@@ -15,25 +15,41 @@ Open http://localhost:3042 and you're in. 🎉
 ## 1 - Landing Page
 
 <p align="center">
-  <img src="image-3.png" width="30%" alt="Landing - hero" />
-  <img src="image-4.png" width="30%" alt="Landing - momentum engine" />
+  <img src="assets/image-3.png" width="30%" alt="Landing - hero" />
+  <img src="assets/image-12.png" width="30%" alt="Landing - value props" />
+  <img src="assets/image-4.png" width="30%" alt="Landing - momentum engine" />
 </p>
 
 ## 2 - Onboarding
 
 <p align="center">
-  <img src="image-5.png" width="30%" alt="Onboarding - reveal" />
-  <img src="image-6.png" width="30%" alt="Onboarding - questionnaire" />
-  <img src="image-7.png" width="30%" alt="Onboarding - watchlist" />
+  <img src="assets/image-5.png" width="30%" alt="Onboarding - reveal" />
+  <img src="assets/image-13.png" width="30%" alt="Onboarding - primer" />
+  <img src="assets/image-6.png" width="30%" alt="Onboarding - questionnaire" />
 </p>
 <p align="center">
-  <img src="image-8.png" width="30%" alt="Onboarding - all set" />
+  <img src="assets/image-14.png" width="30%" alt="Onboarding - capital" />
+  <img src="assets/image-7.png" width="30%" alt="Onboarding - watchlist" />
+  <img src="assets/image-9.png" width="30%" alt="Onboarding - alerts" />
+</p>
+<p align="center">
+  <img src="assets/image-8.png" width="30%" alt="Onboarding - all set" />
 </p>
 
 ## 3 - Command Centre
 
 <p align="center">
-  <img src="image-1.png" width="45%" alt="Command centre" />
+  <img src="assets/image-1.png" width="30%" alt="Command centre - portfolio" />
+  <img src="assets/image-15.png" width="30%" alt="Command centre" />
+  <img src="assets/image-16.png" width="30%" alt="Command centre" />
+</p>
+<p align="center">
+  <img src="assets/image-17.png" width="30%" alt="Command centre" />
+  <img src="assets/image-18.png" width="30%" alt="Command centre" />
+  <img src="assets/image-19.png" width="30%" alt="Command centre" />
+</p>
+<p align="center">
+  <img src="assets/image-20.png" width="30%" alt="Command centre" />
 </p>
 
 
@@ -114,8 +130,7 @@ docs/                     Architecture, AI engine plan, production hardening
 ## More from Lyra
 
 <p align="center">
-  <img src="image-9.png" width="30%" alt="Notification management" />
-  <img src="image-10.png" width="30%" alt="AI support" />
+  <img src="assets/image-10.png" width="30%" alt="AI support" />
 </p>
 
 <p align="center"><sub><b>Notification management</b> &nbsp;·&nbsp; <b>AI support</b></sub></p>
