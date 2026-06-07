@@ -13,21 +13,28 @@ npm install && npm run dev      # ✨ runs on demo data, no keys needed
 Open http://localhost:3042 and you're in. 🎉
 
 ## 1 - Landing Page
-![alt text](image-3.png)
 
-![alt text](image-4.png)
+<p align="center">
+  <img src="image-3.png" width="30%" alt="Landing - hero" />
+  <img src="image-4.png" width="30%" alt="Landing - momentum engine" />
+</p>
 
 ## 2 - Onboarding
-![alt text](image-5.png)
 
-![alt text](image-6.png)
-
-![alt text](image-7.png)
-
-![alt text](image-8.png)
+<p align="center">
+  <img src="image-5.png" width="30%" alt="Onboarding - reveal" />
+  <img src="image-6.png" width="30%" alt="Onboarding - questionnaire" />
+  <img src="image-7.png" width="30%" alt="Onboarding - watchlist" />
+</p>
+<p align="center">
+  <img src="image-8.png" width="30%" alt="Onboarding - all set" />
+</p>
 
 ## 3 - Command Centre
-![alt text](image-1.png)
+
+<p align="center">
+  <img src="image-1.png" width="45%" alt="Command centre" />
+</p>
 
 
 ---
@@ -106,11 +113,12 @@ docs/                     Architecture, AI engine plan, production hardening
 
 ## More from Lyra
 
-### Notification Management
-![alt text](image-9.png)
+<p align="center">
+  <img src="image-9.png" width="30%" alt="Notification management" />
+  <img src="image-10.png" width="30%" alt="AI support" />
+</p>
 
-### AI Support
-![alt text](image-10.png)
+<p align="center"><sub><b>Notification management</b> &nbsp;·&nbsp; <b>AI support</b></sub></p>
 
 ---
 
