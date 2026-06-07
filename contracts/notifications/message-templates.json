@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "limits": { "max_headline_chars": 90, "max_detail_chars": 120, "digest_max_chars": 200 },
+  "slot_source": "Every {slot} is a key in the AlertEvent.facts{} block, rendered verbatim. The composer must not introduce a number that is not a slot.",
+  "ai_rephrase_doctrine": "When the user's Account AI mode is ON, the composer may rephrase headline+detail into warmer prose, but: (1) only using the same facts, (2) staying within the char limits, (3) never adding a recommendation. Deterministic render is always the fallback.",
+  "templates": {
+    "strong_setup": {
+      "severity": "high",
+      "headline": "{ticker} strong setup - score {score} (+{score_delta})",
+      "detail": "RSI {rsi}↑, MACD recovering, vol {vol_ratio}x.",
+      "ai_rephrase": "Flag a fresh momentum-recovery setup forming on {ticker}; cite the score and what's confirming it."
+    },
+    "score_jump": {
+      "severity": "medium",
+      "headline": "{ticker} momentum building - score {score} (+{score_delta})",
+      "detail": "Up from {previous_score} since last scan.",
+      "ai_rephrase": "Note {ticker}'s score climbed meaningfully this hour; cite old→new."
+    },
+    "watchlist_upgrade": {
+      "severity": "low",
+      "headline": "{ticker} entered watchlist setup - score {score}",
+      "detail": "{distance_to_target_pct} from your target.",
+      "ai_rephrase": "Say {ticker} is approaching the zone you flagged; cite distance to target."
+    },
+    "price_alert": {
+      "severity": "medium",
+      "headline": "{ticker} hit your {pct} alert - now {price}",
+      "detail": "from {ref_price} ({pct}).",
+      "ai_rephrase": "Tell them {ticker} crossed the {pct} level they armed; cite current price."
+    },
+    "portfolio_risk": {
+      "severity": "high",
+      "headline": "{ticker} risk: {risk_state} - {pl_pct} P/L",
+      "detail": "Weight {weight_pct}, score {score}.",
+      "ai_rephrase": "Surface that a holding ({ticker}) moved into a risk state worth reviewing; cite P/L."
+    },
+    "signal_invalidated": {
+      "severity": "high",
+      "headline": "{ticker} setup invalidated - score {score} ({score_delta})",
+      "detail": "Prior setup no longer valid.",
+      "ai_rephrase": "Tell them the {ticker} setup broke down; cite the score drop. No recommendation."
+    }
+  },
+  "digest": {
+    "summary": "{strong_count} strong setup{strong_s}, {risk_count} risk flag{risk_s}, {near_count} near trigger. Strongest: {top_ticker} {top_score}.",
+    "ai_rephrase": "A calm 1-2 line read of the hour across the user's book: lead with what changed, name the strongest, keep it scannable. Same numbers only.",
+    "section_lines": {
+      "strong_setups": "Strong: {tickers}",
+      "near_trigger": "Near trigger: {tickers}",
+      "risk_flags": "Risk: {tickers}",
+      "price_alerts": "Alerts hit: {tickers}",
+      "invalidated": "Invalidated: {tickers}"
+    }
+  }
+}

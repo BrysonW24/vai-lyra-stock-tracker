@@ -1,0 +1,10 @@
+pandas
+numpy
+yfinance
+ta
+supabase
+requests
+python-dotenv
+pydantic
+pytz
+pytest

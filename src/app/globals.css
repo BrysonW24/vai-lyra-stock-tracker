@@ -1,0 +1,262 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #07090c;
+  letter-spacing: 0;
+  scroll-behavior: smooth;
+}
+
+/*
+ * iOS Safari auto-zooms the viewport whenever a focused text field has a
+ * computed font-size below 16px, and on modern iOS it will not zoom back out -
+ * so dense sub-16px inputs make the page jump and "go weird" the moment you tap
+ * search / ticker fields. Force every editable control to 16px on touch devices
+ * (coarse pointer) so focusing never triggers a zoom; desktop keeps dense sizing.
+ * !important is the escape hatch needed to win over Tailwind's text-size utilities.
+ */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/*
+ * Dark glassmorphism base: a deep navy-charcoal canvas with soft ambient
+ * aurora glows (electric blue / teal / violet) sitting behind frosted panels,
+ * plus a faint engineering grid for the "operating layer" texture.
+ * Glows are fixed so panels feel like glass floating over depth as you scroll.
+ */
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(920px 540px at 10% -12%, rgba(59, 91, 219, 0.16), transparent 60%),
+    radial-gradient(820px 520px at 102% 2%, rgba(67, 209, 139, 0.08), transparent 55%),
+    radial-gradient(760px 640px at 50% 118%, rgba(124, 58, 237, 0.10), transparent 60%),
+    linear-gradient(rgba(20, 31, 42, 0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 31, 42, 0.13) 1px, transparent 1px),
+    #07090c;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 28px 28px, 28px 28px, 100% 100%;
+  background-attachment: fixed;
+  color: #eef3f8;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(96, 165, 250, 0.30);
+  color: #eef3f8;
+}
+
+.glass-bar {
+  transform: perspective(500px) rotateX(5deg);
+  transform-origin: bottom;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 10px 0 22px rgba(255, 255, 255, 0.12),
+    0 16px 28px rgba(67, 209, 139, 0.12);
+}
+
+/*
+ * Frosted glass panel - the workhorse surface. Translucent navy gradient with a
+ * top light edge, real backdrop blur, and a soft drop shadow for depth.
+ * Alpha is kept high enough that dense tables stay crisp and legible.
+ */
+.terminal-panel {
+  border: 1px solid rgba(126, 148, 168, 0.14);
+  background: linear-gradient(155deg, rgba(24, 32, 43, 0.74), rgba(13, 17, 23, 0.60));
+  backdrop-filter: blur(14px) saturate(118%);
+  -webkit-backdrop-filter: blur(14px) saturate(118%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 30px -14px rgba(0, 0, 0, 0.6);
+}
+
+/* Lighter, more translucent variant for secondary/nested surfaces. */
+.terminal-panel-soft {
+  border: 1px solid rgba(126, 148, 168, 0.10);
+  background: linear-gradient(155deg, rgba(26, 35, 47, 0.58), rgba(15, 22, 30, 0.42));
+  backdrop-filter: blur(12px) saturate(115%);
+  -webkit-backdrop-filter: blur(12px) saturate(115%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Hero accent - opt-in halo for marquee panels (e.g. Command Centre regime, model scenario). */
+.glass-hero {
+  border: 1px solid rgba(96, 165, 250, 0.22) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 1px rgba(96, 165, 250, 0.05),
+    0 24px 70px -28px rgba(59, 91, 219, 0.45);
+}
+
+/* Translucent chrome for the app shell sidebar / header / mobile bar. */
+.glass-chrome {
+  background: rgba(11, 16, 22, 0.62);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(11, 16, 22, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(38, 50, 65, 0.9);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(96, 165, 250, 0.5);
+}
+
+/* Signal Calibration Activation Sequence Keyframes */
+
+@keyframes radarPulse {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes tableRowSlide {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes badgePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(67, 209, 139, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px rgba(67, 209, 139, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(67, 209, 139, 0);
+  }
+}
+
+/* MomentumPulse hero visual: pulsing "now" node + sweeping scan beam */
+@keyframes pulseCore {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.9); opacity: 0.12; }
+}
+
+@keyframes pulseScanX {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(406px); }
+}
+
+/* Lyra creature: gentle idle float + occasional blink */
+@keyframes creatureFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes creatureBlink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.12); }
+}
+
+@keyframes sceneWipeAnimation {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Radar orb - smooth orbital motion with upright, counter-rotated chips */
+@keyframes orbitSpinFwd {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbitSpinRev {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes radarSweepSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-rotor, .orbit-counter, .radar-sweep { animation: none !important; }
+}
+
+/* Intelligence ticker-tape - continuous right-to-left marquee under the regime bar */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.intel-track {
+  animation: marquee 185s linear infinite;
+}
+
+.intel-marquee:hover .intel-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intel-track { animation: none; }
+}
+
+/* Hide scrollbars while keeping scroll - used by the always-on mobile nav strip. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

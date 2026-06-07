@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "description": "Golden cases the composer (deterministic AND ai-rephrased) must pass before any template/prompt change is promoted. Run in CI alongside the worker pytest suite. expect.no_invented_numbers means every number in the rendered text must be a value present in input.facts.",
+  "global_rules": {
+    "headline_max_chars": 90,
+    "detail_max_chars": 120,
+    "facts_used_subset_of_facts": true,
+    "one_message_per_dedup_key_per_cooldown": true
+  },
+  "cases": [
+    {
+      "case_id": "strong-setup-basic",
+      "input": { "type": "strong_setup", "ticker": "NVDA", "severity": "high", "facts": { "score": 84, "score_delta": 9, "rsi": 48, "vol_ratio": 1.24 }, "dedup_key": "u1:NVDA:strong_setup" },
+      "expect": { "max_lines": 2, "must_include": ["NVDA", "84"], "must_not_include": ["buy", "sell", "recommend"], "tickers": ["NVDA"], "no_invented_numbers": true }
+    },
+    {
+      "case_id": "price-alert-up-10",
+      "input": { "type": "price_alert", "ticker": "GOOGL", "severity": "medium", "facts": { "pct": "+10%", "price": 405.00, "ref_price": 368.18 }, "dedup_key": "u1:GOOGL:price_alert:10" },
+      "expect": { "max_lines": 2, "must_include": ["GOOGL", "+10%", "405"], "must_not_include": ["buy", "target"], "tickers": ["GOOGL"], "no_invented_numbers": true }
+    },
+    {
+      "case_id": "portfolio-risk-flag",
+      "input": { "type": "portfolio_risk", "ticker": "TSLA", "severity": "high", "facts": { "risk_state": "elevated_risk", "pl_pct": "-12.4%", "weight_pct": "18%", "score": 41 }, "dedup_key": "u1:TSLA:portfolio_risk" },
+      "expect": { "max_lines": 2, "must_include": ["TSLA", "-12.4%"], "must_not_include": ["sell", "cut", "advice"], "tickers": ["TSLA"], "no_invented_numbers": true }
+    },
+    {
+      "case_id": "invalidated",
+      "input": { "type": "signal_invalidated", "ticker": "AMD", "severity": "high", "facts": { "score": 38, "score_delta": -14 }, "dedup_key": "u1:AMD:signal_invalidated" },
+      "expect": { "max_lines": 2, "must_include": ["AMD"], "must_not_include": ["buy", "recommend"], "tickers": ["AMD"], "no_invented_numbers": true }
+    },
+    {
+      "case_id": "no-invented-number-guard",
+      "input": { "type": "score_jump", "ticker": "CRM", "severity": "medium", "facts": { "score": 76, "score_delta": 6, "previous_score": 70 }, "dedup_key": "u1:CRM:score_jump" },
+      "expect": { "must_include": ["CRM", "76"], "must_not_include": ["80", "90", "100%"], "no_invented_numbers": true, "note": "Composer must not fabricate a price/target not present in facts." }
+    },
+    {
+      "case_id": "dedup-suppressed-rearm",
+      "input": { "type": "price_alert", "ticker": "GOOGL", "severity": "medium", "facts": { "pct": "+10%", "price": 405.50 }, "dedup_key": "u1:GOOGL:price_alert:10", "suppressed": { "value": true, "reason": "Already sent within cooldown" } },
+      "expect": { "sends": false, "note": "Suppressed events render no message; logged to suppressed_count." }
+    },
+    {
+      "case_id": "hourly-digest-rollup",
+      "input": {
+        "kind": "digest",
+        "facts": { "strong_count": 3, "risk_count": 1, "near_count": 2, "top_ticker": "NVDA", "top_score": 84 },
+        "sections": [
+          { "type": "strong_setups", "tickers": ["NVDA", "AVGO", "CRWD"] },
+          { "type": "risk_flags", "tickers": ["TSLA"] },
+          { "type": "near_trigger", "tickers": ["AMD", "MSFT"] }
+        ]
+      },
+      "expect": { "max_lines": 2, "max_chars": 200, "must_include": ["3", "NVDA", "84"], "must_not_include": ["recommend"], "no_invented_numbers": true }
+    },
+    {
+      "case_id": "quiet-hours-gate",
+      "input": { "type": "strong_setup", "ticker": "META", "severity": "high", "facts": { "score": 80 }, "dedup_key": "u1:META:strong_setup", "suppressed": { "value": true, "reason": "User in quiet hours (22-8)" } },
+      "expect": { "sends": false, "note": "Gating from should_send_alert_to_user is honoured upstream; composer emits nothing." }
+    }
+  ]
+}

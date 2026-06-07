@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+coverage/
+.env
+.env.local
+.env.*.local
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.tsbuildinfo
+tmp/
+*.sqlite
+*.duckdb
+.fuse_hidden*

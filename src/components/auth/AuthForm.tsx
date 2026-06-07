@@ -1,0 +1,163 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { BrandLogo } from '@/components/BrandLogo';
+
+const inputClass =
+  'w-full rounded-md border border-[#263241] bg-[#0b1016] px-3 py-2.5 text-sm text-[#eef3f8] placeholder:text-[#5a6772] outline-none transition focus:border-[#f3a33a]/60 focus:ring-1 focus:ring-[#f3a33a]/30';
+
+/**
+ * Simple, founder-friendly auth: first name, last name, email and a 6-digit PIN.
+ * The PIN is the account secret (mapped to the Supabase password, which needs ≥6 chars).
+ * In demo mode (no Supabase configured) the form is shown as a preview and the button
+ * drops straight into the demo console.
+ */
+export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
+  const router = useRouter();
+  const supabase = createSupabaseBrowserClient();
+  const demo = !supabase;
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setNotice(null);
+
+    if (pin.length < 6) {
+      setError('Your PIN must be 6 digits.');
+      return;
+    }
+
+    // Demo mode: no backend yet — drop straight into the demo console.
+    if (!supabase) {
+      router.push('/');
+      return;
+    }
+
+    setLoading(true);
+    if (mode === 'signup') {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password: pin,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            display_name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (signUpError) setError(signUpError.message);
+      else setNotice('Account created. Check your email to confirm, then sign in with your PIN.');
+    } else {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: pin });
+      if (signInError) setError(signInError.message);
+      else {
+        router.push('/');
+        router.refresh();
+      }
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div className="w-full max-w-sm rounded-xl border border-[#263241] bg-[#0d1117] p-6 shadow-2xl">
+      <Link href="/welcome" className="mb-4 inline-flex items-center gap-1 text-xs text-[#8190a0] transition hover:text-[#eef3f8]">
+        ← Back
+      </Link>
+      <div className="mb-5 flex flex-col items-center gap-2 text-center">
+        <BrandLogo size={34} showWordmark />
+        <p className="text-xs text-[#8190a0]">
+          {mode === 'signup' ? 'Create your operator account' : 'Sign in to your console'}
+        </p>
+      </div>
+
+      {demo && (
+        <p className="mb-3 rounded-md border border-[#9a6a1f]/40 bg-[#2a1f0f]/60 px-3 py-2 text-[11px] leading-snug text-[#f3a33a]">
+          Demo mode - accounts aren&apos;t live yet. When they are, sign-{mode === 'signup' ? 'up' : 'in'} is
+          just your email and a 6-digit PIN.
+        </p>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        {mode === 'signup' && (
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              className={inputClass}
+              type="text"
+              placeholder="First name"
+              value={firstName}
+              onChange={(event) => setFirstName(event.target.value)}
+              autoComplete="given-name"
+              required
+            />
+            <input
+              className={inputClass}
+              type="text"
+              placeholder="Last name"
+              value={lastName}
+              onChange={(event) => setLastName(event.target.value)}
+              autoComplete="family-name"
+              required
+            />
+          </div>
+        )}
+        <input
+          className={inputClass}
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          autoComplete="email"
+          required
+        />
+        <div>
+          <input
+            className={`${inputClass} text-center text-lg tracking-[0.5em]`}
+            type="password"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="••••••"
+            value={pin}
+            onChange={(event) => setPin(event.target.value.replace(/\D/g, '').slice(0, 6))}
+            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+            required
+          />
+          <p className="mt-1 text-center text-[10px] text-[#6f7d8a]">
+            {mode === 'signup' ? 'Choose a 6-digit PIN' : 'Enter your 6-digit PIN'}
+          </p>
+        </div>
+
+        {error && <p className="text-xs text-[#ff6b6b]">{error}</p>}
+        {notice && <p className="text-xs text-[#43d18b]">{notice}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.65)] transition hover:brightness-110 disabled:opacity-50"
+        >
+          {loading ? 'Working…' : demo ? 'Continue in demo' : mode === 'signup' ? 'Create account' : 'Sign in'}
+        </button>
+      </form>
+
+      <p className="mt-4 text-center text-xs text-[#8190a0]">
+        {mode === 'signup' ? (
+          <>Already have an account? <Link href="/auth/login" className="text-[#f3a33a] hover:underline">Sign in</Link></>
+        ) : (
+          <>New here? <Link href="/auth/signup" className="text-[#f3a33a] hover:underline">Create an account</Link></>
+        )}
+      </p>
+    </div>
+  );
+}

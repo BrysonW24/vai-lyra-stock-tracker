@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lyra.vivacity.ai/contracts/notifications/notification-contracts.schema.json",
+  "title": "Lyra AI Notification Contracts",
+  "description": "JSON-native objects for the AI notification layer. The deterministic engine fills ChangeSnapshot + AlertEvent (truth); the AI composer emits NotificationMessage / HourlyDigest bounded by these schemas. See docs/ai-notification-layer.md.",
+  "type": "object",
+  "$defs": {
+    "ChangeSnapshot": {
+      "title": "ChangeSnapshot",
+      "description": "The register of change: one per (run, ticker), diffing this scanner run against the prior one.",
+      "type": "object",
+      "required": ["run_id", "generated_at", "ticker", "timeframe", "before", "after", "deltas", "changed"],
+      "properties": {
+        "run_id": { "type": "string", "description": "stock_scanner_runs id for this run." },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "ticker": { "type": "string" },
+        "timeframe": { "type": "string", "default": "1h" },
+        "user_id": { "type": ["string", "null"] },
+        "before": { "$ref": "#/$defs/StateSlice" },
+        "after": { "$ref": "#/$defs/StateSlice" },
+        "deltas": {
+          "type": "object",
+          "properties": {
+            "signal_score_delta": { "type": ["number", "null"] },
+            "rsi_delta": { "type": ["number", "null"] },
+            "macd_histogram_delta": { "type": ["number", "null"] },
+            "price_change_pct": { "type": ["number", "null"] }
+          }
+        },
+        "changed": {
+          "type": "array",
+          "items": { "enum": ["signal_score", "signal_status", "rsi_state", "macd_state", "trend_state", "volume_state", "action_state", "risk_state", "price"] },
+          "description": "Which dimensions moved this run. Empty array = nothing worth saying."
+        },
+        "crossed_thresholds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["kind", "level", "direction"],
+            "properties": {
+              "kind": { "enum": ["score", "rsi", "price"] },
+              "level": { "type": "number" },
+              "direction": { "enum": ["up", "down"] }
+            }
+          }
+        },
+        "watchlist_alerts_hit": {
+          "type": "array",
+          "description": "Which of the user's -10/-5/+5/+10 ladder thresholds the price crossed this run.",
+          "items": {
+            "type": "object",
+            "required": ["pct", "direction"],
+            "properties": {
+              "pct": { "enum": [-10, -5, 5, 10] },
+              "target_price": { "type": ["number", "null"] },
+              "ref_price": { "type": ["number", "null"], "description": "price at add-time the pct is measured from" },
+              "direction": { "enum": ["up", "down"] }
+            }
+          }
+        },
+        "news": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "headline": { "type": "string" },
+              "sentiment": { "enum": ["positive", "neutral", "negative"] },
+              "url": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "StateSlice": {
+      "type": "object",
+      "description": "The deterministic fields snapshotted before/after a run. All verbatim from the engine.",
+      "properties": {
+        "signal_score": { "type": ["number", "null"] },
+        "signal_status": { "type": ["string", "null"] },
+        "action_state": { "type": ["string", "null"] },
+        "risk_state": { "type": ["string", "null"] },
+        "rsi_14": { "type": ["number", "null"] },
+        "macd_histogram": { "type": ["number", "null"] },
+        "volume_ratio": { "type": ["number", "null"] },
+        "close": { "type": ["number", "null"] }
+      }
+    },
+    "AlertEvent": {
+      "title": "AlertEvent",
+      "description": "A deterministic, gated event the AI may turn into words. Numbers live in facts{} (verbatim).",
+      "type": "object",
+      "required": ["event_id", "run_id", "ticker", "type", "severity", "deterministic_reason", "facts", "channel", "dedup_key"],
+      "properties": {
+        "event_id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "user_id": { "type": ["string", "null"] },
+        "ticker": { "type": "string" },
+        "type": { "enum": ["signal_invalidated", "portfolio_risk", "strong_setup", "price_alert", "score_jump", "watchlist_upgrade"] },
+        "severity": { "enum": ["critical", "high", "medium", "low"] },
+        "deterministic_reason": { "type": "string", "description": "One-line machine reason (from alert_engine), the fallback message seed." },
+        "facts": {
+          "type": "object",
+          "description": "Verbatim numeric facts the message may cite. The AI's facts_used MUST be a subset of these keys.",
+          "additionalProperties": { "type": ["number", "string", "null"] }
+        },
+        "channel": { "enum": ["telegram", "whatsapp", "in_app"] },
+        "cooldown_hours": { "type": "integer", "default": 6 },
+        "dedup_key": { "type": "string", "description": "e.g. {user_id}:{ticker}:{type}:{level} — one send per key per cooldown." },
+        "suppressed": {
+          "type": "object",
+          "properties": {
+            "value": { "type": "boolean" },
+            "reason": { "type": "string" }
+          }
+        }
+      }
+    },
+    "NotificationMessage": {
+      "title": "NotificationMessage",
+      "description": "The AI (or deterministic) output. Contract-bound so it is always solid.",
+      "type": "object",
+      "required": ["message_id", "channel", "severity", "headline", "tickers", "facts_used", "source_event_ids", "template_id", "generated_by"],
+      "properties": {
+        "message_id": { "type": "string" },
+        "user_id": { "type": ["string", "null"] },
+        "channel": { "enum": ["telegram", "whatsapp", "in_app"] },
+        "severity": { "enum": ["critical", "high", "medium", "low"] },
+        "headline": { "type": "string", "maxLength": 90, "description": "One line. The message." },
+        "detail": { "type": "string", "maxLength": 120, "description": "Optional second line." },
+        "tickers": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "facts_used": { "type": "array", "items": { "type": "string" }, "description": "Fact keys cited; MUST ⊆ source events' facts (no invented numbers)." },
+        "source_event_ids": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "template_id": { "type": "string" },
+        "generated_by": { "enum": ["deterministic", "ai"] }
+      }
+    },
+    "HourlyDigest": {
+      "title": "HourlyDigest",
+      "description": "The roll-up across a user's watchlist + portfolio — the core hourly driver.",
+      "type": "object",
+      "required": ["digest_id", "run_id", "channel", "summary", "sections", "event_count"],
+      "properties": {
+        "digest_id": { "type": "string" },
+        "user_id": { "type": ["string", "null"] },
+        "run_id": { "type": "string" },
+        "window_start": { "type": "string", "format": "date-time" },
+        "window_end": { "type": "string", "format": "date-time" },
+        "channel": { "enum": ["telegram", "whatsapp", "in_app"] },
+        "summary": { "type": "string", "maxLength": 200, "description": "<= 2 lines. The headline read." },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "line"],
+            "properties": {
+              "type": { "enum": ["strong_setups", "near_trigger", "risk_flags", "price_alerts", "invalidated"] },
+              "line": { "type": "string", "maxLength": 140 },
+              "tickers": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "event_count": { "type": "integer" },
+        "suppressed_count": { "type": "integer", "default": 0 }
+      }
+    }
+  }
+}

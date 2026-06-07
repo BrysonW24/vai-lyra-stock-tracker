@@ -1,0 +1,45 @@
+name: Hourly Stock Scanner
+
+# Runs the Python momentum scanner once an hour during/around US market hours.
+# Configure the secrets below in: Settings -> Secrets and variables -> Actions.
+# With no secrets set, the worker no-ops safely - the dashboard still runs on demo data.
+
+on:
+  schedule:
+    # Every hour at :05. Cron is UTC. The worker's market-hours guard decides whether to scan.
+    - cron: '5 * * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: hourly-stock-scanner
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install worker dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scanner
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEFAULT_USER_ID: ${{ secrets.DEFAULT_USER_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          MARKET_DATA_PROVIDER: ${{ vars.MARKET_DATA_PROVIDER || 'yfinance' }}
+          TICKER_SYMBOLS: ${{ vars.TICKER_SYMBOLS }}
+          DEFAULT_TIMEFRAME: ${{ vars.DEFAULT_TIMEFRAME || '1h' }}
+          ENABLE_TELEGRAM_ALERTS: ${{ vars.ENABLE_TELEGRAM_ALERTS || 'true' }}
+          ENABLE_MARKET_HOURS_GUARD: ${{ vars.ENABLE_MARKET_HOURS_GUARD || 'true' }}
+        run: python -m workers.stock_scanner.main

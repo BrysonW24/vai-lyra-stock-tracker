@@ -1,0 +1,178 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { FeedbackWidget } from '@/components/FeedbackWidget';
+import {
+  BarChart3,
+  Bell,
+  BriefcaseBusiness,
+  CalendarDays,
+  Calculator,
+  Coins,
+  FlaskConical,
+  Gauge,
+  GitCompare,
+  GraduationCap,
+  Megaphone,
+  Newspaper,
+  Radar,
+  Rocket,
+  Search,
+  SlidersHorizontal,
+  Sparkles,
+  Star,
+  Wand2,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
+import type { DashboardData } from '@/types/scanner';
+import { relativeTime } from '@/lib/format';
+import { BrandLogo } from '@/components/BrandLogo';
+import { AlertControl } from '@/components/AlertControl';
+import { AccountMenu } from '@/components/AccountMenu';
+
+// Full section map. Desktop shows it as an icon rail; below xl the same list
+// renders as an always-on, horizontally-scrollable bottom bar so every surface
+// (Education included) is permanently reachable without opening a menu.
+const navItems = [
+  { href: '/', label: 'Command', short: 'Command', icon: Gauge },
+  { href: '/radar', label: 'Signal Radar', short: 'Radar', icon: Radar },
+  { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness },
+  { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star },
+  { href: '/comparison', label: 'Comparison Lab', short: 'Compare', icon: GitCompare },
+  { href: '/simulation', label: 'Simulation Lab', short: 'Simulate', icon: Calculator },
+  { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins },
+  { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays },
+  { href: '/ipos', label: 'IPO Radar', short: 'IPOs', icon: Rocket },
+  { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper },
+  { href: '/fundamentals', label: 'Fundamentals', short: 'Fundies', icon: BarChart3 },
+  { href: '/education', label: 'Education', short: 'Learn', icon: GraduationCap },
+  { href: '/strategy-lab', label: 'Strategy Lab', short: 'Strategy', icon: FlaskConical },
+  { href: '/alerts', label: 'Alerts', short: 'Alerts', icon: Bell },
+  { href: '/whats-new', label: "What's New", short: 'New', icon: Sparkles },
+  { href: '/settings', label: 'Strategy Rules', short: 'Rules', icon: SlidersHorizontal },
+];
+
+interface AppShellProps {
+  data: DashboardData;
+  children: ReactNode;
+}
+
+export function AppShell({ data, children }: AppShellProps) {
+  const pathname = usePathname();
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+
+  return (
+    <div className="min-h-screen bg-[#080a0d] text-[#eef3f8]">
+      <aside className="glass-chrome fixed bottom-0 left-0 top-0 z-30 hidden w-[72px] border-r border-[#1b2530] xl:block">
+        <Link href="/" className="grid h-14 place-items-center border-b border-[#1b2530]">
+          <BrandLogo size={30} />
+        </Link>
+        <nav className="mt-2 flex flex-col items-center gap-1">
+          {navItems.map((item) => (
+            <Link
+              href={item.href}
+              key={item.href}
+              title={item.label}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              className={`group relative grid h-11 w-11 place-items-center rounded-md transition ${
+                isActive(item.href)
+                  ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40'
+                  : 'text-[#8190a0] hover:bg-[#151c25] hover:text-[#eef3f8]'
+              }`}
+            >
+              <item.icon size={18} />
+              <span className="pointer-events-none absolute left-14 z-20 hidden whitespace-nowrap rounded-md border border-[#263241] bg-[#101720] px-2 py-1 text-xs text-[#dbe5ee] shadow-xl group-hover:block">
+                {item.label}
+              </span>
+            </Link>
+          ))}
+        </nav>
+      </aside>
+
+      <div className="xl:pl-[72px]">
+        <header className="glass-chrome sticky top-0 z-20 border-b border-[#1b2530]">
+          <div className="flex h-14 items-center gap-3 px-3 md:px-5">
+            <Link href="/" className="hidden min-w-[150px] items-center md:flex">
+              <BrandLogo size={26} showWordmark />
+            </Link>
+            <Link href="/" aria-label="Lyra home" className="flex shrink-0 items-center md:hidden">
+              <BrandLogo size={24} />
+            </Link>
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-[#263241] bg-[#0d141c] px-3 py-2">
+              <Search size={15} className="text-[#8190a0]" />
+              <span className="truncate text-sm text-[#8190a0]">Search: NVDA / AMD / CRM</span>
+            </div>
+            {/* Market status: pulsing dot + timeframe; market / last-scan detail on hover. */}
+            <span
+              title={`Market open · Last scan ${relativeTime(data.latestRun.finishedAt)} · ${data.latestRun.timeframe.toUpperCase()} timeframe`}
+              className="hidden items-center gap-1.5 rounded-md border border-[#1d4f3a] bg-[#0d251b] px-2 py-1.5 font-mono text-[11px] text-[#43d18b] sm:flex"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#43d18b]" />
+              </span>
+              {data.latestRun.timeframe.toUpperCase()}
+            </span>
+
+            <AlertControl />
+
+            {/* Megaphone -> in-product changelog (Wiz pattern). Amber dot = new updates. */}
+            <Link
+              href="/whats-new"
+              title="What's new"
+              aria-label="What's new"
+              className="relative grid h-9 w-9 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+            >
+              <Megaphone size={16} />
+              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#f3a33a] ring-2 ring-[#0d141c]" />
+            </Link>
+
+            <Link
+              href="/onboarding"
+              title="Guided setup"
+              aria-label="Guided setup"
+              className="hidden h-9 w-9 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8] sm:grid"
+            >
+              <Wand2 size={16} />
+            </Link>
+
+            <AccountMenu />
+          </div>
+        </header>
+
+        <main className="px-3 py-3 md:px-5 md:py-5">{children}</main>
+
+        <footer className="border-t border-[#1b2530] px-3 py-2 text-[10px] text-[#6f7d8a] md:px-5">
+          Research only - not financial advice. Lyra never trades for you.
+        </footer>
+      </div>
+
+      <nav
+        className="glass-chrome fixed bottom-0 left-0 right-0 z-30 border-t border-[#1b2530] xl:hidden"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        aria-label="Primary"
+      >
+        <div className="no-scrollbar flex snap-x snap-proximity gap-1.5 overflow-x-auto px-3 py-2 scroll-px-3">
+          {navItems.map((item) => (
+            <Link
+              href={item.href}
+              key={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              className={`flex min-w-[60px] shrink-0 snap-start flex-col items-center gap-1 rounded-md px-1.5 py-2 text-[10px] font-medium transition ${
+                isActive(item.href)
+                  ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40'
+                  : 'text-[#8190a0] active:bg-[#151c25]'
+              }`}
+            >
+              <item.icon size={18} />
+              <span className="whitespace-nowrap">{item.short}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
+
+      <FeedbackWidget />
+    </div>
+  );
+}
