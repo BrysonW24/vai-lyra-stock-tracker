@@ -163,7 +163,7 @@ export function AccountSettings() {
               <label className={labelClass}>Your icon</label>
               <div className="mt-1 flex items-center gap-3">
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[#263241] bg-[#0d141c] text-2xl">
-                  {profile.avatarEmoji || '📈'}
+                  {profile.avatarEmoji || '🦎'}
                 </span>
                 <div className="flex flex-wrap gap-1">
                   {AVATAR_EMOJIS.map((emoji) => (

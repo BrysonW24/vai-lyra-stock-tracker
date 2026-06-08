@@ -23,7 +23,7 @@ export interface AccountProfile {
 
 /** Curated avatar emojis - a quick, personal "pick your icon" set (markets + characters). */
 export const AVATAR_EMOJIS = [
-  '📈', '📊', '💹', '🪙', '💎', '🎯', '🚀', '⚡',
+  '🦎', '📈', '📊', '💹', '🪙', '💎', '🎯', '🚀', '⚡',
   '🔥', '🧠', '🐂', '🐻', '🦊', '🦉', '🦅', '🦈',
   '🐉', '🌊', '🌙', '⭐', '🏆', '♟️', '🧭', '🤖',
 ] as const;
@@ -55,9 +55,9 @@ export const REGIONS = ['Australia', 'United States', 'United Kingdom', 'Europe'
 
 export const DEFAULT_PROFILE: AccountProfile = {
   displayName: '',
-  avatarEmoji: '📈',
+  avatarEmoji: '🦎',
   email: '',
-  baseCurrency: 'USD',
+  baseCurrency: 'AUD',
   region: 'Australia',
 };
 

@@ -16,14 +16,14 @@ export function AccountMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
-  const [avatar, setAvatar] = useState('📈');
+  const [avatar, setAvatar] = useState('🦎');
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const read = () => {
       const profile = loadProfile();
       setName(profile.displayName);
-      setAvatar(profile.avatarEmoji || '📈');
+      setAvatar(profile.avatarEmoji || '🦎');
     };
     read();
     // Reflect edits made on the settings page (incl. other tabs).
