@@ -12,7 +12,11 @@
     "doctor": "node scripts/doctor.mjs",
     "test": "vitest run",
     "worker:scan": "python -m workers.stock_scanner.main",
-    "worker:test": "python -m pytest tests"
+    "worker:test": "python -m pytest tests",
+    "content:build": "node scripts/build-content.mjs",
+    "predev": "node scripts/build-content.mjs",
+    "prebuild": "node scripts/build-content.mjs",
+    "pretype-check": "node scripts/build-content.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

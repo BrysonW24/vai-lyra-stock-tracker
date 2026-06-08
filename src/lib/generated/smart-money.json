@@ -1,0 +1,47 @@
+[
+  {
+    "ticker": "IONQ",
+    "company": "IonQ",
+    "backer": "big-tech",
+    "backerName": "Amazon",
+    "catalyst": "Quantum cloud-access partnership widened; grouped with big-tech compute coverage.",
+    "date": "2026-06-06",
+    "source": "Newsflow"
+  },
+  {
+    "ticker": "SMR",
+    "company": "NuScale Power",
+    "backer": "government",
+    "backerName": "US DOE",
+    "catalyst": "Small modular reactor program tied to federal clean-energy funding in coverage.",
+    "date": "2026-06-05",
+    "source": "Newsflow"
+  },
+  {
+    "ticker": "BBAI",
+    "company": "BigBear.ai",
+    "backer": "government",
+    "backerName": "US DoD",
+    "catalyst": "Defense analytics work flagged across recent contract newsflow.",
+    "date": "2026-06-04",
+    "source": "Newsflow"
+  },
+  {
+    "ticker": "SOUN",
+    "company": "SoundHound AI",
+    "backer": "big-ai",
+    "backerName": "Nvidia",
+    "catalyst": "Grouped with Nvidia-linked AI names; voice-AI traction cited.",
+    "date": "2026-06-03",
+    "source": "Newsflow"
+  },
+  {
+    "ticker": "RKLB",
+    "company": "Rocket Lab",
+    "backer": "government",
+    "backerName": "US Space Force",
+    "catalyst": "Launch + national-security contracts referenced in newsflow.",
+    "date": "2026-05-30",
+    "source": "Newsflow"
+  }
+]
