@@ -114,10 +114,26 @@ export function AppShell({ data, children }: AppShellProps) {
             <Link href="/" aria-label="Lyra home" className="flex shrink-0 items-center md:hidden">
               <BrandLogo size={24} />
             </Link>
-            <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md border border-[#263241] bg-[#0d141c] px-2.5 py-1.5">
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 lg:max-w-[380px]">
               <Search size={14} className="shrink-0 text-[#8190a0]" />
-              <span className="truncate text-xs text-[#8190a0]">Search: NVDA / AMD / CRM</span>
+              <span className="truncate text-xs text-[#8190a0]">Search: NVDA</span>
             </div>
+
+            {/* Live Wire shortcut - this is a signals app, so the live feed is one tap from
+                anywhere. Green pulse = signals are live. */}
+            <Link
+              href="/wire"
+              title="Live Wire - the live signal feed"
+              aria-label="Live Wire"
+              className="relative grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:border-[#1d4f3a] hover:text-[#43d18b]"
+            >
+              <Bell size={16} />
+              <span className="absolute right-1.5 top-1.5 flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-70" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#43d18b]" />
+              </span>
+            </Link>
+
             {/* Market status: pulsing dot + timeframe; market / last-scan detail on hover. */}
             <span
               title={`Market open · Last scan ${relativeTime(data.latestRun.finishedAt)} · ${data.latestRun.timeframe.toUpperCase()} timeframe`}
