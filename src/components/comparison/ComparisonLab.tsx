@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo, CSSProperties } from 'react';
+import { useState, useEffect, useMemo, useRef, CSSProperties } from 'react';
 import { loadLocalHoldings } from '@/lib/local-portfolio';
 import {
   DEMO_COMPARISON_DATA,
   buildComparisonTable,
   extractTimeLabels,
+  formatPointDateTime,
   normaliseSeriesToBaseline,
   normaliseSeriesToScale,
   type ComparisonSeries,
@@ -76,6 +77,12 @@ export function ComparisonLab() {
       selectedSeries.length > 0
         ? extractTimeLabels(selectedSeries[0].data, selectedSeries[0].data.length)
         : [],
+    [selectedSeries],
+  );
+
+  // Real timestamps per point, for the hover scrubber tooltip.
+  const timestamps = useMemo(
+    () => (selectedSeries.length > 0 ? selectedSeries[0].data.map((p) => p.timestamp) : []),
     [selectedSeries],
   );
 
@@ -224,7 +231,7 @@ export function ComparisonLab() {
           </section>
 
           {/* Multi-Series Chart */}
-          <ComparisonChart series={chartSeries} timeLabels={timeLabels} metricLabel={metricLabel} />
+          <ComparisonChart series={chartSeries} timeLabels={timeLabels} timestamps={timestamps} metricLabel={metricLabel} />
 
           {/* Comparison Table */}
           <ComparisonTable rows={comparisonTable} metricMode={metricMode} />
@@ -246,15 +253,22 @@ interface ChartSeries {
 function ComparisonChart({
   series,
   timeLabels,
+  timestamps,
   metricLabel,
 }: {
   series: ChartSeries[];
   timeLabels: string[];
+  timestamps: string[];
   metricLabel: string;
 }) {
   const chartWidth = 720;
   const chartHeight = 260;
   const pad = 12;
+
+  const plotRef = useRef<HTMLDivElement>(null);
+  const [hover, setHover] = useState<number | null>(null);
+
+  const pointCount = series[0]?.values.length ?? 0;
 
   // Calculate bounds across all series
   const allValues = series.flatMap((s) => s.values);
@@ -262,20 +276,31 @@ function ComparisonChart({
   const max = Math.max(...allValues);
   const range = max - min || 1;
 
-  // Generate path for a series
-  const pathFor = (values: number[]) => {
-    const step = values.length > 1 ? (chartWidth - pad * 2) / (values.length - 1) : 0;
-    return values
-      .map((value, index) => {
-        const x = pad + step * index;
-        const y = chartHeight - pad - ((value - min) / range) * (chartHeight - pad * 2);
-        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
-      })
-      .join(' ');
+  const step = pointCount > 1 ? (chartWidth - pad * 2) / (pointCount - 1) : 0;
+  const xAt = (index: number) => pad + step * index;
+  const yAt = (value: number) => chartHeight - pad - ((value - min) / range) * (chartHeight - pad * 2);
+
+  // Map a pointer position to the nearest data index (account for the plot padding).
+  const handlePointer = (clientX: number) => {
+    const el = plotRef.current;
+    if (!el || pointCount === 0) return;
+    const rect = el.getBoundingClientRect();
+    const padFrac = pad / chartWidth;
+    const f = (clientX - rect.left) / rect.width;
+    const dataF = (f - padFrac) / (1 - padFrac * 2);
+    const idx = Math.round(Math.min(1, Math.max(0, dataF)) * (pointCount - 1));
+    setHover(idx);
   };
+
+  // Generate path for a series
+  const pathFor = (values: number[]) =>
+    values.map((value, index) => `${index === 0 ? 'M' : 'L'} ${xAt(index).toFixed(2)} ${yAt(value).toFixed(2)}`).join(' ');
 
   // Grid lines
   const gridLines = [0, 1, 2, 3, 4];
+
+  const hoverTs = hover !== null ? timestamps[hover] : undefined;
+  const hoverLeftPct = hover !== null ? (xAt(hover) / chartWidth) * 100 : 0;
 
   return (
     <section className="terminal-panel overflow-hidden rounded-md">
@@ -296,7 +321,16 @@ function ComparisonChart({
         </div>
       </div>
 
-      <div className="relative overflow-hidden" style={{ height: `${chartHeight}px` }}>
+      <div
+        ref={plotRef}
+        className="relative cursor-crosshair overflow-hidden"
+        style={{ height: `${chartHeight}px`, touchAction: 'pan-y' }}
+        onPointerMove={(e) => handlePointer(e.clientX)}
+        onPointerDown={(e) => handlePointer(e.clientX)}
+        onPointerLeave={() => setHover(null)}
+        onPointerUp={() => setHover(null)}
+        onPointerCancel={() => setHover(null)}
+      >
         <svg
           className="h-full w-full"
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
@@ -333,7 +367,31 @@ function ComparisonChart({
               vectorEffect="non-scaling-stroke"
             />
           ))}
+
+          {/* Hover guide line */}
+          {hover !== null && (
+            <line
+              x1={xAt(hover)}
+              x2={xAt(hover)}
+              y1={pad}
+              y2={chartHeight - pad}
+              stroke="#5d6b79"
+              strokeWidth="1"
+              strokeDasharray="4 4"
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
         </svg>
+
+        {/* Hover dots (HTML so they stay circular under the non-uniform svg scale) */}
+        {hover !== null &&
+          series.map((item) => (
+            <div
+              key={item.label}
+              className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0b1016]"
+              style={{ left: `${hoverLeftPct}%`, top: `${(yAt(item.values[hover]) / chartHeight) * 100}%`, background: item.color }}
+            />
+          ))}
 
         {/* Time labels */}
         <div className="absolute bottom-2 left-3 right-3 flex justify-between font-mono text-[10px] text-[#5d6b79]">
@@ -342,10 +400,25 @@ function ComparisonChart({
           ))}
         </div>
 
-        {/* Min/Max bounds */}
-        <div className="absolute right-3 top-3 rounded border border-[#263241] bg-[#0d141c]/90 px-2 py-1 font-mono text-[11px] text-[#a8b5c2]">
-          {formatNumber(max, 2)} / {formatNumber(min, 2)}
-        </div>
+        {/* Scrubber readout while hovering, else the static min/max bounds */}
+        {hover !== null && hoverTs ? (
+          <div className="pointer-events-none absolute left-3 top-3 z-10 rounded border border-[#263241] bg-[#0d141c]/95 px-2 py-1.5 font-mono shadow-lg">
+            <p className="text-[10px] font-semibold text-[#dbe5ee]">{formatPointDateTime(hoverTs)}</p>
+            <div className="mt-1 space-y-0.5">
+              {series.map((item) => (
+                <div key={item.label} className="flex items-center gap-2 text-[10px]">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: item.color }} />
+                  <span className="text-[#8190a0]">{item.label}</span>
+                  <span className="ml-auto text-[#eef3f8]">{formatNumber(item.values[hover], 2)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="absolute right-3 top-3 rounded border border-[#263241] bg-[#0d141c]/90 px-2 py-1 font-mono text-[11px] text-[#a8b5c2]">
+            {formatNumber(max, 2)} / {formatNumber(min, 2)}
+          </div>
+        )}
       </div>
     </section>
   );

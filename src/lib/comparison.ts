@@ -281,31 +281,59 @@ export function buildComparisonTable(selected: ComparisonSeries[]): ComparisonTa
  */
 const TL_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** Axis labels straight off each point's real timestamp (e.g. "6 Jun 2pm"), not "H-29". */
-export function extractTimeLabels(points: ComparisonPoint[], totalPoints = 30): string[] {
-  const labels: string[] = [];
-  const interval = Math.max(1, Math.floor(totalPoints / 6));
+function hourLabel(d: Date): string {
+  const h = d.getHours();
+  return `${h % 12 || 12}${h >= 12 ? 'pm' : 'am'}`;
+}
 
-  for (let i = 0; i < totalPoints; i++) {
-    const show = i % interval === 0 || i === totalPoints - 1;
-    if (!show) {
-      labels.push('');
-      continue;
-    }
-    if (i === totalPoints - 1) {
-      labels.push('Now');
+function dayLabel(d: Date): string {
+  return `${d.getDate()} ${TL_MONTHS[d.getMonth()]}`;
+}
+
+/** Full date + time for the hover scrubber, e.g. "7 Jun, 3pm". */
+export function formatPointDateTime(ts: string): string {
+  const d = new Date(ts);
+  return `${dayLabel(d)}, ${hourLabel(d)}`;
+}
+
+/**
+ * Adaptive x-axis labels that never overlap. Intraday windows (<= ~2 days) show
+ * the time only ("5am", "3pm"); longer windows show the day only ("7 Jun"),
+ * de-duplicated so the same day is never printed twice in a row. The last tick is
+ * always "Now". Keeps roughly six visible ticks; the rest are blank spacers.
+ */
+export function extractTimeLabels(points: ComparisonPoint[], totalPoints = 30): string[] {
+  const n = totalPoints;
+  const labels: string[] = new Array(n).fill('');
+  if (n === 0) return labels;
+
+  const firstTs = points[0]?.timestamp;
+  const lastTs = points[n - 1]?.timestamp;
+  const spanMs = firstTs && lastTs ? new Date(lastTs).getTime() - new Date(firstTs).getTime() : 0;
+  const multiDay = spanMs > 48 * 60 * 60 * 1000;
+
+  const interval = Math.max(1, Math.floor(n / 6));
+  let lastDay = '';
+  for (let i = 0; i < n; i++) {
+    const show = i % interval === 0 || i === n - 1;
+    if (!show) continue;
+    if (i === n - 1) {
+      labels[i] = 'Now';
       continue;
     }
     const ts = points[i]?.timestamp;
-    if (!ts) {
-      labels.push('');
-      continue;
-    }
+    if (!ts) continue;
     const d = new Date(ts);
-    const h = d.getHours();
-    const ampm = h >= 12 ? 'pm' : 'am';
-    const h12 = h % 12 || 12;
-    labels.push(`${d.getDate()} ${TL_MONTHS[d.getMonth()]} ${h12}${ampm}`);
+    if (multiDay) {
+      const day = dayLabel(d);
+      if (day !== lastDay) {
+        labels[i] = day;
+        lastDay = day;
+      }
+      // repeated day -> leave blank so "7 Jun" is not printed on every tick
+    } else {
+      labels[i] = hourLabel(d);
+    }
   }
 
   return labels;
