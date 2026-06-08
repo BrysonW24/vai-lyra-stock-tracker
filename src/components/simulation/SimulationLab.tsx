@@ -78,7 +78,7 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
   return (
     <div className="space-y-3 pb-20 md:pb-0">
       {/* Header */}
-      <section className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      <section className="grid grid-cols-2 gap-1.5 md:grid-cols-4">
         {[
           ['Available capital', formatCurrency(availableCash), 'text-[#eef3f8]'],
           ['Trade amount', formatCurrency(tradeAmount), 'text-[#f3a33a]'],
@@ -86,7 +86,7 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
           ['Portfolio size', portfolio.length.toString(), 'text-[#60a5fa]'],
         ].map(([label, value, tone]) => (
           <div className="terminal-panel rounded-md p-2" key={label}>
-            <p className="truncate text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
+            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
             <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
           </div>
         ))}
@@ -240,15 +240,15 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
           {/* Position Sizing */}
           <div className="terminal-panel rounded-md p-3">
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Position sizing</h2>
-            <div className="mt-3 grid gap-2 md:grid-cols-3">
+            <div className="mt-3 grid grid-cols-3 gap-1.5 md:grid-cols-3">
               {[
                 ['Shares', formatNumber(analysis.sizing.shares, 2), 'text-[#dbe5ee]'],
                 ['Stop price', formatCurrency(analysis.sizing.stopPrice), 'text-[#ff6b6b]'],
                 ['Target price', formatCurrency(analysis.sizing.targetPrice), 'text-[#43d18b]'],
               ].map(([label, value, tone]) => (
                 <div key={label}>
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{label}</p>
-                  <p className={`numeric mt-1 font-mono text-sm font-semibold ${tone}`}>{value}</p>
+                  <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
+                  <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
                 </div>
               ))}
             </div>
@@ -257,7 +257,7 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
           {/* Risk & Reward */}
           <div className="terminal-panel rounded-md p-3">
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Risk & reward</h2>
-            <div className="mt-3 grid gap-2 md:grid-cols-4">
+            <div className="mt-3 grid grid-cols-2 gap-1.5 md:grid-cols-4">
               {[
                 ['Risk ($)', formatCurrency(analysis.riskReward.riskDollar), toneClass(-1)],
                 ['Reward ($)', formatCurrency(analysis.riskReward.rewardDollar), toneClass(1)],
@@ -265,8 +265,8 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
                 ['Risk % capital', formatPercent(analysis.riskReward.riskPercent), toneClass(-1)],
               ].map(([label, value, tone]) => (
                 <div key={label}>
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{label}</p>
-                  <p className={`numeric mt-1 font-mono text-sm font-semibold ${tone}`}>{value}</p>
+                  <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
+                  <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
                 </div>
               ))}
             </div>
@@ -275,14 +275,14 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
           {/* Position Weight & Exposure */}
           <div className="terminal-panel rounded-md p-3">
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Exposure impact</h2>
-            <div className="mt-3 grid gap-2 md:grid-cols-2">
+            <div className="mt-3 grid grid-cols-2 gap-1.5 md:grid-cols-2">
               {[
                 ['Position weight', formatPercent(analysis.riskReward.positionWeightPercent, 1), 'text-[#dbe5ee]'],
                 ['Total portfolio exposure', formatPercent(analysis.exposure.totalExposureAfterTrade, 1), 'text-[#60a5fa]'],
               ].map(([label, value, tone]) => (
                 <div key={label}>
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{label}</p>
-                  <p className={`numeric mt-1 font-mono text-sm font-semibold ${tone}`}>{value}</p>
+                  <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
+                  <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
                 </div>
               ))}
             </div>
@@ -338,7 +338,7 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
           {/* Win Rate & Expected Value */}
           <div className="terminal-panel rounded-md p-3">
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Win rate analysis</h2>
-            <div className="mt-3 grid gap-2 md:grid-cols-4">
+            <div className="mt-3 grid grid-cols-2 gap-1.5 md:grid-cols-4">
               {[
                 ['Avg win ($)', formatCurrency(winRateAnalysis.avgWinDollar), toneClass(1)],
                 ['Avg loss ($)', formatCurrency(winRateAnalysis.avgLossDollar), toneClass(-1)],
@@ -346,8 +346,8 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
                 ['EV per trade ($)', formatCurrency(winRateAnalysis.expectedValuePerTrade), toneClass(winRateAnalysis.expectedValuePerTrade)],
               ].map(([label, value, tone]) => (
                 <div key={label}>
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{label}</p>
-                  <p className={`numeric mt-1 font-mono text-sm font-semibold ${tone}`}>{value}</p>
+                  <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
+                  <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
                 </div>
               ))}
             </div>

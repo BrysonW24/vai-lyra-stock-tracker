@@ -97,18 +97,18 @@ export function PortfolioView({ data }: { data: DashboardData }) {
   return (
     <div className="space-y-3 pb-28 xl:pb-6">
       <div className="space-y-2">
-        <section className="grid grid-cols-2 gap-2">
+        <section className="grid grid-cols-2 gap-1.5">
           {topStats.map(([label, value, tone]) => (
             <div className="terminal-panel rounded-md p-2" key={label}>
-              <p className="truncate text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
               <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
             </div>
           ))}
         </section>
-        <section className="grid grid-cols-3 gap-2">
+        <section className="grid grid-cols-3 gap-1.5">
           {gridStats.map(([label, value, tone]) => (
             <div className="terminal-panel rounded-md p-2" key={label}>
-              <p className="truncate text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
               <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
             </div>
           ))}

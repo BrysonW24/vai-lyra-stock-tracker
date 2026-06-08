@@ -60,9 +60,9 @@ export function CalendarEventDrawer({
     >
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md bg-[#1b2530]">
         {facts.map(([k, v]) => (
-          <div className="bg-[#0d1117] p-2.5" key={k}>
-            <p className="text-[10px] uppercase tracking-[0.12em] text-[#8190a0]">{k}</p>
-            <p className="mt-0.5 font-mono text-sm text-[#eef3f8]">{v}</p>
+          <div className="bg-[#0d1117] p-2" key={k}>
+            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{k}</p>
+            <p className="mt-0.5 truncate font-mono text-sm text-[#eef3f8] md:text-base">{v}</p>
           </div>
         ))}
       </div>

@@ -16,14 +16,14 @@ export default async function CommoditiesPage() {
             The raw materials behind markets - where they actually come from (real) and the AI-buildout angle. Live
             prices + commodity newsflow wire in next.
           </p>
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
             <div className="rounded-md border border-[#263241] bg-[#0d141c] p-2">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Tracked</p>
-              <p className="numeric mt-0.5 font-mono text-base font-semibold text-[#eef3f8]">{COMMODITIES.length}</p>
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">Tracked</p>
+              <p className="numeric mt-0.5 truncate font-mono text-sm font-semibold text-[#eef3f8] md:text-base">{COMMODITIES.length}</p>
             </div>
             <div className="rounded-md border border-[#1d4f3a] bg-[#0d251b] p-2">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-[#43d18b]">AI-buildout linked</p>
-              <p className="numeric mt-0.5 font-mono text-base font-semibold text-[#43d18b]">{aiCount}</p>
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#43d18b]">AI-buildout linked</p>
+              <p className="numeric mt-0.5 truncate font-mono text-sm font-semibold text-[#43d18b] md:text-base">{aiCount}</p>
             </div>
           </div>
         </section>

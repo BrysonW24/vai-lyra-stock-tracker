@@ -19,15 +19,15 @@ export default async function SmartMoneyPage() {
             Follow government, big-tech and big-AI money into small caps - a news-driven edge that sits outside the price
             engine. Tap any name for the backing detail. {live ? 'Live from Finnhub news + AI extraction.' : 'Sample shape; live Finnhub + AI newsflow wires in when keys are set.'}
           </p>
-          <div className="mt-2 grid grid-cols-3 gap-2">
+          <div className="mt-2 grid grid-cols-3 gap-1.5">
             {([
               ['Government', gov, 'text-[#8aa2ff]'],
               ['Big tech', bigTech, 'text-[#c08aff]'],
               ['Big AI', bigAi, 'text-[#43d18b]'],
             ] as const).map(([label, count, tone]) => (
               <div className="rounded-md border border-[#263241] bg-[#0d141c] p-2" key={label}>
-                <p className="truncate text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{label}</p>
-                <p className={`numeric mt-0.5 font-mono text-base font-semibold ${tone}`}>{count}</p>
+                <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
+                <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{count}</p>
               </div>
             ))}
           </div>

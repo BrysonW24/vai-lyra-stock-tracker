@@ -159,7 +159,7 @@ export function StrategyLab({ signals }: StrategyLabProps) {
           </section>
 
           {/* Backtest stats */}
-          <section className="grid gap-2 md:grid-cols-3">
+          <section className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
             {([
               ['Win Rate', `${selectedStrategy.backtestStats.winRate}%`, 'text-[#43d18b]', 'Share of backtested trades that ended in profit.'],
               ['Avg Return', `${formatNumber(selectedStrategy.backtestStats.avgReturn, 1)}%`, toneClass(selectedStrategy.backtestStats.avgReturn), 'Average % move per trade across the backtest.'],
@@ -168,9 +168,9 @@ export function StrategyLab({ signals }: StrategyLabProps) {
               ['Best Sector', selectedStrategy.backtestStats.bestSector, 'text-[#60a5fa]', 'Where this strategy worked best historically.'],
               ['Sample Size', selectedStrategy.backtestStats.sampleSize.toString(), 'text-[#a8b5c2]', 'How many trades the stats are based on.'],
             ] as const).map(([label, value, tone, help]) => (
-              <div className="terminal-panel rounded-md p-2.5" key={label}>
+              <div className="terminal-panel rounded-md p-2" key={label}>
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
+                  <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
                   <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-[#5e6b78]">demo</span>
                 </div>
                 <p className={`numeric mt-0.5 font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>

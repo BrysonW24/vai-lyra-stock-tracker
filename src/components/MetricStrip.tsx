@@ -61,9 +61,9 @@ export function MetricStrip({ data }: MetricStripProps) {
   ];
 
   return (
-    <section className="grid grid-cols-2 gap-2 xl:grid-cols-6">
+    <section className="grid grid-cols-3 gap-1.5 xl:grid-cols-6">
       {metrics.map((metric) => (
-        <div className="terminal-panel rounded-md p-2 md:p-2.5" key={metric.label}>
+        <div className="terminal-panel rounded-md p-2" key={metric.label}>
           <div className="flex items-center justify-between gap-2">
             <p className="truncate text-[9px] font-semibold uppercase tracking-[0.14em] text-[#8190a0] md:text-[10px] md:tracking-[0.15em]">{metric.label}</p>
             <metric.icon className={`${metric.tone} shrink-0`} size={13} />

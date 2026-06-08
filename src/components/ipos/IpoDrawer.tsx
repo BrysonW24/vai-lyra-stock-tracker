@@ -69,9 +69,9 @@ export function IpoDrawer({ ipo, onClose }: IpoDrawerProps) {
               ['Offer price', formatCurrency(ipo.offerPrice)],
               [ipo.currentPrice ? 'Current' : 'Est. ref', formatCurrency(ref)],
             ].map(([k, v]) => (
-              <div className="bg-[#0d1117] p-3" key={k}>
-                <p className="text-[10px] uppercase tracking-[0.12em] text-[#8190a0]">{k}</p>
-                <p className="mt-1 font-mono text-sm text-[#eef3f8]">{v}</p>
+              <div className="bg-[#0d1117] p-2" key={k}>
+                <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{k}</p>
+                <p className="mt-0.5 truncate font-mono text-sm text-[#eef3f8] md:text-base">{v}</p>
               </div>
             ))}
           </div>

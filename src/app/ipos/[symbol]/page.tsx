@@ -44,7 +44,7 @@ export default async function IpoDetailPage({ params }: { params: Promise<{ symb
           <p className="mt-3 max-w-3xl text-sm leading-6 text-[#a8b5c2]">{ipo.description}</p>
         </section>
 
-        <section className="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
+        <section className="grid grid-cols-3 gap-1.5 md:grid-cols-3 xl:grid-cols-6">
           {[
             ['Valuation', billions(ipo.valuationUsdM)],
             ['Raised', billions(ipo.proceedsUsdM)],
@@ -53,9 +53,9 @@ export default async function IpoDetailPage({ params }: { params: Promise<{ symb
             ['Shares offered', `${formatNumber(ipo.sharesOfferedM, 1)}M`],
             ['First-day close', ipo.firstDayClosePct !== undefined ? formatSignedPercent(ipo.firstDayClosePct) : '-'],
           ].map(([k, v]) => (
-            <div className="terminal-panel rounded-md p-3" key={k}>
-              <p className="text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{k}</p>
-              <p className="mt-2 truncate font-mono text-lg font-semibold text-[#eef3f8]">{v}</p>
+            <div className="terminal-panel rounded-md p-2" key={k}>
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{k}</p>
+              <p className="mt-0.5 truncate font-mono text-sm font-semibold text-[#eef3f8] md:text-base">{v}</p>
             </div>
           ))}
         </section>

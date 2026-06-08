@@ -67,22 +67,22 @@ export function TickerDetail({ signal, scoreHistory }: TickerDetailProps) {
             </div>
             <p className="mt-1 text-sm text-[#8190a0]">{signal.companyName}</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-right font-mono sm:grid-cols-4 lg:min-w-[520px]">
-            <div className="rounded border border-[#263241] bg-[#0d141c] px-3 py-2">
-              <p className="text-[10px] uppercase text-[#8190a0]">Price</p>
-              <p className="text-lg font-semibold">{formatCurrency(signal.close)}</p>
+          <div className="grid grid-cols-2 gap-1.5 text-right font-mono sm:grid-cols-4 lg:min-w-[520px]">
+            <div className="rounded border border-[#263241] bg-[#0d141c] p-2">
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">Price</p>
+              <p className="truncate text-sm font-semibold md:text-base">{formatCurrency(signal.close)}</p>
             </div>
-            <div className="rounded border border-[#263241] bg-[#0d141c] px-3 py-2">
-              <p className="text-[10px] uppercase text-[#8190a0]">1H / 1D</p>
-              <p className={`text-sm font-semibold ${toneClass(signal.priceChange1h)}`}>{formatSignedPercent(signal.priceChange1h)} / {formatSignedPercent(signal.priceChange1d)}</p>
+            <div className="rounded border border-[#263241] bg-[#0d141c] p-2">
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">1H / 1D</p>
+              <p className={`truncate text-sm font-semibold md:text-base ${toneClass(signal.priceChange1h)}`}>{formatSignedPercent(signal.priceChange1h)} / {formatSignedPercent(signal.priceChange1d)}</p>
             </div>
-            <div className="rounded border border-[#263241] bg-[#0d141c] px-3 py-2">
-              <p className="text-[10px] uppercase text-[#8190a0]">Score</p>
-              <p className="text-lg font-semibold">{signal.score}/100 <span className={toneClass(signal.scoreDelta)}>{formatSignedNumber(signal.scoreDelta, 0)}</span></p>
+            <div className="rounded border border-[#263241] bg-[#0d141c] p-2">
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">Score</p>
+              <p className="truncate text-sm font-semibold md:text-base">{signal.score}/100 <span className={toneClass(signal.scoreDelta)}>{formatSignedNumber(signal.scoreDelta, 0)}</span></p>
             </div>
-            <div className="rounded border border-[#263241] bg-[#0d141c] px-3 py-2">
-              <p className="text-[10px] uppercase text-[#8190a0]">Last scan</p>
-              <p className="text-sm font-semibold">{relativeTime(signal.lastUpdated)}</p>
+            <div className="rounded border border-[#263241] bg-[#0d141c] p-2">
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">Last scan</p>
+              <p className="truncate text-sm font-semibold md:text-base">{relativeTime(signal.lastUpdated)}</p>
             </div>
           </div>
         </div>

@@ -152,9 +152,9 @@ export default async function OverviewPage() {
               Portfolio <ArrowUpRight size={12} />
             </Link>
           </div>
-          <div className="grid gap-px bg-[#1b2530] md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-px bg-[#1b2530] md:grid-cols-2 xl:grid-cols-4">
             {portfolioRows.map((holding) => (
-              <div className="bg-[#0d1117] p-2.5" key={holding.symbol}>
+              <div className="bg-[#0d1117] p-2" key={holding.symbol}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-mono text-sm font-semibold text-[#eef3f8]">{holding.symbol}</p>

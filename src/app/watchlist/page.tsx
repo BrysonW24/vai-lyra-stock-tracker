@@ -16,7 +16,7 @@ export default async function WatchlistPage() {
   return (
     <AppShell data={data}>
       <div className="space-y-3 pb-28 xl:pb-6">
-        <section className="grid grid-cols-3 gap-2 md:grid-cols-4 xl:grid-cols-6">
+        <section className="grid grid-cols-3 gap-1.5 md:grid-cols-4 xl:grid-cols-6">
           {[
             ['Watching', data.watchlist.length.toString(), 'text-[#eef3f8]'],
             ['Approaching', approaching.toString(), 'text-[#f3a33a]'],
@@ -26,7 +26,7 @@ export default async function WatchlistPage() {
             ['Alerts', 'Off', 'text-[#8190a0]'],
           ].map(([label, value, tone]) => (
             <div className="terminal-panel rounded-md p-2" key={label}>
-              <p className="truncate text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
               <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
             </div>
           ))}
