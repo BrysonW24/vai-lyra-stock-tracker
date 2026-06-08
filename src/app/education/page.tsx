@@ -1,20 +1,15 @@
 import { AppShell } from '@/components/AppShell';
 import { EducationHub } from '@/components/education/EducationHub';
-import { EducationCarousel } from '@/components/education/EducationCarousel';
+import { LearningPath } from '@/components/education/LearningPath';
 import { getDashboardData } from '@/lib/data';
 
-export default async function EducationPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ track?: string }>;
-}) {
+export default async function EducationPage() {
   const data = await getDashboardData();
-  const { track } = await searchParams;
 
   return (
     <AppShell data={data}>
-      <div className="space-y-4 pb-28 xl:pb-6">
-        {track === 'beginner' && <EducationCarousel />}
+      <div className="space-y-3 pb-28 xl:pb-6">
+        <LearningPath />
         <EducationHub signals={data.signals} />
       </div>
     </AppShell>

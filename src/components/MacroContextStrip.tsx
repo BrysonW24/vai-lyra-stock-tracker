@@ -22,10 +22,10 @@ const DIR_GLYPH: Record<DeltaDirection, string> = { up: '▲', down: '▼', flat
  */
 export function MacroContextStrip({ data }: { data: MacroSnapshot }) {
   return (
-    <div className="terminal-panel glass-hero overflow-hidden rounded-md p-3">
+    <div className="terminal-panel glass-hero overflow-hidden rounded-md p-2.5">
       <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0">
         {/* Country + policy stance badge */}
-        <div className={`shrink-0 rounded border px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] ${STANCE_COLOR[data.stance]}`}>
+        <div className={`shrink-0 rounded border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] ${STANCE_COLOR[data.stance]}`}>
           {data.countryCode} · {data.stanceLabel}
         </div>
 

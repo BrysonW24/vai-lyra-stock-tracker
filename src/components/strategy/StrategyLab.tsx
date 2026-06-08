@@ -160,18 +160,21 @@ export function StrategyLab({ signals }: StrategyLabProps) {
 
           {/* Backtest stats */}
           <section className="grid gap-2 md:grid-cols-3">
-            {[
-              ['Win Rate', `${selectedStrategy.backtestStats.winRate}%`, 'text-[#43d18b]'],
-              ['Avg Return', `${formatNumber(selectedStrategy.backtestStats.avgReturn, 1)}%`, toneClass(selectedStrategy.backtestStats.avgReturn)],
-              ['Median Return', `${formatNumber(selectedStrategy.backtestStats.medianReturn, 1)}%`, toneClass(selectedStrategy.backtestStats.medianReturn)],
-              ['Max Drawdown', `${selectedStrategy.backtestStats.maxDrawdown}%`, 'text-[#ff6b6b]'],
-              ['Best Sector', selectedStrategy.backtestStats.bestSector, 'text-[#60a5fa]'],
-              ['Sample Size', selectedStrategy.backtestStats.sampleSize.toString(), 'text-[#a8b5c2]'],
-            ].map(([label, value, tone]) => (
-              <div className="terminal-panel rounded-md p-3" key={label}>
-                <p className="text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
-                <p className={`numeric mt-2 font-mono text-lg font-semibold ${tone}`}>{value}</p>
-                <p className="mt-1 text-[10px] text-[#8190a0]">demo</p>
+            {([
+              ['Win Rate', `${selectedStrategy.backtestStats.winRate}%`, 'text-[#43d18b]', 'Share of backtested trades that ended in profit.'],
+              ['Avg Return', `${formatNumber(selectedStrategy.backtestStats.avgReturn, 1)}%`, toneClass(selectedStrategy.backtestStats.avgReturn), 'Average % move per trade across the backtest.'],
+              ['Median Return', `${formatNumber(selectedStrategy.backtestStats.medianReturn, 1)}%`, toneClass(selectedStrategy.backtestStats.medianReturn), 'The middle trade outcome - less skewed by outliers.'],
+              ['Max Drawdown', `${selectedStrategy.backtestStats.maxDrawdown}%`, 'text-[#ff6b6b]', 'Worst peak-to-trough drop along the way.'],
+              ['Best Sector', selectedStrategy.backtestStats.bestSector, 'text-[#60a5fa]', 'Where this strategy worked best historically.'],
+              ['Sample Size', selectedStrategy.backtestStats.sampleSize.toString(), 'text-[#a8b5c2]', 'How many trades the stats are based on.'],
+            ] as const).map(([label, value, tone, help]) => (
+              <div className="terminal-panel rounded-md p-2.5" key={label}>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
+                  <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-[#5e6b78]">demo</span>
+                </div>
+                <p className={`numeric mt-0.5 font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
+                <p className="mt-1 text-[10px] leading-snug text-[#8190a0]">{help}</p>
               </div>
             ))}
           </section>

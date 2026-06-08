@@ -7,8 +7,8 @@ import { useMemo, useState } from 'react';
 import type { SignalRow } from '@/types/scanner';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, formatSignedPercent, toneClass, trendArrow } from '@/lib/format';
 import { StatusBadge } from '@/components/StatusBadge';
-import { MiniSparkline } from '@/components/ChartPrimitives';
 import { TickerLogo } from '@/components/TickerLogo';
+import { SignalDrawer } from '@/components/SignalDrawer';
 
 type FilterMode =
   | 'all'
@@ -57,6 +57,7 @@ export function SignalTable({
   const [filter, setFilter] = useState<FilterMode>(compact ? 'all' : 'all');
   const [sort, setSort] = useState<SortMode>('score');
   const [dense, setDense] = useState(true);
+  const [selected, setSelected] = useState<SignalRow | null>(null);
 
   const portfolioSet = useMemo(() => new Set(portfolioSymbols), [portfolioSymbols]);
   const watchlistSet = useMemo(() => new Set(watchlistSymbols), [watchlistSymbols]);
@@ -108,18 +109,18 @@ export function SignalTable({
         </div>
         {!compact && (
           <div className="flex flex-wrap items-center gap-2">
-            <label className="flex h-9 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-xs text-[#8190a0]">
+            <label className="flex h-8 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-[11px] text-[#8190a0]">
               <Search size={14} />
               <input
-                className="w-32 bg-transparent font-mono text-[#dbe5ee] outline-none placeholder:text-[#5d6b79]"
+                className="w-32 bg-transparent font-mono text-xs text-[#dbe5ee] outline-none placeholder:text-[#5d6b79]"
                 placeholder="Ticker"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
             </label>
-            <label className="flex h-9 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-xs text-[#8190a0]">
+            <label className="flex h-8 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-[11px] text-[#8190a0]">
               <ListFilter size={14} />
-              <select className="bg-transparent font-mono text-[#dbe5ee] outline-none" value={sort} onChange={(event) => setSort(event.target.value as SortMode)}>
+              <select className="bg-transparent font-mono text-xs text-[#dbe5ee] outline-none" value={sort} onChange={(event) => setSort(event.target.value as SortMode)}>
                 <option value="score">Score</option>
                 <option value="delta">Score Delta</option>
                 <option value="ticker">Ticker</option>
@@ -130,7 +131,7 @@ export function SignalTable({
             </label>
             <button
               type="button"
-              className="flex h-9 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-xs text-[#a8b5c2] transition hover:text-[#eef3f8]"
+              className="flex h-8 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-[11px] text-[#a8b5c2] transition hover:text-[#eef3f8]"
               onClick={() => setDense((value) => !value)}
             >
               <Rows3 size={14} />
@@ -146,7 +147,7 @@ export function SignalTable({
             <button
               type="button"
               className={[
-                'shrink-0 rounded border px-2.5 py-1 font-mono text-[11px] transition',
+                'shrink-0 rounded border px-2 py-0.5 font-mono text-[10px] transition',
                 filter === item.value
                   ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
                   : 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:text-[#dbe5ee]',
@@ -227,30 +228,34 @@ export function SignalTable({
 
       <div className="divide-y divide-[#1b2530] md:hidden">
         {rows.map((signal) => (
-          <Link href={`/tickers/${signal.symbol}`} className="block px-3 py-3" key={signal.symbol}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <TickerLogo symbol={signal.symbol} companyName={signal.companyName} size={20} />
-                  <span className="font-mono text-base font-semibold text-[#eef3f8]">{signal.symbol}</span>
+          <button
+            type="button"
+            onClick={() => setSelected(signal)}
+            className="block w-full px-3 py-2 text-left transition hover:bg-[#101720]"
+            key={signal.symbol}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <TickerLogo symbol={signal.symbol} companyName={signal.companyName} size={16} />
+                  <span className="font-mono text-sm font-semibold text-[#eef3f8]">{signal.symbol}</span>
                   <StatusBadge status={signal.status} />
+                  <span className="ml-auto truncate text-[10px] text-[#f3a33a]">{signal.actionState.replaceAll('_', ' ')}</span>
                 </div>
-                <p className="mt-1 font-mono text-xs text-[#a8b5c2]">
+                <p className="mt-0.5 truncate font-mono text-[10px] text-[#a8b5c2]">
                   {formatCurrency(signal.close)} | RSI {formatNumber(signal.rsi)}{trendArrow(signal.rsiDelta)} | Hist {formatNumber(signal.macdHistogram, 2)}{trendArrow(signal.histDelta)} | Vol {formatNumber(signal.volumeRatio, 2)}x
                 </p>
               </div>
-              <div className="text-right font-mono">
-                <p className="text-xl font-semibold text-[#eef3f8]">{signal.score}</p>
-                <p className={`text-xs ${toneClass(signal.scoreDelta)}`}>{formatSignedNumber(signal.scoreDelta, 0)}</p>
+              <div className="shrink-0 text-right font-mono">
+                <p className="text-base font-semibold leading-none text-[#eef3f8]">{signal.score}</p>
+                <p className={`text-[11px] ${toneClass(signal.scoreDelta)}`}>{formatSignedNumber(signal.scoreDelta, 0)}</p>
               </div>
             </div>
-            <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="text-xs text-[#f3a33a]">{signal.actionState.replaceAll('_', ' ')}</span>
-              <MiniSparkline values={[signal.previousRsi, signal.rsi]} color={signal.scoreDelta >= 0 ? '#43d18b' : '#ff6b6b'} />
-            </div>
-          </Link>
+          </button>
         ))}
       </div>
+
+      <SignalDrawer signal={selected} onClose={() => setSelected(null)} />
     </section>
   );
 }

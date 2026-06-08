@@ -14,6 +14,18 @@ html {
   background: #07090c;
   letter-spacing: 0;
   scroll-behavior: smooth;
+  /* Global density baseline: shrink the rem base a touch so every rem-based size
+     (text + spacing) is a couple pixels tighter across the whole app. Inputs are
+     pinned to 16px in the coarse-pointer rule below so iOS never auto-zooms. */
+  font-size: 15px;
+}
+
+/* Compact placeholders everywhere (match the small search field). Placeholder size does
+   NOT trigger iOS focus-zoom - that keys off the input's own font-size, pinned to 16px
+   below - so these stay small on mobile too. */
+::placeholder {
+  font-size: 0.75rem;
+  opacity: 1;
 }
 
 /*
@@ -25,8 +37,9 @@ html {
  * !important is the escape hatch needed to win over Tailwind's text-size utilities.
  */
 @media (pointer: coarse) {
+  /* Only text-entry fields summon the keyboard + trigger the disruptive zoom; selects
+     open a native picker, so they're free to be small. */
   input:not([type='checkbox']):not([type='radio']):not([type='range']),
-  select,
   textarea {
     font-size: 16px !important;
   }

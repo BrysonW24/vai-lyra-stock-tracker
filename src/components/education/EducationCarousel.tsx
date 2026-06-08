@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
-import { BeginnerWelcome } from './BeginnerWelcome';
 
 interface Lesson {
   title: string;
@@ -12,7 +12,8 @@ interface Lesson {
   tag?: string;
 }
 
-// Slide 1 is the BeginnerWelcome overview; these are slides 2-10.
+// The plain-English share/price/RSI/MACD/risk intro now lives in the LearningPath
+// beginner accordions, so this walkthrough starts straight at the deeper lessons.
 const LESSONS: Lesson[] = [
   {
     title: 'What a company is - and why it sells shares',
@@ -107,16 +108,16 @@ const LESSONS: Lesson[] = [
   },
 ];
 
-const TOTAL = LESSONS.length + 1;
+const TOTAL = LESSONS.length;
 
 function LessonSlide({ lesson, index }: { lesson: Lesson; index: number }) {
   return (
-    <div className="terminal-panel glass-hero rounded-lg p-5 md:p-6">
+    <div className="terminal-panel glass-hero rounded-lg p-4">
       <div className="flex items-center gap-2">
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#3b5bdb] bg-[#0d1530] font-mono text-xs font-semibold text-[#8aa2ff]">
           {index + 1}
         </span>
-        <h2 className="text-lg font-semibold text-[#eef3f8] md:text-xl">{lesson.title}</h2>
+        <h2 className="text-base font-semibold text-[#eef3f8] md:text-lg">{lesson.title}</h2>
         {lesson.tag && (
           <span className="ml-auto rounded-full border border-[#7f1d1d] bg-[#2b1214] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#ff6b6b]">
             {lesson.tag}
@@ -157,7 +158,7 @@ export function EducationCarousel() {
       {/* Viewport - one slide at a time with a soft entrance animation */}
       <div className="overflow-hidden">
         <div key={i} className="animate-[tableRowSlide_420ms_ease-out]">
-          {i === 0 ? <BeginnerWelcome /> : <LessonSlide lesson={LESSONS[i - 1]} index={i} />}
+          <LessonSlide lesson={LESSONS[i]} index={i} />
         </div>
       </div>
 
@@ -200,6 +201,13 @@ export function EducationCarousel() {
           </button>
         )}
       </div>
+
+      <p className="text-center text-[10px] leading-4 text-[#8190a0]">
+        General education, not financial advice.{' '}
+        <Link href="/onboarding" className="font-semibold text-[#f3a33a] hover:underline">
+          Set up my console →
+        </Link>
+      </p>
     </section>
   );
 }

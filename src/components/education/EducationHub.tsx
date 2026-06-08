@@ -108,22 +108,22 @@ export function EducationHub({ signals }: EducationHubProps) {
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">
             Filter by category
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="grid grid-cols-4 gap-1">
             <button
               onClick={() => setCategoryFilter(null)}
-              className={`rounded px-2 py-1 text-left font-mono text-xs transition ${
+              className={`rounded px-1.5 py-1 text-center font-mono text-[11px] leading-tight transition ${
                 categoryFilter === null
                   ? 'border border-[#f3a33a] bg-[#2a1f0f] text-[#f3a33a]'
                   : 'border border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:text-[#dbe5ee]'
               }`}
             >
-              All Topics
+              All
             </button>
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
-                className={`rounded px-2 py-1 text-left font-mono text-xs transition ${
+                className={`rounded px-1.5 py-1 text-center font-mono text-[11px] leading-tight transition ${
                   categoryFilter === cat
                     ? 'border border-[#f3a33a] bg-[#2a1f0f] text-[#f3a33a]'
                     : 'border border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:text-[#dbe5ee]'
@@ -171,16 +171,16 @@ export function EducationHub({ signals }: EducationHubProps) {
       {/* Right Panel: Module Detail */}
       {selectedModule && (
         <div className="terminal-panel overflow-hidden rounded-md">
-          <div className="border-b border-[#1b2530] px-4 py-4 md:px-5 md:py-5">
+          <div className="border-b border-[#1b2530] px-3 py-3 md:px-4 md:py-3.5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
               {selectedModule.category}
             </p>
-            <h2 className="mt-2 font-mono text-lg font-semibold text-[#eef3f8] md:text-xl">
+            <h2 className="mt-1.5 font-mono text-base font-semibold text-[#eef3f8] md:text-lg">
               {selectedModule.title}
             </h2>
           </div>
 
-          <div className="space-y-4 overflow-y-auto px-4 py-4 md:px-5 md:py-5" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+          <div className="space-y-3 overflow-y-auto px-3 py-3 md:px-4 md:py-3.5" style={{ maxHeight: 'calc(100vh - 200px)' }}>
             {/* Definition */}
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">

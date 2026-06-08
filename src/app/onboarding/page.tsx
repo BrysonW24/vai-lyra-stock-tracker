@@ -13,6 +13,8 @@ import {
   calculateSetupCompleteness,
 } from '@/lib/onboarding';
 import { syncOperatorProfile } from '@/lib/sync-onboarding';
+import { saveLocalHoldings } from '@/lib/local-portfolio';
+import { saveOnboardingSummary } from '@/lib/onboarding-summary';
 import { isSupabaseConfigured, createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { OnboardingShell } from '@/components/onboarding/OnboardingShell';
 import { WelcomeHero } from '@/components/onboarding/WelcomeHero';
@@ -160,6 +162,27 @@ export default function OnboardingPage() {
         console.error(`Failed to add ${holding.symbol} to portfolio:`, error);
       }
     }
+
+    // Demo mode has no DB, so /api/portfolio above no-ops. Persist the entered holdings
+    // locally so the command centre surfaces the user's real book, not the demo one.
+    saveLocalHoldings(
+      state.portfolio.map((holding) => ({
+        symbol: holding.symbol,
+        quantity: holding.quantity || 1,
+        averageBuyPrice: holding.averageBuyPrice || 0,
+        purchaseDate: holding.purchaseDate,
+        notes: holding.notes,
+      })),
+    );
+
+    // Snapshot the choices so the command centre personalises (no perpetual "New here?").
+    saveOnboardingSummary({
+      onboarded: true,
+      tradedBefore: state.profile?.tradedBefore === 'no' ? 'no' : 'yes',
+      portfolioCount: state.portfolio.length,
+      watchlistCount: state.watchlist.length,
+      experienceLevel: state.profile?.experienceLevel,
+    });
 
     // Navigation to the command centre is handled by SetupCompleteBeat (shown above).
   };

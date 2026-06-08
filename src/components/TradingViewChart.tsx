@@ -62,6 +62,10 @@ export function TradingViewChart({
       // chart fits a narrow viewport instead of overflowing.
       withdateranges: compact ? 'false' : 'true',
       hide_side_toolbar: compact ? 'true' : 'false',
+      // Compact also drops the heavy top toolbar (drawing tools / Fib / brush nobody uses
+      // here) so the chart breathes - our own interval pills cover navigation.
+      hide_top_toolbar: compact ? 'true' : 'false',
+      hide_legend: compact ? 'true' : 'false',
       allow_symbol_change: 'false',
       save_image: 'false',
       show_popup_button: 'true',

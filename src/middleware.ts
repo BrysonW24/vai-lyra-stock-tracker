@@ -17,17 +17,18 @@ export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
-    // Demo mode - no auth, but onboarding is still mandatory on every route. A
-    // visitor who lands on any app route (e.g. straight after a demo "sign in")
-    // is funnelled into onboarding until it is finished. Completion is persisted
-    // in a cookie the onboarding flow sets (demo has no Supabase metadata).
+    // Demo mode - no auth. A first-time visitor lands on the public marketing
+    // page (/welcome) rather than being dropped straight into onboarding; its
+    // "Set up my console" CTA carries them into /onboarding. Onboarding is still
+    // mandatory before the app proper unlocks - completion is persisted in a
+    // cookie the onboarding flow sets (demo has no Supabase metadata).
     const { pathname } = request.nextUrl;
     const isPublic =
       PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
       pathname.startsWith('/api');
     const onboarded = request.cookies.get('lyra_onboarded')?.value === '1';
     if (!onboarded && !isPublic && !pathname.startsWith('/onboarding')) {
-      return NextResponse.redirect(new URL('/onboarding', request.url));
+      return NextResponse.redirect(new URL('/welcome', request.url));
     }
     return response;
   }

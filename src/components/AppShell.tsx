@@ -5,11 +5,13 @@ import { usePathname } from 'next/navigation';
 import { FeedbackWidget } from '@/components/FeedbackWidget';
 import {
   BarChart3,
+  Banknote,
   Bell,
   BriefcaseBusiness,
   CalendarDays,
   Calculator,
   Coins,
+  Gem,
   FlaskConical,
   Gauge,
   GitCompare,
@@ -18,13 +20,14 @@ import {
   Newspaper,
   Radar,
   Rocket,
+  Rss,
   Search,
   SlidersHorizontal,
   Sparkles,
   Star,
   Wand2,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import type { DashboardData } from '@/types/scanner';
 import { relativeTime } from '@/lib/format';
 import { BrandLogo } from '@/components/BrandLogo';
@@ -37,6 +40,7 @@ import { AccountMenu } from '@/components/AccountMenu';
 const navItems = [
   { href: '/', label: 'Command', short: 'Command', icon: Gauge },
   { href: '/radar', label: 'Signal Radar', short: 'Radar', icon: Radar },
+  { href: '/wire', label: 'Live Wire', short: 'Wire', icon: Rss },
   { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness },
   { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star },
   { href: '/comparison', label: 'Comparison Lab', short: 'Compare', icon: GitCompare },
@@ -45,6 +49,8 @@ const navItems = [
   { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays },
   { href: '/ipos', label: 'IPO Radar', short: 'IPOs', icon: Rocket },
   { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper },
+  { href: '/smart-money', label: 'Smart Money', short: 'Smart $', icon: Banknote },
+  { href: '/commodities', label: 'Commodities', short: 'Commod', icon: Gem },
   { href: '/fundamentals', label: 'Fundamentals', short: 'Fundies', icon: BarChart3 },
   { href: '/education', label: 'Education', short: 'Learn', icon: GraduationCap },
   { href: '/strategy-lab', label: 'Strategy Lab', short: 'Strategy', icon: FlaskConical },
@@ -61,6 +67,15 @@ interface AppShellProps {
 export function AppShell({ data, children }: AppShellProps) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+  const navScrollRef = useRef<HTMLDivElement>(null);
+
+  // Each page renders its own AppShell, so the mobile bottom-nav re-mounts on every
+  // navigation and its horizontal scroll resets to the start (Command first). Keep the
+  // active tab scrolled into view so the user never has to scroll back to find it.
+  useEffect(() => {
+    const active = navScrollRef.current?.querySelector<HTMLElement>('[aria-current="page"]');
+    active?.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, [pathname]);
 
   return (
     <div className="min-h-screen bg-[#080a0d] text-[#eef3f8]">
@@ -99,9 +114,9 @@ export function AppShell({ data, children }: AppShellProps) {
             <Link href="/" aria-label="Lyra home" className="flex shrink-0 items-center md:hidden">
               <BrandLogo size={24} />
             </Link>
-            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-[#263241] bg-[#0d141c] px-3 py-2">
-              <Search size={15} className="text-[#8190a0]" />
-              <span className="truncate text-sm text-[#8190a0]">Search: NVDA / AMD / CRM</span>
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md border border-[#263241] bg-[#0d141c] px-2.5 py-1.5">
+              <Search size={14} className="shrink-0 text-[#8190a0]" />
+              <span className="truncate text-xs text-[#8190a0]">Search: NVDA / AMD / CRM</span>
             </div>
             {/* Market status: pulsing dot + timeframe; market / last-scan detail on hover. */}
             <span
@@ -141,7 +156,7 @@ export function AppShell({ data, children }: AppShellProps) {
           </div>
         </header>
 
-        <main className="px-3 py-3 md:px-5 md:py-5">{children}</main>
+        <main className="px-3 py-2.5 md:px-5 md:py-4">{children}</main>
 
         <footer className="border-t border-[#1b2530] px-3 py-2 text-[10px] text-[#6f7d8a] md:px-5">
           Research only - not financial advice. Lyra never trades for you.
@@ -153,7 +168,7 @@ export function AppShell({ data, children }: AppShellProps) {
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Primary"
       >
-        <div className="no-scrollbar flex snap-x snap-proximity gap-1.5 overflow-x-auto px-3 py-2 scroll-px-3">
+        <div ref={navScrollRef} className="no-scrollbar flex snap-x snap-proximity gap-1.5 overflow-x-auto px-3 py-2 scroll-px-3">
           {navItems.map((item) => (
             <Link
               href={item.href}

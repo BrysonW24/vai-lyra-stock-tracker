@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import type { FundamentalsReport } from '@/lib/fundamentals';
+import { TickerLogo } from '@/components/TickerLogo';
 import {
   formatCurrency,
   formatNumber,
@@ -95,7 +96,14 @@ export function FundamentalsView({ reports }: FundamentalsViewProps) {
               Fundamentals
             </h1>
             <p className="mt-1 font-mono text-xs text-[#8190a0]">
-              Business quality metrics. Sort by any column. Select a ticker for detail.
+              Business quality metrics. Tap a ticker for detail.
+            </p>
+            <p className="mt-1.5 text-[10px] leading-relaxed text-[#8190a0]">
+              <span className="text-[#a8b5c2]">Gross margin</span> = profit kept after direct costs ·{' '}
+              <span className="text-[#a8b5c2]">Op margin</span> = profit after running the business ·{' '}
+              <span className="text-[#a8b5c2]">FCF</span> = cash left after spending to run + grow ·{' '}
+              <span className="text-[#a8b5c2]">P/E</span> = price vs earnings ·{' '}
+              <span className="text-[#a8b5c2]">Quality</span> = our 0-100 blend of margins, growth + cash strength.
             </p>
           </div>
 
@@ -305,7 +313,10 @@ export function FundamentalsView({ reports }: FundamentalsViewProps) {
                     }`}
                   >
                     <td className="px-3 py-2 font-semibold text-[#eef3f8]">
-                      {report.symbol}
+                      <span className="inline-flex items-center gap-1.5">
+                        <TickerLogo symbol={report.symbol} companyName={report.companyName} size={16} />
+                        {report.symbol}
+                      </span>
                     </td>
                     <td className="px-3 py-2 text-right">
                       ${formatNumber(report.marketCap, 0)}B
@@ -373,13 +384,12 @@ export function FundamentalsView({ reports }: FundamentalsViewProps) {
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-mono text-lg font-semibold">
-                      {report.symbol}
-                    </p>
-                    <p className="font-mono text-xs text-[#8190a0]">
-                      {report.companyName}
-                    </p>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <TickerLogo symbol={report.symbol} companyName={report.companyName} size={20} />
+                    <div className="min-w-0">
+                      <p className="font-mono text-base font-semibold">{report.symbol}</p>
+                      <p className="truncate font-mono text-[11px] text-[#8190a0]">{report.companyName}</p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="font-mono font-semibold">

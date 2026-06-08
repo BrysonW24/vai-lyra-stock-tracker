@@ -28,17 +28,17 @@ export function DailyBriefCard({ data, market }: DailyBriefCardProps) {
 
   return (
     <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#1b2530] px-4 py-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#f3a33a]">
-            <Sparkles size={16} />
+      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[#1b2530] px-3 py-2">
+        <div className="flex min-w-0 items-start gap-2">
+          <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#f3a33a]">
+            <Sparkles size={14} />
           </span>
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Daily brief</p>
-            <p className="mt-0.5 text-sm font-semibold leading-snug text-[#eef3f8]">{brief.headline}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Daily brief</p>
+            <p className="mt-0.5 text-[13px] font-semibold leading-snug text-[#eef3f8]">{brief.headline}</p>
           </div>
         </div>
-        <span className={`shrink-0 rounded border px-2 py-1 font-mono text-[11px] ${REGIME_CHIP[brief.regimeTone]}`}>
+        <span className={`shrink-0 rounded border px-1.5 py-0.5 font-mono text-[9px] ${REGIME_CHIP[brief.regimeTone]}`}>
           {brief.regimeLabel}
         </span>
       </div>
@@ -48,10 +48,10 @@ export function DailyBriefCard({ data, market }: DailyBriefCardProps) {
 
       <div className="divide-y divide-[#141c25]">
         {brief.lines.map((line) => (
-          <div className="flex items-start gap-3 px-4 py-2.5" key={`${line.label}-${line.text}`}>
-            <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${TONE_DOT[line.tone]}`} />
-            <p className="text-sm leading-relaxed text-[#c8d3de]">
-              <span className="font-mono text-[11px] uppercase tracking-wide text-[#8190a0]">{line.label}</span>
+          <div className="flex items-start gap-2 px-3 py-1.5" key={`${line.label}-${line.text}`}>
+            <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${TONE_DOT[line.tone]}`} />
+            <p className="text-xs leading-snug text-[#c8d3de]">
+              <span className="font-mono text-[10px] uppercase tracking-wide text-[#8190a0]">{line.label}</span>
               <span className="mx-1.5 text-[#3a4654]">·</span>
               {line.text}
             </p>
@@ -59,7 +59,7 @@ export function DailyBriefCard({ data, market }: DailyBriefCardProps) {
         ))}
       </div>
 
-      <p className="border-t border-[#1b2530] px-4 py-2 font-mono text-[10px] text-[#5e6b78]">
+      <p className="border-t border-[#1b2530] px-3 py-1.5 font-mono text-[10px] text-[#5e6b78]">
         Auto-generated from the latest scan. Enable AI in Account to have it written for you.
       </p>
     </section>

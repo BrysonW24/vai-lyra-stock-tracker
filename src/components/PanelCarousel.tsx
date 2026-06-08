@@ -7,7 +7,22 @@ export interface CarouselSlide {
   key: string;
   label: string;
   node: ReactNode;
+  /** Lyra-palette accent so each panel reads as its own thing (Chart/Setup/Intel). */
+  color?: 'blue' | 'amber' | 'green' | 'violet';
 }
+
+// Each tab carries its colour at all times (muted when idle, saturated when active) so
+// Chart / Setup / Intel are instantly distinguishable. Colours are Lyra gradient stops.
+const ACCENT: Record<string, { active: string; idle: string }> = {
+  blue: { active: 'border-[#3b5bdb] bg-[#0d1530] text-[#8aa2ff]', idle: 'border-[#1b2530] bg-[#0d141c] text-[#8aa2ff]/55 hover:text-[#8aa2ff]' },
+  amber: { active: 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]', idle: 'border-[#1b2530] bg-[#0d141c] text-[#f3a33a]/55 hover:text-[#f3a33a]' },
+  green: { active: 'border-[#43d18b] bg-[#0d251b] text-[#43d18b]', idle: 'border-[#1b2530] bg-[#0d141c] text-[#43d18b]/55 hover:text-[#43d18b]' },
+  violet: { active: 'border-[#7c5cff] bg-[#15101f] text-[#a78bfa]', idle: 'border-[#1b2530] bg-[#0d141c] text-[#a78bfa]/55 hover:text-[#a78bfa]' },
+};
+const DEFAULT_ACCENT = {
+  active: 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]',
+  idle: 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:border-[#3a4754] hover:text-[#dbe5ee]',
+};
 
 /**
  * Lightweight swipe carousel for a holdings-board panel. Slide 0 is the live
@@ -53,9 +68,7 @@ export function PanelCarousel({ slides }: { slides: CarouselSlide[] }) {
               aria-pressed={i === index}
               className={[
                 'rounded-md border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] transition',
-                i === index
-                  ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
-                  : 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:border-[#3a4754] hover:text-[#dbe5ee]',
+                (ACCENT[slide.color ?? ''] ?? DEFAULT_ACCENT)[i === index ? 'active' : 'idle'],
               ].join(' ')}
             >
               {slide.label}

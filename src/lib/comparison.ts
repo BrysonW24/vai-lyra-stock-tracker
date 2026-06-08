@@ -279,20 +279,33 @@ export function buildComparisonTable(selected: ComparisonSeries[]): ComparisonTa
 /**
  * Extract time labels for chart x-axis (e.g., 'H-29', 'H-28', ..., 'Now')
  */
+const TL_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Axis labels straight off each point's real timestamp (e.g. "6 Jun 2pm"), not "H-29". */
 export function extractTimeLabels(points: ComparisonPoint[], totalPoints = 30): string[] {
   const labels: string[] = [];
   const interval = Math.max(1, Math.floor(totalPoints / 6));
 
   for (let i = 0; i < totalPoints; i++) {
-    if (i % interval === 0 || i === totalPoints - 1) {
-      if (i === totalPoints - 1) {
-        labels.push('Now');
-      } else {
-        labels.push(`H-${totalPoints - 1 - i}`);
-      }
-    } else {
+    const show = i % interval === 0 || i === totalPoints - 1;
+    if (!show) {
       labels.push('');
+      continue;
     }
+    if (i === totalPoints - 1) {
+      labels.push('Now');
+      continue;
+    }
+    const ts = points[i]?.timestamp;
+    if (!ts) {
+      labels.push('');
+      continue;
+    }
+    const d = new Date(ts);
+    const h = d.getHours();
+    const ampm = h >= 12 ? 'pm' : 'am';
+    const h12 = h % 12 || 12;
+    labels.push(`${d.getDate()} ${TL_MONTHS[d.getMonth()]} ${h12}${ampm}`);
   }
 
   return labels;

@@ -78,16 +78,16 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
   return (
     <div className="space-y-3 pb-20 md:pb-0">
       {/* Header */}
-      <section className="grid gap-2 md:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2 md:grid-cols-4">
         {[
           ['Available capital', formatCurrency(availableCash), 'text-[#eef3f8]'],
           ['Trade amount', formatCurrency(tradeAmount), 'text-[#f3a33a]'],
           ['Entry price', formatCurrency(entryPrice), 'text-[#dbe5ee]'],
           ['Portfolio size', portfolio.length.toString(), 'text-[#60a5fa]'],
         ].map(([label, value, tone]) => (
-          <div className="terminal-panel rounded-md p-3" key={label}>
-            <p className="text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
-            <p className={`numeric mt-2 truncate font-mono text-xl font-semibold ${tone}`}>{value}</p>
+          <div className="terminal-panel rounded-md p-2" key={label}>
+            <p className="truncate text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
+            <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
           </div>
         ))}
       </section>

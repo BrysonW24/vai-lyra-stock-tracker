@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { Eye, EyeOff, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
 import {
   demoCalendarEvents,
@@ -17,6 +16,7 @@ import {
   groupEventsByDate,
   type CalendarEvent,
 } from '@/lib/calendar';
+import { CalendarEventDrawer } from '@/components/calendar/CalendarEventDrawer';
 
 interface CalendarViewProps {
   signals: SignalRow[];
@@ -190,7 +190,7 @@ export function CalendarView({ signals }: CalendarViewProps) {
                           key={event.id}
                           type="button"
                           onClick={() => setSelectedEvent(event)}
-                          className={`flex w-full flex-col gap-2 border-l-2 px-3 py-3 text-left transition hover:bg-[#101720] sm:flex-row sm:items-start sm:justify-between ${eventTypeClass(event.type).split(' ')[0]}`}
+                          className={`flex w-full flex-col gap-1.5 border-l-2 px-3 py-2 text-left transition hover:bg-[#101720] sm:flex-row sm:items-start sm:justify-between ${eventTypeClass(event.type).split(' ')[0]}`}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start gap-2">
@@ -198,8 +198,8 @@ export function CalendarView({ signals }: CalendarViewProps) {
                                 {eventBadgeLabel(event)}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-[#eef3f8]">{event.title}</p>
-                                <p className="text-xs text-[#8190a0]">{eventTypeLabel(event.type)}</p>
+                                <p className="text-[13px] font-medium leading-snug text-[#eef3f8]">{event.title}</p>
+                                <p className="text-[11px] text-[#8190a0]">{eventTypeLabel(event.type)}</p>
                               </div>
                             </div>
                           </div>
@@ -222,57 +222,10 @@ export function CalendarView({ signals }: CalendarViewProps) {
       )}
 
       {/* Month View */}
-      {viewMode === 'month' && <MonthCalendar events={filteredEvents} />}
+      {viewMode === 'month' && <MonthCalendar events={filteredEvents} onSelectEvent={setSelectedEvent} />}
 
-      {/* Event detail drawer */}
-      {selectedEvent && (
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedEvent(null)} />
-          <aside className="absolute right-0 top-0 flex h-full w-full max-w-[400px] flex-col overflow-y-auto border-l border-[#1b2530] bg-[#0b1016] shadow-2xl">
-            <div className="sticky top-0 flex items-center justify-between border-b border-[#1b2530] bg-[#0b1016]/95 px-4 py-3 backdrop-blur">
-              <div className={`rounded-md border px-2 py-1 font-mono text-xs font-semibold ${eventTypeClass(selectedEvent.type)}`}>
-                {eventBadgeLabel(selectedEvent)}
-              </div>
-              <button onClick={() => setSelectedEvent(null)} className="grid h-8 w-8 place-items-center rounded border border-[#263241] text-[#8190a0] transition hover:text-[#eef3f8]" type="button" aria-label="Close">
-                <X size={15} />
-              </button>
-            </div>
-            <div className="space-y-4 px-4 py-4">
-              <div>
-                <p className="text-base font-semibold text-[#eef3f8]">{selectedEvent.title}</p>
-                <p className="mt-1 font-mono text-xs text-[#8190a0]">{eventTypeLabel(selectedEvent.type)}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-xs">
-                <span className="text-[#8190a0]">Date</span>
-                <span className="text-right text-[#dbe5ee]">{selectedEvent.date}</span>
-                <span className="text-[#8190a0]">In</span>
-                <span className="text-right text-[#dbe5ee]">{daysUntil(selectedEvent.date)} days</span>
-                <span className="text-[#8190a0]">Importance</span>
-                <span className="text-right text-[#dbe5ee]">{selectedEvent.importance}</span>
-                {selectedEvent.ticker && (<>
-                  <span className="text-[#8190a0]">Ticker</span>
-                  <span className="text-right text-[#dbe5ee]">{selectedEvent.ticker}</span>
-                  <span className="text-[#8190a0]">Event risk</span>
-                  <span className="text-right text-[#dbe5ee]">{eventRiskForTicker(selectedEvent.ticker, signals)}</span>
-                </>)}
-              </div>
-              {selectedEvent.ticker && (
-                <Link href={`/tickers/${selectedEvent.ticker}`} className="inline-flex rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a8b5c2] transition hover:text-[#eef3f8]">
-                  Open ticker
-                </Link>
-              )}
-              {selectedEvent.type === 'ipo' && (
-                <Link href="/ipos" className="inline-flex rounded border border-[#3b3050] bg-[#15101f] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a78bfa] transition hover:bg-[#1b1330]">
-                  Open IPO radar
-                </Link>
-              )}
-              <p className="text-[10px] leading-4 text-[#8190a0]">
-                A signal before an event carries different risk than the same signal after it. Research context only - not financial advice.
-              </p>
-            </div>
-          </aside>
-        </div>
-      )}
+      {/* Event detail drawer (reusable right-slide explainer) */}
+      <CalendarEventDrawer event={selectedEvent} signals={signals} onClose={() => setSelectedEvent(null)} />
     </div>
   );
 }
@@ -280,12 +233,23 @@ export function CalendarView({ signals }: CalendarViewProps) {
 /**
  * Simple month grid with event dots.
  */
-function MonthCalendar({ events }: { events: typeof demoCalendarEvents }) {
-  const today = new Date('2026-06-03T00:00:00Z');
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
+function MonthCalendar({
+  events,
+  onSelectEvent,
+}: {
+  events: typeof demoCalendarEvents;
+  onSelectEvent: (event: CalendarEvent) => void;
+}) {
+  const MIN_OFFSET = 0;
+  const MAX_OFFSET = 6; // current month plus six forward
+  const [monthOffset, setMonthOffset] = useState(0);
 
-  // Get all days in the current month
+  const today = new Date('2026-06-03T00:00:00Z');
+  const viewDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const currentMonth = viewDate.getMonth();
+  const currentYear = viewDate.getFullYear();
+
+  // Get all days in the displayed month
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Sunday
 
@@ -311,9 +275,31 @@ function MonthCalendar({ events }: { events: typeof demoCalendarEvents }) {
 
   return (
     <section className="terminal-panel rounded-md overflow-hidden">
-      <div className="border-b border-[#1b2530] px-3 py-3">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Calendar Grid</h2>
-        <p className="mt-1 font-mono text-xs text-[#8190a0]">{monthLabel}</p>
+      <div className="flex items-center justify-between gap-2 border-b border-[#1b2530] px-3 py-2">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Calendar grid</h2>
+          <p className="mt-0.5 font-mono text-xs text-[#8190a0]">{monthLabel}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setMonthOffset((o) => Math.max(MIN_OFFSET, o - 1))}
+            disabled={monthOffset <= MIN_OFFSET}
+            aria-label="Previous month"
+            className="grid h-7 w-7 place-items-center rounded border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8] disabled:opacity-30"
+          >
+            <ChevronLeft size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setMonthOffset((o) => Math.min(MAX_OFFSET, o + 1))}
+            disabled={monthOffset >= MAX_OFFSET}
+            aria-label="Next month"
+            className="grid h-7 w-7 place-items-center rounded border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8] disabled:opacity-30"
+          >
+            <ChevronRight size={15} />
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -338,7 +324,8 @@ function MonthCalendar({ events }: { events: typeof demoCalendarEvents }) {
                         ? null
                         : `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const dayEvents = dateStr ? eventsByDate.get(dateStr) : undefined;
-                    const isToday = day === today.getDate() && currentMonth === today.getMonth();
+                    const isToday =
+                      day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
 
                     return (
                       <td
@@ -355,14 +342,16 @@ function MonthCalendar({ events }: { events: typeof demoCalendarEvents }) {
                             {dayEvents && dayEvents.length > 0 && (
                               <div className="mt-1 space-y-1">
                                 {dayEvents.slice(0, 2).map((event) => (
-                                  <div
+                                  <button
+                                    type="button"
                                     key={event.id}
-                                    className={`flex items-center gap-1 truncate rounded border px-1 py-0.5 text-[10px] font-semibold ${eventTypeClass(event.type)}`}
+                                    onClick={() => onSelectEvent(event)}
+                                    className={`flex w-full items-center gap-1 truncate rounded border px-1 py-0.5 text-left text-[10px] font-semibold transition hover:brightness-125 ${eventTypeClass(event.type)}`}
                                     title={`${event.title} - ${eventTypeLabel(event.type)}`}
                                   >
                                     <span className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${eventTypeDot(event.type)}`} />
                                     {eventBadgeLabel(event)}
-                                  </div>
+                                  </button>
                                 ))}
                                 {dayEvents.length > 2 && (
                                   <div className="text-[10px] text-[#8190a0]">+{dayEvents.length - 2} more</div>

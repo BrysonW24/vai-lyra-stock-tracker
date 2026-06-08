@@ -252,9 +252,11 @@ export function IntelligenceFeed({ feed, hypeMap }: IntelligenceFeedProps) {
                       </span>
                     </div>
 
-                    {/* Headline (truncated) */}
+                    {/* Headline (full - wraps so it's readable) + when (mobile, where the
+                        right-side timestamp is hidden) so it's never undated. */}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-[#eef3f8]">{item.headline}</p>
+                      <p className="text-[13px] leading-snug text-[#eef3f8]">{item.headline}</p>
+                      <p className="mt-0.5 font-mono text-[10px] text-[#8190a0] sm:hidden">{relativeTime(item.publishedAt)}</p>
                     </div>
 
                     {/* Sentiment dot */}

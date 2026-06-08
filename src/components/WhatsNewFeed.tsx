@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Search, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Database, Search, Smartphone, Sparkles, Wrench } from 'lucide-react';
 import { RELEASE_CATEGORIES, releaseNotes, type ReleaseCategory, type ReleaseNote } from '@/lib/release-notes';
 import { relativeTime } from '@/lib/format';
 
@@ -12,6 +12,23 @@ const CATEGORY_TONE: Record<ReleaseCategory, string> = {
   Data: 'border-[#3a4754] bg-[#0d141c] text-[#a8b5c2]',
   Fix: 'border-[#7a2630] bg-[#260f12] text-[#f0758a]',
 };
+
+const CATEGORY_ICON: Record<ReleaseCategory, typeof Sparkles> = {
+  Feature: Sparkles,
+  Improvement: ArrowUpRight,
+  Mobile: Smartphone,
+  Data: Database,
+  Fix: Wrench,
+};
+
+function CategoryEmblem({ category }: { category: ReleaseCategory }) {
+  const Icon = CATEGORY_ICON[category];
+  return (
+    <span className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md border ${CATEGORY_TONE[category]}`}>
+      <Icon size={13} />
+    </span>
+  );
+}
 
 type Filter = 'All' | ReleaseCategory;
 
@@ -92,26 +109,29 @@ export function WhatsNewFeed() {
               {group.notes.map((note) => (
                 <article
                   key={note.id}
-                  className="rounded-md border border-[#1b2530] bg-[#0d1117] p-3 transition hover:border-[#263241]"
+                  className="flex gap-2.5 rounded-md border border-[#1b2530] bg-[#0d1117] p-2.5 transition hover:border-[#263241]"
                 >
-                  <div className="flex flex-wrap items-center gap-2">
-                    {note.highlight ? (
-                      <span className="inline-flex items-center gap-1 rounded border border-[#9a6a1f] bg-[#2a1f0f] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#f3a33a]">
-                        <Sparkles size={10} /> Highlight
+                  <CategoryEmblem category={note.category} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {note.highlight ? (
+                        <span className="inline-flex items-center gap-1 rounded border border-[#9a6a1f] bg-[#2a1f0f] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#f3a33a]">
+                          <Sparkles size={9} /> Highlight
+                        </span>
+                      ) : null}
+                      <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${CATEGORY_TONE[note.category]}`}>
+                        {note.category}
                       </span>
-                    ) : null}
-                    <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${CATEGORY_TONE[note.category]}`}>
-                      {note.category}
-                    </span>
-                    {(note.tags ?? []).map((tag) => (
-                      <span key={tag} className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#8190a0]">
-                        {tag}
-                      </span>
-                    ))}
-                    <span className="ml-auto font-mono text-[10px] text-[#5f6b78]">{relativeTime(note.date)}</span>
+                      {(note.tags ?? []).map((tag) => (
+                        <span key={tag} className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#8190a0]">
+                          {tag}
+                        </span>
+                      ))}
+                      <span className="ml-auto font-mono text-[10px] text-[#5f6b78]">{relativeTime(note.date)}</span>
+                    </div>
+                    <h3 className="mt-1 text-[13px] font-semibold text-[#eef3f8]">{note.title}</h3>
+                    <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">{note.description}</p>
                   </div>
-                  <h3 className="mt-2 text-sm font-semibold text-[#eef3f8]">{note.title}</h3>
-                  <p className="mt-1 text-[13px] leading-relaxed text-[#a8b5c2]">{note.description}</p>
                 </article>
               ))}
             </div>

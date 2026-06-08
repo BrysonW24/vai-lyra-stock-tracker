@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { addLocalHolding } from '@/lib/local-portfolio';
 
 export function AddHoldingForm() {
   const router = useRouter();
@@ -40,11 +41,22 @@ export function AddHoldingForm() {
       };
 
       if (!result.ok) {
-        setStatus({
-          type: 'error',
-          message: result.error || 'Failed to add holding',
-        });
-        return;
+        if (result.demo) {
+          // Demo mode (no Supabase): persist locally so the holding shows in the book.
+          addLocalHolding({
+            symbol: formData.symbol,
+            quantity: parseFloat(formData.quantity) || 1,
+            averageBuyPrice: parseFloat(formData.averageBuyPrice) || 0,
+            purchaseDate: formData.purchaseDate || undefined,
+            notes: formData.notes || undefined,
+          });
+        } else {
+          setStatus({
+            type: 'error',
+            message: result.error || 'Failed to add holding',
+          });
+          return;
+        }
       }
 
       setStatus({
@@ -82,7 +94,7 @@ export function AddHoldingForm() {
       <label className="grid gap-1">
         <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Ticker</span>
         <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
+          className="h-8 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-[13px] text-[#dbe5ee] outline-none"
           placeholder="Ticker"
           name="symbol"
           value={formData.symbol}
@@ -93,7 +105,7 @@ export function AddHoldingForm() {
       <label className="grid gap-1">
         <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Quantity</span>
         <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
+          className="h-8 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-[13px] text-[#dbe5ee] outline-none"
           placeholder="Quantity"
           name="quantity"
           type="number"
@@ -106,7 +118,7 @@ export function AddHoldingForm() {
       <label className="grid gap-1">
         <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Average buy price</span>
         <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
+          className="h-8 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-[13px] text-[#dbe5ee] outline-none"
           placeholder="Average buy price"
           name="averageBuyPrice"
           type="number"
@@ -119,7 +131,7 @@ export function AddHoldingForm() {
       <label className="grid gap-1">
         <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Brokerage / fees</span>
         <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
+          className="h-8 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-[13px] text-[#dbe5ee] outline-none"
           placeholder="Brokerage / fees"
           name="brokerageFee"
           type="number"
@@ -131,7 +143,7 @@ export function AddHoldingForm() {
       <label className="grid gap-1">
         <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Purchase date</span>
         <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
+          className="h-8 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-[13px] text-[#dbe5ee] outline-none"
           placeholder="Purchase date"
           name="purchaseDate"
           type="date"
@@ -142,7 +154,7 @@ export function AddHoldingForm() {
       <label className="grid gap-1">
         <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Notes</span>
         <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
+          className="h-8 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-[13px] text-[#dbe5ee] outline-none"
           placeholder="Notes"
           name="notes"
           value={formData.notes}

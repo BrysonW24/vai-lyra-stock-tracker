@@ -16,18 +16,18 @@ export default async function WatchlistPage() {
   return (
     <AppShell data={data}>
       <div className="space-y-3 pb-28 xl:pb-6">
-        <section className="grid gap-2 md:grid-cols-4 xl:grid-cols-6">
+        <section className="grid grid-cols-3 gap-2 md:grid-cols-4 xl:grid-cols-6">
           {[
-            ['Watchlist names', data.watchlist.length.toString(), 'text-[#eef3f8]'],
+            ['Watching', data.watchlist.length.toString(), 'text-[#eef3f8]'],
             ['Approaching', approaching.toString(), 'text-[#f3a33a]'],
             ['Triggered', triggered.toString(), triggered > 0 ? 'text-[#43d18b]' : 'text-[#8190a0]'],
             ['Best score', bestScore.toString(), 'text-[#eef3f8]'],
-            ['Overlay rows', data.latestRun.watchlistOverlaysCreated.toString(), 'text-[#60a5fa]'],
-            ['Watch alerts', 'Off default', 'text-[#8190a0]'],
+            ['Tracked', data.latestRun.watchlistOverlaysCreated.toString(), 'text-[#60a5fa]'],
+            ['Alerts', 'Off', 'text-[#8190a0]'],
           ].map(([label, value, tone]) => (
-            <div className="terminal-panel rounded-md p-3" key={label}>
-              <p className="text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
-              <p className={`numeric mt-2 truncate font-mono text-xl font-semibold ${tone}`}>{value}</p>
+            <div className="terminal-panel rounded-md p-2" key={label}>
+              <p className="truncate text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
+              <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
             </div>
           ))}
         </section>

@@ -37,7 +37,10 @@ export function CalibrationShell({
   return (
     <div className="fixed inset-0 flex flex-col bg-[#07090c]">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
+      <header
+        className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4"
+        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+      >
         <div className="flex items-center gap-2">
           {showBack && (
             <button
@@ -67,13 +70,18 @@ export function CalibrationShell({
 
       {/* Scene Area - scrolls on small screens so dense scenes never clip */}
       <main className="flex-1 overflow-y-auto">
-        <div className="flex min-h-full flex-col items-center justify-center px-4 py-3 md:px-6 md:py-5">
-          {children}
+        {/* my-auto centres the scene when it fits but lets the top scroll into view when
+            it overflows - justify-center clips the top of tall scenes and can't be scrolled to. */}
+        <div className="flex min-h-full flex-col items-center px-4 py-3 md:px-6 md:py-5">
+          <div className="my-auto w-full">{children}</div>
         </div>
       </main>
 
       {/* Progress Footer */}
-      <footer className="flex flex-col items-center gap-2.5 px-4 py-3 md:px-6 md:py-4">
+      <footer
+        className="flex flex-col items-center gap-2.5 px-4 py-3 md:px-6 md:py-4"
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+      >
         {/* Progress Dots */}
         <div className="flex gap-2">
           {Array.from({ length: totalSteps }).map((_, i) => (

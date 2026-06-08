@@ -63,13 +63,13 @@ export function MetricStrip({ data }: MetricStripProps) {
   return (
     <section className="grid grid-cols-2 gap-2 xl:grid-cols-6">
       {metrics.map((metric) => (
-        <div className="terminal-panel rounded-md p-2.5 md:p-3" key={metric.label}>
+        <div className="terminal-panel rounded-md p-2 md:p-2.5" key={metric.label}>
           <div className="flex items-center justify-between gap-2">
             <p className="truncate text-[9px] font-semibold uppercase tracking-[0.14em] text-[#8190a0] md:text-[10px] md:tracking-[0.15em]">{metric.label}</p>
-            <metric.icon className={`${metric.tone} shrink-0`} size={14} />
+            <metric.icon className={`${metric.tone} shrink-0`} size={13} />
           </div>
-          <p className={`numeric mt-1.5 truncate font-mono text-lg font-semibold md:mt-2 md:text-xl ${metric.tone}`}>{metric.value}</p>
-          <p className={`numeric mt-1 truncate text-[11px] md:text-xs ${metric.label === 'Portfolio value' ? toneClass(portfolioPnl) : 'text-[#8190a0]'}`}>
+          <p className={`numeric mt-1 truncate font-mono text-sm font-semibold md:text-base ${metric.tone}`}>{metric.value}</p>
+          <p className={`numeric mt-0.5 truncate text-[10px] ${metric.label === 'Portfolio value' ? toneClass(portfolioPnl) : 'text-[#8190a0]'}`}>
             {metric.detail}
           </p>
         </div>

@@ -1,8 +1,10 @@
 /**
  * In-product changelog manifest - the "What's New" feed at /whats-new.
  *
- * Release notes rendered as a filterable, week-grouped, category-tagged in-product
- * feed rather than a docs site nobody reads.
+ * Pattern stolen from Wiz's Product Updates surface (see vd-business/design-system/
+ * references/wiz/16-product-updates-changelog.png + annotations §I): release notes
+ * rendered as a filterable, week-grouped, category-tagged in-product feed rather
+ * than a docs site nobody reads.
  *
  * This is the source of truth for the feed. Add a new entry at the top whenever a
  * user-visible change ships. Dates on entries before 2026-06 are approximate
@@ -29,6 +31,88 @@ export interface ReleaseNote {
 export const RELEASE_CATEGORIES: ReleaseCategory[] = ['Feature', 'Improvement', 'Mobile', 'Data', 'Fix'];
 
 export const releaseNotes: ReleaseNote[] = [
+  {
+    id: 'rn-2026-06-07-live-wire',
+    date: '2026-06-07',
+    week: 'Week of 1 Jun 2026',
+    category: 'Feature',
+    highlight: true,
+    title: 'Live Wire - one rolling feed of everything changing',
+    description:
+      'A new Wire surface (in the nav after Radar): every signal change + market headlines + events in one dense, newest-first stream with kind filters and a live marker.',
+    tags: ['Wire', 'Intelligence'],
+  },
+  {
+    id: 'rn-2026-06-07-spaces',
+    date: '2026-06-07',
+    week: 'Week of 1 Jun 2026',
+    category: 'Feature',
+    title: 'Smart Money + Commodities spaces',
+    description:
+      'Small caps catching government / big-tech / big-AI money, and the key commodities with real source countries + the AI-buildout angle - each on its own page.',
+    tags: ['Smart Money', 'Commodities'],
+  },
+  {
+    id: 'rn-2026-06-07-drawers',
+    date: '2026-06-07',
+    week: 'Week of 1 Jun 2026',
+    category: 'Feature',
+    title: 'Tap-to-explain drawers everywhere',
+    description:
+      'Tap a signal row, a calendar event, or a Smart Money name and a right-slide drawer explains what the score / RSI / MACD / event actually means. Research, not advice.',
+    tags: ['Explainers'],
+  },
+  {
+    id: 'rn-2026-06-07-density',
+    date: '2026-06-07',
+    week: 'Week of 1 Jun 2026',
+    category: 'Improvement',
+    highlight: true,
+    title: 'Ultra-compact density pass',
+    description:
+      'A top-to-bottom density overhaul - global 15px base, tighter boxes, single-line signal rows, smaller chips and controls - so the whole console reads like a real terminal.',
+    tags: ['Density'],
+  },
+  {
+    id: 'rn-2026-06-07-executive-strip',
+    date: '2026-06-07',
+    week: 'Week of 1 Jun 2026',
+    category: 'Feature',
+    title: 'Executive strip on Command',
+    description:
+      'A Bloomberg-style row of minimal real mini-trackers (ticker / price / change / score) across the top of Command - your book at a glance, tap a tile for detail.',
+    tags: ['Command'],
+  },
+  {
+    id: 'rn-2026-06-07-compare',
+    date: '2026-06-07',
+    week: 'Week of 1 Jun 2026',
+    category: 'Improvement',
+    title: 'Compare: search, your portfolio, real dates',
+    description:
+      'Search-to-add tickers + a one-tap "use my portfolio", real date+time axis labels (no more H-29), and a glossary explaining what each metric means.',
+    tags: ['Compare'],
+  },
+  {
+    id: 'rn-2026-06-07-personalised',
+    date: '2026-06-07',
+    week: 'Week of 1 Jun 2026',
+    category: 'Improvement',
+    title: 'Personalised Command + holdings that stick',
+    description:
+      'The "New here" banner now adapts to what you have set up (or your beginner track), and holdings entered in onboarding now actually show in your book in demo mode.',
+    tags: ['Command', 'Onboarding'],
+  },
+  {
+    id: 'rn-2026-06-07-calendar',
+    date: '2026-06-07',
+    week: 'Week of 1 Jun 2026',
+    category: 'Feature',
+    title: 'Calendar: six months forward + event detail',
+    description:
+      'Navigate the month grid up to six months ahead, and tap any day or event for a detail drawer (type, exchange, timing, event risk).',
+    tags: ['Calendar'],
+  },
   {
     id: 'rn-2026-06-06-live-candles',
     date: '2026-06-06',

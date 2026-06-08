@@ -48,10 +48,10 @@ export function MarketContextStrip({ data }: MarketContextStripProps) {
   };
 
   return (
-    <div className="terminal-panel glass-hero rounded-md p-3 overflow-hidden">
+    <div className="terminal-panel glass-hero rounded-md p-2.5 overflow-hidden">
       <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0">
         {/* Regime badge */}
-        <div className={`shrink-0 rounded border ${regimeColor} px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em]`}>
+        <div className={`shrink-0 rounded border ${regimeColor} px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em]`}>
           {data.regime.replace('_', ' ')}
         </div>
 

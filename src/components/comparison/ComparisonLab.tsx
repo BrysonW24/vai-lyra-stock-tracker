@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, CSSProperties } from 'react';
+import { useState, useEffect, useMemo, CSSProperties } from 'react';
+import { loadLocalHoldings } from '@/lib/local-portfolio';
 import {
   DEMO_COMPARISON_DATA,
   buildComparisonTable,
@@ -78,13 +79,33 @@ export function ComparisonLab() {
     [selectedSeries],
   );
 
-  const toggleTicker = (ticker: string) => {
-    setSelectedTickers((prev) =>
-      prev.includes(ticker)
-        ? prev.filter((t) => t !== ticker)
-        : [...prev, ticker].slice(-6), // Max 6 selected
-    );
+  const [tickerSearch, setTickerSearch] = useState('');
+  const available = useMemo(() => DEMO_COMPARISON_DATA.map((s) => s.ticker), []);
+
+  // Smart default: if the user has a portfolio, compare the names we have data for.
+  useEffect(() => {
+    const owned = loadLocalHoldings()
+      .map((h) => h.symbol)
+      .filter((s) => available.includes(s));
+    if (owned.length > 0) setSelectedTickers(owned.slice(0, 6));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const addTicker = (ticker: string) => {
+    setSelectedTickers((prev) => (prev.includes(ticker) ? prev : [...prev, ticker].slice(-6)));
+    setTickerSearch('');
   };
+  const removeTicker = (ticker: string) => setSelectedTickers((prev) => prev.filter((t) => t !== ticker));
+  const usePortfolio = () => {
+    const owned = loadLocalHoldings()
+      .map((h) => h.symbol)
+      .filter((s) => available.includes(s))
+      .slice(0, 6);
+    if (owned.length > 0) setSelectedTickers(owned);
+  };
+  const filteredTickers = available.filter(
+    (t) => !selectedTickers.includes(t) && t.toLowerCase().includes(tickerSearch.trim().toLowerCase()),
+  );
 
   const metricLabel = {
     return: 'Return %',
@@ -96,28 +117,65 @@ export function ComparisonLab() {
 
   return (
     <div className="space-y-3 pb-20 md:pb-0">
-      {/* Ticker Picker */}
+      {/* Ticker Picker - search to add, with a one-tap "use my portfolio" */}
       <section className="terminal-panel overflow-hidden rounded-md">
-        <div className="border-b border-[#1b2530] px-4 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
-            Ticker Selector
-          </p>
-          <p className="mt-1 text-xs text-[#a8b5c2]">Pick up to 6 tickers to compare</p>
+        <div className="flex items-center justify-between gap-2 border-b border-[#1b2530] px-3 py-2">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Ticker selector</p>
+            <p className="mt-0.5 text-[10px] text-[#a8b5c2]">Search to add - up to 6</p>
+          </div>
+          <button
+            type="button"
+            onClick={usePortfolio}
+            className="shrink-0 rounded border border-[#f3a33a] bg-[#23180b] px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-[#f3a33a] transition hover:bg-[#2a1f0f]"
+          >
+            Use my portfolio
+          </button>
         </div>
-        <div className="flex flex-wrap gap-2 px-4 py-3">
-          {DEMO_COMPARISON_DATA.map((series) => (
-            <button
-              key={series.ticker}
-              onClick={() => toggleTicker(series.ticker)}
-              className={`rounded border px-3 py-2 font-mono text-xs font-semibold transition ${
-                selectedTickers.includes(series.ticker)
-                  ? 'border-[#263241] bg-[#0d1117] text-[#eef3f8]'
-                  : 'border-[#1b2530] bg-[#080a0d] text-[#8190a0] hover:text-[#dbe5ee]'
-              }`}
-            >
-              {series.ticker}
-            </button>
-          ))}
+
+        <div className="space-y-2 px-3 py-2.5">
+          {selectedTickers.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {selectedTickers.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => removeTicker(t)}
+                  title="Remove"
+                  className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d1117] px-2 py-0.5 font-mono text-[11px] font-semibold text-[#eef3f8] transition hover:border-[#ff6b6b]/50"
+                >
+                  {t} <span className="text-[#8190a0]">×</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div>
+            <input
+              value={tickerSearch}
+              onChange={(e) => setTickerSearch(e.target.value)}
+              placeholder="Add a ticker (e.g. MSFT)"
+              className="h-8 w-full rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-xs text-[#dbe5ee] outline-none placeholder:text-[#5d6b79] focus:border-[#f3a33a]/50"
+            />
+            {tickerSearch.trim().length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {filteredTickers.length === 0 ? (
+                  <span className="font-mono text-[10px] text-[#8190a0]">No match in the comparison set</span>
+                ) : (
+                  filteredTickers.slice(0, 8).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => addTicker(t)}
+                      className="rounded border border-[#1b2530] bg-[#080a0d] px-2 py-0.5 font-mono text-[11px] text-[#8190a0] transition hover:text-[#dbe5ee]"
+                    >
+                      + {t}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -139,16 +197,16 @@ export function ComparisonLab() {
                 <button
                   key={mode}
                   onClick={() => setMetricMode(mode)}
-                  className={`rounded border px-3 py-2 font-mono text-xs font-semibold transition ${
+                  className={`rounded border px-2.5 py-1.5 font-mono text-[11px] font-semibold whitespace-nowrap transition ${
                     metricMode === mode
                       ? 'border-[#263241] bg-[#0d1117] text-[#f3a33a]'
                       : 'border-[#1b2530] bg-[#080a0d] text-[#8190a0] hover:text-[#dbe5ee]'
                   }`}
                 >
                   {mode === 'return'
-                    ? 'Return %'
+                    ? 'Return'
                     : mode === 'score'
-                      ? 'Signal Score'
+                      ? 'Score'
                       : mode === 'rsi'
                         ? 'RSI'
                         : mode === 'macd'
@@ -157,6 +215,12 @@ export function ComparisonLab() {
                 </button>
               ))}
             </div>
+            <p className="border-t border-[#1b2530] px-4 py-2 text-[10px] leading-relaxed text-[#8190a0]">
+              <span className="text-[#a8b5c2]">Score</span> = our 0-100 momentum-recovery read ·{' '}
+              <span className="text-[#a8b5c2]">RSI</span> = overbought/oversold gauge ·{' '}
+              <span className="text-[#a8b5c2]">MACD hist</span> = momentum turning up ·{' '}
+              <span className="text-[#a8b5c2]">Volume</span> = participation vs average. Each one feeds the Score.
+            </p>
           </section>
 
           {/* Multi-Series Chart */}

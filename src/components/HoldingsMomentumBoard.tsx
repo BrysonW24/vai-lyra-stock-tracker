@@ -10,6 +10,7 @@ import { PanelCarousel } from '@/components/PanelCarousel';
 import { HoldingSetupSlide } from '@/components/HoldingSetupSlide';
 import { HoldingIntelSlide } from '@/components/HoldingIntelSlide';
 import { formatCurrency, formatSignedNumber, formatSignedPercent, toneClass } from '@/lib/format';
+import { loadLocalHoldings } from '@/lib/local-portfolio';
 
 interface HoldingsMomentumBoardProps {
   holdings: PortfolioHolding[];
@@ -45,6 +46,15 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
 
   // RSI + MACD overlay the live charts by default; the user can switch to clean candles.
   const [showIndicators, setShowIndicators] = useState(true);
+  // Persist the indicators preference so it never resets between sessions (default on).
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem('lyra.chartIndicators');
+      if (saved !== null) setShowIndicators(saved === 'true');
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   // Selectable universe (alphabetical for easy scanning in the picker).
   const options = useMemo(
@@ -68,24 +78,42 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
 
   const [slots, setSlots] = useState<string[]>(defaultSlots);
 
-  // Hydrate saved slot choices on the client, validating against the current universe.
+  // Hydrate slots on the client: saved choices win; otherwise lead with the user's OWN
+  // holdings (from onboarding / the local book) so your book is the default, padded with
+  // top radar setups; else fall back to the demo-derived defaults.
   useEffect(() => {
+    let saved: string[] = [];
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed: unknown = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return;
-      const valid = parsed.filter((s): s is string => typeof s === 'string' && signalBySymbol.has(s));
-      if (valid.length === 0) return;
-      const next = [...valid];
+      const parsed: unknown = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(parsed)) saved = parsed.filter((s): s is string => typeof s === 'string' && signalBySymbol.has(s));
+    } catch {
+      /* ignore malformed storage */
+    }
+
+    if (saved.length > 0) {
+      const next = [...saved];
       for (const fallback of defaultSlots) {
         if (next.length >= SLOT_COUNT) break;
         if (!next.includes(fallback)) next.push(fallback);
       }
       setSlots(next.slice(0, SLOT_COUNT));
-    } catch {
-      /* ignore malformed storage */
+      return;
     }
+
+    // No saved choices: lead with the user's own holdings (largest first) we can chart.
+    const owned = [...loadLocalHoldings()]
+      .sort((a, b) => b.quantity * b.averageBuyPrice - a.quantity * a.averageBuyPrice)
+      .map((h) => h.symbol)
+      .filter((s) => signalBySymbol.has(s));
+    if (owned.length === 0) return; // keep the demo-derived defaultSlots
+
+    const ownedSet = new Set(owned);
+    const radar = [...signals]
+      .filter((s) => !ownedSet.has(s.symbol))
+      .sort((a, b) => b.score - a.score)
+      .map((s) => s.symbol);
+    setSlots([...owned, ...radar].slice(0, SLOT_COUNT));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -129,7 +157,17 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setShowIndicators((value) => !value)}
+            onClick={() =>
+              setShowIndicators((value) => {
+                const next = !value;
+                try {
+                  window.localStorage.setItem('lyra.chartIndicators', String(next));
+                } catch {
+                  /* ignore */
+                }
+                return next;
+              })
+            }
             aria-pressed={showIndicators}
             title="Toggle RSI + MACD on the live charts"
             className={[
@@ -157,7 +195,7 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-px bg-[#1b2530]">
+      <div className="grid grid-cols-1 gap-px bg-[#1b2530]">
         {slots.map((symbol, index) => {
           const signal = signalBySymbol.get(symbol);
           const holding = holdingBySymbol.get(symbol);
@@ -228,6 +266,7 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
                     {
                       key: 'chart',
                       label: 'Chart',
+                      color: 'blue',
                       node: (
                         <TradingViewChart
                           symbol={signal.symbol}
@@ -242,6 +281,7 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
                     {
                       key: 'setup',
                       label: 'Setup',
+                      color: 'amber',
                       node: (
                         <HoldingSetupSlide signal={signal} holding={holding} ticker={tickerBySymbol.get(signal.symbol)} />
                       ),
@@ -249,13 +289,14 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
                     {
                       key: 'intel',
                       label: 'Intel',
+                      color: 'green',
                       node: <HoldingIntelSlide symbol={signal.symbol} />,
                     },
                   ]}
                 />
               </div>
 
-              <p className="mt-2 text-[11px] leading-relaxed text-[#a8b5c2]">{readLine(signal.scoreDelta, signal.histDelta)}</p>
+              <p className="mt-1 text-[11px] leading-snug text-[#a8b5c2]">{readLine(signal.scoreDelta, signal.histDelta)}</p>
             </div>
           );
         })}

@@ -47,7 +47,7 @@ export function IpoExplorer() {
 
   return (
     <div className="space-y-3">
-      <section className="grid gap-2 md:grid-cols-4 xl:grid-cols-6">
+      <section className="grid grid-cols-3 gap-2 md:grid-cols-4 xl:grid-cols-6">
         {[
           ['Tracked IPOs', all.length.toString(), 'text-[#eef3f8]'],
           ['Upcoming', all.filter((i) => i.status === 'upcoming').length.toString(), 'text-[#8aa2ff]'],
@@ -56,9 +56,9 @@ export function IpoExplorer() {
           ['Total raised', billions(all.reduce((s, i) => s + i.proceedsUsdM, 0)), 'text-[#f3a33a]'],
           ['Profitable', all.filter((i) => i.profitable).length.toString(), 'text-[#43d18b]'],
         ].map(([label, value, tone]) => (
-          <div className="terminal-panel rounded-md p-3" key={label}>
-            <p className="text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
-            <p className={`mt-2 truncate font-mono text-xl font-semibold ${tone}`}>{value}</p>
+          <div className="terminal-panel rounded-md p-2" key={label}>
+            <p className="truncate text-[10px] uppercase tracking-[0.15em] text-[#8190a0]">{label}</p>
+            <p className={`mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
           </div>
         ))}
       </section>
