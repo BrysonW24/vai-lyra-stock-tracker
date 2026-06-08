@@ -32,6 +32,67 @@ export const RELEASE_CATEGORIES: ReleaseCategory[] = ['Feature', 'Improvement', 
 
 export const releaseNotes: ReleaseNote[] = [
   {
+    id: 'rn-2026-06-08-product-updates',
+    date: '2026-06-08',
+    week: 'Week of 8 Jun 2026',
+    category: 'Improvement',
+    title: 'Product updates, on a timeline',
+    description:
+      'This page got the chain treatment - a vertical timeline with a colour-coded dot per update, so you can tell at a glance whether a change was a feature, improvement, mobile, data, or fix.',
+    tags: ["What's New"],
+  },
+  {
+    id: 'rn-2026-06-08-content-layer',
+    date: '2026-06-08',
+    week: 'Week of 8 Jun 2026',
+    category: 'Data',
+    highlight: true,
+    title: 'Editorial data you can edit in one line',
+    description:
+      'IPOs, smart money, and commodities now live in an AI-native content layer, so a fact like an IPO reference price updates by editing a single line of data instead of hunting through code.',
+    tags: ['IPOs', 'Smart Money', 'Commodities'],
+  },
+  {
+    id: 'rn-2026-06-08-compare-scrubber',
+    date: '2026-06-08',
+    week: 'Week of 8 Jun 2026',
+    category: 'Improvement',
+    title: 'Compare: cleaner axis + hover date scrubber',
+    description:
+      'The comparison axis now adapts - time-only intraday, day-only over longer windows, with no overlapping labels - and a hover or drag scrubber reveals the exact date and the value of every line at any point.',
+    tags: ['Compare'],
+  },
+  {
+    id: 'rn-2026-06-08-learning-path',
+    date: '2026-06-08',
+    week: 'Week of 8 Jun 2026',
+    category: 'Feature',
+    title: 'A real learning path in Education',
+    description:
+      'Beginner, intermediate, and advanced tracks with inline expandable topics - what each concept is, why it matters, how Lyra uses it, and a live example - so you can level up without leaving the console.',
+    tags: ['Education'],
+  },
+  {
+    id: 'rn-2026-06-08-one-eye-line',
+    date: '2026-06-08',
+    week: 'Week of 8 Jun 2026',
+    category: 'Improvement',
+    title: 'Six stats in one eye-line',
+    description:
+      'Stat tiles across the app (IPO deep-dive, fundamentals, simulation, portfolio, drawers) now pack into compact two or three column grids, so a block of stats reads in one glance instead of scrolling.',
+    tags: ['Density'],
+  },
+  {
+    id: 'rn-2026-06-08-landing-first',
+    date: '2026-06-08',
+    week: 'Week of 8 Jun 2026',
+    category: 'Fix',
+    title: 'Landing page shows first',
+    description:
+      'First-time visitors now arrive on the marketing landing page, and step into onboarding from there, instead of being dropped straight into setup.',
+    tags: ['Onboarding'],
+  },
+  {
     id: 'rn-2026-06-07-live-wire',
     date: '2026-06-07',
     week: 'Week of 1 Jun 2026',
