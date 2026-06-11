@@ -2,16 +2,26 @@
 
 import { useMemo } from 'react';
 import type { MarketContextSnapshot } from '@/lib/market-context';
-import { formatNumber, formatPercent } from '@/lib/format';
+import { formatNumber } from '@/lib/format';
 
 export interface MarketContextStripProps {
   data: MarketContextSnapshot;
 }
 
+interface TapeEntry {
+  key: string;
+  label: string;
+  value: string;
+  change: string;
+  changeTone: string;
+  href: string;
+}
+
 /**
- * Dense horizontal market context strip.
- * Renders: regime badge, index chips, VIX, 10Y, commodities, BTC, Fear & Greed.
- * Mobile: horizontal scroll.
+ * Market context as a ticker-tape (same UX as the Intel marquee): the regime badge
+ * sits fixed on the left while indices, vol, yields, commodities and sentiment
+ * stream behind it. Every item is tappable and opens its primary source. Pauses on
+ * hover; honours prefers-reduced-motion.
  */
 export function MarketContextStrip({ data }: MarketContextStripProps) {
   const regimeColor = useMemo(() => {
@@ -26,133 +36,61 @@ export function MarketContextStrip({ data }: MarketContextStripProps) {
     }
   }, [data.regime]);
 
-  const fearGreedColor = useMemo(() => {
-    if (!data.fearGreedIndex) return 'text-[#a8b5c2]';
-    if (data.fearGreedIndex <= 25) return 'text-[#ff6b6b]';
-    if (data.fearGreedIndex < 45) return 'text-[#f3a33a]';
-    if (data.fearGreedIndex <= 55) return 'text-[#60a5fa]';
-    if (data.fearGreedIndex < 75) return 'text-[#f3a33a]';
-    return 'text-[#43d18b]';
-  }, [data.fearGreedIndex]);
+  const items = useMemo<TapeEntry[]>(() => {
+    const tone = (pct: number | null) => (pct === null ? 'text-[#a8b5c2]' : pct >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]');
+    const pct = (val: number | null) => (val === null ? '-' : `${val >= 0 ? '+' : ''}${val.toFixed(2)}%`);
 
-  const toneClass = (pct: number | null) => {
-    if (pct === null) return 'text-[#a8b5c2]';
-    if (pct >= 0) return 'text-[#43d18b]';
-    return 'text-[#ff6b6b]';
-  };
-
-  const formatPct = (val: number | null) => {
-    if (val === null) return '-';
-    const sign = val >= 0 ? '+' : '';
-    return `${sign}${val.toFixed(2)}%`;
-  };
+    const out: TapeEntry[] = [];
+    if (data.sp500Price !== null)
+      out.push({ key: 'spx', label: 'S&P 500', value: formatNumber(data.sp500Price), change: pct(data.sp500ChangePct), changeTone: tone(data.sp500ChangePct), href: 'https://finance.yahoo.com/quote/%5EGSPC/' });
+    if (data.nasdaqPrice !== null)
+      out.push({ key: 'ndx', label: 'Nasdaq', value: formatNumber(data.nasdaqPrice), change: pct(data.nasdaqChangePct), changeTone: tone(data.nasdaqChangePct), href: 'https://finance.yahoo.com/quote/%5EIXIC/' });
+    if (data.dowPrice !== null)
+      out.push({ key: 'dji', label: 'Dow', value: formatNumber(data.dowPrice), change: pct(data.dowChangePct), changeTone: tone(data.dowChangePct), href: 'https://finance.yahoo.com/quote/%5EDJI/' });
+    if (data.vixPrice !== null)
+      out.push({ key: 'vix', label: 'VIX', value: formatNumber(data.vixPrice, 2), change: pct(data.vixChangePct), changeTone: tone(data.vixChangePct), href: 'https://finance.yahoo.com/quote/%5EVIX/' });
+    if (data.yield10y !== null)
+      out.push({ key: '10y', label: '10Y yield', value: `${data.yield10y.toFixed(2)}%`, change: pct(data.yield10yChangePct), changeTone: tone(data.yield10yChangePct), href: 'https://finance.yahoo.com/quote/%5ETNX/' });
+    if (data.goldPrice !== null)
+      out.push({ key: 'gold', label: 'Gold', value: `$${formatNumber(data.goldPrice)}`, change: pct(data.goldChangePct), changeTone: tone(data.goldChangePct), href: 'https://finance.yahoo.com/quote/GC%3DF/' });
+    if (data.oilPrice !== null)
+      out.push({ key: 'oil', label: 'Oil', value: `$${formatNumber(data.oilPrice, 2)}`, change: pct(data.oilChangePct), changeTone: tone(data.oilChangePct), href: 'https://finance.yahoo.com/quote/CL%3DF/' });
+    if (data.btcPrice !== null)
+      out.push({ key: 'btc', label: 'BTC', value: `$${formatNumber(data.btcPrice)}`, change: pct(data.btcChangePct), changeTone: tone(data.btcChangePct), href: 'https://finance.yahoo.com/quote/BTC-USD/' });
+    if (data.fearGreedIndex !== null)
+      out.push({ key: 'fg', label: 'Fear & Greed', value: String(data.fearGreedIndex), change: data.fearGreedLabel || '-', changeTone: 'text-[#8190a0]', href: 'https://edition.cnn.com/markets/fear-and-greed' });
+    return out;
+  }, [data]);
 
   return (
-    <div className="terminal-panel glass-hero rounded-md p-2.5 overflow-hidden">
-      <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0">
-        {/* Regime badge */}
-        <div className={`shrink-0 rounded border ${regimeColor} px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em]`}>
+    <div className="intel-marquee terminal-panel glass-hero relative flex items-center overflow-hidden rounded-md">
+      {/* Fixed regime badge - the tape scrolls behind it */}
+      <div className="z-20 flex shrink-0 items-center border-r border-[#1b2530] bg-[#0b1016] px-3 py-2">
+        <span className={`rounded border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] ${regimeColor}`}>
           {data.regime.replace('_', ' ')}
+        </span>
+      </div>
+
+      {/* Scrolling track (items duplicated for a seamless loop) */}
+      <div className="relative min-w-0 flex-1 overflow-hidden py-2">
+        <div className="context-track flex w-max items-center">
+          {[...items, ...items].map((item, i) => (
+            <a
+              key={`${item.key}-${i}`}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`Open source for ${item.label}`}
+              className="inline-flex shrink-0 items-baseline gap-1.5 border-r border-[#1b2530] px-4 font-mono transition hover:bg-[#101720]"
+            >
+              <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{item.label}</span>
+              <span className="text-xs font-semibold text-[#dbe5ee]">{item.value}</span>
+              <span className={`text-[11px] ${item.changeTone}`}>{item.change}</span>
+            </a>
+          ))}
         </div>
-
-        {/* S&P 500 */}
-        {data.sp500Price !== null && (
-          <div className="shrink-0 flex flex-col items-start gap-0.5 text-xs font-mono">
-            <span className="text-[#8190a0] uppercase tracking-[0.14em]">S&P 500</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[#dbe5ee] font-semibold">{formatNumber(data.sp500Price)}</span>
-              <span className={toneClass(data.sp500ChangePct)}>{formatPct(data.sp500ChangePct)}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Nasdaq */}
-        {data.nasdaqPrice !== null && (
-          <div className="shrink-0 flex flex-col items-start gap-0.5 text-xs font-mono">
-            <span className="text-[#8190a0] uppercase tracking-[0.14em]">Nasdaq</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[#dbe5ee] font-semibold">{formatNumber(data.nasdaqPrice)}</span>
-              <span className={toneClass(data.nasdaqChangePct)}>{formatPct(data.nasdaqChangePct)}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Dow */}
-        {data.dowPrice !== null && (
-          <div className="shrink-0 flex flex-col items-start gap-0.5 text-xs font-mono">
-            <span className="text-[#8190a0] uppercase tracking-[0.14em]">Dow</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[#dbe5ee] font-semibold">{formatNumber(data.dowPrice)}</span>
-              <span className={toneClass(data.dowChangePct)}>{formatPct(data.dowChangePct)}</span>
-            </div>
-          </div>
-        )}
-
-        {/* VIX */}
-        {data.vixPrice !== null && (
-          <div className="shrink-0 flex flex-col items-start gap-0.5 text-xs font-mono">
-            <span className="text-[#8190a0] uppercase tracking-[0.14em]">VIX</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[#dbe5ee] font-semibold">{formatNumber(data.vixPrice, 2)}</span>
-              <span className={toneClass(data.vixChangePct)}>{formatPct(data.vixChangePct)}</span>
-            </div>
-          </div>
-        )}
-
-        {/* 10Y Yield */}
-        {data.yield10y !== null && (
-          <div className="shrink-0 flex flex-col items-start gap-0.5 text-xs font-mono">
-            <span className="text-[#8190a0] uppercase tracking-[0.14em]">10Y Yield</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[#dbe5ee] font-semibold">{data.yield10y.toFixed(2)}%</span>
-              <span className={toneClass(data.yield10yChangePct)}>{formatPct(data.yield10yChangePct)}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Gold */}
-        {data.goldPrice !== null && (
-          <div className="shrink-0 flex flex-col items-start gap-0.5 text-xs font-mono">
-            <span className="text-[#8190a0] uppercase tracking-[0.14em]">Gold</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[#dbe5ee] font-semibold">${formatNumber(data.goldPrice)}</span>
-              <span className={toneClass(data.goldChangePct)}>{formatPct(data.goldChangePct)}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Oil */}
-        {data.oilPrice !== null && (
-          <div className="shrink-0 flex flex-col items-start gap-0.5 text-xs font-mono">
-            <span className="text-[#8190a0] uppercase tracking-[0.14em]">Oil</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[#dbe5ee] font-semibold">${formatNumber(data.oilPrice, 2)}</span>
-              <span className={toneClass(data.oilChangePct)}>{formatPct(data.oilChangePct)}</span>
-            </div>
-          </div>
-        )}
-
-        {/* BTC */}
-        {data.btcPrice !== null && (
-          <div className="shrink-0 flex flex-col items-start gap-0.5 text-xs font-mono">
-            <span className="text-[#8190a0] uppercase tracking-[0.14em]">BTC</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[#dbe5ee] font-semibold">${formatNumber(data.btcPrice)}</span>
-              <span className={toneClass(data.btcChangePct)}>{formatPct(data.btcChangePct)}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Fear & Greed */}
-        {data.fearGreedIndex !== null && (
-          <div className="shrink-0 flex flex-col items-start gap-0.5 text-xs font-mono">
-            <span className="text-[#8190a0] uppercase tracking-[0.14em]">F&G</span>
-            <div className="flex items-baseline gap-1">
-              <span className={`font-semibold ${fearGreedColor}`}>{data.fearGreedIndex}</span>
-              <span className="text-[#8190a0]">{data.fearGreedLabel || '-'}</span>
-            </div>
-          </div>
-        )}
+        {/* Right edge fade */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[#0b1016] to-transparent" />
       </div>
     </div>
   );
