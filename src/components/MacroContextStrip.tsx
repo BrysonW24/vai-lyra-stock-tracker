@@ -58,7 +58,7 @@ export function MacroContextStrip({ data }: { data: MacroSnapshot }) {
 
       {/* Scrolling track (items duplicated for a seamless loop) */}
       <div className="relative min-w-0 flex-1 overflow-hidden py-2">
-        <div className="context-track flex w-max items-center">
+        <div className="macro-track flex w-max items-center">
           {[...items, ...items].map((item, i) =>
             item.href ? (
               <a
