@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 /** Independently-toggleable studies. BB overlays price; RSI + MACD are sub-panes. */
 export interface ChartIndicators {
@@ -64,7 +64,10 @@ export function TradingViewChart({
   const [interval, setInterval] = useState<string>('D');
 
   const tvSymbol = `${exchange}:${symbol}`.toUpperCase();
-  const frameHeight = height ?? (compact ? 340 : 480);
+  // RSI and MACD each open a sub-pane below the price; give the frame real room for
+  // them so a multi-study chart is legible instead of squeezed (BB overlays price).
+  const subPanes = (indicators.rsi ? 1 : 0) + (indicators.macd ? 1 : 0);
+  const frameHeight = (height ?? (compact ? 340 : 480)) + subPanes * (compact ? 70 : 96);
 
   const activeStudies = (Object.keys(STUDY_ID) as (keyof ChartIndicators)[]).filter((k) => indicators[k]);
   const studyLabel = activeStudies.length
@@ -121,16 +124,28 @@ export function TradingViewChart({
     </div>
   );
 
+  // TradingView studies can only change by reloading the embed, so the iframe
+  // remounts on every toggle (its src changes). Cover the reload with a loading
+  // state so a momentarily-blank chart never reads as "broken".
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => setLoaded(false), [src]);
+
   const frame = (
-    <div style={{ height: frameHeight }} className="w-full bg-[#0d1117]">
+    <div style={{ height: frameHeight }} className="relative w-full bg-[#0d1117]">
       <iframe
         key={src}
         src={src}
         title={`${tvSymbol} price chart`}
         loading="lazy"
+        onLoad={() => setLoaded(true)}
         className="h-full w-full border-0"
         allow="clipboard-write"
       />
+      {!loaded && (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-[#0d1117]">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#5f6b78]">Loading {studyLabel}...</span>
+        </div>
+      )}
     </div>
   );
 
