@@ -77,6 +77,17 @@ export default async function OverviewPage() {
 
         <MetricStrip data={data} />
 
+        {/* Compact ticker summary - moved up: it is the fastest read of the radar. */}
+        <Suspense fallback={<div className="terminal-panel rounded-md p-4 text-sm text-[#8190a0]">Loading compact ticker feed...</div>}>
+          <SignalTable
+            signals={data.signals.slice(0, 5)}
+            compact
+            portfolioSymbols={data.portfolio.map((holding) => holding.symbol)}
+            watchlistSymbols={data.watchlist.map((item) => item.symbol)}
+            title="Compact ticker feed"
+          />
+        </Suspense>
+
         <MarketContextStrip data={marketContext} />
 
         <MacroContextStrip data={macroContext} />
@@ -210,15 +221,6 @@ export default async function OverviewPage() {
           </div>
         </section>
 
-        <Suspense fallback={<div className="terminal-panel rounded-md p-4 text-sm text-[#8190a0]">Loading compact ticker feed...</div>}>
-          <SignalTable
-            signals={data.signals.slice(0, 5)}
-            compact
-            portfolioSymbols={data.portfolio.map((holding) => holding.symbol)}
-            watchlistSymbols={data.watchlist.map((item) => item.symbol)}
-            title="Compact ticker feed"
-          />
-        </Suspense>
       </div>
     </AppShell>
   );
