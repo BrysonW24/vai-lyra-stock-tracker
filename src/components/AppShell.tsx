@@ -31,7 +31,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import type { DashboardData } from '@/types/scanner';
 import { relativeTime } from '@/lib/format';
 import { BrandLogo } from '@/components/BrandLogo';
-import { AlertControl } from '@/components/AlertControl';
+import { AlertStatusBadge } from '@/components/AlertStatusBadge';
 import { AccountMenu } from '@/components/AccountMenu';
 
 // Full section map. Desktop shows it as an icon rail; below xl the same list
@@ -131,7 +131,7 @@ export function AppShell({ data, children }: AppShellProps) {
               {data.latestRun.timeframe.toUpperCase()}
             </span>
 
-            <AlertControl />
+            <AlertStatusBadge />
 
             {/* Live Wire shortcut - signals first; the live feed is one tap from anywhere.
                 Green pulse = signals are live. Sits to the right of the Live alert control. */}
