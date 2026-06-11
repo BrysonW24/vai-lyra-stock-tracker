@@ -145,7 +145,7 @@ export function MetricStrip({ data }: MetricStripProps) {
             faces={tile.faces.map((face, fi) => (
               <FaceBlock key={fi} face={face} icon={tile.icon} />
             ))}
-            offsetMs={i * 700}
+            intervalMs={5000} offsetMs={i * 120}
           />
         </div>
       ))}
