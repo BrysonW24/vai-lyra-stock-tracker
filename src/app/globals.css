@@ -259,7 +259,7 @@ textarea {
 
 /* Context strips (market regime / local macro) - shorter tapes, faster loop. */
 .context-track {
-  animation: marquee 70s linear infinite;
+  animation: marquee 47s linear infinite;
 }
 
 .intel-marquee:hover .intel-track,

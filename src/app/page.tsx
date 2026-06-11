@@ -5,6 +5,7 @@ import { AppShell } from '@/components/AppShell';
 import { DailyBriefCard } from '@/components/DailyBriefCard';
 import { ExecutiveStrip } from '@/components/ExecutiveStrip';
 import { SignalEventsPanel } from '@/components/SignalEventsPanel';
+import { WatchlistTriggerBoard } from '@/components/WatchlistTriggerBoard';
 import type { SignalRow } from '@/types/scanner';
 import { HoldingsMomentumBoard } from '@/components/HoldingsMomentumBoard';
 import { GettingStartedBanner } from '@/components/GettingStartedBanner';
@@ -145,24 +146,7 @@ export default async function OverviewPage() {
         <HoldingsMomentumBoard holdings={data.portfolio} signals={data.signals} tickers={data.tickers} />
 
         <section className="grid gap-3 xl:grid-cols-[0.85fr_1.15fr]">
-          <div className="terminal-panel overflow-hidden rounded-md">
-            <div className="border-b border-[#1b2530] px-3 py-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Watchlist near trigger</p>
-              <p className="mt-0.5 font-mono text-[10px] text-[#a8b5c2]">Backend watchlist overlay state</p>
-            </div>
-            <div className="divide-y divide-[#1b2530]">
-              {watchlistNearTrigger.map((item) => (
-                <div className="grid grid-cols-[72px_1fr_84px] items-center gap-3 px-3 py-2 font-mono text-xs" key={item.symbol}>
-                  <Link href={`/tickers/${item.symbol}`} className="font-semibold text-[#eef3f8]">{item.symbol}</Link>
-                  <div className="min-w-0">
-                    <p className="truncate text-[#dbe5ee]">{item.triggerState.replaceAll('_', ' ')} | target {formatCurrency(item.targetBuyZone)}</p>
-                    <p className="truncate text-[#8190a0]">Score {item.signalScore} {formatSignedNumber(item.scoreDelta, 0)} | dist {formatPercent(item.distanceToTarget)}</p>
-                  </div>
-                  <span className="justify-self-end rounded border border-[#9a6a1f] bg-[#2a1f0f] px-2 py-1 text-[#f3a33a]">{item.alertStatus}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <WatchlistTriggerBoard rows={watchlistNearTrigger} />
 
           <div className="terminal-panel overflow-hidden rounded-md">
             <div className="flex items-center justify-between border-b border-[#1b2530] px-3 py-2">

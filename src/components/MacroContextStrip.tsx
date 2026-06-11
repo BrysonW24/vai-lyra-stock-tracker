@@ -22,6 +22,13 @@ const DIR_GLYPH: Record<DeltaDirection, string> = { up: '▲', down: '▼', flat
  */
 export function MacroContextStrip({ data }: { data: MacroSnapshot }) {
   const items = [
+    {
+      key: 'read',
+      label: 'Read',
+      value: '',
+      change: '',
+      implication: `${data.stanceLabel} into a soft but stable economy - a supportive backdrop for risk.`,
+    },
     ...data.indicators.map((indicator) => ({
       key: indicator.label,
       label: indicator.label,
@@ -29,6 +36,7 @@ export function MacroContextStrip({ data }: { data: MacroSnapshot }) {
       change: indicator.change ? `${indicator.direction ? `${DIR_GLYPH[indicator.direction]} ` : ''}${indicator.change}` : '',
       href: indicator.sourceUrl,
       source: indicator.source,
+      implication: indicator.implication,
     })),
     {
       key: 'chart-pack',
@@ -38,7 +46,7 @@ export function MacroContextStrip({ data }: { data: MacroSnapshot }) {
       href: data.chartPackUrl,
       source: 'RBA',
     },
-  ];
+  ] as { key: string; label: string; value: string; change: string; href?: string; source?: string; implication?: string }[];
 
   return (
     <div className="intel-marquee terminal-panel glass-hero relative flex items-center overflow-hidden rounded-md">
@@ -64,7 +72,8 @@ export function MacroContextStrip({ data }: { data: MacroSnapshot }) {
                 <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{item.label}</span>
                 {item.value && <span className="text-xs font-semibold text-[#dbe5ee]">{item.value}</span>}
                 {item.change && <span className="text-[11px] text-[#8190a0]">{item.change}</span>}
-                {!item.value && <ArrowUpRight size={11} className="self-center text-[#8190a0]" />}
+                {item.implication && <span className="text-[11px] text-[#6f7d8a]">- {item.implication}</span>}
+                {!item.value && !item.implication && <ArrowUpRight size={11} className="self-center text-[#8190a0]" />}
               </a>
             ) : (
               <span
@@ -74,6 +83,7 @@ export function MacroContextStrip({ data }: { data: MacroSnapshot }) {
                 <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{item.label}</span>
                 {item.value && <span className="text-xs font-semibold text-[#dbe5ee]">{item.value}</span>}
                 {item.change && <span className="text-[11px] text-[#8190a0]">{item.change}</span>}
+                {item.implication && <span className="text-[11px] text-[#6f7d8a]">- {item.implication}</span>}
               </span>
             ),
           )}

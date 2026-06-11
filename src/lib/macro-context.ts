@@ -27,6 +27,8 @@ export interface MacroIndicator {
   source?: string;
   /** Link to the primary source release - tapping the indicator opens it. */
   sourceUrl?: string;
+  /** Plain-English "so what" - why this number matters for markets right now. */
+  implication?: string;
 }
 
 export interface MacroSnapshot {
@@ -50,13 +52,13 @@ const AUSTRALIA_DEMO: MacroSnapshot = {
   stanceLabel: 'RBA easing',
   asOf: '2026-06-06',
   indicators: [
-    { label: 'Cash rate', value: '3.85%', change: '-0.25', direction: 'down', source: 'RBA', sourceUrl: 'https://www.rba.gov.au/statistics/cash-rate/' },
-    { label: 'CPI (YoY)', value: '2.8%', change: '-0.3', direction: 'down', source: 'ABS', sourceUrl: 'https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/consumer-price-index-australia/latest-release' },
-    { label: 'Unemployment', value: '4.3%', change: '+0.1', direction: 'up', source: 'ABS', sourceUrl: 'https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia/latest-release' },
-    { label: 'GDP (YoY)', value: '1.8%', change: '+0.2', direction: 'up', source: 'ABS', sourceUrl: 'https://www.abs.gov.au/statistics/economy/national-accounts/australian-national-accounts-national-income-expenditure-and-product/latest-release' },
-    { label: 'Wages (WPI)', value: '3.5%', change: '-0.1', direction: 'down', source: 'ABS', sourceUrl: 'https://www.abs.gov.au/statistics/labour/earnings-and-working-conditions/wage-price-index-australia/latest-release' },
-    { label: 'AUD/USD', value: '0.668', change: '+0.34%', direction: 'up', source: 'RBA', sourceUrl: 'https://www.rba.gov.au/statistics/frequency/exchange-rates.html' },
-    { label: 'ASX 200', value: '8,120.5', change: '+0.41%', direction: 'up', source: 'ASX', sourceUrl: 'https://finance.yahoo.com/quote/%5EAXJO/' },
+    { label: 'Cash rate', value: '3.85%', change: '-0.25', direction: 'down', source: 'RBA', sourceUrl: 'https://www.rba.gov.au/statistics/cash-rate/', implication: 'rate cuts ease financial conditions - a tailwind for risk assets' },
+    { label: 'CPI (YoY)', value: '2.8%', change: '-0.3', direction: 'down', source: 'ABS', sourceUrl: 'https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/consumer-price-index-australia/latest-release', implication: 'inside the RBA 2-3% band - gives room to keep easing' },
+    { label: 'Unemployment', value: '4.3%', change: '+0.1', direction: 'up', source: 'ABS', sourceUrl: 'https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia/latest-release', implication: 'labour softening - dovish, supports more cuts' },
+    { label: 'GDP (YoY)', value: '1.8%', change: '+0.2', direction: 'up', source: 'ABS', sourceUrl: 'https://www.abs.gov.au/statistics/economy/national-accounts/australian-national-accounts-national-income-expenditure-and-product/latest-release', implication: 'soft but positive growth - no recession signal' },
+    { label: 'Wages (WPI)', value: '3.5%', change: '-0.1', direction: 'down', source: 'ABS', sourceUrl: 'https://www.abs.gov.au/statistics/labour/earnings-and-working-conditions/wage-price-index-australia/latest-release', implication: 'wage pressure easing - keeps inflation contained' },
+    { label: 'AUD/USD', value: '0.668', change: '+0.34%', direction: 'up', source: 'RBA', sourceUrl: 'https://www.rba.gov.au/statistics/frequency/exchange-rates.html', implication: 'a softer AUD flatters offshore-earning exporters' },
+    { label: 'ASX 200', value: '8,120.5', change: '+0.41%', direction: 'up', source: 'ASX', sourceUrl: 'https://finance.yahoo.com/quote/%5EAXJO/', implication: 'local market firm - risk appetite holding up' },
   ],
   chartPackUrl: 'https://www.rba.gov.au/chart-pack/',
   chartPackLabel: 'RBA chart pack',
