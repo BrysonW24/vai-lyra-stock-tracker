@@ -12,6 +12,7 @@ import {
   type AlertFrequency,
   type AlertScope,
 } from '@/lib/alert-prefs';
+import { OPEN_ACCOUNT_MENU_EVENT } from '@/components/AlertStatusBadge';
 import { createSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase/client';
 
 /**
@@ -39,6 +40,13 @@ export function AccountMenu() {
     // Reflect edits made on the settings page (incl. other tabs).
     window.addEventListener('storage', read);
     return () => window.removeEventListener('storage', read);
+  }, []);
+
+  // Open the menu when the header alert badge is tapped (jumps to the mode controls).
+  useEffect(() => {
+    const openMenu = () => setOpen(true);
+    window.addEventListener(OPEN_ACCOUNT_MENU_EVENT, openMenu);
+    return () => window.removeEventListener(OPEN_ACCOUNT_MENU_EVENT, openMenu);
   }, []);
 
   useEffect(() => {
