@@ -1,0 +1,1073 @@
+[
+  {
+    "symbol": "MSFT",
+    "name": "Microsoft",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-hyperscalers",
+      "agi-frontier-labs"
+    ],
+    "sizeBucket": "mega",
+    "exposure": "direct",
+    "whyItMatters": "Largest hyperscaler capex programme in the AI buildout and the primary commercial channel for OpenAI models via Azure. Its data-centre spending sets the demand curve for the entire supply chain below it.",
+    "evidence": 97,
+    "evidenceSummary": "Disclosed capex guidance above 80B USD annually, Azure AI revenue run-rate disclosures, and the OpenAI commercial partnership on public record.",
+    "financialQuality": 97,
+    "liquidity": 99,
+    "crowding": 90,
+    "hypeRisk": 40,
+    "dilutionRisk": 3,
+    "risks": [
+      "AI capex may outrun monetisation for several years",
+      "Regulatory scrutiny of the OpenAI relationship",
+      "Azure growth deceleration would compress the multiple"
+    ]
+  },
+  {
+    "symbol": "NVDA",
+    "name": "NVIDIA",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-gpu-accelerators",
+      "semi-designers"
+    ],
+    "sizeBucket": "mega",
+    "exposure": "direct",
+    "whyItMatters": "Owns the dominant share of AI training and inference accelerators plus the CUDA software moat. Every hyperscaler capex announcement flows disproportionately to its data-centre segment.",
+    "evidence": 98,
+    "evidenceSummary": "Reported data-centre revenue in the tens of billions per quarter with disclosed hyperscaler purchase commitments and multi-year supply agreements.",
+    "financialQuality": 96,
+    "liquidity": 100,
+    "crowding": 97,
+    "hypeRisk": 65,
+    "dilutionRisk": 3,
+    "risks": [
+      "Customer concentration in a handful of hyperscalers",
+      "Custom silicon (TPU, Trainium, MTIA) eroding share over time",
+      "Cyclical air pocket if AI capex digests"
+    ]
+  },
+  {
+    "symbol": "TSM",
+    "name": "Taiwan Semiconductor Manufacturing",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-advanced-packaging",
+      "semi-foundries"
+    ],
+    "sizeBucket": "mega",
+    "exposure": "direct",
+    "whyItMatters": "Manufactures essentially every leading-edge AI accelerator and controls CoWoS advanced packaging, the single tightest physical bottleneck in the GPU supply chain.",
+    "evidence": 95,
+    "evidenceSummary": "Disclosed CoWoS capacity expansion plans, AI revenue contribution guidance, and Arizona fab commitments backed by CHIPS Act funding.",
+    "financialQuality": 92,
+    "liquidity": 96,
+    "crowding": 86,
+    "hypeRisk": 30,
+    "dilutionRisk": 3,
+    "risks": [
+      "Taiwan geopolitical concentration risk",
+      "Capex intensity pressures free cash flow in down cycles",
+      "Customer pressure on leading-edge pricing"
+    ]
+  },
+  {
+    "symbol": "ASML",
+    "name": "ASML Holding",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-semicap-equipment",
+      "semi-equipment"
+    ],
+    "sizeBucket": "mega",
+    "exposure": "supplier",
+    "whyItMatters": "Monopoly supplier of EUV lithography, without which no leading-edge AI chip can be printed. Backlog and bookings are a leading indicator for the whole semiconductor capex cycle.",
+    "evidence": 93,
+    "evidenceSummary": "Disclosed multi-year EUV and High-NA order backlog with named foundry customers and published bookings figures each quarter.",
+    "financialQuality": 91,
+    "liquidity": 94,
+    "crowding": 80,
+    "hypeRisk": 28,
+    "dilutionRisk": 2,
+    "risks": [
+      "Export controls limit China sales",
+      "Lumpy order timing creates guidance volatility",
+      "Foundry capex digestion delays tool shipments"
+    ]
+  },
+  {
+    "symbol": "AVGO",
+    "name": "Broadcom",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-gpu-accelerators",
+      "agi-optical-networking"
+    ],
+    "sizeBucket": "mega",
+    "exposure": "direct",
+    "whyItMatters": "The leading designer of custom AI accelerators (XPUs) for hyperscalers building alternatives to merchant GPUs, plus dominant Ethernet switching silicon for AI clusters.",
+    "evidence": 92,
+    "evidenceSummary": "Disclosed multi-billion-dollar AI semiconductor revenue and publicly discussed multi-year custom accelerator engagements with several large customers.",
+    "financialQuality": 82,
+    "liquidity": 97,
+    "crowding": 88,
+    "hypeRisk": 55,
+    "dilutionRisk": 10,
+    "risks": [
+      "High debt load from serial acquisitions",
+      "Custom silicon programmes can be cancelled or insourced",
+      "VMware integration execution risk"
+    ]
+  },
+  {
+    "symbol": "ANET",
+    "name": "Arista Networks",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-optical-networking"
+    ],
+    "sizeBucket": "large",
+    "exposure": "direct",
+    "whyItMatters": "Primary supplier of high-speed Ethernet switching for AI back-end networks at Microsoft and Meta. AI cluster networking is shifting from InfiniBand toward Ethernet, which is its home turf.",
+    "evidence": 90,
+    "evidenceSummary": "Disclosed AI back-end networking revenue targets and named cloud titan customer concentration in filings.",
+    "financialQuality": 92,
+    "liquidity": 92,
+    "crowding": 83,
+    "hypeRisk": 48,
+    "dilutionRisk": 4,
+    "risks": [
+      "Two customers drive a large share of revenue",
+      "NVIDIA Spectrum-X competes directly for AI Ethernet",
+      "White-box switching pressure on margins"
+    ]
+  },
+  {
+    "symbol": "VRT",
+    "name": "Vertiv Holdings",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-cooling-thermal",
+      "agi-transformers-switchgear"
+    ],
+    "sizeBucket": "large",
+    "exposure": "direct",
+    "whyItMatters": "One of the few at-scale suppliers of liquid cooling and power management for AI data centres. Rack densities above 100kW make its thermal portfolio structurally more important each GPU generation.",
+    "evidence": 88,
+    "evidenceSummary": "Disclosed record order backlog, organic orders growth tied to AI deployments, and a co-development relationship with NVIDIA on reference architectures.",
+    "financialQuality": 78,
+    "liquidity": 88,
+    "crowding": 78,
+    "hypeRisk": 52,
+    "dilutionRisk": 8,
+    "risks": [
+      "Order timing is lumpy and tied to hyperscaler schedules",
+      "Liquid cooling attracts heavy new competition",
+      "Margin pressure if data-centre buildouts pause"
+    ]
+  },
+  {
+    "symbol": "ETN",
+    "name": "Eaton",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-transformers-switchgear",
+      "agi-grid-transmission",
+      "grid-transmission-equipment"
+    ],
+    "sizeBucket": "mega",
+    "exposure": "supplier",
+    "whyItMatters": "Supplies switchgear, busway, and power distribution across data centres and the grid that feeds them. Electrical equipment lead times stretching to years give it unusual pricing power.",
+    "evidence": 85,
+    "evidenceSummary": "Disclosed multi-year electrical backlog and data-centre segment orders growth in quarterly filings.",
+    "financialQuality": 88,
+    "liquidity": 93,
+    "crowding": 72,
+    "hypeRisk": 32,
+    "dilutionRisk": 4,
+    "risks": [
+      "Industrial cycle exposure beyond data centres",
+      "Backlog conversion slower than orders imply",
+      "Valuation already reflects electrification narrative"
+    ]
+  },
+  {
+    "symbol": "GEV",
+    "name": "GE Vernova",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-power-generation",
+      "agi-grid-transmission",
+      "agi-transformers-switchgear"
+    ],
+    "sizeBucket": "large",
+    "exposure": "supplier",
+    "whyItMatters": "One of three global gas-turbine manufacturers at a time when data-centre power demand has sold out turbine slots into the late 2020s. Also a major grid equipment and wind player.",
+    "evidence": 86,
+    "evidenceSummary": "Disclosed gas turbine slot reservations sold out years forward and published equipment backlog by segment.",
+    "financialQuality": 75,
+    "liquidity": 90,
+    "crowding": 76,
+    "hypeRisk": 45,
+    "dilutionRisk": 5,
+    "risks": [
+      "Wind segment losses drag on group economics",
+      "Turbine capacity expansion could overshoot demand",
+      "Execution risk on a young standalone company"
+    ]
+  },
+  {
+    "symbol": "CEG",
+    "name": "Constellation Energy",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-power-generation",
+      "agi-nuclear-smr"
+    ],
+    "sizeBucket": "large",
+    "exposure": "direct",
+    "whyItMatters": "Largest US nuclear fleet operator and the first to sign a dedicated data-centre nuclear PPA at scale, restarting Three Mile Island Unit 1 for Microsoft. Clean firm power is the scarcest input in the AI buildout.",
+    "evidence": 88,
+    "evidenceSummary": "Signed 20-year Microsoft power purchase agreement for the Crane Clean Energy Center restart, on public record with disclosed economics.",
+    "financialQuality": 82,
+    "liquidity": 90,
+    "crowding": 74,
+    "hypeRisk": 48,
+    "dilutionRisk": 4,
+    "risks": [
+      "Regulatory treatment of co-located data-centre deals",
+      "Power price normalisation would compress margins",
+      "Nuclear operating incidents carry asymmetric downside"
+    ]
+  },
+  {
+    "symbol": "VST",
+    "name": "Vistra",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-power-generation"
+    ],
+    "sizeBucket": "large",
+    "exposure": "direct",
+    "whyItMatters": "Independent power producer with nuclear and gas fleets in the tightest US power markets. Data-centre demand has repriced its entire generation portfolio upward.",
+    "evidence": 80,
+    "evidenceSummary": "Disclosed hedged generation margins, nuclear fleet acquisition (Energy Harbor), and ongoing data-centre contracting discussions in earnings materials.",
+    "financialQuality": 75,
+    "liquidity": 89,
+    "crowding": 76,
+    "hypeRisk": 55,
+    "dilutionRisk": 7,
+    "risks": [
+      "Merchant power price exposure cuts both ways",
+      "Heavily owned by momentum funds after a large re-rate",
+      "Texas market regulatory intervention risk"
+    ]
+  },
+  {
+    "symbol": "MOD",
+    "name": "Modine Manufacturing",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-cooling-thermal"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "supplier",
+    "whyItMatters": "Legacy auto thermal company that pivoted into data-centre cooling, with its Airedale unit supplying chillers and CDUs to hyperscale and colocation customers.",
+    "evidence": 72,
+    "evidenceSummary": "Disclosed data-centre segment revenue growth above 50 percent and announced capacity expansions for cooling production.",
+    "financialQuality": 68,
+    "liquidity": 70,
+    "crowding": 56,
+    "hypeRisk": 45,
+    "dilutionRisk": 10,
+    "risks": [
+      "Legacy vehicular business dilutes the data-centre story",
+      "Competes with much larger HVAC incumbents",
+      "Customer concentration in a few colocation builders"
+    ]
+  },
+  {
+    "symbol": "POWL",
+    "name": "Powell Industries",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-transformers-switchgear"
+    ],
+    "sizeBucket": "small",
+    "exposure": "supplier",
+    "whyItMatters": "Builds custom-engineered switchgear and power control rooms with multi-year lead times. Data-centre and utility orders are layering on top of its oil and gas base, driving record backlog.",
+    "evidence": 74,
+    "evidenceSummary": "Disclosed record order backlog and growing commercial and data-centre bookings mix in quarterly filings.",
+    "financialQuality": 72,
+    "liquidity": 48,
+    "crowding": 42,
+    "hypeRisk": 35,
+    "dilutionRisk": 6,
+    "risks": [
+      "Project-based revenue is lumpy",
+      "Oil and gas cycle still drives a large share of orders",
+      "Capacity constraints limit how fast backlog converts"
+    ]
+  },
+  {
+    "symbol": "CRDO",
+    "name": "Credo Technology",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-optical-networking"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "direct",
+    "whyItMatters": "Supplies active electrical cables and SerDes connectivity used to wire GPUs inside AI racks. AEC adoption rises with every increase in rack density.",
+    "evidence": 76,
+    "evidenceSummary": "Disclosed hyperscaler design wins and revenue inflection driven by AEC shipments to named large customers.",
+    "financialQuality": 66,
+    "liquidity": 62,
+    "crowding": 68,
+    "hypeRisk": 60,
+    "dilutionRisk": 14,
+    "risks": [
+      "Heavy customer concentration",
+      "Connectivity standards can shift between GPU generations",
+      "Valuation embeds flawless execution"
+    ]
+  },
+  {
+    "symbol": "ALAB",
+    "name": "Astera Labs",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-optical-networking"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "direct",
+    "whyItMatters": "Sells PCIe retimers, smart cable modules, and fabric switches that solve signal integrity inside AI servers. Effectively a pure-play toll on GPU rack complexity.",
+    "evidence": 74,
+    "evidenceSummary": "Disclosed design wins across major AI server programmes and rapid post-IPO revenue growth in filings.",
+    "financialQuality": 62,
+    "liquidity": 60,
+    "crowding": 76,
+    "hypeRisk": 68,
+    "dilutionRisk": 20,
+    "risks": [
+      "Competes against in-house silicon at large customers",
+      "Post-IPO lockup and insider supply overhang",
+      "Single product family drives most revenue"
+    ]
+  },
+  {
+    "symbol": "APLD",
+    "name": "Applied Digital",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-neoclouds",
+      "agi-data-centre-reits"
+    ],
+    "sizeBucket": "small",
+    "exposure": "direct",
+    "whyItMatters": "Converts power-rich North Dakota sites into AI data-centre campuses leased to GPU cloud tenants. A levered, dilution-funded bet on the neocloud buildout.",
+    "evidence": 62,
+    "evidenceSummary": "Signed multi-year CoreWeave lease agreements for the Ellendale campus disclosed in filings, with financing packages announced alongside.",
+    "financialQuality": 30,
+    "liquidity": 58,
+    "crowding": 58,
+    "hypeRisk": 72,
+    "dilutionRisk": 85,
+    "risks": [
+      "Serial equity issuance funds the buildout",
+      "Single-tenant concentration risk",
+      "Negative free cash flow until campuses fully lease"
+    ]
+  },
+  {
+    "symbol": "IREN",
+    "name": "IREN",
+    "theme": "agi-infrastructure",
+    "nodes": [
+      "agi-neoclouds",
+      "agi-power-generation"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "direct",
+    "whyItMatters": "Former bitcoin miner redeploying its renewable-powered sites and grid connections into GPU cloud services. Secured power capacity is the scarce asset; the pivot quality is the open question.",
+    "evidence": 60,
+    "evidenceSummary": "Disclosed contracted power capacity, deployed GPU counts, and AI cloud revenue figures in operating updates.",
+    "financialQuality": 45,
+    "liquidity": 62,
+    "crowding": 60,
+    "hypeRisk": 66,
+    "dilutionRisk": 62,
+    "risks": [
+      "Equity raises have funded each expansion phase",
+      "Bitcoin mining revenue is volatile and capital hungry",
+      "Neocloud pricing could compress as supply arrives"
+    ]
+  },
+  {
+    "symbol": "RKLB",
+    "name": "Rocket Lab",
+    "theme": "space-economy",
+    "nodes": [
+      "space-launch-providers",
+      "space-satellites",
+      "space-defence-payloads"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "direct",
+    "whyItMatters": "The only proven small-launch alternative to SpaceX, with Electron flying at high cadence and Neutron targeting the medium-lift gap. Space systems now drives most revenue, making it a vertically integrated prime in miniature.",
+    "evidence": 82,
+    "evidenceSummary": "Disclosed launch backlog, SDA satellite contract awards worth over 500M USD, and published Electron flight cadence.",
+    "financialQuality": 50,
+    "liquidity": 72,
+    "crowding": 70,
+    "hypeRisk": 62,
+    "dilutionRisk": 38,
+    "risks": [
+      "Neutron development schedule and cost risk",
+      "Still free-cash-flow negative",
+      "SpaceX price pressure on launch economics"
+    ]
+  },
+  {
+    "symbol": "LUNR",
+    "name": "Intuitive Machines",
+    "theme": "space-economy",
+    "nodes": [
+      "space-in-space-services",
+      "space-defence-payloads"
+    ],
+    "sizeBucket": "small",
+    "exposure": "direct",
+    "whyItMatters": "First commercial company to soft-land on the Moon, anchored by NASA CLPS missions and the Near Space Network services contract. A concentrated bet on the cislunar economy actually materialising.",
+    "evidence": 65,
+    "evidenceSummary": "NASA CLPS task orders and the Near Space Network contract with a ceiling above 4B USD on public record.",
+    "financialQuality": 35,
+    "liquidity": 55,
+    "crowding": 48,
+    "hypeRisk": 62,
+    "dilutionRisk": 58,
+    "risks": [
+      "Mission failures directly hit the stock",
+      "Revenue concentrated in NASA programmes",
+      "Cash burn requires periodic capital raises"
+    ]
+  },
+  {
+    "symbol": "RDW",
+    "name": "Redwire",
+    "theme": "space-economy",
+    "nodes": [
+      "space-in-space-services",
+      "space-satellites"
+    ],
+    "sizeBucket": "small",
+    "exposure": "direct",
+    "whyItMatters": "Space infrastructure roll-up supplying solar arrays, structures, and in-space manufacturing capabilities across civil and defence programmes. Broad exposure without single-mission concentration.",
+    "evidence": 60,
+    "evidenceSummary": "Disclosed contracted backlog across NASA and defence programmes plus announced acquisitions expanding the defence drone portfolio.",
+    "financialQuality": 35,
+    "liquidity": 50,
+    "crowding": 40,
+    "hypeRisk": 55,
+    "dilutionRisk": 60,
+    "risks": [
+      "Roll-up integration and goodwill risk",
+      "Thin margins on government cost-plus work",
+      "Dilution has funded acquisitions"
+    ]
+  },
+  {
+    "symbol": "ASTS",
+    "name": "AST SpaceMobile",
+    "theme": "space-economy",
+    "nodes": [
+      "space-satellites",
+      "space-comms-ground"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "direct",
+    "whyItMatters": "Building a space-based cellular broadband network that connects standard smartphones directly to satellites. The addressable market is enormous; the constellation is still mostly unbuilt.",
+    "evidence": 55,
+    "evidenceSummary": "Definitive commercial agreements with AT&T and Verizon plus successful BlueBird test satellite calls on public record.",
+    "financialQuality": 30,
+    "liquidity": 75,
+    "crowding": 80,
+    "hypeRisk": 85,
+    "dilutionRisk": 70,
+    "risks": [
+      "Tens of satellites still needed for continuous service",
+      "Repeated capital raises to fund constellation",
+      "Launch cadence dependence on third parties"
+    ]
+  },
+  {
+    "symbol": "KTOS",
+    "name": "Kratos Defense and Security",
+    "theme": "space-economy",
+    "nodes": [
+      "space-defence-payloads",
+      "def-drones-autonomy"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "direct",
+    "whyItMatters": "Supplies hypersonic test vehicles, jet drones, and satellite ground systems to the Pentagon. Sits across two priority budget lines: affordable attritable aircraft and space resilience.",
+    "evidence": 78,
+    "evidenceSummary": "Disclosed multi-year hypersonic flight test contracts and Valkyrie drone programme awards in filings.",
+    "financialQuality": 60,
+    "liquidity": 68,
+    "crowding": 52,
+    "hypeRisk": 42,
+    "dilutionRisk": 28,
+    "risks": [
+      "Government budget timing slips programmes",
+      "Low-margin development contracts",
+      "Competition for the collaborative combat aircraft programme"
+    ]
+  },
+  {
+    "symbol": "HEI",
+    "name": "HEICO",
+    "theme": "space-economy",
+    "nodes": [
+      "space-avionics-radhard",
+      "def-primes"
+    ],
+    "sizeBucket": "large",
+    "exposure": "supplier",
+    "whyItMatters": "Family-run aerospace parts compounder whose electronic technologies group supplies radiation-hardened components into satellites and defence programmes. Quality exposure without constellation risk.",
+    "evidence": 85,
+    "evidenceSummary": "Decades of disclosed acquisition-driven revenue growth with defence and space electronics content in filings.",
+    "financialQuality": 88,
+    "liquidity": 80,
+    "crowding": 62,
+    "hypeRisk": 18,
+    "dilutionRisk": 5,
+    "risks": [
+      "Premium valuation for a parts supplier",
+      "Acquisition pipeline must keep replenishing growth",
+      "Commercial aero cycle exposure"
+    ]
+  },
+  {
+    "symbol": "BKSY",
+    "name": "BlackSky Technology",
+    "theme": "space-economy",
+    "nodes": [
+      "space-earth-observation",
+      "space-defence-payloads"
+    ],
+    "sizeBucket": "micro",
+    "exposure": "direct",
+    "whyItMatters": "Operates a high-revisit Earth observation constellation selling imagery and AI-derived analytics to defence and intelligence customers. Real government revenue at micro-cap scale.",
+    "evidence": 60,
+    "evidenceSummary": "NRO Electro-Optical Commercial Layer contract award and disclosed multi-year international defence contracts.",
+    "financialQuality": 30,
+    "liquidity": 35,
+    "crowding": 25,
+    "hypeRisk": 45,
+    "dilutionRisk": 65,
+    "risks": [
+      "Sub-scale against Planet and Maxar",
+      "Persistent cash burn",
+      "Government contract recompete risk"
+    ]
+  },
+  {
+    "symbol": "PWR",
+    "name": "Quanta Services",
+    "theme": "power-grid",
+    "nodes": [
+      "grid-engineering-services",
+      "agi-construction-engineering"
+    ],
+    "sizeBucket": "large",
+    "exposure": "direct",
+    "whyItMatters": "The largest specialty contractor building transmission lines, substations, and renewable interconnects in North America. Every AI data centre and grid upgrade ultimately needs its crews.",
+    "evidence": 90,
+    "evidenceSummary": "Disclosed record total backlog above 30B USD spanning multi-year utility and renewable programmes.",
+    "financialQuality": 85,
+    "liquidity": 90,
+    "crowding": 72,
+    "hypeRisk": 28,
+    "dilutionRisk": 5,
+    "risks": [
+      "Skilled labour availability caps growth",
+      "Fixed-price project execution risk",
+      "Valuation re-rated well above historical range"
+    ]
+  },
+  {
+    "symbol": "FLNC",
+    "name": "Fluence Energy",
+    "theme": "power-grid",
+    "nodes": [
+      "grid-storage-batteries"
+    ],
+    "sizeBucket": "small",
+    "exposure": "direct",
+    "whyItMatters": "Pure-play grid-scale battery storage integrator born from Siemens and AES. Storage is the fastest-growing grid asset class, but integration is a competitive, thin-margin business.",
+    "evidence": 70,
+    "evidenceSummary": "Disclosed multi-gigawatt-hour order backlog and deployed storage fleet figures in quarterly filings.",
+    "financialQuality": 40,
+    "liquidity": 55,
+    "crowding": 35,
+    "hypeRisk": 42,
+    "dilutionRisk": 45,
+    "risks": [
+      "Chinese battery integrators undercut pricing",
+      "Project margin volatility",
+      "Tariff and domestic content rule changes"
+    ]
+  },
+  {
+    "symbol": "CCJ",
+    "name": "Cameco",
+    "theme": "nuclear-uranium",
+    "nodes": [
+      "nuc-uranium-miners",
+      "nuc-enrichment-fuel"
+    ],
+    "sizeBucket": "large",
+    "exposure": "direct",
+    "whyItMatters": "The western world's largest listed uranium producer with tier-one assets in Saskatchewan and a 49 percent stake in Westinghouse. The default large-cap expression of the nuclear restart thesis.",
+    "evidence": 90,
+    "evidenceSummary": "Disclosed long-term contract book with utilities and published production volumes from McArthur River and Cigar Lake.",
+    "financialQuality": 80,
+    "liquidity": 88,
+    "crowding": 76,
+    "hypeRisk": 40,
+    "dilutionRisk": 6,
+    "risks": [
+      "Uranium spot price volatility",
+      "Kazakh joint venture geopolitical exposure",
+      "Westinghouse earnings lumpy"
+    ]
+  },
+  {
+    "symbol": "OKLO",
+    "name": "Oklo",
+    "theme": "nuclear-uranium",
+    "nodes": [
+      "nuc-reactors-smr",
+      "agi-nuclear-smr"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "direct",
+    "whyItMatters": "Sam Altman-backed fast microreactor developer targeting data-centre power with a build-own-operate model. Compelling narrative, but no licensed reactor and no revenue yet.",
+    "evidence": 30,
+    "evidenceSummary": "Non-binding letters of intent with data-centre operators and a DOE site use permit at Idaho National Laboratory; first NRC application was denied in 2022 and is being resubmitted.",
+    "financialQuality": 25,
+    "liquidity": 68,
+    "crowding": 80,
+    "hypeRisk": 90,
+    "dilutionRisk": 60,
+    "risks": [
+      "Pre-revenue with unproven licensing pathway",
+      "HALEU fuel supply is itself a bottleneck",
+      "Valuation is almost entirely narrative"
+    ]
+  },
+  {
+    "symbol": "LEU",
+    "name": "Centrus Energy",
+    "theme": "nuclear-uranium",
+    "nodes": [
+      "nuc-enrichment-fuel"
+    ],
+    "sizeBucket": "small",
+    "exposure": "direct",
+    "whyItMatters": "The only US-licensed producer of HALEU, the fuel every advanced reactor design requires. A policy-protected chokepoint as the West rebuilds enrichment independence from Russia.",
+    "evidence": 78,
+    "evidenceSummary": "DOE HALEU production contracts and disclosed LEU supply backlog with utility customers on public record.",
+    "financialQuality": 60,
+    "liquidity": 50,
+    "crowding": 48,
+    "hypeRisk": 50,
+    "dilutionRisk": 30,
+    "risks": [
+      "Revenue still dominated by Russian-sourced LEU resale",
+      "DOE funding cadence drives the growth story",
+      "Single-site operational concentration"
+    ]
+  },
+  {
+    "symbol": "UUUU",
+    "name": "Energy Fuels",
+    "theme": "nuclear-uranium",
+    "nodes": [
+      "nuc-uranium-miners",
+      "min-rare-earth-producers",
+      "min-processing-refining"
+    ],
+    "sizeBucket": "small",
+    "exposure": "direct",
+    "whyItMatters": "Operates White Mesa, the only conventional uranium mill in the US, and is layering rare earth separation onto the same licensed facility. Two strategic-minerals theses in one permitted asset.",
+    "evidence": 68,
+    "evidenceSummary": "Disclosed uranium production restarts, commercial NdPr separation runs at White Mesa, and long-term utility supply contracts.",
+    "financialQuality": 45,
+    "liquidity": 52,
+    "crowding": 42,
+    "hypeRisk": 48,
+    "dilutionRisk": 50,
+    "risks": [
+      "At-the-market equity issuance funds growth",
+      "Rare earth economics unproven at scale",
+      "Uranium production costs above tier-one peers"
+    ]
+  },
+  {
+    "symbol": "MP",
+    "name": "MP Materials",
+    "theme": "critical-minerals",
+    "nodes": [
+      "min-rare-earth-producers",
+      "min-processing-refining"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "direct",
+    "whyItMatters": "Owns Mountain Pass, the only operating rare earth mine in the US, and is building magnet production with the Pentagon and Apple as anchor partners. The centrepiece of western rare earth supply policy.",
+    "evidence": 85,
+    "evidenceSummary": "DoD equity investment and price floor agreement plus a disclosed Apple magnet supply deal and operating production volumes.",
+    "financialQuality": 60,
+    "liquidity": 70,
+    "crowding": 66,
+    "hypeRisk": 55,
+    "dilutionRisk": 25,
+    "risks": [
+      "NdPr price still set by Chinese supply decisions",
+      "Magnet manufacturing ramp execution risk",
+      "Policy support could shift with administrations"
+    ]
+  },
+  {
+    "symbol": "FCX",
+    "name": "Freeport-McMoRan",
+    "theme": "critical-minerals",
+    "nodes": [
+      "min-copper-producers"
+    ],
+    "sizeBucket": "large",
+    "exposure": "direct",
+    "whyItMatters": "One of the world's largest copper producers at a time when grid expansion, data centres, and electrification all pull on the same constrained copper supply. The liquid large-cap copper proxy.",
+    "evidence": 88,
+    "evidenceSummary": "Published copper production and reserve figures across Grasberg and the Americas with decades of operating history.",
+    "financialQuality": 75,
+    "liquidity": 92,
+    "crowding": 58,
+    "hypeRisk": 22,
+    "dilutionRisk": 5,
+    "risks": [
+      "Indonesian policy and smelter obligations",
+      "Copper price cyclicality",
+      "Declining ore grades raise unit costs"
+    ]
+  },
+  {
+    "symbol": "NB",
+    "name": "NioCorp Developments",
+    "theme": "critical-minerals",
+    "nodes": [
+      "min-rare-earth-producers",
+      "min-processing-refining"
+    ],
+    "sizeBucket": "micro",
+    "exposure": "direct",
+    "whyItMatters": "Pre-production developer of the Elk Creek niobium, scandium, and rare earth project in Nebraska. A genuine strategic deposit, but the financing gap is the entire story.",
+    "evidence": 25,
+    "evidenceSummary": "Completed feasibility study and an EXIM Bank financing letter of interest, with no construction financing closed yet.",
+    "financialQuality": 15,
+    "liquidity": 25,
+    "crowding": 15,
+    "hypeRisk": 60,
+    "dilutionRisk": 85,
+    "risks": [
+      "Project financing in the billions remains unsecured",
+      "Persistent shareholder dilution to fund overheads",
+      "Single-asset development risk"
+    ]
+  },
+  {
+    "symbol": "ONTO",
+    "name": "Onto Innovation",
+    "theme": "semiconductors",
+    "nodes": [
+      "semi-equipment",
+      "agi-advanced-packaging"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "supplier",
+    "whyItMatters": "Process control and inspection systems with a strong franchise in advanced packaging metrology. HBM stacking and CoWoS expansion directly increase demand for its tools.",
+    "evidence": 75,
+    "evidenceSummary": "Disclosed record advanced packaging revenue tied to HBM and 2.5D logic inspection in quarterly results.",
+    "financialQuality": 75,
+    "liquidity": 62,
+    "crowding": 46,
+    "hypeRisk": 38,
+    "dilutionRisk": 5,
+    "risks": [
+      "Semicap cycle downturns hit orders fast",
+      "Larger rivals (KLA) push into packaging inspection",
+      "Customer concentration among memory makers"
+    ]
+  },
+  {
+    "symbol": "CAMT",
+    "name": "Camtek",
+    "theme": "semiconductors",
+    "nodes": [
+      "semi-equipment",
+      "agi-advanced-packaging"
+    ],
+    "sizeBucket": "small",
+    "exposure": "supplier",
+    "whyItMatters": "Israeli inspection and metrology supplier whose tools are used to inspect HBM stacks and advanced packaging interposers. A focused small-cap toll on the same bottleneck TSMC is racing to expand.",
+    "evidence": 72,
+    "evidenceSummary": "Disclosed record orders for HBM and chiplet inspection systems with revenue growth reported through the AI packaging ramp.",
+    "financialQuality": 72,
+    "liquidity": 48,
+    "crowding": 42,
+    "hypeRisk": 45,
+    "dilutionRisk": 8,
+    "risks": [
+      "Order momentum tracks the memory capex cycle",
+      "Geopolitical risk around Israeli operations",
+      "Competition from KLA and Onto in packaging"
+    ]
+  },
+  {
+    "symbol": "LHX",
+    "name": "L3Harris Technologies",
+    "theme": "defence-drones",
+    "nodes": [
+      "def-primes",
+      "space-defence-payloads"
+    ],
+    "sizeBucket": "large",
+    "exposure": "direct",
+    "whyItMatters": "Sixth-largest US defence prime with deep electronics, space payload, and solid rocket motor (Aerojet) franchises. A diversified beneficiary of rising western defence budgets.",
+    "evidence": 88,
+    "evidenceSummary": "Disclosed backlog above 30B USD across DoD and allied programmes including SDA satellite awards.",
+    "financialQuality": 78,
+    "liquidity": 88,
+    "crowding": 50,
+    "hypeRisk": 18,
+    "dilutionRisk": 5,
+    "risks": [
+      "Budget continuing resolutions delay awards",
+      "Aerojet integration and supply chain issues",
+      "Margin targets depend on cost programmes landing"
+    ]
+  },
+  {
+    "symbol": "AVAV",
+    "name": "AeroVironment",
+    "theme": "defence-drones",
+    "nodes": [
+      "def-drones-autonomy",
+      "def-counter-uas"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "direct",
+    "whyItMatters": "Maker of Switchblade loitering munitions and small drones proven in Ukraine, now expanded into counter-UAS and space via the BlueHalo acquisition. The clearest listed pure-play on attritable autonomy.",
+    "evidence": 85,
+    "evidenceSummary": "Disclosed Switchblade procurement contracts from the US Army and allies plus record funded backlog after the BlueHalo merger.",
+    "financialQuality": 70,
+    "liquidity": 70,
+    "crowding": 66,
+    "hypeRisk": 55,
+    "dilutionRisk": 22,
+    "risks": [
+      "Programme concentration in loitering munitions",
+      "BlueHalo integration risk",
+      "Cheaper FPV drones compress the value proposition"
+    ]
+  },
+  {
+    "symbol": "ONDS",
+    "name": "Ondas Holdings",
+    "theme": "defence-drones",
+    "nodes": [
+      "def-counter-uas",
+      "def-drones-autonomy"
+    ],
+    "sizeBucket": "micro",
+    "exposure": "direct",
+    "whyItMatters": "Micro-cap holding company selling autonomous drone-in-a-box systems and counter-drone interceptors, mostly to defence and homeland security customers. High narrative torque, fragile financials.",
+    "evidence": 40,
+    "evidenceSummary": "Disclosed military orders for Iron Drone interceptors and Optimus systems in the low tens of millions of dollars.",
+    "financialQuality": 15,
+    "liquidity": 40,
+    "crowding": 35,
+    "hypeRisk": 75,
+    "dilutionRisk": 85,
+    "risks": [
+      "Heavy recurring share issuance",
+      "Order book is small relative to valuation",
+      "Competes against far better capitalised drone firms"
+    ]
+  },
+  {
+    "symbol": "TER",
+    "name": "Teradyne",
+    "theme": "robotics-automation",
+    "nodes": [
+      "rob-components-actuators",
+      "semi-equipment"
+    ],
+    "sizeBucket": "large",
+    "exposure": "second-order",
+    "whyItMatters": "Owns Universal Robots and MiR, the leading collaborative robot franchises, alongside its core semiconductor test business that benefits from AI chip volume. Robotics optionality on a profitable test base.",
+    "evidence": 80,
+    "evidenceSummary": "Disclosed robotics segment revenue and UR cobot install base alongside semiconductor test share data in filings.",
+    "financialQuality": 80,
+    "liquidity": 82,
+    "crowding": 40,
+    "hypeRisk": 25,
+    "dilutionRisk": 4,
+    "risks": [
+      "Cobot demand tied to industrial capex cycles",
+      "Robotics segment has underdelivered growth targets",
+      "Mobile SOC test customer concentration"
+    ]
+  },
+  {
+    "symbol": "HSAI",
+    "name": "Hesai Group",
+    "theme": "robotics-automation",
+    "nodes": [
+      "rob-vision-sensors"
+    ],
+    "sizeBucket": "small",
+    "exposure": "direct",
+    "whyItMatters": "Volume leader in automotive and robotics lidar, shipping hundreds of thousands of units annually into ADAS and robotaxi programmes. Vision sensing is the common input across every autonomy stack.",
+    "evidence": 72,
+    "evidenceSummary": "Disclosed lidar shipment volumes above one million units annually and named design wins with robotaxi and ADAS platforms.",
+    "financialQuality": 55,
+    "liquidity": 50,
+    "crowding": 40,
+    "hypeRisk": 50,
+    "dilutionRisk": 28,
+    "risks": [
+      "US-China tension threatens listing and contracts",
+      "Lidar price erosion is structural",
+      "Camera-only autonomy approaches reduce TAM"
+    ]
+  },
+  {
+    "symbol": "SERV",
+    "name": "Serve Robotics",
+    "theme": "robotics-automation",
+    "nodes": [
+      "rob-humanoids-platforms",
+      "rob-vision-sensors"
+    ],
+    "sizeBucket": "micro",
+    "exposure": "direct",
+    "whyItMatters": "Sidewalk delivery robot operator spun out of Uber, with a contract to deploy up to 2,000 robots on Uber Eats. Real deployments, but unit economics remain unproven and funding is equity-led.",
+    "evidence": 45,
+    "evidenceSummary": "Disclosed Uber Eats deployment agreement for up to 2,000 robots and published active robot fleet counts.",
+    "financialQuality": 15,
+    "liquidity": 45,
+    "crowding": 45,
+    "hypeRisk": 80,
+    "dilutionRisk": 80,
+    "risks": [
+      "Heavy ongoing dilution to fund fleet growth",
+      "Single-partner revenue concentration",
+      "Per-delivery economics not yet demonstrated at scale"
+    ]
+  },
+  {
+    "symbol": "CRWD",
+    "name": "CrowdStrike",
+    "theme": "cybersecurity",
+    "nodes": [
+      "cyber-platforms"
+    ],
+    "sizeBucket": "large",
+    "exposure": "direct",
+    "whyItMatters": "Leading endpoint and cloud security platform consolidating spend across the security stack. AI both raises attack volume and powers its Charlotte AI detection layer.",
+    "evidence": 92,
+    "evidenceSummary": "Disclosed annual recurring revenue above 4B USD with published module adoption and net retention metrics.",
+    "financialQuality": 85,
+    "liquidity": 92,
+    "crowding": 85,
+    "hypeRisk": 48,
+    "dilutionRisk": 8,
+    "risks": [
+      "Premium valuation leaves no execution slack",
+      "2024 global outage created lasting reputational tail risk",
+      "Microsoft bundling pressures the mid-market"
+    ]
+  },
+  {
+    "symbol": "CYBR",
+    "name": "CyberArk Software",
+    "theme": "cybersecurity",
+    "nodes": [
+      "cyber-identity"
+    ],
+    "sizeBucket": "large",
+    "exposure": "direct",
+    "whyItMatters": "Category leader in privileged access management, now extending identity security to machine identities and AI agents. Agentic AI multiplies the number of credentials that need governing.",
+    "evidence": 85,
+    "evidenceSummary": "Disclosed subscription ARR growth and the Venafi machine-identity acquisition broadening the platform.",
+    "financialQuality": 70,
+    "liquidity": 72,
+    "crowding": 56,
+    "hypeRisk": 35,
+    "dilutionRisk": 12,
+    "risks": [
+      "Integration risk from recent acquisitions",
+      "Competition from Microsoft and Okta adjacencies",
+      "Subscription transition still maturing into margins"
+    ]
+  },
+  {
+    "symbol": "IONQ",
+    "name": "IonQ",
+    "theme": "quantum-computing",
+    "nodes": [
+      "q-hardware"
+    ],
+    "sizeBucket": "mid",
+    "exposure": "direct",
+    "whyItMatters": "The most visible pure-play quantum computing stock, selling trapped-ion systems and cloud access. Genuine research traction, but revenue is tiny relative to a multi-billion valuation.",
+    "evidence": 45,
+    "evidenceSummary": "Disclosed contracts with the US Air Force Research Lab and quantum networking acquisitions, with annual revenue still under 100M USD.",
+    "financialQuality": 30,
+    "liquidity": 70,
+    "crowding": 75,
+    "hypeRisk": 88,
+    "dilutionRisk": 72,
+    "risks": [
+      "Commercial quantum advantage remains years away",
+      "Cash burn funded by repeated equity sales",
+      "Retail-driven valuation detached from bookings"
+    ]
+  },
+  {
+    "symbol": "RGTI",
+    "name": "Rigetti Computing",
+    "theme": "quantum-computing",
+    "nodes": [
+      "q-hardware",
+      "q-enablers"
+    ],
+    "sizeBucket": "small",
+    "exposure": "direct",
+    "whyItMatters": "Superconducting qubit developer with its own fab, selling systems and QPU access to research customers. One of the purest and most speculative quantum hardware exposures on public markets.",
+    "evidence": 30,
+    "evidenceSummary": "Disclosed government research contracts and chip milestones, with quarterly revenue in the low single-digit millions.",
+    "financialQuality": 15,
+    "liquidity": 55,
+    "crowding": 65,
+    "hypeRisk": 90,
+    "dilutionRisk": 85,
+    "risks": [
+      "Repeated dilutive raises keep the company funded",
+      "Technology race against far better funded rivals",
+      "Revenue does not yet support the market cap"
+    ]
+  }
+]

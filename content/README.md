@@ -41,3 +41,8 @@ through `.tsx` files, no code change, no risk of breaking a component.
 | Commodities | `commodities.jsonl` | `Commodity` (`src/lib/commodities.ts`) | Commodities page |
 | IPOs | `ipos.jsonl` | `IpoCompany` (`src/lib/ipos.ts`) | IPO Radar + deep-dive |
 | Smart money | `smart-money.jsonl` | `SmartMoneyItem` (`src/lib/smart-money.ts`) | Smart Money page |
+| Themes | `themes.jsonl` | `Theme` (`src/lib/world-radar.ts`) | World Radar + theme dossiers |
+| Supply-chain nodes | `supply-chain-nodes.jsonl` | `SupplyChainNode` (`src/lib/world-radar.ts`) | Theme dossiers (supply-chain map) |
+| Theme companies | `theme-companies.jsonl` | `ThemeCompany` (`src/lib/world-radar.ts`) | Theme dossiers + Small Caps |
+| Capital events | `capital-events.jsonl` | `CapitalEvent` (`src/lib/world-radar.ts`) | World Radar + theme dossiers |
+| Investors | `investors.jsonl` | `Investor` (`src/lib/world-radar.ts`) | Investor Radar + theme dossiers |

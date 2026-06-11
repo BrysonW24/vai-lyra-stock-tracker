@@ -1,0 +1,1026 @@
+[
+  {
+    "id": "agi-frontier-labs",
+    "theme": "agi-infrastructure",
+    "layer": 1,
+    "name": "Frontier AI labs",
+    "description": "The labs training frontier models - OpenAI, Anthropic, Google DeepMind, Meta, xAI - whose scaling roadmaps define how much compute the world tries to buy.",
+    "whyItMatters": "Every dollar of demand in this theme starts here: training-run ambitions set the order book for GPUs, packaging, memory, power and ultimately minerals.",
+    "scarcity": 80,
+    "bottleneck": 55,
+    "pricingPower": 75,
+    "commodities": [
+      "Electricity"
+    ],
+    "risks": [
+      "Model capability commoditises faster than pricing holds",
+      "Training capex outruns revenue and funding tightens",
+      "Regulation slows frontier-scale training runs"
+    ]
+  },
+  {
+    "id": "agi-hyperscalers",
+    "theme": "agi-infrastructure",
+    "layer": 1,
+    "name": "Hyperscale cloud platforms",
+    "description": "The mega-cap cloud platforms - Microsoft, Amazon, Google, Meta, Oracle - converting AI demand into hundreds of billions of dollars of annual data-centre capex.",
+    "whyItMatters": "Hyperscaler capex budgets are the single largest funding pipe in the theme; when they guide capex up or down, every supplier below them re-rates.",
+    "scarcity": 50,
+    "bottleneck": 50,
+    "pricingPower": 70,
+    "commodities": [
+      "Electricity",
+      "Water"
+    ],
+    "risks": [
+      "Capex digestion phase after the initial buildout wave",
+      "Depreciation of short-lived GPU fleets pressures earnings",
+      "Antitrust and regulatory scrutiny of platform power"
+    ]
+  },
+  {
+    "id": "agi-neoclouds",
+    "theme": "agi-infrastructure",
+    "layer": 2,
+    "name": "GPU neoclouds",
+    "description": "Specialist GPU rental clouds - CoreWeave, Nebius, Crusoe, Lambda - that buy accelerators in bulk and lease capacity to labs and enterprises.",
+    "whyItMatters": "Neoclouds are the marginal buyer of GPUs and the fastest signal of whether AI compute demand exceeds hyperscaler supply.",
+    "scarcity": 45,
+    "bottleneck": 40,
+    "pricingPower": 45,
+    "commodities": [
+      "Electricity",
+      "Water"
+    ],
+    "risks": [
+      "GPU rental prices deflate as supply catches up",
+      "Heavy customer concentration in a few AI labs",
+      "Debt-financed fleets are fragile if utilisation slips"
+    ]
+  },
+  {
+    "id": "agi-gpu-accelerators",
+    "theme": "agi-infrastructure",
+    "layer": 3,
+    "name": "GPUs and AI accelerators",
+    "description": "The chips that actually run training and inference - NVIDIA and AMD GPUs plus custom silicon like Google TPUs, Amazon Trainium and emerging ASICs.",
+    "whyItMatters": "This is the theme's profit pool and its hardest constraint: accelerator supply, not ideas, has gated AI progress since 2023.",
+    "scarcity": 85,
+    "bottleneck": 90,
+    "pricingPower": 92,
+    "commodities": [
+      "Silicon",
+      "Copper"
+    ],
+    "risks": [
+      "Custom in-house silicon erodes the merchant GPU share",
+      "Export controls fence off major markets",
+      "A demand air pocket after multi-year over-ordering"
+    ]
+  },
+  {
+    "id": "agi-semicap-equipment",
+    "theme": "agi-infrastructure",
+    "layer": 4,
+    "name": "Semiconductor capital equipment",
+    "description": "The tools that make leading-edge chips possible - ASML lithography, Applied Materials, Lam Research and KLA deposition, etch and inspection systems.",
+    "whyItMatters": "No new EUV-class tools, no new leading-edge capacity: equipment lead times of 12-24 months set the speed limit on how fast accelerator supply can grow.",
+    "scarcity": 90,
+    "bottleneck": 85,
+    "pricingPower": 88,
+    "commodities": [
+      "Steel"
+    ],
+    "risks": [
+      "Export controls cap sales into China",
+      "Wafer-fab equipment spending is deeply cyclical",
+      "Single-source dependencies inside their own supply chains"
+    ]
+  },
+  {
+    "id": "agi-advanced-packaging",
+    "theme": "agi-infrastructure",
+    "layer": 4,
+    "name": "Advanced packaging",
+    "description": "CoWoS and similar 2.5D/3D packaging that bonds GPU dies to HBM stacks - dominated by TSMC with Amkor, ASE and Intel building capacity behind it.",
+    "whyItMatters": "Packaging, not wafer starts, has repeatedly been the literal unit-volume cap on AI accelerator shipments since the boom began.",
+    "scarcity": 80,
+    "bottleneck": 88,
+    "pricingPower": 70,
+    "commodities": [
+      "Silicon",
+      "Copper"
+    ],
+    "risks": [
+      "Aggressive capacity adds eventually normalise the shortage",
+      "Heavy geographic concentration in Taiwan",
+      "Technology transitions like panel-level packaging reshuffle winners"
+    ]
+  },
+  {
+    "id": "agi-hbm-memory",
+    "theme": "agi-infrastructure",
+    "layer": 4,
+    "name": "HBM memory",
+    "description": "High-bandwidth memory stacked next to the GPU die - an oligopoly of SK Hynix, Micron and Samsung whose output is sold out quarters in advance.",
+    "whyItMatters": "Each accelerator generation needs more HBM per chip, so HBM supply and yield directly cap how many usable accelerators ship.",
+    "scarcity": 80,
+    "bottleneck": 88,
+    "pricingPower": 80,
+    "commodities": [
+      "Silicon"
+    ],
+    "risks": [
+      "Memory industry cyclicality returns once supply catches demand",
+      "Samsung qualification success adds a third full supplier",
+      "Yield missteps on next-generation stacks"
+    ]
+  },
+  {
+    "id": "agi-optical-networking",
+    "theme": "agi-infrastructure",
+    "layer": 5,
+    "name": "Optical networking",
+    "description": "The transceivers, switches and interconnect silicon - Broadcom, Coherent, Credo, Marvell - that lash tens of thousands of GPUs into one training cluster.",
+    "whyItMatters": "Cluster scale is a networking problem: as clusters grow, optics content per GPU rises faster than GPU counts themselves.",
+    "scarcity": 65,
+    "bottleneck": 70,
+    "pricingPower": 65,
+    "commodities": [
+      "Silicon",
+      "Gallium"
+    ],
+    "risks": [
+      "Architecture shifts like co-packaged optics strand incumbents",
+      "Steep per-unit price declines each product cycle",
+      "Chinese transceiver competition at the commodity end"
+    ]
+  },
+  {
+    "id": "agi-data-centre-reits",
+    "theme": "agi-infrastructure",
+    "layer": 5,
+    "name": "Data centre REITs and operators",
+    "description": "Owners and landlords of the buildings - Equinix, Digital Realty and private operators - leasing powered shells and colocation capacity to AI tenants.",
+    "whyItMatters": "They control the scarcest real asset in the chain - land with secured grid connections - even though their economics are steadier than the silicon above them.",
+    "scarcity": 55,
+    "bottleneck": 45,
+    "pricingPower": 55,
+    "commodities": [
+      "Electricity",
+      "Water",
+      "Steel",
+      "Copper"
+    ],
+    "risks": [
+      "Interest-rate sensitivity of REIT valuations",
+      "Hyperscalers self-build instead of leasing",
+      "Power availability delays new campus delivery"
+    ]
+  },
+  {
+    "id": "agi-power-generation",
+    "theme": "agi-infrastructure",
+    "layer": 6,
+    "name": "Power generation",
+    "description": "The gas turbines, nuclear plants and renewables that feed AI campuses - from utility IPPs to behind-the-meter generation deals signed directly with hyperscalers.",
+    "whyItMatters": "AI data centres are forecast to add power demand measured in tens of gigawatts; electrons have replaced chips as the long-pole constraint on new capacity.",
+    "scarcity": 70,
+    "bottleneck": 80,
+    "pricingPower": 70,
+    "commodities": [
+      "Natural gas",
+      "Uranium",
+      "Steel",
+      "Copper"
+    ],
+    "risks": [
+      "Gas turbine order books are sold out for years",
+      "Permitting and siting delays for new plants",
+      "Fuel price volatility passes through to economics"
+    ]
+  },
+  {
+    "id": "agi-grid-transmission",
+    "theme": "agi-infrastructure",
+    "layer": 6,
+    "name": "Grid transmission and interconnection",
+    "description": "The high-voltage lines, substations and interconnection queues that connect new generation and new data centres to the grid.",
+    "whyItMatters": "Interconnection queues of 3-7 years are now the slowest physical step in the entire AGI buildout - a campus without a grid connection is a warehouse.",
+    "scarcity": 75,
+    "bottleneck": 90,
+    "pricingPower": 60,
+    "commodities": [
+      "Copper",
+      "Steel",
+      "Aluminium"
+    ],
+    "risks": [
+      "Permitting timelines measured in years not quarters",
+      "Regulated returns cap the upside of the buildout",
+      "Skilled transmission labour is itself scarce"
+    ]
+  },
+  {
+    "id": "agi-transformers-switchgear",
+    "theme": "agi-infrastructure",
+    "layer": 6,
+    "name": "Transformers and switchgear",
+    "description": "Large power transformers, switchgear and electrical gear from Hitachi Energy, Siemens Energy, Eaton, GE Vernova and Schneider - the hardware every substation and data centre needs.",
+    "whyItMatters": "Large transformer lead times stretched to 3-5 years; this is one of the most concrete, slowest-to-fix bottlenecks anywhere in the AI supply chain.",
+    "scarcity": 85,
+    "bottleneck": 92,
+    "pricingPower": 80,
+    "commodities": [
+      "Copper",
+      "Steel",
+      "Aluminium"
+    ],
+    "risks": [
+      "Capacity expansions eventually normalise lead times",
+      "Grain-oriented electrical steel supply is itself constrained",
+      "Double-ordering in the backlog overstates real demand"
+    ]
+  },
+  {
+    "id": "agi-cooling-thermal",
+    "theme": "agi-infrastructure",
+    "layer": 7,
+    "name": "Cooling and thermal management",
+    "description": "Liquid cooling, cold plates, CDUs and thermal infrastructure - Vertiv, nVent and specialists - required as rack densities jump past 100kW.",
+    "whyItMatters": "Next-generation accelerators cannot be air-cooled; liquid cooling adoption is mandatory, making thermal vendors a forced purchase per GPU rack.",
+    "scarcity": 60,
+    "bottleneck": 70,
+    "pricingPower": 65,
+    "commodities": [
+      "Copper",
+      "Aluminium",
+      "Water"
+    ],
+    "risks": [
+      "Technology shifts between cooling architectures",
+      "Crowding as industrials pile into the category",
+      "Direct dependence on the data-centre capex cycle"
+    ]
+  },
+  {
+    "id": "agi-nuclear-smr",
+    "theme": "agi-infrastructure",
+    "layer": 7,
+    "name": "Nuclear and SMR for AI campuses",
+    "description": "Restarted reactors, new nuclear PPAs and small modular reactor programs - Microsoft-Constellation, Amazon and Google SMR deals - aimed at firm clean power for AI.",
+    "whyItMatters": "Nuclear is the only proven firm, carbon-free power source dense enough for gigawatt AI campuses, which is why hyperscalers are signing decades-long deals.",
+    "scarcity": 70,
+    "bottleneck": 75,
+    "pricingPower": 60,
+    "commodities": [
+      "Uranium",
+      "Steel",
+      "Water"
+    ],
+    "risks": [
+      "Licensing timelines stretch deployments into the 2030s",
+      "First-of-a-kind SMR cost overruns",
+      "Public and political opposition to siting"
+    ]
+  },
+  {
+    "id": "agi-construction-engineering",
+    "theme": "agi-infrastructure",
+    "layer": 8,
+    "name": "Construction and engineering",
+    "description": "The EPC firms, electrical contractors and skilled trades - Quanta, EMCOR, AECOM and peers - that physically build data centres, substations and power plants.",
+    "whyItMatters": "Designs and chips mean nothing without electricians and ironworkers; skilled-labour capacity is the human bottleneck under every physical layer of the theme.",
+    "scarcity": 55,
+    "bottleneck": 65,
+    "pricingPower": 55,
+    "commodities": [
+      "Steel",
+      "Copper",
+      "Aluminium",
+      "Water"
+    ],
+    "risks": [
+      "Skilled electrical labour shortage limits delivery",
+      "Fixed-price contract overruns in a hot market",
+      "Backlog evaporates if the capex cycle turns"
+    ]
+  },
+  {
+    "id": "agi-critical-minerals",
+    "theme": "agi-infrastructure",
+    "layer": 9,
+    "name": "Critical minerals for AI hardware",
+    "description": "The raw inputs at the bottom of the stack - copper for power, gallium for RF and power chips, rare earths for motors and silver for connectors.",
+    "whyItMatters": "Every layer above ultimately resolves to mined material; export controls on gallium and structurally tight copper supply make this the deepest causal link in the chain.",
+    "scarcity": 75,
+    "bottleneck": 70,
+    "pricingPower": 50,
+    "commodities": [
+      "Copper",
+      "Rare earths",
+      "Gallium",
+      "Silver"
+    ],
+    "risks": [
+      "China export controls on gallium and rare earths",
+      "Commodity price volatility swamps equity returns",
+      "New mine supply takes a decade to arrive"
+    ]
+  },
+  {
+    "id": "space-launch-providers",
+    "theme": "space-economy",
+    "layer": 1,
+    "name": "Launch providers",
+    "description": "The companies that put mass into orbit - SpaceX, Rocket Lab, ULA, Arianespace and emerging entrants - selling launch as the gateway service of the space economy.",
+    "whyItMatters": "Launch cost per kilogram is the master variable of the entire theme; every downstream market expands or contracts with it.",
+    "scarcity": 70,
+    "bottleneck": 75,
+    "pricingPower": 70,
+    "commodities": [
+      "Aluminium",
+      "Titanium",
+      "Natural gas"
+    ],
+    "risks": [
+      "SpaceX's pricing umbrella caps everyone else's margins",
+      "A high-profile failure grounds a vehicle for months",
+      "Demand concentration in mega-constellation customers"
+    ]
+  },
+  {
+    "id": "space-rocket-engines",
+    "theme": "space-economy",
+    "layer": 2,
+    "name": "Rocket engines",
+    "description": "Engine developers and manufacturers - Raptor, BE-4, Archimedes, Aerojet Rocketdyne heritage engines - the highest-value and hardest subsystem of any launcher.",
+    "whyItMatters": "Engine cadence and reusability determine launch cadence; an engine program slipping is the most common cause of a launcher slipping.",
+    "scarcity": 75,
+    "bottleneck": 80,
+    "pricingPower": 65,
+    "commodities": [
+      "Titanium",
+      "Steel",
+      "Copper",
+      "Aluminium"
+    ],
+    "risks": [
+      "Development cost overruns and test failures",
+      "Vertical integration by launch providers removes the merchant market",
+      "Long qualification cycles before revenue"
+    ]
+  },
+  {
+    "id": "space-propellants-materials",
+    "theme": "space-economy",
+    "layer": 3,
+    "name": "Propellants and advanced materials",
+    "description": "Methane, hydrogen and solid propellants plus the aerospace-grade alloys and composites that engines and airframes are built from.",
+    "whyItMatters": "Reusable rockets turned propellant and materials into recurring operating inputs rather than one-off costs, tying launch economics to commodity supply.",
+    "scarcity": 55,
+    "bottleneck": 60,
+    "pricingPower": 50,
+    "commodities": [
+      "Natural gas",
+      "Aluminium",
+      "Titanium"
+    ],
+    "risks": [
+      "Commodity price exposure with thin pricing power",
+      "Aerospace qualification cycles slow new suppliers",
+      "Small standalone revenue pools for pure plays"
+    ]
+  },
+  {
+    "id": "space-avionics-radhard",
+    "theme": "space-economy",
+    "layer": 3,
+    "name": "Avionics and radiation-hardened electronics",
+    "description": "Flight computers, guidance systems and rad-hard chips - BAE, Microchip, Teledyne and specialists - that survive launch loads and orbital radiation.",
+    "whyItMatters": "Every vehicle and satellite needs qualified avionics, and the rad-hard supply base is narrow enough that a single supplier slip ripples across programs.",
+    "scarcity": 70,
+    "bottleneck": 72,
+    "pricingPower": 70,
+    "commodities": [
+      "Silicon",
+      "Gallium"
+    ],
+    "risks": [
+      "Long qualification cycles delay design wins",
+      "ITAR and export controls shrink the addressable market",
+      "Commercial off-the-shelf parts undercut rad-hard pricing"
+    ]
+  },
+  {
+    "id": "space-satellites",
+    "theme": "space-economy",
+    "layer": 4,
+    "name": "Satellite manufacturers",
+    "description": "Builders of satellite buses and constellations - from Airbus and Maxar to constellation factories like SpaceX's Starlink line and Rocket Lab's bus business.",
+    "whyItMatters": "Satellites are the payload that justifies launch; constellation-scale manufacturing turned spacecraft from bespoke craft into a volume industry.",
+    "scarcity": 55,
+    "bottleneck": 60,
+    "pricingPower": 55,
+    "commodities": [
+      "Aluminium",
+      "Silicon",
+      "Gallium"
+    ],
+    "risks": [
+      "Mega-constellation owners vertically integrate manufacturing",
+      "Per-satellite price deflation as volumes rise",
+      "Program delays cascade from component shortages"
+    ]
+  },
+  {
+    "id": "space-comms-ground",
+    "theme": "space-economy",
+    "layer": 5,
+    "name": "Communications and ground segment",
+    "description": "Satellite broadband and connectivity operators plus the ground stations, terminals and antennas - Starlink, SES, Viasat, AST SpaceMobile, ground networks like KSAT.",
+    "whyItMatters": "Connectivity is the largest commercial revenue pool in space today; the ground segment is the unglamorous toll booth every bit of data must pass through.",
+    "scarcity": 50,
+    "bottleneck": 55,
+    "pricingPower": 50,
+    "commodities": [
+      "Silicon",
+      "Copper"
+    ],
+    "risks": [
+      "Starlink price pressure on legacy operators",
+      "GEO satellite business in structural decline",
+      "Spectrum rights contention and regulation"
+    ]
+  },
+  {
+    "id": "space-earth-observation",
+    "theme": "space-economy",
+    "layer": 5,
+    "name": "Earth observation",
+    "description": "Imaging and sensing constellations - Planet, BlackSky, ICEYE, Maxar - selling pictures, radar and analytics of the planet to governments and industry.",
+    "whyItMatters": "EO is the proof case for space data as a recurring software-like revenue stream, and defence demand for persistent imaging keeps it funded.",
+    "scarcity": 50,
+    "bottleneck": 45,
+    "pricingPower": 50,
+    "commodities": [
+      "Silicon"
+    ],
+    "risks": [
+      "Imagery commoditises as supply of pixels explodes",
+      "Heavy dependence on government contracts",
+      "AI analytics value accrues to software layers above the constellations"
+    ]
+  },
+  {
+    "id": "space-defence-payloads",
+    "theme": "space-economy",
+    "layer": 6,
+    "name": "Defence payloads",
+    "description": "Military sensors, missile-warning payloads and secure comms hosted in orbit - the fastest-growing funded demand line in space, led by programs like the SDA's proliferated architecture.",
+    "whyItMatters": "Defence budgets underwrite space demand independent of commercial cycles, and payload primes capture the highest-margin slice of each satellite.",
+    "scarcity": 65,
+    "bottleneck": 65,
+    "pricingPower": 65,
+    "commodities": [
+      "Gallium",
+      "Silicon",
+      "Titanium"
+    ],
+    "risks": [
+      "Program cancellations or restructuring",
+      "Classified work limits investor visibility",
+      "Budget cycles and continuing resolutions delay awards"
+    ]
+  },
+  {
+    "id": "space-in-space-services",
+    "theme": "space-economy",
+    "layer": 7,
+    "name": "In-space services",
+    "description": "Orbital tugs, satellite servicing, refuelling and debris removal - Astroscale, Impulse Space, Northrop's MEV line - the logistics layer that emerges once orbit is busy.",
+    "whyItMatters": "As constellations scale, moving, extending and disposing of spacecraft becomes a real cost line; this layer turns orbital congestion into a service market.",
+    "scarcity": 60,
+    "bottleneck": 45,
+    "pricingPower": 40,
+    "commodities": [
+      "Aluminium",
+      "Titanium"
+    ],
+    "risks": [
+      "Commercial demand is still largely unproven",
+      "Long development timelines before recurring revenue",
+      "Dependent on continued venture and government funding"
+    ]
+  },
+  {
+    "id": "space-insurance-logistics",
+    "theme": "space-economy",
+    "layer": 8,
+    "name": "Space insurance and logistics",
+    "description": "Underwriters, brokers and supply-chain logistics that price launch and in-orbit risk and move flight hardware around the planet.",
+    "whyItMatters": "Insurance is where the whole theme's risk gets priced in dollars; rising losses or shrinking capacity raise the cost of capital for every layer above.",
+    "scarcity": 45,
+    "bottleneck": 50,
+    "pricingPower": 55,
+    "commodities": [],
+    "risks": [
+      "Large loss events shrink underwriting capacity",
+      "The premium pool is small relative to the industry it covers",
+      "Mega-constellations self-insure and bypass the market"
+    ]
+  },
+  {
+    "id": "grid-utilities-ipp",
+    "theme": "power-grid",
+    "layer": 1,
+    "name": "Utilities and independent power producers",
+    "description": "Regulated utilities and merchant IPPs - NextEra, Constellation, Vistra, Talen - that own generation and sell electrons into surging demand.",
+    "whyItMatters": "They are the demand aggregators of the theme: data centres, electrification and reshoring all show up first as utility load growth and IPP power prices.",
+    "scarcity": 50,
+    "bottleneck": 55,
+    "pricingPower": 60,
+    "commodities": [
+      "Natural gas",
+      "Uranium",
+      "Copper",
+      "Steel"
+    ],
+    "risks": [
+      "Regulators cap allowed returns on the buildout",
+      "Rising interest rates pressure capital-heavy balance sheets",
+      "Fuel cost volatility in merchant markets"
+    ]
+  },
+  {
+    "id": "grid-transmission-equipment",
+    "theme": "power-grid",
+    "layer": 2,
+    "name": "Transmission equipment",
+    "description": "High-voltage transformers, cables, switchgear and HVDC systems - Hitachi Energy, Siemens Energy, Prysmian, Eaton - the hardware of grid expansion.",
+    "whyItMatters": "Multi-year lead times on transformers and HV cable are the binding physical constraint on connecting new load and new generation anywhere in the West.",
+    "scarcity": 85,
+    "bottleneck": 90,
+    "pricingPower": 80,
+    "commodities": [
+      "Copper",
+      "Steel",
+      "Aluminium"
+    ],
+    "risks": [
+      "Capacity expansion eventually works off the backlog",
+      "Raw material cost swings squeeze fixed-price orders",
+      "Execution risk on rapid factory expansions"
+    ]
+  },
+  {
+    "id": "grid-storage-batteries",
+    "theme": "power-grid",
+    "layer": 3,
+    "name": "Grid storage and batteries",
+    "description": "Utility-scale battery systems and integrators - Tesla Energy, Fluence, Sungrow - that firm renewables and arbitrage peak power.",
+    "whyItMatters": "Storage is what makes intermittent generation dispatchable; every gigawatt of solar and wind added pulls battery demand with it.",
+    "scarcity": 55,
+    "bottleneck": 60,
+    "pricingPower": 45,
+    "commodities": [
+      "Lithium",
+      "Copper",
+      "Aluminium"
+    ],
+    "risks": [
+      "Cell price deflation compresses integrator margins",
+      "Dominant Chinese supply chain invites tariff shocks",
+      "Policy and subsidy dependence in key markets"
+    ]
+  },
+  {
+    "id": "grid-engineering-services",
+    "theme": "power-grid",
+    "layer": 4,
+    "name": "Grid engineering services",
+    "description": "The contractors that design, build and maintain grid infrastructure - Quanta Services, MYR Group, MasTec - supplying the crews behind every upgrade.",
+    "whyItMatters": "Transmission lines are built by linemen, not press releases; skilled-crew capacity converts utility capex plans into energised assets.",
+    "scarcity": 65,
+    "bottleneck": 70,
+    "pricingPower": 65,
+    "commodities": [
+      "Copper",
+      "Steel"
+    ],
+    "risks": [
+      "The same labour scarcity that supports pricing limits growth",
+      "Fixed-price project execution risk",
+      "Utility capex cycles can pause large programs"
+    ]
+  },
+  {
+    "id": "nuc-reactors-smr",
+    "theme": "nuclear-uranium",
+    "layer": 1,
+    "name": "Reactor and SMR developers",
+    "description": "Builders of new nuclear capacity - Westinghouse AP1000s, GE Hitachi BWRX-300, NuScale, Oklo, TerraPower - plus restarts of shuttered plants.",
+    "whyItMatters": "Reactors are the demand engine of the entire uranium chain; every announced SMR program and restart flows backward into fuel and enrichment demand.",
+    "scarcity": 70,
+    "bottleneck": 70,
+    "pricingPower": 55,
+    "commodities": [
+      "Uranium",
+      "Steel",
+      "Water"
+    ],
+    "risks": [
+      "Licensing timelines stretch beyond investor patience",
+      "First-of-a-kind construction cost overruns",
+      "Pre-revenue developers carry heavy dilution risk"
+    ]
+  },
+  {
+    "id": "nuc-uranium-miners",
+    "theme": "nuclear-uranium",
+    "layer": 2,
+    "name": "Uranium miners",
+    "description": "Producers of mined uranium - Cameco, Kazatomprom, Paladin, NexGen and a long tail of developers - supplying the raw fuel for the reactor fleet.",
+    "whyItMatters": "A decade of underinvestment left primary supply below reactor demand; restarts and new builds tighten a market with very slow supply response.",
+    "scarcity": 75,
+    "bottleneck": 75,
+    "pricingPower": 65,
+    "commodities": [
+      "Water",
+      "Electricity",
+      "Steel"
+    ],
+    "risks": [
+      "Spot price volatility whipsaws sentiment",
+      "Idled capacity restarts faster than new demand lands",
+      "Geopolitical supply risk in Kazakhstan and Niger"
+    ]
+  },
+  {
+    "id": "nuc-enrichment-fuel",
+    "theme": "nuclear-uranium",
+    "layer": 3,
+    "name": "Enrichment and fuel fabrication",
+    "description": "Conversion, enrichment and fuel assembly - Urenco, Orano, Centrus and the push for Western HALEU capacity - turning mined uranium into reactor-ready fuel.",
+    "whyItMatters": "Russia still controls roughly 40 percent of global enrichment; replacing it is the hardest, slowest and most strategic choke point in the nuclear revival.",
+    "scarcity": 88,
+    "bottleneck": 90,
+    "pricingPower": 80,
+    "commodities": [
+      "Uranium",
+      "Electricity"
+    ],
+    "risks": [
+      "Transition risk as Russian supply bans phase in",
+      "HALEU demand depends on SMRs actually being built",
+      "Capex-heavy expansion with long payback periods"
+    ]
+  },
+  {
+    "id": "semi-foundries",
+    "theme": "semiconductors",
+    "layer": 1,
+    "name": "Foundries",
+    "description": "Contract chip manufacturers - TSMC overwhelmingly, plus Samsung Foundry and Intel Foundry - that fabricate the world's leading-edge silicon.",
+    "whyItMatters": "Leading-edge logic capacity is concentrated in one company on one island; foundry allocation decides which chip designers ship and which wait.",
+    "scarcity": 85,
+    "bottleneck": 85,
+    "pricingPower": 80,
+    "commodities": [
+      "Silicon",
+      "Water",
+      "Electricity",
+      "Copper"
+    ],
+    "risks": [
+      "Geopolitical concentration of leading-edge capacity in Taiwan",
+      "Enormous capex bets ahead of uncertain demand",
+      "Node-transition execution stumbles"
+    ]
+  },
+  {
+    "id": "semi-designers",
+    "theme": "semiconductors",
+    "layer": 2,
+    "name": "Chip designers",
+    "description": "Fabless and IP-led designers - NVIDIA, AMD, Qualcomm, Broadcom, Arm - that architect the chips foundries manufacture.",
+    "whyItMatters": "Design is where most of the industry's margin and differentiation lives, and design wins decide where foundry and packaging capacity gets allocated.",
+    "scarcity": 60,
+    "bottleneck": 55,
+    "pricingPower": 75,
+    "commodities": [
+      "Silicon"
+    ],
+    "risks": [
+      "A missed product cycle cedes share for years",
+      "Customer concentration among hyperscalers",
+      "Export controls restrict top-end product sales"
+    ]
+  },
+  {
+    "id": "semi-equipment",
+    "theme": "semiconductors",
+    "layer": 3,
+    "name": "Semiconductor equipment",
+    "description": "Wafer-fab equipment makers - ASML, Applied Materials, Lam Research, KLA, Tokyo Electron - whose tools define what chips can physically be made.",
+    "whyItMatters": "ASML's EUV monopoly is the single most concentrated choke point in global technology; equipment shipments today are chip supply two years from now.",
+    "scarcity": 90,
+    "bottleneck": 88,
+    "pricingPower": 88,
+    "commodities": [
+      "Steel",
+      "Aluminium"
+    ],
+    "risks": [
+      "Export controls cut off Chinese demand",
+      "Wafer-fab equipment spending is sharply cyclical",
+      "Their own sub-supplier base has single-source choke points"
+    ]
+  },
+  {
+    "id": "semi-materials",
+    "theme": "semiconductors",
+    "layer": 4,
+    "name": "Semiconductor materials",
+    "description": "Silicon wafers, photoresists, specialty gases and CMP slurries - Shin-Etsu, SUMCO, JSR, Linde - the consumables every wafer start burns through.",
+    "whyItMatters": "Materials are low-glamour but irreplaceable: a photoresist or wafer shortage stops fabs as surely as a missing EUV tool, as Japan's export spat with Korea proved.",
+    "scarcity": 70,
+    "bottleneck": 72,
+    "pricingPower": 60,
+    "commodities": [
+      "Silicon",
+      "Water",
+      "Electricity",
+      "Gallium"
+    ],
+    "risks": [
+      "Supply concentration in Japan invites policy shocks",
+      "Price pressure from fab customers with more leverage",
+      "Purity qualification barriers cut both ways for new entrants"
+    ]
+  },
+  {
+    "id": "min-rare-earth-producers",
+    "theme": "critical-minerals",
+    "layer": 1,
+    "name": "Rare earth producers",
+    "description": "Miners of rare earth elements outside China - MP Materials, Lynas, emerging projects - producing the feedstock for permanent magnets and defence systems.",
+    "whyItMatters": "Rare earth magnets sit inside EVs, wind turbines, drones and missiles; Western producers are the only hedge against China's near-monopoly on supply.",
+    "scarcity": 85,
+    "bottleneck": 80,
+    "pricingPower": 55,
+    "commodities": [
+      "Water",
+      "Electricity"
+    ],
+    "risks": [
+      "China sets prices and can flood the market",
+      "The processing gap outside China limits value capture",
+      "Permitting new mines takes the better part of a decade"
+    ]
+  },
+  {
+    "id": "min-copper-producers",
+    "theme": "critical-minerals",
+    "layer": 2,
+    "name": "Copper producers",
+    "description": "The major copper miners - Freeport, BHP, Codelco, Southern Copper - supplying the metal that wires grids, data centres, EVs and motors.",
+    "whyItMatters": "Copper is the common denominator of electrification and the AI power buildout; structural deficits are forecast as grades decline and demand compounds.",
+    "scarcity": 70,
+    "bottleneck": 70,
+    "pricingPower": 50,
+    "commodities": [
+      "Water",
+      "Electricity",
+      "Steel"
+    ],
+    "risks": [
+      "Declining ore grades raise unit costs",
+      "Political and permitting risk in Chile, Peru and the DRC",
+      "New mines take over a decade from discovery to production"
+    ]
+  },
+  {
+    "id": "min-processing-refining",
+    "theme": "critical-minerals",
+    "layer": 3,
+    "name": "Processing and refining",
+    "description": "The midstream that turns concentrate into usable metal and magnet alloy - a step China dominates with roughly 90 percent of rare earth refining and most gallium output.",
+    "whyItMatters": "Mining ore means little without refining; the processing gap is the real Western vulnerability and the choke point China's export controls actually squeeze.",
+    "scarcity": 88,
+    "bottleneck": 90,
+    "pricingPower": 60,
+    "commodities": [
+      "Rare earths",
+      "Electricity",
+      "Water"
+    ],
+    "risks": [
+      "China export controls weaponise the midstream",
+      "Environmental permitting slows Western capacity",
+      "Cost disadvantage versus incumbent Chinese refiners"
+    ]
+  },
+  {
+    "id": "def-primes",
+    "theme": "defence-drones",
+    "layer": 1,
+    "name": "Defence primes",
+    "description": "The major contractors - Lockheed Martin, RTX, BAE, Rheinmetall, Northrop - integrating platforms and absorbing the bulk of rising Western defence budgets.",
+    "whyItMatters": "Primes are the funded demand source of the theme: rearmament budgets flow through their order books into drones, counter-UAS and component suppliers below.",
+    "scarcity": 65,
+    "bottleneck": 60,
+    "pricingPower": 65,
+    "commodities": [
+      "Titanium",
+      "Steel",
+      "Aluminium",
+      "Rare earths"
+    ],
+    "risks": [
+      "Budget politics and continuing resolutions",
+      "Fixed-price development programs bleed margin",
+      "Their own supply chains gate delivery rates"
+    ]
+  },
+  {
+    "id": "def-drones-autonomy",
+    "theme": "defence-drones",
+    "layer": 2,
+    "name": "Drones and autonomy",
+    "description": "Unmanned systems and autonomy software - Anduril, AeroVironment, Kratos and a wave of startups - reshaping force structure after Ukraine proved cheap drones change wars.",
+    "whyItMatters": "Attritable autonomous systems are the fastest-growing line in defence procurement, shifting spend from few exquisite platforms to many cheap ones.",
+    "scarcity": 55,
+    "bottleneck": 60,
+    "pricingPower": 60,
+    "commodities": [
+      "Lithium",
+      "Silicon",
+      "Aluminium"
+    ],
+    "risks": [
+      "Slow procurement cycles lag battlefield demand",
+      "Dependence on Chinese components in small-drone supply chains",
+      "A crowded venture-funded field compresses pricing"
+    ]
+  },
+  {
+    "id": "def-counter-uas",
+    "theme": "defence-drones",
+    "layer": 3,
+    "name": "Counter-UAS",
+    "description": "Systems that detect and defeat hostile drones - radars, jammers, directed energy and interceptors from RTX, Rheinmetall, DroneShield and specialists.",
+    "whyItMatters": "Every cheap attack drone creates demand for a defence; counter-UAS is the necessary mirror market to the drone boom and is moving from niche to program of record.",
+    "scarcity": 60,
+    "bottleneck": 65,
+    "pricingPower": 65,
+    "commodities": [
+      "Gallium",
+      "Silicon"
+    ],
+    "risks": [
+      "Threats evolve faster than fielded countermeasures",
+      "Many competing approaches fragment program wins",
+      "Export restrictions limit addressable markets"
+    ]
+  },
+  {
+    "id": "rob-humanoids-platforms",
+    "theme": "robotics-automation",
+    "layer": 1,
+    "name": "Humanoid platforms",
+    "description": "General-purpose humanoid robot programs - Tesla Optimus, Figure, Agility, Unitree - betting that one form factor can address labour shortages across industries.",
+    "whyItMatters": "Humanoids are the demand thesis of the robotics theme: if they scale, they pull an automotive-sized supply chain of actuators, sensors and magnets into existence.",
+    "scarcity": 50,
+    "bottleneck": 45,
+    "pricingPower": 40,
+    "commodities": [
+      "Aluminium",
+      "Lithium",
+      "Rare earths",
+      "Silicon"
+    ],
+    "risks": [
+      "Unit economics and reliability are still unproven",
+      "Hype runs far ahead of paid deployments",
+      "Chinese platforms compete aggressively on cost"
+    ]
+  },
+  {
+    "id": "rob-components-actuators",
+    "theme": "robotics-automation",
+    "layer": 2,
+    "name": "Components and actuators",
+    "description": "The precision guts of every robot - harmonic drives, servo motors, ball screws and reducers from Harmonic Drive Systems, Nidec, Regal Rexnord and peers.",
+    "whyItMatters": "Each humanoid needs roughly 30-40 actuators; component capacity and rare earth magnet supply, not software, would gate any genuine production ramp.",
+    "scarcity": 75,
+    "bottleneck": 80,
+    "pricingPower": 70,
+    "commodities": [
+      "Rare earths",
+      "Copper",
+      "Steel",
+      "Aluminium"
+    ],
+    "risks": [
+      "Rare earth magnet supply is a China-controlled input",
+      "Capacity additions lag if the humanoid ramp is real",
+      "Customer concentration in a few robot programs"
+    ]
+  },
+  {
+    "id": "rob-vision-sensors",
+    "theme": "robotics-automation",
+    "layer": 3,
+    "name": "Vision and sensors",
+    "description": "Cameras, lidar, force-torque and tactile sensors plus the perception silicon - from Sony image sensors to specialist robotics sensing firms.",
+    "whyItMatters": "Robots only act on what they perceive; sensor cost and capability set the floor on what tasks automation can reliably do outside a cage.",
+    "scarcity": 60,
+    "bottleneck": 65,
+    "pricingPower": 60,
+    "commodities": [
+      "Silicon",
+      "Gallium"
+    ],
+    "risks": [
+      "Sensor hardware commoditises over time",
+      "Smartphone supply-chain giants enter at scale",
+      "Losing a design cycle locks vendors out for years"
+    ]
+  },
+  {
+    "id": "cyber-platforms",
+    "theme": "cybersecurity",
+    "layer": 1,
+    "name": "Security platforms",
+    "description": "Broad security platforms - CrowdStrike, Palo Alto Networks, Fortinet, Microsoft Security - consolidating endpoint, network and cloud defence into single vendors.",
+    "whyItMatters": "Security spend is among the least discretionary lines in enterprise IT, and AI raises both attack volume and the value of platform-scale telemetry.",
+    "scarcity": 55,
+    "bottleneck": 50,
+    "pricingPower": 75,
+    "commodities": [],
+    "risks": [
+      "Platform consolidation wars compress smaller vendors",
+      "AI shifts the attack-defence balance unpredictably",
+      "A self-inflicted outage or breach destroys trust quickly"
+    ]
+  },
+  {
+    "id": "cyber-identity",
+    "theme": "cybersecurity",
+    "layer": 2,
+    "name": "Identity and access",
+    "description": "Identity providers and privileged access vendors - Okta, CyberArk, Microsoft Entra - controlling who and what can touch enterprise systems.",
+    "whyItMatters": "Identity is the control plane of zero-trust security, and the coming wave of AI agents multiplies the machine identities that must be governed.",
+    "scarcity": 55,
+    "bottleneck": 60,
+    "pricingPower": 70,
+    "commodities": [],
+    "risks": [
+      "Microsoft bundling pressures standalone vendors",
+      "A breach of an identity provider is existential",
+      "Agentic AI redraws the identity perimeter faster than products adapt"
+    ]
+  },
+  {
+    "id": "q-hardware",
+    "theme": "quantum-computing",
+    "layer": 1,
+    "name": "Quantum hardware",
+    "description": "Quantum computer builders across modalities - IBM and Google superconducting, IonQ trapped ion, PsiQuantum photonic, Quantinuum - racing toward fault tolerance.",
+    "whyItMatters": "Hardware progress is the entire thesis: error-corrected logical qubits are the milestone that would turn quantum from research spend into a real market.",
+    "scarcity": 65,
+    "bottleneck": 50,
+    "pricingPower": 35,
+    "commodities": [
+      "Silicon",
+      "Electricity"
+    ],
+    "risks": [
+      "Commercial utility remains unproven at current scale",
+      "Pre-revenue names carry heavy dilution risk",
+      "The winning qubit modality is still undecided"
+    ]
+  },
+  {
+    "id": "q-enablers",
+    "theme": "quantum-computing",
+    "layer": 2,
+    "name": "Quantum enablers",
+    "description": "The picks and shovels of quantum - cryogenics from Bluefors-class suppliers, control electronics, lasers, photonics and specialist test equipment.",
+    "whyItMatters": "Every quantum lab and machine buys cryostats, lasers and control systems regardless of which modality wins, making enablers the lower-risk causal link in the theme.",
+    "scarcity": 70,
+    "bottleneck": 70,
+    "pricingPower": 60,
+    "commodities": [
+      "Copper",
+      "Aluminium",
+      "Silicon"
+    ],
+    "risks": [
+      "The addressable market is tiny today",
+      "Customer concentration in a handful of funded programs",
+      "A modality shift strands specialised tooling"
+    ]
+  }
+]

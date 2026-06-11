@@ -32,6 +32,48 @@ export const RELEASE_CATEGORIES: ReleaseCategory[] = ['Feature', 'Improvement', 
 
 export const releaseNotes: ReleaseNote[] = [
   {
+    id: 'rn-2026-06-11-world-radar',
+    date: '2026-06-11',
+    week: 'Week of 8 Jun 2026',
+    category: 'Feature',
+    highlight: true,
+    title: 'World Radar - themes mapped from first principles',
+    description:
+      'Lyra now scans the causal chain behind future returns, not just charts: 10 secular themes (AGI infrastructure, space, grid, nuclear, and more), each broken into supply-chain layers with bottleneck, scarcity and pricing-power reads, ranked companies, capital events, and an honest "what would prove this wrong".',
+    tags: ['Themes', 'World Radar'],
+  },
+  {
+    id: 'rn-2026-06-11-small-caps',
+    date: '2026-06-11',
+    week: 'Week of 8 Jun 2026',
+    category: 'Feature',
+    highlight: true,
+    title: 'Small-cap discovery engine',
+    description:
+      'A dedicated Small Caps surface that ranks under-discovered names by a deterministic opportunity score - evidence, bottleneck exposure, theme fit, momentum - and sorts them into honest buckets, including an explicit "avoid - dilution/hype risk" list.',
+    tags: ['Small Caps'],
+  },
+  {
+    id: 'rn-2026-06-11-investor-radar',
+    date: '2026-06-11',
+    week: 'Week of 8 Jun 2026',
+    category: 'Feature',
+    title: 'Investor Radar - elite funds, with caveats',
+    description:
+      'Track what disclosed 13F filings show for managers like Situational Awareness LP, Coatue and Berkshire - new positions, increases, exits, and which small caps elite money is touching. Filing-delay caveats are first-class: research context, never copy-trading.',
+    tags: ['Investors'],
+  },
+  {
+    id: 'rn-2026-06-11-capital-events',
+    date: '2026-06-11',
+    week: 'Week of 8 Jun 2026',
+    category: 'Data',
+    title: 'Capital-flow events in the content layer',
+    description:
+      'Hyperscaler capex, nuclear PPAs, defence and space awards, grid expansions - capital events now live in the agent-editable JSONL content layer and surface on the World Radar and every theme dossier.',
+    tags: ['Capital Flow', 'Content'],
+  },
+  {
     id: 'rn-2026-06-08-product-updates',
     date: '2026-06-08',
     week: 'Week of 8 Jun 2026',
