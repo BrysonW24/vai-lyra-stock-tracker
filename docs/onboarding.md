@@ -607,7 +607,7 @@ You added NVDA. Add quantity and average price to unlock P/L tracking.
 ## Skip option
 
 ```text
-Skip for now - I’ll add holdings later.
+Skip for now — I’ll add holdings later.
 ```
 
 ## Visual
@@ -635,7 +635,7 @@ Create trade snapshots from your buy dates.
 ## Subtitle
 
 ```text
-When you add a buy date, we can reconstruct what the market looked like when you entered the position - price, momentum, volume, technical setup, news and future performance.
+When you add a buy date, we can reconstruct what the market looked like when you entered the position — price, momentum, volume, technical setup, news and future performance.
 ```
 
 ## Explain the value
@@ -853,7 +853,7 @@ News/hype alerts: Off until Horizon 2
 ## Alert philosophy message
 
 ```text
-We only alert you when something meaningful changes - not every time a stock moves.
+We only alert you when something meaningful changes — not every time a stock moves.
 ```
 
 ## Telegram setup
@@ -1554,7 +1554,7 @@ You can start with ticker symbols only, or add quantity, average buy price and p
 ```text
 Learn from the day you entered.
 
-A Trade Day Snapshot reconstructs the market context around your buy date - including RSI, MACD, volume, moving averages, nearby news, earnings events and future performance after entry.
+A Trade Day Snapshot reconstructs the market context around your buy date — including RSI, MACD, volume, moving averages, nearby news, earnings events and future performance after entry.
 ```
 
 ## Alerts

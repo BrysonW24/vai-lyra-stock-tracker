@@ -10,6 +10,7 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   Calculator,
+  ClipboardList,
   Coins,
   Gem,
   FlaskConical,
@@ -25,6 +26,7 @@ import {
   Rocket,
   Rss,
   Search,
+  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
   Star,
@@ -50,6 +52,8 @@ const navItems = [
   { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness },
   { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star },
   { href: '/comparison', label: 'Comparison Lab', short: 'Compare', icon: GitCompare },
+  { href: '/paper', label: 'Paper Trading', short: 'Paper', icon: ClipboardList },
+  { href: '/trading', label: 'Bot Readiness', short: 'Bot', icon: ShieldCheck },
   { href: '/simulation', label: 'Simulation Lab', short: 'Simulate', icon: Calculator },
   { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins },
   { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays },
@@ -64,6 +68,15 @@ const navItems = [
   { href: '/whats-new', label: "What's New", short: 'New', icon: Sparkles },
   { href: '/settings', label: 'Strategy Rules', short: 'Rules', icon: SlidersHorizontal },
 ];
+
+// Lyra colour ramp - nav icons ascend through the brand palette and descend back
+// (ping-pong), so the rail reads as one continuous Lyra gradient wave.
+const LYRA_RAMP = ['#3b5bdb', '#5bc8ff', '#43d18b', '#f3a33a', '#f0758a', '#a78bfa'];
+function rampColor(index: number): string {
+  const period = LYRA_RAMP.length * 2 - 2;
+  const pos = index % period;
+  return LYRA_RAMP[pos < LYRA_RAMP.length ? pos : period - pos];
+}
 
 interface AppShellProps {
   data: DashboardData;
@@ -90,7 +103,7 @@ export function AppShell({ data, children }: AppShellProps) {
           <BrandLogo size={30} />
         </Link>
         <nav className="mt-2 flex flex-col items-center gap-1">
-          {navItems.map((item) => (
+          {navItems.map((item, i) => (
             <Link
               href={item.href}
               key={item.href}
@@ -99,10 +112,10 @@ export function AppShell({ data, children }: AppShellProps) {
               className={`group relative grid h-11 w-11 place-items-center rounded-md transition ${
                 isActive(item.href)
                   ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40'
-                  : 'text-[#8190a0] hover:bg-[#151c25] hover:text-[#eef3f8]'
+                  : 'hover:bg-[#151c25]'
               }`}
             >
-              <item.icon size={18} />
+              <item.icon size={18} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-75 transition group-hover:opacity-100'} />
               <span className="pointer-events-none absolute left-14 z-20 hidden whitespace-nowrap rounded-md border border-[#263241] bg-[#101720] px-2 py-1 text-xs text-[#dbe5ee] shadow-xl group-hover:block">
                 {item.label}
               </span>
@@ -191,7 +204,7 @@ export function AppShell({ data, children }: AppShellProps) {
         aria-label="Primary"
       >
         <div ref={navScrollRef} className="no-scrollbar flex snap-x snap-proximity gap-1.5 overflow-x-auto px-3 py-2 scroll-px-3">
-          {navItems.map((item) => (
+          {navItems.map((item, i) => (
             <Link
               href={item.href}
               key={item.href}
@@ -202,7 +215,7 @@ export function AppShell({ data, children }: AppShellProps) {
                   : 'text-[#8190a0] active:bg-[#151c25]'
               }`}
             >
-              <item.icon size={18} />
+              <item.icon size={18} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-80'} />
               <span className="whitespace-nowrap">{item.short}</span>
             </Link>
           ))}

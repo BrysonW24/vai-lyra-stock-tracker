@@ -73,7 +73,7 @@ Collects and normalises market, financial, news, social, event, and portfolio da
 Calculates deterministic indicators, scores, rankings, regimes, and risk states.
 
 3. Research Brain
-Uses AI to explain, summarise, compare, and investigate - but not invent trading truth.
+Uses AI to explain, summarise, compare, and investigate — but not invent trading truth.
 
 4. Execution Brain
 Helps with simulations, position sizing, paper trades, alerts, and eventually broker-connected actions.
@@ -817,7 +817,7 @@ Missed
 Example:
 
 ```text
-SNOW - Approaching
+SNOW — Approaching
 Score 68 → target 75
 Price 4.2% above target
 RSI rising
@@ -1170,7 +1170,7 @@ AI should use strict structures:
 Example:
 
 ```text
-AMD - Buy Review
+AMD — Buy Review
 
 Evidence:
 - RSI rose from 39 to 45.
@@ -1827,7 +1827,7 @@ Can this system help me execute safely?
 
 # The final product in one sentence
 
-> **A personal market operating system that scans US technology stocks, calculates deterministic technical and fundamental signals, overlays portfolio and watchlist context, monitors news/hype/events, teaches the user what the metrics mean, simulates trade outcomes, sends only meaningful alerts, and eventually supports controlled execution - all designed to improve trading discipline, opportunity detection, and risk-adjusted returns.**
+> **A personal market operating system that scans US technology stocks, calculates deterministic technical and fundamental signals, overlays portfolio and watchlist context, monitors news/hype/events, teaches the user what the metrics mean, simulates trade outcomes, sends only meaningful alerts, and eventually supports controlled execution — all designed to improve trading discipline, opportunity detection, and risk-adjusted returns.**
 
 ---
 

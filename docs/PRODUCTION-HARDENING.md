@@ -1,7 +1,7 @@
 # Production hardening (Phase 9)
 
 What's protected in code vs what still needs infrastructure. Lyra is research software,
-not a broker - it never holds funds or places trades, which keeps the blast radius small.
+not a broker — it never holds funds or places trades, which keeps the blast radius small.
 
 ## Done in code (this repo)
 
@@ -17,17 +17,17 @@ not a broker - it never holds funds or places trades, which keeps the blast radi
   key (if entered) stays in their browser.
 - **Security headers.** `next.config.js` sets X-Frame-Options, X-Content-Type-Options,
   Referrer-Policy, Permissions-Policy, and HSTS on every route.
-- **Legal disclaimer** surfaced in the app shell footer ("research only - not financial
+- **Legal disclaimer** surfaced in the app shell footer ("research only — not financial
   advice"). Required before public signups.
 - **Input validation** on all write routes (numeric ranges, required fields, symbol
   normalisation).
 - **Local PIN lock** option with hashed (never plaintext) PIN + reset escape.
 
-## Needs infrastructure (provisioning - not code)
+## Needs infrastructure (provisioning — not code)
 
 1. **Rate limiting.** The write routes are auth-gated + RLS-scoped (a user can only touch
    their own rows), so abuse surface is limited, but for DoS protection add a distributed
-   limiter - recommended: Upstash Redis + `@upstash/ratelimit` on the API routes and the
+   limiter — recommended: Upstash Redis + `@upstash/ratelimit` on the API routes and the
    auth pages. (Supabase Auth already rate-limits sign-in/sign-up server-side.)
 2. **Monitoring + error tracking.** Add Sentry (frontend + worker) for runtime errors and
    the worker's scan failures. Wire alerts on `stock_scanner_runs.status = 'error'`.
@@ -43,4 +43,4 @@ not a broker - it never holds funds or places trades, which keeps the blast radi
 ## CI gates to add (Phase 7 follow-on)
 
 - type-check + lint + `vitest run` + worker `pytest` on every push.
-- `next build` in CI (the real compile - can't run in the dev sandbox).
+- `next build` in CI (the real compile — can't run in the dev sandbox).

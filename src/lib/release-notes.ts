@@ -32,6 +32,37 @@ export const RELEASE_CATEGORIES: ReleaseCategory[] = ['Feature', 'Improvement', 
 
 export const releaseNotes: ReleaseNote[] = [
   {
+    id: 'rn-2026-06-11-paper-trading',
+    date: '2026-06-11',
+    week: 'Week of 8 Jun 2026',
+    category: 'Feature',
+    highlight: true,
+    title: 'Paper trading - prove the edge before any automation',
+    description:
+      'A simulated account with realistic fees, slippage and a trade journal - plus honest per-strategy readiness scores that say "not ready for automation" until the sample size and out-of-sample evidence exist.',
+    tags: ['Paper Trading'],
+  },
+  {
+    id: 'rn-2026-06-11-bot-readiness',
+    date: '2026-06-11',
+    week: 'Week of 8 Jun 2026',
+    category: 'Feature',
+    title: 'Bot Readiness - the gates before live trading',
+    description:
+      'Live trading is disabled by design. The new Bot Readiness page shows the deterministic pre-trade risk engine actually refusing a demo order, the full kill-switch taxonomy, and every gate (backtests, paper validation, risk limits, approvals, legal) that must pass first. AI never creates orders - it can only explain them.',
+    tags: ['Trading', 'Risk'],
+  },
+  {
+    id: 'rn-2026-06-11-security-foundations',
+    date: '2026-06-11',
+    week: 'Week of 8 Jun 2026',
+    category: 'Improvement',
+    title: 'Security-first foundations under the hood',
+    description:
+      'Secret-verified Telegram webhooks, signature-verified WhatsApp architecture, a unified notification router with quiet hours and dedupe, AI guardrails (injection isolation, tool permissions, citation enforcement), evidence-store schema, and a full security + runbook documentation system.',
+    tags: ['Security', 'AI', 'Notifications'],
+  },
+  {
     id: 'rn-2026-06-11-world-radar',
     date: '2026-06-11',
     week: 'Week of 8 Jun 2026',

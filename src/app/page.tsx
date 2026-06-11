@@ -4,6 +4,7 @@ import { ArrowUpRight, Clock3 } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { DailyBriefCard } from '@/components/DailyBriefCard';
 import { ExecutiveStrip } from '@/components/ExecutiveStrip';
+import { SignalEventsPanel } from '@/components/SignalEventsPanel';
 import type { SignalRow } from '@/types/scanner';
 import { HoldingsMomentumBoard } from '@/components/HoldingsMomentumBoard';
 import { GettingStartedBanner } from '@/components/GettingStartedBanner';
@@ -26,14 +27,40 @@ export default async function OverviewPage() {
   const marketContext = await getMarketContext();
   const macroContext = await getMacroContext();
   const setupStatus = await getSetupStatus();
-  const strongSignals = data.signals.filter((signal) => signal.status === 'strong_setup').slice(0, 5);
+  // Strongest setups: real strong_setup rows when they exist; otherwise fall back to
+  // the top-scored names so the table is never blank (labelled honestly below).
+  const trueStrong = data.signals.filter((signal) => signal.status === 'strong_setup');
+  const hasStrong = trueStrong.length > 0;
+  const strongSignals = hasStrong ? trueStrong.slice(0, 5) : [...data.signals].sort((a, b) => b.score - a.score).slice(0, 5);
   const watchlistNearTrigger = [...data.watchlist].sort((a, b) => b.scoreDelta - a.scoreDelta).slice(0, 5);
   const portfolioRows = data.portfolio.slice(0, 4);
   const sigBySymbol = new Map(data.signals.map((s) => [s.symbol, s]));
-  const stripSignals =
+  const bookSignals =
     data.portfolio.length > 0
       ? data.portfolio.map((h) => sigBySymbol.get(h.symbol)).filter((s): s is SignalRow => Boolean(s))
-      : [...data.signals].sort((a, b) => b.score - a.score).slice(0, 8);
+      : [...data.signals].sort((a, b) => b.score - a.score).slice(0, 4);
+  const watchlistSignals = data.watchlist
+    .map((w) => ({ row: w, signal: sigBySymbol.get(w.symbol) }))
+    .filter((x): x is { row: (typeof data.watchlist)[number]; signal: SignalRow } => Boolean(x.signal));
+  const stripPanels = [
+    { label: data.portfolio.length > 0 ? 'Your book' : 'Top signals', signals: bookSignals },
+    {
+      label: 'Watchlist leaders',
+      signals: [...watchlistSignals].sort((a, b) => b.row.scoreDelta - a.row.scoreDelta).map((x) => x.signal).slice(0, 4),
+    },
+    {
+      label: 'Watchlist losers',
+      signals: [...watchlistSignals].sort((a, b) => a.signal.priceChange1d - b.signal.priceChange1d).map((x) => x.signal).slice(0, 4),
+    },
+    {
+      label: 'Watchlist picks',
+      signals: [...watchlistSignals]
+        .filter((x) => x.row.triggerState === 'approaching' || x.row.triggerState === 'triggered' || x.signal.status === 'strong_setup')
+        .sort((a, b) => b.row.signalScore - a.row.signalScore)
+        .map((x) => x.signal)
+        .slice(0, 4),
+    },
+  ];
 
   return (
     <AppShell data={data}>
@@ -42,9 +69,11 @@ export default async function OverviewPage() {
 
         {setupStatus.signedIn ? <SetupChecklist status={setupStatus} /> : <GettingStartedBanner />}
 
-        <ExecutiveStrip signals={stripSignals} />
+        <ExecutiveStrip panels={stripPanels} />
 
         <DailyBriefCard data={data} market={marketContext} />
+
+        <SignalEventsPanel signals={data.signals} />
 
         <MetricStrip data={data} />
 
@@ -58,7 +87,9 @@ export default async function OverviewPage() {
             <div className="flex items-center justify-between border-b border-[#1b2530] px-3 py-2">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Strongest setups</p>
-                <p className="mt-0.5 font-mono text-[10px] text-[#a8b5c2]">Ranked backend signal outputs</p>
+                <p className="mt-0.5 font-mono text-[10px] text-[#a8b5c2]">
+                  {hasStrong ? 'Ranked backend signal outputs' : 'No strong setups right now - showing the top-scored radar names'}
+                </p>
               </div>
               <Link href="/radar" className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-2 py-1 text-xs text-[#a8b5c2] transition hover:text-[#eef3f8]">
                 Radar <ArrowUpRight size={12} />

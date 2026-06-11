@@ -1,4 +1,4 @@
-Yes - this is the right way to think about it.
+Yes — this is the right way to think about it.
 
 The roadmap should be structured in **horizons**, where each horizon adds a new layer of intelligence without breaking the core principle:
 
@@ -40,7 +40,7 @@ What could happen if I make a trade?
 
 ---
 
-# Horizon 1 - Technical Analysis Console
+# Horizon 1 — Technical Analysis Console
 
 ## Goal
 
@@ -368,7 +368,7 @@ A major Horizon 1 success criterion is:
 
 ---
 
-# Horizon 2 - News, Events, Fundamentals and Market Intelligence
+# Horizon 2 — News, Events, Fundamentals and Market Intelligence
 
 ## Goal
 
@@ -592,7 +592,7 @@ Ticker | Event | Sentiment | Relevance | Time | Impact
 
 ---
 
-# Horizon 3 - AI Tools, Education Hub and Strategy Assistant
+# Horizon 3 — AI Tools, Education Hub and Strategy Assistant
 
 ## Goal
 
@@ -841,7 +841,7 @@ Not as a giant chatbot taking over the screen.
 
 ---
 
-# Horizon 4 - Trading Bot / Decision Automation Layer
+# Horizon 4 — Trading Bot / Decision Automation Layer
 
 ## Goal
 
@@ -1001,7 +1001,7 @@ Emergency stop control
 
 # Recommended Horizon Roadmap
 
-## Horizon 1 - Technical Console
+## Horizon 1 — Technical Console
 
 Theme:
 
@@ -1030,7 +1030,7 @@ The user can open the app and immediately know which tech stocks deserve review.
 
 ---
 
-## Horizon 2 - Market Context
+## Horizon 2 — Market Context
 
 Theme:
 
@@ -1058,7 +1058,7 @@ The user can understand whether a technical signal has real-world support or ris
 
 ---
 
-## Horizon 3 - AI and Education
+## Horizon 3 — AI and Education
 
 Theme:
 
@@ -1086,7 +1086,7 @@ The user becomes better at reading stocks while using the product.
 
 ---
 
-## Horizon 4 - Trading Automation
+## Horizon 4 — Trading Automation
 
 Theme:
 
@@ -1120,7 +1120,7 @@ Since this is the immediate priority, I’d break Horizon 1 into 4 releases.
 
 ---
 
-## Horizon 1A - Live Technical Scanner
+## Horizon 1A — Live Technical Scanner
 
 Goal:
 
@@ -1149,7 +1149,7 @@ The app scans real stocks, stores real signals, and shows them in the UI.
 
 ---
 
-## Horizon 1B - Dense Charting and Ticker Detail
+## Horizon 1B — Dense Charting and Ticker Detail
 
 Goal:
 
@@ -1178,7 +1178,7 @@ The user can open a ticker and visually understand the setup in under 30 seconds
 
 ---
 
-## Horizon 1C - Portfolio and Watchlist
+## Horizon 1C — Portfolio and Watchlist
 
 Goal:
 
@@ -1206,7 +1206,7 @@ The app tells the user what matters specifically to their money and watchlist.
 
 ---
 
-## Horizon 1D - Interactive Comparison Lab
+## Horizon 1D — Interactive Comparison Lab
 
 Goal:
 

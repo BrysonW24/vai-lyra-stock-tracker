@@ -3,28 +3,41 @@
 import { useState } from 'react';
 import { TickerLogo } from '@/components/TickerLogo';
 import { SignalDrawer } from '@/components/SignalDrawer';
+import { RotatingFaces } from '@/components/RotatingFaces';
 import { formatCurrency, formatSignedPercent, toneClass } from '@/lib/format';
 import type { SignalRow } from '@/types/scanner';
 
-/**
- * Executive strip - a Bloomberg-TV-style row of minimal, real mini-trackers across the
- * top of Command: ticker, price, 1d change, score. Horizontally scrollable; tap a tile
- * for the full signal explainer drawer. Real numbers off the live signal set.
- */
-export function ExecutiveStrip({ signals }: { signals: SignalRow[] }) {
-  const [selected, setSelected] = useState<SignalRow | null>(null);
-  if (signals.length === 0) return null;
+export interface StripPanel {
+  /** Header label, e.g. "Your book", "Watchlist leaders". */
+  label: string;
+  signals: SignalRow[];
+}
 
-  return (
-    <section className="terminal-panel overflow-hidden rounded-md">
+/**
+ * Executive strip - a rotating feature space across the top of Command. It rolls
+ * through panels (Your book -> Watchlist leaders -> Watchlist losers -> Watchlist
+ * picks) with the same slot-machine animation as the metric tiles, so one strip
+ * carries four reads. Tap any tile for the full signal explainer drawer.
+ */
+export function ExecutiveStrip({ panels }: { panels: StripPanel[] }) {
+  const [selected, setSelected] = useState<SignalRow | null>(null);
+  const usable = panels.filter((p) => p.signals.length > 0);
+  if (usable.length === 0) return null;
+
+  const faces = usable.map((panel) => (
+    <div key={panel.label}>
       <div className="flex items-center justify-between gap-2 px-3 pb-1.5 pt-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Your book · tap a tile</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">{panel.label} · tap a tile</p>
         <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-[#43d18b]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#43d18b]" /> Live
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#43d18b]" />
+          </span>
+          Live
         </span>
       </div>
       <div className="grid grid-cols-4 gap-1.5 px-3 pb-2.5">
-        {signals.slice(0, 4).map((s) => (
+        {panel.signals.slice(0, 4).map((s) => (
           <button
             key={s.symbol}
             type="button"
@@ -40,7 +53,12 @@ export function ExecutiveStrip({ signals }: { signals: SignalRow[] }) {
           </button>
         ))}
       </div>
+    </div>
+  ));
 
+  return (
+    <section className="terminal-panel overflow-hidden rounded-md">
+      <RotatingFaces faces={faces} intervalMs={7500} />
       <SignalDrawer signal={selected} onClose={() => setSelected(null)} />
     </section>
   );

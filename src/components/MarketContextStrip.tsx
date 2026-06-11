@@ -24,15 +24,15 @@ interface TapeEntry {
  * hover; honours prefers-reduced-motion.
  */
 export function MarketContextStrip({ data }: MarketContextStripProps) {
-  const regimeColor = useMemo(() => {
+  const regime = useMemo(() => {
     switch (data.regime) {
       case 'risk_on':
-        return 'bg-[#1a3a2a] text-[#43d18b] border-[#43d18b]';
+        return { text: 'text-[#43d18b]', dot: 'bg-[#43d18b]' };
       case 'risk_off':
-        return 'bg-[#3a1a1a] text-[#ff6b6b] border-[#ff6b6b]';
+        return { text: 'text-[#ff6b6b]', dot: 'bg-[#ff6b6b]' };
       case 'neutral':
       default:
-        return 'bg-[#1a2a3a] text-[#60a5fa] border-[#60a5fa]';
+        return { text: 'text-[#60a5fa]', dot: 'bg-[#60a5fa]' };
     }
   }, [data.regime]);
 
@@ -64,9 +64,10 @@ export function MarketContextStrip({ data }: MarketContextStripProps) {
 
   return (
     <div className="intel-marquee terminal-panel glass-hero relative flex items-center overflow-hidden rounded-md">
-      {/* Fixed regime badge - the tape scrolls behind it */}
-      <div className="z-20 flex shrink-0 items-center border-r border-[#1b2530] bg-[#0b1016] px-3 py-2">
-        <span className={`rounded border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] ${regimeColor}`}>
+      {/* Fixed regime label - same treatment as the Intel tape */}
+      <div className="z-20 flex shrink-0 items-center gap-1.5 border-r border-[#1b2530] bg-[#0b1016] px-3 py-2">
+        <span className={`h-1.5 w-1.5 animate-pulse rounded-full ${regime.dot}`} />
+        <span className={`font-mono text-[10px] font-semibold uppercase tracking-[0.16em] ${regime.text}`}>
           {data.regime.replace('_', ' ')}
         </span>
       </div>

@@ -1,4 +1,4 @@
-# Lyra - AI-Native Notification Layer
+# Lyra — AI-Native Notification Layer
 
 > **Captured 2026-06-07.** The design for the AI interpretation layer that sits on top of
 > the deterministic engine and composes the hourly alert/digest messages. Status: **contract +
@@ -7,8 +7,8 @@
 ## Principle (product doctrine)
 
 The **deterministic engine decides** *what* and *when* (score, status, action-state, threshold
-crossings, risk states) - that is truth and the compliance guarantee. **AI only composes** the
-human message: it phrases the *why* and the *so-what* in 1-2 lines, **never inventing a number**
+crossings, risk states) — that is truth and the compliance guarantee. **AI only composes** the
+human message: it phrases the *why* and the *so-what* in 1–2 lines, **never inventing a number**
 and never overriding a decision. Every numeric fact in a message is passed verbatim from a
 deterministic field. This is what keeps Lyra "research, not advice."
 
@@ -20,10 +20,10 @@ hourly scanner run
   → AI COMPOSER reads {snapshot, events, intelligence, user profile}
   → NOTIFICATION MESSAGE(s)  (JSON contract: ≤2 lines, required facts, inclusion rules)
   → HOURLY DIGEST (rolled up across the user's watchlist/portfolio)
-  → channel delivery (Telegram / WhatsApp - live today)
+  → channel delivery (Telegram / WhatsApp — live today)
 ```
 
-## Is the backend ready? - Yes, the truth layer exists
+## Is the backend ready? — Yes, the truth layer exists
 
 | Need | Already in backend | File |
 |---|---|---|
@@ -44,21 +44,21 @@ composition spec, and a **test register** that gates message quality. All define
 
 ## The objects (full JSON Schema in `contracts/notifications/notification-contracts.schema.json`)
 
-1. **ChangeSnapshot** - the register of change. One per (run, ticker): `before` / `after` /
+1. **ChangeSnapshot** — the register of change. One per (run, ticker): `before` / `after` /
    `deltas` / `changed[]` (which dimensions moved) / `crossed_thresholds[]` / `watchlist_alerts_hit[]`
    (the −10/−5/+5/+10 ladder) / `news[]`. This is the adjacent-snapshot diff that decides whether
    anything is worth saying.
-2. **AlertEvent** - a deterministic, gated event the AI may turn into words. Carries `type`,
+2. **AlertEvent** — a deterministic, gated event the AI may turn into words. Carries `type`,
    `severity`, `deterministic_reason`, a **`facts{}` block of verbatim numbers**, `dedup_key`,
    `cooldown_hours`, and `suppressed{}` (with reason) so suppression is auditable.
-3. **NotificationMessage** - the AI output, contract-bound: `headline` (1 line, ≤90 chars),
+3. **NotificationMessage** — the AI output, contract-bound: `headline` (1 line, ≤90 chars),
    optional `detail` (1 line, ≤120), `tickers[]`, `facts_used[]` (must be a subset of the event's
    `facts`), `source_event_ids[]`, `severity`, `template_id`. Guardrail: `facts_used` ⊆ event facts
    → no invented numbers.
-4. **HourlyDigest** - the roll-up: a ≤2-line `summary` + `sections[]` (by type), `event_count`,
-   `suppressed_count`. This is the core driver - the hourly update.
+4. **HourlyDigest** — the roll-up: a ≤2-line `summary` + `sections[]` (by type), `event_count`,
+   `suppressed_count`. This is the core driver — the hourly update.
 
-## Message guardrails - "what makes a message solid"
+## Message guardrails — "what makes a message solid"
 
 A message is only sent if it passes the contract:
 - **Length:** headline ≤ 90 chars / 1 line; optional detail ≤ 120 / 1 line. No walls of text.
@@ -69,11 +69,11 @@ A message is only sent if it passes the contract:
   threshold within the window is suppressed (logged, not sent).
 - **Severity ordering:** `invalidated` > `portfolio_risk` > `strong_setup` > `price_alert` > `score_jump` > `watchlist_upgrade`.
 - **Plain English, deterministic fallback:** if AI is off/unavailable, the `message-templates.json`
-  deterministic template renders the same facts - the message always sends.
+  deterministic template renders the same facts — the message always sends.
 
 ## Templates (`contracts/notifications/message-templates.json`)
 
-Concise 1-2 line templates per event type, with `{slots}` filled from `facts{}`, plus an
+Concise 1–2 line templates per event type, with `{slots}` filled from `facts{}`, plus an
 `ai_rephrase` instruction the composer uses when AI mode is on (same facts, warmer prose). The
 hourly digest has its own template. Deterministic render is always the fallback.
 
@@ -81,12 +81,12 @@ hourly digest has its own template. Deterministic render is always the fallback.
 
 Golden cases: `input` (a ChangeSnapshot/AlertEvent) → `expect` (`max_lines`, `max_chars`,
 `must_include`, `must_not_include`, `tickers`, `no_invented_numbers`). The composer (deterministic
-and AI) must pass the whole register before a prompt/template change is promoted - the "register of
+and AI) must pass the whole register before a prompt/template change is promoted — the "register of
 how we pass testing" so messages are assembled properly. Run in CI alongside the worker pytest suite.
 
 ## Next build (not done here)
-1. `change_register.py` in `stock_scanner/` - build `ChangeSnapshot` from this run vs the prior
-   (`stock_scanner_runs` lookback). 2. `message_composer.py` - deterministic render from templates;
+1. `change_register.py` in `stock_scanner/` — build `ChangeSnapshot` from this run vs the prior
+   (`stock_scanner_runs` lookback). 2. `message_composer.py` — deterministic render from templates;
    AI rephrase behind the Account AI toggle. 3. Persist messages/digests (new `stock_messages` table)
    for the in-app feed + delivery audit. 4. Wire the test register into CI. 5. The hourly GitHub
    Actions workflow calls composer → Telegram/WhatsApp.

@@ -3,10 +3,10 @@
 import { ArrowUpRight } from 'lucide-react';
 import type { DeltaDirection, MacroSnapshot, MacroStance } from '@/lib/macro-context';
 
-const STANCE_COLOR: Record<MacroStance, string> = {
-  easing: 'bg-[#1a2a3a] text-[#60a5fa] border-[#60a5fa]',
-  hold: 'bg-[#161e27] text-[#a8b5c2] border-[#3a4754]',
-  tightening: 'bg-[#3a1a1a] text-[#ff6b6b] border-[#ff6b6b]',
+const STANCE_COLOR: Record<MacroStance, { text: string; dot: string }> = {
+  easing: { text: 'text-[#60a5fa]', dot: 'bg-[#60a5fa]' },
+  hold: { text: 'text-[#a8b5c2]', dot: 'bg-[#a8b5c2]' },
+  tightening: { text: 'text-[#ff6b6b]', dot: 'bg-[#ff6b6b]' },
 };
 
 const DIR_GLYPH: Record<DeltaDirection, string> = { up: '▲', down: '▼', flat: '-' };
@@ -42,9 +42,10 @@ export function MacroContextStrip({ data }: { data: MacroSnapshot }) {
 
   return (
     <div className="intel-marquee terminal-panel glass-hero relative flex items-center overflow-hidden rounded-md">
-      {/* Fixed country + policy stance badge - the tape scrolls behind it */}
-      <div className="z-20 flex shrink-0 items-center border-r border-[#1b2530] bg-[#0b1016] px-3 py-2">
-        <span className={`rounded border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] ${STANCE_COLOR[data.stance]}`}>
+      {/* Fixed country + policy stance label - same treatment as the Intel tape */}
+      <div className="z-20 flex shrink-0 items-center gap-1.5 border-r border-[#1b2530] bg-[#0b1016] px-3 py-2">
+        <span className={`h-1.5 w-1.5 animate-pulse rounded-full ${STANCE_COLOR[data.stance].dot}`} />
+        <span className={`font-mono text-[10px] font-semibold uppercase tracking-[0.16em] ${STANCE_COLOR[data.stance].text}`}>
           {data.countryCode} · {data.stanceLabel}
         </span>
       </div>
