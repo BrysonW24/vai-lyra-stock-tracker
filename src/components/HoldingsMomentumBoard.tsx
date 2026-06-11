@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import type { PortfolioHolding, SignalRow, TickerSetting } from '@/types/scanner';
 import { TickerLogo } from '@/components/TickerLogo';
-import { TradingViewChart } from '@/components/TradingViewChart';
+import { TradingViewChart, DEFAULT_CHART_INDICATORS, type ChartIndicators } from '@/components/TradingViewChart';
 import { PanelCarousel } from '@/components/PanelCarousel';
 import { HoldingSetupSlide } from '@/components/HoldingSetupSlide';
 import { HoldingIntelSlide } from '@/components/HoldingIntelSlide';
@@ -44,17 +44,26 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
   );
   const tickerBySymbol = useMemo(() => new Map(tickers.map((t) => [t.symbol, t])), [tickers]);
 
-  // RSI + MACD overlay the live charts by default; the user can switch to clean candles.
-  const [showIndicators, setShowIndicators] = useState(true);
-  // Persist the indicators preference so it never resets between sessions (default on).
+  // Each study (Bollinger / RSI / MACD) toggles independently and persists.
+  const [indicators, setIndicators] = useState<ChartIndicators>(DEFAULT_CHART_INDICATORS);
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem('lyra.chartIndicators');
-      if (saved !== null) setShowIndicators(saved === 'true');
+      const saved = window.localStorage.getItem('lyra.chartIndicators.v2');
+      if (saved) setIndicators({ ...DEFAULT_CHART_INDICATORS, ...(JSON.parse(saved) as Partial<ChartIndicators>) });
     } catch {
       /* ignore */
     }
   }, []);
+  const toggleIndicator = (key: keyof ChartIndicators) =>
+    setIndicators((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try {
+        window.localStorage.setItem('lyra.chartIndicators.v2', JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
 
   // Selectable universe (alphabetical for easy scanning in the picker).
   const options = useMemo(
@@ -155,30 +164,29 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
           <p className="mt-1 text-xs text-[#a8b5c2]">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() =>
-              setShowIndicators((value) => {
-                const next = !value;
-                try {
-                  window.localStorage.setItem('lyra.chartIndicators', String(next));
-                } catch {
-                  /* ignore */
-                }
-                return next;
-              })
-            }
-            aria-pressed={showIndicators}
-            title="Toggle RSI + MACD on the live charts"
-            className={[
-              'rounded border px-2 py-1 font-mono text-[11px] transition',
-              showIndicators
-                ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
-                : 'border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:text-[#eef3f8]',
-            ].join(' ')}
-          >
-            Indicators {showIndicators ? 'on' : 'off'}
-          </button>
+          <div className="flex items-center gap-1" role="group" aria-label="Chart indicators">
+            {([
+              ['bb', 'BB'],
+              ['rsi', 'RSI'],
+              ['macd', 'MACD'],
+            ] as [keyof ChartIndicators, string][]).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleIndicator(key)}
+                aria-pressed={indicators[key]}
+                title={`Toggle ${label} on the live charts`}
+                className={[
+                  'rounded border px-1.5 py-1 font-mono text-[10px] transition',
+                  indicators[key]
+                    ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
+                    : 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:text-[#dbe5ee]',
+                ].join(' ')}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             onClick={resetSlots}
@@ -274,7 +282,7 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
                           companyName={signal.companyName}
                           height={300}
                           compact
-                          showIndicators={showIndicators}
+                          indicators={indicators}
                         />
                       ),
                     },

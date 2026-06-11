@@ -2,6 +2,21 @@
 
 import { useMemo, useState } from 'react';
 
+/** Independently-toggleable studies. BB overlays price; RSI + MACD are sub-panes. */
+export interface ChartIndicators {
+  bb: boolean;
+  rsi: boolean;
+  macd: boolean;
+}
+
+export const DEFAULT_CHART_INDICATORS: ChartIndicators = { bb: false, rsi: true, macd: true };
+
+const STUDY_ID: Record<keyof ChartIndicators, string> = {
+  bb: 'BB@tv-basicstudies',
+  rsi: 'RSI@tv-basicstudies',
+  macd: 'MACD@tv-basicstudies',
+};
+
 interface TradingViewChartProps {
   symbol: string;
   exchange?: string;
@@ -11,14 +26,14 @@ interface TradingViewChartProps {
    * Compact variant for embedding inside an existing panel cell (e.g. the
    * Holdings Momentum board). Drops the large header/footer chrome and the
    * outer panel border so the live candle view fits in a tight slot while
-   * keeping the same charting premise (candles + RSI + MACD + range selector).
+   * keeping the same charting premise (candles + indicators + range selector).
    */
   compact?: boolean;
   /**
-   * Overlay the RSI + MACD momentum studies. Defaults on so momentum is always
-   * visible; the board exposes a toggle so the user can switch to clean candles.
+   * Which studies to overlay - Bollinger Bands, RSI, MACD - each toggled
+   * independently by the board. Defaults to RSI + MACD on, Bollinger off.
    */
-  showIndicators?: boolean;
+  indicators?: ChartIndicators;
 }
 
 type Interval = { code: string; label: string };
@@ -44,12 +59,17 @@ export function TradingViewChart({
   companyName,
   height,
   compact = false,
-  showIndicators = true,
+  indicators = DEFAULT_CHART_INDICATORS,
 }: TradingViewChartProps) {
   const [interval, setInterval] = useState<string>('D');
 
   const tvSymbol = `${exchange}:${symbol}`.toUpperCase();
   const frameHeight = height ?? (compact ? 340 : 480);
+
+  const activeStudies = (Object.keys(STUDY_ID) as (keyof ChartIndicators)[]).filter((k) => indicators[k]);
+  const studyLabel = activeStudies.length
+    ? `candles + ${activeStudies.map((k) => k.toUpperCase()).join(' + ')}`
+    : 'candles';
 
   const src = useMemo(() => {
     const params = new URLSearchParams({
@@ -73,11 +93,12 @@ export function TradingViewChart({
       popup_height: '650',
       locale: 'en',
     });
-    if (showIndicators) {
-      params.set('studies', JSON.stringify(['RSI@tv-basicstudies', 'MACD@tv-basicstudies']));
+    const studies = activeStudies.map((k) => STUDY_ID[k]);
+    if (studies.length) {
+      params.set('studies', JSON.stringify(studies));
     }
     return `https://www.tradingview.com/embed-widget/advanced-chart/?${params.toString()}`;
-  }, [tvSymbol, interval, showIndicators, compact]);
+  }, [tvSymbol, interval, indicators.bb, indicators.rsi, indicators.macd, compact, activeStudies]);
 
   const intervalButtons = (
     <div className="flex gap-1">
@@ -119,7 +140,7 @@ export function TradingViewChart({
       <div className="overflow-hidden rounded border border-[#1b2530] bg-[#0d1117]">
         <div className="flex items-center justify-between gap-2 border-b border-[#1b2530] px-2 py-1.5">
           <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">
-            {tvSymbol} · live · {showIndicators ? 'candles + RSI + MACD' : 'candles'}
+            {tvSymbol} · live · {studyLabel}
           </p>
           {intervalButtons}
         </div>
@@ -137,7 +158,7 @@ export function TradingViewChart({
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Price chart</p>
           <p className="mt-1 font-mono text-xs text-[#a8b5c2]">
-            {companyName ? `${companyName} · ` : ''}{tvSymbol} · candles + RSI + MACD · live market data
+            {companyName ? `${companyName} · ` : ''}{tvSymbol} · {studyLabel} · live market data
           </p>
         </div>
         {intervalButtons}

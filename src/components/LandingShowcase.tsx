@@ -163,7 +163,7 @@ function BriefSlide() {
 }
 
 const SLIDES = [
-  { key: 'candles', label: 'Live candles · RSI · MACD', node: <TradingViewChart symbol="NVDA" exchange="NASDAQ" compact showIndicators height={296} /> },
+  { key: 'candles', label: 'Live candles · RSI · MACD', node: <TradingViewChart symbol="NVDA" exchange="NASDAQ" compact height={296} /> },
   { key: 'setup', label: 'Every setup, scored & explained', node: <SetupSlide /> },
   { key: 'brief', label: 'A plain-English daily brief', node: <BriefSlide /> },
 ];
