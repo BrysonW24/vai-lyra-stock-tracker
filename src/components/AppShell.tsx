@@ -52,9 +52,8 @@ const navItems = [
   { href: '/wire', label: 'Live Wire', short: 'Wire', icon: Rss },
   { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper },
   { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays },
-  // -- Signals & alerts --
+  // -- Signals --
   { href: '/radar', label: 'Signal Radar', short: 'Radar', icon: Radar },
-  { href: '/alerts', label: 'Alerts', short: 'Alerts', icon: Bell },
   { href: '/smart-money', label: 'Smart Money', short: 'Smart $', icon: Banknote },
   // -- Research --
   { href: '/themes', label: 'World Radar', short: 'Themes', icon: Globe },
