@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import type { PortfolioHolding, SignalRow, TickerSetting } from '@/types/scanner';
 import { TickerLogo } from '@/components/TickerLogo';
 import { TradingViewChart, DEFAULT_CHART_INDICATORS, type ChartIndicators } from '@/components/TradingViewChart';
@@ -54,6 +54,17 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
       /* ignore */
     }
   }, []);
+  // Per-holding collapse (keyed by symbol). Collapsed hides the chart carousel but
+  // keeps the header + chips, so the board can show every name at a glance.
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleCollapse = (symbol: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(symbol)) next.delete(symbol);
+      else next.add(symbol);
+      return next;
+    });
+
   const toggleIndicator = (key: keyof ChartIndicators) =>
     setIndicators((prev) => {
       const next = { ...prev, [key]: !prev[key] };
@@ -139,6 +150,9 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
     });
   }
 
+  const allCollapsed = slots.length > 0 && slots.every((s) => collapsed.has(s));
+  const toggleAll = () => setCollapsed(allCollapsed ? new Set() : new Set(slots));
+
   function resetSlots() {
     setSlots(defaultSlots);
     try {
@@ -189,6 +203,14 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
           </div>
           <button
             type="button"
+            onClick={toggleAll}
+            title={allCollapsed ? 'Expand every holding' : 'Collapse every holding'}
+            className="rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-[11px] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+          >
+            {allCollapsed ? 'Expand all' : 'Collapse all'}
+          </button>
+          <button
+            type="button"
             onClick={resetSlots}
             className="rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-[11px] text-[#a8b5c2] transition hover:text-[#eef3f8]"
           >
@@ -210,10 +232,11 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
           if (!signal) return null;
 
           const owned = Boolean(holding);
+          const isCollapsed = collapsed.has(symbol);
 
           return (
             <div className="bg-[#0d1117] p-3" key={`${index}-${symbol}`}>
-              {/* Header: identity + slot picker */}
+              {/* Header: identity + slot picker + collapse */}
               <div className="flex items-start justify-between gap-2">
                 <Link href={`/tickers/${signal.symbol}`} className="flex min-w-0 items-center gap-2">
                   <TickerLogo symbol={signal.symbol} companyName={signal.companyName} size={26} />
@@ -224,21 +247,33 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
                     <span className="block max-w-[120px] truncate text-[11px] text-[#8190a0] sm:max-w-[180px]">{signal.companyName}</span>
                   </span>
                 </Link>
-                <label className="shrink-0">
-                  <span className="sr-only">Choose ticker for this panel</span>
-                  <select
-                    value={symbol}
-                    onChange={(event) => changeSlot(index, event.target.value)}
-                    className="max-w-[92px] rounded border border-[#263241] bg-[#0d141c] px-1.5 py-1 font-mono text-[11px] text-[#a8b5c2] outline-none transition focus:ring-1 focus:ring-[#f3a33a]/40"
-                    aria-label="Choose ticker for this panel"
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <label>
+                    <span className="sr-only">Choose ticker for this panel</span>
+                    <select
+                      value={symbol}
+                      onChange={(event) => changeSlot(index, event.target.value)}
+                      className="max-w-[92px] rounded border border-[#263241] bg-[#0d141c] px-1.5 py-1 font-mono text-[11px] text-[#a8b5c2] outline-none transition focus:ring-1 focus:ring-[#f3a33a]/40"
+                      aria-label="Choose ticker for this panel"
+                    >
+                      {options.map((option) => (
+                        <option key={option.symbol} value={option.symbol} className="bg-[#0d141c] text-[#dbe5ee]">
+                          {option.symbol}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => toggleCollapse(symbol)}
+                    aria-expanded={!isCollapsed}
+                    aria-label={isCollapsed ? `Expand ${signal.symbol}` : `Collapse ${signal.symbol}`}
+                    title={isCollapsed ? `Expand ${signal.symbol}` : `Collapse ${signal.symbol}`}
+                    className="grid h-7 w-7 place-items-center rounded border border-[#263241] bg-[#0d141c] text-[#8190a0] transition hover:text-[#eef3f8]"
                   >
-                    {options.map((option) => (
-                      <option key={option.symbol} value={option.symbol} className="bg-[#0d141c] text-[#dbe5ee]">
-                        {option.symbol}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <ChevronDown size={14} className={`transition-transform ${isCollapsed ? '' : 'rotate-180'}`} />
+                  </button>
+                </div>
               </div>
 
               {/* Money / radar context + setup chips - compact values to fit one line */}
@@ -266,8 +301,8 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
               </div>
 
               {/* Swipeable dossier: live chart -> setup -> intelligence, all keyed to the
-                  selected ticker. Live chart shows real history/trend; the dossier slides
-                  surface the backend setup read and ticker-tagged intelligence. */}
+                  selected ticker. Collapsed holdings hide this so the board stays scannable. */}
+              {!isCollapsed && (
               <div className="mt-3">
                 <PanelCarousel
                   slides={[
@@ -303,6 +338,7 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
                   ]}
                 />
               </div>
+              )}
 
               <p className="mt-1 text-[11px] leading-snug text-[#a8b5c2]">{readLine(signal.scoreDelta, signal.histDelta)}</p>
             </div>
