@@ -50,10 +50,11 @@ const navItems = [
   { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness },
   { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star },
   { href: '/wire', label: 'Live Wire', short: 'Wire', icon: Rss },
+  { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper },
+  { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays },
   // -- Signals & alerts --
   { href: '/radar', label: 'Signal Radar', short: 'Radar', icon: Radar },
   { href: '/alerts', label: 'Alerts', short: 'Alerts', icon: Bell },
-  { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper },
   { href: '/smart-money', label: 'Smart Money', short: 'Smart $', icon: Banknote },
   // -- Research --
   { href: '/themes', label: 'World Radar', short: 'Themes', icon: Globe },
@@ -67,7 +68,6 @@ const navItems = [
   { href: '/simulation', label: 'Simulation Lab', short: 'Simulate', icon: Calculator },
   { href: '/strategy-lab', label: 'Strategy Lab', short: 'Strategy', icon: FlaskConical },
   { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins },
-  { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays },
   // -- Trading layer --
   { href: '/paper', label: 'Paper Trading', short: 'Paper', icon: ClipboardList },
   { href: '/trading', label: 'Bot Readiness', short: 'Bot', icon: ShieldCheck },
