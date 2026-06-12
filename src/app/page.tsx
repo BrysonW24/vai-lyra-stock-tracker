@@ -4,6 +4,7 @@ import { ArrowUpRight, Clock3 } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { DailyBriefCard } from '@/components/DailyBriefCard';
 import { ExecutiveStrip } from '@/components/ExecutiveStrip';
+import { PrimeSetupsBoard } from '@/components/PrimeSetupsBoard';
 import { SignalEventsPanel } from '@/components/SignalEventsPanel';
 import { WatchlistTriggerBoard } from '@/components/WatchlistTriggerBoard';
 import type { SignalRow } from '@/types/scanner';
@@ -72,13 +73,7 @@ export default async function OverviewPage() {
 
         <ExecutiveStrip panels={stripPanels} />
 
-        <DailyBriefCard data={data} market={marketContext} />
-
-        <SignalEventsPanel signals={data.signals} />
-
-        <MetricStrip data={data} />
-
-        {/* Compact ticker summary - moved up: it is the fastest read of the radar. */}
+        {/* Compact ticker summary - sits directly under the runners as the fastest read of the radar. */}
         <Suspense fallback={<div className="terminal-panel rounded-md p-4 text-sm text-[#8190a0]">Loading compact ticker feed...</div>}>
           <SignalTable
             signals={data.signals.slice(0, 5)}
@@ -88,6 +83,15 @@ export default async function OverviewPage() {
             title="Compact ticker feed"
           />
         </Suspense>
+
+        {/* Prime Setups - the deterministic "what's worth acting on / watching" callout. */}
+        <PrimeSetupsBoard signals={data.signals} />
+
+        <DailyBriefCard data={data} market={marketContext} />
+
+        <SignalEventsPanel signals={data.signals} />
+
+        <MetricStrip data={data} />
 
         <MarketContextStrip data={marketContext} />
 
