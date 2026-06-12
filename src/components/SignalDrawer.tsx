@@ -57,14 +57,19 @@ export function SignalDrawer({ signal, onClose }: { signal: SignalRow | null; on
     >
       <p className="text-[11px] leading-snug text-[#a8b5c2]">{HELP.score}</p>
 
-      {/* Score component breakdown */}
+      {/* Score component breakdown - these bars are how many points each factor
+          contributed to the composite score, NOT the raw indicator readings. The
+          live RSI / MACD / volume values are shown in the section below. */}
       <div className="space-y-2 rounded-md border border-[#263241] bg-[#0d141c] p-3">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">What makes the score</p>
-        <Bar label="RSI" value={b.rsiScore} />
-        <Bar label="MACD" value={b.macdScore} />
+        <p className="-mt-1 text-[10px] leading-snug text-[#6f7d8a]">
+          How much each factor added to the {signal.score} score - not the raw readings. Your live RSI / MACD / volume are below.
+        </p>
+        <Bar label="RSI score" value={b.rsiScore} />
+        <Bar label="MACD score" value={b.macdScore} />
         <Bar label="Price location" value={b.priceLocationScore} />
         <Bar label="Trend" value={b.trendScore} />
-        <Bar label="Volume" value={b.volumeScore} />
+        <Bar label="Volume score" value={b.volumeScore} />
       </div>
 
       {/* Live metric values + plain-English help */}

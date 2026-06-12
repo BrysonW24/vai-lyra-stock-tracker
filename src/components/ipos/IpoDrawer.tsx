@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { X, ArrowUpRight } from 'lucide-react';
 import { SourceFavicon } from '@/components/SourceFavicon';
@@ -21,6 +22,13 @@ function billions(usdM: number): string {
  * full-screen sheet on mobile. Closes on backdrop click or Esc.
  */
 export function IpoDrawer({ ipo, onClose }: IpoDrawerProps) {
+  // Portal to <body> so the fixed overlay escapes any ancestor backdrop-filter /
+  // transform containing block (e.g. .terminal-panel) that would trap it.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -31,12 +39,12 @@ export function IpoDrawer({ ipo, onClose }: IpoDrawerProps) {
     }
   }, [ipo, onClose]);
 
-  if (!ipo) return null;
+  if (!ipo || !mounted) return null;
 
   const est = ipo.modelEstimate;
   const ref = ipo.currentPrice ?? ipo.offerPrice;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <aside className="absolute right-0 top-0 flex h-full w-full max-w-[440px] flex-col overflow-y-auto border-l border-[#1b2530] bg-[#0b1016] shadow-2xl">
@@ -147,6 +155,7 @@ export function IpoDrawer({ ipo, onClose }: IpoDrawerProps) {
           </Link>
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface DetailDrawerProps {
@@ -19,6 +20,14 @@ interface DetailDrawerProps {
  */
 export function DetailDrawer({ open, onClose, title, subtitle, badge, children }: DetailDrawerProps) {
   const [shown, setShown] = useState(false);
+  // Portal to <body> so the fixed overlay escapes any ancestor with a
+  // backdrop-filter / transform (e.g. .terminal-panel), which would otherwise
+  // become the containing block for `position: fixed` and trap the drawer
+  // inside the panel - mislaying it and making the close button unclickable.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -36,9 +45,9 @@ export function DetailDrawer({ open, onClose, title, subtitle, badge, children }
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50">
       <div
         className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${shown ? 'opacity-100' : 'opacity-0'}`}
@@ -66,6 +75,7 @@ export function DetailDrawer({ open, onClose, title, subtitle, badge, children }
         </div>
         <div className="space-y-4 px-4 py-4">{children}</div>
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }
