@@ -6,6 +6,7 @@ import type { SignalRow } from '@/types/scanner';
 import { DetailDrawer } from '@/components/DetailDrawer';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TickerLogo } from '@/components/TickerLogo';
+import { buildScoreBreakdown } from '@/lib/score-breakdown';
 import { formatNumber, formatSignedNumber, toneClass, trendArrow } from '@/lib/format';
 
 // Plain-English "what is this" for the metrics that drive the score.
@@ -16,13 +17,12 @@ const HELP = {
   volume: 'Volume vs its own average. Above 1x means heavier-than-usual participation confirming the move.',
 };
 
-function Bar({ label, value }: { label: string; value: number }) {
-  const pct = Math.max(0, Math.min(100, value));
+function Bar({ label, value, max, pct }: { label: string; value: number; max: number; pct: number }) {
   return (
     <div>
       <div className="flex items-center justify-between font-mono text-[10px] text-[#8190a0]">
         <span>{label}</span>
-        <span className="text-[#dbe5ee]">{Math.round(value)}</span>
+        <span className="text-[#dbe5ee]">{value}/{max}</span>
       </div>
       <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-[#1b2530]">
         <div className="h-full rounded-full bg-gradient-to-r from-[#3b5bdb] to-[#43d18b]" style={{ width: `${pct}%` }} />
@@ -57,19 +57,17 @@ export function SignalDrawer({ signal, onClose }: { signal: SignalRow | null; on
     >
       <p className="text-[11px] leading-snug text-[#a8b5c2]">{HELP.score}</p>
 
-      {/* Score component breakdown - these bars are how many points each factor
-          contributed to the composite score, NOT the raw indicator readings. The
-          live RSI / MACD / volume values are shown in the section below. */}
+      {/* Score component breakdown - point contribution per factor (value / max),
+          shared with the ticker page via buildScoreBreakdown so they never drift.
+          NOT the raw indicator readings - those are in the section below. */}
       <div className="space-y-2 rounded-md border border-[#263241] bg-[#0d141c] p-3">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">What makes the score</p>
         <p className="-mt-1 text-[10px] leading-snug text-[#6f7d8a]">
-          How much each factor added to the {signal.score} score - not the raw readings. Your live RSI / MACD / volume are below.
+          Points each factor added, out of its max - they sum to the {signal.score} score. Your live RSI / MACD / volume are below.
         </p>
-        <Bar label="RSI score" value={b.rsiScore} />
-        <Bar label="MACD score" value={b.macdScore} />
-        <Bar label="Price location" value={b.priceLocationScore} />
-        <Bar label="Trend" value={b.trendScore} />
-        <Bar label="Volume score" value={b.volumeScore} />
+        {buildScoreBreakdown(b).map((c) => (
+          <Bar key={c.label} label={c.label} value={c.value} max={c.max} pct={c.pct} />
+        ))}
       </div>
 
       {/* Live metric values + plain-English help */}

@@ -6,6 +6,7 @@ import type { SignalRow } from '@/types/scanner';
 import { SignalDrawer } from '@/components/SignalDrawer';
 import { TickerLogo } from '@/components/TickerLogo';
 import { FullSetupLink } from '@/components/FullSetupLink';
+import { PrimeSetupsHelp } from '@/components/PrimeSetupsHelp';
 import { derivePrimeSetups, type PrimeSetup } from '@/lib/prime-setups';
 import { formatSignedNumber } from '@/lib/format';
 
@@ -71,7 +72,10 @@ export function PrimeSetupsBoard({ signals }: { signals: SignalRow[] }) {
             </p>
           </div>
         </div>
-        <span className="shrink-0 font-mono text-[10px] text-[#8190a0]">{total} flagged</span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="font-mono text-[10px] text-[#8190a0]">{total} flagged</span>
+          <PrimeSetupsHelp />
+        </div>
       </div>
 
       {total === 0 ? (

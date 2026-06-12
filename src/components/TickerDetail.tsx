@@ -1,7 +1,9 @@
 import type { ScorePoint, SignalRow } from '@/types/scanner';
-import { DenseLineChart, MacdHistogramChart, ScoreHeatBars } from '@/components/ChartPrimitives';
+import { MacdHistogramChart, ScoreHeatBars } from '@/components/ChartPrimitives';
 import { StatusBadge } from '@/components/StatusBadge';
 import { OutcomeHistoryPanel } from '@/components/tickers/OutcomeHistoryPanel';
+import { TickerInsightsPanel } from '@/components/tickers/TickerInsightsPanel';
+import { buildScoreBreakdown } from '@/lib/score-breakdown';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, formatSignedPercent, relativeTime, toneClass, trendArrow } from '@/lib/format';
 
 interface TickerDetailProps {
@@ -41,14 +43,7 @@ function ExplanationList({ title, items, tone }: { title: string; items: string[
 }
 
 export function TickerDetail({ signal, scoreHistory }: TickerDetailProps) {
-  const labels = scoreHistory.map((point) => point.label);
-  const scoreBreakdown = [
-    ['RSI', signal.scoreBreakdown.rsiScore, 25],
-    ['MACD', signal.scoreBreakdown.macdScore, 30],
-    ['Price location', signal.scoreBreakdown.priceLocationScore, 15],
-    ['Trend', signal.scoreBreakdown.trendScore, 15],
-    ['Volume', signal.scoreBreakdown.volumeScore, 15],
-  ] as const;
+  const scoreBreakdown = buildScoreBreakdown(signal.scoreBreakdown);
 
   return (
     <section className="space-y-3">
@@ -89,16 +84,7 @@ export function TickerDetail({ signal, scoreHistory }: TickerDetailProps) {
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[1.3fr_0.7fr]">
-        <DenseLineChart
-          title="Signal score / RSI history"
-          subtitle="Backend-provided ticker signal window."
-          labels={labels}
-          series={[
-            { label: 'Score', values: scoreHistory.map((point) => point.score), color: '#f3a33a' },
-            { label: 'RSI', values: scoreHistory.map((point) => point.rsi), color: '#60a5fa' },
-          ]}
-          height={330}
-        />
+        <TickerInsightsPanel signal={signal} />
         <ScoreHeatBars points={scoreHistory} />
       </div>
 
@@ -137,15 +123,16 @@ export function TickerDetail({ signal, scoreHistory }: TickerDetailProps) {
       <div className="grid gap-3 xl:grid-cols-[0.72fr_1.28fr]">
         <section className="terminal-panel rounded-md p-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Score breakdown</p>
+          <p className="mt-1 text-[10px] leading-snug text-[#6f7d8a]">Points each factor added, out of its max - they sum to the {signal.score} score.</p>
           <div className="mt-3 space-y-3">
-            {scoreBreakdown.map(([label, value, max]) => (
+            {scoreBreakdown.map(({ label, value, max, pct }) => (
               <div key={label}>
                 <div className="flex justify-between font-mono text-xs">
                   <span className="text-[#a8b5c2]">{label}</span>
                   <span className="text-[#dbe5ee]">{value}/{max}</span>
                 </div>
                 <div className="mt-1 h-1.5 overflow-hidden rounded-sm bg-[#17202a]">
-                  <div className="h-full bg-[#f3a33a]" style={{ width: `${Math.min(100, (value / max) * 100)}%` }} />
+                  <div className="h-full bg-[#f3a33a]" style={{ width: `${pct}%` }} />
                 </div>
               </div>
             ))}

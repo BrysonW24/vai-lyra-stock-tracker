@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { TradingViewChart, DEFAULT_CHART_INDICATORS, type ChartIndicators } from '@/components/TradingViewChart';
 
 const ALL_ON: ChartIndicators = { bb: true, rsi: true, macd: true };
@@ -22,7 +24,15 @@ export function TickerChartView({
   companyName: string;
   fullSetup: boolean;
 }) {
+  const router = useRouter();
   const [indicators, setIndicators] = useState<ChartIndicators>(fullSetup ? ALL_ON : DEFAULT_CHART_INDICATORS);
+
+  // Return to wherever the user came from (Prime Setups, Radar, the drawer, etc.).
+  // Falls back to Command if this was a fresh/direct load with no history to pop.
+  const goBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) router.back();
+    else router.push('/');
+  };
 
   useEffect(() => {
     if (fullSetup) {
@@ -58,6 +68,14 @@ export function TickerChartView({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          onClick={goBack}
+          className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-1 font-mono text-[10px] text-[#a8b5c2] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
+        >
+          <ArrowLeft size={12} /> Back
+        </button>
+        <span className="mx-0.5 h-3.5 w-px bg-[#263241]" />
         <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#8190a0]">Indicators</span>
         {([
           ['bb', 'BB'],
