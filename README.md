@@ -12,6 +12,28 @@ npm install && npm run dev      # ✨ runs on demo data, no keys needed
 
 Open http://localhost:3042 and you're in. 🎉
 
+## 0 - How to Access Lyra
+
+<p align="center">
+  <img src="image-2.png" width="30%"
+  alt="Three Dots - Share Button" />
+  <img src="image-1.png" width="30%"
+  alt="Add to Home Screen" />
+  <img src="image.png" width="30%"
+  alt="Adding to Home Screen" />
+</p>
+
+## 1 - Lyra Notifcations
+
+<!-- <p align="center">
+  <img src="image-2.png" width="30%"
+  alt="Three Dots - Share Button" />
+  <img src="image-1.png" width="30%"
+  alt="Add to Home Screen" />
+  <img src="image.png" width="30%"
+  alt="Adding to Home Screen" />
+</p> -->
+
 ## 1 - Landing Page
 
 <p align="center">
