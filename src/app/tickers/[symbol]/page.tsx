@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
 import { TickerDetail } from '@/components/TickerDetail';
-import { TradingViewChart } from '@/components/TradingViewChart';
+import { TickerChartView } from '@/components/TickerChartView';
 import { getDashboardData } from '@/lib/data';
 import { buildScoreHistory } from '@/lib/score-history';
 
@@ -9,10 +9,12 @@ interface TickerPageProps {
   params: Promise<{
     symbol: string;
   }>;
+  searchParams: Promise<{ view?: string }>;
 }
 
-export default async function TickerPage({ params }: TickerPageProps) {
+export default async function TickerPage({ params, searchParams }: TickerPageProps) {
   const { symbol } = await params;
+  const { view } = await searchParams;
   const data = await getDashboardData();
   const signal = data.signals.find((candidate) => candidate.symbol.toLowerCase() === symbol.toLowerCase());
 
@@ -26,7 +28,12 @@ export default async function TickerPage({ params }: TickerPageProps) {
   return (
     <AppShell data={data}>
       <div className="space-y-3 pb-28 xl:pb-6">
-        <TradingViewChart symbol={signal.symbol} exchange={exchange} companyName={signal.companyName} />
+        <TickerChartView
+          symbol={signal.symbol}
+          exchange={exchange}
+          companyName={signal.companyName}
+          fullSetup={view === 'setup'}
+        />
         <TickerDetail
           signal={signal}
           scoreHistory={buildScoreHistory({

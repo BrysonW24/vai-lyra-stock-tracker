@@ -9,7 +9,7 @@ import { TradingViewChart, DEFAULT_CHART_INDICATORS, type ChartIndicators } from
 import { PanelCarousel } from '@/components/PanelCarousel';
 import { HoldingSetupSlide } from '@/components/HoldingSetupSlide';
 import { HoldingIntelSlide } from '@/components/HoldingIntelSlide';
-import { formatCurrency, formatSignedNumber, formatSignedPercent, toneClass } from '@/lib/format';
+import { formatCompactCurrency, formatCurrency, formatSignedNumber, formatSignedPercent, toneClass } from '@/lib/format';
 import { loadLocalHoldings } from '@/lib/local-portfolio';
 
 interface HoldingsMomentumBoardProps {
@@ -241,27 +241,27 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
                 </label>
               </div>
 
-              {/* Money / radar context + setup chips */}
-              <div className="mt-2 flex flex-wrap items-center gap-1.5 font-mono text-[11px]">
+              {/* Money / radar context + setup chips - compact values to fit one line */}
+              <div className="mt-2 flex flex-wrap items-center gap-1 font-mono text-[10px]">
                 {owned && holding ? (
                   <>
-                    <span className="rounded border border-[#263241] bg-[#0d141c] px-2 py-0.5 text-[#dbe5ee]">
-                      {formatCurrency(holding.marketValue)}
+                    <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 text-[#dbe5ee]" title={formatCurrency(holding.marketValue)}>
+                      {formatCompactCurrency(holding.marketValue)}
                     </span>
-                    <span className="rounded border border-[#263241] bg-[#0d141c] px-2 py-0.5 text-[#8190a0]">
-                      Spent {formatCurrency(amountSpent(holding))}
+                    <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 text-[#8190a0]" title={`Spent ${formatCurrency(amountSpent(holding))}`}>
+                      Spent {formatCompactCurrency(amountSpent(holding))}
                     </span>
-                    <span className={`rounded border border-[#263241] bg-[#0d141c] px-2 py-0.5 ${toneClass(holding.unrealisedPnl)}`}>
+                    <span className={`rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 ${toneClass(holding.unrealisedPnl)}`}>
                       {formatSignedPercent(holding.unrealisedPnlPercent)}
                     </span>
                   </>
                 ) : (
-                  <span className="rounded border border-[#263241] bg-[#0d141c] px-2 py-0.5 uppercase tracking-wide text-[#8190a0]">
+                  <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 uppercase tracking-wide text-[#8190a0]">
                     On radar · not held
                   </span>
                 )}
-                <span className="rounded border border-[#263241] bg-[#0d141c] px-2 py-0.5 text-[#f3a33a]">
-                  Setup {signal.score}/100 <span className={toneClass(signal.scoreDelta)}>{formatSignedNumber(signal.scoreDelta, 0)}</span>
+                <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 text-[#f3a33a]">
+                  Setup {signal.score} <span className={toneClass(signal.scoreDelta)}>{formatSignedNumber(signal.scoreDelta, 0)}</span>
                 </span>
               </div>
 

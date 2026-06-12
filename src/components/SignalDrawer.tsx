@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, LineChart } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
 import { DetailDrawer } from '@/components/DetailDrawer';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -122,12 +122,20 @@ export function SignalDrawer({ signal, onClose }: { signal: SignalRow | null; on
         <span className="text-[#f3a33a]">{signal.actionState.replaceAll('_', ' ')}</span>
       </div>
 
-      <Link
-        href={`/tickers/${signal.symbol}`}
-        className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a8b5c2] transition hover:text-[#eef3f8]"
-      >
-        Open {signal.symbol} <ArrowUpRight size={12} />
-      </Link>
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href={`/tickers/${signal.symbol}?view=setup`}
+          className="inline-flex items-center gap-1.5 rounded border border-[#3b5bdb] bg-[#0d1530] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#8aa2ff] transition hover:bg-[#11193a]"
+        >
+          <LineChart size={13} /> Full setup chart
+        </Link>
+        <Link
+          href={`/tickers/${signal.symbol}`}
+          className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+        >
+          Open {signal.symbol} <ArrowUpRight size={12} />
+        </Link>
+      </div>
     </DetailDrawer>
   );
 }

@@ -33,6 +33,18 @@ export function formatCurrency(value: number): string {
   });
 }
 
+/**
+ * Compact currency for tight chips: $13,137.60 -> $13.1K, $1,234,567 -> $1.2M.
+ * Small values keep full precision so prices still read normally.
+ */
+export function formatCompactCurrency(value: number): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(1)}K`;
+  return formatCurrency(value);
+}
+
 export function relativeTime(isoDate: string | null): string {
   if (!isoDate) {
     return 'Not sent yet';

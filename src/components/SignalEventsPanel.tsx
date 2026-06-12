@@ -5,6 +5,7 @@ import { Zap } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
 import { SignalDrawer } from '@/components/SignalDrawer';
 import { TickerLogo } from '@/components/TickerLogo';
+import { FullSetupLink } from '@/components/FullSetupLink';
 import {
   buildEventStories,
   deriveSignalEvents,
@@ -104,40 +105,45 @@ export function SignalEventsPanel({ signals }: { signals: SignalRow[] }) {
           {stories.map((story) => {
             const signal = bySymbol.get(story.symbol);
             return (
-              <button
-                key={story.id}
-                type="button"
-                onClick={() => signal && setSelected(signal)}
-                className="block w-full px-3 py-2 text-left transition hover:bg-[#101720]"
-              >
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <TickerLogo symbol={story.symbol} companyName={story.companyName} size={13} />
-                  <span className="font-mono text-[12px] font-semibold text-[#eef3f8]">{story.symbol}</span>
-                  <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] ${TONE_CHIP[story.meta.tone]}`}>
-                    {story.meta.chip}
-                  </span>
-                  <span
-                    className={`rounded border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] ${
-                      story.confirming
-                        ? 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]'
-                        : 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]'
-                    }`}
+              <div key={story.id} className="px-3 py-2 transition hover:bg-[#101720]">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => signal && setSelected(signal)}
+                    className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 text-left"
                   >
-                    {story.confirming ? 'Confirming' : 'Diverging'}
-                  </span>
-                  <span className="ml-auto font-mono text-[9px] text-[#5e6b78]">
-                    {ageLabel(story.ageHours)} · {Math.ceil(story.hoursRemaining)}h left
-                  </span>
+                    <TickerLogo symbol={story.symbol} companyName={story.companyName} size={13} />
+                    <span className="font-mono text-[12px] font-semibold text-[#eef3f8]">{story.symbol}</span>
+                    <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] ${TONE_CHIP[story.meta.tone]}`}>
+                      {story.meta.chip}
+                    </span>
+                    <span
+                      className={`rounded border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] ${
+                        story.confirming
+                          ? 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]'
+                          : 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]'
+                      }`}
+                    >
+                      {story.confirming ? 'Confirming' : 'Diverging'}
+                    </span>
+                  </button>
+                  <FullSetupLink symbol={story.symbol} />
                 </div>
-                <p className="mt-1 text-[11px] leading-snug text-[#a8b5c2]">{story.meta.behaviour}</p>
-                <p className="mt-0.5 font-mono text-[10px] text-[#8190a0]">
-                  Since the event:{' '}
-                  <span className={story.priceMovePct >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}>
-                    {formatSignedPercent(story.priceMovePct)}
-                  </span>{' '}
-                  price · score {formatSignedNumber(story.scoreMove, 0)} · RSI at trigger {Math.round(story.rsiAtDetection)}
-                </p>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => signal && setSelected(signal)}
+                  className="mt-1 block w-full text-left"
+                >
+                  <p className="text-[11px] leading-snug text-[#a8b5c2]">{story.meta.behaviour}</p>
+                  <p className="mt-0.5 font-mono text-[10px] text-[#8190a0]">
+                    Since the event:{' '}
+                    <span className={story.priceMovePct >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}>
+                      {formatSignedPercent(story.priceMovePct)}
+                    </span>{' '}
+                    price · score {formatSignedNumber(story.scoreMove, 0)} · {ageLabel(story.ageHours)} ago · {Math.ceil(story.hoursRemaining)}h left
+                  </p>
+                </button>
+              </div>
             );
           })}
         </div>
