@@ -43,28 +43,36 @@ import { AccountMenu } from '@/components/AccountMenu';
 // renders as an always-on, horizontally-scrollable bottom bar so every surface
 // (Education included) is permanently reachable without opening a menu.
 const navItems = [
+  // Grouped for a daily user: your account, then signals/live, then research,
+  // then analysis tools, then the trading layer, then learn + settings.
+  // -- Yours --
   { href: '/', label: 'Command', short: 'Command', icon: Gauge },
-  { href: '/radar', label: 'Signal Radar', short: 'Radar', icon: Radar },
+  { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness },
+  { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star },
   { href: '/wire', label: 'Live Wire', short: 'Wire', icon: Rss },
+  // -- Signals & alerts --
+  { href: '/radar', label: 'Signal Radar', short: 'Radar', icon: Radar },
+  { href: '/alerts', label: 'Alerts', short: 'Alerts', icon: Bell },
+  { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper },
+  { href: '/smart-money', label: 'Smart Money', short: 'Smart $', icon: Banknote },
+  // -- Research --
   { href: '/themes', label: 'World Radar', short: 'Themes', icon: Globe },
   { href: '/small-caps', label: 'Small Caps', short: 'SmCaps', icon: Microscope },
   { href: '/investors', label: 'Investor Radar', short: 'Funds', icon: Landmark },
-  { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness },
-  { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star },
-  { href: '/comparison', label: 'Comparison Lab', short: 'Compare', icon: GitCompare },
-  { href: '/paper', label: 'Paper Trading', short: 'Paper', icon: ClipboardList },
-  { href: '/trading', label: 'Bot Readiness', short: 'Bot', icon: ShieldCheck },
-  { href: '/simulation', label: 'Simulation Lab', short: 'Simulate', icon: Calculator },
-  { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins },
-  { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays },
   { href: '/ipos', label: 'IPO Radar', short: 'IPOs', icon: Rocket },
-  { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper },
-  { href: '/smart-money', label: 'Smart Money', short: 'Smart $', icon: Banknote },
   { href: '/commodities', label: 'Commodities', short: 'Commod', icon: Gem },
   { href: '/fundamentals', label: 'Fundamentals', short: 'Fundies', icon: BarChart3 },
-  { href: '/education', label: 'Education', short: 'Learn', icon: GraduationCap },
+  // -- Analysis tools --
+  { href: '/comparison', label: 'Comparison Lab', short: 'Compare', icon: GitCompare },
+  { href: '/simulation', label: 'Simulation Lab', short: 'Simulate', icon: Calculator },
   { href: '/strategy-lab', label: 'Strategy Lab', short: 'Strategy', icon: FlaskConical },
-  { href: '/alerts', label: 'Alerts', short: 'Alerts', icon: Bell },
+  { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins },
+  { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays },
+  // -- Trading layer --
+  { href: '/paper', label: 'Paper Trading', short: 'Paper', icon: ClipboardList },
+  { href: '/trading', label: 'Bot Readiness', short: 'Bot', icon: ShieldCheck },
+  // -- Learn & settings --
+  { href: '/education', label: 'Education', short: 'Learn', icon: GraduationCap },
   { href: '/whats-new', label: "What's New", short: 'New', icon: Sparkles },
   { href: '/settings', label: 'Strategy Rules', short: 'Rules', icon: SlidersHorizontal },
 ];
