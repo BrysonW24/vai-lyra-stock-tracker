@@ -1,9 +1,14 @@
 /**
- * Ticker → company domain map, used to render real company logos (via favicon)
- * across the console so the operator can trace names at a glance.
+ * Logo routing - the single source of truth for turning a ticker (or any domain)
+ * into a logo URL, used everywhere a company mark is surfaced.
  *
- * Returns a domain for known tickers; unknown tickers return null and callers
- * fall back to a deterministic coloured letter badge.
+ * Resolution order for a ticker (best first):
+ *   1. a curated local override under /public/logos (most reliable, offline-safe)
+ *   2. the live favicon for the mapped company domain
+ *   3. (caller) a deterministic coloured letter badge
+ *
+ * Always render through the shared `TickerLogo` component so the fallback chain and
+ * contrast-safe chip are applied consistently - never hand-roll a favicon <img>.
  */
 const TICKER_DOMAINS: Record<string, string> = {
   // Mega-cap platforms
@@ -43,9 +48,49 @@ const TICKER_DOMAINS: Record<string, string> = {
   AFRM: 'affirm.com', SOFI: 'sofi.com',
 };
 
-/** Resolve a ticker to a company domain, or null if unknown. */
+/**
+ * Curated overrides for tickers whose live favicon is poor (low-contrast, wrong, or
+ * missing). A local asset wins over the favicon service. To add one: drop a file at
+ * `public/logos/<file>` and map the ticker here, e.g. `AMD: '/logos/amd.svg'`.
+ * The contrast-safe chip in TickerLogo already rescues dark favicons (like AMD's), so
+ * an override is only needed when the favicon itself is wrong or unavailable.
+ */
+const LOGO_OVERRIDES: Record<string, string> = {};
+
+/** Snap a requested pixel size to a favicon resolution the service actually serves. */
+function faviconSize(size: number): number {
+  if (size <= 16) return 32;
+  if (size <= 32) return 64;
+  return 128;
+}
+
+/** Favicon URL for any domain at a given on-screen size. Shared by channel/exchange marks too. */
+export function faviconUrl(domain: string, size = 32): string {
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=${faviconSize(size)}`;
+}
+
+/** Resolve a ticker to its company domain, or null if unknown. */
 export function tickerDomain(symbol: string): string | null {
   return TICKER_DOMAINS[symbol.toUpperCase()] ?? null;
+}
+
+/**
+ * Ordered logo source URLs for a ticker, best first (override, then favicon). Callers
+ * try each in order and fall back to a letter badge when the list is exhausted. Empty
+ * when the ticker is unknown and has no override.
+ */
+export function tickerLogoSources(symbol: string, size = 32): string[] {
+  const key = symbol.toUpperCase();
+  const sources: string[] = [];
+  if (LOGO_OVERRIDES[key]) sources.push(LOGO_OVERRIDES[key]);
+  const domain = TICKER_DOMAINS[key];
+  if (domain) sources.push(faviconUrl(domain, size));
+  return sources;
+}
+
+/** Single best logo URL for a ticker, or null - for callers that don't need the fallback chain. */
+export function tickerLogoUrl(symbol: string, size = 32): string | null {
+  return tickerLogoSources(symbol, size)[0] ?? null;
 }
 
 /** The full set of known ticker symbols, sorted - for autocomplete / suggestions. */

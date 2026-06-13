@@ -4,6 +4,8 @@
  * these globally). Real exchange marks via the favicon CDN, muted for a trust-bar feel.
  */
 
+import { faviconUrl } from '@/lib/ticker-logos';
+
 const EXCHANGES = [
   { label: 'NASDAQ', domain: 'nasdaq.com' },
   { label: 'LSE', domain: 'londonstockexchange.com' },
@@ -21,7 +23,7 @@ export function ExchangeStrip() {
           <div key={ex.label} className="flex items-center gap-2 opacity-90 transition hover:opacity-100">
             <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-md border border-black/5 bg-white shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element -- favicon CDN, not a bundled asset */}
-              <img src={`https://www.google.com/s2/favicons?domain=${ex.domain}&sz=128`} alt={ex.label} width={18} height={18} />
+              <img src={faviconUrl(ex.domain, 18)} alt={ex.label} width={18} height={18} />
             </span>
             <span className="text-[12px] font-semibold tracking-wide text-[#5A6B82]">{ex.label}</span>
           </div>

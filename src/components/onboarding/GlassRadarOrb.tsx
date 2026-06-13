@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { tickerDomain } from '@/lib/ticker-logos';
+import { tickerLogoUrl } from '@/lib/ticker-logos';
 
 /**
  * Glass Radar Orb - a premium glassmorphism radar with company logos orbiting
@@ -12,7 +12,7 @@ import { tickerDomain } from '@/lib/ticker-logos';
 
 function OrbitLogo({ symbol }: { symbol: string }) {
   const [errored, setErrored] = useState(false);
-  const domain = tickerDomain(symbol);
+  const src = tickerLogoUrl(symbol, 28);
 
   function hue(str: string): number {
     let h = 0;
@@ -23,10 +23,10 @@ function OrbitLogo({ symbol }: { symbol: string }) {
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-white/20 bg-white shadow-[0_8px_22px_-8px_rgba(0,0,0,0.8)]">
-        {domain && !errored ? (
+        {src && !errored ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`}
+            src={src}
             alt={symbol}
             width={28}
             height={28}

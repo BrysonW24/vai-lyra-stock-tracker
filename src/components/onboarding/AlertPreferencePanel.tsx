@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { AlertPreferences } from '@/lib/onboarding';
 import { Toggle } from '@/components/Toggle';
 import { BellRing } from 'lucide-react';
+import { faviconUrl } from '@/lib/ticker-logos';
 
 interface AlertPreferencePanelProps {
   alerts: AlertPreferences;
@@ -50,7 +51,7 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
             status="Soon"
             logo={
               // eslint-disable-next-line @next/next/no-img-element
-              <img src="https://www.google.com/s2/favicons?domain=telegram.org&sz=64" alt="Telegram" width={16} height={16} className="rounded" />
+              <img src={faviconUrl('telegram.org', 16)} alt="Telegram" width={16} height={16} className="rounded" />
             }
           />
           <ChannelCard
@@ -58,7 +59,7 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
             status="Soon"
             logo={
               // eslint-disable-next-line @next/next/no-img-element
-              <img src="https://www.google.com/s2/favicons?domain=whatsapp.com&sz=64" alt="WhatsApp" width={16} height={16} className="rounded" />
+              <img src={faviconUrl('whatsapp.com', 16)} alt="WhatsApp" width={16} height={16} className="rounded" />
             }
           />
         </div>

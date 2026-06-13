@@ -1,4 +1,4 @@
-import { tickerDomain } from '@/lib/ticker-logos';
+import { tickerLogoUrl } from '@/lib/ticker-logos';
 
 /**
  * Artistic trading view for the light premium "Why Lyra" band.
@@ -67,7 +67,7 @@ export function ArtisticTradingView() {
         <div className="mb-3 flex items-center gap-2.5">
           <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-xl border border-black/5 bg-white shadow-sm">
             {/* eslint-disable-next-line @next/next/no-img-element -- favicon CDN, not a bundled asset */}
-            <img src={`https://www.google.com/s2/favicons?domain=${tickerDomain('NVDA')}&sz=128`} alt="NVIDIA" width={24} height={24} />
+            <img src={tickerLogoUrl('NVDA', 24) ?? ''} alt="NVIDIA" width={24} height={24} />
           </span>
           <div className="leading-tight">
             <p className="font-mono text-[13px] font-semibold text-[#0E1E3A]">NVDA <span className="ml-1 text-[#1FA971]">▲ 2.1%</span></p>

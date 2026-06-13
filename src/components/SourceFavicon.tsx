@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { faviconUrl } from '@/lib/ticker-logos';
 
 interface SourceFaviconProps {
   domain: string;
@@ -47,7 +48,7 @@ export function SourceFavicon({ domain, sourceName }: SourceFaviconProps) {
 
   return (
     <img
-      src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`}
+      src={faviconUrl(domain, 32)}
       alt={sourceName}
       className="h-8 w-8 shrink-0 rounded border border-[#263241]"
       onError={() => setImageError(true)}

@@ -1,5 +1,5 @@
 import { Bell } from 'lucide-react';
-import { tickerDomain } from '@/lib/ticker-logos';
+import { tickerLogoUrl } from '@/lib/ticker-logos';
 
 /**
  * Feature visualisation tiles for the light premium "Why Lyra" band.
@@ -8,7 +8,7 @@ import { tickerDomain } from '@/lib/ticker-logos';
  * matching the Vivacity.ai brand-image style. Presentational, server-safe.
  */
 
-const favicon = (sym: string) => `https://www.google.com/s2/favicons?domain=${tickerDomain(sym)}&sz=128`;
+const favicon = (sym: string) => tickerLogoUrl(sym, 16) ?? '';
 
 const CARD = 'relative overflow-hidden rounded-2xl border border-white/70 bg-white/65 p-4 shadow-[0_24px_60px_-38px_rgba(14,30,58,0.4)] backdrop-blur-xl';
 const SHEEN = 'pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent';

@@ -1,5 +1,6 @@
 import { Sparkles, Newspaper, Brain, Target, ShieldCheck } from 'lucide-react';
 import { BRAND_NAME } from '@/lib/brand';
+import { faviconUrl } from '@/lib/ticker-logos';
 
 /**
  * "Future state" showcase on the light landing - an LLM intelligence layer over the
@@ -137,14 +138,14 @@ export function FutureStateAI() {
         <span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 py-1 shadow-sm backdrop-blur">
           <span className="grid h-4 w-4 shrink-0 place-items-center overflow-hidden rounded-[4px] bg-white">
             {/* eslint-disable-next-line @next/next/no-img-element -- favicon CDN, not a bundled asset */}
-            <img src="https://www.google.com/s2/favicons?domain=telegram.org&sz=128" alt="Telegram" width={14} height={14} />
+            <img src={faviconUrl('telegram.org', 14)} alt="Telegram" width={14} height={14} />
           </span>
           <span className="text-[11px] font-semibold text-[#0E1E3A]">Telegram</span>
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 py-1 shadow-sm backdrop-blur">
           <span className="grid h-4 w-4 shrink-0 place-items-center overflow-hidden rounded-[4px] bg-white">
             {/* eslint-disable-next-line @next/next/no-img-element -- favicon CDN, not a bundled asset */}
-            <img src="https://www.google.com/s2/favicons?domain=whatsapp.com&sz=128" alt="WhatsApp" width={14} height={14} />
+            <img src={faviconUrl('whatsapp.com', 14)} alt="WhatsApp" width={14} height={14} />
           </span>
           <span className="text-[11px] font-semibold text-[#0E1E3A]">WhatsApp</span>
         </span>
