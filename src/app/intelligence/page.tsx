@@ -1,6 +1,6 @@
 import { AppShell } from '@/components/AppShell';
 import { IntelligenceFeed } from '@/components/intelligence/IntelligenceFeed';
-import { GoodToKnow } from '@/components/GoodToKnow';
+import { Insight } from '@/components/Insight';
 import { getDashboardData } from '@/lib/data';
 import { demoIntelligenceFeed, demoTickerHypeMap } from '@/lib/intelligence';
 
@@ -14,7 +14,7 @@ export default async function IntelligencePage() {
   return (
     <AppShell data={data}>
       <div className="space-y-3 pb-28 xl:pb-6">
-        <GoodToKnow />
+        <Insight />
         <IntelligenceFeed feed={demoIntelligenceFeed} hypeMap={demoTickerHypeMap} />
       </div>
     </AppShell>
