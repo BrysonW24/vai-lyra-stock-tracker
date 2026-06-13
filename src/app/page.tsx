@@ -5,6 +5,8 @@ import { AppShell } from '@/components/AppShell';
 import { DailyBriefCard } from '@/components/DailyBriefCard';
 import { ExecutiveStrip } from '@/components/ExecutiveStrip';
 import { PrimeSetupsBoard } from '@/components/PrimeSetupsBoard';
+import { CatalystCountdown } from '@/components/CatalystCountdown';
+import { CatalystRadar } from '@/components/CatalystRadar';
 import { SignalEventsPanel } from '@/components/SignalEventsPanel';
 import { WatchlistTriggerBoard } from '@/components/WatchlistTriggerBoard';
 import type { SignalRow } from '@/types/scanner';
@@ -88,12 +90,18 @@ export default async function OverviewPage() {
           />
         </Suspense>
 
+        {/* Big moments ticking down - the future-state hero, makes Command feel alive. */}
+        <CatalystCountdown />
+
         {/* Prime Setups - the deterministic "what's worth acting on / watching" callout. */}
         <PrimeSetupsBoard signals={data.signals} />
 
         <DailyBriefCard data={data} market={marketContext} />
 
         <SignalEventsPanel signals={data.signals} />
+
+        {/* Catalyst Radar - the forward-looking matrix board, in the signals area. */}
+        <CatalystRadar />
 
         <MetricStrip data={data} />
 
