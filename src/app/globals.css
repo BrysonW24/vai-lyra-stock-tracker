@@ -264,10 +264,15 @@ textarea {
 .macro-track {
   animation: marquee 59s linear infinite;
 }
+/* Insight tape - clearly moving but calm (the 185s intel pace reads as static on long facts). */
+.insight-track {
+  animation: marquee 80s linear infinite;
+}
 
 .intel-marquee:hover .intel-track,
 .intel-marquee:hover .context-track,
-.intel-marquee:hover .macro-track {
+.intel-marquee:hover .macro-track,
+.intel-marquee:hover .insight-track {
   animation-play-state: paused;
 }
 
@@ -275,6 +280,7 @@ textarea {
   .intel-track { animation: none; }
   .context-track { animation: none; }
   .macro-track { animation: none; }
+  .insight-track { animation: none; }
 }
 
 /* Hide scrollbars while keeping scroll - used by the always-on mobile nav strip. */

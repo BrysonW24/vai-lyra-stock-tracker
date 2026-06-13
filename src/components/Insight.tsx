@@ -7,7 +7,7 @@ import { FINANCE_FACTS, type FactCategory } from '@/lib/finance-facts';
 type InsightMode = 'panel' | 'slider';
 
 const MODE_KEY = 'lyra.insightMode.v1';
-const TAPE_FACTS = FINANCE_FACTS.slice(0, 28);
+const TAPE_FACTS = FINANCE_FACTS.slice(0, 16);
 
 const CATEGORY_LABEL: Record<FactCategory, string> = {
   definition: 'Definition',
@@ -76,9 +76,9 @@ export function Insight() {
           </button>
         </div>
         <div className="relative min-w-0 flex-1 overflow-hidden py-1.5">
-          <div className="intel-track flex w-max items-center">
+          <div className="insight-track flex w-max items-center">
             {[...TAPE_FACTS, ...TAPE_FACTS].map((f, i) => (
-              <span key={`${f.id}-${i}`} className="inline-flex shrink-0 items-baseline gap-1.5 border-r border-[#1b2530] px-4">
+              <span key={`${f.id}-${i}`} className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap border-r border-[#1b2530] px-4">
                 <span className="font-mono text-[11px] font-semibold text-[#eef3f8]">{f.term}</span>
                 <span className="text-[11px] text-[#a8b5c2]">{f.body}</span>
               </span>
@@ -111,8 +111,8 @@ export function Insight() {
         </button>
       </div>
       <button type="button" onClick={() => order.length && setPos((p) => p + 1)} className="mt-2 block w-full text-left">
-        <p className="text-[13px] font-semibold text-[#eef3f8]">{fact.term}</p>
-        <p className="mt-0.5 text-[12px] leading-snug text-[#a8b5c2]">{fact.body}</p>
+        <p className="text-[12px] font-semibold text-[#eef3f8]">{fact.term}</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">{fact.body}</p>
       </button>
     </section>
   );
