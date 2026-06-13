@@ -23,11 +23,21 @@ function weatherIcon(code?: number): LucideIcon {
   return Cloud;
 }
 
+// "Australia/Sydney" -> "Sydney"; "America/Argentina/Buenos_Aires" -> "Buenos Aires".
+function cityFromTimezone(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    return tz.split('/').pop()?.replaceAll('_', ' ') ?? '';
+  } catch {
+    return '';
+  }
+}
+
 /**
- * Local context bar - fills the top strip with the date, current weather and city so the
- * space above the boards carries value instead of sitting blank. Date is instant; weather
- * + location are a best-effort IP lookup (ipwho.is) + Open-Meteo, both keyless and
- * CORS-friendly. If either call fails it degrades silently to just the date.
+ * Local context bar - date + weather + city above the boards so the space carries value.
+ * The city comes from the device timezone (instant, no network, no permission - so it
+ * always shows). Weather is a best-effort Open-Meteo lookup (geocode the city -> current
+ * conditions; both keyless and CORS-friendly). If weather fails, date + city still show.
  */
 export function LocalContextBar() {
   const [now, setNow] = useState<Date | null>(null);
@@ -38,23 +48,23 @@ export function LocalContextBar() {
     const tick = window.setInterval(() => setNow(new Date()), 60_000);
     let cancelled = false;
 
+    const city = cityFromTimezone();
+    if (city) setCtx({ city });
+
     (async () => {
       try {
-        const loc = await fetch('https://ipwho.is/').then((r) => (r.ok ? r.json() : null));
-        if (!loc?.success || cancelled) return;
-        const fahrenheit = loc.country_code === 'US';
-        const next: LocalContext = { city: loc.city, unit: fahrenheit ? 'F' : 'C' };
-        if (typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
-          const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,weather_code${fahrenheit ? '&temperature_unit=fahrenheit' : ''}`;
-          const w = await fetch(url).then((r) => (r.ok ? r.json() : null));
-          if (w?.current && !cancelled) {
-            next.tempCurrent = Math.round(w.current.temperature_2m);
-            next.code = w.current.weather_code;
-          }
+        if (!city) return;
+        const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`).then((r) => (r.ok ? r.json() : null));
+        const place = geo?.results?.[0];
+        if (!place || cancelled) return;
+        const fahrenheit = place.country_code === 'US';
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,weather_code${fahrenheit ? '&temperature_unit=fahrenheit' : ''}`;
+        const w = await fetch(url).then((r) => (r.ok ? r.json() : null));
+        if (w?.current && !cancelled) {
+          setCtx({ city: place.name || city, tempCurrent: Math.round(w.current.temperature_2m), unit: fahrenheit ? 'F' : 'C', code: w.current.weather_code });
         }
-        if (!cancelled) setCtx(next);
       } catch {
-        /* date still shows */
+        /* date + city still show */
       }
     })();
 
