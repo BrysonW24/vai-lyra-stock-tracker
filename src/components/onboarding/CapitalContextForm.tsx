@@ -45,57 +45,57 @@ export function CapitalContextForm({ capital, onChange, onNext }: CapitalContext
     <div className="space-y-2.5">
       <p className="text-[11px] leading-snug text-[#a8b5c2]">Optional - these personalise your portfolio simulations.</p>
 
-      <div className="grid gap-2 md:grid-cols-2">
-        <label className="grid gap-1">
+      {/* 2-up grid: fills the horizontal space and halves the vertical footprint. */}
+      <div className="grid gap-2.5 md:grid-cols-2">
+        <label className="grid content-start gap-1">
           <span className={labelClass}>Cash available</span>
           <MoneyInput value={capital.cashAvailable} onChange={(v) => handleChange('cashAvailable', v)} placeholder="50,000" />
         </label>
 
-        <label className="grid gap-1">
+        <label className="grid content-start gap-1">
           <span className={labelClass}>Monthly contribution</span>
           <MoneyInput value={capital.monthlyContribution} onChange={(v) => handleChange('monthlyContribution', v)} placeholder="2,000" />
         </label>
-      </div>
 
-      <div className="grid gap-1.5">
-        <div>
-          <span className={labelClass}>Max position size</span>
-          <p className="text-[10px] leading-snug text-[#5d6b79]">The most of your money Lyra will suggest putting into any single stock.</p>
+        <div className="grid content-start gap-1">
+          <span className={labelClass}>
+            Max position size <span className="font-normal lowercase tracking-normal text-[#5d6b79]">· most per stock</span>
+          </span>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[5, 10, 15, 20].map((pct) => (
+              <button
+                key={pct}
+                onClick={() => handleChange('maxPositionSizePct', pct)}
+                type="button"
+                className={`h-8 rounded-md text-[13px] font-semibold transition ${
+                  capital.maxPositionSizePct === pct
+                    ? 'border border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
+                    : 'border border-[#263241] bg-[#0d141c] text-[#8190a0] hover:border-[#3a4754] hover:bg-[#101720]'
+                }`}
+              >
+                {pct}%
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-4 gap-2">
-          {[5, 10, 15, 20].map((pct) => (
-            <button
-              key={pct}
-              onClick={() => handleChange('maxPositionSizePct', pct)}
-              type="button"
-              className={`rounded-md px-2 py-1.5 text-[13px] font-semibold transition ${
-                capital.maxPositionSizePct === pct
-                  ? 'border border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
-                  : 'border border-[#263241] bg-[#0d141c] text-[#8190a0] hover:border-[#3a4754] hover:bg-[#101720]'
-              }`}
-            >
-              {pct}%
-            </button>
-          ))}
-        </div>
-      </div>
 
-      <label className="grid gap-1">
-        <span className={labelClass}>Primary outcome</span>
-        <select
-          className="h-8 rounded-md border border-[#263241] bg-[#0d141c] px-3 text-[13px] text-[#dbe5ee] outline-none focus:border-[#f3a33a]/50"
-          value={capital.primaryOutcome || ''}
-          onChange={(e) => handleChange('primaryOutcome', e.target.value || undefined)}
-        >
-          <option value="">Select an outcome...</option>
-          <option value="portfolio_growth">Portfolio growth</option>
-          <option value="income_from_trading">Income from trading</option>
-          <option value="dividend_income">Dividend income</option>
-          <option value="capital_preservation">Capital preservation</option>
-          <option value="learning_discipline">Learning &amp; discipline</option>
-          <option value="high_growth_tech">High-growth tech exposure</option>
-        </select>
-      </label>
+        <label className="grid content-start gap-1">
+          <span className={labelClass}>Primary outcome</span>
+          <select
+            className="h-8 rounded-md border border-[#263241] bg-[#0d141c] px-3 text-[13px] text-[#dbe5ee] outline-none focus:border-[#f3a33a]/50"
+            value={capital.primaryOutcome || ''}
+            onChange={(e) => handleChange('primaryOutcome', e.target.value || undefined)}
+          >
+            <option value="">Select an outcome...</option>
+            <option value="portfolio_growth">Portfolio growth</option>
+            <option value="income_from_trading">Income from trading</option>
+            <option value="dividend_income">Dividend income</option>
+            <option value="capital_preservation">Capital preservation</option>
+            <option value="learning_discipline">Learning &amp; discipline</option>
+            <option value="high_growth_tech">High-growth tech exposure</option>
+          </select>
+        </label>
+      </div>
 
       <div className="overflow-hidden rounded-md border border-[#263241] bg-[#0d141c]">
         <div className="flex items-center justify-between gap-3 px-3 py-2">
