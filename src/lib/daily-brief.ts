@@ -20,6 +20,8 @@ export interface BriefLine {
   label: string;
   text: string;
   tone: BriefTone;
+  /** The ticker this line is about, if any - makes the line click through to its analysis. */
+  symbol?: string;
 }
 
 export interface DailyBrief {
@@ -83,6 +85,7 @@ export function buildDailyBrief(data: DashboardData, market: MarketContextSnapsh
       label: 'Lead setup',
       text: `${topSetup.symbol} leads at ${topSetup.score}/100 (${formatSignedNumber(topSetup.scoreDelta, 0)}) - ${statusLabel(topSetup.status).toLowerCase()}.`,
       tone: topSetup.scoreDelta >= 0 ? 'pos' : 'neg',
+      symbol: topSetup.symbol,
     });
   }
 
@@ -95,6 +98,7 @@ export function buildDailyBrief(data: DashboardData, market: MarketContextSnapsh
         label: 'Your book',
         text: `${mover.symbol} ${rising ? 'is strengthening' : 'is cooling'} (${formatSignedNumber(mover.scoreDelta, 0)}) - ${statusLabel(mover.signalStatus).toLowerCase()}.`,
         tone: rising ? 'pos' : 'neg',
+        symbol: mover.symbol,
       });
     }
 
@@ -104,6 +108,7 @@ export function buildDailyBrief(data: DashboardData, market: MarketContextSnapsh
         label: 'Risk watch',
         text: `${flagged.map((h) => h.symbol).join(', ')} flagged ${flagged[0].riskState.replaceAll('_', ' ')} - review exposure before adding.`,
         tone: 'warn',
+        symbol: flagged[0].symbol,
       });
     }
   }
@@ -116,6 +121,7 @@ export function buildDailyBrief(data: DashboardData, market: MarketContextSnapsh
         label: 'Watchlist',
         text: `${nearest.symbol} is closest to triggering - ~${formatPercent(Math.abs(nearest.distanceToTarget))} from target.`,
         tone: 'neutral',
+        symbol: nearest.symbol,
       });
     }
   }

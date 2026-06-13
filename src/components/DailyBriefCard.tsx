@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowUpRight, Sparkles } from 'lucide-react';
 import type { DashboardData } from '@/types/scanner';
 import type { MarketContextSnapshot } from '@/lib/market-context';
 import { buildDailyBrief, type BriefTone } from '@/lib/daily-brief';
@@ -28,6 +29,7 @@ interface LiveLineData {
   text: string;
   tone: BriefTone;
   chip: 'NEW' | 'HOT';
+  symbol: string;
 }
 
 /** Deterministic pool of injectable lines derived from the latest scan. */
@@ -41,6 +43,7 @@ function buildLivePool(data: DashboardData): LiveLineData[] {
         text: `${s.symbol} ${s.scoreDelta > 0 ? 'building' : 'cooling'} (${formatSignedNumber(s.scoreDelta, 0)}) - score ${s.score}, RSI ${Math.round(s.rsi)}.`,
         tone: s.scoreDelta > 0 ? 'pos' : 'warn',
         chip: Math.abs(s.scoreDelta) >= 8 || s.status === 'strong_setup' ? 'HOT' : 'NEW',
+        symbol: s.symbol,
       });
     }
     if (s.volumeRatio >= 1.5) {
@@ -50,6 +53,7 @@ function buildLivePool(data: DashboardData): LiveLineData[] {
         text: `${s.symbol} trading ${s.volumeRatio.toFixed(1)}x average volume - participation is real.`,
         tone: 'pos',
         chip: s.volumeRatio >= 2 ? 'HOT' : 'NEW',
+        symbol: s.symbol,
       });
     }
   }
@@ -60,6 +64,7 @@ function buildLivePool(data: DashboardData): LiveLineData[] {
       text: `${w.symbol} ${Math.abs(w.distanceToTarget).toFixed(1)}% from trigger - score ${w.signalScore} ${formatSignedNumber(w.scoreDelta, 0)}.`,
       tone: w.triggerState === 'approaching' || w.triggerState === 'triggered' ? 'pos' : 'neutral',
       chip: w.triggerState === 'triggered' ? 'HOT' : 'NEW',
+      symbol: w.symbol,
     });
   }
   return pool;
@@ -74,8 +79,9 @@ function LiveLine({ line }: { line: LiveLineData }) {
   }, []);
   const hot = line.chip === 'HOT';
   return (
-    <div
-      className={`flex items-start gap-2 px-3 py-1.5 transition-colors duration-[1500ms] ${
+    <Link
+      href={`/tickers/${line.symbol}?view=setup`}
+      className={`flex items-start gap-2 px-3 py-1.5 transition-colors duration-[1500ms] hover:bg-[#101720] ${
         settled ? 'bg-transparent' : hot ? 'bg-[#2a1f0f]' : 'bg-[#0d251b]'
       }`}
       style={{ animation: 'tableRowSlide 420ms ease-out' }}
@@ -84,7 +90,7 @@ function LiveLine({ line }: { line: LiveLineData }) {
         <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${TONE_DOT[line.tone]}`} />
         <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${TONE_DOT[line.tone]}`} />
       </span>
-      <p className="min-w-0 text-xs leading-snug text-[#c8d3de]">
+      <p className="min-w-0 flex-1 text-xs leading-snug text-[#c8d3de]">
         <span className="font-mono text-[10px] uppercase tracking-wide text-[#8190a0]">{line.label}</span>
         <span
           className={`mx-1.5 inline-block -translate-y-px rounded border px-1 py-px font-mono text-[8px] font-semibold uppercase tracking-[0.1em] ${
@@ -95,7 +101,8 @@ function LiveLine({ line }: { line: LiveLineData }) {
         </span>
         {line.text}
       </p>
-    </div>
+      <ArrowUpRight size={12} className="mt-1 shrink-0 text-[#5e6b78]" />
+    </Link>
   );
 }
 
@@ -169,16 +176,29 @@ export function DailyBriefCard({ data, market }: DailyBriefCardProps) {
         {liveLines.map((line) => (
           <LiveLine key={line.id} line={line} />
         ))}
-        {brief.lines.map((line) => (
-          <div className="flex items-start gap-2 px-3 py-1.5" key={`${line.label}-${line.text}`}>
-            <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${TONE_DOT[line.tone]}`} />
-            <p className="text-xs leading-snug text-[#c8d3de]">
-              <span className="font-mono text-[10px] uppercase tracking-wide text-[#8190a0]">{line.label}</span>
-              <span className="mx-1.5 text-[#3a4654]">·</span>
-              {line.text}
-            </p>
-          </div>
-        ))}
+        {brief.lines.map((line) => {
+          const key = `${line.label}-${line.text}`;
+          const inner = (
+            <>
+              <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${TONE_DOT[line.tone]}`} />
+              <p className="min-w-0 flex-1 text-xs leading-snug text-[#c8d3de]">
+                <span className="font-mono text-[10px] uppercase tracking-wide text-[#8190a0]">{line.label}</span>
+                <span className="mx-1.5 text-[#3a4654]">·</span>
+                {line.text}
+              </p>
+              {line.symbol && <ArrowUpRight size={12} className="mt-1 shrink-0 text-[#5e6b78]" />}
+            </>
+          );
+          return line.symbol ? (
+            <Link key={key} href={`/tickers/${line.symbol}?view=setup`} className="flex items-start gap-2 px-3 py-1.5 transition hover:bg-[#101720]">
+              {inner}
+            </Link>
+          ) : (
+            <div key={key} className="flex items-start gap-2 px-3 py-1.5">
+              {inner}
+            </div>
+          );
+        })}
       </div>
 
       <p className="border-t border-[#1b2530] px-3 py-1.5 font-mono text-[10px] text-[#5e6b78]">

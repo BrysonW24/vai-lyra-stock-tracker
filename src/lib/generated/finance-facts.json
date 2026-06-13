@@ -1,0 +1,542 @@
+[
+  {
+    "id": "fact-001",
+    "term": "ETF",
+    "body": "An ETF (exchange-traded fund) is a basket of assets you buy as a single share that trades all day like a stock - instant diversification, usually at low cost.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-002",
+    "term": "Index fund",
+    "body": "An index fund tracks a market index like the S&P 500 instead of trying to beat it - low fees, broad exposure, no stock-picking.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-003",
+    "term": "P/E ratio",
+    "body": "Price-to-earnings divides share price by earnings per share - a rough gauge of how much you pay for each dollar of profit.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-004",
+    "term": "EPS",
+    "body": "Earnings per share is a company's profit divided by its shares outstanding - the per-share slice of the bottom line.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-005",
+    "term": "Market cap",
+    "body": "Market capitalisation is share price times shares outstanding - the market's price tag on the whole company.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-006",
+    "term": "Dividend",
+    "body": "A dividend is a slice of profit paid to shareholders, usually quarterly. Plenty of growth companies pay none and reinvest instead.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-007",
+    "term": "Dividend yield",
+    "body": "Annual dividend divided by share price, as a percent - the cash return you get just for holding the stock.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-008",
+    "term": "RSI",
+    "body": "The Relative Strength Index (0-100) measures how hard a stock has been bought or sold lately. Low can mean oversold, high overbought.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-009",
+    "term": "MACD",
+    "body": "Moving Average Convergence Divergence tracks momentum by comparing two moving averages - crossovers can flag a shift in trend.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-010",
+    "term": "Beta",
+    "body": "Beta measures how much a stock moves versus the market. Above 1 is more volatile than the index, below 1 is calmer.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-011",
+    "term": "Alpha",
+    "body": "Alpha is the return above what the market would explain - the value a strategy adds on its own merit.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-012",
+    "term": "Sharpe ratio",
+    "body": "The Sharpe ratio measures return earned per unit of risk taken. Higher means better risk-adjusted performance.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-013",
+    "term": "Bid-ask spread",
+    "body": "The gap between the highest price buyers offer and the lowest sellers accept. Tighter spreads mean more liquidity.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-014",
+    "term": "Liquidity",
+    "body": "How easily an asset can be bought or sold without moving its price. Cash is the most liquid; a tiny micro-cap is not.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-015",
+    "term": "Volatility",
+    "body": "How much a price swings over time. Higher volatility means bigger ups and downs - more risk and more opportunity.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-016",
+    "term": "Short selling",
+    "body": "Borrowing shares to sell now and buy back later, betting the price falls. Losses are theoretically unlimited.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-017",
+    "term": "Margin",
+    "body": "Borrowing from your broker to buy more than your cash allows. It amplifies gains and losses - and charges interest.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-018",
+    "term": "Call option",
+    "body": "A call gives the right, not the obligation, to buy a stock at a set price before a date - a bullish bet with capped downside.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-019",
+    "term": "Put option",
+    "body": "A put gives the right to sell at a set price before a date - used to bet on a fall, or to insure a holding against one.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-020",
+    "term": "Futures",
+    "body": "A futures contract locks in a price to buy or sell something later - used to hedge or speculate on commodities, indexes and more.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-021",
+    "term": "Bond",
+    "body": "A bond is a loan to a government or company that pays interest along the way and returns the principal at maturity.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-022",
+    "term": "Yield curve",
+    "body": "A plot of bond yields across maturities. When short yields rise above long ones (inversion), recessions have often followed.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-023",
+    "term": "Price-to-book",
+    "body": "P/B compares share price to the company's net asset value per share - a classic lens for value and for banks.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-024",
+    "term": "Free cash flow",
+    "body": "The cash a business generates after capital spending - what is actually left to reward shareholders or reinvest.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-025",
+    "term": "EBITDA",
+    "body": "Earnings before interest, taxes, depreciation and amortisation - a rough proxy for operating cash generation.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-026",
+    "term": "Dollar-cost averaging",
+    "body": "Investing a fixed amount on a schedule regardless of price, smoothing the highs and lows out over time.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-027",
+    "term": "Compound interest",
+    "body": "Earning returns on your returns. Small gains snowball over long periods - time in the market is the engine.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-028",
+    "term": "Blue chip",
+    "body": "A large, established, financially sound company. The name comes from the highest-value chips in poker.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-029",
+    "term": "Bull market",
+    "body": "A sustained rise in prices. A bull attacks by thrusting its horns up - hence the optimistic name.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-030",
+    "term": "Bear market",
+    "body": "A fall of roughly 20% or more from the highs. A bear swipes its paws downward - the pessimistic counterpart.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-031",
+    "term": "IPO",
+    "body": "An initial public offering is the first time a private company sells shares to the public and lists on an exchange.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-032",
+    "term": "Ticker symbol",
+    "body": "The short code that identifies a listed company - AAPL for Apple, BHP for BHP - a relic of the old ticker-tape machines.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-033",
+    "term": "Stock split",
+    "body": "A split divides each share into more shares at a lower price. The pie is the same size; the slices are just smaller.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-034",
+    "term": "Buyback",
+    "body": "A share buyback is a company repurchasing its own stock, shrinking the share count and lifting earnings per share.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-035",
+    "term": "Ex-dividend date",
+    "body": "Buy on or after this date and you miss the next dividend - the price typically drops by about the dividend amount.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-036",
+    "term": "Circuit breaker",
+    "body": "An automatic trading halt triggered by a sharp drop, built to cool panic. Born after the 1987 crash.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-037",
+    "term": "VIX",
+    "body": "The VIX, or fear gauge, measures expected S&P 500 volatility over the next 30 days. It spikes when markets get scared.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-038",
+    "term": "13F",
+    "body": "A 13F is a quarterly filing of a large manager's holdings - but it lags up to 45 days and excludes short positions.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-039",
+    "term": "Form 4",
+    "body": "A Form 4 reports a company insider buying or selling their own stock, and must be filed within two business days.",
+    "category": "definition"
+  },
+  {
+    "id": "fact-040",
+    "term": "Diversification",
+    "body": "Spreading money across assets so one loss cannot sink you. Often called the only free lunch in investing.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-041",
+    "term": "NYSE origins",
+    "body": "The New York Stock Exchange traces to the 1792 Buttonwood Agreement, signed by 24 brokers under a buttonwood tree on Wall Street.",
+    "category": "history"
+  },
+  {
+    "id": "fact-042",
+    "term": "Nasdaq launch",
+    "body": "The Nasdaq launched in 1971 as the world's first electronic stock market - no trading floor, just a network of quotes.",
+    "category": "history"
+  },
+  {
+    "id": "fact-043",
+    "term": "Wall Street name",
+    "body": "Wall Street is named after an actual wall the Dutch built across lower Manhattan in the 1600s.",
+    "category": "history"
+  },
+  {
+    "id": "fact-044",
+    "term": "Dow Jones",
+    "body": "The Dow Jones Industrial Average was created by Charles Dow in 1896 and started with just 12 companies.",
+    "category": "history"
+  },
+  {
+    "id": "fact-045",
+    "term": "S&P 500",
+    "body": "The S&P 500 index of large US companies was introduced by Standard & Poor's in 1957.",
+    "category": "history"
+  },
+  {
+    "id": "fact-046",
+    "term": "First index fund",
+    "body": "John Bogle launched the first index mutual fund at Vanguard in 1976 - mocked at the time, now a multi-trillion-dollar idea.",
+    "category": "history"
+  },
+  {
+    "id": "fact-047",
+    "term": "Black-Scholes",
+    "body": "The Black-Scholes model for pricing options was published in 1973 and reshaped modern finance.",
+    "category": "history"
+  },
+  {
+    "id": "fact-048",
+    "term": "The bourse",
+    "body": "Stock exchange is bourse in French, after the Van der Beurze family whose Bruges inn hosted traders back in the 1300s.",
+    "category": "history"
+  },
+  {
+    "id": "fact-049",
+    "term": "Ticker tape",
+    "body": "The stock ticker was invented in 1867, printing prices onto paper tape - the origin of the ticker-tape parade.",
+    "category": "history"
+  },
+  {
+    "id": "fact-050",
+    "term": "Black Monday",
+    "body": "On 19 October 1987 the Dow fell 22.6% in a single day, its worst one-day drop - and the spark for circuit breakers.",
+    "category": "history"
+  },
+  {
+    "id": "fact-051",
+    "term": "Bretton Woods",
+    "body": "The 1944 Bretton Woods agreement pegged world currencies to the US dollar, which stayed tied to gold until 1971.",
+    "category": "history"
+  },
+  {
+    "id": "fact-052",
+    "term": "Tulip mania",
+    "body": "In 1630s Holland, tulip-bulb prices soared then collapsed - often cited as the first great speculative bubble.",
+    "category": "history"
+  },
+  {
+    "id": "fact-053",
+    "term": "VIX birth",
+    "body": "The Cboe introduced the VIX in 1993, giving markets a single number for expected volatility.",
+    "category": "history"
+  },
+  {
+    "id": "fact-054",
+    "term": "Decimalisation",
+    "body": "US stocks were quoted in fractions (eighths of a dollar) until 2001, when exchanges finally switched to decimals.",
+    "category": "history"
+  },
+  {
+    "id": "fact-055",
+    "term": "ASX formed",
+    "body": "The Australian Stock Exchange was formed in 1987 by merging the six state exchanges; its Sydney roots reach back to 1871.",
+    "category": "au"
+  },
+  {
+    "id": "fact-056",
+    "term": "ASX 200",
+    "body": "The S&P/ASX 200 is Australia's main benchmark, tracking the 200 largest companies listed on the ASX.",
+    "category": "au"
+  },
+  {
+    "id": "fact-057",
+    "term": "Franking credits",
+    "body": "Australia's dividend imputation (franking) credits stop dividends being taxed twice - a feature few other countries share.",
+    "category": "au"
+  },
+  {
+    "id": "fact-058",
+    "term": "Superannuation",
+    "body": "Australia's compulsory super system began in 1992; employers must pay a slice of wages into a retirement fund.",
+    "category": "au"
+  },
+  {
+    "id": "fact-059",
+    "term": "RBA cash rate",
+    "body": "The Reserve Bank of Australia sets the cash rate, the interest-rate lever that ripples through mortgages and markets.",
+    "category": "au"
+  },
+  {
+    "id": "fact-060",
+    "term": "ASX hours",
+    "body": "The ASX trades 10:00 to 16:00 Sydney time after a pre-open auction, and is closed on public holidays.",
+    "category": "au"
+  },
+  {
+    "id": "fact-061",
+    "term": "Miners and banks",
+    "body": "Australia's market leans heavily on miners and banks, so commodity prices and interest rates move the index a lot.",
+    "category": "au"
+  },
+  {
+    "id": "fact-062",
+    "term": "CHESS",
+    "body": "The ASX settles trades through CHESS, its electronic clearing system - whose long-running replacement has been quite the saga.",
+    "category": "au"
+  },
+  {
+    "id": "fact-063",
+    "term": "T+1 settlement",
+    "body": "Since 2024 most US stock trades settle in one business day (T+1) - cash and shares change hands the next day.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-064",
+    "term": "After-hours",
+    "body": "Stocks can trade before and after the official session, but with thinner volume, wider spreads and bigger swings.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-065",
+    "term": "How an IPO prices",
+    "body": "Underwriters gauge demand on a roadshow, set an offer price, then the stock floats - it can pop or flop on day one.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-066",
+    "term": "Market maker",
+    "body": "Market makers quote both a buy and sell price continuously, providing the liquidity that lets you trade instantly.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-067",
+    "term": "Limit vs market order",
+    "body": "A market order fills now at the going price; a limit order only fills at your price or better.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-068",
+    "term": "Stop loss",
+    "body": "A stop-loss order sells automatically if the price falls to a set level, capping a loss - though a gap can skip past it.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-069",
+    "term": "Float",
+    "body": "The float is the number of shares actually available to trade, excluding locked-up insider and restricted holdings.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-070",
+    "term": "Trade vs settlement date",
+    "body": "The trade date is when you agree the deal; the settlement date is when the money and shares actually move.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-071",
+    "term": "Rebalancing",
+    "body": "Periodically trimming winners and topping up laggards to hold your target mix - selling high and buying low by rule.",
+    "category": "mechanics"
+  },
+  {
+    "id": "fact-072",
+    "term": "Risk and reward",
+    "body": "Higher potential returns come with higher risk. Anything promising big returns with no risk is a red flag.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-073",
+    "term": "Time in the market",
+    "body": "Timing the exact bottom is brutally hard; staying invested through the cycle has historically beaten jumping in and out.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-074",
+    "term": "The 4% rule",
+    "body": "A retirement rule of thumb: draw about 4% of your portfolio in year one, adjust for inflation, and it may last roughly 30 years.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-075",
+    "term": "Efficient markets",
+    "body": "The efficient market hypothesis argues prices already reflect known information, making it hard to consistently beat them.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-076",
+    "term": "Margin of safety",
+    "body": "Value investors buy below their estimate of worth, leaving a cushion if they are wrong - a Ben Graham principle.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-077",
+    "term": "Mr Market",
+    "body": "Ben Graham pictured the market as a moody partner quoting wild prices daily - your job is to exploit his moods, not follow them.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-078",
+    "term": "Survivorship bias",
+    "body": "Looking only at the funds and stocks that survived hides the failures - and quietly flatters past returns.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-079",
+    "term": "Loss aversion",
+    "body": "People feel a loss about twice as hard as an equal gain, which nudges investors to sell winners early and cling to losers.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-080",
+    "term": "Dividends compound",
+    "body": "Reinvested dividends have historically driven a large share of long-run total returns, not just the price gains.",
+    "category": "concept"
+  },
+  {
+    "id": "fact-081",
+    "term": "Quants",
+    "body": "Quants trade with maths and code instead of gut feel - many of the biggest funds are now run largely by algorithms.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-082",
+    "term": "The buttonwood tree",
+    "body": "The buttonwood (American sycamore) the NYSE was born under still lends its name to finance columns today.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-083",
+    "term": "More indexes than stocks",
+    "body": "There are far more stock indexes in the world than there are listed companies - thousands slice the market every way imaginable.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-084",
+    "term": "Triple witching",
+    "body": "Four times a year, options and futures expire together (triple witching), often spiking volume and volatility.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-085",
+    "term": "The Charging Bull",
+    "body": "The Charging Bull statue near Wall Street was installed without permission in 1989 as a piece of guerrilla art.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-086",
+    "term": "Dead-cat bounce",
+    "body": "A brief recovery in a falling price before it drops again - traders grimly note that even a dead cat bounces if dropped far enough.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-087",
+    "term": "Calendar effects fade",
+    "body": "Markets show only weak, inconsistent day-of-week patterns - most calendar quirks vanish once everyone knows about them.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-088",
+    "term": "All the gold",
+    "body": "Every gram of gold ever mined would fit in a cube about 22 metres a side - that scarcity is the whole point.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-089",
+    "term": "Compounding quote",
+    "body": "The line that compound interest is the eighth wonder of the world is often attributed to Einstein, though it is unverified.",
+    "category": "fun"
+  },
+  {
+    "id": "fact-090",
+    "term": "Pork bellies",
+    "body": "Frozen pork bellies were a famously traded futures contract for decades - the punchline of many trading-floor jokes.",
+    "category": "fun"
+  }
+]
