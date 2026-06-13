@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FeedbackWidget } from '@/components/FeedbackWidget';
 import {
+  ArrowLeftRight,
   BarChart3,
   Banknote,
   Bell,
@@ -65,6 +66,7 @@ const navItems = [
   { href: '/small-caps', label: 'Small Caps', short: 'SmCaps', icon: Microscope },
   { href: '/investors', label: 'Investor Radar', short: 'Funds', icon: Landmark },
   { href: '/awards', label: 'Gov Awards', short: 'Awards', icon: ScrollText },
+  { href: '/flows', label: 'Capital Flows', short: 'Flows', icon: ArrowLeftRight },
   { href: '/ipos', label: 'IPO Radar', short: 'IPOs', icon: Rocket },
   { href: '/commodities', label: 'Commodities', short: 'Commod', icon: Gem },
   { href: '/fundamentals', label: 'Fundamentals', short: 'Fundies', icon: BarChart3 },
