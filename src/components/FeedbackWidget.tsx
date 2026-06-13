@@ -6,37 +6,54 @@ import { MessageSquarePlus, X, Loader2, Check } from 'lucide-react';
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 type FeedbackType = 'idea' | 'bug' | 'other';
 
+interface FeedbackWidgetProps {
+  /**
+   * Controlled open state. When provided, the widget renders NO launcher of its own -
+   * the parent (e.g. the dual launcher) owns opening it. Omit for the standalone
+   * floating-button behaviour.
+   */
+  open?: boolean;
+  onClose?: () => void;
+}
+
 /**
- * In-app feedback - a floating launcher + a quick sheet. One box, one tap, send.
- * Posts to /api/feedback (which files a GitHub issue when configured) so users who
- * have never touched GitHub can still get their ideas onto the board.
+ * In-app feedback - a quick sheet. One box, one tap, send. Posts to /api/feedback
+ * (which files a GitHub issue when configured) so users who have never touched GitHub
+ * can still get their ideas onto the board. Renders its own floating launcher when
+ * uncontrolled; when the parent passes `open`, it's a pure sheet with no launcher.
  */
-export function FeedbackWidget() {
-  const [open, setOpen] = useState(false);
+export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidgetProps = {}) {
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? controlledOpen : internalOpen;
   const [type, setType] = useState<FeedbackType>('idea');
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
+  const [botInterest, setBotInterest] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
 
   const close = () => {
-    setOpen(false);
+    if (isControlled) onClose?.();
+    else setInternalOpen(false);
     setStatus('idle');
   };
 
   const submit = async () => {
     if (!message.trim() || status === 'sending') return;
     setStatus('sending');
+    const fullMessage = botInterest ? `${message}\n\n[Also interested in: Trading bot (paper trading)]` : message;
     try {
       const res = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, message, email }),
+        body: JSON.stringify({ type, message: fullMessage, email }),
       });
       const data = (await res.json()) as { ok?: boolean };
       if (data.ok) {
         setStatus('sent');
         setMessage('');
         setEmail('');
+        setBotInterest(false);
         window.setTimeout(close, 1900);
       } else {
         setStatus('error');
@@ -48,14 +65,16 @@ export function FeedbackWidget() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Send feedback"
-        className="fixed bottom-20 right-3 z-40 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-[#dbe5ee] shadow-[0_12px_34px_-12px_rgba(0,0,0,0.85)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#f3a33a]/40 xl:bottom-4"
-      >
-        <MessageSquarePlus size={15} className="text-[#f3a33a]" /> Feedback
-      </button>
+      {!isControlled && (
+        <button
+          type="button"
+          onClick={() => setInternalOpen(true)}
+          aria-label="Send feedback"
+          className="fixed bottom-20 right-3 z-40 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-[#dbe5ee] shadow-[0_12px_34px_-12px_rgba(0,0,0,0.85)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#f3a33a]/40 xl:bottom-4"
+        >
+          <MessageSquarePlus size={15} className="text-[#f3a33a]" /> Feedback
+        </button>
+      )}
 
       {open && (
         <div
@@ -120,6 +139,16 @@ export function FeedbackWidget() {
                   placeholder="Email (optional - if you'd like a reply)"
                   className="h-9 w-full rounded-md border border-[#263241] bg-[#0d141c] px-3 text-[13px] text-[#dbe5ee] placeholder:text-[#5d6b79] outline-none focus:border-[#f3a33a]/50"
                 />
+
+                <label className="flex cursor-pointer items-center gap-2 rounded-md border border-[#263241] bg-[#0d141c] px-3 py-2">
+                  <input
+                    type="checkbox"
+                    checked={botInterest}
+                    onChange={(e) => setBotInterest(e.target.checked)}
+                    className="h-4 w-4 shrink-0 accent-[#8aa2ff]"
+                  />
+                  <span className="text-[12px] text-[#cdd8e3]">I&apos;d be interested in a trading bot (paper trading)</span>
+                </label>
 
                 {status === 'error' && <p className="text-[11px] text-[#ff6b6b]">Something went wrong - please try again.</p>}
 

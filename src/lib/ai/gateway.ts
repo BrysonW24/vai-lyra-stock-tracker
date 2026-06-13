@@ -10,7 +10,7 @@
  * docs/ai-engine-plan.md.
  */
 
-export type AiProvider = 'anthropic' | 'openai' | 'openrouter' | 'google';
+export type AiProvider = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'xai';
 
 export interface AiCompleteParams {
   provider: AiProvider;
@@ -35,11 +35,12 @@ export interface AiCompleteResult {
 export const DEFAULT_MODELS: Record<AiProvider, string> = {
   anthropic: 'claude-3-5-haiku-latest',
   openai: 'gpt-4o-mini',
-  openrouter: 'anthropic/claude-3.5-haiku',
-  google: 'gemini-1.5-flash',
+  openrouter: 'meta-llama/llama-3.1-70b-instruct',
+  google: 'gemini-3.1-flash-lite',
+  xai: 'grok-2-latest',
 };
 
-export const SUPPORTED_PROVIDERS: AiProvider[] = ['anthropic', 'openai', 'openrouter', 'google'];
+export const SUPPORTED_PROVIDERS: AiProvider[] = ['anthropic', 'openai', 'openrouter', 'google', 'xai'];
 
 /** Resolve a user-supplied model (which may be blank) to a concrete model id. */
 export function resolveModel(provider: AiProvider, model?: string): string {
@@ -178,6 +179,17 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
       break;
     case 'google':
       text = await callGoogle(apiKey, model, system, prompt, maxTokens, temperature);
+      break;
+    case 'xai':
+      text = await callOpenAiCompatible(
+        'https://api.x.ai/v1/chat/completions',
+        apiKey,
+        model,
+        system,
+        prompt,
+        maxTokens,
+        temperature,
+      );
       break;
     default: {
       const never: never = provider;

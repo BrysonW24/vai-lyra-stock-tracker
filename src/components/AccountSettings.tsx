@@ -1,15 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { BrainCircuit, Check, KeyRound, Lock, Send, ShieldCheck, Trash2, UserRound } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { BrainCircuit, Check, ClipboardPaste, KeyRound, Lock, Send, ShieldCheck, Trash2, UserRound } from 'lucide-react';
 import {
-  AVATAR_EMOJIS,
   CURRENCIES,
   DEFAULT_AI,
   DEFAULT_LOCK,
   DEFAULT_PROFILE,
   REGIONS,
-  type AiMode,
   type AiSettings,
   type AccountProfile,
   type LockSettings,
@@ -24,30 +22,47 @@ import {
 } from '@/lib/account';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { syncAccountProfile } from '@/lib/sync-onboarding';
+import { loadInterest, saveInterest, registerInterest } from '@/lib/interest';
 import { NotificationsSetup } from '@/components/NotificationsSetup';
 
 function Panel({ icon: Icon, title, subtitle, children }: { icon: typeof UserRound; title: string; subtitle: string; children: React.ReactNode }) {
   return (
     <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex items-start gap-3 border-b border-[#1b2530] px-4 py-3">
-        <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#f3a33a]">
-          <Icon size={16} />
+      <div className="flex items-start gap-2.5 border-b border-[#1b2530] px-3 py-2">
+        <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#f3a33a]">
+          <Icon size={14} />
         </span>
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#c8d3de]">{title}</p>
-          <p className="mt-0.5 text-xs text-[#8190a0]">{subtitle}</p>
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[#c8d3de]">{title}</p>
+          <p className="mt-0.5 text-[11px] leading-snug text-[#8190a0]">{subtitle}</p>
         </div>
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-3">{children}</div>
     </section>
   );
 }
 
 const inputClass =
-  'w-full rounded border border-[#263241] bg-[#0d141c] px-3 py-2 font-mono text-sm text-[#dbe5ee] outline-none transition focus:border-[#3a4754] focus:ring-1 focus:ring-[#f3a33a]/30';
-const labelClass = 'mb-1 block text-[11px] font-medium uppercase tracking-wide text-[#8190a0]';
+  'w-full rounded border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 font-mono text-[13px] text-[#dbe5ee] outline-none transition focus:border-[#3a4754] focus:ring-1 focus:ring-[#f3a33a]/30';
+const labelClass = 'mb-0.5 block text-[10px] font-medium uppercase tracking-wide text-[#8190a0]';
 const buttonPrimary =
-  'inline-flex items-center justify-center gap-1.5 rounded border border-[#1d7f55] bg-[#0d251b] px-3 py-2 font-mono text-xs text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-40';
+  'inline-flex items-center justify-center gap-1.5 rounded border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 font-mono text-[11px] text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-40';
+
+/**
+ * Per-provider display + key sourcing. `group: 'free'` are the open / free-tier models that are
+ * on by default (Google's free tier, open-source Llama via OpenRouter); `group: 'byo'` are premium
+ * models the user pays for with their own key. Mirrors the gateway's DEFAULT_MODELS + adapters.
+ */
+const PROVIDER_META: Record<
+  AiSettings['provider'],
+  { label: string; modelPlaceholder: string; group: 'free' | 'byo'; keyUrl: string; keyHost: string; keyPlaceholder: string }
+> = {
+  google: { label: 'Google Gemini', modelPlaceholder: 'gemini-3.1-flash-lite', group: 'free', keyUrl: 'https://aistudio.google.com/apikey', keyHost: 'Google AI Studio', keyPlaceholder: 'AIza…' },
+  openrouter: { label: 'Llama (OpenRouter)', modelPlaceholder: 'meta-llama/llama-3.1-70b-instruct', group: 'free', keyUrl: 'https://openrouter.ai/keys', keyHost: 'openrouter.ai', keyPlaceholder: 'sk-or-…' },
+  anthropic: { label: 'Anthropic (Claude)', modelPlaceholder: 'claude-3-5-haiku-latest', group: 'byo', keyUrl: 'https://console.anthropic.com/settings/keys', keyHost: 'console.anthropic.com', keyPlaceholder: 'sk-ant-…' },
+  openai: { label: 'OpenAI (GPT)', modelPlaceholder: 'gpt-4o-mini', group: 'byo', keyUrl: 'https://platform.openai.com/api-keys', keyHost: 'platform.openai.com', keyPlaceholder: 'sk-…' },
+  xai: { label: 'xAI (Grok)', modelPlaceholder: 'grok-2-latest', group: 'byo', keyUrl: 'https://console.x.ai', keyHost: 'console.x.ai', keyPlaceholder: 'xai-…' },
+};
 
 function SavedTick({ show }: { show: boolean }) {
   if (!show) return null;
@@ -69,12 +84,54 @@ export function AccountSettings() {
   const [pinConfirm, setPinConfirm] = useState('');
   const [pinError, setPinError] = useState<string | null>(null);
   const [lockNote, setLockNote] = useState<string | null>(null);
+  const [botInterest, setBotInterest] = useState(false);
+  const emojiInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setProfile(loadProfile());
     setAi(loadAi());
     setLock(loadLock());
+    setBotInterest(loadInterest().tradingBot);
   }, []);
+
+  function toggleBotInterest(checked: boolean) {
+    setBotInterest(checked);
+    saveInterest({ tradingBot: checked });
+    if (checked) void registerInterest('Trading bot (paper trading)', loadProfile().email);
+  }
+
+  // Deep link from "connect a model" (chat / onboarding) lands here: scroll to the AI panel
+  // so the model picker + key field are right in front of the user.
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.location.hash !== '#ai-settings') return;
+    requestAnimationFrame(() => {
+      document.getElementById('ai-settings')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
+
+  // Take the last emoji (grapheme) the user typed/inserted so the icon is always one glyph,
+  // even for multi-codepoint emoji (flags, skin tones, ZWJ sequences).
+  function pickEmoji(raw: string) {
+    const value = raw.trim();
+    if (!value) {
+      setProfile({ ...profile, avatarEmoji: '' });
+      return;
+    }
+    let last = value;
+    try {
+      const Seg = (Intl as unknown as { Segmenter?: typeof Intl.Segmenter }).Segmenter;
+      if (Seg) {
+        const parts = Array.from(new Seg(undefined, { granularity: 'grapheme' }).segment(value), (s) => s.segment);
+        last = parts[parts.length - 1] ?? value;
+      } else {
+        const arr = Array.from(value);
+        last = arr[arr.length - 1] ?? value;
+      }
+    } catch {
+      last = value;
+    }
+    setProfile({ ...profile, avatarEmoji: last });
+  }
 
   function commitProfile() {
     saveProfile(profile);
@@ -98,6 +155,15 @@ export function AccountSettings() {
     saveAi(next);
     setAiSaved(true);
     setTimeout(() => setAiSaved(false), 1800);
+  }
+
+  async function pasteAiKey() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) setAi((prev) => ({ ...prev, apiKey: text.trim() }));
+    } catch {
+      /* clipboard unavailable - the user can long-press the field to paste instead */
+    }
   }
 
   async function enablePin() {
@@ -141,48 +207,35 @@ export function AccountSettings() {
     setTimeout(() => setLockNote(null), 3000);
   }
 
-  const aiModes: { value: AiMode; label: string; blurb: string }[] = [
-    { value: 'off', label: 'Off', blurb: 'No AI. Deterministic signals only.' },
-    { value: 'byo', label: 'Bring your own key', blurb: 'Use your own provider key, stored only in this browser.' },
-    { value: 'hosted', label: 'Hosted (managed)', blurb: 'We run the daily scan and AI for you on shared infrastructure.' },
-  ];
-
   return (
-    <div className="space-y-3">
-      <div className="terminal-panel rounded-md px-4 py-3">
-        <h1 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#c8d3de]">Account &amp; settings</h1>
-        <p className="mt-1 text-xs text-[#8190a0]">
-          Personal preferences for this device. Everything here is stored locally in your browser - Lyra is research software, not a broker, and never holds your money or trades.
+    <div className="space-y-2.5">
+      <div className="terminal-panel rounded-md px-3 py-2.5">
+        <h1 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#c8d3de]">Account &amp; settings</h1>
+        <p className="mt-0.5 text-[11px] leading-snug text-[#8190a0]">
+          Stored locally in this browser - Lyra is research software, not a broker, and never holds your money or trades.
         </p>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid gap-2.5 lg:grid-cols-2">
         <Panel icon={UserRound} title="Profile" subtitle="Light details used to personalise the dashboard.">
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div>
               <label className={labelClass}>Your icon</label>
-              <div className="mt-1 flex items-center gap-3">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[#263241] bg-[#0d141c] text-2xl">
-                  {profile.avatarEmoji || '🦎'}
-                </span>
-                <div className="flex flex-wrap gap-1">
-                  {AVATAR_EMOJIS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setProfile({ ...profile, avatarEmoji: emoji })}
-                      aria-pressed={profile.avatarEmoji === emoji}
-                      aria-label={`Use ${emoji} as your icon`}
-                      className={`grid h-8 w-8 place-items-center rounded-md border text-lg transition ${
-                        profile.avatarEmoji === emoji
-                          ? 'border-[#f3a33a] bg-[#23180b]'
-                          : 'border-[#263241] bg-[#0d141c] hover:border-[#3a4754]'
-                      }`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
+              <div className="mt-0.5 flex items-center gap-2.5">
+                {/* The circle IS the picker: a <label> wraps a real (transparent) input so a tap
+                    natively focuses it and opens the device keyboard - no text box to type into.
+                    A <label> is the most reliable keyboard trigger on iOS. */}
+                <label className="relative grid h-12 w-12 shrink-0 cursor-pointer place-items-center rounded-full border border-[#263241] bg-[#0d141c] text-2xl">
+                  <span aria-hidden>{profile.avatarEmoji || '🦎'}</span>
+                  <input
+                    ref={emojiInputRef}
+                    value={profile.avatarEmoji}
+                    onChange={(event) => pickEmoji(event.target.value)}
+                    aria-label="Tap to pick an emoji from your keyboard"
+                    className="absolute inset-0 h-full w-full cursor-pointer rounded-full bg-transparent text-transparent caret-transparent opacity-0"
+                  />
+                </label>
+                <p className="text-[10px] leading-snug text-[#8190a0]">Tap the circle to pick any emoji from your keyboard.</p>
               </div>
             </div>
             <div>
@@ -299,86 +352,111 @@ export function AccountSettings() {
           </div>
         </Panel>
 
-        <Panel icon={BrainCircuit} title="AI assistance" subtitle="Optional. Plain-English help on top of the deterministic signals.">
-          <div className="space-y-3">
-            <div className="grid gap-2">
-              {aiModes.map((mode) => (
-                <button
-                  key={mode.value}
-                  type="button"
-                  onClick={() => commitAi({ ...ai, mode: mode.value })}
-                  className={`rounded border px-3 py-2 text-left transition ${
-                    ai.mode === mode.value
-                      ? 'border-[#f3a33a] bg-[#23180b]'
-                      : 'border-[#263241] bg-[#0d141c] hover:border-[#3a4754]'
-                  }`}
-                >
-                  <span className={`block font-mono text-xs ${ai.mode === mode.value ? 'text-[#f3a33a]' : 'text-[#dbe5ee]'}`}>{mode.label}</span>
-                  <span className="mt-0.5 block text-[11px] text-[#8190a0]">{mode.blurb}</span>
-                </button>
-              ))}
-            </div>
-
-            {ai.mode === 'byo' && (
-              <div className="space-y-2 rounded border border-[#263241] bg-[#0b1016] p-3">
+        <div id="ai-settings" className="scroll-mt-4">
+          <Panel icon={BrainCircuit} title="AI assistance" subtitle="Always on. A free open model, or your own key for more power.">
+            <div className="space-y-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className={labelClass} htmlFor="acct-provider">Provider</label>
+                  <label className={labelClass} htmlFor="acct-provider">Model</label>
                   <select
                     id="acct-provider"
-                    className={inputClass}
+                    className={`${inputClass} !text-[11px]`}
                     value={ai.provider}
-                    onChange={(event) => commitAi({ ...ai, provider: event.target.value as AiSettings['provider'] })}
+                    onChange={(event) => {
+                      const provider = event.target.value as AiSettings['provider'];
+                      commitAi({ ...ai, provider, mode: PROVIDER_META[provider].group });
+                    }}
                   >
-                    <option value="anthropic" className="bg-[#0d141c]">Anthropic (Claude)</option>
-                    <option value="openai" className="bg-[#0d141c]">OpenAI</option>
+                    <optgroup label="Free / open">
+                      <option value="google" className="bg-[#0d141c]">Google Gemini (free)</option>
+                      <option value="openrouter" className="bg-[#0d141c]">Llama 3.1 (open-source)</option>
+                    </optgroup>
+                    <optgroup label="Your own key">
+                      <option value="anthropic" className="bg-[#0d141c]">Claude</option>
+                      <option value="openai" className="bg-[#0d141c]">GPT (OpenAI)</option>
+                      <option value="xai" className="bg-[#0d141c]">Grok (xAI)</option>
+                    </optgroup>
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass} htmlFor="acct-model">
-                    Model <span className="text-[#6f7d8a]">(optional)</span>
-                  </label>
+                  <label className={labelClass} htmlFor="acct-model">Version <span className="text-[#6f7d8a]">(optional)</span></label>
                   <input
                     id="acct-model"
                     type="text"
                     autoComplete="off"
                     className={inputClass}
                     value={ai.model}
-                    placeholder={ai.provider === 'anthropic' ? 'claude-3-5-haiku-latest' : 'gpt-4o-mini'}
+                    placeholder={PROVIDER_META[ai.provider].modelPlaceholder}
                     onChange={(event) => setAi({ ...ai, model: event.target.value })}
                   />
-                  <p className="mt-1 text-[11px] leading-relaxed text-[#6f7d8a]">
-                    Bring your own model - leave blank for the default, or name any model your key can access.
-                  </p>
                 </div>
-                <div>
-                  <label className={labelClass} htmlFor="acct-key">API key</label>
+              </div>
+
+              <div>
+                <label className={labelClass} htmlFor="acct-key">
+                  {PROVIDER_META[ai.provider].group === 'free' ? 'Free API key' : 'API key'}
+                </label>
+                <div className="flex gap-1.5">
                   <input
                     id="acct-key"
                     type="password"
                     autoComplete="off"
-                    className={inputClass}
+                    className={`${inputClass} min-w-0 flex-1`}
                     value={ai.apiKey}
-                    placeholder="sk-…"
+                    placeholder={PROVIDER_META[ai.provider].keyPlaceholder}
                     onChange={(event) => setAi({ ...ai, apiKey: event.target.value })}
                   />
+                  <button
+                    type="button"
+                    onClick={pasteAiKey}
+                    className="inline-flex shrink-0 items-center gap-1 rounded border border-[#8aa2ff]/40 bg-[#101a2e] px-2.5 text-[11px] font-semibold text-[#8aa2ff] transition hover:bg-[#13203a]"
+                  >
+                    <ClipboardPaste size={13} /> Paste
+                  </button>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button type="button" className={buttonPrimary} onClick={() => commitAi(ai)}>Save key</button>
-                  <SavedTick show={aiSaved} />
-                </div>
-                <p className="text-[11px] leading-relaxed text-[#6f7d8a]">
-                  Your key never leaves this browser except to call {ai.provider === 'anthropic' ? 'Anthropic' : 'OpenAI'} directly when an AI feature runs. It is never committed or sent to Lyra&apos;s servers.
-                </p>
               </div>
-            )}
 
-            {ai.mode === 'hosted' && (
-              <p className="rounded border border-[#263241] bg-[#0b1016] p-3 text-[11px] leading-relaxed text-[#8190a0]">
-                Hosted mode runs the daily scan and AI summaries for you on shared infrastructure - no key to manage. This is the &ldquo;run it for everyone on the cheap&rdquo; option and is being wired up; for now it behaves like Off.
+              <div className="flex items-center justify-between gap-2">
+                <button type="button" className={buttonPrimary} onClick={() => commitAi(ai)}>Save key</button>
+                <div className="flex items-center gap-2.5">
+                  <SavedTick show={aiSaved} />
+                  <a
+                    href={PROVIDER_META[ai.provider].keyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] font-semibold text-[#8aa2ff] transition hover:text-[#aab8ff]"
+                  >
+                    Get a key from {PROVIDER_META[ai.provider].keyHost} →
+                  </a>
+                </div>
+              </div>
+
+              <p className="text-[9.5px] leading-snug text-[#6f7d8a]">
+                {PROVIDER_META[ai.provider].group === 'free'
+                  ? `Free open model - grab a free key from ${PROVIDER_META[ai.provider].keyHost} (no card needed). It stays in this browser, only ever sent to the provider.`
+                  : `Your key stays in this browser, only ever sent to ${PROVIDER_META[ai.provider].label} when an AI feature runs - never committed or sent to Lyra's servers.`}
               </p>
-            )}
-          </div>
-        </Panel>
+
+              <label className="flex cursor-pointer items-start gap-2 rounded border border-[#1d2733] bg-[#0b1016] p-2.5">
+                <input
+                  type="checkbox"
+                  checked={botInterest}
+                  onChange={(event) => toggleBotInterest(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#8aa2ff]"
+                />
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-[12px] font-semibold text-[#dbe5ee]">Trading bot (paper)</span>
+                    <span className="rounded-full border border-[#8aa2ff]/30 bg-[#101a2e] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-[#8aa2ff]">Coming soon</span>
+                  </span>
+                  <span className="mt-0.5 block text-[10px] leading-snug text-[#8190a0]">
+                    Let Lyra paper-trade your portfolio behind an approval gate - never live. Tick to register interest and join the beta.
+                  </span>
+                </span>
+              </label>
+            </div>
+          </Panel>
+        </div>
 
         <Panel icon={Send} title="Notifications" subtitle="Get signal alerts on Telegram or WhatsApp. Stored to your account only.">
           <NotificationsSetup />

@@ -239,25 +239,25 @@ export const SETUP_PATHS = {
   quick_start: {
     title: 'Scan the market',
     description: 'Start with the US Technology 100 and explore signals immediately.',
-    steps: [1, 2, 3, 10, 9], // Welcome, Profile, Market, Strategy, Ready
+    steps: [1, 2, 3, 10, 11, 9], // Welcome, Profile, Market, Strategy, AI, Ready
     skipWatchlist: true,
     skipPortfolio: true,
   },
   watchlist_first: {
     title: 'Build a watchlist',
     description: 'Track companies you care about and receive setup alerts.',
-    steps: [1, 2, 3, 4, 10, 9], // Welcome, Profile, Universe, Watchlist, Strategy, Ready
+    steps: [1, 2, 3, 4, 10, 11, 9], // Welcome, Profile, Universe, Watchlist, Strategy, AI, Ready
     skipPortfolio: true,
   },
   portfolio_first: {
     title: 'Add your portfolio',
     description: 'Analyse your current holdings, P/L, risk and trade history.',
-    steps: [1, 2, 3, 4, 5, 10, 7, 8, 9], // Welcome, Profile, Universe, Watchlist, Holdings, Strategy, Capital, Alerts, Ready
+    steps: [1, 2, 3, 4, 5, 10, 7, 8, 11, 9], // Welcome, Profile, Universe, Watchlist, Holdings, Strategy, Capital, Alerts, AI, Ready
   },
   full_setup: {
     title: 'Full setup',
     description: 'Add watchlist, portfolio, goals and alerts now.',
-    steps: [1, 2, 3, 4, 5, 10, 6, 7, 8, 9], // Welcome, Profile, Universe, Watchlist, Holdings, Strategy, Snapshots, Capital, Alerts, Ready
+    steps: [1, 2, 3, 4, 5, 10, 6, 7, 8, 11, 9], // Welcome, Profile, Universe, Watchlist, Holdings, Strategy, Snapshots, Capital, Alerts, AI, Ready
   },
 };
 
@@ -316,6 +316,12 @@ export const ONBOARDING_STEPS = [
     id: 8,
     name: 'Alerts',
     title: 'Choose how you want to be alerted.',
+    skipAvailable: true,
+  },
+  {
+    id: 11,
+    name: 'AI insights',
+    title: 'Add an AI copilot (optional).',
     skipAvailable: true,
   },
   {

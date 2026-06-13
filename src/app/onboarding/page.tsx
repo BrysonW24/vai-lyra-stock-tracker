@@ -30,6 +30,7 @@ import { MomentumPulse } from '@/components/onboarding/MomentumPulse';
 import { TickerConstellation } from '@/components/onboarding/TickerConstellation';
 import { GlassPortfolioStack } from '@/components/onboarding/GlassPortfolioStack';
 import { StrategyPicker, type StrategyValue } from '@/components/onboarding/StrategyPicker';
+import { AiInsightStep } from '@/components/onboarding/AiInsightStep';
 import { ActivationSequence } from '@/components/activation/ActivationSequence';
 import { LyraReveal } from '@/components/activation/LyraReveal';
 import { SceneSlider } from '@/components/activation/SceneSlider';
@@ -182,6 +183,7 @@ export default function OnboardingPage() {
       portfolioCount: state.portfolio.length,
       watchlistCount: state.watchlist.length,
       experienceLevel: state.profile?.experienceLevel,
+      riskComfort: state.profile?.riskComfort,
     });
 
     // Navigation to the command centre is handled by SetupCompleteBeat (shown above).
@@ -259,6 +261,9 @@ export default function OnboardingPage() {
             onNext={handleNext}
           />
         );
+
+      case 11: // AI insights (optional)
+        return <AiInsightStep onNext={handleNext} />;
 
       case 9: // Summary / Ready
         return <SetupSummaryCard state={state} onFinish={handleFinish} />;

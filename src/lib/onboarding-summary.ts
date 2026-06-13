@@ -10,6 +10,8 @@ export interface OnboardingSummary {
   portfolioCount: number;
   watchlistCount: number;
   experienceLevel?: 'beginner' | 'intermediate' | 'advanced' | 'professional';
+  /** Risk appetite from the operator profile - drives the copilot's tone. */
+  riskComfort?: 'conservative' | 'balanced' | 'aggressive' | 'experimental';
 }
 
 const KEY = 'lyra.onboarding.summary';

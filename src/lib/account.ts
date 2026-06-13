@@ -9,8 +9,14 @@
  * provider you choose - never committed, never proxied elsewhere.
  */
 
-export type AiMode = 'off' | 'byo' | 'hosted';
-export type AiProvider = 'anthropic' | 'openai';
+/**
+ * 'free' = an open / free-tier model (Google, Llama via OpenRouter) - on by default; runs on a
+ * free user key, or a shared server key if one is configured. 'byo' = the user's own key for a
+ * premium model (Claude, GPT, Grok). 'off'/'hosted' are legacy and migrated to 'free' on load.
+ */
+export type AiMode = 'free' | 'byo' | 'off' | 'hosted';
+/** Kept in sync with the gateway's provider union (src/lib/ai/gateway.ts). */
+export type AiProvider = 'anthropic' | 'openai' | 'google' | 'openrouter' | 'xai';
 
 export interface AccountProfile {
   displayName: string;
@@ -62,8 +68,8 @@ export const DEFAULT_PROFILE: AccountProfile = {
 };
 
 export const DEFAULT_AI: AiSettings = {
-  mode: 'off',
-  provider: 'anthropic',
+  mode: 'free',
+  provider: 'google',
   apiKey: '',
   model: '',
 };
@@ -111,7 +117,15 @@ function save<T>(key: string, value: T): void {
 export const loadProfile = () => load<AccountProfile>(KEYS.profile, DEFAULT_PROFILE);
 export const saveProfile = (value: AccountProfile) => save(KEYS.profile, value);
 
-export const loadAi = () => load<AiSettings>(KEYS.ai, DEFAULT_AI);
+export const loadAi = (): AiSettings => {
+  const ai = load<AiSettings>(KEYS.ai, DEFAULT_AI);
+  // AI is always on now. Legacy 'off'/'hosted' migrate to the free open-model default
+  // (or to BYO if a key was already stored).
+  if (ai.mode === 'off' || ai.mode === 'hosted') {
+    return ai.apiKey ? { ...ai, mode: 'byo' } : { ...ai, mode: 'free', provider: 'google' };
+  }
+  return ai;
+};
 export const saveAi = (value: AiSettings) => save(KEYS.ai, value);
 
 export const loadLock = () => load<LockSettings>(KEYS.lock, DEFAULT_LOCK);

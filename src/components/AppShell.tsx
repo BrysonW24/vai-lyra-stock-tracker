@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FeedbackWidget } from '@/components/FeedbackWidget';
+import { DualLauncher } from '@/components/DualLauncher';
 import {
   ArrowLeftRight,
   BarChart3,
@@ -241,7 +241,7 @@ export function AppShell({ data, children }: AppShellProps) {
         </div>
       </nav>
 
-      <FeedbackWidget />
+      <DualLauncher />
     </div>
   );
 }

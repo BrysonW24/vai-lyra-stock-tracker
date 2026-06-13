@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { DailyBrief } from '@/lib/daily-brief';
 import { complete, type AiProvider } from '@/lib/ai/gateway';
+import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_BRIEF_FORMAT, composeSystem } from '@/lib/ai/system-prompt';
 
 /**
  * AI-phrased Daily Brief. GROUNDED: the model is given ONLY the deterministic facts
@@ -16,17 +17,16 @@ import { complete, type AiProvider } from '@/lib/ai/gateway';
 
 interface BriefRequest {
   brief: DailyBrief;
-  ai: { mode: 'off' | 'byo' | 'hosted'; provider: AiProvider; apiKey: string; model?: string };
+  ai: { mode: 'free' | 'byo' | 'off' | 'hosted'; provider: AiProvider; apiKey: string; model?: string };
   profile?: { experienceLevel?: string; learningStyle?: string; tradedBefore?: string };
 }
 
-const SYSTEM = [
-  'You are Lyra, a research assistant for a stock momentum dashboard.',
-  'You will be given a set of FACTS computed deterministically by the app.',
-  'Write a 2-3 sentence brief in plain English that conveys those facts naturally.',
-  'Rules: use ONLY the facts provided. Never invent or change a number. Never give buy/sell advice or price targets.',
-  'This is research, not financial advice. Be concise, calm, and concrete.',
-].join(' ');
+const SYSTEM = composeSystem([
+  LYRA_IDENTITY,
+  'You will be given a set of FACTS computed deterministically by the app. Write a brief that conveys those facts naturally.',
+  LYRA_GUARDRAILS,
+  LYRA_BRIEF_FORMAT,
+]);
 
 function factsBlock(brief: DailyBrief): string {
   const lines = brief.lines.map((l) => `- ${l.label}: ${l.text}`).join('\n');
@@ -49,21 +49,20 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as BriefRequest;
     const { brief, ai, profile } = body;
 
-    if (!brief || !ai || ai.mode === 'off') {
+    if (!brief || !ai) {
       return NextResponse.json({ ok: false, reason: 'disabled' });
     }
-    if (ai.mode === 'hosted') {
-      // Central key not wired yet - behave like off so the client keeps the deterministic brief.
-      return NextResponse.json({ ok: false, reason: 'hosted_not_configured' });
-    }
-    if (ai.mode === 'byo' && !ai.apiKey) {
-      return NextResponse.json({ ok: false, reason: 'no_key' });
-    }
+    // The user's own key wins; the free open-model tier may use a shared server-side Google
+    // free-tier key (GOOGLE_AI_KEY) so the brief is AI-phrased with zero setup.
+    const userKey = ai.apiKey?.trim();
+    const sharedKey = ai.provider === 'google' ? (process.env.GOOGLE_AI_KEY ?? '').trim() : '';
+    const apiKey = userKey || sharedKey;
+    if (!apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
     const prompt = `${factsBlock(brief)}\n\nWrite the brief.${audience(profile)}`;
     const { text } = await complete({
       provider: ai.provider,
-      apiKey: ai.apiKey,
+      apiKey,
       model: ai.model,
       system: SYSTEM,
       prompt,

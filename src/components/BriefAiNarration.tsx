@@ -16,8 +16,11 @@ export function BriefAiNarration({ brief }: { brief: DailyBrief }) {
 
   useEffect(() => {
     const ai = loadAi();
-    if (ai.mode === 'off') return;
-    if (ai.mode === 'byo' && !ai.apiKey) return;
+    // Only call when a key is actually available: the user's own key, or the free open model
+    // backed by a shared server-side Google key (signalled to the client by NEXT_PUBLIC_LYRA_FREE_AI).
+    const hasKey = !!ai.apiKey?.trim();
+    const sharedFree = ai.provider === 'google' && process.env.NEXT_PUBLIC_LYRA_FREE_AI === '1';
+    if (!hasKey && !sharedFree) return;
 
     let cancelled = false;
     setLoading(true);
