@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { ArrowUpRight, Clock3 } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { DailyBriefCard } from '@/components/DailyBriefCard';
 import { ExecutiveStrip } from '@/components/ExecutiveStrip';
@@ -20,11 +20,12 @@ import { IntelligenceTicker } from '@/components/IntelligenceTicker';
 import { MetricStrip } from '@/components/MetricStrip';
 import { SignalTable } from '@/components/SignalTable';
 import { StatusBadge } from '@/components/StatusBadge';
+import { CommandLayout, type CommandSectionNode } from '@/components/CommandLayout';
 import { getDashboardData } from '@/lib/data';
 import { getMarketContext } from '@/lib/market-context';
 import { getMacroContext } from '@/lib/macro-context';
 import { getSetupStatus } from '@/lib/setup-status';
-import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, relativeTime, toneClass, trendArrow } from '@/lib/format';
+import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass, trendArrow } from '@/lib/format';
 
 export default async function OverviewPage() {
   // These four are independent - fetch them concurrently instead of one-after-another
@@ -70,120 +71,37 @@ export default async function OverviewPage() {
     },
   ];
 
-  return (
-    <AppShell data={data}>
-      <div className="space-y-3 pb-28 xl:pb-6">
-        <ProductTour />
-
-        {setupStatus.signedIn ? <SetupChecklist status={setupStatus} /> : <GettingStartedBanner />}
-
-        <ExecutiveStrip panels={stripPanels} />
-
-        {/* Compact ticker summary - sits directly under the runners as the fastest read of the radar. */}
-        <Suspense fallback={<div className="terminal-panel rounded-md p-4 text-sm text-[#8190a0]">Loading compact ticker feed...</div>}>
-          <SignalTable
-            signals={data.signals.slice(0, 5)}
-            compact
-            portfolioSymbols={data.portfolio.map((holding) => holding.symbol)}
-            watchlistSymbols={data.watchlist.map((item) => item.symbol)}
-            title="Compact ticker feed"
-          />
-        </Suspense>
-
-        {/* Big moments ticking down - the future-state hero, makes Command feel alive. */}
-        <CatalystCountdown />
-
-        {/* Prime Setups - the deterministic "what's worth acting on / watching" callout. */}
-        <PrimeSetupsBoard signals={data.signals} />
-
-        <DailyBriefCard data={data} market={marketContext} />
-
-        <SignalEventsPanel signals={data.signals} />
-
-        {/* Catalyst Radar - the forward-looking matrix board, in the signals area. */}
-        <CatalystRadar />
-
-        <MetricStrip data={data} />
-
-        <MarketContextStrip data={marketContext} />
-
-        <MacroContextStrip data={macroContext} />
-
-        <IntelligenceTicker />
-
-        <section className="terminal-panel overflow-hidden rounded-md">
-            <div className="flex items-center justify-between border-b border-[#1b2530] px-3 py-2">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Strongest setups</p>
-                <p className="mt-0.5 font-mono text-[10px] text-[#a8b5c2]">
-                  {hasStrong ? 'Ranked backend signal outputs' : 'No strong setups right now - showing the top-scored radar names'}
-                </p>
-              </div>
-              <Link href="/radar" className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-2 py-1 text-xs text-[#a8b5c2] transition hover:text-[#eef3f8]">
-                Radar <ArrowUpRight size={12} />
-              </Link>
-            </div>
-            <div className="no-scrollbar overflow-x-auto">
-              <table className="min-w-[640px] text-left text-xs md:min-w-full">
-                <thead className="bg-[#0b1016] font-mono uppercase text-[#8190a0]">
-                  <tr>
-                    <th className="px-3 py-2">Ticker</th>
-                    <th className="px-3 py-2">Score</th>
-                    <th className="px-3 py-2">Delta</th>
-                    <th className="px-3 py-2">RSI</th>
-                    <th className="px-3 py-2">Hist</th>
-                    <th className="px-3 py-2">Vol</th>
-                    <th className="px-3 py-2">Low</th>
-                    <th className="px-3 py-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1b2530]">
-                  {strongSignals.map((signal) => (
-                    <tr className="font-mono text-[#dbe5ee] hover:bg-[#101720]" key={signal.symbol}>
-                      <td className="px-3 py-2 font-semibold text-[#eef3f8]">
-                        <Link href={`/tickers/${signal.symbol}`} className="inline-flex items-center gap-1">
-                          {signal.symbol} <ArrowUpRight size={11} />
-                        </Link>
-                      </td>
-                      <td className="px-3 py-2 text-base font-semibold">{signal.score}</td>
-                      <td className={`px-3 py-2 ${toneClass(signal.scoreDelta)}`}>{formatSignedNumber(signal.scoreDelta, 0)}</td>
-                      <td className="px-3 py-2">{formatNumber(signal.rsi)}{trendArrow(signal.rsiDelta)}</td>
-                      <td className="px-3 py-2">{formatNumber(signal.macdHistogram, 2)}{trendArrow(signal.histDelta)}</td>
-                      <td className="px-3 py-2">{formatNumber(signal.volumeRatio, 2)}x</td>
-                      <td className="px-3 py-2">{formatPercent(signal.distanceFromLow)}</td>
-                      <td className="px-3 py-2"><StatusBadge status={signal.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-        </section>
-
-        <HoldingsMomentumBoard holdings={data.portfolio} signals={data.signals} tickers={data.tickers} />
-
-        <section className="grid gap-3 xl:grid-cols-[0.85fr_1.15fr]">
-          <WatchlistTriggerBoard rows={watchlistNearTrigger} />
-
-          <div className="terminal-panel overflow-hidden rounded-md">
-            <div className="flex items-center justify-between border-b border-[#1b2530] px-3 py-2">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Recent signal changes</p>
-                <p className="mt-0.5 font-mono text-[10px] text-[#a8b5c2]">Since last scan</p>
-              </div>
-              <Clock3 className="text-[#8190a0]" size={16} />
-            </div>
-            <div className="divide-y divide-[#1b2530]">
-              {data.signalChanges.map((change) => (
-                <div className="grid grid-cols-[72px_1fr_86px] items-center gap-3 px-3 py-2 font-mono text-xs" key={`${change.symbol}-${change.label}`}>
-                  <Link href={`/tickers/${change.symbol}`} className="font-semibold text-[#eef3f8]">{change.symbol}</Link>
-                  <span className="truncate text-[#dbe5ee]">{change.label}</span>
-                  <span className={`justify-self-end ${toneClass(change.change)}`}>{formatSignedNumber(change.change, 0)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
+  // Section order here is the DEFAULT layout; the user can reorder / hide via Customise.
+  const sections: CommandSectionNode[] = [
+    { id: 'runners', node: <ExecutiveStrip panels={stripPanels} /> },
+    { id: 'metrics', node: <MetricStrip data={data} /> },
+    {
+      id: 'context',
+      node: (
+        <div className="space-y-3">
+          <MarketContextStrip data={marketContext} />
+          <MacroContextStrip data={macroContext} />
+          <IntelligenceTicker />
+        </div>
+      ),
+    },
+    { id: 'daily-brief', node: <DailyBriefCard data={data} market={marketContext} /> },
+    { id: 'prime', node: <PrimeSetupsBoard signals={data.signals} /> },
+    { id: 'signals', node: <SignalEventsPanel signals={data.signals} /> },
+    { id: 'charts', node: <HoldingsMomentumBoard holdings={data.portfolio} signals={data.signals} tickers={data.tickers} /> },
+    {
+      id: 'catalysts',
+      node: (
+        <div className="space-y-3">
+          <CatalystCountdown />
+          <CatalystRadar />
+        </div>
+      ),
+    },
+    { id: 'watchlist', node: <WatchlistTriggerBoard rows={watchlistNearTrigger} /> },
+    {
+      id: 'portfolio-exposure',
+      node: (
         <section className="terminal-panel overflow-hidden rounded-md">
           <div className="flex items-center justify-between border-b border-[#1b2530] px-3 py-2">
             <div>
@@ -220,7 +138,84 @@ export default async function OverviewPage() {
             ))}
           </div>
         </section>
+      ),
+    },
+    {
+      id: 'compact-feed',
+      node: (
+        <Suspense fallback={<div className="terminal-panel rounded-md p-4 text-sm text-[#8190a0]">Loading compact ticker feed...</div>}>
+          <SignalTable
+            signals={data.signals.slice(0, 5)}
+            compact
+            portfolioSymbols={data.portfolio.map((holding) => holding.symbol)}
+            watchlistSymbols={data.watchlist.map((item) => item.symbol)}
+            title="Compact ticker feed"
+          />
+        </Suspense>
+      ),
+    },
+    {
+      id: 'strongest',
+      node: (
+        <section className="terminal-panel overflow-hidden rounded-md">
+          <div className="flex items-center justify-between border-b border-[#1b2530] px-3 py-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Strongest setups</p>
+              <p className="mt-0.5 font-mono text-[10px] text-[#a8b5c2]">
+                {hasStrong ? 'Ranked backend signal outputs' : 'No strong setups right now - showing the top-scored radar names'}
+              </p>
+            </div>
+            <Link href="/radar" className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-2 py-1 text-xs text-[#a8b5c2] transition hover:text-[#eef3f8]">
+              Radar <ArrowUpRight size={12} />
+            </Link>
+          </div>
+          <div className="no-scrollbar overflow-x-auto">
+            <table className="min-w-[640px] text-left text-xs md:min-w-full">
+              <thead className="bg-[#0b1016] font-mono uppercase text-[#8190a0]">
+                <tr>
+                  <th className="px-3 py-2">Ticker</th>
+                  <th className="px-3 py-2">Score</th>
+                  <th className="px-3 py-2">Delta</th>
+                  <th className="px-3 py-2">RSI</th>
+                  <th className="px-3 py-2">Hist</th>
+                  <th className="px-3 py-2">Vol</th>
+                  <th className="px-3 py-2">Low</th>
+                  <th className="px-3 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1b2530]">
+                {strongSignals.map((signal) => (
+                  <tr className="font-mono text-[#dbe5ee] hover:bg-[#101720]" key={signal.symbol}>
+                    <td className="px-3 py-2 font-semibold text-[#eef3f8]">
+                      <Link href={`/tickers/${signal.symbol}`} className="inline-flex items-center gap-1">
+                        {signal.symbol} <ArrowUpRight size={11} />
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2 text-base font-semibold">{signal.score}</td>
+                    <td className={`px-3 py-2 ${toneClass(signal.scoreDelta)}`}>{formatSignedNumber(signal.scoreDelta, 0)}</td>
+                    <td className="px-3 py-2">{formatNumber(signal.rsi)}{trendArrow(signal.rsiDelta)}</td>
+                    <td className="px-3 py-2">{formatNumber(signal.macdHistogram, 2)}{trendArrow(signal.histDelta)}</td>
+                    <td className="px-3 py-2">{formatNumber(signal.volumeRatio, 2)}x</td>
+                    <td className="px-3 py-2">{formatPercent(signal.distanceFromLow)}</td>
+                    <td className="px-3 py-2"><StatusBadge status={signal.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ),
+    },
+  ];
 
+  return (
+    <AppShell data={data}>
+      <div className="space-y-3 pb-28 xl:pb-6">
+        <ProductTour />
+
+        {setupStatus.signedIn ? <SetupChecklist status={setupStatus} /> : <GettingStartedBanner />}
+
+        <CommandLayout sections={sections} />
       </div>
     </AppShell>
   );
