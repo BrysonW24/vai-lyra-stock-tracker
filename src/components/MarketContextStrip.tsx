@@ -65,13 +65,13 @@ export function MarketContextStrip({ data }: MarketContextStripProps) {
   return (
     <div className="intel-marquee terminal-panel glass-hero relative flex items-center overflow-hidden rounded-md">
       {/* Fixed feed title - same treatment as the Intel tape. Dot stays regime-coloured. */}
-      <div className="z-20 flex shrink-0 items-center gap-1.5 border-r border-[#1b2530] bg-[#0b1016] px-3 py-2">
+      <div className="z-20 flex shrink-0 items-center gap-1.5 border-r border-[#1b2530] bg-[#0b1016] px-3 py-1.5">
         <span className={`h-1.5 w-1.5 animate-pulse rounded-full ${regime.dot}`} />
         <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8aa2ff]">Markets</span>
       </div>
 
       {/* Scrolling track (items duplicated for a seamless loop) */}
-      <div className="relative min-w-0 flex-1 overflow-hidden py-2">
+      <div className="relative min-w-0 flex-1 overflow-hidden py-1.5">
         <div className="context-track flex w-max items-center">
           {[...items, ...items].map((item, i) => (
             <a

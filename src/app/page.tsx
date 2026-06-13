@@ -17,7 +17,7 @@ import { ProductTour } from '@/components/ProductTour';
 import { MarketContextStrip } from '@/components/MarketContextStrip';
 import { MacroContextStrip } from '@/components/MacroContextStrip';
 import { IntelligenceTicker } from '@/components/IntelligenceTicker';
-import { GoodToKnow } from '@/components/GoodToKnow';
+import { InsightTicker } from '@/components/InsightTicker';
 import { MetricStrip } from '@/components/MetricStrip';
 import { SignalTable } from '@/components/SignalTable';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -84,7 +84,7 @@ export default async function OverviewPage() {
           <MarketContextStrip data={marketContext} />
           <MacroContextStrip data={macroContext} />
           <IntelligenceTicker />
-          <GoodToKnow />
+          <InsightTicker />
         </div>
       ),
     },
