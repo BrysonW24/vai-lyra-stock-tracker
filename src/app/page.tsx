@@ -25,10 +25,14 @@ import { getSetupStatus } from '@/lib/setup-status';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, relativeTime, toneClass, trendArrow } from '@/lib/format';
 
 export default async function OverviewPage() {
-  const data = await getDashboardData();
-  const marketContext = await getMarketContext();
-  const macroContext = await getMacroContext();
-  const setupStatus = await getSetupStatus();
+  // These four are independent - fetch them concurrently instead of one-after-another
+  // so the server render waits on the slowest, not the sum.
+  const [data, marketContext, macroContext, setupStatus] = await Promise.all([
+    getDashboardData(),
+    getMarketContext(),
+    getMacroContext(),
+    getSetupStatus(),
+  ]);
   // Strongest setups: real strong_setup rows when they exist; otherwise fall back to
   // the top-scored names so the table is never blank (labelled honestly below).
   const trueStrong = data.signals.filter((signal) => signal.status === 'strong_setup');
