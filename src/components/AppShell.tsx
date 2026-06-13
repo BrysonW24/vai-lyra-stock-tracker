@@ -35,6 +35,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Star,
+  Workflow,
   Wand2,
 } from 'lucide-react';
 import { useEffect, useRef, type ReactNode } from 'react';
@@ -64,6 +65,7 @@ const navItems = [
   { href: '/smart-money', label: 'Smart Money', short: 'Smart $', icon: Banknote },
   // -- Research --
   { href: '/themes', label: 'World Radar', short: 'Themes', icon: Globe },
+  { href: '/supply-chain', label: 'Supply Chain', short: 'Chain', icon: Workflow },
   { href: '/small-caps', label: 'Small Caps', short: 'SmCaps', icon: Microscope },
   { href: '/investors', label: 'Investor Radar', short: 'Funds', icon: Landmark },
   { href: '/awards', label: 'Gov Awards', short: 'Awards', icon: ScrollText },
