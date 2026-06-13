@@ -17,6 +17,7 @@ export const COMMAND_SECTION_LABELS: Record<string, string> = {
   metrics: 'Metric tiles',
   context: 'Market context tapes',
   prime: 'Prime setups',
+  countdown: 'Big moments',
   signals: 'Signals',
   charts: 'Holdings momentum',
   catalysts: 'Catalyst radar',

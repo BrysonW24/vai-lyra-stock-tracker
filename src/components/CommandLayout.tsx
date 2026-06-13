@@ -16,6 +16,12 @@ export interface CommandSectionNode {
   node: ReactNode;
 }
 
+interface CommandLayoutProps {
+  sections: CommandSectionNode[];
+  /** Rendered on the left of the top row (e.g. the local context bar). */
+  leading?: ReactNode;
+}
+
 /**
  * Command layout orderer. The server page builds every section node; this renders them
  * in the user's chosen order, skipping hidden ones, and exposes a "Customise" panel to
@@ -23,7 +29,7 @@ export interface CommandSectionNode {
  * per device. The initial state is deterministic (default order, default-hidden) so it
  * matches the server render; saved overrides apply after mount.
  */
-export function CommandLayout({ sections }: { sections: CommandSectionNode[] }) {
+export function CommandLayout({ sections, leading }: CommandLayoutProps) {
   const knownIds = useMemo(() => sections.map((s) => s.id), [sections]);
   const byId = useMemo(() => new Map(sections.map((s) => [s.id, s.node])), [sections]);
   const knownKey = knownIds.join(',');
@@ -57,11 +63,12 @@ export function CommandLayout({ sections }: { sections: CommandSectionNode[] }) 
 
   return (
     <>
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">{leading}</div>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-md border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
         >
           <SlidersHorizontal size={12} /> Customise
         </button>

@@ -21,6 +21,7 @@ import { MetricStrip } from '@/components/MetricStrip';
 import { SignalTable } from '@/components/SignalTable';
 import { StatusBadge } from '@/components/StatusBadge';
 import { CommandLayout, type CommandSectionNode } from '@/components/CommandLayout';
+import { LocalContextBar } from '@/components/LocalContextBar';
 import { getDashboardData } from '@/lib/data';
 import { getMarketContext } from '@/lib/market-context';
 import { getMacroContext } from '@/lib/macro-context';
@@ -87,17 +88,10 @@ export default async function OverviewPage() {
     },
     { id: 'daily-brief', node: <DailyBriefCard data={data} market={marketContext} /> },
     { id: 'prime', node: <PrimeSetupsBoard signals={data.signals} /> },
-    { id: 'signals', node: <SignalEventsPanel signals={data.signals} /> },
+    { id: 'countdown', node: <CatalystCountdown /> },
     { id: 'charts', node: <HoldingsMomentumBoard holdings={data.portfolio} signals={data.signals} tickers={data.tickers} /> },
-    {
-      id: 'catalysts',
-      node: (
-        <div className="space-y-3">
-          <CatalystCountdown />
-          <CatalystRadar />
-        </div>
-      ),
-    },
+    { id: 'signals', node: <SignalEventsPanel signals={data.signals} /> },
+    { id: 'catalysts', node: <CatalystRadar /> },
     { id: 'watchlist', node: <WatchlistTriggerBoard rows={watchlistNearTrigger} /> },
     {
       id: 'portfolio-exposure',
@@ -215,7 +209,7 @@ export default async function OverviewPage() {
 
         {setupStatus.signedIn ? <SetupChecklist status={setupStatus} /> : <GettingStartedBanner />}
 
-        <CommandLayout sections={sections} />
+        <CommandLayout sections={sections} leading={<LocalContextBar />} />
       </div>
     </AppShell>
   );
