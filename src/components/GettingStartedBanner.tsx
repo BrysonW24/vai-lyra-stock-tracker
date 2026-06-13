@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Compass, GraduationCap, X, CheckCircle2, Circle } from 'lucide-react';
+import { Check, Compass, GraduationCap, X } from 'lucide-react';
 import { loadOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadLocalHoldings } from '@/lib/local-portfolio';
 import { loadProfile, loadAi, loadNotifications } from '@/lib/account';
@@ -151,16 +151,20 @@ export function GettingStartedBanner() {
           <Compass size={14} /> Refine setup
         </Link>
       </div>
-      <div className="mt-2 flex flex-wrap gap-1.5">
+      {/* Actual checklist: a square checkbox that ticks when done + the item, in a
+          compact grid so all five fit without getting tall. */}
+      <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
         {steps.map((s) => (
-          <span
-            key={s.label}
-            className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[10px] ${
-              s.done ? 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]' : 'border-[#263241] bg-[#0d141c] text-[#8190a0]'
-            }`}
-          >
-            {s.done ? <CheckCircle2 size={11} /> : <Circle size={11} />} {s.label}
-          </span>
+          <div key={s.label} className="flex items-center gap-2">
+            <span
+              className={`grid h-4 w-4 shrink-0 place-items-center rounded-[4px] border transition ${
+                s.done ? 'border-[#1d7f55] bg-[#0d251b] text-[#43d18b]' : 'border-[#3a4754] bg-[#0d141c]'
+              }`}
+            >
+              {s.done && <Check size={11} strokeWidth={3} />}
+            </span>
+            <span className={`text-[12px] ${s.done ? 'text-[#6f7d8a]' : 'text-[#dbe5ee]'}`}>{s.label}</span>
+          </div>
         ))}
       </div>
     </section>
