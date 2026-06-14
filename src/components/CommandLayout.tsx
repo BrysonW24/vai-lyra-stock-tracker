@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ArrowDown, ArrowUp, Eye, EyeOff, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowDown, ArrowUp, Eye, EyeOff, RefreshCw, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { DetailDrawer } from '@/components/DetailDrawer';
 import {
   COMMAND_SECTION_LABELS,
@@ -36,6 +37,17 @@ export function CommandLayout({ sections, leading }: CommandLayoutProps) {
 
   const [state, setState] = useState<CommandLayoutState>(() => defaultLayout(knownIds));
   const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Manual hard refresh: re-run the server components (re-fetch the latest scan / prices) without a
+  // full page reload. The spinner is a brief visual; data swaps in when the refetch resolves.
+  const refresh = () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    router.refresh();
+    window.setTimeout(() => setRefreshing(false), 900);
+  };
 
   useEffect(() => {
     setState(loadCommandLayout(knownIds));
@@ -65,6 +77,16 @@ export function CommandLayout({ sections, leading }: CommandLayoutProps) {
     <>
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0 flex-1">{leading}</div>
+        <button
+          type="button"
+          onClick={refresh}
+          disabled={refreshing}
+          aria-label="Refresh data"
+          title="Refresh - re-pull the latest scan"
+          className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8] disabled:opacity-60"
+        >
+          <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+        </button>
         <button
           type="button"
           onClick={() => setOpen(true)}
