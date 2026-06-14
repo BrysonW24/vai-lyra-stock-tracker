@@ -22,6 +22,11 @@ type ServerClient = NonNullable<Awaited<ReturnType<typeof createSupabaseServerCl
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const PAPER_ACCOUNT_NAME = 'Lyra Paper';
 
+// Idempotency: a fill is identified by its intent's idempotency key. If executeBotRun is retried
+// (network hiccup, double tap), we must not double-insert the order/trade/position. Process-scoped;
+// a DB unique constraint is the durable backstop when this graduates past the demo path.
+const persistedFillKeys = new Set<string>();
+
 // ---- Pure mapping (unit-tested, no I/O) -----------------------------------
 
 export interface DbPosition {
@@ -146,6 +151,9 @@ export async function persistFillIfAuthed(fill: PaperFill, intent: OrderIntent):
     const auth = await resolveAuthed();
     if (!auth) return false;
     const { supabase, userId } = auth;
+    // Idempotent: if this exact fill was already persisted this session, do nothing and report success.
+    const idemKey = intent.idempotencyKey || intent.id;
+    if (idemKey && persistedFillKeys.has(idemKey)) return true;
     const account = await getOrCreateAccount(supabase, userId);
     if (!account) return false;
     const now = new Date().toISOString();
@@ -216,6 +224,7 @@ export async function persistFillIfAuthed(fill: PaperFill, intent: OrderIntent):
         { user_id: userId, paper_account_id: account.id, equity: summary.equity, unrealised_pnl: summary.unrealisedPnl },
       ]);
     }
+    if (idemKey) persistedFillKeys.add(idemKey); // mark persisted only after the writes succeeded
     return true;
   } catch {
     return false; // persistence is best-effort; the in-memory record already succeeded
