@@ -4,6 +4,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { DailyBriefCard } from '@/components/DailyBriefCard';
 import { NextBestActions } from '@/components/NextBestActions';
+import { AiOfferCard } from '@/components/AiOfferCard';
 import { ExecutiveStrip } from '@/components/ExecutiveStrip';
 import { PrimeSetupsBoard } from '@/components/PrimeSetupsBoard';
 import { CatalystCountdown } from '@/components/CatalystCountdown';
@@ -78,6 +79,7 @@ export default async function OverviewPage() {
   const sections: CommandSectionNode[] = [
     { id: 'runners', node: <ExecutiveStrip panels={stripPanels} /> },
     { id: 'metrics', node: <MetricStrip data={data} /> },
+    { id: 'ai-offer', node: <AiOfferCard /> },
     {
       id: 'context',
       node: (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   createInitialOnboardingState,
@@ -15,6 +15,7 @@ import {
 import { syncOperatorProfile } from '@/lib/sync-onboarding';
 import { saveLocalHoldings } from '@/lib/local-portfolio';
 import { saveOnboardingSummary } from '@/lib/onboarding-summary';
+import { loadOnboardingProgress, saveOnboardingProgress, clearOnboardingProgress } from '@/lib/onboarding-progress';
 import { isSupabaseConfigured, createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { OnboardingShell } from '@/components/onboarding/OnboardingShell';
 import { WelcomeHero } from '@/components/onboarding/WelcomeHero';
@@ -41,10 +42,31 @@ export default function OnboardingPage() {
   const [state, setState] = useState<OnboardingState | null>(null);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [phase, setPhase] = useState<'reveal' | 'primer' | 'questionnaire' | 'complete'>('reveal');
+  const [hydrated, setHydrated] = useState(false);
 
-  // Initialize state when component mounts
-  if (!state) {
-    setState(createInitialOnboardingState('full_setup'));
+  // Mount: resume from a saved checkpoint if one exists (so a returning user picks up where they
+  // left off), otherwise start a fresh setup. Done in an effect (client-only) to avoid an SSR/
+  // hydration mismatch from reading localStorage.
+  useEffect(() => {
+    const saved = loadOnboardingProgress();
+    if (saved) {
+      setState(saved.state);
+      setCurrentStep(saved.currentStep);
+      setPhase(saved.phase);
+    } else {
+      setState(createInitialOnboardingState('full_setup'));
+    }
+    setHydrated(true);
+  }, []);
+
+  // Checkpoint progress on every change so it's resumable; cleared on completion.
+  useEffect(() => {
+    if (hydrated && state && phase !== 'complete') {
+      saveOnboardingProgress({ state, currentStep, phase, savedAt: new Date().toISOString() });
+    }
+  }, [hydrated, state, currentStep, phase]);
+
+  if (!hydrated || !state) {
     return null;
   }
 
@@ -102,6 +124,8 @@ export default function OnboardingPage() {
   const handleFinish = async () => {
     // Show the success beat immediately; it navigates to the command centre when done.
     setPhase('complete');
+    // Onboarding done - drop the resumable checkpoint so a re-visit starts clean.
+    clearOnboardingProgress();
     // Sync operator profile and onboarding progress if Supabase is configured.
     if (isSupabaseConfigured() && state.profile) {
       const completeness = calculateSetupCompleteness(state);
