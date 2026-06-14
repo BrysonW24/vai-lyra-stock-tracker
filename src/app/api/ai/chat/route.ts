@@ -4,6 +4,8 @@ import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { getDashboardData } from '@/lib/data';
 import { buildGrounding, type ChatProfile } from '@/lib/ai/chat-context';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_CHAT_FORMAT, composeSystem, toneFor } from '@/lib/ai/system-prompt';
+import { recordAiRun, hashInput } from '@/lib/ai/audit';
+import { recordQuestionSignal } from '@/lib/ai/question-signals';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -39,7 +41,23 @@ export async function POST(request: NextRequest) {
     if (!apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
     const last = messages[messages.length - 1];
+    const inputHash = hashInput({ messages, profile });
     if (last?.role === 'user' && detectInjectionAttempt(last.content)) {
+      void recordAiRun({
+        userId: 'local',
+        agentName: 'portfolio_assistant',
+        provider: ai.provider,
+        model: ai.model || 'n/a',
+        inputHash,
+        outputHash: null,
+        toolsUsed: [],
+        injectionFlags: ['user_message'],
+        validationErrors: [],
+        citationCount: 0,
+        status: 'refused',
+        refusalReason: 'injection_attempt',
+        latencyMs: null,
+      }).catch(() => {});
       return NextResponse.json({
         ok: true,
         text: "I can only answer research questions grounded in your dashboard - I won't act on instructions hidden in messages or data. Ask me about your holdings, watchlist, the signals, prime setups, catalysts or the macro picture.",
@@ -59,7 +77,9 @@ export async function POST(request: NextRequest) {
     const history = messages.slice(-8).map((m) => `${m.role === 'user' ? 'User' : 'Lyra'}: ${m.content}`).join('\n');
     const prompt = `${history}\nLyra:`;
 
-    const { text } = await complete({ provider: ai.provider, apiKey, model: ai.model, system, prompt, maxTokens: 600 });
+    const startedAt = Date.now();
+    const { text, model: usedModel } = await complete({ provider: ai.provider, apiKey, model: ai.model, system, prompt, maxTokens: 600 });
+    const latencyMs = Date.now() - startedAt;
     if (!text) return NextResponse.json({ ok: false, reason: 'empty' });
     // Strip an echoed "Lyra:" turn label, then split off the FOLLOW_UPS line into suggestion chips.
     const cleaned = text.replace(/^\s*(?:Lyra|Assistant)\s*:\s*/i, '').trim();
@@ -74,6 +94,25 @@ export async function POST(request: NextRequest) {
         .filter(Boolean)
         .slice(0, 3);
     }
+
+    // Durable-by-design audit (hash-only) + the Listening layer (captures the question on purpose).
+    void recordAiRun({
+      userId: 'local',
+      agentName: 'portfolio_assistant',
+      provider: ai.provider,
+      model: usedModel,
+      inputHash,
+      outputHash: hashInput(answer),
+      toolsUsed: [],
+      injectionFlags: [],
+      validationErrors: [],
+      citationCount: 0,
+      status: 'ok',
+      refusalReason: null,
+      latencyMs,
+    }).catch(() => {});
+    if (last?.role === 'user') recordQuestionSignal(last.content);
+
     return NextResponse.json({ ok: true, text: answer || cleaned, suggestions });
   } catch {
     return NextResponse.json({ ok: false, reason: 'error' });

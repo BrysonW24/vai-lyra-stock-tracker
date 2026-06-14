@@ -5,6 +5,7 @@
  * renders the genuinely failing report. No execution path exists anywhere here -
  * the page exists to show the engine refusing a trade, honestly.
  */
+import { Bot, ArrowRight, FlaskConical } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { TradingReadiness } from '@/components/trading/TradingReadiness';
 import { getDashboardData } from '@/lib/data';
@@ -90,6 +91,23 @@ export default async function TradingPage() {
           killSwitches={ALL_KILL_SWITCHES}
           report={report}
         />
+
+        {/* How we're testing toward live + the meantime path to the Paper Bot */}
+        <section className="terminal-panel rounded-md p-3">
+          <div className="flex items-center gap-2">
+            <FlaskConical size={14} className="text-[#8aa2ff]" />
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#c8d3de]">How we earn the right to go live</h2>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-[#a8b5c2]">
+            Live execution stays gated until a strategy <span className="text-[#dbe5ee]">proves itself on paper first</span>. We test the entire pipeline on the <span className="text-[#dbe5ee]">Paper Bot</span>: the AI explains readiness, deterministic code builds the order, the same risk engine above gates it, you approve, and fills are simulated at real prices with real fees and slippage. Every simulated trade builds the track record - and clears the readiness gates above - that a live bot would have to pass before a single real order is ever placed. Nothing here is optimised away when execution eventually ships; it is added <span className="text-[#dbe5ee]">behind</span> this gate, not instead of it.
+          </p>
+          <a
+            href="/paper-bot"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-[#101a2e] px-3 py-1.5 text-xs font-semibold text-[#8aa2ff] transition hover:bg-[#13203a]"
+          >
+            <Bot size={13} /> In the meantime, use the Paper Bot <ArrowRight size={13} />
+          </a>
+        </section>
 
         <p className="text-[10px] text-[#6f7d8a]">
           Research only - not financial advice. No live trading exists in this product; the pre-trade engine

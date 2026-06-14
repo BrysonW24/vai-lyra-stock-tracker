@@ -69,17 +69,19 @@ export function MiniSparkline({
   values,
   color = '#43d18b',
   height = 36,
+  className = 'h-9 w-24',
 }: {
   values: number[];
   color?: string;
   height?: number;
+  className?: string;
 }) {
   const width = 96;
   const { min, max } = bounds(values);
 
   return (
     <svg
-      className="h-9 w-24 overflow-visible"
+      className={`${className} overflow-visible`}
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="none"
       role="img"

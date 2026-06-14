@@ -129,7 +129,7 @@ export function TradingReadiness({ report, killSwitches, demoIntent }: TradingRe
       {/* (a) Status header */}
       <section className="terminal-panel glass-hero rounded-md p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-sm font-semibold text-[#eef3f8]">Bot Readiness</h1>
+          <h1 className="text-sm font-semibold text-[#eef3f8]">Live Bot</h1>
           <span className="rounded border border-[#f0758a]/50 bg-[#f0758a]/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wide text-[#f0758a]">
             LIVE TRADING: DISABLED
           </span>

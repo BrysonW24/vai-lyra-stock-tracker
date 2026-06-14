@@ -287,13 +287,13 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                   )}
 
                   <div className="space-y-2">
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-nowrap gap-1 overflow-x-auto no-scrollbar">
                       {CATEGORIES.map((c) => (
                         <button
                           key={c.label}
                           type="button"
                           onClick={() => setCategory(c.label)}
-                          className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                          className={`shrink-0 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold transition ${
                             category === c.label
                               ? 'border-[#8aa2ff] bg-[#101a2e] text-[#8aa2ff]'
                               : 'border-[#1d2733] bg-[#0d141c] text-[#a8b5c2] hover:border-[#3a4754]'

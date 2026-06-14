@@ -8,6 +8,60 @@ import type { DashboardData } from '@/types/scanner';
 import { derivePrimeSetups } from '@/lib/prime-setups';
 import { deriveCatalystRadar } from '@/lib/catalysts';
 import { formatCurrency, formatSignedNumber, formatSignedPercent } from '@/lib/format';
+import { THEME_COMPANIES, getTheme, getNodesForTheme } from '@/lib/world-radar';
+import iposData from '@/lib/generated/ipos.json';
+
+/** Minimal IPO reference shape read off the compiled content layer. */
+interface IpoRef {
+  symbol: string;
+  ipoDate: string;
+  offerPrice: number;
+  currentPrice: number;
+  returnSinceIpoPct: number;
+}
+const IPO_REFS = iposData as IpoRef[];
+
+/**
+ * Editorial thematic context for the user's OWN symbols - a static join over the already-compiled
+ * content layer (themes -> supply-chain bottleneck -> falsifier, plus IPO reference). This is the
+ * deterministic-first grounding upgrade: no model call, the curated thesis/bottleneck/IPO data we
+ * already build on every compile is simply joined onto the holdings/watchlist the AI is discussing.
+ */
+function buildThematicContext(symbols: string[]): string {
+  const lines: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of symbols) {
+    const symbol = raw.toUpperCase();
+    if (seen.has(symbol)) continue;
+    seen.add(symbol);
+
+    const company = THEME_COMPANIES.find((c) => c.symbol === symbol);
+    const ipo = IPO_REFS.find((i) => i.symbol === symbol);
+    if (!company && !ipo) continue;
+
+    const parts: string[] = [];
+    if (company) {
+      const theme = getTheme(company.theme);
+      if (theme) {
+        parts.push(`theme "${theme.name}" (${theme.maturity}, momentum ${Math.round(theme.momentum)}/100): ${theme.thesis}`);
+        const topNode = getNodesForTheme(company.theme)
+          .slice()
+          .sort((a, b) => b.bottleneck - a.bottleneck)[0];
+        if (topNode && topNode.bottleneck >= 55) {
+          parts.push(`Key bottleneck - ${topNode.name} (${topNode.bottleneck}/100): ${topNode.whyItMatters}`);
+        }
+        if (theme.falsifier) parts.push(`Falsifier: ${theme.falsifier}`);
+        parts.push(`exposure: ${company.exposure}.`);
+      }
+    }
+    if (ipo) {
+      const sign = ipo.returnSinceIpoPct >= 0 ? '+' : '';
+      parts.push(`IPO ${ipo.ipoDate} at $${ipo.offerPrice}, now $${ipo.currentPrice} (${sign}${ipo.returnSinceIpoPct}% since IPO).`);
+    }
+    if (parts.length) lines.push(`- ${symbol}: ${parts.join(' ')}`);
+  }
+  return lines.length ? `THEMATIC CONTEXT (editorial, for your symbols):\n${lines.join('\n')}` : '';
+}
 
 export interface ChatProfile {
   displayName?: string;
@@ -68,6 +122,15 @@ export function buildGrounding(data: DashboardData, now: Date): string {
     lines.push('UPCOMING CATALYSTS:');
     for (const c of catalysts) lines.push(`- ${c.title} (${c.tier}, heat ${c.heat}, ${c.daysUntil >= 0 ? `in ${c.daysUntil}d` : 'live/just passed'}) - ${c.why}`);
   }
+
+  // Deterministic-first grounding upgrade: join the curated editorial content layer onto the
+  // user's own symbols so the AI sees thesis / bottleneck / falsifier / IPO context, not just price.
+  const symbols = [
+    ...data.portfolio.slice(0, 12).map((h) => h.symbol),
+    ...data.watchlist.slice(0, 12).map((w) => w.symbol),
+  ];
+  const thematic = buildThematicContext(symbols);
+  if (thematic) lines.push(thematic);
 
   return lines.join('\n');
 }

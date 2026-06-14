@@ -8,6 +8,7 @@ import {
   BarChart3,
   Banknote,
   Bell,
+  Bot,
   Bookmark,
   BriefcaseBusiness,
   CalendarDays,
@@ -81,7 +82,8 @@ const navItems = [
   { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins },
   // -- Trading layer --
   { href: '/paper', label: 'Paper Trading', short: 'Paper', icon: ClipboardList },
-  { href: '/trading', label: 'Bot Readiness', short: 'Bot', icon: ShieldCheck },
+  { href: '/paper-bot', label: 'Paper Bot', short: 'Paper Bot', icon: Bot },
+  { href: '/trading', label: 'Live Bot', short: 'Live Bot', icon: ShieldCheck },
   // -- Learn & settings --
   { href: '/education', label: 'Education', short: 'Learn', icon: GraduationCap },
   { href: '/whats-new', label: "What's New", short: 'New', icon: Sparkles },
@@ -104,7 +106,8 @@ interface AppShellProps {
 
 export function AppShell({ data, children }: AppShellProps) {
   const pathname = usePathname();
-  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+  // Boundary-aware: /paper-bot must not also light up /paper (startsWith without the '/' boundary).
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/'));
   const navScrollRef = useRef<HTMLDivElement>(null);
 
   // Each page renders its own AppShell, so the mobile bottom-nav re-mounts on every
@@ -157,17 +160,28 @@ export function AppShell({ data, children }: AppShellProps) {
               <span className="truncate text-xs text-[#8190a0]">Search: NVDA</span>
             </div>
 
-            {/* Market status: pulsing dot + timeframe; market / last-scan detail on hover. */}
-            <span
-              title={`Market open · Last scan ${relativeTime(data.latestRun.finishedAt)} · ${data.latestRun.timeframe.toUpperCase()} timeframe`}
-              className="hidden items-center gap-1.5 rounded-md border border-[#1d4f3a] bg-[#0d251b] px-2 py-1.5 font-mono text-[11px] text-[#43d18b] sm:flex"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#43d18b]" />
+            {/* Market status: honest about demo vs live. Green pulse + timeframe + last-scan when the
+                scan is live (Supabase-backed); amber static DEMO chip when showing sample data. */}
+            {data.generatedFrom === 'demo' ? (
+              <span
+                title="Demo data - illustrative sample signals, not a live market scan"
+                className="hidden items-center gap-1.5 rounded-md border border-[#5a4a1a] bg-[#231a08] px-2 py-1.5 font-mono text-[11px] text-[#f3a33a] sm:flex"
+              >
+                <span className="inline-flex h-2 w-2 rounded-full bg-[#f3a33a]" />
+                DEMO
               </span>
-              {data.latestRun.timeframe.toUpperCase()}
-            </span>
+            ) : (
+              <span
+                title={`Live · Last scan ${relativeTime(data.latestRun.finishedAt)} · ${data.latestRun.timeframe.toUpperCase()} timeframe`}
+                className="hidden items-center gap-1.5 rounded-md border border-[#1d4f3a] bg-[#0d251b] px-2 py-1.5 font-mono text-[11px] text-[#43d18b] sm:flex"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#43d18b]" />
+                </span>
+                {data.latestRun.timeframe.toUpperCase()} · {relativeTime(data.latestRun.finishedAt)}
+              </span>
+            )}
 
             <AlertStatusBadge />
 
@@ -209,6 +223,13 @@ export function AppShell({ data, children }: AppShellProps) {
             <AccountMenu />
           </div>
         </header>
+
+        {data.generatedFrom === 'demo' && (
+          <div className="flex items-center justify-center gap-1.5 border-b border-[#5a4a1a]/50 bg-[#1a1407] px-3 py-1.5 text-center text-[11px] text-[#f3a33a] md:px-5">
+            <span className="inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-[#f3a33a]" />
+            <span>Demo data - signals shown are illustrative samples, not a live market scan. Connect a live data source to go live.</span>
+          </div>
+        )}
 
         <main className="px-3 py-2.5 md:px-5 md:py-4">{children}</main>
 
