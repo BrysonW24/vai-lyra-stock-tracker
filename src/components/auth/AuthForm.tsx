@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { CheckCircle2, CircleAlert } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { BrandLogo } from '@/components/BrandLogo';
 
@@ -60,7 +61,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
         },
       });
       if (signUpError) setError(signUpError.message);
-      else setNotice('Account created. Check your email to confirm, then sign in with your PIN.');
+      else setNotice(`Account created. We've sent a confirmation link to ${email}. Tap it to verify, then come back and sign in with your PIN.`);
     } else {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: pin });
       if (signInError) setError(signInError.message);
@@ -140,8 +141,21 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
           </p>
         </div>
 
-        {error && <p className="text-xs text-[#ff6b6b]">{error}</p>}
-        {notice && <p className="text-xs text-[#43d18b]">{notice}</p>}
+        {error && (
+          <div className="flex items-start gap-2 rounded-lg border border-[#7f1d1d] bg-[#2b1214] px-3 py-2.5">
+            <CircleAlert size={16} className="mt-px shrink-0 text-[#ff6b6b]" />
+            <p className="text-[13px] leading-relaxed text-[#ffb4b4]">{error}</p>
+          </div>
+        )}
+        {notice && (
+          <div className="flex items-start gap-2.5 rounded-lg border border-[#1d7f55] bg-[#0d251b] px-3 py-3">
+            <CheckCircle2 size={18} className="mt-px shrink-0 text-[#43d18b]" />
+            <div>
+              <p className="text-[13px] font-semibold text-[#43d18b]">Account created</p>
+              <p className="mt-0.5 text-[12.5px] leading-relaxed text-[#a7e9c8]">{notice.replace(/^Account created\.\s*/, '')}</p>
+            </div>
+          </div>
+        )}
 
         <button
           type="submit"
