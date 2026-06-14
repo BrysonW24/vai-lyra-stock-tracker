@@ -153,6 +153,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
             <div>
               <p className="text-[13px] font-semibold text-[#43d18b]">Account created</p>
               <p className="mt-0.5 text-[12.5px] leading-relaxed text-[#a7e9c8]">{notice.replace(/^Account created\.\s*/, '')}</p>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-[#7faa92]">Don&apos;t see it within a minute? Check your <span className="font-semibold">spam / junk</span> folder and mark it &ldquo;not junk&rdquo; - new senders sometimes land there.</p>
             </div>
           </div>
         )}
