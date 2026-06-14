@@ -18,6 +18,7 @@ import { PAPER_FEE_RATE, PAPER_SLIPPAGE_RATE } from '@/lib/paper-trading';
 import { getDashboardData } from '@/lib/data';
 import { recordPaperFill } from './paper-account-store';
 import { recordFlag } from './notifications-store';
+import { persistFillIfAuthed } from './paper-account-repo';
 
 export type BotRunStatus =
   | 'research_only'
@@ -176,5 +177,7 @@ export async function executeBotRun(intent: OrderIntent): Promise<BotRun> {
   // The fill now LIVES in the paper account so it can be viewed + analysed (positions, P/L, track record).
   recordPaperFill({ symbol: fill.symbol, side: fill.side, quantity: fill.quantity, fillPrice: fill.fillPrice, simulatedFee: fill.simulatedFee });
   recordFlag({ kind: 'fill', symbol: fill.symbol, message: `Paper filled ${fill.side.toUpperCase()} ${fill.quantity} ${fill.symbol} @ $${fill.fillPrice} (notional $${fill.notional.toLocaleString()})` });
+  // Durable, per-user persistence for authenticated users (RLS-scoped); a no-op in demo mode.
+  await persistFillIfAuthed(fill, intent);
   return { status: 'paper_executed', intent: { ...intent, status: 'paper_executed' }, report, fill };
 }

@@ -89,6 +89,8 @@ export interface PaperAccountSummary {
   startingEquity: number;
   equity: number;
   equityCurve: number[];
+  // 'persisted' = durable per-user Supabase data; 'demo' = in-memory session (no auth / not configured).
+  dataSource: 'persisted' | 'demo';
 }
 
 /** Mark the open positions to the latest scan price and roll up the account analytics. */
@@ -135,5 +137,6 @@ export async function getPaperAccountSummary(): Promise<PaperAccountSummary> {
     equity,
     // Oldest -> newest for the sparkline (series stored newest-first).
     equityCurve: [...EQUITY_SERIES].reverse().map((p) => p.equity),
+    dataSource: 'demo',
   };
 }

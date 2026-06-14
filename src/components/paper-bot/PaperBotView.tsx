@@ -73,6 +73,7 @@ interface Account {
   startingEquity: number;
   equity: number;
   equityCurve: number[];
+  dataSource: 'persisted' | 'demo';
 }
 interface Flag {
   id: string;
@@ -308,6 +309,11 @@ export function PaperBotView() {
         <div className="flex items-center gap-1.5">
           <Wallet size={11} className="text-[#43d18b]" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#c8d3de]">Paper account</span>
+          {account && (
+            <span className={`rounded-sm border px-1 py-px text-[8px] font-semibold uppercase tracking-[0.08em] ${account.dataSource === 'persisted' ? 'border-[#1d7f55] bg-[#0d251b] text-[#43d18b]' : 'border-[#5a4a1a] bg-[#231a08] text-[#f3a33a]'}`}>
+              {account.dataSource === 'persisted' ? 'saved' : 'session'}
+            </span>
+          )}
           {account && account.openPositions > 0 && (
             <span className={`ml-1 font-mono text-[10px] ${pnlUp ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
               {pnlUp ? '+' : ''}{account.unrealisedPnl} ({pnlUp ? '+' : ''}{account.unrealisedPnlPct}%)
@@ -359,7 +365,11 @@ export function PaperBotView() {
                 );
               })}
             </ul>
-            <p className="mt-1 text-[8px] leading-snug text-[#5e6b78]">In-memory this session. Durable history + equity curve land with Supabase.</p>
+            <p className="mt-1 text-[8px] leading-snug text-[#5e6b78]">
+              {account.dataSource === 'persisted'
+                ? 'Saved to your account - positions, trades and equity curve survive restarts.'
+                : 'In-memory this session. Sign in (with Supabase configured) for a durable, saved track record.'}
+            </p>
           </>
         )}
       </div>

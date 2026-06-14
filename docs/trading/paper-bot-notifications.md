@@ -97,5 +97,32 @@ does not yet survive a server restart.
 | Equity curve | in-memory session series | `paper_equity_snapshots` (new table) for cross-restart history |
 
 Persistence requires a real authenticated Supabase user (`auth.uid()`); the demo/sim path
-(`lyra_onboarded` cookie, no auth user) stays in-memory. That is the next hardening pass.
+(`lyra_onboarded` cookie, no auth user) stays in-memory. The account summary now carries a
+`dataSource: 'persisted' | 'demo'` field (shown as a `saved` / `session` tag in the UI) so the
+provenance is never silent.
+
+## Persistence layer (migration 020 + 021)
+
+`paper-account-repo.ts` binds the paper bot to Supabase using the cookie-aware, RLS-enforced server
+client (never the service role). A signed-in user's fills persist to `paper_orders` + `paper_trades`,
+the averaged `paper_positions` row, and a `paper_equity_snapshots` point (migration 021) - all scoped
+by `auth.uid() = user_id`. Reads come back through `getPaperAccountSummaryAuthAware()`: persisted for
+an authed user, in-memory for demo. Failures are best-effort (a failed read returns null -> in-memory
+fallback; a failed trade/position write returns false and skips the equity snapshot) so persistence
+never breaks the fill or the page.
+
+Verified: pure mapping (`averageIn`, `rollupPersisted`) is unit-tested; the live round-trip needs a
+configured Supabase project + an authenticated session.
+
+### Known follow-ups (deferred - pertain to not-yet-wired sell/close paths or ops)
+
+- **Realised P/L from closed trades** - `rollupPersisted` sums open positions only. Correct today
+  (the spine only opens buys; no closes exist yet). When sells/closes are wired, add a realised-P/L
+  query and fold it into equity.
+- **Fill idempotency** - `persistFillIfAuthed` has no dedupe; a retried fill could double-insert. Add
+  an idempotency key (the intent already has one) + a unique constraint when execution gets retries.
+- **Oversell validation** - `averageIn` clamps an oversell to 0 quantity rather than rejecting it;
+  harmless while only buys execute, but a sell path should validate available quantity upstream.
+- **Equity-snapshot retention** - one row per fill, read-capped at 120; add a retention/rollup policy
+  before high-frequency use.
 ```

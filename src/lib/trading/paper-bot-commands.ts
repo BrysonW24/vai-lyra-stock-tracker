@@ -12,7 +12,7 @@
  */
 import type { AiCreds } from '@/lib/ai/run-agent';
 import { proposeBotRun, executeBotRun } from './paper-bot';
-import { getPaperAccountSummary } from './paper-account-store';
+import { getPaperAccountSummaryAuthAware as getPaperAccountSummary } from './paper-account-repo';
 import { listFlags } from './notifications-store';
 import { activeChannels } from './notify-delivery';
 import type { OrderIntent } from './types';
