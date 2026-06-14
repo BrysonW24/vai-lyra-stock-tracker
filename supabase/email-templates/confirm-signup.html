@@ -1,40 +1,75 @@
 <!--
-  Lyra-branded "Confirm signup" auth email.
+  Lyra-branded "Confirm signup" auth email (rich version).
   Paste the body below into Supabase Dashboard -> Authentication -> Email Templates -> "Confirm signup".
   Subject: Confirm your Lyra account
   Supabase template var used: {{ .ConfirmationURL }}
-  Email-client-safe: table layout + inline styles; the brand gradient falls back to a solid colour
-  in clients that strip gradients (Outlook), so the button always renders.
+  Email-client-safe: table layout + inline styles; brand gradients fall back to solid colours
+  (Outlook) so the badge + button always render.
 -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F6F2;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <tr>
     <td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;border:1px solid #e7e9ef;overflow:hidden;">
-        <tr><td style="height:4px;background-color:#1E63FF;background:linear-gradient(90deg,#3b5bdb,#43d18b,#f3a33a);">&nbsp;</td></tr>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:18px;border:1px solid #e7e9ef;overflow:hidden;box-shadow:0 24px 70px -34px rgba(14,30,58,0.30);">
+        <tr><td style="height:5px;background-color:#1E63FF;background:linear-gradient(90deg,#3b5bdb,#43d18b,#f3a33a);">&nbsp;</td></tr>
+
+        <!-- Brand badge + wordmark -->
         <tr>
-          <td style="padding:30px 32px 6px;">
-            <span style="font-size:22px;font-weight:700;letter-spacing:-0.02em;color:#0E1E3A;">Lyra</span>
-            <span style="font-size:12px;color:#8290a0;">&nbsp; by Vivacity.ai</span>
+          <td align="center" style="padding:36px 32px 0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" align="center"><tr>
+              <td style="width:58px;height:58px;border-radius:16px;background-color:#1E63FF;background:linear-gradient(135deg,#3b5bdb,#43d18b,#f3a33a);text-align:center;vertical-align:middle;font-size:30px;line-height:58px;color:#ffffff;font-weight:800;">&#8599;</td>
+            </tr></table>
+            <div style="margin-top:14px;font-size:24px;font-weight:700;letter-spacing:-0.02em;color:#0E1E3A;">Lyra</div>
+            <div style="margin-top:2px;font-size:11px;letter-spacing:0.14em;color:#9aa6b6;text-transform:uppercase;">by Vivacity.ai</div>
           </td>
         </tr>
+
+        <!-- Headline -->
         <tr>
-          <td style="padding:6px 32px 0;">
-            <h1 style="margin:0;font-size:22px;line-height:1.25;color:#0E1E3A;font-weight:600;">Confirm your account</h1>
-            <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#5A6B82;">You're one click from your momentum console. Confirm your email to finish setting up Lyra.</p>
+          <td align="center" style="padding:22px 36px 0;">
+            <h1 style="margin:0;font-size:23px;line-height:1.25;color:#0E1E3A;font-weight:600;">You're one click from your console</h1>
+            <p style="margin:11px 0 0;font-size:15px;line-height:1.6;color:#5A6B82;">Confirm your email to unlock Lyra - the deterministic momentum console for US tech, made personal to your book.</p>
           </td>
         </tr>
+
+        <!-- CTA -->
         <tr>
-          <td style="padding:24px 32px 6px;">
-            <a href="{{ .ConfirmationURL }}" style="display:inline-block;background-color:#1E63FF;background:linear-gradient(90deg,#3b5bdb,#43d18b,#f3a33a);color:#07090c;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;padding:14px 28px;border-radius:10px;">Confirm email &rarr;</a>
+          <td align="center" style="padding:26px 36px 4px;">
+            <a href="{{ .ConfirmationURL }}" style="display:inline-block;background-color:#1E63FF;background:linear-gradient(90deg,#3b5bdb,#43d18b,#f3a33a);color:#07090c;text-decoration:none;font-weight:700;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;padding:15px 34px;border-radius:11px;">Confirm my email &rarr;</a>
           </td>
         </tr>
+
+        <!-- What you're unlocking -->
         <tr>
-          <td style="padding:10px 32px 0;">
-            <p style="margin:0;font-size:12px;line-height:1.6;color:#8290a0;">Or paste this link into your browser:<br><a href="{{ .ConfirmationURL }}" style="color:#1E63FF;word-break:break-all;">{{ .ConfirmationURL }}</a></p>
+          <td style="padding:26px 40px 6px;">
+            <div style="border-top:1px solid #eef0f4;padding-top:18px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="14" valign="top" style="padding:3px 12px 14px 0;"><div style="width:9px;height:9px;border-radius:3px;background:#1E63FF;"></div></td>
+                  <td style="padding:0 0 14px;font-size:13.5px;line-height:1.5;color:#5A6B82;"><span style="color:#0E1E3A;font-weight:600;">Ranked, explained signals</span> - the maths makes the call on every setup.</td>
+                </tr>
+                <tr>
+                  <td width="14" valign="top" style="padding:3px 12px 14px 0;"><div style="width:9px;height:9px;border-radius:3px;background:#43d18b;"></div></td>
+                  <td style="padding:0 0 14px;font-size:13.5px;line-height:1.5;color:#5A6B82;"><span style="color:#0E1E3A;font-weight:600;">Your book, in context</span> - holdings &amp; watchlist overlaid on every signal.</td>
+                </tr>
+                <tr>
+                  <td width="14" valign="top" style="padding:3px 12px 0 0;"><div style="width:9px;height:9px;border-radius:3px;background:#f3a33a;"></div></td>
+                  <td style="padding:0;font-size:13.5px;line-height:1.5;color:#5A6B82;"><span style="color:#0E1E3A;font-weight:600;">A plain-English brief</span> - what's setting up and why, every morning.</td>
+                </tr>
+              </table>
+            </div>
           </td>
         </tr>
+
+        <!-- Fallback link -->
         <tr>
-          <td style="padding:22px 32px 30px;">
+          <td style="padding:18px 40px 0;">
+            <p style="margin:0;font-size:11.5px;line-height:1.6;color:#9aa6b6;">Button not working? Paste this link into your browser:<br><a href="{{ .ConfirmationURL }}" style="color:#1E63FF;word-break:break-all;">{{ .ConfirmationURL }}</a></p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:22px 40px 30px;">
             <div style="border-top:1px solid #eef0f4;padding-top:16px;">
               <p style="margin:0;font-size:11px;line-height:1.6;color:#9aa6b6;">If you didn't create a Lyra account, you can safely ignore this email.<br>Lyra is research software, not financial advice. &copy; Vivacity.ai</p>
             </div>
