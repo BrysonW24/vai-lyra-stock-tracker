@@ -60,13 +60,33 @@ export const UNIVERSE_TICKERS: UniverseTicker[] = [
   { symbol: 'ZS', name: 'Zscaler' },
 ];
 
-/** Type-ahead search: symbol-prefix matches first, then symbol/name contains. */
-export function searchUniverse(query: string, limit = 6): UniverseTicker[] {
-  const q = query.trim().toUpperCase();
+/**
+ * Type-ahead search, relevance-ranked so the obvious pick is first:
+ *   exact symbol > symbol prefix (shorter wins) > name starts > name word-start > symbol/name contains.
+ * Strips a leading "$" and any exchange suffix (e.g. .AX) the user might type, and is case-insensitive.
+ * E.g. "s" -> SQ/SE/SHOP..., "sales" -> Salesforce, "micro" -> Micron / Super Micro / Microsoft.
+ */
+export function searchUniverse(query: string, limit = 7): UniverseTicker[] {
+  const q = query
+    .trim()
+    .toUpperCase()
+    .replace(/^\$/, '')
+    .replace(/\.(AX|US|NYSE|NASDAQ)$/i, '');
   if (!q) return [];
-  const starts = UNIVERSE_TICKERS.filter((t) => t.symbol.startsWith(q));
-  const contains = UNIVERSE_TICKERS.filter(
-    (t) => !t.symbol.startsWith(q) && (t.symbol.includes(q) || t.name.toUpperCase().includes(q)),
-  );
-  return [...starts, ...contains].slice(0, limit);
+  const scored = UNIVERSE_TICKERS.map((t) => {
+    const sym = t.symbol.toUpperCase();
+    const name = t.name.toUpperCase();
+    const nameWords = name.split(/[^A-Z0-9]+/).filter(Boolean);
+    let score = -1;
+    if (sym === q) score = 1000;
+    else if (sym.startsWith(q)) score = 800 - sym.length; // shorter prefix match ranks higher
+    else if (name.startsWith(q)) score = 600;
+    else if (nameWords.some((w) => w.startsWith(q))) score = 500;
+    else if (sym.includes(q)) score = 300;
+    else if (name.includes(q)) score = 200;
+    return { t, score };
+  })
+    .filter((x) => x.score >= 0)
+    .sort((a, b) => b.score - a.score || a.t.symbol.localeCompare(b.t.symbol));
+  return scored.slice(0, limit).map((x) => x.t);
 }

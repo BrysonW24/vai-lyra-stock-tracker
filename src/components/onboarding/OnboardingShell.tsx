@@ -45,8 +45,22 @@ export function OnboardingShell({
       document.body.scrollTop = 0;
     };
     toTop();
-    const raf = requestAnimationFrame(toTop);
-    return () => cancelAnimationFrame(raf);
+    // Re-assert the top across the next paints and a couple of short delays so a late
+    // autoFocus / layout shift (which scrolls a field into view a frame or two later)
+    // can't leave the step nudged down.
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      toTop();
+      raf2 = requestAnimationFrame(toTop);
+    });
+    const t1 = window.setTimeout(toTop, 60);
+    const t2 = window.setTimeout(toTop, 180);
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [currentStep]);
 
   // Lock page scroll while the step fits the viewport (no scroll, no rubber-band),

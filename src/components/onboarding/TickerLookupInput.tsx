@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, Loader2, X } from 'lucide-react';
 import { searchUniverse } from '@/lib/universe';
+import { TickerLogo } from '@/components/TickerLogo';
 
 export interface TickerLookup {
   valid: boolean;
@@ -41,11 +42,17 @@ export function TickerLookupInput({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(-1);
 
   const query = input.trim();
   const suggestions = useMemo(() => searchUniverse(query), [query]);
   const showSuggestions = focused && query.length > 0 && suggestions.length > 0;
   const showFetchHint = focused && query.length >= 1 && suggestions.length === 0;
+
+  // Reset the keyboard highlight whenever the query changes.
+  useEffect(() => {
+    setActiveIdx(-1);
+  }, [query]);
 
   const submit = async (symbolOverride?: string) => {
     const sym = (symbolOverride ?? input).toUpperCase().trim();
@@ -87,7 +94,24 @@ export function TickerLookupInput({
             onFocus={() => setFocused(true)}
             onBlur={() => window.setTimeout(() => setFocused(false), 150)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') submit();
+              if (e.key === 'ArrowDown' && showSuggestions) {
+                e.preventDefault();
+                setActiveIdx((i) => Math.min(i + 1, suggestions.length - 1));
+              } else if (e.key === 'ArrowUp' && showSuggestions) {
+                e.preventDefault();
+                setActiveIdx((i) => Math.max(i - 1, -1));
+              } else if (e.key === 'Enter') {
+                // Enter picks the highlighted suggestion if one is active, else submits the typed text.
+                if (showSuggestions && activeIdx >= 0) {
+                  e.preventDefault();
+                  submit(suggestions[activeIdx].symbol);
+                } else {
+                  submit();
+                }
+              } else if (e.key === 'Escape') {
+                setFocused(false);
+                setActiveIdx(-1);
+              }
             }}
             placeholder={placeholder}
             className="h-9 w-full rounded-md border border-[#263241] bg-[#0d141c] pl-8 pr-3 font-mono text-[13px] text-[#dbe5ee] placeholder:text-[#5d6b79] outline-none focus:border-[#f3a33a]/50"
@@ -96,7 +120,7 @@ export function TickerLookupInput({
           {/* Type-ahead suggestions from the scanned universe */}
           {showSuggestions && (
             <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-md border border-[#2c3a4a] bg-[#0d1117] shadow-2xl ring-1 ring-black/40">
-              {suggestions.map((s) => (
+              {suggestions.map((s, i) => (
                 <button
                   key={s.symbol}
                   type="button"
@@ -104,11 +128,13 @@ export function TickerLookupInput({
                     e.preventDefault();
                     submit(s.symbol);
                   }}
-                  className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left transition hover:bg-[#151c25]"
+                  onMouseEnter={() => setActiveIdx(i)}
+                  className={`flex w-full items-center gap-2.5 px-2.5 py-1.5 text-left transition ${i === activeIdx ? 'bg-[#151c25]' : ''}`}
                 >
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#43d18b]" title="Scanned hourly" />
+                  <TickerLogo symbol={s.symbol} companyName={s.name} size={20} />
                   <span className="font-mono text-[13px] font-semibold text-[#eef3f8]">{s.symbol}</span>
                   <span className="truncate text-[11px] text-[#8190a0]">{s.name}</span>
+                  <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-[#43d18b]" title="Scanned hourly" />
                 </button>
               ))}
             </div>
