@@ -13,7 +13,7 @@
  */
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getDashboardData } from '@/lib/data';
-import { getPaperAccountSummary as getInMemorySummary, type PaperAccountSummary } from './paper-account-store';
+import { getPaperAccountSummary as getInMemorySummary, computeTradeAnalytics, type PaperAccountSummary } from './paper-account-store';
 import type { OrderIntent } from './types';
 import type { PaperFill } from './paper-bot';
 
@@ -53,6 +53,7 @@ export function rollupPersisted(input: {
   startingCash: number;
   equityCurve: number[];
   fillCount: number;
+  closedRealisedPnls?: number[];
 }): PaperAccountSummary {
   let totalInvested = 0;
   let marketValue = 0;
@@ -81,7 +82,8 @@ export function rollupPersisted(input: {
       };
     });
   const unrealisedPnl = round2(totalPnl);
-  const equity = round2(input.startingCash + unrealisedPnl);
+  const analytics = computeTradeAnalytics(input.closedRealisedPnls ?? []);
+  const equity = round2(input.startingCash + analytics.realisedPnl + unrealisedPnl);
   return {
     positions: positions.sort((a, b) => b.marketValue - a.marketValue),
     totalInvested: round2(totalInvested),
@@ -93,6 +95,12 @@ export function rollupPersisted(input: {
     startingEquity: input.startingCash,
     equity,
     equityCurve: input.equityCurve.length >= 1 ? input.equityCurve : [input.startingCash, equity],
+    realisedPnl: analytics.realisedPnl,
+    closedTrades: analytics.closedTrades,
+    winRate: analytics.winRate,
+    avgWin: analytics.avgWin,
+    avgLoss: analytics.avgLoss,
+    expectancy: analytics.expectancy,
     dataSource: 'persisted',
   };
 }
@@ -214,6 +222,56 @@ export async function persistFillIfAuthed(fill: PaperFill, intent: OrderIntent):
   }
 }
 
+/**
+ * Persist a full close for a symbol if authed: mark the open trade rows closed (with realised P/L),
+ * record the sell order, delete the position, snapshot equity. No-op in demo mode; best-effort.
+ */
+export async function persistCloseIfAuthed(symbol: string, exitPrice: number, exitFee: number): Promise<boolean> {
+  try {
+    const auth = await resolveAuthed();
+    if (!auth) return false;
+    const { supabase, userId } = auth;
+    const account = await getOrCreateAccount(supabase, userId);
+    if (!account) return false;
+    const sym = symbol.toUpperCase();
+    const now = new Date().toISOString();
+
+    const { data: openTrades, error } = await supabase
+      .from('paper_trades')
+      .select('id, entry_price, quantity, fees')
+      .eq('paper_account_id', account.id)
+      .eq('symbol', sym)
+      .is('exit_time', null);
+    if (error) return false;
+
+    let totalQty = 0;
+    for (const t of (openTrades ?? []) as Array<{ id: string; entry_price: number; quantity: number; fees: number | null }>) {
+      const qty = Number(t.quantity);
+      totalQty += qty;
+      const realised = round2((exitPrice - Number(t.entry_price)) * qty - Number(t.fees ?? 0));
+      await supabase
+        .from('paper_trades')
+        .update({ exit_time: now, exit_price: exitPrice, realised_pnl: realised, exit_reason: 'manual_close' })
+        .eq('id', t.id);
+    }
+
+    await supabase.from('paper_orders').insert([
+      { user_id: userId, paper_account_id: account.id, symbol: sym, side: 'sell', order_type: 'market', quantity: totalQty, status: 'filled', reason_code: 'manual_close', filled_at: now },
+    ]);
+    await supabase.from('paper_positions').delete().eq('paper_account_id', account.id).eq('symbol', sym);
+
+    const summary = await readPersistedSummary(supabase, userId, account);
+    if (summary) {
+      await supabase.from('paper_equity_snapshots').insert([
+        { user_id: userId, paper_account_id: account.id, equity: summary.equity, unrealised_pnl: summary.unrealisedPnl },
+      ]);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function readPersistedSummary(
   supabase: ServerClient,
   userId: string,
@@ -224,7 +282,7 @@ async function readPersistedSummary(
 
   const [posRes, tradeRes, snapRes] = await Promise.all([
     supabase.from('paper_positions').select('symbol, quantity, average_price').eq('paper_account_id', account.id),
-    supabase.from('paper_trades').select('symbol, fees').eq('paper_account_id', account.id),
+    supabase.from('paper_trades').select('symbol, fees, exit_time, realised_pnl').eq('paper_account_id', account.id),
     supabase
       .from('paper_equity_snapshots')
       .select('equity, captured_at')
@@ -236,12 +294,15 @@ async function readPersistedSummary(
   // rather than rendering an empty account that looks like data loss.
   if (posRes.error || tradeRes.error) return null;
   const posRows = posRes.data;
-  const tradeRows = tradeRes.data;
+  const tradeRows = (tradeRes.data ?? []) as Array<{ symbol: string; fees: number | null; exit_time: string | null; realised_pnl: number | null }>;
   const snapRows = snapRes.data;
 
+  // Fees on still-OPEN entries reduce unrealised P/L; closed entries' fees are already in realised_pnl.
   const feesBySymbol: Record<string, number> = {};
-  for (const t of (tradeRows ?? []) as Array<{ symbol: string; fees: number | null }>) {
-    feesBySymbol[t.symbol] = round2((feesBySymbol[t.symbol] ?? 0) + (t.fees ?? 0));
+  const closedRealisedPnls: number[] = [];
+  for (const t of tradeRows) {
+    if (t.exit_time) closedRealisedPnls.push(Number(t.realised_pnl ?? 0));
+    else feesBySymbol[t.symbol] = round2((feesBySymbol[t.symbol] ?? 0) + (t.fees ?? 0));
   }
 
   return rollupPersisted({
@@ -250,7 +311,8 @@ async function readPersistedSummary(
     priceOf,
     startingCash: Number(account.starting_cash) || 100000,
     equityCurve: ((snapRows ?? []) as Array<{ equity: number }>).map((s) => Number(s.equity)),
-    fillCount: (tradeRows ?? []).length,
+    fillCount: tradeRows.length,
+    closedRealisedPnls,
   });
 }
 

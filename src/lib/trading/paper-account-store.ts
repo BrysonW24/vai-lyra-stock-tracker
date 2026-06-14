@@ -58,6 +58,70 @@ export interface RecordedFill {
 const POSITIONS = new Map<string, PaperPosition>();
 let fillCount = 0;
 
+export interface ClosedTrade {
+  symbol: string;
+  quantity: number;
+  entryPrice: number;
+  exitPrice: number;
+  realisedPnl: number;
+  openedAt: string;
+  closedAt: string;
+}
+const CLOSED: ClosedTrade[] = [];
+let realisedTotal = 0;
+
+/**
+ * Close a position at the exit price (full close). Computes realised P/L net of entry + exit fees,
+ * records a closed round-trip trade, and removes the position. Returns the closed trade, or null when
+ * there is nothing to close.
+ */
+export function closePaperPosition(symbol: string, exitPrice: number, exitFee: number): ClosedTrade | null {
+  const key = symbol.toUpperCase();
+  const p = POSITIONS.get(key);
+  if (!p || p.quantity <= 0) return null;
+  const gross = (exitPrice - p.avgEntryPrice) * p.quantity;
+  const realised = round2(gross - p.totalFees - exitFee);
+  const trade: ClosedTrade = {
+    symbol: p.symbol,
+    quantity: p.quantity,
+    entryPrice: round2(p.avgEntryPrice),
+    exitPrice: round2(exitPrice),
+    realisedPnl: realised,
+    openedAt: p.openedAt,
+    closedAt: new Date().toISOString(),
+  };
+  CLOSED.unshift(trade);
+  realisedTotal = round2(realisedTotal + realised);
+  POSITIONS.delete(key);
+  fillCount += 1;
+  return trade;
+}
+
+export interface TradeAnalytics {
+  realisedPnl: number;
+  closedTrades: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  avgWin: number;
+  avgLoss: number;
+  expectancy: number;
+}
+
+/** Win rate / expectancy / avg win-loss from an array of realised P/L values (pure, reusable). */
+export function computeTradeAnalytics(realisedPnls: number[]): TradeAnalytics {
+  const closedTrades = realisedPnls.length;
+  const wins = realisedPnls.filter((p) => p > 0);
+  const losses = realisedPnls.filter((p) => p <= 0);
+  const realisedPnl = round2(realisedPnls.reduce((a, b) => a + b, 0));
+  const avgWin = wins.length ? round2(wins.reduce((a, b) => a + b, 0) / wins.length) : 0;
+  const avgLoss = losses.length ? round2(Math.abs(losses.reduce((a, b) => a + b, 0)) / losses.length) : 0;
+  const winRate = closedTrades ? round2((wins.length / closedTrades) * 100) : 0;
+  // Per-trade expected value: p(win)*avgWin - p(loss)*avgLoss.
+  const expectancy = closedTrades ? round2((winRate / 100) * avgWin - (1 - winRate / 100) * avgLoss) : 0;
+  return { realisedPnl, closedTrades, wins: wins.length, losses: losses.length, winRate, avgWin, avgLoss, expectancy };
+}
+
 /** Accrue a simulated fill into the paper account. Buys open/average; sells reduce/close. */
 export function recordPaperFill(fill: RecordedFill): void {
   fillCount += 1;
@@ -89,6 +153,13 @@ export interface PaperAccountSummary {
   startingEquity: number;
   equity: number;
   equityCurve: number[];
+  // Realised performance from closed round-trip trades.
+  realisedPnl: number;
+  closedTrades: number;
+  winRate: number;
+  avgWin: number;
+  avgLoss: number;
+  expectancy: number;
   // 'persisted' = durable per-user Supabase data; 'demo' = in-memory session (no auth / not configured).
   dataSource: 'persisted' | 'demo';
 }
@@ -123,7 +194,9 @@ export async function getPaperAccountSummary(): Promise<PaperAccountSummary> {
 
   // Account P/L sums the fee-inclusive position P/L so the rollup reconciles with the rows.
   const unrealisedPnl = round2(totalPnl);
-  const equity = round2(STARTING_PAPER_CASH + unrealisedPnl);
+  const analytics = computeTradeAnalytics(CLOSED.map((t) => t.realisedPnl));
+  // Equity = starting cash + locked-in realised P/L + open unrealised P/L.
+  const equity = round2(STARTING_PAPER_CASH + analytics.realisedPnl + unrealisedPnl);
   snapshotEquity(equity);
   return {
     positions: positions.sort((a, b) => b.marketValue - a.marketValue),
@@ -137,6 +210,12 @@ export async function getPaperAccountSummary(): Promise<PaperAccountSummary> {
     equity,
     // Oldest -> newest for the sparkline (series stored newest-first).
     equityCurve: [...EQUITY_SERIES].reverse().map((p) => p.equity),
+    realisedPnl: analytics.realisedPnl,
+    closedTrades: analytics.closedTrades,
+    winRate: analytics.winRate,
+    avgWin: analytics.avgWin,
+    avgLoss: analytics.avgLoss,
+    expectancy: analytics.expectancy,
     dataSource: 'demo',
   };
 }

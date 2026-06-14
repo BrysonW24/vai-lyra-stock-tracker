@@ -16,9 +16,9 @@ import { DEFAULT_TRADING_SETTINGS } from './types';
 import type { OrderIntent, PreTradeContext, PreTradeReport, TradingSettings } from './types';
 import { PAPER_FEE_RATE, PAPER_SLIPPAGE_RATE } from '@/lib/paper-trading';
 import { getDashboardData } from '@/lib/data';
-import { recordPaperFill } from './paper-account-store';
+import { recordPaperFill, closePaperPosition } from './paper-account-store';
 import { recordFlag } from './notifications-store';
-import { persistFillIfAuthed } from './paper-account-repo';
+import { persistFillIfAuthed, persistCloseIfAuthed, getPaperAccountSummaryAuthAware } from './paper-account-repo';
 
 export type BotRunStatus =
   | 'research_only'
@@ -180,4 +180,54 @@ export async function executeBotRun(intent: OrderIntent): Promise<BotRun> {
   // Durable, per-user persistence for authenticated users (RLS-scoped); a no-op in demo mode.
   await persistFillIfAuthed(fill, intent);
   return { status: 'paper_executed', intent: { ...intent, status: 'paper_executed' }, report, fill };
+}
+
+export interface CloseRun {
+  status: 'closed' | 'no_position' | 'blocked_by_risk' | 'error';
+  symbol?: string;
+  fill?: PaperFill;
+  realisedPnl?: number;
+  report?: PreTradeReport;
+  error?: string;
+}
+
+/**
+ * CLOSE a full position at the market (a risk-reducing sell). One step: the explicit command/click IS
+ * the approval. Re-runs the risk gate, simulates the sell fill, books realised P/L (in-memory + durable),
+ * and removes the position. Returns no_position when there is nothing to close.
+ */
+export async function runClose(symbol: string): Promise<CloseRun> {
+  const sym = symbol.toUpperCase();
+  const data = await getDashboardData();
+  const summary = await getPaperAccountSummaryAuthAware();
+  const pos = summary.positions.find((p) => p.symbol === sym);
+  if (!pos || pos.quantity <= 0) return { status: 'no_position', symbol: sym };
+
+  const signal = data.signals.find((s) => s.symbol === sym);
+  const referencePrice = signal?.close ?? pos.currentPrice ?? pos.avgEntryPrice;
+  const intent = buildPaperOrderIntent({
+    userId: 'local',
+    symbol: sym,
+    side: 'sell',
+    quantity: pos.quantity,
+    referencePrice,
+    signalSnapshot: signal ? { symbol: sym, score: signal.score, rsi: Math.round(signal.rsi), macdState: signal.macdState, status: signal.status, close: signal.close } : { symbol: sym },
+    evidenceRefs: [],
+    aiExplanation: 'Manual position close',
+  });
+
+  const portfolioValue = data.portfolio.reduce((s, h) => s + h.marketValue, 0) || 100000;
+  const report = runPreTradeChecks(intent, buildPaperContext(PAPER_SETTINGS, portfolioValue));
+  if (!report.passed) return { status: 'blocked_by_risk', symbol: sym, report };
+
+  const fill = simulatePaperFill(intent, referencePrice);
+  const closed = closePaperPosition(sym, fill.fillPrice, fill.simulatedFee); // in-memory realised P/L
+  await persistCloseIfAuthed(sym, fill.fillPrice, fill.simulatedFee); // durable if authed
+  const realisedPnl = closed?.realisedPnl;
+  recordFlag({
+    kind: 'fill',
+    symbol: sym,
+    message: `Paper closed ${pos.quantity} ${sym} @ $${fill.fillPrice} · realised ${realisedPnl !== undefined ? `${realisedPnl >= 0 ? '+' : ''}${realisedPnl}` : 'n/a'}`,
+  });
+  return { status: 'closed', symbol: sym, fill, realisedPnl, report };
 }

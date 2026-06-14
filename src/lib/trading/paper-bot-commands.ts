@@ -11,7 +11,7 @@
  * arrive with the Supabase persistence pass).
  */
 import type { AiCreds } from '@/lib/ai/run-agent';
-import { proposeBotRun, executeBotRun } from './paper-bot';
+import { proposeBotRun, executeBotRun, runClose } from './paper-bot';
 import { getPaperAccountSummaryAuthAware as getPaperAccountSummary } from './paper-account-repo';
 import { listFlags } from './notifications-store';
 import { activeChannels } from './notify-delivery';
@@ -33,6 +33,7 @@ const HELP: string[] = [
   '  propose <SYM> <QTY> AI assesses readiness + drafts a paper order',
   '  approve             approve the pending paper order',
   '  execute | fill      simulate the fill (must be approved first)',
+  '  close <SYM>         close a position and realise its P/L',
   '  flags | alerts      recent bot notifications',
   '  channels            where flags are delivered (Telegram / WhatsApp)',
   '  help | ?            this list',
@@ -127,6 +128,16 @@ export async function runPaperBotCommand(rawLine: string, creds: AiCreds): Promi
       pendingIntent = null;
       const f = run.fill;
       return { ok: true, kind: 'filled', lines: [`Paper filled ${f.side.toUpperCase()} ${f.quantity} ${f.symbol} @ ${f.fillPrice} · notional ${money(f.notional)} (fee ${f.simulatedFee}, slippage ${f.simulatedSlippage}).`] };
+    }
+
+    case 'close': {
+      const symbol = (args[0] ?? '').toUpperCase();
+      if (!symbol) return { ok: false, kind: 'usage', lines: ['Usage: close <SYMBOL>   e.g. close NVDA'] };
+      const run = await runClose(symbol);
+      if (run.status === 'no_position') return { ok: false, kind: 'no_position', lines: [`No open ${symbol} position to close.`] };
+      if (run.status === 'blocked_by_risk') return { ok: false, kind: 'blocked', lines: [`Close blocked by the risk gate for ${symbol}.`] };
+      if (run.status !== 'closed' || !run.fill) return { ok: false, kind: 'error', lines: [`Could not close ${symbol}${run.error ? `: ${run.error}` : ''}.`] };
+      return { ok: true, kind: 'closed', lines: [`Closed ${run.fill.quantity} ${symbol} @ ${run.fill.fillPrice} · realised P/L ${run.realisedPnl !== undefined ? signed(run.realisedPnl) : 'n/a'}`] };
     }
 
     case 'flags':

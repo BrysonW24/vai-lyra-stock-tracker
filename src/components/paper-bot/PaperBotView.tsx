@@ -73,6 +73,12 @@ interface Account {
   startingEquity: number;
   equity: number;
   equityCurve: number[];
+  realisedPnl: number;
+  closedTrades: number;
+  winRate: number;
+  avgWin: number;
+  avgLoss: number;
+  expectancy: number;
   dataSource: 'persisted' | 'demo';
 }
 interface Flag {
@@ -145,6 +151,7 @@ export function PaperBotView() {
   const [cliLog, setCliLog] = useState<CliEntry[]>([]);
   const [cliInput, setCliInput] = useState('');
   const [cliBusy, setCliBusy] = useState(false);
+  const [closing, setClosing] = useState<string | null>(null);
   const cliEndRef = useRef<HTMLDivElement>(null);
 
   const loadAccount = useCallback(async () => {
@@ -183,6 +190,25 @@ export function PaperBotView() {
   useEffect(() => {
     cliEndRef.current?.scrollIntoView({ block: 'nearest' });
   }, [cliLog]);
+
+  async function closePosition(symbol: string) {
+    if (closing) return;
+    setClosing(symbol);
+    try {
+      const ai = loadAi();
+      await fetch('/api/trading/paper-bot/command', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ line: `close ${symbol}`, ai: { provider: ai.provider, apiKey: ai.apiKey, model: ai.model } }),
+      });
+    } catch {
+      /* best-effort */
+    } finally {
+      setClosing(null);
+      loadAccount();
+      loadNotifications();
+    }
+  }
 
   async function runCli(line: string) {
     const cmd = line.trim();
@@ -322,7 +348,7 @@ export function PaperBotView() {
           <span className="ml-auto text-[9px] text-[#6f7d8a]">{account?.fillCount ?? 0} fills · {account?.openPositions ?? 0} open</span>
         </div>
 
-        {!account || account.openPositions === 0 ? (
+        {!account || (account.openPositions === 0 && account.closedTrades === 0) ? (
           <p className="mt-1 text-[9.5px] leading-snug text-[#6f7d8a]">No positions yet. Approved fills accrue here, marked to the latest price with live P/L.</p>
         ) : (
           <>
@@ -332,6 +358,18 @@ export function PaperBotView() {
               <span>val <span className="text-[#dbe5ee]">${account.marketValue.toLocaleString()}</span></span>
               <span>equity <span className="text-[#dbe5ee]">${account.equity.toLocaleString()}</span></span>
             </div>
+
+            {/* Realised performance (analytics from closed trades) */}
+            {account.closedTrades > 0 && (
+              <div className="mt-1 flex flex-wrap items-center gap-2.5 font-mono text-[9px]">
+                <span className={account.realisedPnl >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}>
+                  realised {account.realisedPnl >= 0 ? '+' : ''}{account.realisedPnl}
+                </span>
+                <span className="text-[#8190a0]">win {account.winRate}% · {account.closedTrades} closed</span>
+                <span className="text-[#8190a0]">exp {account.expectancy >= 0 ? '+' : ''}{account.expectancy}/trade</span>
+                {account.avgWin > 0 && <span className="text-[#5e6b78]">avg +{account.avgWin}/-{account.avgLoss}</span>}
+              </div>
+            )}
 
             {/* Live equity curve (session) */}
             {account.equityCurve && account.equityCurve.length >= 2 && (
@@ -357,6 +395,14 @@ export function PaperBotView() {
                       <span className={`ml-auto font-mono text-[10px] ${up ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
                         {up ? '+' : ''}{p.unrealisedPnl} ({up ? '+' : ''}{p.unrealisedPnlPct}%)
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => closePosition(p.symbol)}
+                        disabled={closing !== null}
+                        className="inline-flex items-center rounded border border-[#3a2630] bg-[#1c1116] px-1.5 py-px font-mono text-[8px] uppercase tracking-wide text-[#e08a9a] transition hover:bg-[#26161d] disabled:opacity-50"
+                      >
+                        {closing === p.symbol ? <Loader2 size={9} className="animate-spin" /> : 'close'}
+                      </button>
                     </div>
                     <div className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-[#11181f]">
                       <div className={`h-full rounded-full ${up ? 'bg-[#43d18b]' : 'bg-[#ff6b6b]'}`} style={{ width: `${Math.max(4, mag)}%` }} />
