@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { DailyBriefCard } from '@/components/DailyBriefCard';
+import { NextBestActions } from '@/components/NextBestActions';
 import { ExecutiveStrip } from '@/components/ExecutiveStrip';
 import { PrimeSetupsBoard } from '@/components/PrimeSetupsBoard';
 import { CatalystCountdown } from '@/components/CatalystCountdown';
@@ -89,6 +90,7 @@ export default async function OverviewPage() {
       ),
     },
     { id: 'daily-brief', node: <DailyBriefCard data={data} market={marketContext} /> },
+    { id: 'next-best', node: <NextBestActions signals={data.signals} portfolio={data.portfolio} watchlist={data.watchlist} /> },
     { id: 'prime', node: <PrimeSetupsBoard signals={data.signals} /> },
     { id: 'countdown', node: <CatalystCountdown /> },
     { id: 'charts', node: <HoldingsMomentumBoard holdings={data.portfolio} signals={data.signals} tickers={data.tickers} /> },

@@ -19,6 +19,12 @@ export const metadata: Metadata = {
 // centre. See onboarding-aesthetic-prompt.md. Palette grounded in the classic Vivacity mark:
 // cream #F7F6F2 · navy #0E1E3A · electric blue #1E63FF · icy cyan #5BC8FF.
 export default function WelcomePage() {
+  // When Supabase auth is configured, account creation is the start of setup (sign up -> confirm ->
+  // onboard), and middleware gates /onboarding behind a signed-in user. In demo mode there's no auth,
+  // so the CTA goes straight to onboarding (which the demo middleware allows). Picking the right
+  // target here is what makes "Set up my console" actually work instead of bouncing to /welcome.
+  const supabaseConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  const setupHref = supabaseConfigured ? '/auth/signup' : '/onboarding';
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#F7F6F2] text-[#0E1E3A]">
       {/* Ambient brand glow + light geometric texture - premium, never busy */}
@@ -85,7 +91,7 @@ export default function WelcomePage() {
             </div>
 
             <div className="mt-7 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              <Link href="/onboarding" className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_12px_30px_-10px_rgba(67,209,139,0.6)] transition hover:brightness-110">
+              <Link href={setupHref} className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_12px_30px_-10px_rgba(67,209,139,0.6)] transition hover:brightness-110">
                 Set up my console <ArrowRight size={16} />
               </Link>
               <Link href="/auth/login" className="inline-flex items-center gap-2 rounded-md border border-[#0E1E3A]/10 bg-white/70 px-5 py-3 text-sm font-medium text-[#0E1E3A] backdrop-blur transition hover:border-[#1E63FF]/30">
@@ -130,7 +136,7 @@ export default function WelcomePage() {
         <footer className="mt-auto flex flex-col items-center gap-3 border-t border-[#0E1E3A]/10 pt-5 text-center text-[11px] text-[#8290a0]">
           <div className="flex items-center gap-4">
             <Link href="/privacy" className="transition hover:text-[#0E1E3A]">Privacy</Link>
-            <Link href="/onboarding" className="transition hover:text-[#0E1E3A]">Set up my console</Link>
+            <Link href={setupHref} className="transition hover:text-[#0E1E3A]">Set up my console</Link>
           </div>
           <p>© {new Date().getFullYear()} {BRAND_NAME}. Research software, not a broker.</p>
           <div className="flex items-center gap-2">

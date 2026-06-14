@@ -2,16 +2,31 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { X, Send, Loader2, Sparkles, ShieldCheck, KeyRound, SquarePen, ArrowUpRight, Star } from 'lucide-react';
-import { loadAi, loadProfile, type AiSettings } from '@/lib/account';
+import { X, Send, Loader2, Sparkles, ShieldCheck, KeyRound, SquarePen, ArrowUpRight, Star, Plus, Check, Undo2, RotateCcw } from 'lucide-react';
+import { loadAi, loadProfile, loadAgent, type AiSettings } from '@/lib/account';
 import { loadOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadSavedPrompts, toggleSavedPrompt } from '@/lib/saved-prompts';
 import type { ChatProfile } from '@/lib/ai/chat-context';
 
+interface ProposedAction {
+  type: 'add_watchlist' | 'add_portfolio';
+  symbol: string;
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  action?: ProposedAction;
+  actionStatus?: 'proposed' | 'running' | 'done' | 'undone' | 'failed' | 'demo';
+  undoId?: string;
+  qty?: number;
+  price?: number;
 }
+
+const ACTION_LABEL: Record<ProposedAction['type'], string> = {
+  add_watchlist: 'Add to watchlist',
+  add_portfolio: 'Add to portfolio',
+};
 
 interface ChatWidgetProps {
   open: boolean;
@@ -177,14 +192,16 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     setSuggestions([]);
     setStatus('sending');
     try {
+      const agentActions = loadAgent().actionsEnabled;
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next, ai, profile }),
+        body: JSON.stringify({ messages: next, ai, profile, agentActions }),
       });
-      const data = (await res.json()) as { ok?: boolean; text?: string; reason?: string; suggestions?: string[] };
+      const data = (await res.json()) as { ok?: boolean; text?: string; reason?: string; suggestions?: string[]; action?: ProposedAction | null };
       if (data.ok && data.text) {
-        setMessages((m) => [...m, { role: 'assistant', content: data.text as string }]);
+        const action = data.action && (data.action.type === 'add_watchlist' || data.action.type === 'add_portfolio') ? data.action : undefined;
+        setMessages((m) => [...m, { role: 'assistant', content: data.text as string, action, actionStatus: action ? 'proposed' : undefined }]);
         setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 3) : []);
         setStatus('idle');
       } else {
@@ -192,6 +209,48 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
       }
     } catch {
       setStatus('error');
+    }
+  };
+
+  /** Confirm-to-act: the user explicitly approved, so deterministic code performs the reversible action. */
+  const runAction = async (i: number) => {
+    const msg = messages[i];
+    if (!msg.action || msg.actionStatus === 'running' || msg.actionStatus === 'done') return;
+    const { type, symbol } = msg.action;
+    setMessages((m) => m.map((x, j) => (j === i ? { ...x, actionStatus: 'running' } : x)));
+    try {
+      const endpoint = type === 'add_watchlist' ? '/api/watchlist' : '/api/portfolio';
+      const payload =
+        type === 'add_watchlist'
+          ? { symbol }
+          : { symbol, quantity: msg.qty ?? 10, averageBuyPrice: msg.price ?? 0 };
+      const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = (await res.json()) as { ok?: boolean; demo?: boolean; data?: { id?: string }; error?: string };
+      setMessages((m) =>
+        m.map((x, j) => {
+          if (j !== i) return x;
+          if (data.ok) return { ...x, actionStatus: 'done', undoId: data.data?.id };
+          // demo (Supabase not configured) OR signed-out (401) both resolve to "sign in to save".
+          if (data.demo || res.status === 401) return { ...x, actionStatus: 'demo' };
+          return { ...x, actionStatus: 'failed' };
+        }),
+      );
+    } catch {
+      setMessages((m) => m.map((x, j) => (j === i ? { ...x, actionStatus: 'failed' } : x)));
+    }
+  };
+
+  /** Reversibility: undo the action via the matching soft-delete endpoint. */
+  const undoAction = async (i: number) => {
+    const msg = messages[i];
+    if (!msg.action || !msg.undoId) return;
+    const endpoint = msg.action.type === 'add_watchlist' ? '/api/watchlist' : '/api/portfolio';
+    setMessages((m) => m.map((x, j) => (j === i ? { ...x, actionStatus: 'running' } : x)));
+    try {
+      await fetch(endpoint, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: msg.undoId }) });
+      setMessages((m) => m.map((x, j) => (j === i ? { ...x, actionStatus: 'undone' } : x)));
+    } catch {
+      setMessages((m) => m.map((x, j) => (j === i ? { ...x, actionStatus: 'done' } : x)));
     }
   };
 
@@ -341,6 +400,50 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                     }
                   >
                     {m.role === 'user' ? m.content : <RichText text={m.content} />}
+                    {m.role === 'assistant' && m.action && (
+                      <div className="mt-2 rounded-lg border border-[#8aa2ff]/30 bg-[#0b1220] p-2.5">
+                        {(m.actionStatus === 'proposed' || m.actionStatus === 'running' || m.actionStatus === 'failed') && (
+                          <>
+                            <div className="flex items-center gap-1.5">
+                              <Plus size={12} className="text-[#8aa2ff]" />
+                              <span className="text-[11.5px] font-semibold text-[#dbe5ee]">{ACTION_LABEL[m.action.type]}: {m.action.symbol}</span>
+                            </div>
+                            {m.action.type === 'add_portfolio' && (
+                              <div className="mt-1.5 flex items-center gap-1.5">
+                                <label className="text-[9px] uppercase tracking-wide text-[#6f7d8a]">Qty</label>
+                                <input type="number" min={1} defaultValue={m.qty ?? 10} onChange={(e) => { const v = Math.max(1, Number(e.target.value) || 1); setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, qty: v } : x))); }} className="w-16 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[11px] text-[#dbe5ee] outline-none" />
+                                <label className="text-[9px] uppercase tracking-wide text-[#6f7d8a]">Buy $</label>
+                                <input type="number" min={0} step="0.01" placeholder="price" onChange={(e) => { const v = Number(e.target.value) || 0; setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, price: v } : x))); }} className="w-20 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[11px] text-[#dbe5ee] outline-none" />
+                              </div>
+                            )}
+                            <p className="mt-1 text-[9px] leading-snug text-[#6f7d8a]">You confirm; Lyra never acts on its own. Reversible - you can undo it.</p>
+                            <button type="button" onClick={() => runAction(i)} disabled={m.actionStatus === 'running'} className="mt-1.5 inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-[#101a2e] px-2.5 py-1 text-[11px] font-semibold text-[#8aa2ff] transition hover:bg-[#13203a] disabled:opacity-50">
+                              {m.actionStatus === 'running' ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Confirm
+                            </button>
+                            {m.actionStatus === 'failed' && <span className="ml-2 text-[10px] text-[#ff8a8a]">Didn&apos;t go through - try again.</span>}
+                          </>
+                        )}
+                        {m.actionStatus === 'done' && (
+                          <div className="flex items-center gap-1.5">
+                            <Check size={12} className="text-[#43d18b]" />
+                            <span className="text-[11.5px] text-[#43d18b]">{m.action.symbol} added to your {m.action.type === 'add_watchlist' ? 'watchlist' : 'portfolio'}.</span>
+                            {m.undoId && (
+                              <button type="button" onClick={() => undoAction(i)} className="ml-auto inline-flex items-center gap-1 rounded border border-[#3a2630] bg-[#1c1116] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-[#e08a9a] transition hover:bg-[#26161d]">
+                                <Undo2 size={9} /> Undo
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {m.actionStatus === 'undone' && (
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#8190a0]"><RotateCcw size={11} /> Undone - {m.action.symbol} removed.</div>
+                        )}
+                        {m.actionStatus === 'demo' && (
+                          <div className="text-[10.5px] leading-snug text-[#f3a33a]">
+                            You&apos;re in demo mode - <Link href="/auth/login" className="underline">sign in</Link> to save {m.action.symbol} to your real {m.action.type === 'add_watchlist' ? 'watchlist' : 'portfolio'}.
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

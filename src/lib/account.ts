@@ -90,6 +90,7 @@ const KEYS = {
   ai: 'lyra.account.ai',
   lock: 'lyra.account.lock',
   notifications: 'lyra.account.notifications',
+  agent: 'lyra.account.agent',
 } as const;
 
 export const UNLOCK_FLAG = 'lyra.account.unlocked';
@@ -133,6 +134,14 @@ export const saveLock = (value: LockSettings) => save(KEYS.lock, value);
 
 export const loadNotifications = () => load<NotificationSettings>(KEYS.notifications, DEFAULT_NOTIFICATIONS);
 export const saveNotifications = (value: NotificationSettings) => save(KEYS.notifications, value);
+
+/** AI actions opt-in: when on, Lyra may PROPOSE reversible app actions (you still confirm each one). */
+export interface AgentSettings {
+  actionsEnabled: boolean;
+}
+const DEFAULT_AGENT: AgentSettings = { actionsEnabled: false };
+export const loadAgent = () => load<AgentSettings>(KEYS.agent, DEFAULT_AGENT);
+export const saveAgent = (value: AgentSettings) => save(KEYS.agent, value);
 
 /** Wipe every Lyra-owned localStorage key (account, prefs, board slots, banners…). */
 export function clearAllLocalData(): void {

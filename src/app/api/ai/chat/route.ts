@@ -16,7 +16,18 @@ interface ChatRequest {
   messages: ChatMessage[];
   ai: { mode: 'free' | 'byo' | 'off' | 'hosted'; provider: AiProvider; apiKey: string; model?: string };
   profile?: ChatProfile;
+  agentActions?: boolean;
 }
+
+interface ProposedAction {
+  type: 'add_watchlist' | 'add_portfolio';
+  symbol: string;
+}
+
+const ACTION_VERBS: Record<string, ProposedAction['type']> = {
+  add_watchlist: 'add_watchlist',
+  add_portfolio: 'add_portfolio',
+};
 
 /**
  * Grounded chat. Mirrors /api/ai/brief: BYOK key forwarded from the browser, never logged or
@@ -28,7 +39,7 @@ interface ChatRequest {
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as ChatRequest;
-    const { messages, ai, profile } = body;
+    const { messages, ai, profile, agentActions } = body;
 
     if (!ai) return NextResponse.json({ ok: false, reason: 'disabled' });
     if (!Array.isArray(messages) || messages.length === 0) return NextResponse.json({ ok: false, reason: 'empty' });
@@ -70,6 +81,11 @@ export async function POST(request: NextRequest) {
       'The user is chatting with you. Answer their question directly.',
       LYRA_GUARDRAILS,
       LYRA_CHAT_FORMAT,
+      // Action proposals are opt-in. Even when enabled, Lyra only PROPOSES; the user confirms and
+      // deterministic code performs the (reversible) action. Lyra never acts on its own.
+      agentActions
+        ? 'ACTIONS (enabled): ONLY when the user EXPLICITLY asks to add, track, watch, or save a specific stock, you may PROPOSE one action by adding a line BEFORE the FOLLOW_UPS line, in exactly this form: "ACTION: add_watchlist || SYMBOL" (to track it on their watchlist) or "ACTION: add_portfolio || SYMBOL" (to add it as a holding). Use the real ticker. Propose at most ONE action, and only the one they asked for. CRITICAL: you do NOT perform the action - the user confirms it via a button. So phrase your reply as an OFFER awaiting their confirmation, e.g. "I can add NVDA to your watchlist - confirm below to save it." NEVER claim you have already added, saved, or processed it. NEVER propose selling, ordering, money movement, or anything they did not explicitly request.'
+        : 'You cannot take actions or change the user data; you explain and answer only.',
       'NEXT STEPS: After your answer, add one final line in exactly this form: "FOLLOW_UPS: question one || question two || question three". Give 2-3 short, natural questions THIS user would most likely want to ask next, each fully answerable from the same dashboard data and specific (name the tickers or sections). Phrase them as the user would ask ("Why is...", "Compare...", "What about..."). Put nothing after that line.',
       toneFor(profile),
       `CONTEXT (deterministic, from the latest scan):\n${buildGrounding(data, new Date())}`,
@@ -82,7 +98,21 @@ export async function POST(request: NextRequest) {
     const latencyMs = Date.now() - startedAt;
     if (!text) return NextResponse.json({ ok: false, reason: 'empty' });
     // Strip an echoed "Lyra:" turn label, then split off the FOLLOW_UPS line into suggestion chips.
-    const cleaned = text.replace(/^\s*(?:Lyra|Assistant)\s*:\s*/i, '').trim();
+    let cleaned = text.replace(/^\s*(?:Lyra|Assistant)\s*:\s*/i, '').trim();
+
+    // Parse an optional ACTION line (only honoured when actions are enabled) into a confirm-to-act
+    // proposal, and strip it from the visible answer. The user confirms; Lyra never executes.
+    let action: ProposedAction | null = null;
+    if (agentActions) {
+      const am = cleaned.match(/\n?\s*ACTION\s*:\s*(add_watchlist|add_portfolio)\s*\|\|\s*([A-Za-z.\-]{1,8})\s*$/im);
+      if (am) {
+        const type = ACTION_VERBS[am[1].toLowerCase()];
+        const symbol = am[2].toUpperCase().trim();
+        if (type && symbol) action = { type, symbol };
+        cleaned = cleaned.replace(am[0], '').trim();
+      }
+    }
+
     let answer = cleaned;
     let suggestions: string[] = [];
     const m = cleaned.match(/^([\s\S]*?)\n+\s*FOLLOW[_ ]?UPS\s*:\s*([\s\S]*)$/i);
@@ -113,7 +143,7 @@ export async function POST(request: NextRequest) {
     }).catch(() => {});
     if (last?.role === 'user') recordQuestionSignal(last.content);
 
-    return NextResponse.json({ ok: true, text: answer || cleaned, suggestions });
+    return NextResponse.json({ ok: true, text: answer || cleaned, suggestions, action });
   } catch {
     return NextResponse.json({ ok: false, reason: 'error' });
   }

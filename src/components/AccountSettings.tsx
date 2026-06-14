@@ -14,9 +14,11 @@ import {
   clearAllLocalData,
   hashPin,
   loadAi,
+  loadAgent,
   loadLock,
   loadProfile,
   saveAi,
+  saveAgent,
   saveLock,
   saveProfile,
 } from '@/lib/account';
@@ -85,6 +87,7 @@ export function AccountSettings() {
   const [pinError, setPinError] = useState<string | null>(null);
   const [lockNote, setLockNote] = useState<string | null>(null);
   const [botInterest, setBotInterest] = useState(false);
+  const [agentActions, setAgentActions] = useState(false);
   const emojiInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -92,12 +95,18 @@ export function AccountSettings() {
     setAi(loadAi());
     setLock(loadLock());
     setBotInterest(loadInterest().tradingBot);
+    setAgentActions(loadAgent().actionsEnabled);
   }, []);
 
   function toggleBotInterest(checked: boolean) {
     setBotInterest(checked);
     saveInterest({ tradingBot: checked });
     if (checked) void registerInterest('Trading bot (paper trading)', loadProfile().email);
+  }
+
+  function toggleAgentActions(checked: boolean) {
+    setAgentActions(checked);
+    saveAgent({ actionsEnabled: checked });
   }
 
   // Deep link from "connect a model" (chat / onboarding) lands here: scroll to the AI panel
@@ -451,6 +460,21 @@ export function AccountSettings() {
                   </span>
                   <span className="mt-0.5 block text-[10px] leading-snug text-[#8190a0]">
                     Let Lyra paper-trade your portfolio behind an approval gate - never live. Tick to register interest and join the beta.
+                  </span>
+                </span>
+              </label>
+
+              <label className="flex cursor-pointer items-start gap-2 rounded border border-[#1d2733] bg-[#0b1016] p-2.5">
+                <input
+                  type="checkbox"
+                  checked={agentActions}
+                  onChange={(event) => toggleAgentActions(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#8aa2ff]"
+                />
+                <span className="min-w-0">
+                  <span className="text-[12px] font-semibold text-[#dbe5ee]">AI actions (confirm-to-act)</span>
+                  <span className="mt-0.5 block text-[10px] leading-snug text-[#8190a0]">
+                    When on, Lyra can <span className="text-[#a8b5c2]">propose</span> reversible actions in chat - like adding a stock to your watchlist or portfolio - and you confirm each one. Lyra never changes your data on its own, never trades, and every action can be undone.
                   </span>
                 </span>
               </label>

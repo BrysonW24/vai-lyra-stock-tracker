@@ -38,9 +38,10 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       return;
     }
 
-    // Demo mode: no backend yet — drop straight into the demo console.
+    // Demo mode: no backend yet — route into onboarding (which the demo middleware allows and which
+    // sets the onboarded cookie). Pushing to '/' here would bounce back to /welcome (no cookie yet).
     if (!supabase) {
-      router.push('/');
+      router.push('/onboarding');
       return;
     }
 
