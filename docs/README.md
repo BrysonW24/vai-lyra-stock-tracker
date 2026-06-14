@@ -1,6 +1,6 @@
 # Lyra docs system
 
-> **Purpose:** Master index of the Lyra (vdapp42 Stock Momentum Radar) documentation system - what each doc covers, where it lives, and the standards every doc must follow. | **Audience:** Engineers and agents working on Lyra. | **Status:** Active | **Owner:** Bryson Walter | **Last updated:** 2026-06-11
+> **Purpose:** Master index of the Lyra (vdapp42 Stock Momentum Radar) documentation system - what each doc covers, where it lives, and the standards every doc must follow. | **Audience:** Engineers and agents working on Lyra. | **Status:** Active | **Owner:** Bryson Walter | **Last updated:** 2026-06-14
 
 Lyra is a research-first momentum console evolving into an AI-native, security-first, trading-bot-READY platform. Two invariants hold across every doc in this system:
 
@@ -32,6 +32,7 @@ Status legend: **Shipped** = exists on disk now. **Planned** = named here so lin
 
 | Doc | Purpose | Status |
 |---|---|---|
+| [`architecture/product-technical-story.md`](./architecture/product-technical-story.md) | New-user and founder-facing technical story: what the product does, what it solves, how the layers fit, what AI can and cannot do, and how the paper-bot path works | Shipped |
 | [`architecture/system-overview.md`](./architecture/system-overview.md) | The 9-layer architecture mapped to actual code paths, current state vs target state per layer | Shipped |
 | [`architecture/data-flow.md`](./architecture/data-flow.md) | End-to-end flows with sequence diagrams: scanner to dashboard, content pipeline, notification routing, future evidence-to-alert chain | Shipped |
 | [`architecture/ai-native-architecture.md`](./architecture/ai-native-architecture.md) | AI layer design: gateway, agents registry, tools + permission gate, guardrails, ai_runs/ai_citations audit trail, AI_NEVER/AI_MAY policy, evals | Shipped |
@@ -95,8 +96,9 @@ Status legend: **Shipped** = exists on disk now. **Planned** = named here so lin
 
 ## Reading order for a new engineer or agent
 
-1. `architecture/system-overview.md` - the map.
-2. `architecture/data-flow.md` - how data actually moves.
-3. `../SECURITY.md` - what must never leak.
-4. `architecture/ai-native-architecture.md` - what AI may and may never do.
-5. `architecture/future-trading-bot.md` - why live trading is intentionally unreachable today.
+1. `architecture/product-technical-story.md` - what the app is and what a new user can do.
+2. `architecture/system-overview.md` - the engineering map.
+3. `architecture/data-flow.md` - how data actually moves.
+4. `../SECURITY.md` - what must never leak.
+5. `architecture/ai-native-architecture.md` - what AI may and may never do.
+6. `architecture/future-trading-bot.md` - why live trading is intentionally unreachable today.
