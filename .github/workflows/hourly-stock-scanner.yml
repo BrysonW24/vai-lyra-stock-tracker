@@ -18,6 +18,9 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Pull SUPABASE_* secrets + ENABLE_MARKET_HOURS_GUARD etc. from the "Production"
+    # GitHub environment so they don't have to be duplicated as repo-level secrets/vars.
+    environment: Production
     steps:
       - uses: actions/checkout@v4
 
