@@ -129,6 +129,32 @@ export const EDUCATION_MODULES: EducationModule[] = [
     liveExampleHint:
       'Compare a strong_setup (often 20-50% off low) to an overextended signal (>70% off low) on the Radar.',
   },
+  {
+    id: 'timeframes',
+    title: 'Timeframes - which chart to read',
+    category: 'Technical',
+    definition:
+      'The candle interval you view changes what the chart tells you. Very short intervals (45s, 1m) are noisy and useful only for fine-tuning the exact moment of an entry or exit. Longer intervals filter the noise: 5m is a solid short-term default, 15m confirms whether a move is holding or just a spike, 1h shows whether a trend is meaningful beyond a quick pump, and the daily is the frame for any proper sell/hold decision.',
+    whyItMatters:
+      'Reading a fast, vertical move on a 45-second chart is mostly noise unless you are literally scalping. Confirming the same move on the 5m/15m and checking the 1h for trend is the difference between chasing a pump and acting on a real move. A simple framework by style: Scalp = 1m + 5m. Day trade = 5m + 15m + 1h. Swing / investment = 1h + 4h + daily. Use the shortest interval only to time the actual entry or trim.',
+    howConsoleUsesIt:
+      'Lyra scans and scores on the hourly candle, so its signals are trend-meaningful by design rather than 45-second noise. Use the ticker detail to step through timeframes: 5m or 15m as your primary read, then the 1h to confirm the trend before you act.',
+    liveExampleHint:
+      'On a sharp vertical move, check the 5m and 15m next. If RSI is still cooked, price is at or outside the upper Bollinger Band, and MACD is starting to curl down, that is a far stronger picture than anything the 45-second chart shows.',
+  },
+  {
+    id: 'taking-profit',
+    title: 'Trimming a sharp vertical move',
+    category: 'Risk',
+    definition:
+      'After a fast, near-vertical run, three signals appearing together often mark exhaustion: RSI still very high ("cooked"), price pinned at or outside the upper Bollinger Band, and the MACD just beginning to curl back down. No single one is decisive - together they suggest the easy part of the move is likely done.',
+    whyItMatters:
+      'Chasing a stock that has already gone vertical is where a lot of gains get given back. Recognising exhaustion - rather than reacting to a single green candle - is what separates trimming into strength from buying the top. The cleaner reads come from the 5m/15m, not the 45-second chart.',
+    howConsoleUsesIt:
+      'The console surfaces Overextension Risk and tracks RSI, MACD state and distance-from-low on the ticker detail, so you can see these conditions for yourself. It never tells you to sell - it shows the evidence; the decision is always yours.',
+    liveExampleHint:
+      'Open a name that has run hard, switch to the 5m/15m, and watch for RSI holding above 70, price at the upper band, and the MACD histogram shrinking. That combination is the classic "trim, do not add" picture.',
+  },
 
   // Fundamental Metrics
   {
