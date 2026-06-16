@@ -13,9 +13,8 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   Calculator,
-  ClipboardList,
-  FileText,
   Coins,
+  FileText,
   Gem,
   FlaskConical,
   Gauge,
@@ -81,7 +80,6 @@ const navItems = [
   { href: '/strategy-lab', label: 'Strategy Lab', short: 'Strategy', icon: FlaskConical },
   { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins },
   // -- Trading layer --
-  { href: '/paper', label: 'Paper Trading', short: 'Paper', icon: ClipboardList },
   { href: '/paper-bot', label: 'Paper Bot', short: 'Paper Bot', icon: Bot },
   { href: '/trading', label: 'Live Bot', short: 'Live Bot', icon: ShieldCheck },
   // -- Learn & settings --

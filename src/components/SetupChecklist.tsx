@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bell, BriefcaseBusiness, Check, ChevronRight, Compass, Star, X } from 'lucide-react';
+import { Bell, Bot, BriefcaseBusiness, Check, ChevronRight, Compass, Star, X } from 'lucide-react';
 import type { SetupStatus } from '@/lib/setup-status';
 
 /**
@@ -39,6 +39,7 @@ export function SetupChecklist({ status }: { status: SetupStatus }) {
     { key: 'portfolio', label: 'Add your portfolio', hint: 'Make the signals about what you own', href: '/portfolio', icon: BriefcaseBusiness, done: status.hasPortfolio },
     { key: 'watchlist', label: 'Create a watchlist', hint: 'Track setups you want to catch', href: '/watchlist', icon: Star, done: status.hasWatchlist },
     { key: 'notifications', label: 'Set up notifications', hint: 'Get alerts on Telegram or WhatsApp', href: '/account', icon: Bell, done: status.hasNotifications },
+    { key: 'paper-bot', label: 'Try the Paper Bot', hint: 'Let the AI propose simulated trades for you', href: '/paper-bot', icon: Bot, done: status.hasPortfolio },
   ];
 
   const completed = steps.filter((step) => step.done).length;

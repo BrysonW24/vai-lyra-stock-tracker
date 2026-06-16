@@ -202,17 +202,22 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, status]);
 
-  // Connected when the user has a browser key, or the selected provider is backed by a server key.
-  const connected =
-    ai != null &&
-    (!!ai.apiKey?.trim() ||
-      (ai.provider === 'openai' && runtime?.hostedOpenAi) ||
-      (ai.provider === 'google' && (runtime?.sharedGoogle || process.env.NEXT_PUBLIC_LYRA_FREE_AI === '1')));
+  // Still waiting for the /api/ai/status response (fetch in-flight).
   const checkingRuntime =
     ai != null &&
     !ai.apiKey?.trim() &&
     runtime == null &&
     (ai.provider === 'openai' || ai.provider === 'google');
+
+  // Connected when the user has a browser key, or the selected provider is backed by a server
+  // key (confirmed by the status endpoint). While still checking (runtime === null) treat
+  // openai/google as optimistically connected so the chat UI renders immediately rather than
+  // flashing the "Connect a model" dead-state - the spinner handles the loading UX instead.
+  const connected =
+    ai != null &&
+    (!!ai.apiKey?.trim() ||
+      (ai.provider === 'openai' && (runtime?.hostedOpenAi || runtime === null)) ||
+      (ai.provider === 'google' && (runtime?.sharedGoogle || runtime === null || process.env.NEXT_PUBLIC_LYRA_FREE_AI === '1')));
 
   const send = async (text: string) => {
     const trimmed = text.trim();

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, Compass, GraduationCap, X } from 'lucide-react';
+import { Bot, Check, Compass, GraduationCap, X } from 'lucide-react';
 import { loadOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadLocalHoldings } from '@/lib/local-portfolio';
 import { loadProfile, loadAi, loadNotifications } from '@/lib/account';
@@ -47,7 +47,7 @@ export function GettingStartedBanner() {
       { label: 'Holdings', done: holdings.length > 0 || (summary?.portfolioCount ?? 0) > 0 },
       { label: 'Watchlist', done: (summary?.watchlistCount ?? 0) > 0 },
       { label: 'Alerts', done: notifications.telegramEnabled },
-      { label: 'AI', done: ai.mode !== 'off' },
+      { label: 'Paper Bot', done: ai.mode !== 'off' },
     ]);
     setShow(!dismissed);
     setReady(true);
