@@ -56,7 +56,8 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="How we use it">
-          <p>To provide the service: personalise signals to what you own and watch, generate your daily brief, and deliver the alerts you opt into. We do not send your portfolio to any AI provider unless you explicitly enable AI assistance.</p>
+          <p>To provide the service: personalise signals to what you own and watch, generate your daily brief, and deliver the alerts you opt into.</p>
+          <p>When you use AI assistance, Lyra sends only the grounded dashboard/profile context needed for that response to the selected AI provider. Beta AI may use a server-side hosted OpenAI key, and any optional bring-your-own key stays browser-local.</p>
         </Section>
 
         <Section title="Your rights">

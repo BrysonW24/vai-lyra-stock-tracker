@@ -85,8 +85,14 @@ ok(`Market data provider: ${env.MARKET_DATA_PROVIDER || 'yfinance (default)'}`);
 if (has('FINNHUB_API_KEY')) ok('Finnhub key present - Horizon-2 news/fundamentals can go live');
 else warn('No Finnhub key - news/fundamentals/calendar use demo data (optional)');
 
-if (has('ANTHROPIC_API_KEY') && /^true$/i.test(env.ENABLE_AI_EXPLANATIONS || '')) ok('AI mode enabled (Anthropic key + ENABLE_AI_EXPLANATIONS=true)');
-else warn('AI explanations off (optional - add ANTHROPIC_API_KEY + ENABLE_AI_EXPLANATIONS=true)');
+if (has('OPENAI_API_KEY')) ok(`Hosted OpenAI beta configured (${env.LYRA_HOSTED_OPENAI_MODEL || 'gpt-5.5'})`);
+else warn('Hosted OpenAI beta not configured - keyless users cannot chat until OPENAI_API_KEY is set server-side');
+
+if (has('GOOGLE_AI_KEY')) ok('Shared Google AI fallback configured');
+else warn('No shared Google fallback (optional)');
+
+if (has('ANTHROPIC_API_KEY') && /^true$/i.test(env.ENABLE_AI_EXPLANATIONS || '')) ok('Legacy worker AI explanations enabled (Anthropic key + ENABLE_AI_EXPLANATIONS=true)');
+else warn('Legacy worker AI explanations off (optional)');
 
 // 7. Optional live Supabase reachability
 async function pingSupabase() {
@@ -109,7 +115,8 @@ function summary() {
   let mode = 'Demo mode (no keys) - exploring the UI on demo data';
   if (feSupabase && beSupabase) mode = 'Live mode - real scanning enabled';
   if (feSupabase && beSupabase && has('TELEGRAM_BOT_TOKEN') && has('TELEGRAM_CHAT_ID')) mode += ' + Telegram alerts';
-  if (has('ANTHROPIC_API_KEY') && /^true$/i.test(env.ENABLE_AI_EXPLANATIONS || '')) mode += ' + AI';
+  if (has('OPENAI_API_KEY')) mode += ' + hosted OpenAI';
+  if (has('ANTHROPIC_API_KEY') && /^true$/i.test(env.ENABLE_AI_EXPLANATIONS || '')) mode += ' + legacy worker AI';
   console.log(`\n${BOLD}Mode:${RESET} ${mode}`);
   console.log(`${DIM}Run "npm run dev -- -p 3042" and open http://localhost:3042${RESET}\n`);
 }

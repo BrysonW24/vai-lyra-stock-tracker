@@ -89,17 +89,18 @@ Open http://localhost:3042 and you're in. 🎉
 
 ---
 
-## 🔑 Bring your own key. 🧠 Bring your own model.
+## 🔑 Hosted OpenAI beta. Optional BYOK.
 
-The AI layer is **100% opt-in and fully BYO**. Lyra never ships an API key and never proxies your key through a server you don't control.
+The beta AI layer is wired for a server-side hosted OpenAI key so friends can test Lyra without pasting provider credentials. User keys are still supported and override the hosted key.
 
-- **🔑 Bring your own key (BYOK)** - paste your own API key in **Settings → AI**. It's stored **only in your browser** and sent **directly** to your chosen provider when an AI feature runs. It is never committed, never logged, never sent to a Lyra server.
-- **🧠 Bring your own model (BYOM)** - pick the exact model you want. Leave it blank for a sensible cheap default, or name any model your key can access (e.g. `claude-3-5-sonnet-latest`, `gpt-4o`, `claude-3-5-haiku-latest`, `gpt-4o-mini`).
-- **🔁 Works with OpenAI and Anthropic** out of the box - choose your provider in Settings. (Under the hood the gateway is provider-agnostic and also speaks OpenRouter and Gemini.)
+- **Hosted default** - set server-side `OPENAI_API_KEY` and new users default to OpenAI (`gpt-5.5`, configurable with `LYRA_HOSTED_OPENAI_MODEL`).
+- **Bring your own key (BYOK)** - paste your own API key in **Settings -> AI**. It stays in this browser and is never stored by Lyra.
+- **Bring your own model (BYOM)** - pick the exact model you want. Leave it blank for the provider default, or name any model your key can access.
+- **Provider-agnostic gateway** - OpenAI, Anthropic, OpenRouter, Gemini, and xAI all route through one server-side gateway.
 
 > The AI **explains**; the deterministic engine **decides**. The model is only ever given facts the engine already computed - it never invents a number and never gives buy/sell advice.
 
-Prefer no AI at all? Leave it **Off** (the default). Every brief and explanation has a deterministic fallback, so the whole app works with the AI layer completely disabled.
+Every brief and explanation has a deterministic fallback, so the app still works if a model call fails.
 
 ---
 
@@ -109,7 +110,7 @@ Prefer no AI at all? Leave it **Off** (the default). Every brief and explanation
 |------|---------------|--------------|
 | 🎮 **Demo** | nothing | The full console on built-in sample data. Just `npm run dev`. |
 | 📡 **Live** | Supabase + a market-data source | Real hourly scanning, your own tickers, portfolio + watchlist overlays. |
-| 🤖 **AI** | your own OpenAI **or** Anthropic key | Plain-English briefs and explanations, with your model of choice. |
+| 🤖 **AI** | `OPENAI_API_KEY` server-side, or a user's BYOK | Hosted beta chat/briefs plus optional user-selected models. |
 
 Run **`npm run doctor`** anytime to see exactly what's configured, what's missing, and which mode you're in. 🩺
 

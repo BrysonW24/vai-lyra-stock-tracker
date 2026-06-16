@@ -10,9 +10,9 @@
 
 | Capability | Status | Evidence |
 |---|---|---|
-| AI Gateway - provider/model-agnostic `complete()` | Live | `src/lib/ai/gateway.ts` - Anthropic, OpenAI, OpenRouter, Google; BYOK; server-side only; key never logged or persisted |
-| Grounded Daily Brief | Live | `src/app/api/ai/brief/route.ts` - facts-only prompt, deterministic fallback on ANY failure |
-| AI settings (off / byo / hosted) | Live | `src/lib/account.ts`; `hosted` returns `hosted_not_configured` and behaves like off |
+| AI Gateway - provider/model-agnostic `complete()` | Live | `src/lib/ai/gateway.ts` - Anthropic, OpenAI, OpenRouter, Google, xAI; browser BYOK or server-side hosted key; key never logged or persisted |
+| Grounded Daily Brief + Ask Lyra | Live | `src/app/api/ai/brief/route.ts` and `src/app/api/ai/chat/route.ts` - facts-only prompts, deterministic fallback on failure |
+| AI settings (hosted / free / byo) | Live | `src/lib/account.ts`; hosted OpenAI is the default beta path and browser BYOK overrides it |
 | Notification contracts + templates + test register | Defined, not consumed | `contracts/notifications/{notification-contracts.schema.json,message-templates.json,test-register.json}` |
 | Notification composer | NOT BUILT | plan in `docs/ai-engine-plan.md` |
 | Agents registry | NOT BUILT | this doc is the design |

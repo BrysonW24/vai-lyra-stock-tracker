@@ -5,14 +5,12 @@
  * server-side authentication. The optional PIN is a light convenience lock for THIS
  * browser only; we store a SHA-256 hash (never the raw PIN) and always provide a
  * reset escape so a user can never be permanently locked out. A bring-your-own AI
- * key, if entered, also stays in this browser and is only ever sent to the AI
- * provider you choose - never committed, never proxied elsewhere.
+ * key, if entered, also stays in this browser and overrides the hosted server key.
  */
 
 /**
- * 'free' = an open / free-tier model (Google, Llama via OpenRouter) - on by default; runs on a
- * free user key, or a shared server key if one is configured. 'byo' = the user's own key for a
- * premium model (Claude, GPT, Grok). 'off'/'hosted' are legacy and migrated to 'free' on load.
+ * 'hosted' = Lyra's server-side OpenAI beta key; 'free' = a free/open provider selected by the
+ * user; 'byo' = the user's own key. 'off' is legacy and migrates to the hosted default.
  */
 export type AiMode = 'free' | 'byo' | 'off' | 'hosted';
 /** Kept in sync with the gateway's provider union (src/lib/ai/gateway.ts). */
@@ -68,8 +66,8 @@ export const DEFAULT_PROFILE: AccountProfile = {
 };
 
 export const DEFAULT_AI: AiSettings = {
-  mode: 'free',
-  provider: 'google',
+  mode: 'hosted',
+  provider: 'openai',
   apiKey: '',
   model: '',
 };
@@ -120,10 +118,10 @@ export const saveProfile = (value: AccountProfile) => save(KEYS.profile, value);
 
 export const loadAi = (): AiSettings => {
   const ai = load<AiSettings>(KEYS.ai, DEFAULT_AI);
-  // AI is always on now. Legacy 'off'/'hosted' migrate to the free open-model default
-  // (or to BYO if a key was already stored).
-  if (ai.mode === 'off' || ai.mode === 'hosted') {
-    return ai.apiKey ? { ...ai, mode: 'byo' } : { ...ai, mode: 'free', provider: 'google' };
+  // AI is always on now. Legacy "off" migrates to hosted OpenAI unless a user key was already
+  // stored, in which case preserve that provider and mark it BYO.
+  if (ai.mode === 'off') {
+    return ai.apiKey ? { ...ai, mode: 'byo' } : DEFAULT_AI;
   }
   return ai;
 };

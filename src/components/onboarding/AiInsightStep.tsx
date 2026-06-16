@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Sparkles, KeyRound, ShieldCheck, ExternalLink, ClipboardPaste } from 'lucide-react';
-import { loadAi, saveAi, type AiProvider } from '@/lib/account';
+import { DEFAULT_AI, loadAi, saveAi, type AiProvider } from '@/lib/account';
 
 interface AiInsightStepProps {
   onNext: () => void;
@@ -18,11 +18,22 @@ const PROVIDERS: {
   keyUrl: string;
   keyHost: string;
   placeholder: string;
+  hosted?: boolean;
 }[] = [
+  {
+    id: 'openai',
+    label: 'OpenAI GPT-5.5',
+    blurb: 'Hosted beta default - no key needed for friends testing the app.',
+    tag: 'Hosted beta',
+    keyUrl: 'https://platform.openai.com/api-keys',
+    keyHost: 'platform.openai.com',
+    placeholder: 'optional sk-…',
+    hosted: true,
+  },
   {
     id: 'google',
     label: 'Google Gemini',
-    blurb: 'Generous free tier - a free key works out of the box.',
+    blurb: 'Generous free tier if you want to bring your own Google AI Studio key.',
     tag: 'Free',
     keyUrl: 'https://aistudio.google.com/apikey',
     keyHost: 'Google AI Studio',
@@ -45,25 +56,15 @@ const PROVIDERS: {
     keyHost: 'console.anthropic.com',
     placeholder: 'sk-ant-…',
   },
-  {
-    id: 'openai',
-    label: 'OpenAI',
-    blurb: 'GPT-4o mini and the rest of the OpenAI line-up.',
-    keyUrl: 'https://platform.openai.com/api-keys',
-    keyHost: 'platform.openai.com',
-    placeholder: 'sk-…',
-  },
 ];
 
 /**
  * Onboarding AI step (optional) - lets the user pick which model powers Lyra's insights
- * and paste their own key, or skip and do it later in Settings. Writes straight to the
- * browser-local AI settings via saveAi. Keys never leave this browser except to call the
- * chosen provider. A chosen provider with no key is remembered (Settings pre-fills) but
- * stays "off" until a key exists, so nothing pretends to work that doesn't.
+ * and optionally paste their own key. Hosted OpenAI is the default beta path; browser keys are
+ * still supported and override the server key. Writes straight to browser-local AI settings.
  */
 export function AiInsightStep({ onNext }: AiInsightStepProps) {
-  const [choice, setChoice] = useState<Choice>('google');
+  const [choice, setChoice] = useState<Choice>('openai');
   const [apiKey, setApiKey] = useState('');
 
   // Prefill from any existing settings (returning user re-running onboarding).
@@ -86,9 +87,9 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
 
   const handleNext = () => {
     const current = loadAi();
-    if (choice === 'skip') {
-      // AI stays on with the free open model; the user can add a key anytime in Settings.
-      saveAi({ ...current, mode: 'free', provider: 'google' });
+    if (choice === 'skip' || choice === 'openai') {
+      const key = choice === 'openai' ? apiKey.trim() : '';
+      saveAi({ ...DEFAULT_AI, ...current, mode: key ? 'byo' : 'hosted', provider: 'openai', apiKey: key, model: choice === 'openai' ? current.model : '' });
     } else {
       const group: 'free' | 'byo' = choice === 'google' || choice === 'openrouter' ? 'free' : 'byo';
       saveAi({ ...current, provider: choice, apiKey: apiKey.trim(), mode: group });
@@ -101,7 +102,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
       <p className="flex items-start gap-1.5 text-[11px] leading-snug text-[#a8b5c2]">
         <Sparkles className="mt-px shrink-0 text-[#8aa2ff]" size={14} />
         <span>
-          Ask Lyra anything about your dashboard - your book, the signals, catalysts - in plain English. It&apos;s on by default with a free open model; bring your own key for something more powerful. Your key stays in this browser, and you can change this anytime in Settings.
+          Ask Lyra anything about your dashboard - your book, the signals, catalysts - in plain English. Hosted OpenAI is on by default for the beta; bring your own key only if you want to override it. You can change this anytime in Settings.
         </span>
       </p>
 
@@ -136,7 +137,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
         <div className="space-y-2 rounded-lg border border-[#8aa2ff]/25 bg-[#0b1016] p-3">
           <div className="flex items-center justify-between">
             <label htmlFor="onboard-ai-key" className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">
-              <KeyRound size={12} /> {selected.label} key
+              <KeyRound size={12} /> {selected.label} key{selected.hosted ? ' (optional)' : ''}
             </label>
             <a
               href={selected.keyUrl}
@@ -144,7 +145,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#8aa2ff] transition hover:text-[#aab8ff]"
             >
-              Get a key from {selected.keyHost} <ExternalLink size={10} />
+              {selected.hosted ? 'Use your own key from' : 'Get a key from'} {selected.keyHost} <ExternalLink size={10} />
             </a>
           </div>
           <div className="flex gap-1.5">
@@ -167,7 +168,9 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
           </div>
           <p className="flex items-center gap-1 text-[10px] leading-relaxed text-[#6f7d8a]">
             <ShieldCheck size={11} className="shrink-0 text-[#43d18b]" />
-            Stays in this browser, only ever sent to {selected.label} when an AI feature runs. Paste it later in Settings if you prefer.
+            {selected.hosted
+              ? "Leave blank to use Lyra's hosted beta key. A pasted key stays in this browser and overrides the hosted key."
+              : `Stays in this browser, only ever used for ${selected.label} requests. Paste it later in Settings if you prefer.`}
           </p>
         </div>
       )}
@@ -179,7 +182,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
           choice === 'skip' ? 'border-[#8aa2ff] bg-[#101a2e] text-[#8aa2ff]' : 'border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:border-[#3a4754]'
         }`}
       >
-        Not now - keep the free model on, I&apos;ll add a key later in Settings.
+        Not now - use the hosted beta model.
       </button>
 
       <button

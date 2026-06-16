@@ -95,7 +95,7 @@ Anything retrieved from outside (news, filings, documents, inbound chat) is data
 |---|---|---|---|
 | Public-by-design config | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_APP_URL` | Browser bundle + server env | Yes - safe only because RLS is the real gate |
 | Server runtime secrets | `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_BOT_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_VERIFY_TOKEN` | Deployment env (Vercel) | Never |
-| Worker secrets | `SUPABASE_SERVICE_ROLE_KEY`, `FINNHUB_API_KEY`, `ANTHROPIC_API_KEY` | Worker env / Actions secrets | Never |
+| Worker/server secrets | `SUPABASE_SERVICE_ROLE_KEY`, `FINNHUB_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_AI_KEY`, `ANTHROPIC_API_KEY` | Worker/server env / Actions secrets | Never |
 | User-held BYOK keys | per-user AI provider keys | The user's browser; forwarded per-request, never persisted server-side | Held by the user, by design |
 | Derived / hashed material | pairing code hashes (`channel_pairing_codes.code_hash`, only the sha256 hash is stored - `buildPairingCode` in `src/lib/notifications/telegram.ts`) | Supabase | Hash only |
 

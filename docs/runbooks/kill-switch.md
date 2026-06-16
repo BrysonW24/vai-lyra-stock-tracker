@@ -24,13 +24,14 @@ Verify: trigger any alert path and confirm the `DeliveryRecord.status` is `demo_
 
 ## 2. AI - off today
 
-The only live AI surface is the BYOK Daily Brief narration (`src/app/api/ai/brief/route.ts` via the gateway `src/lib/ai/gateway.ts`). It is off by default (`DEFAULT_AI.mode: 'off'` in `src/lib/account.ts`).
+Live AI surfaces run through the server-side gateway (`src/lib/ai/gateway.ts`). Keyless beta users use hosted OpenAI when `OPENAI_API_KEY` is configured; user BYOK still overrides it.
 
 | Lever | How | Effect |
 |---|---|---|
-| User-side (the real switch) | Settings -> AI mode `off`, or clear `lyra.account.ai` from localStorage | `BriefAiNarration` never calls the route; deterministic brief renders unchanged |
-| Remove the key | Delete the BYOK key in Settings | `byo` mode without a key returns `ok:false, reason:'no_key'` - fallback to deterministic |
-| Server env | Keep `ENABLE_AI_EXPLANATIONS=false` and `ANTHROPIC_API_KEY` unset | Honest status: these are RESERVED in `.env.example` for a future hosted mode. Today hosted mode already returns `hosted_not_configured` regardless - there is no hosted key to remove. |
+| Hosted OpenAI | Unset `OPENAI_API_KEY` in Vercel, redeploy | Keyless OpenAI chat/briefs return `ok:false, reason:'no_key'`; deterministic brief still renders |
+| Shared Google fallback | Unset `GOOGLE_AI_KEY`, redeploy | Keyless Google fallback is unavailable |
+| User BYOK | Delete the key in Settings, or clear `lyra.account.ai` from localStorage | That user's provider requests stop using their browser key |
+| Legacy worker explanations | Keep `ENABLE_AI_EXPLANATIONS=false` or unset `ANTHROPIC_API_KEY` | Worker-side AI explanation paths stay off |
 
 The route's failure posture is total: any error, empty response, or disabled mode returns `ok:false` and the client keeps the deterministic brief. Killing AI can never blank a page.
 

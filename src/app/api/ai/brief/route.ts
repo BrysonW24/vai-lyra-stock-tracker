@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { DailyBrief } from '@/lib/daily-brief';
 import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_BRIEF_FORMAT, composeSystem } from '@/lib/ai/system-prompt';
+import { resolveAiCredentials } from '@/lib/ai/credentials';
 
 /**
  * AI-phrased Daily Brief. GROUNDED: the model is given ONLY the deterministic facts
@@ -10,9 +11,8 @@ import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_BRIEF_FORMAT, composeSystem } from
  * to the deterministic brief (which always renders).
  *
  * Provider/model dispatch lives in the AI Gateway (src/lib/ai/gateway.ts) - this route
- * just grounds the prompt and delegates. Bring-your-own-key: the key is sent from the
- * browser (where the user stored it) to this route, forwarded to the chosen provider,
- * never logged or persisted. Hosted mode is a placeholder until a central key is wired.
+ * just grounds the prompt and delegates. Browser BYOK wins when present; otherwise hosted
+ * OpenAI can run from the server-side OPENAI_API_KEY. Keys are never logged or persisted.
  */
 
 interface BriefRequest {
@@ -52,18 +52,14 @@ export async function POST(request: NextRequest) {
     if (!brief || !ai) {
       return NextResponse.json({ ok: false, reason: 'disabled' });
     }
-    // The user's own key wins; the free open-model tier may use a shared server-side Google
-    // free-tier key (GOOGLE_AI_KEY) so the brief is AI-phrased with zero setup.
-    const userKey = ai.apiKey?.trim();
-    const sharedKey = ai.provider === 'google' ? (process.env.GOOGLE_AI_KEY ?? '').trim() : '';
-    const apiKey = userKey || sharedKey;
-    if (!apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
+    const creds = resolveAiCredentials(ai);
+    if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
     const prompt = `${factsBlock(brief)}\n\nWrite the brief.${audience(profile)}`;
     const { text } = await complete({
-      provider: ai.provider,
-      apiKey,
-      model: ai.model,
+      provider: creds.provider,
+      apiKey: creds.apiKey,
+      model: creds.model,
       system: SYSTEM,
       prompt,
       maxTokens: 220,

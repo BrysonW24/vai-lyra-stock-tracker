@@ -19,19 +19,19 @@ deterministic render** if it fails.
 
 | Capability | Status | Evidence |
 |---|---|---|
-| BYOK for the **Daily Brief** | ✅ Live | [`api/ai/brief/route.ts`](../src/app/api/ai/brief/route.ts) — forwards user key to Anthropic/OpenAI, never logged/persisted |
-| Account AI settings (mode/provider/key) | ✅ Live | [`lib/account.ts`](../src/lib/account.ts) — `off / byo / hosted`, stored browser-local |
-| **Choose your own model** | ❌ | Model hardcoded per provider (`claude-3-5-haiku-latest`, `gpt-4o-mini`) |
+| Hosted OpenAI + BYOK for chat/briefs | ✅ Live | [`api/ai/brief/route.ts`](../src/app/api/ai/brief/route.ts) and [`api/ai/chat/route.ts`](../src/app/api/ai/chat/route.ts) resolve browser BYOK first, then server-side `OPENAI_API_KEY` |
+| Account AI settings (mode/provider/key/model) | ✅ Live | [`lib/account.ts`](../src/lib/account.ts) - hosted OpenAI default, optional browser-local BYOK |
+| **Choose your own model** | ✅ Live | Free-text model field falls back to provider defaults in [`lib/ai/gateway.ts`](../src/lib/ai/gateway.ts) |
 | **AI alert/notification messages** | ❌ | No composer — `AlertEvent` → `NotificationMessage` is unwired |
-| Provider breadth | ⚠️ 2 | Anthropic + OpenAI only; no OpenRouter / Gemini / local |
-| Hosted (managed) mode | ❌ | Placeholder — route returns `hosted_not_configured` |
+| Provider breadth | ✅ 5 | Anthropic, OpenAI, OpenRouter, Gemini, xAI |
+| Hosted (managed) mode | ✅ Live | `OPENAI_API_KEY` powers keyless beta users; `GOOGLE_AI_KEY` remains an optional fallback |
 | Runtime guardrails / evals | ⚠️ | `test-register.json` exists but is not enforced at runtime or in CI |
 | Usage / cost metering | ❌ | No token/cost/latency logging |
 | Backend hourly composer | ❌ | `change_register.py` / `message_composer.py` not built |
 
-**Bottom line:** a user who brings their own key gets an AI-phrased *brief* — not the alert
-messages, and cannot select their own model. The contracts ([`contracts/notifications/`](../contracts/notifications/))
-are defined and validated, but nothing consumes them yet.
+**Bottom line:** keyless beta users can use hosted OpenAI for chat/briefs, and power users can
+override provider/model/key. Notification AI contracts ([`contracts/notifications/`](../contracts/notifications/))
+are still defined and validated, but nothing consumes them yet.
 
 ---
 

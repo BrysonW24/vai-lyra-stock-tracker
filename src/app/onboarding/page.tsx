@@ -126,14 +126,16 @@ export default function OnboardingPage() {
     setPhase('complete');
     // Onboarding done - drop the resumable checkpoint so a re-visit starts clean.
     clearOnboardingProgress();
-    // Sync operator profile and onboarding progress if Supabase is configured.
+    // Sync operator profile + capital + strategy + alerts so AI can ground on user constraints.
     if (isSupabaseConfigured() && state.profile) {
       const completeness = calculateSetupCompleteness(state);
-      try {
-        await syncOperatorProfile(state.profile, completeness.percentage);
-      } catch (error) {
-        console.warn('Failed to sync operator profile:', error);
-        // Continue anyway - localStorage is the fallback.
+      const result = await syncOperatorProfile(state.profile, completeness.percentage, {
+        capital: state.capital,
+        alerts: state.alerts,
+        strategy: state.strategy,
+      });
+      if (!result.ok && !result.demo) {
+        console.error('[onboarding] profile/capital/alerts did not save to the cloud:', result.error);
       }
     }
 

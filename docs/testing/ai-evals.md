@@ -6,7 +6,7 @@
 
 - **What exists today:** deterministic guardrail UNIT tests in `src/lib/ai/__tests__/guardrails.test.ts` (22 tests) and `src/lib/ai/__tests__/gateway.test.ts` (4 tests). They run in the normal vitest gate, cost nothing, and never call a model.
 - **What does NOT exist yet:** a model-in-the-loop eval harness, golden datasets, scored runs, or eval CI. This doc is the spec for that harness, not a description of a built one.
-- **Why the bar can stay low-risk meanwhile:** the only live AI surface is the BYOK Daily Brief narration (`src/app/api/ai/brief/route.ts`), which is grounded on deterministic facts, capped at ~220 tokens, off by default, and falls back to the deterministic brief on any failure. AI has no tool execution, no write path, and no notification origination anywhere in the codebase (`src/lib/ai/policy.ts`).
+- **Why the bar can stay low-risk meanwhile:** the live AI surfaces are grounded chat/brief routes backed by BYOK or hosted OpenAI. They are grounded on deterministic facts, capped, and fall back to deterministic UI on failure. Write actions are confirm-to-act only: AI may propose a reversible action, but deterministic app code performs it after user confirmation.
 
 ## The five risk classes
 

@@ -5,9 +5,9 @@
  * the notification composer (AI-03/04), and future conversational surfaces. Adding a
  * provider or letting a user bring their own model never touches a feature again.
  *
- * SECURITY: server-side only. The API key is BYOK - forwarded from the user's browser
- * to this code to the chosen provider. It is never logged, never persisted. See
- * docs/ai-engine-plan.md.
+ * SECURITY: server-side only. The API key is either BYOK, forwarded from the user's browser
+ * to the chosen provider, or a hosted server-side key resolved by the route. It is never logged
+ * or persisted. See docs/ai-engine-plan.md.
  */
 
 export type AiProvider = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'xai';
@@ -31,10 +31,10 @@ export interface AiCompleteResult {
   model: string;
 }
 
-/** Sensible, low-cost defaults per provider. OpenRouter unlocks "any model" with one key. */
+/** Defaults per provider. OpenAI intentionally uses the powerful hosted beta default. */
 export const DEFAULT_MODELS: Record<AiProvider, string> = {
   anthropic: 'claude-3-5-haiku-latest',
-  openai: 'gpt-4o-mini',
+  openai: 'gpt-5.5',
   openrouter: 'meta-llama/llama-3.1-70b-instruct',
   google: 'gemini-3.1-flash-lite',
   xai: 'grok-2-latest',
@@ -76,7 +76,57 @@ async function callAnthropic(
   return data.content?.[0]?.text?.trim() ?? '';
 }
 
-/** OpenAI + OpenRouter share the OpenAI chat-completions wire format. */
+interface OpenAiResponse {
+  output_text?: string;
+  output?: Array<{
+    type?: string;
+    content?: Array<{ type?: string; text?: string }>;
+  }>;
+}
+
+function openAiReasoningEffort(): 'none' | 'low' | 'medium' | 'high' | 'xhigh' {
+  const effort = process.env.LYRA_OPENAI_REASONING_EFFORT?.trim();
+  return effort === 'none' || effort === 'low' || effort === 'medium' || effort === 'high' || effort === 'xhigh'
+    ? effort
+    : 'low';
+}
+
+async function callOpenAiResponses(
+  apiKey: string,
+  model: string,
+  system: string,
+  prompt: string,
+  maxTokens: number,
+  temperature?: number,
+): Promise<string> {
+  const isGpt5 = /^gpt-5(?:\.|-|$)/i.test(model);
+  const body = {
+    model,
+    instructions: system,
+    input: prompt,
+    max_output_tokens: maxTokens,
+    ...(isGpt5 ? { reasoning: { effort: openAiReasoningEffort() }, text: { verbosity: 'low' } } : {}),
+    ...(!isGpt5 && temperature != null ? { temperature } : {}),
+  };
+  const res = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`openai ${res.status}`);
+  const data = (await res.json()) as OpenAiResponse;
+  const outputText = data.output_text?.trim();
+  if (outputText) return outputText;
+  return (
+    data.output
+      ?.flatMap((item) => item.content ?? [])
+      .map((content) => content.text ?? '')
+      .join('')
+      .trim() ?? ''
+  );
+}
+
+/** OpenRouter and xAI use the OpenAI chat-completions wire format. */
 async function callOpenAiCompatible(
   endpoint: string,
   apiKey: string,
@@ -155,8 +205,7 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
       text = await callAnthropic(apiKey, model, system, prompt, maxTokens, temperature);
       break;
     case 'openai':
-      text = await callOpenAiCompatible(
-        'https://api.openai.com/v1/chat/completions',
+      text = await callOpenAiResponses(
         apiKey,
         model,
         system,

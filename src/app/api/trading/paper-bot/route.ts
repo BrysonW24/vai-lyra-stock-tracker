@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { AiProvider } from '@/lib/ai/gateway';
 import { proposeBotRun, executeBotRun } from '@/lib/trading/paper-bot';
 import type { OrderIntent } from '@/lib/trading/types';
+import { resolveAiCredentials } from '@/lib/ai/credentials';
 
 interface PaperBotRequest {
   action: 'propose' | 'approve' | 'execute';
@@ -25,11 +26,9 @@ export async function POST(request: NextRequest) {
 
     if (action === 'propose') {
       if (!ai || !symbol) return NextResponse.json({ ok: false, reason: 'bad_request' });
-      const userKey = ai.apiKey?.trim();
-      const sharedKey = ai.provider === 'google' ? (process.env.GOOGLE_AI_KEY ?? '').trim() : '';
-      const apiKey = userKey || sharedKey;
-      if (!apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
-      const run = await proposeBotRun({ symbol, quantity: quantity && quantity > 0 ? quantity : 10, creds: { provider: ai.provider, apiKey, model: ai.model } });
+      const creds = resolveAiCredentials(ai);
+      if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
+      const run = await proposeBotRun({ symbol, quantity: quantity && quantity > 0 ? quantity : 10, creds: { provider: creds.provider, apiKey: creds.apiKey, model: creds.model } });
       return NextResponse.json({ ok: true, ...run });
     }
 

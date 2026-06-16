@@ -85,10 +85,10 @@ This layer owns every decision. **Current:**
 
 **Current:**
 
-- `src/lib/ai/gateway.ts` - provider-and-model-agnostic `complete()`: Anthropic, OpenAI, OpenRouter, Google. BYOK, server-side only, key never logged or persisted.
-- `src/app/api/ai/brief/route.ts` - the grounded Daily Brief: model receives ONLY deterministic facts and phrases them; any failure returns `ok:false` and the client renders the deterministic brief.
-- AI settings (`off` / `byo` / `hosted`) in `src/lib/account.ts`; `hosted` is a placeholder that behaves like `off`.
-- Worker-side flag reserved: `ENABLE_AI_EXPLANATIONS` + `ANTHROPIC_API_KEY` (off by default).
+- `src/lib/ai/gateway.ts` - provider-and-model-agnostic `complete()`: Anthropic, OpenAI, OpenRouter, Google, xAI. Browser BYOK or server-side hosted key, never logged or persisted.
+- `src/app/api/ai/brief/route.ts` and `src/app/api/ai/chat/route.ts` - grounded brief/chat: model receives ONLY deterministic facts and phrases them; failure returns `ok:false` and deterministic UI remains.
+- AI settings (`hosted` / `free` / `byo`) in `src/lib/account.ts`; hosted OpenAI is the beta default.
+- Worker-side flag remains available for legacy explanation paths: `ENABLE_AI_EXPLANATIONS` + `ANTHROPIC_API_KEY`.
 
 **Target:** agents registry, tool layer with a permission gate, notification composer consuming `contracts/notifications/`, `ai_runs`/`ai_citations` audit tables, eval harness. Full design in [`ai-native-architecture.md`](./ai-native-architecture.md) - most of it is explicitly not built yet.
 
@@ -154,7 +154,7 @@ This layer owns every decision. **Current:**
 | `ALERT_SCORE_THRESHOLD`, `WATCHLIST_SCORE_THRESHOLD`, `SIGNAL_CHANGE_THRESHOLD` | worker | 4 | deterministic thresholds (75/60/8 defaults) |
 | `ENABLE_TELEGRAM_ALERTS`, `ENABLE_WATCHLIST_ALERTS`, `ENABLE_HOURLY_DIGEST`, `ENABLE_MARKET_HOURS_GUARD`, `FORCE_SCAN`, `SCAN_INTERVAL` | worker | 4/6 | scanner toggles |
 | `FINNHUB_API_KEY` | worker | 1 | optional live news/fundamentals/events |
-| `ANTHROPIC_API_KEY`, `ENABLE_AI_EXPLANATIONS` | server/worker only | 5 | off by default; BYOK flow does not use these |
+| `OPENAI_API_KEY`, `LYRA_HOSTED_OPENAI_MODEL`, `LYRA_OPENAI_REASONING_EFFORT`, `GOOGLE_AI_KEY`, `ANTHROPIC_API_KEY`, `ENABLE_AI_EXPLANATIONS` | server/worker only | 5 | hosted OpenAI beta, optional Gemini fallback, legacy worker explanations |
 
 ## Failure modes
 

@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import type { OperatorProfile } from '@/lib/onboarding';
+import type { OperatorProfile, CapitalContext, AlertPreferences, StrategySelection } from '@/lib/onboarding';
 
 /**
- * Onboarding persistence API. Saves operator profile and onboarding progress for
- * signed-in users. Uses the cookie-aware (RLS-enforced) Supabase client, so each
- * user can only write their own rows. Falls back to demo mode when Supabase isn't
- * configured.
+ * Onboarding persistence API. Saves operator profile, capital context, strategy, alert
+ * preferences and onboarding progress for signed-in users. Uses the cookie-aware
+ * (RLS-enforced) Supabase client, so each user can only write their own rows.
  */
 
 interface OnboardingRequest {
   profile: OperatorProfile;
   completionPct?: number;
+  capital?: CapitalContext;
+  alerts?: AlertPreferences;
+  strategy?: StrategySelection;
 }
 
 const demoResponse = () =>
@@ -63,6 +65,14 @@ export async function POST(request: NextRequest) {
           beginner_involvement: body.profile.beginnerInvolvement || null,
           beginner_learning_style: body.profile.beginnerLearningStyle || null,
           beginner_horizon: body.profile.beginnerHorizon || null,
+          cash_available: body.capital?.cashAvailable ?? null,
+          monthly_contribution: body.capital?.monthlyContribution ?? null,
+          max_position_size_pct: body.capital?.maxPositionSizePct ?? null,
+          default_trade_amount: body.capital?.defaultTradeAmount ?? null,
+          primary_outcome: body.capital?.primaryOutcome ?? null,
+          simulation_enabled: body.capital?.simulationEnabled ?? null,
+          strategy_id: body.strategy?.strategyId ?? null,
+          strategy_overrides: body.strategy?.overrides ?? null,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'user_id' },
@@ -75,6 +85,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (body.alerts) {
+      const { error: alertsError } = await supabase
+        .from('user_alert_preferences')
+        .upsert(
+          {
+            user_id: user.id,
+            strong_setup_enabled: body.alerts.strongSetupAlerts,
+            portfolio_risk_enabled: body.alerts.portfolioRiskAlerts,
+            watchlist_trigger_enabled: body.alerts.watchlistTriggerAlerts,
+            invalidation_enabled: body.alerts.signalInvalidationAlerts,
+            digest_enabled: Boolean(body.alerts.dailyDigest || body.alerts.hourlyDigest),
+            frequency: body.alerts.hourlyDigest ? 'hourly' : 'daily',
+            digest_time: body.alerts.digestTime || '08:00',
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' },
+        );
+      if (alertsError) console.warn('Failed to save alert preferences:', alertsError.message);
+    }
+
     // Upsert into onboarding_progress table to track completion.
     if (body.completionPct !== undefined) {
       const { error: progressError } = await supabase
@@ -82,7 +112,7 @@ export async function POST(request: NextRequest) {
         .upsert(
           {
             user_id: user.id,
-            profile_completed: Boolean(body.profile.tradedBefore),
+            operator_profile_completed: Boolean(body.profile.tradedBefore),
             completion_pct: Math.min(Math.max(body.completionPct, 0), 100),
             updated_at: new Date().toISOString(),
           },

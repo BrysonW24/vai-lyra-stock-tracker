@@ -135,8 +135,12 @@ The hourly scanner runs from the PUBLIC repo's workflow: `.github/workflows/hour
 
 | Var | Where | Notes |
 |---|---|---|
-| (none required) | - | The live AI surface is BYOK: the user's key is stored in their browser (`lyra.account.ai` localStorage, `src/lib/account.ts`) and forwarded per-request through `/api/ai/brief` to the chosen provider. Default mode is `off`. |
-| `ANTHROPIC_API_KEY` / `ENABLE_AI_EXPLANATIONS` | reserved in `.env.example` | For a future hosted mode. Today `/api/ai/brief` returns `hosted_not_configured` for hosted mode - setting these does not enable anything yet. Do not pretend otherwise. |
+| `OPENAI_API_KEY` | Vercel server-side | Hosted beta default for keyless users. Never prefix with `NEXT_PUBLIC_`. |
+| `LYRA_HOSTED_OPENAI_MODEL` | Vercel server-side | Optional override; defaults to `gpt-5.5`. |
+| `LYRA_OPENAI_REASONING_EFFORT` | Vercel server-side | Optional `none`, `low`, `medium`, `high`, or `xhigh`; defaults to `low`. |
+| `GOOGLE_AI_KEY` | Vercel server-side | Optional older shared Gemini fallback. |
+| User BYOK | Browser localStorage | Optional. A user's key in Settings -> AI overrides the hosted key for that user's request. |
+| `ANTHROPIC_API_KEY` / `ENABLE_AI_EXPLANATIONS` | Vercel/GitHub server-side | Optional legacy worker-side explanations/smart-money paths. |
 
 ## 7. Post-deploy verification checklist
 

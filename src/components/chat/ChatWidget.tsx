@@ -9,8 +9,10 @@ import { loadSavedPrompts, toggleSavedPrompt } from '@/lib/saved-prompts';
 import type { ChatProfile } from '@/lib/ai/chat-context';
 
 interface ProposedAction {
-  type: 'add_watchlist' | 'add_portfolio';
+  type: 'add_watchlist' | 'add_portfolio' | 'log_trade';
   symbol: string;
+  side?: 'buy';
+  notional?: number;
 }
 
 interface ChatMessage {
@@ -23,9 +25,16 @@ interface ChatMessage {
   price?: number;
 }
 
+interface AiRuntimeStatus {
+  hostedOpenAi: boolean;
+  hostedOpenAiModel: string;
+  sharedGoogle: boolean;
+}
+
 const ACTION_LABEL: Record<ProposedAction['type'], string> = {
   add_watchlist: 'Add to watchlist',
   add_portfolio: 'Add to portfolio',
+  log_trade: 'Log trade',
 };
 
 interface ChatWidgetProps {
@@ -141,6 +150,7 @@ const CATEGORIES: { label: string; questions: string[] }[] = [
  */
 export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const [ai, setAi] = useState<AiSettings | null>(null);
+  const [runtime, setRuntime] = useState<AiRuntimeStatus | null>(null);
   const [profile, setProfile] = useState<ChatProfile>({});
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -162,6 +172,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   useEffect(() => {
     if (!open) return;
     setAi(loadAi());
+    setRuntime(null);
     setSaved(loadSavedPrompts());
     const acct = loadProfile();
     const summary = loadOnboardingSummary();
@@ -171,17 +182,37 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
       tradedBefore: summary?.tradedBefore,
       riskComfort: summary?.riskComfort,
     });
+
+    let cancelled = false;
+    fetch('/api/ai/status')
+      .then((res) => res.json())
+      .then((data: AiRuntimeStatus) => {
+        if (!cancelled) setRuntime(data);
+      })
+      .catch(() => {
+        if (!cancelled) setRuntime({ hostedOpenAi: false, hostedOpenAiModel: '', sharedGoogle: false });
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, status]);
 
-  // Connected when the user has a key, or the free open model is backed by a shared server-side
-  // Google key (NEXT_PUBLIC_LYRA_FREE_AI === '1' tells the client that env is configured).
+  // Connected when the user has a browser key, or the selected provider is backed by a server key.
   const connected =
     ai != null &&
-    (!!ai.apiKey?.trim() || (ai.provider === 'google' && process.env.NEXT_PUBLIC_LYRA_FREE_AI === '1'));
+    (!!ai.apiKey?.trim() ||
+      (ai.provider === 'openai' && runtime?.hostedOpenAi) ||
+      (ai.provider === 'google' && (runtime?.sharedGoogle || process.env.NEXT_PUBLIC_LYRA_FREE_AI === '1')));
+  const checkingRuntime =
+    ai != null &&
+    !ai.apiKey?.trim() &&
+    runtime == null &&
+    (ai.provider === 'openai' || ai.provider === 'google');
 
   const send = async (text: string) => {
     const trimmed = text.trim();
@@ -200,7 +231,10 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
       });
       const data = (await res.json()) as { ok?: boolean; text?: string; reason?: string; suggestions?: string[]; action?: ProposedAction | null };
       if (data.ok && data.text) {
-        const action = data.action && (data.action.type === 'add_watchlist' || data.action.type === 'add_portfolio') ? data.action : undefined;
+        const action =
+          data.action && (data.action.type === 'add_watchlist' || data.action.type === 'add_portfolio' || data.action.type === 'log_trade')
+            ? data.action
+            : undefined;
         setMessages((m) => [...m, { role: 'assistant', content: data.text as string, action, actionStatus: action ? 'proposed' : undefined }]);
         setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 3) : []);
         setStatus('idle');
@@ -219,11 +253,13 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     const { type, symbol } = msg.action;
     setMessages((m) => m.map((x, j) => (j === i ? { ...x, actionStatus: 'running' } : x)));
     try {
-      const endpoint = type === 'add_watchlist' ? '/api/watchlist' : '/api/portfolio';
+      const endpoint = type === 'add_watchlist' ? '/api/watchlist' : type === 'add_portfolio' ? '/api/portfolio' : '/api/trades';
       const payload =
         type === 'add_watchlist'
           ? { symbol }
-          : { symbol, quantity: msg.qty ?? 10, averageBuyPrice: msg.price ?? 0 };
+          : type === 'add_portfolio'
+            ? { symbol, quantity: msg.qty ?? 10, averageBuyPrice: msg.price ?? 0 }
+            : { side: msg.action.side ?? 'buy', symbol, notional: msg.action.notional ?? 0, source: 'chat' };
       const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = (await res.json()) as { ok?: boolean; demo?: boolean; data?: { id?: string }; error?: string };
       setMessages((m) =>
@@ -244,7 +280,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const undoAction = async (i: number) => {
     const msg = messages[i];
     if (!msg.action || !msg.undoId) return;
-    const endpoint = msg.action.type === 'add_watchlist' ? '/api/watchlist' : '/api/portfolio';
+    const endpoint = msg.action.type === 'add_watchlist' ? '/api/watchlist' : msg.action.type === 'add_portfolio' ? '/api/portfolio' : '/api/trades';
     setMessages((m) => m.map((x, j) => (j === i ? { ...x, actionStatus: 'running' } : x)));
     try {
       await fetch(endpoint, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: msg.undoId }) });
@@ -297,18 +333,22 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
         {!connected ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
             <span className="grid h-12 w-12 place-items-center rounded-full border border-[#8aa2ff]/25 bg-[#101a2e] text-[#8aa2ff]">
-              <KeyRound size={22} />
+              {checkingRuntime ? <Loader2 size={22} className="animate-spin" /> : <KeyRound size={22} />}
             </span>
-            <p className="text-sm font-semibold text-[#eef3f8]">Connect a model to chat</p>
+            <p className="text-sm font-semibold text-[#eef3f8]">{checkingRuntime ? 'Checking hosted model' : 'Connect a model to chat'}</p>
             <p className="max-w-xs text-[12px] leading-relaxed text-[#a8b5c2]">
-              Lyra runs on a model you choose. Add a free key (Google AI Studio, ~10s, no card needed) - or your own key for a more powerful model. It stays in this browser.
+              {checkingRuntime
+                ? 'Lyra is checking whether the hosted beta key is available for this deployment.'
+                : ai?.provider === 'openai'
+                  ? 'Hosted OpenAI is not configured for this deployment yet. Add your own OpenAI key, or set OPENAI_API_KEY server-side and redeploy.'
+                  : 'Lyra runs on a model you choose. Add a free key or your own provider key in Settings. Browser keys stay on this device.'}
             </p>
             <Link
               href="/account#ai-settings"
               onClick={onClose}
               className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-[#101a2e] px-4 py-2 text-xs font-semibold text-[#8aa2ff] transition hover:bg-[#13203a]"
             >
-              <KeyRound size={13} /> Connect a model
+              <KeyRound size={13} /> Open AI settings
             </Link>
           </div>
         ) : (
@@ -406,7 +446,10 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                           <>
                             <div className="flex items-center gap-1.5">
                               <Plus size={12} className="text-[#8aa2ff]" />
-                              <span className="text-[11.5px] font-semibold text-[#dbe5ee]">{ACTION_LABEL[m.action.type]}: {m.action.symbol}</span>
+                              <span className="text-[11.5px] font-semibold text-[#dbe5ee]">
+                                {ACTION_LABEL[m.action.type]}: {m.action.symbol}
+                                {m.action.type === 'log_trade' && m.action.notional ? ` - $${m.action.notional.toLocaleString()}` : ''}
+                              </span>
                             </div>
                             {m.action.type === 'add_portfolio' && (
                               <div className="mt-1.5 flex items-center gap-1.5">
@@ -426,7 +469,11 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                         {m.actionStatus === 'done' && (
                           <div className="flex items-center gap-1.5">
                             <Check size={12} className="text-[#43d18b]" />
-                            <span className="text-[11.5px] text-[#43d18b]">{m.action.symbol} added to your {m.action.type === 'add_watchlist' ? 'watchlist' : 'portfolio'}.</span>
+                            <span className="text-[11.5px] text-[#43d18b]">
+                              {m.action.type === 'log_trade'
+                                ? `${m.action.symbol} trade logged. Cash and holdings updated.`
+                                : `${m.action.symbol} added to your ${m.action.type === 'add_watchlist' ? 'watchlist' : 'portfolio'}.`}
+                            </span>
                             {m.undoId && (
                               <button type="button" onClick={() => undoAction(i)} className="ml-auto inline-flex items-center gap-1 rounded border border-[#3a2630] bg-[#1c1116] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-[#e08a9a] transition hover:bg-[#26161d]">
                                 <Undo2 size={9} /> Undo
@@ -435,11 +482,13 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                           </div>
                         )}
                         {m.actionStatus === 'undone' && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-[#8190a0]"><RotateCcw size={11} /> Undone - {m.action.symbol} removed.</div>
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#8190a0]">
+                            <RotateCcw size={11} /> Undone - {m.action.type === 'log_trade' ? `${m.action.symbol} trade reversed.` : `${m.action.symbol} removed.`}
+                          </div>
                         )}
                         {m.actionStatus === 'demo' && (
                           <div className="text-[10.5px] leading-snug text-[#f3a33a]">
-                            You&apos;re in demo mode - <Link href="/auth/login" className="underline">sign in</Link> to save {m.action.symbol} to your real {m.action.type === 'add_watchlist' ? 'watchlist' : 'portfolio'}.
+                            You&apos;re in demo mode - <Link href="/auth/login" className="underline">sign in</Link> to save {m.action.symbol} to your real {m.action.type === 'add_watchlist' ? 'watchlist' : m.action.type === 'add_portfolio' ? 'portfolio' : 'trade log'}.
                           </div>
                         )}
                       </div>

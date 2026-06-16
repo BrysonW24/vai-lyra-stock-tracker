@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { AiProvider } from '@/lib/ai/gateway';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { runResearchAnalyst } from '@/lib/ai/run-agent';
+import { resolveAiCredentials } from '@/lib/ai/credentials';
 
 interface AgentRequest {
   agent: 'research_analyst';
@@ -21,17 +22,15 @@ export async function POST(request: NextRequest) {
     const { agent, symbol, question, ai } = body;
     if (!ai || !symbol) return NextResponse.json({ ok: false, reason: 'bad_request' });
 
-    const userKey = ai.apiKey?.trim();
-    const sharedKey = ai.provider === 'google' ? (process.env.GOOGLE_AI_KEY ?? '').trim() : '';
-    const apiKey = userKey || sharedKey;
-    if (!apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
+    const creds = resolveAiCredentials(ai);
+    if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
     if (question && detectInjectionAttempt(question)) {
       return NextResponse.json({ ok: false, reason: 'refused' });
     }
 
     if (agent === 'research_analyst') {
-      const result = await runResearchAnalyst({ symbol, question, creds: { provider: ai.provider, apiKey, model: ai.model } });
+      const result = await runResearchAnalyst({ symbol, question, creds: { provider: creds.provider, apiKey: creds.apiKey, model: creds.model } });
       return NextResponse.json(result);
     }
 

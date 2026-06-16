@@ -51,18 +51,17 @@ const buttonPrimary =
   'inline-flex items-center justify-center gap-1.5 rounded border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 font-mono text-[11px] text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-40';
 
 /**
- * Per-provider display + key sourcing. `group: 'free'` are the open / free-tier models that are
- * on by default (Google's free tier, open-source Llama via OpenRouter); `group: 'byo'` are premium
- * models the user pays for with their own key. Mirrors the gateway's DEFAULT_MODELS + adapters.
+ * Per-provider display + key sourcing. `hosted` uses the server-side OpenAI beta key when present;
+ * user-entered keys still override it. `free`/`byo` remain available for testers who want control.
  */
 const PROVIDER_META: Record<
   AiSettings['provider'],
-  { label: string; modelPlaceholder: string; group: 'free' | 'byo'; keyUrl: string; keyHost: string; keyPlaceholder: string }
+  { label: string; modelPlaceholder: string; group: 'hosted' | 'free' | 'byo'; keyUrl: string; keyHost: string; keyPlaceholder: string }
 > = {
   google: { label: 'Google Gemini', modelPlaceholder: 'gemini-3.1-flash-lite', group: 'free', keyUrl: 'https://aistudio.google.com/apikey', keyHost: 'Google AI Studio', keyPlaceholder: 'AIza…' },
   openrouter: { label: 'Llama (OpenRouter)', modelPlaceholder: 'meta-llama/llama-3.1-70b-instruct', group: 'free', keyUrl: 'https://openrouter.ai/keys', keyHost: 'openrouter.ai', keyPlaceholder: 'sk-or-…' },
   anthropic: { label: 'Anthropic (Claude)', modelPlaceholder: 'claude-3-5-haiku-latest', group: 'byo', keyUrl: 'https://console.anthropic.com/settings/keys', keyHost: 'console.anthropic.com', keyPlaceholder: 'sk-ant-…' },
-  openai: { label: 'OpenAI (GPT)', modelPlaceholder: 'gpt-4o-mini', group: 'byo', keyUrl: 'https://platform.openai.com/api-keys', keyHost: 'platform.openai.com', keyPlaceholder: 'sk-…' },
+  openai: { label: 'OpenAI (hosted)', modelPlaceholder: 'gpt-5.5', group: 'hosted', keyUrl: 'https://platform.openai.com/api-keys', keyHost: 'platform.openai.com', keyPlaceholder: 'optional sk-…' },
   xai: { label: 'xAI (Grok)', modelPlaceholder: 'grok-2-latest', group: 'byo', keyUrl: 'https://console.x.ai', keyHost: 'console.x.ai', keyPlaceholder: 'xai-…' },
 };
 
@@ -362,7 +361,7 @@ export function AccountSettings() {
         </Panel>
 
         <div id="ai-settings" className="scroll-mt-4">
-          <Panel icon={BrainCircuit} title="AI assistance" subtitle="Always on. A free open model, or your own key for more power.">
+          <Panel icon={BrainCircuit} title="AI assistance" subtitle="Hosted OpenAI beta by default. Optional BYOK when you want control.">
             <div className="space-y-2.5">
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -373,16 +372,25 @@ export function AccountSettings() {
                     value={ai.provider}
                     onChange={(event) => {
                       const provider = event.target.value as AiSettings['provider'];
-                      commitAi({ ...ai, provider, mode: PROVIDER_META[provider].group });
+                      const sameProvider = provider === ai.provider;
+                      commitAi({
+                        ...ai,
+                        provider,
+                        mode: PROVIDER_META[provider].group,
+                        apiKey: sameProvider ? ai.apiKey : '',
+                        model: sameProvider ? ai.model : '',
+                      });
                     }}
                   >
+                    <optgroup label="Hosted beta">
+                      <option value="openai" className="bg-[#0d141c]">OpenAI GPT-5.5</option>
+                    </optgroup>
                     <optgroup label="Free / open">
                       <option value="google" className="bg-[#0d141c]">Google Gemini (free)</option>
                       <option value="openrouter" className="bg-[#0d141c]">Llama 3.1 (open-source)</option>
                     </optgroup>
                     <optgroup label="Your own key">
                       <option value="anthropic" className="bg-[#0d141c]">Claude</option>
-                      <option value="openai" className="bg-[#0d141c]">GPT (OpenAI)</option>
                       <option value="xai" className="bg-[#0d141c]">Grok (xAI)</option>
                     </optgroup>
                   </select>
@@ -403,7 +411,11 @@ export function AccountSettings() {
 
               <div>
                 <label className={labelClass} htmlFor="acct-key">
-                  {PROVIDER_META[ai.provider].group === 'free' ? 'Free API key' : 'API key'}
+                  {PROVIDER_META[ai.provider].group === 'hosted'
+                    ? 'Optional API key'
+                    : PROVIDER_META[ai.provider].group === 'free'
+                      ? 'Free API key'
+                      : 'API key'}
                 </label>
                 <div className="flex gap-1.5">
                   <input
@@ -426,7 +438,7 @@ export function AccountSettings() {
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <button type="button" className={buttonPrimary} onClick={() => commitAi(ai)}>Save key</button>
+                <button type="button" className={buttonPrimary} onClick={() => commitAi(ai)}>Save AI settings</button>
                 <div className="flex items-center gap-2.5">
                   <SavedTick show={aiSaved} />
                   <a
@@ -435,15 +447,17 @@ export function AccountSettings() {
                     rel="noopener noreferrer"
                     className="text-[10px] font-semibold text-[#8aa2ff] transition hover:text-[#aab8ff]"
                   >
-                    Get a key from {PROVIDER_META[ai.provider].keyHost} →
+                    {PROVIDER_META[ai.provider].group === 'hosted' ? 'Use your own key from' : 'Get a key from'} {PROVIDER_META[ai.provider].keyHost} →
                   </a>
                 </div>
               </div>
 
               <p className="text-[9.5px] leading-snug text-[#6f7d8a]">
-                {PROVIDER_META[ai.provider].group === 'free'
-                  ? `Free open model - grab a free key from ${PROVIDER_META[ai.provider].keyHost} (no card needed). It stays in this browser, only ever sent to the provider.`
-                  : `Your key stays in this browser, only ever sent to ${PROVIDER_META[ai.provider].label} when an AI feature runs - never committed or sent to Lyra's servers.`}
+                {PROVIDER_META[ai.provider].group === 'hosted'
+                  ? `Hosted beta uses Lyra's server-side OpenAI key when available. Add your own key here only if you want to override it; browser keys are never stored on Lyra's servers.`
+                  : PROVIDER_META[ai.provider].group === 'free'
+                    ? `Free open model - grab a free key from ${PROVIDER_META[ai.provider].keyHost} (no card needed). It stays in this browser, only ever sent to the provider.`
+                    : `Your key stays in this browser and is only used for ${PROVIDER_META[ai.provider].label} requests - never committed or stored by Lyra.`}
               </p>
 
               <label className="flex cursor-pointer items-start gap-2 rounded border border-[#1d2733] bg-[#0b1016] p-2.5">
@@ -474,7 +488,7 @@ export function AccountSettings() {
                 <span className="min-w-0">
                   <span className="text-[12px] font-semibold text-[#dbe5ee]">AI actions (confirm-to-act)</span>
                   <span className="mt-0.5 block text-[10px] leading-snug text-[#8190a0]">
-                    When on, Lyra can <span className="text-[#a8b5c2]">propose</span> reversible actions in chat - like adding a stock to your watchlist or portfolio - and you confirm each one. Lyra never changes your data on its own, never trades, and every action can be undone.
+                    When on, Lyra can <span className="text-[#a8b5c2]">propose</span> reversible actions in chat - like adding a stock to your watchlist, portfolio, or trade log - and you confirm each one. Lyra never changes your data on its own, never trades, and every action can be undone.
                   </span>
                 </span>
               </label>

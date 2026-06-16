@@ -1,42 +1,44 @@
 'use client';
 
-import type { OperatorProfile } from './onboarding';
+import type { OperatorProfile, CapitalContext, AlertPreferences, StrategySelection } from './onboarding';
+
+export interface OnboardingSyncResult {
+  ok: boolean;
+  demo?: boolean;
+  error?: string;
+}
 
 /**
- * Resilient client helper to sync operator profile to the backend.
- * Non-blocking; errors are logged but do not interrupt the UI.
+ * Sync the full operator profile + capital + strategy + alert preferences to the backend.
+ * Non-throwing, but returns the outcome so callers can surface real persistence failures.
  */
-export async function syncOperatorProfile(profile: OperatorProfile, completionPct?: number): Promise<void> {
+export async function syncOperatorProfile(
+  profile: OperatorProfile,
+  completionPct?: number,
+  extras?: { capital?: CapitalContext; alerts?: AlertPreferences; strategy?: StrategySelection },
+): Promise<OnboardingSyncResult> {
   try {
     const response = await fetch('/api/onboarding', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile, completionPct }),
+      body: JSON.stringify({ profile, completionPct, capital: extras?.capital, alerts: extras?.alerts, strategy: extras?.strategy }),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.warn('[onboarding sync] HTTP error:', error);
-      // Silently fail - localStorage is the fallback.
-      return;
+    const data = await response.json().catch(() => ({ ok: false, error: `Bad response (HTTP ${response.status})` }));
+
+    if (data?.demo) return { ok: false, demo: true };
+
+    if (!response.ok || !data?.ok) {
+      const error = data?.error || `HTTP ${response.status}`;
+      console.warn('[onboarding sync] error:', error);
+      return { ok: false, error };
     }
 
-    const data = await response.json();
-    if (data.demo) {
-      // Demo mode - no network available, that's fine.
-      return;
-    }
-
-    if (!data.ok) {
-      console.warn('[onboarding sync] API error:', data.error);
-      // Silently fail - localStorage is the fallback.
-      return;
-    }
-
-    console.debug('[onboarding sync] Synced successfully');
+    return { ok: true };
   } catch (err) {
-    console.warn('[onboarding sync] Network error:', err instanceof Error ? err.message : String(err));
-    // Silently fail - localStorage is the fallback.
+    const error = err instanceof Error ? err.message : String(err);
+    console.warn('[onboarding sync] network error:', error);
+    return { ok: false, error };
   }
 }
 

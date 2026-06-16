@@ -8,7 +8,7 @@ import { loadAi } from '@/lib/account';
 /**
  * Optional AI narration over the deterministic Daily Brief. Reads the user's Account AI
  * setting; if enabled, asks the grounded /api/ai/brief route to phrase the same facts.
- * Renders nothing when AI is off or unavailable, so the card stays deterministic.
+ * Renders nothing when AI is unavailable, so the card stays deterministic.
  */
 export function BriefAiNarration({ brief }: { brief: DailyBrief }) {
   const [text, setText] = useState<string | null>(null);
@@ -16,11 +16,11 @@ export function BriefAiNarration({ brief }: { brief: DailyBrief }) {
 
   useEffect(() => {
     const ai = loadAi();
-    // Only call when a key is actually available: the user's own key, or the free open model
-    // backed by a shared server-side Google key (signalled to the client by NEXT_PUBLIC_LYRA_FREE_AI).
+    // Browser BYOK wins. OpenAI/Google can also be server-backed; the route resolves that without
+    // exposing secret availability to the bundle.
     const hasKey = !!ai.apiKey?.trim();
-    const sharedFree = ai.provider === 'google' && process.env.NEXT_PUBLIC_LYRA_FREE_AI === '1';
-    if (!hasKey && !sharedFree) return;
+    const serverBacked = ai.provider === 'openai' || ai.provider === 'google';
+    if (!hasKey && !serverBacked) return;
 
     let cancelled = false;
     setLoading(true);

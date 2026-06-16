@@ -25,7 +25,7 @@ Containment beats diagnosis. Pull the relevant kill lever first, understand seco
 
 ## Playbook 1 - Leaked secret
 
-Applies to: `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_APP_SECRET`, `FINNHUB_API_KEY`, `ANTHROPIC_API_KEY`. Full inventory + rotation column: [`secrets-management.md`](./secrets-management.md).
+Applies to: `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_APP_SECRET`, `FINNHUB_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_AI_KEY`, `ANTHROPIC_API_KEY`. Full inventory + rotation column: [`secrets-management.md`](./secrets-management.md).
 
 **Detect**
 - A secret appears in a commit, log line, screenshot, chat paste, or `NEXT_PUBLIC_*` variable.
@@ -81,7 +81,7 @@ Applies to: `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK
 
 **Contain**
 - Trip the **`ai_system` kill switch** (taxonomy in [`trading-risk-controls.md`](./trading-risk-controls.md)) - it disables the AI layer, which "can never trade anyway".
-- Set `ENABLE_AI_EXPLANATIONS=false` (server env) - AI mode is off by default and this returns it there.
+- Unset `OPENAI_API_KEY` and `GOOGLE_AI_KEY` (server env) to disable hosted/shared AI, and set `ENABLE_AI_EXPLANATIONS=false` for legacy worker explanations.
 - The product keeps working: every AI surface has a deterministic fallback (the brief route returns `ok:false` and the client renders the deterministic brief - `src/app/api/ai/brief/route.ts`).
 - If a BYOK key may have been exfiltrated to a hostile endpoint (it should be structurally impossible - the gateway only calls four fixed provider endpoints in `src/lib/ai/gateway.ts`), tell the user to rotate their provider key.
 

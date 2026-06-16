@@ -4,7 +4,7 @@ import { resolveModel, DEFAULT_MODELS, SUPPORTED_PROVIDERS, type AiProvider } fr
 describe('ai gateway · resolveModel', () => {
   it('falls back to the provider default when no model is given', () => {
     expect(resolveModel('anthropic')).toBe(DEFAULT_MODELS.anthropic);
-    expect(resolveModel('openai')).toBe(DEFAULT_MODELS.openai);
+    expect(resolveModel('openai')).toBe('gpt-5.5');
     expect(resolveModel('openrouter')).toBe(DEFAULT_MODELS.openrouter);
     expect(resolveModel('google')).toBe(DEFAULT_MODELS.google);
   });

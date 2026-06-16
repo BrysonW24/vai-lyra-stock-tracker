@@ -45,7 +45,12 @@ To scan real stocks and store results you need **Supabase** and a **market-data 
 To receive Telegram alerts, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`. See `TELEGRAM_SETUP.md` (pairing flow). Alert behaviour (mode, mute, quiet hours, scope) is controlled from the top bar of the Command Centre.
 
 ### 4. AI mode (optional)
-Add `ANTHROPIC_API_KEY` and set `ENABLE_AI_EXPLANATIONS=true` to unlock AI explanations. Everything else works without it.
+Add server-side `OPENAI_API_KEY` to unlock the hosted beta default for keyless users. Optional:
+- `LYRA_HOSTED_OPENAI_MODEL=gpt-5.5`
+- `LYRA_OPENAI_REASONING_EFFORT=low`
+- `GOOGLE_AI_KEY` for the older shared Gemini fallback
+
+Users can still paste their own provider key in Settings -> AI; browser keys override the hosted key for that user.
 
 ---
 
@@ -56,7 +61,7 @@ Add `ANTHROPIC_API_KEY` and set `ENABLE_AI_EXPLANATIONS=true` to unlock AI expla
 | Explore the UI | none (demo mode) |
 | Scan real stocks | Supabase + market data |
 | Receive alerts | + Telegram bot token & chat id |
-| AI explanations | + Anthropic key |
+| Hosted AI beta | + OpenAI key |
 
 Run `npm run doctor` anytime to see exactly what's configured and what's missing.
 

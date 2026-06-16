@@ -7,7 +7,7 @@
 Anything prefixed `NEXT_PUBLIC_` is compiled into the browser bundle and is visible to everyone, forever, in every deployed build. Therefore:
 
 - Only values that are safe to publish may carry the prefix. In Lyra that is the app URL, the demo-fallback toggle, and the Supabase URL + anon key - and the anon key is only safe because **RLS is the real gate** (see [`architecture.md`](./architecture.md)).
-- `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`, `FINNHUB_API_KEY`, every `WHATSAPP_*` credential, and `TELEGRAM_WEBHOOK_SECRET` must only ever be unprefixed server/worker variables (`SECURITY.md` golden rules).
+- `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`, `OPENAI_API_KEY`, `GOOGLE_AI_KEY`, `ANTHROPIC_API_KEY`, `FINNHUB_API_KEY`, every `WHATSAPP_*` credential, and `TELEGRAM_WEBHOOK_SECRET` must only ever be unprefixed server/worker variables (`SECURITY.md` golden rules).
 - `src/lib/env.ts` (Zod-validated, importable by frontend code) deliberately contains ONLY the two public Supabase vars. Server secrets are read at call time inside server-only modules (`src/lib/supabase/admin.ts`, `src/lib/notifications/telegram.ts`, `src/lib/notifications/whatsapp.ts` - the latter notes its env read is "intentionally NOT in src/lib/env.ts").
 - Audit before release: `grep -rn "NEXT_PUBLIC" src/ | grep -iv "supabase_url\|anon_key\|app_url\|demo_fallback"` should return nothing surprising.
 
@@ -48,7 +48,11 @@ Anything prefixed `NEXT_PUBLIC_` is compiled into the browser bundle and is visi
 | `FORCE_SCAN` | Bypass scheduler guard once | Worker | config | n/a |
 | `SCAN_INTERVAL` | Scan cadence label | Worker | config | n/a |
 | `FINNHUB_API_KEY` | Live news/fundamentals/earnings (Horizon 2) | Worker | secret | Finnhub dashboard > regenerate key |
-| `ANTHROPIC_API_KEY` | Server-side AI explanations (optional mode) | Server/worker AI paths | secret (cost abuse) | Anthropic console > revoke + reissue |
+| `OPENAI_API_KEY` | Hosted beta AI default for keyless users | Server AI routes via `src/lib/ai/credentials.ts` and `src/lib/ai/gateway.ts` | secret (cost abuse) | OpenAI dashboard > revoke + reissue; update Vercel env |
+| `LYRA_HOSTED_OPENAI_MODEL` | Hosted OpenAI model override | Server AI routes | config | n/a |
+| `LYRA_OPENAI_REASONING_EFFORT` | Hosted OpenAI reasoning effort | Server AI routes | config | n/a |
+| `GOOGLE_AI_KEY` | Optional shared Gemini fallback | Server AI routes | secret (cost abuse) | Google AI Studio > revoke + reissue; update Vercel env |
+| `ANTHROPIC_API_KEY` | Server-side AI explanations (optional legacy mode) | Server/worker AI paths | secret (cost abuse) | Anthropic console > revoke + reissue |
 | `ENABLE_AI_EXPLANATIONS` | AI explanations master toggle (off by default) | Server/worker | config | n/a - also the AI kill lever |
 | `TELEGRAM_WEBHOOK_SECRET` | Authenticity token echoed by Telegram in `X-Telegram-Bot-Api-Secret-Token`; route 401s on mismatch or unset | `src/app/api/webhooks/telegram/route.ts` | secret | Generate (`openssl rand -hex 32`), set env, re-run `setWebhook` with the new `secret_token` - both must change together |
 | `WHATSAPP_ACCESS_TOKEN` | Graph API send credential (system-user token) | `src/lib/notifications/whatsapp.ts` (server only) | **secret-critical** | Meta Business > system user > generate new token, revoke old |
@@ -62,7 +66,7 @@ Anything prefixed `NEXT_PUBLIC_` is compiled into the browser bundle and is visi
 
 | Secret | Notes |
 |---|---|
-| BYOK AI provider keys (per user) | Held in the user's browser, sent per-request to `src/app/api/ai/brief/route.ts`, forwarded by `src/lib/ai/gateway.ts`, **never logged or persisted server-side**. The user rotates them at their provider. |
+| BYOK AI provider keys (per user) | Held in the user's browser, sent per-request to AI routes, forwarded by `src/lib/ai/gateway.ts`, **never logged or persisted server-side**. The user rotates them at their provider. |
 | Pairing codes | Plaintext shown once in the app; only the sha256 hash would be stored (`channel_pairing_codes.code_hash`, `hashPairingCode` in `src/lib/notifications/telegram.ts`). A leaked table cannot be replayed. |
 | GitHub Actions secrets | The hourly scanner workflow needs the worker secrets mirrored as Actions secrets. Treat them as a second copy of the same secrets - rotate both. |
 
