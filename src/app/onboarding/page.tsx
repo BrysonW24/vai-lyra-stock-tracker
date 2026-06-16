@@ -42,6 +42,7 @@ export default function OnboardingPage() {
   const [state, setState] = useState<OnboardingState | null>(null);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [phase, setPhase] = useState<'reveal' | 'primer' | 'questionnaire' | 'complete'>('reveal');
+  const [isSaving, setIsSaving] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   // Mount: resume from a saved checkpoint if one exists (so a returning user picks up where they
@@ -122,97 +123,106 @@ export default function OnboardingPage() {
   };
 
   const handleFinish = async () => {
-    // Show the success beat immediately; it navigates to the command centre when done.
-    setPhase('complete');
-    // Onboarding done - drop the resumable checkpoint so a re-visit starts clean.
-    clearOnboardingProgress();
-    // Sync operator profile + capital + strategy + alerts so AI can ground on user constraints.
-    if (isSupabaseConfigured() && state.profile) {
-      const completeness = calculateSetupCompleteness(state);
-      const result = await syncOperatorProfile(state.profile, completeness.percentage, {
-        capital: state.capital,
-        alerts: state.alerts,
-        strategy: state.strategy,
+    if (isSaving) return;
+    setIsSaving(true);
+
+    try {
+      // Sync operator profile + capital + strategy + alerts so AI can ground on user constraints.
+      if (isSupabaseConfigured() && state.profile) {
+        const completeness = calculateSetupCompleteness(state);
+        const result = await syncOperatorProfile(state.profile, completeness.percentage, {
+          capital: state.capital,
+          alerts: state.alerts,
+          strategy: state.strategy,
+        });
+        if (!result.ok && !result.demo) {
+          console.error('[onboarding] profile/capital/alerts did not save to the cloud:', result.error);
+        }
+      }
+
+      // Mark the account onboarded so the mandatory-onboarding gate releases.
+      if (isSupabaseConfigured()) {
+        try {
+          const supabase = createSupabaseBrowserClient();
+          await supabase?.auth.updateUser({ data: { onboarded: true } });
+        } catch (error) {
+          console.warn('Failed to mark account onboarded:', error);
+        }
+      } else {
+        // Demo mode has no auth backend - persist the onboarded flag in a cookie the
+        // middleware reads so the mandatory-onboarding gate releases on every route.
+        document.cookie = 'lyra_onboarded=1; path=/; max-age=31536000; samesite=lax';
+      }
+
+      // Submit watchlist items
+      for (const item of state.watchlist) {
+        try {
+          await fetch('/api/watchlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              symbol: item.symbol,
+              targetPrice: item.targetBuyPrice,
+              targetSignalScore: item.targetSignalScore,
+              notes: item.notes,
+            }),
+          });
+        } catch (error) {
+          console.error(`Failed to add ${item.symbol} to watchlist:`, error);
+        }
+      }
+
+      // Submit portfolio holdings using the new atomic REPLACE endpoint
+      if (state.portfolio.length > 0) {
+        try {
+          await fetch('/api/portfolio', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              holdings: state.portfolio.map(h => ({
+                symbol: h.symbol,
+                quantity: h.quantity || 1, // Will be validated by UI and API
+                averageBuyPrice: h.averageBuyPrice || 0, // Will be validated by UI and API
+                purchaseDate: h.purchaseDate,
+                notes: h.notes,
+              })),
+            }),
+          });
+        } catch (error) {
+          console.error('Failed to replace portfolio:', error);
+        }
+      }
+
+      // Demo mode has no DB, so /api/portfolio above no-ops. Persist the entered holdings
+      // locally so the command centre surfaces the user's real book, not the demo one.
+      saveLocalHoldings(
+        state.portfolio.map((holding) => ({
+          symbol: holding.symbol,
+          quantity: holding.quantity || 1,
+          averageBuyPrice: holding.averageBuyPrice || 0,
+          purchaseDate: holding.purchaseDate,
+          notes: holding.notes,
+        })),
+      );
+
+      // Snapshot the choices so the command centre personalises (no perpetual "New here?").
+      saveOnboardingSummary({
+        onboarded: true,
+        tradedBefore: state.profile?.tradedBefore === 'no' ? 'no' : 'yes',
+        portfolioCount: state.portfolio.length,
+        watchlistCount: state.watchlist.length,
+        experienceLevel: state.profile?.experienceLevel,
+        riskComfort: state.profile?.riskComfort,
       });
-      if (!result.ok && !result.demo) {
-        console.error('[onboarding] profile/capital/alerts did not save to the cloud:', result.error);
-      }
+
+      // Onboarding done - drop the resumable checkpoint so a re-visit starts clean.
+      clearOnboardingProgress();
+
+      // Show the success beat only AFTER all saves are done; it navigates to the command centre when done.
+      setPhase('complete');
+    } finally {
+      setIsSaving(false);
     }
-
-    // Mark the account onboarded so the mandatory-onboarding gate releases.
-    if (isSupabaseConfigured()) {
-      try {
-        const supabase = createSupabaseBrowserClient();
-        await supabase?.auth.updateUser({ data: { onboarded: true } });
-      } catch (error) {
-        console.warn('Failed to mark account onboarded:', error);
-      }
-    } else {
-      // Demo mode has no auth backend - persist the onboarded flag in a cookie the
-      // middleware reads so the mandatory-onboarding gate releases on every route.
-      document.cookie = 'lyra_onboarded=1; path=/; max-age=31536000; samesite=lax';
-    }
-
-    // Submit watchlist items
-    for (const item of state.watchlist) {
-      try {
-        await fetch('/api/watchlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            symbol: item.symbol,
-            targetPrice: item.targetBuyPrice,
-            targetSignalScore: item.targetSignalScore,
-            notes: item.notes,
-          }),
-        });
-      } catch (error) {
-        console.error(`Failed to add ${item.symbol} to watchlist:`, error);
-      }
-    }
-
-    // Submit portfolio holdings (ticker-only entries are valid per spec)
-    for (const holding of state.portfolio) {
-      try {
-        await fetch('/api/portfolio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            symbol: holding.symbol,
-            quantity: holding.quantity || 1, // Default to 1 if not specified
-            averageBuyPrice: holding.averageBuyPrice || 0, // Default to 0 if not specified
-            purchaseDate: holding.purchaseDate,
-            notes: holding.notes,
-          }),
-        });
-      } catch (error) {
-        console.error(`Failed to add ${holding.symbol} to portfolio:`, error);
-      }
-    }
-
-    // Demo mode has no DB, so /api/portfolio above no-ops. Persist the entered holdings
-    // locally so the command centre surfaces the user's real book, not the demo one.
-    saveLocalHoldings(
-      state.portfolio.map((holding) => ({
-        symbol: holding.symbol,
-        quantity: holding.quantity || 1,
-        averageBuyPrice: holding.averageBuyPrice || 0,
-        purchaseDate: holding.purchaseDate,
-        notes: holding.notes,
-      })),
-    );
-
-    // Snapshot the choices so the command centre personalises (no perpetual "New here?").
-    saveOnboardingSummary({
-      onboarded: true,
-      tradedBefore: state.profile?.tradedBefore === 'no' ? 'no' : 'yes',
-      portfolioCount: state.portfolio.length,
-      watchlistCount: state.watchlist.length,
-      experienceLevel: state.profile?.experienceLevel,
-      riskComfort: state.profile?.riskComfort,
-    });
-
-    // Navigation to the command centre is handled by SetupCompleteBeat (shown above).
   };
 
   const renderStep = () => {
@@ -292,7 +302,7 @@ export default function OnboardingPage() {
         return <AiInsightStep onNext={handleNext} />;
 
       case 9: // Summary / Ready
-        return <SetupSummaryCard state={state} onFinish={handleFinish} />;
+        return <SetupSummaryCard state={state} onFinish={handleFinish} isSaving={isSaving} />;
 
       default:
         return <div>Unknown step</div>;

@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         .upsert(
           {
             user_id: user.id,
-            operator_profile_completed: Boolean(body.profile.tradedBefore),
+            operator_profile_completed: true,
             completion_pct: Math.min(Math.max(body.completionPct, 0), 100),
             updated_at: new Date().toISOString(),
           },

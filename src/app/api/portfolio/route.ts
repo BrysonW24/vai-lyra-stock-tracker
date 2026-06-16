@@ -18,6 +18,16 @@ interface AddPortfolioRequest {
   notes?: string;
 }
 
+interface ReplacePortfolioRequest {
+  holdings: Array<{
+    symbol: string;
+    quantity: number | string;
+    averageBuyPrice: number | string;
+    purchaseDate?: string;
+    notes?: string;
+  }>;
+}
+
 interface DeletePortfolioRequest {
   id: string;
 }
@@ -94,6 +104,88 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, data });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 });
+  }
+}
+
+/**
+ * PUT /api/portfolio — Replace the user's entire active portfolio in a single atomic operation.
+ * Used by onboarding to ensure the submitted holdings fully replace any previously seeded or
+ * entered holdings. Steps:
+ *   1. Soft-delete all currently active rows for this user (is_active = false).
+ *   2. Insert the new holdings array as active rows.
+ * Holdings with quantity <= 0 or averageBuyPrice <= 0 are skipped (not rejected) so that
+ * a partial save never silently drops the whole batch.
+ */
+export async function PUT(request: NextRequest) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    if (!supabase) return demoResponse();
+
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+    if (!user) return unauthenticated();
+
+    const body = (await request.json()) as ReplacePortfolioRequest;
+
+    if (!Array.isArray(body.holdings)) {
+      return NextResponse.json({ ok: false, error: 'Missing required field: holdings (array)' }, { status: 400 });
+    }
+
+    // Step 1: deactivate all existing active positions for this user.
+    const { error: deactivateError } = await supabase
+      .from('portfolio_positions')
+      .update({ is_active: false })
+      .eq('user_id', user.id)
+      .eq('is_active', true);
+
+    if (deactivateError) {
+      return NextResponse.json(
+        { ok: false, error: `Failed to clear existing portfolio: ${deactivateError.message}` },
+        { status: 400 },
+      );
+    }
+
+    // Step 2: insert new holdings, skipping any that are invalid.
+    const skipped: string[] = [];
+    const rows = body.holdings
+      .map((h) => {
+        const symbol = String(h.symbol ?? '').toUpperCase().trim();
+        const quantity = parseFloat(String(h.quantity ?? 0));
+        const averageBuyPrice = parseFloat(String(h.averageBuyPrice ?? 0));
+        if (!symbol || quantity <= 0 || averageBuyPrice <= 0) {
+          if (symbol) skipped.push(symbol);
+          return null;
+        }
+        return {
+          user_id: user.id,
+          symbol,
+          quantity,
+          average_buy_price: averageBuyPrice,
+          brokerage_fee: 0,
+          purchase_date: h.purchaseDate || null,
+          notes: h.notes || null,
+          is_active: true,
+        };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+
+    if (rows.length === 0) {
+      // All holdings were invalid or the list was empty. Old rows have been deactivated.
+      return NextResponse.json({ ok: true, inserted: 0, skipped, replaced: true });
+    }
+
+    const { data, error: insertError } = await supabase.from('portfolio_positions').insert(rows).select();
+
+    if (insertError) {
+      return NextResponse.json(
+        { ok: false, error: `Portfolio cleared but re-insert failed: ${insertError.message}` },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json({ ok: true, inserted: data?.length ?? 0, skipped, replaced: true });
   } catch (err) {
     return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 });
   }

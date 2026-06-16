@@ -41,7 +41,7 @@ export function PortfolioBuilderTable({ portfolio, onChange, onNext, hideContinu
     <div className="space-y-3">
       <p className="text-[11px] leading-snug text-[#a8b5c2]">
         Add what you own - type any ticker (US or ASX) and we&apos;ll pull it live. Quantity and average price are
-        optional, but they unlock P/L and portfolio-risk alerts.
+        required for portfolio value and performance alerts.
       </p>
 
       <TickerLookupInput onAdd={add} existing={portfolio.map((h) => h.symbol)} ctaLabel="Add" />
@@ -123,7 +123,8 @@ export function PortfolioBuilderTable({ portfolio, onChange, onNext, hideContinu
       {!hideContinue && (
         <button
           onClick={onNext}
-          className="w-full rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
+          disabled={!portfolio.every(h => h.quantity != null && h.quantity > 0 && h.averageBuyPrice != null && h.averageBuyPrice > 0)}
+          className="w-full rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue
         </button>

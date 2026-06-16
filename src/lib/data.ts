@@ -287,7 +287,7 @@ function mapPortfolio(
 ): PortfolioHolding[] {
   const overlayBySymbol = latestPerSymbol(overlays);
 
-  return positions
+  const mapped = positions
     .filter((position) => position.is_active !== false)
     .map((position) => {
       const overlay = overlayBySymbol.get(position.symbol) ?? null;
@@ -320,6 +320,14 @@ function mapPortfolio(
         explanation: explanationFromPayload(overlay?.explanation ?? null, action),
       };
     });
+
+  const totalMarketValue = mapped.reduce((sum, h) => sum + h.marketValue, 0);
+
+  // If overlay didn't provide a weight, calculate it from the total market value
+  return mapped.map((h) => ({
+    ...h,
+    portfolioWeight: h.portfolioWeight > 0 ? h.portfolioWeight : (totalMarketValue > 0 ? (h.marketValue / totalMarketValue) * 100 : 0),
+  }));
 }
 
 function mapWatchlist(
@@ -412,9 +420,10 @@ export async function getDashboardData(): Promise<DashboardData> {
 
     // Portfolio + watchlist live in separate tables. Fetch them in their own guarded
     // block so a missing/empty overlay table never breaks the core dashboard - each
-    // field independently falls back to demo data.
-    let portfolio = demoDashboardData.portfolio;
-    let watchlist = demoDashboardData.watchlist;
+    // field independently falls back to demo data if not signed in, but allows empty
+    // arrays if the user is signed in.
+    let portfolio = userId ? ([] as PortfolioHolding[]) : demoDashboardData.portfolio;
+    let watchlist = userId ? ([] as WatchlistRow[]) : demoDashboardData.watchlist;
     let signalChanges = signals.length > 0 ? deriveSignalChanges(signals) : demoDashboardData.signalChanges;
 
     try {
@@ -431,23 +440,23 @@ export async function getDashboardData(): Promise<DashboardData> {
         supabase.from('watchlist_signal_overlay').select('*').order('candle_time', { ascending: false }).limit(200),
       ]);
 
-      if (!positionsResult.error && (positionsResult.data?.length ?? 0) > 0) {
+      if (!positionsResult.error) {
         const mapped = mapPortfolio(
-          positionsResult.data as PortfolioPositionRecord[],
+          (positionsResult.data ?? []) as PortfolioPositionRecord[],
           (portfolioOverlayResult.data ?? []) as PortfolioOverlayRecord[],
           signalsBySymbol,
         );
-        if (mapped.length > 0) portfolio = mapped;
+        if (userId || mapped.length > 0) portfolio = mapped;
       }
 
-      if (!watchlistItemsResult.error && (watchlistItemsResult.data?.length ?? 0) > 0) {
+      if (!watchlistItemsResult.error) {
         const mapped = mapWatchlist(
-          watchlistItemsResult.data as WatchlistItemRecord[],
+          (watchlistItemsResult.data ?? []) as WatchlistItemRecord[],
           (watchlistOverlayResult.data ?? []) as WatchlistOverlayRecord[],
           tickers,
           signalsBySymbol,
         );
-        if (mapped.length > 0) watchlist = mapped;
+        if (userId || mapped.length > 0) watchlist = mapped;
       }
     } catch {
       /* keep per-field demo fallback for portfolio/watchlist */

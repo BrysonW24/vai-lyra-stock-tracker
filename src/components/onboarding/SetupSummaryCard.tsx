@@ -1,13 +1,16 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
+
 import { OnboardingState, calculateSetupCompleteness } from '@/lib/onboarding';
 
 interface SetupSummaryCardProps {
   state: OnboardingState;
   onFinish: () => void;
+  isSaving?: boolean;
 }
 
-export function SetupSummaryCard({ state, onFinish }: SetupSummaryCardProps) {
+export function SetupSummaryCard({ state, onFinish, isSaving }: SetupSummaryCardProps) {
   const completeness = calculateSetupCompleteness(state);
   const profile = state.profile;
   const profileStr = profile?.experienceLevel
@@ -62,9 +65,11 @@ export function SetupSummaryCard({ state, onFinish }: SetupSummaryCardProps) {
 
       <button
         onClick={onFinish}
-        className="w-full rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
+        disabled={isSaving}
+        className="flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110 disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        Open command centre
+        {isSaving && <Loader2 size={16} className="animate-spin text-[#07090c]" />}
+        {isSaving ? 'Starting scanner...' : 'Open command centre'}
       </button>
     </div>
   );
