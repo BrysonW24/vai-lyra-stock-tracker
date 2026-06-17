@@ -297,7 +297,6 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
     }
   }
   async function execute() {
-    if (tourStep === 3) setTourStep(4);
     if (!intent) return;
     const r = await call('execute', { intent });
     setRun(r);
@@ -310,8 +309,9 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
           totalInvested: r.fill.notional, marketValue: r.fill.notional, unrealisedPnl: 0, unrealisedPnlPct: 0, openPositions: 1, fillCount: 1, startingEquity: 100000, equity: 100000, equityCurve: [100000, 100000], realisedPnl: 0, closedTrades: 0, winRate: 0, avgWin: 0, avgLoss: 0, expectancy: 0, dataSource: 'demo'
         });
       } else {
-        loadAccount();
+        await loadAccount();
       }
+      if (tourStep === 3) setTourStep(4);
     }
   }
 
