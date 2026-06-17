@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
 
 interface SaaSTooltipProps {
@@ -10,6 +11,15 @@ interface SaaSTooltipProps {
 }
 
 export function SaaSTooltip({ title, body, position = 'top', align = 'center' }: SaaSTooltipProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   let posClasses = '';
   switch (position) {
     case 'top':
@@ -48,7 +58,7 @@ export function SaaSTooltip({ title, body, position = 'top', align = 'center' }:
   }
 
   return (
-    <div className={`absolute z-50 w-64 ${posClasses}`}>
+    <div ref={ref} className={`absolute z-50 w-64 ${posClasses}`}>
       <div className="relative overflow-hidden rounded-xl border border-[#f3a33a]/50 bg-[#23180b]/95 p-3 shadow-2xl backdrop-blur-md">
         <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-[#f3a33a]/20 blur-xl" />
         <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#f3a33a]">
