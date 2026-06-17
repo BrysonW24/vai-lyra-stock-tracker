@@ -391,7 +391,7 @@ export function PaperAccountCharts({ positions, totalMarketValue, equityCurve, s
       <div className="flex border-b border-[#111d28]">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button key={id} type="button" onClick={() => setTab(id)}
-            className={`flex flex-1 items-center justify-center gap-1 py-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition-colors ${
+            className={`flex flex-1 items-center justify-center gap-1 py-2.5 text-[9.5px] font-semibold uppercase tracking-[0.08em] transition-colors ${
               tab === id ? 'border-b-2 border-[#8aa2ff] text-[#8aa2ff] bg-[#0b1220]' : 'text-[#4a5a6a] hover:text-[#8190a0]'
             }`}>
             <Icon size={11} />{label}

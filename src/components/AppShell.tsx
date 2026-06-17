@@ -247,13 +247,13 @@ export function AppShell({ data, children }: AppShellProps) {
               href={item.href}
               key={item.href}
               aria-current={isActive(item.href) ? 'page' : undefined}
-              className={`flex min-w-[66px] shrink-0 snap-start flex-col items-center gap-1.5 rounded-md px-1.5 py-2.5 text-[11px] font-medium transition ${
+              className={`flex min-w-[73px] shrink-0 snap-start flex-col items-center gap-2 rounded-md px-2 py-3 text-[12px] font-medium transition ${
                 isActive(item.href)
                   ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40'
                   : 'text-[#8190a0] active:bg-[#151c25]'
               }`}
             >
-              <item.icon size={20} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-80'} />
+              <item.icon size={22} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-80'} />
               <span className="whitespace-nowrap">{item.short}</span>
             </Link>
           ))}
