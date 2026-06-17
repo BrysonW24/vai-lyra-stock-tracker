@@ -382,8 +382,10 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
         {tourStep === 4 && (
           <SaaSTooltip
             title="Track it live"
-            body="Your simulated trade is now an open position! It tracks live P/L based on real market prices. Tour complete!"
+            body="Your simulated trade is now an open position! It tracks live P/L based on real market prices. Tour complete! 🎉"
             position="bottom"
+            onDismiss={() => setTourStep(-1)}
+            onReplay={() => setTourStep(0)}
           />
         )}
 
