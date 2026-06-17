@@ -156,6 +156,11 @@ export async function POST(request: NextRequest) {
         };
         const { recordPaperFill } = await import('@/lib/trading/paper-account-store');
         recordPaperFill(fill);
+        
+        // Persist it if authed so the 15-second polling doesn't erase the mock trade
+        const { persistFillIfAuthed } = await import('@/lib/trading/paper-account-repo');
+        await persistFillIfAuthed(fill, intent);
+
         const run = {
           status: 'paper_executed' as const,
           intent: { ...intent, status: 'paper_executed' as const },
