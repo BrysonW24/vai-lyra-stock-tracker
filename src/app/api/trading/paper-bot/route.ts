@@ -5,6 +5,7 @@ import type { OrderIntent } from '@/lib/trading/types';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { dispatchNotificationEvent } from '@/lib/notifications/dispatch';
+import { buildPaperOrderIntent } from '@/lib/trading/order-intent-builder';
 
 interface PaperBotRequest {
   action: 'propose' | 'approve' | 'execute';
@@ -95,17 +96,19 @@ export async function POST(request: NextRequest) {
 
     if (action === 'propose') {
       if (tour) {
-        const mockIntent: OrderIntent = {
-          id: `tour-intent-${Date.now()}`,
+        const mockIntent = buildPaperOrderIntent({
           userId: 'local',
           symbol: symbol || 'AAPL',
           side: 'buy',
           quantity: quantity || 10,
-          notionalValue: (quantity || 10) * 150,
-          reasonCode: 'tour_mode',
+          referencePrice: 150,
+          signalSnapshot: { score: 100, status: 'optimal' },
+          evidenceRefs: [],
           aiExplanation: 'Tour mode: Guaranteed to pass the AI evidence checks and risk gate.',
-          status: 'pending_approval'
-        };
+        });
+        mockIntent.status = 'pending_approval';
+        mockIntent.reasonCode = 'tour_mode';
+
         const run = {
           status: 'proposed' as const,
           verdict: { readiness: 'paper_trade_eligible', reasons: ['Tour mode: Perfect setup detected.', 'All risk checks overridden for onboarding.'], confidence: 0.99 },
