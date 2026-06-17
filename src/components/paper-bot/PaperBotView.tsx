@@ -8,6 +8,7 @@ import { SaaSTooltip } from './SaaSTooltip';
 import { PaperTickerInput } from './PaperTickerInput';
 import { PaperBotQuotes } from './PaperBotQuotes';
 import { Insight } from '@/components/Insight';
+import { PaperAccountCharts } from './PaperAccountCharts';
 
 interface MarketQuote {
   valid: boolean;
@@ -535,6 +536,16 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Allocation, Sector, P&L, Benchmark Charts */}
+            <div className="mt-3">
+              <PaperAccountCharts
+                positions={account.positions}
+                totalMarketValue={account.marketValue}
+                equityCurve={account.equityCurve}
+                startingEquity={account.startingEquity}
+              />
             </div>
 
             {/* Realised performance */}
