@@ -360,8 +360,8 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
         )}
       </div>
 
-      {/* Paper account analytics - compact: where you view + analyse the bot's track record */}
-      <div className={`terminal-panel rounded-md px-2.5 py-2 relative ${tourStep === 4 ? 'z-50' : ''}`}>
+      {/* Paper account analytics */}
+      <div className={`terminal-panel rounded-md p-4 relative ${tourStep === 4 ? 'z-50' : ''}`}>
         {tourStep === 4 && (
           <SaaSTooltip
             title="Track it live"
@@ -369,89 +369,184 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
             position="bottom"
           />
         )}
-        <div className="flex items-center gap-1.5">
-          <Wallet size={11} className="text-[#43d18b]" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#c8d3de]">Paper account</span>
-          {account && (
-            <span className={`rounded-sm border px-1 py-px text-[8px] font-semibold uppercase tracking-[0.08em] ${account.dataSource === 'persisted' ? 'border-[#1d7f55] bg-[#0d251b] text-[#43d18b]' : 'border-[#5a4a1a] bg-[#231a08] text-[#f3a33a]'}`}>
-              {account.dataSource === 'persisted' ? 'saved' : 'session'}
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="grid h-6 w-6 place-items-center rounded-md border border-[#43d18b]/30 bg-[#0d251b] text-[#43d18b]">
+              <Wallet size={13} />
             </span>
-          )}
-          {account && account.openPositions > 0 && (
-            <span className={`ml-1 font-mono text-[10px] ${pnlUp ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
-              {pnlUp ? '+' : ''}{account.unrealisedPnl} ({pnlUp ? '+' : ''}{account.unrealisedPnlPct}%)
-            </span>
-          )}
-          <span className="ml-auto text-[9px] text-[#6f7d8a]">{account?.fillCount ?? 0} fills · {account?.openPositions ?? 0} open</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#c8d3de]">Paper Account</span>
+            {account && (
+              <span className={`rounded-full border px-2 py-px text-[8px] font-semibold uppercase tracking-[0.08em] ${
+                account.dataSource === 'persisted' ? 'border-[#1d7f55] bg-[#0d251b] text-[#43d18b]' : 'border-[#5a4a1a] bg-[#231a08] text-[#f3a33a]'
+              }`}>
+                {account.dataSource === 'persisted' ? 'Saved' : 'Session'}
+              </span>
+            )}
+          </div>
+          <span className="text-[9px] text-[#6f7d8a]">{account?.fillCount ?? 0} fills · {account?.openPositions ?? 0} open</span>
         </div>
 
         {!account || (account.openPositions === 0 && account.closedTrades === 0) ? (
-          <p className="mt-1 text-[9.5px] leading-snug text-[#6f7d8a]">No positions yet. Approved fills accrue here, marked to the latest price with live P/L.</p>
+          /* Empty state */
+          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[#1d2733] py-8 text-center">
+            <div className="grid h-12 w-12 place-items-center rounded-full border border-[#1d2733] bg-[#0b1016]">
+              <TrendingUp size={20} className="text-[#3a4a5a]" />
+            </div>
+            <div>
+              <p className="text-[12px] font-semibold text-[#4a5a6a]">No positions yet</p>
+              <p className="mt-0.5 text-[10px] text-[#3a4a5a]">Approved fills appear here with live P/L tracking</p>
+            </div>
+          </div>
         ) : (
           <>
-            {/* Inline summary (one line, no boxes) */}
-            <div className="mt-1 flex items-center gap-3 font-mono text-[9.5px] text-[#8190a0]">
-              <span>inv <span className="text-[#dbe5ee]">${account.totalInvested.toLocaleString()}</span></span>
-              <span>val <span className="text-[#dbe5ee]">${account.marketValue.toLocaleString()}</span></span>
-              <span>equity <span className="text-[#dbe5ee]">${account.equity.toLocaleString()}</span></span>
+            {/* Hero equity stats */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="rounded-lg border border-[#1d2733] bg-[#080c11] p-2.5 text-center">
+                <p className="text-[8px] uppercase tracking-[0.1em] text-[#6f7d8a] mb-0.5">Equity</p>
+                <p className="font-mono text-[14px] font-bold text-[#eef3f8]">${account.equity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+              </div>
+              <div className="rounded-lg border border-[#1d2733] bg-[#080c11] p-2.5 text-center">
+                <p className="text-[8px] uppercase tracking-[0.1em] text-[#6f7d8a] mb-0.5">Unrealised P/L</p>
+                <p className={`font-mono text-[14px] font-bold ${pnlUp ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+                  {pnlUp ? '+' : ''}${account.unrealisedPnl.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+              </div>
+              <div className="rounded-lg border border-[#1d3a5a] bg-[#0b1626] p-2.5 text-center">
+                <p className="text-[8px] uppercase tracking-[0.1em] text-[#6f7d8a] mb-0.5">Cash Free</p>
+                <p className="font-mono text-[14px] font-bold text-[#8aa2ff]">
+                  ${(account.equity - account.totalInvested).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+              </div>
             </div>
 
-            {/* Realised performance (analytics from closed trades) */}
-            {account.closedTrades > 0 && (
-              <div className="mt-1 flex flex-wrap items-center gap-2.5 font-mono text-[9px]">
-                <span className={account.realisedPnl >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}>
-                  realised {account.realisedPnl >= 0 ? '+' : ''}{account.realisedPnl}
-                </span>
-                <span className="text-[#8190a0]">win {account.winRate}% · {account.closedTrades} closed</span>
-                <span className="text-[#8190a0]">exp {account.expectancy >= 0 ? '+' : ''}{account.expectancy}/trade</span>
-                {account.avgWin > 0 && <span className="text-[#5e6b78]">avg +{account.avgWin}/-{account.avgLoss}</span>}
-              </div>
-            )}
-
-            {/* Live equity curve (session) */}
+            {/* Equity curve chart */}
             {account.equityCurve && account.equityCurve.length >= 2 && (
-              <div className="mt-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[8px] uppercase tracking-[0.12em] text-[#6f7d8a]">Equity curve · live</span>
-                  <span className="text-[8px] text-[#5e6b78]">start ${account.startingEquity.toLocaleString()}</span>
+              <div className="mb-3 rounded-lg border border-[#1d2733] bg-[#080c11] p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] uppercase tracking-[0.12em] text-[#6f7d8a]">Portfolio Value Over Time</span>
+                  <span className={`text-[9px] font-semibold ${account.equity >= account.startingEquity ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+                    {account.equity >= account.startingEquity ? '▲' : '▼'} {Math.abs(((account.equity - account.startingEquity) / account.startingEquity) * 100).toFixed(2)}%
+                  </span>
                 </div>
-                <MiniSparkline values={account.equityCurve} color={account.equity >= account.startingEquity ? '#43d18b' : '#ff6b6b'} className="mt-0.5 h-8 w-full" />
+                <MiniSparkline
+                  values={account.equityCurve}
+                  color={account.equity >= account.startingEquity ? '#43d18b' : '#ff6b6b'}
+                  className="h-14 w-full"
+                />
+                <div className="mt-1 flex justify-between">
+                  <span className="text-[8px] text-[#5e6b78]">Start ${account.startingEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  <span className="text-[8px] text-[#5e6b78]">Now ${account.equity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                </div>
               </div>
             )}
 
-            {/* Per-position rows - one tight line each with a hairline P/L bar */}
-            <ul className="mt-1 space-y-0.5">
+            {/* Cash remaining bar */}
+            <div className="mb-3 rounded-lg border border-[#1d3a5a] bg-gradient-to-r from-[#0b1626] to-[#0d141c] px-3 py-2.5">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[9px] uppercase tracking-[0.1em] text-[#6f7d8a]">Capital Deployed</span>
+                <span className="font-mono text-[10px] text-[#8aa2ff]">{Math.round((account.totalInvested / account.equity) * 100)}%</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-[#0d141c]">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#3b5bdb] to-[#8aa2ff] transition-all duration-700"
+                  style={{ width: `${Math.min(100, (account.totalInvested / account.equity) * 100)}%` }}
+                />
+              </div>
+              <div className="mt-1 flex justify-between">
+                <span className="text-[8px] text-[#5e6b78]">Invested ${account.totalInvested.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                <span className="text-[8px] text-[#43d18b]">Free ${(account.equity - account.totalInvested).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              </div>
+            </div>
+
+            {/* Per-position cards */}
+            <div className="space-y-2">
+              <p className="text-[9px] uppercase tracking-[0.1em] text-[#6f7d8a]">Open Positions</p>
               {account.positions.map((p) => {
                 const up = p.unrealisedPnl >= 0;
-                const mag = Math.min(100, Math.abs(p.unrealisedPnlPct) * 6);
+                const mag = Math.min(100, Math.abs(p.unrealisedPnlPct) * 8);
                 return (
-                  <li key={p.symbol} className="py-0.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[10px] font-semibold text-[#eef3f8]">{p.symbol}</span>
-                      <span className="font-mono text-[9px] text-[#6f7d8a]">{p.quantity}@{p.avgEntryPrice}→{p.currentPrice}</span>
-                      <span className={`ml-auto font-mono text-[10px] ${up ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
-                        {up ? '+' : ''}{p.unrealisedPnl} ({up ? '+' : ''}{p.unrealisedPnlPct}%)
+                  <div key={p.symbol} className={`rounded-lg border p-3 transition ${
+                    up ? 'border-[#1d4a35] bg-gradient-to-r from-[#0a1e14] to-[#0d251b]' : 'border-[#4a1d2a] bg-gradient-to-r from-[#1e0a10] to-[#2b1214]'
+                  }`}>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[15px] font-bold text-[#eef3f8]">{p.symbol}</span>
+                          <span className="rounded-full border border-[#1d2733] bg-[#0b1016] px-2 py-px font-mono text-[9px] text-[#8190a0]">
+                            {p.quantity} units
+                          </span>
+                        </div>
+                        <p className="mt-0.5 font-mono text-[9px] text-[#6f7d8a]">
+                          Avg ${p.avgEntryPrice} → ${p.currentPrice}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-mono text-[14px] font-bold ${up ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+                          {up ? '+' : ''}${p.unrealisedPnl.toFixed(2)}
+                        </p>
+                        <p className={`font-mono text-[10px] ${up ? 'text-[#43d18b]/70' : 'text-[#ff6b6b]/70'}`}>
+                          {up ? '+' : ''}{p.unrealisedPnlPct}%
+                        </p>
+                      </div>
+                    </div>
+                    {/* P/L bar */}
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="flex-1 h-1 overflow-hidden rounded-full bg-[#11181f]">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            up ? 'bg-gradient-to-r from-[#1d7f55] to-[#43d18b]' : 'bg-gradient-to-r from-[#7f1d1d] to-[#ff6b6b]'
+                          }`}
+                          style={{ width: `${Math.max(4, mag)}%` }}
+                        />
+                      </div>
+                      <span className="font-mono text-[9px] text-[#5e6b78]">
+                        Val ${p.marketValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                       </span>
                       <button
                         type="button"
                         onClick={() => closePosition(p.symbol)}
                         disabled={closing !== null}
-                        className="inline-flex items-center rounded border border-[#3a2630] bg-[#1c1116] px-1.5 py-px font-mono text-[8px] uppercase tracking-wide text-[#e08a9a] transition hover:bg-[#26161d] disabled:opacity-50"
+                        className="inline-flex items-center rounded-md border border-[#3a2630] bg-[#1c1116] px-2 py-0.5 font-mono text-[8px] uppercase tracking-wide text-[#e08a9a] transition hover:bg-[#26161d] disabled:opacity-50"
                       >
-                        {closing === p.symbol ? <Loader2 size={9} className="animate-spin" /> : 'close'}
+                        {closing === p.symbol ? <Loader2 size={9} className="animate-spin" /> : 'Close'}
                       </button>
                     </div>
-                    <div className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-[#11181f]">
-                      <div className={`h-full rounded-full ${up ? 'bg-[#43d18b]' : 'bg-[#ff6b6b]'}`} style={{ width: `${Math.max(4, mag)}%` }} />
-                    </div>
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
-            <p className="mt-1 text-[8px] leading-snug text-[#5e6b78]">
+            </div>
+
+            {/* Realised performance */}
+            {account.closedTrades > 0 && (
+              <div className="mt-3 rounded-lg border border-[#1d2733] bg-[#080c11] px-3 py-2.5">
+                <p className="mb-2 text-[9px] uppercase tracking-[0.1em] text-[#6f7d8a]">Closed Trade Stats</p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-[8px] text-[#5e6b78]">Win Rate</p>
+                    <p className={`font-mono text-[13px] font-bold ${account.winRate >= 50 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>{account.winRate}%</p>
+                  </div>
+                  <div>
+                    <p className="text-[8px] text-[#5e6b78]">Realised</p>
+                    <p className={`font-mono text-[13px] font-bold ${account.realisedPnl >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+                      {account.realisedPnl >= 0 ? '+' : ''}${account.realisedPnl}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[8px] text-[#5e6b78]">Expectancy</p>
+                    <p className={`font-mono text-[13px] font-bold ${account.expectancy >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+                      {account.expectancy >= 0 ? '+' : ''}${account.expectancy}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <p className="mt-2 text-[8px] leading-snug text-[#5e6b78]">
               {account.dataSource === 'persisted'
-                ? 'Saved to your account - positions, trades and equity curve survive restarts.'
-                : 'In-memory this session. Sign in (with Supabase configured) for a durable, saved track record.'}
+                ? 'Saved — positions, trades and equity curve survive app restarts.'
+                : 'In-memory this session. Sign in for a persistent saved track record.'}
             </p>
           </>
         )}
@@ -527,47 +622,109 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
       </div>
 
       {/* Propose form */}
-      <div className={`terminal-panel rounded-md p-3 relative ${tourStep === 0 ? 'z-50' : ''}`}>
-        <div className="flex flex-wrap items-end gap-2">
-          <div>
-            <label className="mb-0.5 block text-[10px] font-medium uppercase tracking-wide text-[#8190a0]">Symbol</label>
+      <div className={`terminal-panel rounded-md p-4 relative ${tourStep === 0 ? 'z-50' : ''}`}>
+        {/* Section header */}
+        <div className="mb-3 flex items-center gap-2">
+          <span className="grid h-6 w-6 place-items-center rounded-md border border-[#8aa2ff]/30 bg-[#101a2e] text-[#8aa2ff]">
+            <Bot size={13} />
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#c8d3de]">Propose a Paper Trade</span>
+        </div>
+
+        {/* Buying power banner */}
+        {account && (
+          <div className="mb-3 rounded-lg border border-[#1d3a5a] bg-gradient-to-r from-[#0b1626] to-[#101a2e] p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-[#6f7d8a]">Buying Power</span>
+              <span className="text-[9px] text-[#6f7d8a]">{account.openPositions} position{account.openPositions !== 1 ? 's' : ''} open</span>
+            </div>
+            <div className="mt-1 flex items-end justify-between">
+              <span className="font-mono text-[20px] font-bold text-[#dbe5ee]">
+                ${(account.equity - account.totalInvested).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </span>
+              <span className="text-[10px] text-[#8190a0]">of ${account.equity.toLocaleString(undefined, { maximumFractionDigits: 0 })} equity</span>
+            </div>
+            {/* Cash utilisation bar */}
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#0d141c]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#3b5bdb] to-[#8aa2ff] transition-all duration-500"
+                style={{ width: `${Math.min(100, (account.totalInvested / account.equity) * 100)}%` }}
+              />
+            </div>
+            <div className="mt-1 flex justify-between">
+              <span className="text-[8px] text-[#5e6b78]">Invested ${account.totalInvested.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              <span className="text-[8px] text-[#5e6b78]">{Math.round((account.totalInvested / account.equity) * 100)}% deployed</span>
+            </div>
+          </div>
+        )}
+
+        {/* Inputs row */}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[90px]">
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8190a0]">Symbol</label>
             <input
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              className="w-28 rounded border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 font-mono text-[13px] text-[#dbe5ee] outline-none focus:border-[#8aa2ff]/50"
+              className="w-full rounded-lg border border-[#263241] bg-[#0d141c] px-3 py-2 font-mono text-[15px] font-bold text-[#dbe5ee] outline-none focus:border-[#8aa2ff]/70 focus:ring-1 focus:ring-[#8aa2ff]/20 transition"
             />
           </div>
-          <div>
-            <label className="mb-0.5 block text-[10px] font-medium uppercase tracking-wide text-[#8190a0]">Quantity</label>
+          <div className="flex-1 min-w-[80px]">
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8190a0]">Qty (shares)</label>
             <input
               type="number"
               value={quantity}
               min={1}
               onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
-              className="w-24 rounded border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 font-mono text-[13px] text-[#dbe5ee] outline-none focus:border-[#8aa2ff]/50"
+              className="w-full rounded-lg border border-[#263241] bg-[#0d141c] px-3 py-2 font-mono text-[15px] font-bold text-[#dbe5ee] outline-none focus:border-[#8aa2ff]/70 focus:ring-1 focus:ring-[#8aa2ff]/20 transition"
             />
           </div>
-          <div className="relative">
-            {tourStep === 0 && (
-              <SaaSTooltip
-                title="Propose a trade"
-                body="Click this to ask the AI to evaluate an AAPL trade. The AI explains, and the deterministic code builds the order."
-                position="top"
-                align="left"
-              />
-            )}
-            <button
-              type="button"
-              onClick={propose}
-              disabled={busy !== null}
-              className="inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-[#101a2e] px-3 py-1.5 text-xs font-semibold text-[#8aa2ff] transition hover:bg-[#13203a] disabled:opacity-50"
-            >
-              {busy === 'propose' ? <Loader2 size={13} className="animate-spin" /> : <Bot size={13} />} Propose paper trade
-            </button>
-          </div>
         </div>
-        <p className="mt-2 text-[9.5px] leading-snug text-[#6f7d8a]">
-          The AI assesses readiness and explains; deterministic code builds the order; the risk engine gates it; you approve before any simulated fill. Research, not advice.
+
+        {/* Live estimated value */}
+        <div className="mt-3 flex items-center justify-between rounded-lg border border-[#1d2733] bg-[#080c11] px-3 py-2.5">
+          <div>
+            <p className="text-[9px] uppercase tracking-[0.1em] text-[#6f7d8a]">Est. Order Value</p>
+            <p className="font-mono text-[17px] font-bold text-[#eef3f8]">
+              ~${intent?.notionalValue ? intent.notionalValue.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—'}
+            </p>
+          </div>
+          {account && intent?.notionalValue && (
+            <div className="text-right">
+              <p className="text-[9px] uppercase tracking-[0.1em] text-[#6f7d8a]">Cash after</p>
+              <p className={`font-mono text-[14px] font-semibold ${
+                (account.equity - account.totalInvested - intent.notionalValue) < 0 ? 'text-[#ff6b6b]' : 'text-[#43d18b]'
+              }`}>
+                ${Math.max(0, account.equity - account.totalInvested - intent.notionalValue).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </p>
+            </div>
+          )}
+          {!intent?.notionalValue && (
+            <p className="text-[9px] text-[#5e6b78]">Propose to see exact value</p>
+          )}
+        </div>
+
+        {/* CTA */}
+        <div className="relative mt-3">
+          {tourStep === 0 && (
+            <SaaSTooltip
+              title="Propose a trade"
+              body="Click this to ask the AI to evaluate an AAPL trade. The AI explains, and the deterministic code builds the order."
+              position="top"
+              align="left"
+            />
+          )}
+          <button
+            type="button"
+            onClick={propose}
+            disabled={busy !== null}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-[#8aa2ff]/40 bg-gradient-to-r from-[#101a2e] to-[#13203a] px-4 py-2.5 text-[13px] font-semibold text-[#8aa2ff] transition hover:border-[#8aa2ff]/70 hover:from-[#13203a] hover:to-[#1a2d50] disabled:opacity-50"
+          >
+            {busy === 'propose' ? <Loader2 size={14} className="animate-spin" /> : <Bot size={14} />}
+            Propose Paper Trade
+          </button>
+        </div>
+        <p className="mt-2 text-[9px] leading-snug text-[#5e6b78]">
+          AI assesses readiness · deterministic code builds the order · risk engine gates it · you approve before any fill. Research, not advice.
         </p>
       </div>
 
