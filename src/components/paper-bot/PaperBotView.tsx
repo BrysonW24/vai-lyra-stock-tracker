@@ -160,7 +160,10 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
   const [quantity, setQuantity] = useState(10);
   const [liveQuote, setLiveQuote] = useState<MarketQuote | null>(null);
   const [alertsOn, setAlertsOn] = useState(true);
-  const [tourStep, setTourStep] = useState<number>(isTour ? 0 : -1);
+  const [tourStep, setTourStep] = useState<number>(() => {
+    if (typeof window === 'undefined') return -1;
+    return localStorage.getItem('lyra.paperTourDismissed') === 'true' ? -1 : (isTour ? 0 : -1);
+  });
   const [run, setRun] = useState<BotRun | null>(null);
   const [intent, setIntent] = useState<Intent | null>(null);
   const [busy, setBusy] = useState<Action | null>(null);
@@ -337,9 +340,22 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
             <h1 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#c8d3de]">Paper Bot</h1>
             <p className="text-[10px] text-[#8190a0]">Practise the pipeline with fake money + real prices. AI explains; you approve; code fills on paper.</p>
           </div>
-          <span className="ml-auto inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[#1d7f55] bg-[#0d251b] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-[#43d18b]">
-            <ShieldCheck size={10} className="shrink-0" /> Live trading disabled
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.setItem('lyra.paperTourDismissed', 'false');
+                setTourStep(0);
+              }}
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#263241] bg-[#0d141c] font-mono text-[11px] font-bold text-[#8190a0] transition hover:border-[#8aa2ff]/40 hover:bg-[#101a2e] hover:text-[#8aa2ff]"
+              title="Restart Tour"
+            >
+              ?
+            </button>
+            <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[#1d7f55] bg-[#0d251b] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-[#43d18b]">
+              <ShieldCheck size={10} className="shrink-0" /> Live trading disabled
+            </span>
+          </div>
         </div>
       </div>
 
@@ -385,7 +401,10 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
             title="Track it live"
             body="Your simulated trade is now an open position! It tracks live P/L based on real market prices. Tour complete! 🎉"
             position="bottom"
-            onDismiss={() => setTourStep(-1)}
+            onDismiss={() => {
+              localStorage.setItem('lyra.paperTourDismissed', 'true');
+              setTourStep(-1);
+            }}
             onReplay={() => setTourStep(0)}
           />
         )}
