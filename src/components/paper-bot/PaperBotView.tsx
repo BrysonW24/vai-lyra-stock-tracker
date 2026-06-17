@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bot, ShieldCheck, Loader2, CheckCircle2, XCircle, AlertTriangle, ArrowRight, Activity, Sparkles, Calculator, Wallet, TrendingUp, Terminal, Bell, CornerDownLeft, BellRing, BellOff, BadgePercent } from 'lucide-react';
 import { loadAi } from '@/lib/account';
-import { MiniSparkline } from '@/components/ChartPrimitives';
+import { MiniSparkline, MiniCandlestick } from '@/components/ChartPrimitives';
+import { TickerLogo } from '@/components/TickerLogo';
 import { SaaSTooltip } from './SaaSTooltip';
 import { PaperTickerInput } from './PaperTickerInput';
 import { PaperBotQuotes } from './PaperBotQuotes';
@@ -176,6 +177,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
   const [cliInput, setCliInput] = useState('');
   const [cliBusy, setCliBusy] = useState(false);
   const [closing, setClosing] = useState<string | null>(null);
+  const [chartType, setChartType] = useState<'line' | 'candle'>('line');
   const cliEndRef = useRef<HTMLDivElement>(null);
 
   const loadAccount = useCallback(async () => {
@@ -461,25 +463,66 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
             </div>
 
             {/* Equity curve chart */}
-            {account.equityCurve && account.equityCurve.length >= 2 && (
-              <div className="mb-3 rounded-lg border border-[#1d2733] bg-[#080c11] p-3">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[9px] uppercase tracking-[0.12em] text-[#6f7d8a]">Portfolio Value Over Time</span>
-                  <span className={`text-[9px] font-semibold ${account.equity >= account.startingEquity ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
-                    {account.equity >= account.startingEquity ? '▲' : '▼'} {Math.abs(((account.equity - account.startingEquity) / account.startingEquity) * 100).toFixed(2)}%
-                  </span>
+            {account.equityCurve && account.equityCurve.length >= 2 && (() => {
+              const days = account.equityCurve.length;
+              const startDate = new Date(Date.now() - (days - 1) * 86400000);
+              const startLabel = startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+              const nowLabel = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+              return (
+                <div className="mb-3 rounded-lg border border-[#1d2733] bg-[#080c11] p-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[9px] uppercase tracking-[0.12em] text-[#6f7d8a]">Portfolio Value Over Time</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex rounded-md bg-[#0d141c] p-0.5 border border-[#1d2733]">
+                        <button
+                          type="button"
+                          onClick={() => setChartType('line')}
+                          className={`rounded px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider transition-colors ${
+                            chartType === 'line'
+                              ? 'bg-[#1e2d3d] text-[#eef3f8]'
+                              : 'text-[#5e6b78] hover:text-[#8190a0]'
+                          }`}
+                        >
+                          Line
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setChartType('candle')}
+                          className={`rounded px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider transition-colors ${
+                            chartType === 'candle'
+                              ? 'bg-[#1e2d3d] text-[#eef3f8]'
+                              : 'text-[#5e6b78] hover:text-[#8190a0]'
+                          }`}
+                        >
+                          Candle
+                        </button>
+                      </div>
+                      <span className={`text-[9px] font-semibold ${account.equity >= account.startingEquity ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+                        {account.equity >= account.startingEquity ? '▲' : '▼'} {Math.abs(((account.equity - account.startingEquity) / account.startingEquity) * 100).toFixed(2)}%
+                      </span>
+                    </div>
+                  </div>
+                  {chartType === 'line' ? (
+                    <MiniSparkline
+                      values={account.equityCurve}
+                      color={account.equity >= account.startingEquity ? '#43d18b' : '#ff6b6b'}
+                      className="h-14 w-full"
+                    />
+                  ) : (
+                    <MiniCandlestick
+                      values={account.equityCurve}
+                      positiveColor="#43d18b"
+                      negativeColor="#ff6b6b"
+                      className="h-14 w-full"
+                    />
+                  )}
+                  <div className="mt-1 flex justify-between">
+                    <span className="text-[8px] text-[#5e6b78]">Start ({startLabel}) ${account.startingEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    <span className="text-[8px] text-[#5e6b78]">Now ({nowLabel}) ${account.equity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  </div>
                 </div>
-                <MiniSparkline
-                  values={account.equityCurve}
-                  color={account.equity >= account.startingEquity ? '#43d18b' : '#ff6b6b'}
-                  className="h-14 w-full"
-                />
-                <div className="mt-1 flex justify-between">
-                  <span className="text-[8px] text-[#5e6b78]">Start ${account.startingEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                  <span className="text-[8px] text-[#5e6b78]">Now ${account.equity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Cash remaining bar */}
             <div className="mb-3 rounded-lg border border-[#1d3a5a] bg-gradient-to-r from-[#0b1626] to-[#0d141c] px-3 py-2.5">
@@ -512,6 +555,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="flex items-center gap-2">
+                          <TickerLogo symbol={p.symbol} size={20} />
                           <span className="font-mono text-[15px] font-bold text-[#eef3f8]">{p.symbol}</span>
                           <span className="rounded-full border border-[#1d2733] bg-[#0b1016] px-2 py-px font-mono text-[9px] text-[#8190a0]">
                             {p.quantity} units

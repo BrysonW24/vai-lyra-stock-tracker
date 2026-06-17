@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PieChart, BarChart2, TrendingUp, Globe } from 'lucide-react';
+import { TickerLogo } from '@/components/TickerLogo';
 
 const SECTOR_MAP: Record<string, string> = {
   AAPL:'Tech',MSFT:'Tech',NVDA:'Tech',AMD:'Tech',GOOGL:'Tech',GOOG:'Tech',
@@ -114,7 +115,8 @@ function DonutChart({ slices }: { slices: { label: string; pct: number; color: s
         {arcs.map(a => (
           <li key={a.label} className="flex items-center gap-2 cursor-pointer"
             onMouseEnter={() => setHovered(a.label)} onMouseLeave={() => setHovered(null)}>
-            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: a.color }} />
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: a.color }} />
+            <TickerLogo symbol={a.label} size={14} />
             <span className={`font-mono text-[11px] font-bold transition-colors ${hovered === a.label ? 'text-[#eef3f8]' : 'text-[#8190a0]'}`}>{a.label}</span>
             <span className="ml-auto font-mono text-[10px] text-[#5e6b78]">{a.pct.toFixed(1)}%</span>
           </li>
@@ -158,8 +160,9 @@ function PnlBars({ positions, colors }: { positions: Position[]; colors: string[
         return (
           <li key={p.symbol}>
             <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
+                <TickerLogo symbol={p.symbol} size={14} />
                 <span className="font-mono text-[11px] font-bold text-[#c8d3de]">{p.symbol}</span>
               </div>
               <span className={`font-mono text-[11px] font-semibold ${up ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
@@ -313,14 +316,16 @@ function BenchmarkChart({
                 </div>
               );
             })}
-            <p className="mt-1 text-center font-mono text-[8px] text-[#3a4a5a]">Day {hovered.idx + 1} of 30</p>
+            <p className="mt-1 text-center font-mono text-[8px] text-[#3a4a5a]">
+              {new Date(Date.now() - (days - 1 - hovered.idx) * 86400000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+            </p>
           </div>
         )}
       </div>
 
       {/* X-axis labels */}
       <div className="mt-1 flex justify-between px-1">
-        <span className="font-mono text-[8px] text-[#3a4a5a]">30d ago</span>
+        <span className="font-mono text-[8px] text-[#3a4a5a]">{new Date(Date.now() - 30 * 86400000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
         <span className="font-mono text-[8px] text-[#3a4a5a]">Today</span>
       </div>
 
@@ -391,7 +396,7 @@ export function PaperAccountCharts({ positions, totalMarketValue, equityCurve, s
       <div className="flex border-b border-[#111d28]">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button key={id} type="button" onClick={() => setTab(id)}
-            className={`flex flex-1 items-center justify-center gap-1 py-2.5 text-[9.5px] font-semibold uppercase tracking-[0.08em] transition-colors ${
+            className={`flex flex-1 items-center justify-center gap-1 py-2.5 text-[8.5px] font-semibold uppercase tracking-[0.08em] transition-colors ${
               tab === id ? 'border-b-2 border-[#8aa2ff] text-[#8aa2ff] bg-[#0b1220]' : 'text-[#4a5a6a] hover:text-[#8190a0]'
             }`}>
             <Icon size={11} />{label}

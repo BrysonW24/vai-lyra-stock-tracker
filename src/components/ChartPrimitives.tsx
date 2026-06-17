@@ -111,6 +111,105 @@ export function MiniSparkline({
   );
 }
 
+export function MiniCandlestick({
+  values,
+  positiveColor = '#43d18b',
+  negativeColor = '#ff6b6b',
+  height = 56,
+  className = 'h-14 w-full',
+}: {
+  values: number[];
+  positiveColor?: string;
+  negativeColor?: string;
+  height?: number;
+  className?: string;
+}) {
+  const width = 160;
+
+  // Generate OHLC data from the 1D values array
+  const candles = useMemo(() => {
+    return values.map((val, i) => {
+      const close = val;
+      const open = i === 0 ? val : values[i - 1];
+      const diff = Math.abs(close - open);
+      const baseNoise = Math.max(close, open) * 0.003; // 0.3% baseline volatility
+      const high = Math.max(open, close) + Math.max(diff * 0.2, baseNoise * 0.4);
+      const low = Math.min(open, close) - Math.max(diff * 0.2, baseNoise * 0.4);
+      return { open, high, low, close };
+    });
+  }, [values]);
+
+  const { min, max } = useMemo(() => {
+    const lows = candles.map((c) => c.low);
+    const highs = candles.map((c) => c.high);
+    const minVal = Math.min(...lows);
+    const maxVal = Math.max(...highs);
+    if (minVal === maxVal) {
+      return { min: minVal - 1, max: maxVal + 1 };
+    }
+    return { min: minVal, max: maxVal };
+  }, [candles]);
+
+  const pad = 4;
+  const plotW = width - pad * 2;
+  const plotH = height - pad * 2;
+  const step = candles.length > 1 ? plotW / (candles.length - 1) : 0;
+  const candleW = Math.max(1.5, Math.min(6, step * 0.6));
+
+  return (
+    <svg
+      className={`${className} overflow-visible`}
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
+      role="img"
+      aria-label="Candlestick chart"
+      shapeRendering="geometricPrecision"
+    >
+      {candles.map((candle, index) => {
+        const x = pad + step * index;
+        const range = max - min || 1;
+        const yOpen = height - pad - ((candle.open - min) / range) * plotH;
+        const yClose = height - pad - ((candle.close - min) / range) * plotH;
+        const yHigh = height - pad - ((candle.high - min) / range) * plotH;
+        const yLow = height - pad - ((candle.low - min) / range) * plotH;
+
+        const isBullish = candle.close >= candle.open;
+        const bodyColor = isBullish ? positiveColor : negativeColor;
+        const bodyY = Math.min(yOpen, yClose);
+        const bodyH = Math.max(1.5, Math.abs(yOpen - yClose));
+
+        return (
+          <g key={index}>
+            {/* Wick */}
+            <line
+              x1={x}
+              y1={yHigh}
+              x2={x}
+              y2={yLow}
+              stroke={bodyColor}
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
+            {/* Body */}
+            <rect
+              x={x - candleW / 2}
+              y={bodyY}
+              width={candleW}
+              height={bodyH}
+              fill={bodyColor}
+              stroke={bodyColor}
+              strokeWidth="0.5"
+              rx={0.5}
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+
 export function DenseLineChart({
   title,
   subtitle,
