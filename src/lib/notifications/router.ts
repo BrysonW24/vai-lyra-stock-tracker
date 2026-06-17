@@ -33,6 +33,8 @@ export interface RouteOptions {
   now?: Date;
   /** Dedupe keys already delivered inside the collapse window (typically same-day). */
   recentDedupeKeys?: string[];
+  /** Bypass quiet hours and instant-alerts deferral logic. Used for test notifications. */
+  forceInstant?: boolean;
 }
 
 /** Stable machine-readable drop reasons so callers and audits never string-match prose. */
@@ -279,6 +281,10 @@ export function routeNotification(
   // nowhere to send, deferred or otherwise.
   if (channels.length === 0) {
     return { deliver: false, reason: DROP_REASONS.noChannels };
+  }
+
+  if (opts.forceInstant) {
+    return { deliver: true, channels, deferredToDigest: false };
   }
 
   // 9. Quiet hours - non-critical events inside the window (including overnight

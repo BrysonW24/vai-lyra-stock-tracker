@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="lyra-grad" x1="0" y1="512" x2="512" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3b5bdb" />
+      <stop offset="0.55" stop-color="#43d18b" />
+      <stop offset="1" stop-color="#f3a33a" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#lyra-grad)" />
+  <path d="M192 320L320 192M320 192H216M320 192V296" stroke="white" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

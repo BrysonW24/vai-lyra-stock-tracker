@@ -59,6 +59,7 @@ export interface DispatchNotificationInput {
   dedupeKey?: string;
   idempotencyKey?: string;
   now?: Date;
+  forceInstant?: boolean;
 }
 
 export interface DispatchNotificationResult {
@@ -366,7 +367,7 @@ export async function dispatchNotificationEvent(
   };
 
   const { prefs, channels } = await loadPreferences(supabase, input.userId);
-  const decision = routeNotification(event, prefs, { now });
+  const decision = routeNotification(event, prefs, { now, forceInstant: input.forceInstant });
   if (!decision.deliver) {
     await insertDelivery(supabase, {
       eventId: event.id,

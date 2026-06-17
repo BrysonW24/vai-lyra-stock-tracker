@@ -324,3 +324,24 @@ describe('isWithinQuietHours', () => {
     expect(isWithinQuietHours(LATE_NIGHT, '22:00', '22:00')).toBe(false);
   });
 });
+
+describe('routeNotification - forceInstant', () => {
+  const quietPrefs = prefs({ quietHoursEnabled: true, quietStart: '22:00', quietEnd: '07:00' });
+
+  it('delivers instantly during quiet hours when forceInstant is true', () => {
+    const decision = routeNotification(event(), quietPrefs, { now: LATE_NIGHT, forceInstant: true });
+    expect(decision).toEqual({ deliver: true, channels: ['telegram', 'whatsapp'], deferredToDigest: false });
+  });
+
+  it('delivers instantly even if instant alerts toggle is off when forceInstant is true', () => {
+    const noInstantPrefs = prefs({ instantAlerts: false });
+    const decision = routeNotification(event(), noInstantPrefs, { now: DAYTIME, forceInstant: true });
+    expect(decision).toEqual({ deliver: true, channels: ['telegram', 'whatsapp'], deferredToDigest: false });
+  });
+
+  it('still drops if there are no enabled channels', () => {
+    const noChannelsPrefs = prefs({ telegramEnabled: false, whatsappEnabled: false, pushEnabled: false });
+    const decision = routeNotification(event(), noChannelsPrefs, { now: DAYTIME, forceInstant: true });
+    expect(decision).toEqual({ deliver: false, reason: DROP_REASONS.noChannels });
+  });
+});

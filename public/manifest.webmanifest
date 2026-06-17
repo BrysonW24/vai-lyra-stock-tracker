@@ -1,5 +1,5 @@
 {
-  "name": "Lyra Stock Tracker",
+  "name": "Lyra",
   "short_name": "Lyra",
   "description": "Momentum, portfolio, watchlist, and market-intelligence alerts.",
   "start_url": "/?source=pwa",

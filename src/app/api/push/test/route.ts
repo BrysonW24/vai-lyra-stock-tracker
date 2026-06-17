@@ -28,6 +28,7 @@ export async function POST() {
       url: '/account',
       dedupeKey: `test_notification:${user.id}:${Date.now()}`,
       payload: { source: 'push_test' },
+      forceInstant: true,
     });
 
     return NextResponse.json(result);

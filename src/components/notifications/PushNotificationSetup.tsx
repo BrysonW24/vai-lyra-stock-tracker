@@ -86,6 +86,7 @@ export function PushNotificationSetup() {
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<any>(null);
 
   const pushEnabled = prefs.pushEnabled && activePushCount > 0;
   const permissionLabel = useMemo(() => {
@@ -214,12 +215,13 @@ export function PushNotificationSetup() {
   async function sendTest() {
     setBusy('test');
     setError(null);
+    setTestResult(null);
+    setNotice(null);
     try {
       const response = await fetch('/api/push/test', { method: 'POST' });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.errors?.[0] || data.error || 'Could not send test notification.');
-      setNotice(data.deliveredChannels?.includes('push') ? 'Test notification sent.' : 'Test logged.');
-      setTimeout(() => setNotice(null), 2200);
+      setTestResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not send test notification.');
     } finally {
@@ -304,6 +306,32 @@ export function PushNotificationSetup() {
           </button>
         </div>
 
+        {testResult && (
+          <div className="mt-2 rounded-md border border-[#263241] bg-[#0d141c] p-3 text-[12px]">
+            {testResult.deliveredChannels?.includes('push') ? (
+              <p className="font-semibold text-[#43d18b] mb-1">✓ Test push sent</p>
+            ) : (
+              <p className="font-semibold text-[#f3a33a] mb-1">
+                {testResult.suppressedChannels?.includes('push') ? 'Test logged but suppressed' : 'Push not delivered'}
+              </p>
+            )}
+            
+            {testResult.errors && testResult.errors.length > 0 && (
+              <p className="text-[#ff6b6b] mt-1 break-all font-mono text-[10px]">Error: {testResult.errors.join(', ')}</p>
+            )}
+            {testResult.routeReason && (
+              <p className="text-[#8190a0] mt-1 text-[11px]">Reason: {testResult.routeReason}</p>
+            )}
+            
+            <div className="mt-2 border-t border-[#1b2530] pt-2 font-mono text-[10px] text-[#6f7d8a]">
+              <p>eventId: {testResult.eventId || 'none'}</p>
+              <p>route: {testResult.routeReason === 'forced instant' ? 'force instant' : testResult.routeReason || 'default'}</p>
+              <p>channels: {testResult.deliveredChannels?.length ? testResult.deliveredChannels.join(', ') : 'none'}</p>
+              <p>delivery: {testResult.deliveredChannels?.includes('push') ? 'sent' : testResult.errors?.length ? 'failed' : testResult.suppressedChannels?.includes('push') ? 'suppressed' : 'logged'}</p>
+            </div>
+          </div>
+        )}
+
         {settingsLoaded && !pushConfigured && (
           <p className="text-[11px] leading-snug text-[#f3a33a]">VAPID keys are not configured in this environment.</p>
         )}
@@ -384,6 +412,12 @@ export function PushNotificationSetup() {
             </label>
             <input id="quiet-end" type="time" value={prefs.quietEnd} onChange={(event) => updatePrefs({ quietEnd: event.target.value })} className={inputClass} />
           </div>
+        </div>
+        
+        <div className="flex">
+          <button type="button" onClick={() => savePrefs()} disabled={busy !== null} className={secondaryButton}>
+            <Save size={13} /> {busy === 'prefs' ? 'Saving...' : 'Save preferences'}
+          </button>
         </div>
 
         <div className="divide-y divide-[#1b2530]">
