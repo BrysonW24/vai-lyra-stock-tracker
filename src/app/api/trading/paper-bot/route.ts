@@ -12,6 +12,7 @@ interface PaperBotRequest {
   quantity?: number;
   intent?: OrderIntent;
   ai?: { provider: AiProvider; apiKey: string; model?: string };
+  tour?: boolean;
 }
 
 async function dispatchPaperBotNotification(params: {
@@ -90,9 +91,31 @@ async function dispatchPaperBotNotification(params: {
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as PaperBotRequest;
-    const { action, symbol, quantity, intent, ai } = body;
+    const { action, symbol, quantity, intent, ai, tour } = body;
 
     if (action === 'propose') {
+      if (tour) {
+        const mockIntent: OrderIntent = {
+          id: `tour-intent-${Date.now()}`,
+          userId: 'local',
+          symbol: symbol || 'AAPL',
+          side: 'buy',
+          quantity: quantity || 10,
+          notionalValue: (quantity || 10) * 150,
+          reasonCode: 'tour_mode',
+          aiExplanation: 'Tour mode: Guaranteed to pass the AI evidence checks and risk gate.',
+          status: 'pending_approval'
+        };
+        const run = {
+          status: 'proposed' as const,
+          verdict: { readiness: 'paper_trade_eligible', reasons: ['Tour mode: Perfect setup detected.', 'All risk checks overridden for onboarding.'], confidence: 0.99 },
+          report: { passed: true, requiresApproval: true, blocking: [], warnings: [] },
+          intent: mockIntent,
+          requiresApproval: true
+        };
+        return NextResponse.json({ ok: true, ...run });
+      }
+
       if (!ai || !symbol) return NextResponse.json({ ok: false, reason: 'bad_request' });
       const creds = resolveAiCredentials(ai);
       if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
@@ -115,6 +138,30 @@ export async function POST(request: NextRequest) {
       if (intent.status !== 'approved') {
         return NextResponse.json({ ok: false, reason: 'not_approved', intentStatus: intent.status });
       }
+
+      if (tour || intent.reasonCode === 'tour_mode') {
+        const fill = {
+          symbol: intent.symbol,
+          side: intent.side,
+          quantity: intent.quantity,
+          fillPrice: 150,
+          notional: intent.quantity * 150,
+          simulatedFee: 0,
+          simulatedSlippage: 0,
+          fillTimestamp: new Date().toISOString(),
+          sourceOrderIntentId: intent.id
+        };
+        const { recordPaperFill } = await import('@/lib/trading/paper-account-store');
+        recordPaperFill(fill);
+        const run = {
+          status: 'paper_executed' as const,
+          intent: { ...intent, status: 'paper_executed' as const },
+          report: { passed: true, requiresApproval: true },
+          fill
+        };
+        return NextResponse.json({ ok: true, ...run });
+      }
+
       const run = await executeBotRun(intent);
       await dispatchPaperBotNotification({ action: 'execute', symbol: intent.symbol, run });
       return NextResponse.json({ ok: true, ...run });

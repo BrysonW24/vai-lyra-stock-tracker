@@ -248,7 +248,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
       const res = await fetch('/api/trading/paper-bot', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ action, ...body }),
+        body: JSON.stringify({ action, tour: isTour && tourStep > -1, ...body }),
       });
       return (await res.json()) as BotRun;
     } catch {
