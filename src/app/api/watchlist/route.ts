@@ -16,6 +16,8 @@ interface AddWatchlistRequest {
   rsiMax?: number | string;
   requireMacdHistogramRising?: boolean;
   requireVolumeRatio?: number | string;
+  referencePrice?: number | string;
+  movementAlertPcts?: number[];
   notes?: string;
 }
 
@@ -61,6 +63,10 @@ export async function POST(request: NextRequest) {
     const rsiMin = body.rsiMin ? parseFloat(String(body.rsiMin)) : 35;
     const rsiMax = body.rsiMax ? parseFloat(String(body.rsiMax)) : 50;
     const requireVolumeRatio = body.requireVolumeRatio ? parseFloat(String(body.requireVolumeRatio)) : 0.8;
+    const referencePrice = body.referencePrice ? parseFloat(String(body.referencePrice)) : null;
+    const movementAlertPcts = Array.isArray(body.movementAlertPcts)
+      ? Array.from(new Set(body.movementAlertPcts.map((value) => Math.trunc(Number(value))).filter((value) => value !== 0 && Math.abs(value) <= 100))).sort((a, b) => a - b)
+      : [-15, -10, -5, 5, 10, 15];
 
     if (targetPrice !== null && (isNaN(targetPrice) || targetPrice <= 0)) {
       return NextResponse.json({ ok: false, error: 'targetPrice must be a positive number' }, { status: 400 });
@@ -80,6 +86,9 @@ export async function POST(request: NextRequest) {
     if (isNaN(requireVolumeRatio) || requireVolumeRatio <= 0) {
       return NextResponse.json({ ok: false, error: 'requireVolumeRatio must be a positive number' }, { status: 400 });
     }
+    if (referencePrice !== null && (isNaN(referencePrice) || referencePrice <= 0)) {
+      return NextResponse.json({ ok: false, error: 'referencePrice must be a positive number' }, { status: 400 });
+    }
 
     const { data, error } = await supabase
       .from('watchlist_items')
@@ -93,6 +102,8 @@ export async function POST(request: NextRequest) {
           rsi_max: rsiMax,
           require_macd_histogram_rising: body.requireMacdHistogramRising !== false,
           require_volume_ratio: requireVolumeRatio,
+          reference_price: referencePrice,
+          movement_alert_pcts: movementAlertPcts,
           notes: body.notes || null,
           is_active: true,
         },

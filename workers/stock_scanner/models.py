@@ -182,6 +182,8 @@ class WatchlistItem:
     rsi_max: float = 50.0
     require_macd_histogram_rising: bool = True
     require_volume_ratio: float = 0.8
+    reference_price: float | None = None
+    movement_alert_pcts: tuple[int, ...] = (-15, -10, -5, 5, 10, 15)
     notes: str | None = None
     # Multi-user: which user owns this watchlist item. None in single-operator mode.
     user_id: str | None = None

@@ -57,6 +57,26 @@ def portfolio_alert_decisions(overlays: list[PortfolioOverlay]) -> list[AlertDec
                     user_id=overlay.user_id,
                 )
             )
+        for threshold in crossed_thresholds_from_current(overlay.unrealised_pl_pct):
+            direction = "up" if threshold > 0 else "down"
+            decisions.append(
+                AlertDecision(
+                    should_send=True,
+                    symbol=overlay.symbol,
+                    alert_type=f"portfolio_price_move_{direction}_{abs(threshold)}",
+                    channel="multi_channel",
+                    reason=f"Portfolio holding {overlay.symbol} moved {overlay.unrealised_pl_pct:.1f}% from cost basis, crossing {threshold:+d}%.",
+                    cooldown_hours=24 * 30,
+                    payload={
+                        **overlay.explanation,
+                        "threshold_pct": threshold,
+                        "current_move_pct": overlay.unrealised_pl_pct,
+                        "current_price": overlay.current_price,
+                        "dedupe_key": f"portfolio_price_move:{overlay.symbol}:{direction}:{abs(threshold)}",
+                    },
+                    user_id=overlay.user_id,
+                )
+            )
     return decisions
 
 
@@ -79,7 +99,64 @@ def watchlist_alert_decisions(overlays: list[WatchlistOverlay], settings: Settin
                     user_id=overlay.user_id,
                 )
             )
+        reference_price = overlay.explanation.get("reference_price")
+        current_price = overlay.current_price
+        move_pct = pct_move_from_reference(current_price, reference_price)
+        for threshold in crossed_thresholds_from_current(move_pct, overlay.explanation.get("movement_alert_pcts")):
+            direction = "up" if threshold > 0 else "down"
+            decisions.append(
+                AlertDecision(
+                    should_send=True,
+                    symbol=overlay.symbol,
+                    alert_type=f"watchlist_price_move_{direction}_{abs(threshold)}",
+                    channel="multi_channel",
+                    reason=f"Watchlist item {overlay.symbol} moved {move_pct:.1f}% from its add-time price, crossing {threshold:+d}%.",
+                    cooldown_hours=24 * 30,
+                    payload={
+                        **overlay.explanation,
+                        "threshold_pct": threshold,
+                        "current_move_pct": move_pct,
+                        "current_price": current_price,
+                        "dedupe_key": f"watchlist_price_move:{overlay.symbol}:{direction}:{abs(threshold)}",
+                    },
+                    user_id=overlay.user_id,
+                )
+            )
     return decisions
+
+
+def pct_move_from_reference(current_price: float | None, reference_price: Any) -> float | None:
+    try:
+        reference = float(reference_price)
+    except (TypeError, ValueError):
+        return None
+    if current_price is None or reference <= 0:
+        return None
+    return ((float(current_price) - reference) / reference) * 100
+
+
+def normalise_thresholds(thresholds: Any = None) -> list[int]:
+    if not thresholds:
+        thresholds = [-15, -10, -5, 5, 10, 15]
+    out: set[int] = set()
+    for raw in thresholds:
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if value != 0:
+            out.add(value)
+    return sorted(out)
+
+
+def crossed_thresholds_from_current(current_pct: float | None, thresholds: Any = None) -> list[int]:
+    if current_pct is None:
+        return []
+    return [
+        threshold
+        for threshold in normalise_thresholds(thresholds)
+        if (threshold > 0 and current_pct >= threshold) or (threshold < 0 and current_pct <= threshold)
+    ]
 
 
 def should_send_alert_to_user(
@@ -106,10 +183,14 @@ def should_send_alert_to_user(
         return False, "User alerts disabled globally"
 
     # Check quiet hours
-    quiet_start = user_prefs.get("quiet_hours_start")
-    quiet_end = user_prefs.get("quiet_hours_end")
+    quiet_start = user_prefs.get("quiet_hours_start") or user_prefs.get("quiet_start")
+    quiet_end = user_prefs.get("quiet_hours_end") or user_prefs.get("quiet_end")
     if quiet_start is not None and quiet_end is not None:
         current_hour = current_time.hour
+        if isinstance(quiet_start, str):
+            quiet_start = int(quiet_start.split(":")[0])
+        if isinstance(quiet_end, str):
+            quiet_end = int(quiet_end.split(":")[0])
         # Handle wrap-around midnight (e.g., 22:00 to 08:00)
         if quiet_start < quiet_end:
             # Normal range, e.g., 09:00 to 17:00
@@ -129,6 +210,15 @@ def should_send_alert_to_user(
                 return False, f"Ticker muted until {muted_until_dt.isoformat()}"
 
     # Check per-type alert toggles
+    if alert_type.startswith("watchlist_price_move") and not user_prefs.get("watchlist_movement_alerts", True):
+        return False, "Watchlist movement alerts disabled for user"
+    if alert_type.startswith("portfolio_price_move") and not user_prefs.get("portfolio_movement_alerts", True):
+        return False, "Portfolio movement alerts disabled for user"
+    if alert_type == "portfolio_risk" and not user_prefs.get("portfolio_risk_enabled", True):
+        return False, "Portfolio risk alerts disabled for user"
+    if alert_type == "watchlist_upgrade" and not user_prefs.get("watchlist_trigger_enabled", True):
+        return False, "Watchlist trigger alerts disabled for user"
+
     alert_toggle_key = f"enable_{alert_type}"
     if alert_toggle_key in user_prefs and not user_prefs[alert_toggle_key]:
         return False, f"Alert type {alert_type} disabled for user"

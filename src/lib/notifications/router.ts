@@ -2,7 +2,7 @@
  * Deterministic notification router - pure decision logic, no I/O, no AI.  [NOTIF-01]
  *
  * `routeNotification` is the single gate every NotificationEvent passes before any
- * channel adapter (Telegram / WhatsApp) is allowed to send. It is a pure function of
+ * channel adapter (Push / Telegram / WhatsApp) is allowed to send. It is a pure function of
  * (event, preferences, clock, recent-dedupe window), so identical inputs always
  * produce the identical RouteDecision and the entire policy is unit-testable.
  * AI has no write path into this module - it may phrase a payload the router has
@@ -43,6 +43,10 @@ export const DROP_REASONS = {
   duplicate: 'duplicate',
   paperTradeAlertsDisabled: 'paper trade alerts disabled',
   orderApprovalAlertsDisabled: 'order approval alerts disabled',
+  watchlistMovementAlertsDisabled: 'watchlist movement alerts disabled',
+  portfolioMovementAlertsDisabled: 'portfolio movement alerts disabled',
+  themeAlertsDisabled: 'theme alerts disabled',
+  macroAlertsDisabled: 'macro alerts disabled',
   dailyDigestDisabled: 'daily digest disabled',
   weeklyDigestDisabled: 'weekly digest disabled',
   noChannels: 'no channels',
@@ -62,18 +66,37 @@ export const DROP_REASONS = {
 const SAFETY_CRITICAL_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'kill_switch_enabled',
   'order_approval_required',
+  'paper_approval_required',
+  'risk_blocked',
 ]);
 
 const PAPER_TRADE_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'paper_trade_opened',
   'paper_trade_closed',
   'paper_trade_stop_hit',
+  'paper_fill',
+  'paper_position_move',
 ]);
 
 /** Non-critical order lifecycle chatter, gated by prefs.orderApprovalAlerts. */
 const ORDER_CHATTER_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'order_intent_created',
   'order_rejected',
+]);
+
+const WATCHLIST_MOVEMENT_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
+  'watchlist_price_move',
+]);
+
+const PORTFOLIO_MOVEMENT_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
+  'portfolio_price_move',
+]);
+
+const THEME_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>(['theme_breakout']);
+
+const MACRO_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
+  'capital_event',
+  'investor_move',
 ]);
 
 /** relatedEntityType values that identify a symbol-scoped event. */
@@ -115,9 +138,10 @@ export function isWithinQuietHours(now: Date, quietStart: string, quietEnd: stri
   return minutesNow >= start || minutesNow < end;
 }
 
-/** Enabled delivery channels in a stable order (telegram first). */
+/** Enabled delivery channels in a stable order (native push first). */
 function enabledChannels(prefs: NotificationPreferences): ChannelType[] {
   const channels: ChannelType[] = [];
+  if (prefs.pushEnabled) channels.push('push');
   if (prefs.telegramEnabled) channels.push('telegram');
   if (prefs.whatsappEnabled) channels.push('whatsapp');
   return channels;
@@ -204,6 +228,22 @@ export function routeNotification(
   // 5. Paper-trade events respect the paperTradeAlerts toggle.
   if (PAPER_TRADE_TYPES.has(event.type) && !prefs.paperTradeAlerts) {
     return { deliver: false, reason: DROP_REASONS.paperTradeAlertsDisabled };
+  }
+
+  if (WATCHLIST_MOVEMENT_TYPES.has(event.type) && !prefs.watchlistMovementAlerts) {
+    return { deliver: false, reason: DROP_REASONS.watchlistMovementAlertsDisabled };
+  }
+
+  if (PORTFOLIO_MOVEMENT_TYPES.has(event.type) && !prefs.portfolioMovementAlerts) {
+    return { deliver: false, reason: DROP_REASONS.portfolioMovementAlertsDisabled };
+  }
+
+  if (THEME_TYPES.has(event.type) && !prefs.themeAlerts) {
+    return { deliver: false, reason: DROP_REASONS.themeAlertsDisabled };
+  }
+
+  if (MACRO_TYPES.has(event.type) && !prefs.macroAlerts) {
+    return { deliver: false, reason: DROP_REASONS.macroAlertsDisabled };
   }
 
   // 6. Non-critical order lifecycle chatter (intent created / rejected) respects

@@ -78,6 +78,14 @@ if (has('TELEGRAM_BOT_TOKEN')) {
   warn('Telegram not configured - alerts are off (optional)');
 }
 
+// 4a. Web Push
+const webPushConfigured = has('NEXT_PUBLIC_VAPID_PUBLIC_KEY') && has('VAPID_PRIVATE_KEY');
+if (webPushConfigured) ok('Web Push VAPID keys present');
+else warn('Web Push VAPID keys missing - iPhone/browser push is disabled');
+
+if (has('NOTIFICATION_DISPATCH_SECRET')) ok('Notification dispatch secret present');
+else warn('No notification dispatch secret - scanner cannot call the multi-channel dispatch API');
+
 // 5. Market data
 ok(`Market data provider: ${env.MARKET_DATA_PROVIDER || 'yfinance (default)'}`);
 
@@ -115,6 +123,7 @@ function summary() {
   let mode = 'Demo mode (no keys) - exploring the UI on demo data';
   if (feSupabase && beSupabase) mode = 'Live mode - real scanning enabled';
   if (feSupabase && beSupabase && has('TELEGRAM_BOT_TOKEN') && has('TELEGRAM_CHAT_ID')) mode += ' + Telegram alerts';
+  if (webPushConfigured) mode += ' + Web Push';
   if (has('OPENAI_API_KEY')) mode += ' + hosted OpenAI';
   if (has('ANTHROPIC_API_KEY') && /^true$/i.test(env.ENABLE_AI_EXPLANATIONS || '')) mode += ' + legacy worker AI';
   console.log(`\n${BOLD}Mode:${RESET} ${mode}`);

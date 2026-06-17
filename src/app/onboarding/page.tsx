@@ -164,6 +164,8 @@ export default function OnboardingPage() {
               symbol: item.symbol,
               targetPrice: item.targetBuyPrice,
               targetSignalScore: item.targetSignalScore,
+              referencePrice: item.lastPrice,
+              movementAlertPcts: item.alertPcts,
               notes: item.notes,
             }),
           });

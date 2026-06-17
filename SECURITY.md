@@ -5,7 +5,7 @@ Lyra (Stock Momentum Radar) is research software. Treat keys and tokens carefull
 ## Golden rules
 
 1. **Never put secrets in `NEXT_PUBLIC_*` variables.** Anything prefixed `NEXT_PUBLIC_` is bundled into the browser and visible to everyone. Only the read-only Supabase anon URL/key belong there.
-2. **Server secrets stay server-side.** `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`, `OPENAI_API_KEY`, `GOOGLE_AI_KEY`, `ANTHROPIC_API_KEY`, and `FINNHUB_API_KEY` must only ever be set as unprefixed (worker/server) variables - never exposed to the frontend.
+2. **Server secrets stay server-side.** `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`, `VAPID_PRIVATE_KEY`, `NOTIFICATION_DISPATCH_SECRET`, `OPENAI_API_KEY`, `GOOGLE_AI_KEY`, `ANTHROPIC_API_KEY`, and `FINNHUB_API_KEY` must only ever be set as unprefixed (worker/server) variables - never exposed to the frontend.
 3. **Never commit `.env.local`** (or any real `.env`). Only `.env.example` (placeholders) is committed. `.gitignore` should cover `.env*` except `.env.example`.
 4. **Rotate anything that leaks.** If a key is committed or shared by accident, rotate it in the provider immediately.
 
@@ -19,6 +19,12 @@ Lyra (Stock Momentum Radar) is research software. Treat keys and tokens carefull
 
 - The bot token can post to any chat the bot is in - keep it server-side only.
 - Store the resolved `chat_id` per user; do not log tokens.
+
+## Web Push
+
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` is intentionally public; browsers need it to subscribe.
+- `VAPID_PRIVATE_KEY` and `NOTIFICATION_DISPATCH_SECRET` are server-side only. Never prefix either with `NEXT_PUBLIC_`.
+- Notifications wake the user to review evidence. They do not create, approve, or execute trades.
 
 ## Demo mode is the safe default
 

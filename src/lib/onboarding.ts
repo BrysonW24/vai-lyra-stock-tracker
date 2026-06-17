@@ -105,8 +105,16 @@ export interface AlertPreferences {
   portfolioRiskAlerts: boolean;
   watchlistTriggerAlerts: boolean;
   signalInvalidationAlerts: boolean;
+  pushEnabled: boolean;
+  watchlistMovementAlerts: boolean;
+  portfolioMovementAlerts: boolean;
+  paperBotAlerts: boolean;
+  orderApprovalAlerts: boolean;
+  macroAlerts: boolean;
+  themeAlerts: boolean;
   dailyDigest: boolean;
   hourlyDigest: boolean;
+  minSignalScore?: number;
   /** Local time the daily digest is delivered, "HH:MM" (24h). */
   digestTime?: string;
   telegramConnected?: boolean;
@@ -160,11 +168,21 @@ export const DEFAULT_ALERTS: AlertPreferences = {
   portfolioRiskAlerts: true,
   watchlistTriggerAlerts: true,
   signalInvalidationAlerts: true,
+  pushEnabled: true,
+  watchlistMovementAlerts: true,
+  portfolioMovementAlerts: true,
+  paperBotAlerts: true,
+  orderApprovalAlerts: true,
+  macroAlerts: false,
+  themeAlerts: true,
   dailyDigest: true,
   hourlyDigest: false,
+  minSignalScore: 75,
   digestTime: '08:00',
   telegramConnected: false,
 };
+
+export const DEFAULT_WATCHLIST_ALERT_PCTS = [-15, -10, -5, 5, 10, 15];
 
 export const DEFAULT_STRATEGY: StrategySelection = {
   strategyId: 'momentum-recovery',
@@ -419,7 +437,7 @@ export function calculateSetupCompleteness(state: OnboardingState): {
     missing.push('portfolio_enrichment');
   }
   if (!state.capital?.cashAvailable) missing.push('capital_context');
-  if (!state.alerts?.telegramConnected) missing.push('telegram');
+  if (!(state.alerts?.pushEnabled || state.alerts?.telegramConnected)) missing.push('notifications');
 
   // Core setup (completed by finishing the flow) is the baseline (60%); the
   // optional personalisation items fill the remaining 40%. Avoids a misleading
@@ -440,7 +458,7 @@ export function calculateSetupCompleteness(state: OnboardingState): {
     watchlistCount > 0,
     portfolioCount > 0,
     portfolioEnrichedCount > 0,
-    Boolean(state.capital?.cashAvailable) || Boolean(state.alerts?.telegramConnected),
+    Boolean(state.capital?.cashAvailable) || Boolean(state.alerts?.pushEnabled || state.alerts?.telegramConnected),
   ];
   const enrichmentEarned = enrichment.filter(Boolean).length;
 

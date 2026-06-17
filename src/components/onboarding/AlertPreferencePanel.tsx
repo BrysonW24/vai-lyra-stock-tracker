@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { AlertPreferences } from '@/lib/onboarding';
 import { Toggle } from '@/components/Toggle';
-import { BellRing } from 'lucide-react';
+import { BellRing, Smartphone } from 'lucide-react';
 import { faviconUrl } from '@/lib/ticker-logos';
 
 interface AlertPreferencePanelProps {
@@ -12,11 +12,33 @@ interface AlertPreferencePanelProps {
   onNext: () => void;
 }
 
-const ALERT_TYPES: { key: keyof AlertPreferences; label: string }[] = [
+type AlertToggleKey =
+  | 'pushEnabled'
+  | 'strongSetupAlerts'
+  | 'portfolioRiskAlerts'
+  | 'watchlistTriggerAlerts'
+  | 'watchlistMovementAlerts'
+  | 'portfolioMovementAlerts'
+  | 'signalInvalidationAlerts'
+  | 'paperBotAlerts'
+  | 'orderApprovalAlerts'
+  | 'themeAlerts'
+  | 'macroAlerts'
+  | 'dailyDigest'
+  | 'hourlyDigest';
+
+const ALERT_TYPES: { key: AlertToggleKey; label: string }[] = [
+  { key: 'pushEnabled', label: 'iPhone push alerts' },
   { key: 'strongSetupAlerts', label: 'Strong setups' },
   { key: 'portfolioRiskAlerts', label: 'Portfolio risk' },
   { key: 'watchlistTriggerAlerts', label: 'Watchlist triggers' },
+  { key: 'watchlistMovementAlerts', label: 'Watchlist +/- moves' },
+  { key: 'portfolioMovementAlerts', label: 'Portfolio +/- moves' },
   { key: 'signalInvalidationAlerts', label: 'Signal invalidations' },
+  { key: 'paperBotAlerts', label: 'Paper bot alerts' },
+  { key: 'orderApprovalAlerts', label: 'Approval prompts' },
+  { key: 'themeAlerts', label: 'Theme alerts' },
+  { key: 'macroAlerts', label: 'Macro alerts' },
   { key: 'dailyDigest', label: 'Daily digest' },
   { key: 'hourlyDigest', label: 'Hourly digest' },
 ];
@@ -37,18 +59,24 @@ function ChannelCard({ logo, name, status, on }: { logo: ReactNode; name: string
 }
 
 export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferencePanelProps) {
-  const handleToggle = (key: keyof AlertPreferences, value: boolean) => onChange({ ...alerts, [key]: value });
+  const handleToggle = (key: AlertToggleKey, value: boolean) => onChange({ ...alerts, [key]: value });
 
   return (
     <div className="space-y-3">
       {/* Delivery channels - push-first; Telegram + WhatsApp are extras */}
       <div>
         <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">How you&apos;ll be alerted</h3>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <ChannelCard on name="In-app" status="On" logo={<BellRing size={15} className="text-[#43d18b]" />} />
           <ChannelCard
+            on={alerts.pushEnabled}
+            name="Push"
+            status={alerts.pushEnabled ? 'On' : 'Off'}
+            logo={<Smartphone size={15} className={alerts.pushEnabled ? 'text-[#43d18b]' : 'text-[#8190a0]'} />}
+          />
+          <ChannelCard
             name="Telegram"
-            status="Soon"
+            status="Settings"
             logo={
               // eslint-disable-next-line @next/next/no-img-element
               <img src={faviconUrl('telegram.org', 16)} alt="Telegram" width={16} height={16} className="rounded" />
@@ -56,7 +84,7 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
           />
           <ChannelCard
             name="WhatsApp"
-            status="Soon"
+            status="Settings"
             logo={
               // eslint-disable-next-line @next/next/no-img-element
               <img src={faviconUrl('whatsapp.com', 16)} alt="WhatsApp" width={16} height={16} className="rounded" />
@@ -64,7 +92,7 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
           />
         </div>
         <p className="mt-1.5 text-[11px] leading-snug text-[#5d6b79]">
-          Push lands right on your phone - add Lyra to your home screen. Telegram &amp; WhatsApp soon.
+          Add Lyra to your home screen, then enable native push in Settings.
         </p>
       </div>
 
@@ -72,6 +100,18 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
       <div>
         <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">What to alert me about</h3>
         <div className="divide-y divide-[#1b2530] overflow-hidden rounded-md border border-[#263241] bg-[#0d141c]">
+          <div className="flex items-center justify-between gap-3 px-3 py-1.5">
+            <span className="text-[13px] font-medium text-[#eef3f8]">Minimum signal score</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={alerts.minSignalScore ?? 75}
+              onChange={(e) => onChange({ ...alerts, minSignalScore: Math.min(Math.max(Number(e.target.value), 0), 100) })}
+              aria-label="Minimum signal score"
+              className="h-7 w-20 rounded border border-[#263241] bg-[#0b1119] px-2 text-right font-mono text-[13px] text-[#dbe5ee] outline-none focus:border-[#f3a33a]/50"
+            />
+          </div>
           {ALERT_TYPES.map(({ key, label }) => (
             <div key={key}>
               <div className="flex items-center justify-between gap-3 px-3 py-1.5">

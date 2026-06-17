@@ -60,6 +60,8 @@ def calculate_watchlist_overlays(
                     "rsi_range": [item.rsi_min, item.rsi_max],
                     "requires_macd_histogram_rising": item.require_macd_histogram_rising,
                     "required_volume_ratio": item.require_volume_ratio,
+                    "reference_price": item.reference_price,
+                    "movement_alert_pcts": list(item.movement_alert_pcts),
                     "trigger_state": trigger_state,
                     "notes": item.notes,
                 },

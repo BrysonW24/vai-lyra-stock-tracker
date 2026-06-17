@@ -6,6 +6,7 @@ import { ChevronDown, Compass } from 'lucide-react';
 import { TickerLogo } from '@/components/TickerLogo';
 import { ACTION_TONE, SIZE_LABEL } from '@/lib/world-radar';
 import type { ScoredCompany, SmallCapBucket } from '@/lib/world-radar';
+import type { SmallCapResearchBackend, SmallCapResearchCandidate } from '@/lib/small-cap-research';
 
 const AVOID_BUCKET = 'Avoid - dilution/hype risk';
 const EMERGING_BUCKET = 'Emerging opportunities';
@@ -18,6 +19,7 @@ interface ThemeMeta {
 interface SmallCapDiscoveryProps {
   buckets: SmallCapBucket[];
   themesBySlug: Record<string, ThemeMeta>;
+  research: SmallCapResearchBackend;
 }
 
 /** Deterministic tone for the 0-100 opportunity total. */
@@ -122,12 +124,69 @@ function CompanyRow({ company, theme, open, onToggle }: CompanyRowProps) {
   );
 }
 
+function ResearchCandidateRow({ candidate }: { candidate: SmallCapResearchCandidate }) {
+  const scoreCells = [
+    ['Gov', candidate.score.governmentScore],
+    ['Vol', candidate.score.buyerVolumeScore],
+    ['Tech', candidate.score.technicalScore],
+    ['Risk', -candidate.score.riskPenalty],
+  ] as const;
+
+  return (
+    <div className="rounded-md border border-[#1b2530] bg-[#0d1117] p-2">
+      <div className="flex items-center gap-2">
+        <TickerLogo symbol={candidate.symbol} companyName={candidate.name} size={14} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-mono text-[12px] font-semibold text-[#eef3f8]">
+            {candidate.symbol} <span className="font-sans text-[10px] font-normal text-[#8190a0]">{candidate.name}</span>
+          </p>
+          <p className="truncate text-[10px] text-[#8190a0]">{candidate.vertical}</p>
+        </div>
+        <span className={`numeric font-mono text-base font-semibold ${scoreTone(candidate.score.totalScore)}`}>
+          {candidate.score.totalScore}
+        </span>
+      </div>
+
+      <div className="mt-2 grid grid-cols-4 gap-1.5">
+        {scoreCells.map(([label, value]) => (
+          <div key={label} className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-1">
+            <p className="text-[8px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
+            <p className={`numeric font-mono text-[11px] font-semibold ${value >= 0 ? 'text-[#eef3f8]' : 'text-[#f0758a]'}`}>
+              {value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-1.5 line-clamp-2 text-[10px] leading-snug text-[#a8b5c2]">{candidate.evidenceSummary}</p>
+
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#a8b5c2]">
+          {candidate.researchState}
+        </span>
+        {candidate.paperBot.eligible ? (
+          <Link
+            href={candidate.paperBot.route}
+            className="rounded border border-[#1d7f55] bg-[#0d251b] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#43d18b] transition hover:bg-[#103626]"
+          >
+            Paper bot ready
+          </Link>
+        ) : (
+          <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#8190a0]">
+            Paper bot watch
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /**
  * Small-cap discovery engine. Deterministic buckets from world-radar rendered as dense
  * inline accordions, with client-side theme filtering. Research surface only - no
  * output here is a buy or sell call.
  */
-export function SmallCapDiscovery({ buckets, themesBySlug }: SmallCapDiscoveryProps) {
+export function SmallCapDiscovery({ buckets, themesBySlug, research }: SmallCapDiscoveryProps) {
   const [activeTheme, setActiveTheme] = useState<string>('all');
   const [openSymbol, setOpenSymbol] = useState<string | null>(null);
 
@@ -160,6 +219,39 @@ export function SmallCapDiscovery({ buckets, themesBySlug }: SmallCapDiscoveryPr
 
   return (
     <div className="space-y-3">
+      <section className="terminal-panel rounded-md p-3">
+        <div className="flex items-center gap-2">
+          <Compass size={16} className="text-[#43d18b]" />
+          <h2 className="text-sm font-semibold text-[#eef3f8]">Research backend</h2>
+          <span className="ml-auto rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#8190a0]">
+            {research.sources.filter((source) => source.integration === 'live-now').length} live / {research.sources.length} mapped
+          </span>
+        </div>
+        <p className="mt-1 text-[10px] leading-snug text-[#8190a0]">
+          Official spend, filings, buyer-volume and technical markers are blended into a paper-only research queue.
+        </p>
+
+        <div className="mt-2 grid gap-2 lg:grid-cols-3">
+          {research.candidates.slice(0, 6).map((candidate) => (
+            <ResearchCandidateRow key={candidate.symbol} candidate={candidate} />
+          ))}
+        </div>
+
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {research.sources.slice(0, 5).map((source) => (
+            <a
+              key={source.id}
+              href={source.url}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded border border-[#263241] bg-[#0d141c] px-2 py-0.5 font-mono text-[9px] text-[#8190a0] transition hover:text-[#dbe5ee]"
+            >
+              {source.name}
+            </a>
+          ))}
+        </div>
+      </section>
+
       <section className="terminal-panel rounded-md p-3">
         <div className="flex items-center gap-2">
           <Compass size={16} className="text-[#7fb0ff]" />

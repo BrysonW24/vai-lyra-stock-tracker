@@ -14,6 +14,7 @@ from workers.stock_scanner.logger import get_logger
 from workers.stock_scanner.market_context import build_market_context
 from workers.stock_scanner.market_data import create_provider
 from workers.stock_scanner.models import IndicatorSnapshot, SignalResult, Ticker
+from workers.stock_scanner.notification_dispatch import dispatch_notification
 from workers.stock_scanner.portfolio_engine import calculate_portfolio_overlays
 from workers.stock_scanner.scheduler_guard import should_run_now
 from workers.stock_scanner.signal_engine import calculate_signal
@@ -250,6 +251,39 @@ def main() -> None:
                 message = _message_for_signal(signal, ticker, signal.previous_signal_score, decision.alert_type)
             else:
                 message = f"{decision.alert_type.replace('_', ' ').title()}\n\n{decision.reason}\n\nNot financial advice."
+
+            if decision.user_id and settings.notification_dispatch_enabled:
+                dispatch_result = dispatch_notification(
+                    settings,
+                    user_id=decision.user_id,
+                    symbol=decision.symbol,
+                    alert_type=decision.alert_type,
+                    title=f"{decision.symbol} {decision.alert_type.replace('_', ' ')}",
+                    body=decision.reason,
+                    reason=decision.reason,
+                    payload={"reason": decision.reason, **decision.payload},
+                    relevance_score=float(decision.payload.get("signal_score") or 100),
+                )
+                repository.save_alert(
+                    signal_id=signal_id,
+                    symbol=decision.symbol,
+                    alert_type=decision.alert_type,
+                    channel="multi_channel",
+                    message=message,
+                    sent_status="sent" if dispatch_result.ok else "failed",
+                    error_message=dispatch_result.error_message,
+                    payload={
+                        "reason": decision.reason,
+                        **decision.payload,
+                        "dispatch_response": dispatch_result.response,
+                        "deduped": dispatch_result.deduped,
+                    },
+                    user_id=decision.user_id,
+                )
+                if dispatch_result.ok:
+                    alerts_sent += 0 if dispatch_result.deduped else 1
+                    continue
+
             alerts_sent += _send_and_log_alert(
                 repository,
                 signal_id,

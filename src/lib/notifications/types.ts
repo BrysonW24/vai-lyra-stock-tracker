@@ -1,12 +1,12 @@
 /**
- * Unified notification system - types. Channel-independent: Telegram/WhatsApp (and
+ * Unified notification system - types. Channel-independent: Push/Telegram/WhatsApp (and
  * later email/push) are delivery adapters behind the router. Every notification has a
  * deterministic trigger reason, evidence links, preference + quiet-hours checks, a
  * dedupe key, and an idempotency key. AI never originates notifications - it may only
  * phrase a payload the deterministic router has already approved.
  */
 
-export type ChannelType = 'telegram' | 'whatsapp';
+export type ChannelType = 'push' | 'telegram' | 'whatsapp';
 
 export type NotificationType =
   | 'signal_alert'
@@ -16,20 +16,30 @@ export type NotificationType =
   | 'investor_move'
   | 'portfolio_news'
   | 'portfolio_risk'
+  | 'portfolio_price_move'
+  | 'watchlist_price_move'
   | 'paper_trade_opened'
   | 'paper_trade_closed'
   | 'paper_trade_stop_hit'
+  | 'paper_approval_required'
+  | 'paper_fill'
+  | 'paper_position_move'
+  | 'risk_blocked'
   | 'order_intent_created'
   | 'order_approval_required'
   | 'order_rejected'
   | 'kill_switch_enabled'
   | 'daily_digest'
-  | 'weekly_report';
+  | 'weekly_report'
+  | 'test_notification';
+
+export type NotificationSeverity = 'low' | 'medium' | 'high' | 'critical';
 
 export interface NotificationEvent {
   /** Stable id for this event instance. */
   id: string;
   type: NotificationType;
+  severity?: NotificationSeverity;
   userId: string;
   /** Deterministic trigger reason - never AI-originated. */
   triggerReason: string;
@@ -39,6 +49,7 @@ export interface NotificationEvent {
   evidenceRefs: string[];
   relatedEntityType?: string;
   relatedEntityId?: string;
+  url?: string;
   /** 0-100 relevance from the deterministic engine. */
   relevanceScore: number;
   /** Same-content collapse key (e.g. `${type}:${symbol}:${day}`). */
@@ -52,6 +63,7 @@ export interface NotificationPreferences {
   instantAlerts: boolean;
   dailyDigest: boolean;
   weeklyDigest: boolean;
+  pushEnabled: boolean;
   telegramEnabled: boolean;
   whatsappEnabled: boolean;
   quietHoursEnabled: boolean;
@@ -64,12 +76,17 @@ export interface NotificationPreferences {
   minRelevanceScore: number;
   paperTradeAlerts: boolean;
   orderApprovalAlerts: boolean;
+  watchlistMovementAlerts: boolean;
+  portfolioMovementAlerts: boolean;
+  macroAlerts: boolean;
+  themeAlerts: boolean;
 }
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   instantAlerts: true,
   dailyDigest: true,
   weeklyDigest: true,
+  pushEnabled: false,
   telegramEnabled: false,
   whatsappEnabled: false,
   quietHoursEnabled: true,
@@ -80,6 +97,10 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   minRelevanceScore: 40,
   paperTradeAlerts: true,
   orderApprovalAlerts: true,
+  watchlistMovementAlerts: true,
+  portfolioMovementAlerts: true,
+  macroAlerts: false,
+  themeAlerts: true,
 };
 
 export type RouteDecision =
@@ -92,7 +113,7 @@ export interface DeliveryRecord {
   id: string;
   eventId: string;
   userId: string;
-  channel: ChannelType;
+  channel: ChannelType | 'digest' | 'router';
   destination: string;
   status: DeliveryStatus;
   providerMessageId?: string;

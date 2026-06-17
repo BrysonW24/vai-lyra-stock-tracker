@@ -200,6 +200,33 @@ describe('routeNotification - channels', () => {
     });
     expect(decision).toEqual({ deliver: true, channels: ['telegram'], deferredToDigest: false });
   });
+
+  it('routes native push before chat channels when enabled', () => {
+    const decision = routeNotification(event(), prefs({ pushEnabled: true }), {
+      now: DAYTIME,
+    });
+    expect(decision).toEqual({ deliver: true, channels: ['push', 'telegram', 'whatsapp'], deferredToDigest: false });
+  });
+});
+
+describe('routeNotification - movement alert toggles', () => {
+  it('drops watchlist movement alerts when that preference is off', () => {
+    const decision = routeNotification(
+      event({ type: 'watchlist_price_move', dedupeKey: buildDedupeKey('watchlist_price_move', 'NVDA', 'up-5') }),
+      prefs({ watchlistMovementAlerts: false }),
+      { now: DAYTIME },
+    );
+    expect(decision).toEqual({ deliver: false, reason: DROP_REASONS.watchlistMovementAlertsDisabled });
+  });
+
+  it('drops portfolio movement alerts when that preference is off', () => {
+    const decision = routeNotification(
+      event({ type: 'portfolio_price_move', dedupeKey: buildDedupeKey('portfolio_price_move', 'NVDA', 'down-5') }),
+      prefs({ portfolioMovementAlerts: false }),
+      { now: DAYTIME },
+    );
+    expect(decision).toEqual({ deliver: false, reason: DROP_REASONS.portfolioMovementAlertsDisabled });
+  });
 });
 
 describe('routeNotification - paper trade alerts toggle', () => {

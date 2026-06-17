@@ -279,6 +279,8 @@ class SupabaseRepository:
                 rsi_max=float(row.get("rsi_max") or 50),
                 require_macd_histogram_rising=bool(row.get("require_macd_histogram_rising", True)),
                 require_volume_ratio=float(row.get("require_volume_ratio") or 0.8),
+                reference_price=float(row["reference_price"]) if row.get("reference_price") is not None else None,
+                movement_alert_pcts=tuple(int(value) for value in (row.get("movement_alert_pcts") or [-15, -10, -5, 5, 10, 15])),
                 notes=row.get("notes"),
                 user_id=row.get("user_id"),
             )

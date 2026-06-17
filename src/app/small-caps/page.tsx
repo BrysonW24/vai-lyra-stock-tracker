@@ -1,6 +1,7 @@
 import { AppShell } from '@/components/AppShell';
 import { SmallCapDiscovery } from '@/components/smallcaps/SmallCapDiscovery';
 import { getDashboardData } from '@/lib/data';
+import { buildSmallCapResearchBackend } from '@/lib/small-cap-research';
 import { bucketSmallCaps, getThemes, scoreThemeCompanies } from '@/lib/world-radar';
 
 export default async function SmallCapsPage() {
@@ -12,6 +13,7 @@ export default async function SmallCapsPage() {
   );
   const buckets = bucketSmallCaps(scored);
   const themesBySlug = Object.fromEntries(getThemes().map((t) => [t.slug, { name: t.name, emoji: t.emoji }]));
+  const research = buildSmallCapResearchBackend(data.signals);
 
   return (
     <AppShell data={data}>
@@ -25,7 +27,7 @@ export default async function SmallCapsPage() {
           </p>
         </section>
 
-        <SmallCapDiscovery buckets={buckets} themesBySlug={themesBySlug} />
+        <SmallCapDiscovery buckets={buckets} themesBySlug={themesBySlug} research={research} />
 
         <p className="text-[10px] text-[#6f7d8a]">
           Research only - not financial advice. Scores are deterministic research rankings, not recommendations.

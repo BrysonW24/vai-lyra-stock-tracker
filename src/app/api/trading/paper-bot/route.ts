@@ -3,6 +3,8 @@ import type { AiProvider } from '@/lib/ai/gateway';
 import { proposeBotRun, executeBotRun } from '@/lib/trading/paper-bot';
 import type { OrderIntent } from '@/lib/trading/types';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { dispatchNotificationEvent } from '@/lib/notifications/dispatch';
 
 interface PaperBotRequest {
   action: 'propose' | 'approve' | 'execute';
@@ -10,6 +12,72 @@ interface PaperBotRequest {
   quantity?: number;
   intent?: OrderIntent;
   ai?: { provider: AiProvider; apiKey: string; model?: string };
+}
+
+async function dispatchPaperBotNotification(params: {
+  action: 'propose' | 'execute';
+  symbol?: string;
+  run: Awaited<ReturnType<typeof proposeBotRun>> | Awaited<ReturnType<typeof executeBotRun>>;
+}) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return;
+  const { data } = await supabase.auth.getUser();
+  const user = data.user;
+  if (!user) return;
+
+  try {
+    if (params.run.status === 'proposed' && params.run.intent) {
+      await dispatchNotificationEvent(supabase, {
+        userId: user.id,
+        type: 'paper_approval_required',
+        severity: 'high',
+        title: `${params.run.intent.symbol} paper approval required`,
+        body: `${params.run.intent.side.toUpperCase()} ${params.run.intent.quantity} ${params.run.intent.symbol} is waiting for approval.`,
+        triggerReason: 'The deterministic paper-bot risk gate passed and manual approval is required.',
+        symbol: params.run.intent.symbol,
+        relatedEntityType: 'order_intent',
+        relatedEntityId: params.run.intent.id,
+        relevanceScore: 100,
+        url: '/paper-bot',
+        dedupeKey: `paper_approval_required:${params.run.intent.id}`,
+        payload: { intent: params.run.intent, report: params.run.report },
+      });
+    } else if (params.run.status === 'blocked_by_risk' && params.run.intent) {
+      await dispatchNotificationEvent(supabase, {
+        userId: user.id,
+        type: 'risk_blocked',
+        severity: 'high',
+        title: `${params.run.intent.symbol} blocked by risk gate`,
+        body: 'The paper bot blocked the action. No trade executed.',
+        triggerReason: 'The deterministic risk engine failed at least one pre-trade check.',
+        symbol: params.run.intent.symbol,
+        relatedEntityType: 'order_intent',
+        relatedEntityId: params.run.intent.id,
+        relevanceScore: 100,
+        url: '/paper-bot',
+        dedupeKey: `risk_blocked:${params.run.intent.id}:${Date.now()}`,
+        payload: { intent: params.run.intent, report: params.run.report },
+      });
+    } else if (params.run.status === 'paper_executed' && params.run.fill) {
+      await dispatchNotificationEvent(supabase, {
+        userId: user.id,
+        type: 'paper_fill',
+        severity: 'medium',
+        title: `${params.run.fill.symbol} paper fill`,
+        body: `Paper filled ${params.run.fill.side.toUpperCase()} ${params.run.fill.quantity} ${params.run.fill.symbol} @ $${params.run.fill.fillPrice}.`,
+        triggerReason: 'You approved the paper order and the simulator filled it.',
+        symbol: params.run.fill.symbol,
+        relatedEntityType: 'paper_fill',
+        relatedEntityId: params.run.fill.sourceOrderIntentId,
+        relevanceScore: 100,
+        url: '/paper-bot',
+        dedupeKey: `paper_fill:${params.run.fill.sourceOrderIntentId}:${params.run.fill.fillTimestamp}`,
+        payload: { fill: params.run.fill, intent: params.run.intent, report: params.run.report },
+      });
+    }
+  } catch (error) {
+    console.warn('[paper-bot] notification dispatch failed:', error instanceof Error ? error.message : error);
+  }
 }
 
 /**
@@ -29,6 +97,7 @@ export async function POST(request: NextRequest) {
       const creds = resolveAiCredentials(ai);
       if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
       const run = await proposeBotRun({ symbol, quantity: quantity && quantity > 0 ? quantity : 10, creds: { provider: creds.provider, apiKey: creds.apiKey, model: creds.model } });
+      await dispatchPaperBotNotification({ action: 'propose', symbol, run });
       return NextResponse.json({ ok: true, ...run });
     }
 
@@ -47,6 +116,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: false, reason: 'not_approved', intentStatus: intent.status });
       }
       const run = await executeBotRun(intent);
+      await dispatchPaperBotNotification({ action: 'execute', symbol: intent.symbol, run });
       return NextResponse.json({ ok: true, ...run });
     }
 

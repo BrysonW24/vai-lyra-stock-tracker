@@ -36,6 +36,8 @@ class Settings:
     enable_hourly_digest: bool
     enable_market_hours_guard: bool
     force_scan: bool
+    notification_dispatch_url: str = ""
+    notification_dispatch_secret: str = ""
     # Multi-user: in single-operator mode this stamps every overlay with one operator
     # id so the data fits the multi-user schema. The full per-user overlay loop (one set
     # of overlays per active user) is the next worker iteration. Empty = legacy mode.
@@ -49,8 +51,17 @@ class Settings:
     def telegram_enabled(self) -> bool:
         return bool(self.enable_telegram_alerts and self.telegram_bot_token and self.telegram_chat_id)
 
+    @property
+    def notification_dispatch_enabled(self) -> bool:
+        return bool(self.notification_dispatch_url and self.notification_dispatch_secret)
+
 
 def load_settings() -> Settings:
+    app_base_url = os.getenv("APP_BASE_URL", "").rstrip("/")
+    dispatch_url = os.getenv("NOTIFICATION_DISPATCH_URL", "")
+    if not dispatch_url and app_base_url:
+        dispatch_url = f"{app_base_url}/api/notifications/dispatch"
+
     return Settings(
         supabase_url=os.getenv("SUPABASE_URL", ""),
         supabase_service_role_key=os.getenv("SUPABASE_SERVICE_ROLE_KEY", ""),
@@ -72,5 +83,7 @@ def load_settings() -> Settings:
         enable_hourly_digest=_bool_env("ENABLE_HOURLY_DIGEST", False),
         enable_market_hours_guard=_bool_env("ENABLE_MARKET_HOURS_GUARD", True),
         force_scan=_bool_env("FORCE_SCAN", False),
+        notification_dispatch_url=dispatch_url,
+        notification_dispatch_secret=os.getenv("NOTIFICATION_DISPATCH_SECRET", ""),
         default_user_id=os.getenv("DEFAULT_USER_ID", ""),
     )

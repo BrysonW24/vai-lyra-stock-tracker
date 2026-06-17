@@ -27,15 +27,22 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   investor_move: 'INVESTOR MOVE',
   portfolio_news: 'PORTFOLIO NEWS',
   portfolio_risk: 'PORTFOLIO RISK',
+  portfolio_price_move: 'PORTFOLIO MOVE',
+  watchlist_price_move: 'WATCHLIST MOVE',
   paper_trade_opened: 'PAPER OPEN',
   paper_trade_closed: 'PAPER CLOSE',
   paper_trade_stop_hit: 'PAPER STOP',
+  paper_approval_required: 'PAPER APPROVAL',
+  paper_fill: 'PAPER FILL',
+  paper_position_move: 'PAPER MOVE',
+  risk_blocked: 'RISK BLOCKED',
   order_intent_created: 'ORDER INTENT',
   order_approval_required: 'APPROVAL REQUIRED',
   order_rejected: 'ORDER REJECTED',
   kill_switch_enabled: 'KILL SWITCH',
   daily_digest: 'DAILY DIGEST',
   weekly_report: 'WEEKLY REPORT',
+  test_notification: 'TEST',
 };
 
 /**
@@ -52,6 +59,8 @@ const SIGNAL_LIKE_TYPES: ReadonlySet<NotificationType> = new Set<NotificationTyp
   'investor_move',
   'portfolio_news',
   'portfolio_risk',
+  'portfolio_price_move',
+  'watchlist_price_move',
   'daily_digest',
   'weekly_report',
 ]);
@@ -67,6 +76,7 @@ function clamp(text: string, max: number): string {
 function typeExtraLine(event: NotificationEvent): string {
   switch (event.type) {
     case 'order_approval_required':
+    case 'paper_approval_required':
       return event.relatedEntityId
         ? `Action: approve ${event.relatedEntityId} or reject ${event.relatedEntityId}. Nothing executes without approval.`
         : 'Action: approve or reject. Nothing executes without approval.';
@@ -79,7 +89,11 @@ function typeExtraLine(event: NotificationEvent): string {
     case 'paper_trade_opened':
     case 'paper_trade_closed':
     case 'paper_trade_stop_hit':
+    case 'paper_fill':
+    case 'paper_position_move':
       return 'Paper trade - no real money moved.';
+    case 'risk_blocked':
+      return 'Risk gate blocked action. Nothing executed.';
     default:
       return '';
   }

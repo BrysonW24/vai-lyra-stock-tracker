@@ -1,6 +1,6 @@
 'use client';
 
-import { WatchlistItem } from '@/lib/onboarding';
+import { DEFAULT_WATCHLIST_ALERT_PCTS, WatchlistItem } from '@/lib/onboarding';
 import { TickerLogo } from '@/components/TickerLogo';
 import { TickerLookupInput, type TickerLookup } from '@/components/onboarding/TickerLookupInput';
 import { displaySymbol } from '@/lib/format';
@@ -24,7 +24,13 @@ export function WatchlistBuilder({ watchlist, onChange, onNext, hideContinue }: 
   const add = (r: TickerLookup) => {
     onChange([
       ...watchlist,
-      { symbol: r.symbol, name: r.name ?? undefined, lastPrice: r.price ?? undefined, currency: r.currency ?? undefined },
+      {
+        symbol: r.symbol,
+        name: r.name ?? undefined,
+        lastPrice: r.price ?? undefined,
+        currency: r.currency ?? undefined,
+        alertPcts: DEFAULT_WATCHLIST_ALERT_PCTS,
+      },
     ]);
   };
   const remove = (symbol: string) => onChange(watchlist.filter((w) => w.symbol !== symbol));
@@ -81,7 +87,7 @@ export function WatchlistBuilder({ watchlist, onChange, onNext, hideContinue }: 
                 {/* Price-move alert thresholds */}
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <span className="mr-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">Notify</span>
-                  {[-10, -5, 5, 10].map((pct) => {
+                  {DEFAULT_WATCHLIST_ALERT_PCTS.map((pct) => {
                     const active = alerts.includes(pct);
                     const up = pct >= 0;
                     return (
