@@ -3,7 +3,7 @@
 # Migrations in supabase/migrations/ are applied to preview branches on every PR and to
 # production on merge. See docs/MULTI-USER-GO-LIVE.md.
 
-project_id = "your-project-ref"
+project_id = "droqoofjbclszlceowrp"
 
 [api]
 enabled = true
