@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut, Settings } from 'lucide-react';
+import { BellRing, BrainCircuit, LogOut, Settings, UserRound } from 'lucide-react';
 import { loadProfile } from '@/lib/account';
 import {
   ALERT_FREQ,
@@ -189,7 +189,23 @@ export function AccountMenu() {
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 px-3 py-2.5 text-sm text-[#cdd8e3] transition hover:bg-[#101720]"
           >
-            <Settings size={15} className="text-[#8190a0]" /> Account &amp; settings
+            <Settings size={15} className="text-[#8190a0]" /> Account
+          </Link>
+          <Link
+            href="/account#notifications"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 border-t border-[#1b2530] px-3 py-2.5 text-sm text-[#cdd8e3] transition hover:bg-[#101720]"
+          >
+            <BellRing size={15} className="text-[#8190a0]" /> Notifications
+          </Link>
+          <Link
+            href="/account#ai-settings"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 border-t border-[#1b2530] px-3 py-2.5 text-sm text-[#cdd8e3] transition hover:bg-[#101720]"
+          >
+            <BrainCircuit size={15} className="text-[#8190a0]" /> AI Settings
           </Link>
           {isSupabaseConfigured() && (
             <button

@@ -108,12 +108,12 @@ export function AccountSettings() {
     saveAgent({ actionsEnabled: checked });
   }
 
-  // Deep link from "connect a model" (chat / onboarding) lands here: scroll to the AI panel
-  // so the model picker + key field are right in front of the user.
+  // Deep link from other UI elements (e.g. Account dropdown or chat onboarding).
   useEffect(() => {
-    if (typeof window === 'undefined' || window.location.hash !== '#ai-settings') return;
+    if (typeof window === 'undefined' || !window.location.hash) return;
+    const hash = window.location.hash.substring(1);
     requestAnimationFrame(() => {
-      document.getElementById('ai-settings')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }, []);
 
@@ -496,9 +496,11 @@ export function AccountSettings() {
           </Panel>
         </div>
 
-        <Panel icon={Send} title="Notifications" subtitle="Get signal alerts on Telegram or WhatsApp. Stored to your account only.">
-          <NotificationsSetup />
-        </Panel>
+        <div id="notifications" className="scroll-mt-4">
+          <Panel icon={Send} title="Notifications" subtitle="Get signal alerts on Telegram or WhatsApp. Stored to your account only.">
+            <NotificationsSetup />
+          </Panel>
+        </div>
 
         <Panel icon={Trash2} title="Data &amp; privacy" subtitle="Everything is local to this browser.">
           <div className="space-y-3">
