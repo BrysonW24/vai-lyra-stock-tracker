@@ -14,3 +14,4 @@ tmp/
 *.sqlite
 *.duckdb
 .fuse_hidden*
+.vercel
