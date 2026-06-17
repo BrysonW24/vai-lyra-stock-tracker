@@ -526,7 +526,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
       </div>
 
       {/* Propose form */}
-      <div className="terminal-panel rounded-md p-3">
+      <div className={`terminal-panel rounded-md p-3 relative ${tourStep === 0 ? 'z-50' : ''}`}>
         <div className="flex flex-wrap items-end gap-2">
           <div>
             <label className="mb-0.5 block text-[10px] font-medium uppercase tracking-wide text-[#8190a0]">Symbol</label>
@@ -572,7 +572,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
 
       {/* Result */}
       {run && (
-        <div className="terminal-panel space-y-3 rounded-md p-3">
+        <div className={`terminal-panel space-y-3 rounded-md p-3 relative ${tourStep >= 1 && tourStep <= 3 ? 'z-50' : ''}`}>
           {run.ok === false ? (
             <p className="text-[12px] text-[#ff6b6b]">Could not run: {run.reason}</p>
           ) : (
