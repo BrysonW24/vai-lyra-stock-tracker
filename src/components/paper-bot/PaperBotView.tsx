@@ -280,7 +280,17 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
     const r = await call('execute', { intent });
     setRun(r);
     if (r.intent) setIntent(r.intent);
-    if (r.status === 'paper_executed') loadAccount();
+    if (r.status === 'paper_executed') {
+      if ((isTour || intent.reasonCode === 'tour_mode') && r.fill) {
+        // Force the UI to immediately show the "track it live" layout by mocking the account
+        setAccount({
+          positions: [{ symbol: r.fill.symbol, quantity: r.fill.quantity, avgEntryPrice: r.fill.fillPrice, currentPrice: r.fill.fillPrice, marketValue: r.fill.notional, unrealisedPnl: 0, unrealisedPnlPct: 0 }],
+          totalInvested: r.fill.notional, marketValue: r.fill.notional, unrealisedPnl: 0, unrealisedPnlPct: 0, openPositions: 1, fillCount: 1, startingEquity: 100000, equity: 100000, equityCurve: [100000, 100000], realisedPnl: 0, closedTrades: 0, winRate: 0, avgWin: 0, avgLoss: 0, expectancy: 0, dataSource: 'demo'
+        });
+      } else {
+        loadAccount();
+      }
+    }
   }
 
   // Advance tour when the AI completes its verdict
@@ -350,7 +360,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
       </div>
 
       {/* Paper account analytics - compact: where you view + analyse the bot's track record */}
-      <div className="terminal-panel rounded-md px-2.5 py-2 relative">
+      <div className={`terminal-panel rounded-md px-2.5 py-2 relative ${tourStep === 4 ? 'z-50' : ''}`}>
         {tourStep === 4 && (
           <SaaSTooltip
             title="Track it live"
