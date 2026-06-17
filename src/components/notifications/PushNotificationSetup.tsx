@@ -287,14 +287,14 @@ export function PushNotificationSetup() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {!pushEnabled ? (
+          {support.permission !== 'granted' ? (
             <button
               type="button"
               onClick={enablePush}
               disabled={!support.supported || !vapidPublicKey || busy !== null}
               className={successButton}
             >
-              <BellRing size={13} /> {busy === 'push-enable' ? 'Enabling...' : 'Enable push'}
+              <BellRing size={13} /> {busy === 'push-enable' ? 'Enabling...' : activePushCount > 0 ? 'Enable on this device' : 'Enable push'}
             </button>
           ) : (
             <button type="button" onClick={disablePush} disabled={busy !== null} className={dangerButton}>
