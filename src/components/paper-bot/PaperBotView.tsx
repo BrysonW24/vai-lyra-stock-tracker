@@ -22,6 +22,7 @@ interface Intent {
   notionalValue: number;
   status: string;
   aiExplanation?: string;
+  reasonCode?: string;
 }
 interface Check {
   id: string;
