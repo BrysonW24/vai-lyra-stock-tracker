@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { allTickerSymbols } from '@/lib/ticker-logos';
+import { Search } from 'lucide-react';
+import { searchUniverse } from '@/lib/universe';
+import { TickerLogo } from '@/components/TickerLogo';
 
 export function AddWatchRuleForm() {
   const router = useRouter();
-  const tickerOptions = useMemo(() => allTickerSymbols(), []);
   const [formData, setFormData] = useState({
     symbol: '',
     targetPrice: '',
@@ -20,6 +21,19 @@ export function AddWatchRuleForm() {
   const [status, setStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message?: string }>({
     type: 'idle',
   });
+  const [focused, setFocused] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(-1);
+
+  const query = formData.symbol.trim().toUpperCase();
+  const suggestions = useMemo(() => searchUniverse(query), [query]);
+  const showSuggestions = focused && query.length > 0 && suggestions.length > 0;
+
+  function pickSuggestion(sym: string) {
+    const upper = sym.toUpperCase();
+    setFormData((prev) => ({ ...prev, symbol: upper }));
+    setFocused(false);
+    setActiveIdx(-1);
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -88,23 +102,55 @@ export function AddWatchRuleForm() {
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-2">
-      <label className="grid gap-1">
+      <label className="grid gap-1 relative">
         <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Ticker</span>
-        <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none focus:border-[#f3a33a]/50"
-          placeholder="Start typing - e.g. AMD"
-          name="symbol"
-          list="watch-ticker-options"
-          autoComplete="off"
-          value={formData.symbol}
-          onChange={(e) => setFormData((prev) => ({ ...prev, symbol: e.target.value.toUpperCase() }))}
-          required
-        />
-        <datalist id="watch-ticker-options">
-          {tickerOptions.map((sym) => (
-            <option key={sym} value={sym} />
-          ))}
-        </datalist>
+        <div className="relative">
+          <input
+            className="h-9 w-full rounded border border-[#263241] bg-[#0d141c] pl-8 pr-2 font-mono text-sm text-[#dbe5ee] outline-none focus:border-[#f3a33a]/50 focus:ring-1 focus:ring-[#f3a33a]/30 transition-all"
+            placeholder="Start typing - e.g. AMD"
+            name="symbol"
+            autoComplete="off"
+            value={formData.symbol}
+            onChange={(e) => {
+              setFormData((prev) => ({ ...prev, symbol: e.target.value.toUpperCase() }));
+            }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => window.setTimeout(() => setFocused(false), 150)}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowDown' && showSuggestions) { e.preventDefault(); setActiveIdx(i => Math.min(i + 1, suggestions.length - 1)); }
+              else if (e.key === 'ArrowUp' && showSuggestions) { e.preventDefault(); setActiveIdx(i => Math.max(i - 1, -1)); }
+              else if (e.key === 'Enter' && showSuggestions && activeIdx >= 0) { e.preventDefault(); pickSuggestion(suggestions[activeIdx].symbol); }
+              else if (e.key === 'Escape') setFocused(false);
+            }}
+            required
+          />
+          <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2">
+            <Search size={12} className="text-[#4a5a6a]" />
+          </div>
+        </div>
+
+        {/* Suggestion list */}
+        {showSuggestions && (
+          <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-[#1e2d3d] bg-[#070b10] shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+            {suggestions.slice(0, 5).map((s, i) => (
+              <button
+                key={s.symbol}
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); pickSuggestion(s.symbol); }}
+                onMouseEnter={() => setActiveIdx(i)}
+                className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left transition-colors ${i === activeIdx ? 'bg-[#0e1826]' : 'hover:bg-[#0b1520]'}`}
+              >
+                <TickerLogo symbol={s.symbol} companyName={s.name} size={20} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-[12px] font-bold text-[#eef3f8]">{s.symbol}</span>
+                    <span className="truncate text-[9px] text-[#5e6b78]">{s.name}</span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </label>
       <label className="grid gap-1">
         <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Target price</span>
