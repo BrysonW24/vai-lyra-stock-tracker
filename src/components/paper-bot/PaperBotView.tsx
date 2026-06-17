@@ -1,10 +1,24 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Bot, ShieldCheck, Loader2, CheckCircle2, XCircle, AlertTriangle, ArrowRight, Activity, Sparkles, Calculator, Wallet, TrendingUp, Terminal, Bell, CornerDownLeft } from 'lucide-react';
+import { Bot, ShieldCheck, Loader2, CheckCircle2, XCircle, AlertTriangle, ArrowRight, Activity, Sparkles, Calculator, Wallet, TrendingUp, Terminal, Bell, CornerDownLeft, BellRing, BellOff, BadgePercent } from 'lucide-react';
 import { loadAi } from '@/lib/account';
 import { MiniSparkline } from '@/components/ChartPrimitives';
 import { SaaSTooltip } from './SaaSTooltip';
+import { PaperTickerInput } from './PaperTickerInput';
+import { PaperBotQuotes } from './PaperBotQuotes';
+import { Insight } from '@/components/Insight';
+
+interface MarketQuote {
+  valid: boolean;
+  symbol: string;
+  name: string | null;
+  price: number | null;
+  currency: string | null;
+  exchange: string | null;
+  changePercent: number | null;
+  error?: string;
+}
 
 type Action = 'propose' | 'approve' | 'execute';
 
@@ -90,6 +104,7 @@ interface Flag {
   message: string;
   symbol?: string;
   createdAt: string;
+  read: boolean;
 }
 interface CliEntry {
   cmd: string;
@@ -142,6 +157,8 @@ const OWNER_TONE: Record<string, string> = {
 export function PaperBotView({ isTour }: { isTour?: boolean }) {
   const [symbol, setSymbol] = useState('NVDA');
   const [quantity, setQuantity] = useState(10);
+  const [liveQuote, setLiveQuote] = useState<MarketQuote | null>(null);
+  const [alertsOn, setAlertsOn] = useState(true);
   const [tourStep, setTourStep] = useState<number>(isTour ? 0 : -1);
   const [run, setRun] = useState<BotRun | null>(null);
   const [intent, setIntent] = useState<Intent | null>(null);
@@ -553,20 +570,66 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
       </div>
 
       {/* Notifications / flags feed */}
-      <div className="terminal-panel rounded-md px-2.5 py-2">
-        <div className="flex items-center gap-1.5">
-          <Bell size={11} className="text-[#f3a33a]" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#c8d3de]">Notifications</span>
-          <span className="ml-auto text-[8.5px] text-[#6f7d8a]">{channels.length ? channels.join(' · ') : 'in-app only'}</span>
+      <div className="terminal-panel rounded-md p-3">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="grid h-6 w-6 place-items-center rounded-md border border-[#f3a33a]/30 bg-[#231a08] text-[#f3a33a]">
+              <Bell size={13} />
+            </span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#c8d3de]">Portfolio Alerts</span>
+            {flags.filter(f => !f.read).length > 0 && (
+              <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#f3a33a] px-1 font-mono text-[9px] font-bold text-[#07090c]">
+                {flags.filter(f => !f.read).length}
+              </span>
+            )}
+          </div>
+          {/* Alert toggle */}
+          <button
+            type="button"
+            onClick={() => setAlertsOn(a => !a)}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-semibold transition ${
+              alertsOn
+                ? 'border-[#1d7f55] bg-[#0d251b] text-[#43d18b] hover:bg-[#103626]'
+                : 'border-[#263241] bg-[#0d141c] text-[#6f7d8a] hover:border-[#3a4a5a]'
+            }`}
+          >
+            {alertsOn ? <BellRing size={10} /> : <BellOff size={10} />}
+            {alertsOn ? 'Alerts on' : 'Alerts off'}
+          </button>
         </div>
+
+        {/* Alert threshold info */}
+        {alertsOn && (
+          <div className="mb-2 flex items-center gap-2 rounded-lg border border-[#2a1f08] bg-[#1a1206] px-2.5 py-1.5">
+            <BadgePercent size={11} className="shrink-0 text-[#f3a33a]" />
+            <p className="text-[10px] text-[#a8913a]">Notified when any position moves <span className="font-semibold">±5%</span> — fills, approvals and risk blocks also flagged</p>
+          </div>
+        )}
+
+        {/* Channel status */}
+        <div className="mb-2 flex items-center gap-1.5">
+          <span className={`h-1.5 w-1.5 rounded-full ${channels.length ? 'bg-[#43d18b]' : 'bg-[#3a4a5a]'}`} />
+          <span className="text-[9px] text-[#6f7d8a]">{channels.length ? channels.join(' · ') : 'In-app only — configure Telegram in Settings for push delivery'}</span>
+        </div>
+
+        {/* Flags feed */}
         {flags.length === 0 ? (
-          <p className="mt-1 text-[9.5px] leading-snug text-[#6f7d8a]">No flags yet. The bot flags approvals, fills, and ±5% position moves here{channels.length ? '' : ' (and on Telegram once configured)'}.</p>
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-[#1d2733] py-5 text-center">
+            <Bell size={16} className="text-[#3a4a5a]" />
+            <p className="text-[10px] text-[#4a5a6a]">No alerts yet — they'll appear here as your portfolio moves</p>
+          </div>
         ) : (
-          <ul className="mt-1 space-y-0.5">
-            {flags.slice(0, 5).map((f) => (
-              <li key={f.id} className="flex items-start gap-1.5">
+          <ul className="space-y-1">
+            {flags.slice(0, 8).map((f) => (
+              <li key={f.id} className={`flex items-start gap-2 rounded-lg border px-2.5 py-1.5 ${
+                f.severity === 'action' ? 'border-[#5a4a1a] bg-[#1a1206]' :
+                f.severity === 'good' ? 'border-[#1d4a35] bg-[#0a1e14]' :
+                f.severity === 'warn' ? 'border-[#4a2a1d] bg-[#1a1006]' :
+                'border-[#1d2733] bg-[#080c11]'
+              }`}>
                 <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${FLAG_DOT[f.severity] ?? FLAG_DOT.info}`} />
-                <span className="text-[10px] leading-snug text-[#a8b5c2]">{f.message}</span>
+                <span className="flex-1 text-[10px] leading-snug text-[#a8b5c2]">{f.message}</span>
               </li>
             ))}
           </ul>
@@ -644,7 +707,6 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
               </span>
               <span className="text-[10px] text-[#8190a0]">of ${account.equity.toLocaleString(undefined, { maximumFractionDigits: 0 })} equity</span>
             </div>
-            {/* Cash utilisation bar */}
             <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#0d141c]">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-[#3b5bdb] to-[#8aa2ff] transition-all duration-500"
@@ -658,50 +720,34 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
           </div>
         )}
 
-        {/* Inputs row */}
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[90px]">
-            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8190a0]">Symbol</label>
-            <input
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              className="w-full rounded-lg border border-[#263241] bg-[#0d141c] px-3 py-2 font-mono text-[15px] font-bold text-[#dbe5ee] outline-none focus:border-[#8aa2ff]/70 focus:ring-1 focus:ring-[#8aa2ff]/20 transition"
-            />
-          </div>
-          <div className="flex-1 min-w-[80px]">
-            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-[#8190a0]">Qty (shares)</label>
-            <input
-              type="number"
-              value={quantity}
-              min={1}
-              onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
-              className="w-full rounded-lg border border-[#263241] bg-[#0d141c] px-3 py-2 font-mono text-[15px] font-bold text-[#dbe5ee] outline-none focus:border-[#8aa2ff]/70 focus:ring-1 focus:ring-[#8aa2ff]/20 transition"
-            />
-          </div>
-        </div>
+        {/* Rich ticker input with logo + search + live price */}
+        <PaperTickerInput
+          symbol={symbol}
+          quantity={quantity}
+          onSymbolChange={setSymbol}
+          onQuantityChange={setQuantity}
+          onQuoteResolved={setLiveQuote}
+        />
 
-        {/* Live estimated value */}
-        <div className="mt-3 flex items-center justify-between rounded-lg border border-[#1d2733] bg-[#080c11] px-3 py-2.5">
-          <div>
-            <p className="text-[9px] uppercase tracking-[0.1em] text-[#6f7d8a]">Est. Order Value</p>
-            <p className="font-mono text-[17px] font-bold text-[#eef3f8]">
-              ~${intent?.notionalValue ? intent.notionalValue.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—'}
-            </p>
-          </div>
-          {account && intent?.notionalValue && (
-            <div className="text-right">
-              <p className="text-[9px] uppercase tracking-[0.1em] text-[#6f7d8a]">Cash after</p>
-              <p className={`font-mono text-[14px] font-semibold ${
-                (account.equity - account.totalInvested - intent.notionalValue) < 0 ? 'text-[#ff6b6b]' : 'text-[#43d18b]'
+        {/* Cash after estimate (uses live price × qty) */}
+        {account && liveQuote?.price && (
+          <div className="mt-3 flex items-center justify-between rounded-lg border border-[#1d3a5a] bg-[#080e16] px-3 py-2">
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.1em] text-[#6f7d8a]">Cash remaining after order</p>
+              <p className={`font-mono text-[15px] font-bold ${
+                (account.equity - account.totalInvested - liveQuote.price * quantity) < 0 ? 'text-[#ff6b6b]' : 'text-[#43d18b]'
               }`}>
-                ${Math.max(0, account.equity - account.totalInvested - intent.notionalValue).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                ${Math.max(0, account.equity - account.totalInvested - liveQuote.price * quantity).toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </p>
             </div>
-          )}
-          {!intent?.notionalValue && (
-            <p className="text-[9px] text-[#5e6b78]">Propose to see exact value</p>
-          )}
-        </div>
+            <div className="text-right">
+              <p className="text-[9px] uppercase tracking-[0.1em] text-[#6f7d8a]">% cash used</p>
+              <p className="font-mono text-[13px] font-semibold text-[#8aa2ff]">
+                {Math.min(100, Math.round(((liveQuote.price * quantity) / Math.max(1, account.equity - account.totalInvested)) * 100))}%
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* CTA */}
         <div className="relative mt-3">
@@ -823,7 +869,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
                         />
                       )}
                       <button type="button" onClick={execute} disabled={busy !== null} className="inline-flex items-center gap-1.5 rounded-md border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 text-xs font-semibold text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-50">
-                        {busy === 'execute' ? <Loader2 size={13} className="animate-spin" /> : <ArrowRight size={13} />} Submit to paper
+                         {busy === 'execute' ? <Loader2 size={13} className="animate-spin" /> : <ArrowRight size={13} />} Submit to paper
                       </button>
                     </div>
                   )}
@@ -833,6 +879,12 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
           )}
         </div>
       )}
+
+      {/* Insight panel — same as command centre */}
+      <Insight />
+
+      {/* Rotating quotes from investing greats */}
+      <PaperBotQuotes />
     </div>
   );
 }
