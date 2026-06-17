@@ -542,6 +542,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
                 title="Propose a trade"
                 body="Click this to ask the AI to evaluate an AAPL trade. The AI explains, and the deterministic code builds the order."
                 position="top"
+                align="left"
               />
             )}
             <button
@@ -635,6 +636,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
                           title="You are the gate"
                           body="The AI cannot trade. Deterministic code cannot trade. Only you can approve this intent."
                           position="top"
+                          align="left"
                         />
                       )}
                       <button type="button" onClick={approve} disabled={busy !== null} className="inline-flex items-center gap-1.5 rounded-md border border-[#9a6a1f] bg-[#2a1f0f] px-3 py-1.5 text-xs font-semibold text-[#f3a33a] transition hover:bg-[#332615] disabled:opacity-50">
@@ -649,6 +651,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
                           title="Simulate Fill"
                           body="Push it through the risk engine one last time and simulate a fill at the real price."
                           position="top"
+                          align="left"
                         />
                       )}
                       <button type="button" onClick={execute} disabled={busy !== null} className="inline-flex items-center gap-1.5 rounded-md border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 text-xs font-semibold text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-50">
