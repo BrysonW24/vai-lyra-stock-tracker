@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bot, ShieldCheck, Loader2, CheckCircle2, XCircle, AlertTriangle, ArrowRight, Activity, Sparkles, Calculator, Wallet, TrendingUp, Terminal, Bell, CornerDownLeft } from 'lucide-react';
 import { loadAi } from '@/lib/account';
 import { MiniSparkline } from '@/components/ChartPrimitives';
+import { SaaSTooltip } from './SaaSTooltip';
 
 type Action = 'propose' | 'approve' | 'execute';
 
@@ -137,9 +138,10 @@ const OWNER_TONE: Record<string, string> = {
  * No live trading buttons exist. AI explains; the user approves; deterministic code fills on paper.
  * A "how it works" explainer makes the pipeline legible; a paper-account panel makes it analysable.
  */
-export function PaperBotView() {
+export function PaperBotView({ isTour }: { isTour?: boolean }) {
   const [symbol, setSymbol] = useState('NVDA');
   const [quantity, setQuantity] = useState(10);
+  const [tourStep, setTourStep] = useState<number>(isTour ? 0 : -1);
   const [run, setRun] = useState<BotRun | null>(null);
   const [intent, setIntent] = useState<Intent | null>(null);
   const [busy, setBusy] = useState<Action | null>(null);
@@ -190,6 +192,13 @@ export function PaperBotView() {
   useEffect(() => {
     cliEndRef.current?.scrollIntoView({ block: 'nearest' });
   }, [cliLog]);
+
+  useEffect(() => {
+    if (tourStep === 0) {
+      setSymbol('AAPL');
+      setQuantity(10);
+    }
+  }, [tourStep]);
 
   async function closePosition(symbol: string) {
     if (closing) return;
@@ -250,12 +259,14 @@ export function PaperBotView() {
   }
 
   async function propose() {
+    if (tourStep === 0) setTourStep(1);
     const ai = loadAi();
     const r = await call('propose', { symbol: symbol.trim().toUpperCase(), quantity, ai: { provider: ai.provider, apiKey: ai.apiKey, model: ai.model } });
     setRun(r);
     setIntent(r.intent ?? null);
   }
   async function approve() {
+    if (tourStep === 2) setTourStep(3);
     if (!intent) return;
     const r = await call('approve', { intent });
     if (r.ok && r.intent) {
@@ -264,12 +275,20 @@ export function PaperBotView() {
     }
   }
   async function execute() {
+    if (tourStep === 3) setTourStep(4);
     if (!intent) return;
     const r = await call('execute', { intent });
     setRun(r);
     if (r.intent) setIntent(r.intent);
     if (r.status === 'paper_executed') loadAccount();
   }
+
+  // Advance tour when the AI completes its verdict
+  useEffect(() => {
+    if (tourStep === 1 && run?.status === 'proposed' && intent?.status === 'pending_approval') {
+      setTourStep(2);
+    }
+  }, [tourStep, run?.status, intent?.status]);
 
   const status = run?.status ?? '';
   const statusCopy = STATUS_COPY[status];
@@ -331,7 +350,14 @@ export function PaperBotView() {
       </div>
 
       {/* Paper account analytics - compact: where you view + analyse the bot's track record */}
-      <div className="terminal-panel rounded-md px-2.5 py-2">
+      <div className="terminal-panel rounded-md px-2.5 py-2 relative">
+        {tourStep === 4 && (
+          <SaaSTooltip
+            title="Track it live"
+            body="Your simulated trade is now an open position! It tracks live P/L based on real market prices. Tour complete!"
+            position="bottom"
+          />
+        )}
         <div className="flex items-center gap-1.5">
           <Wallet size={11} className="text-[#43d18b]" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#c8d3de]">Paper account</span>
@@ -510,14 +536,23 @@ export function PaperBotView() {
               className="w-24 rounded border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 font-mono text-[13px] text-[#dbe5ee] outline-none focus:border-[#8aa2ff]/50"
             />
           </div>
-          <button
-            type="button"
-            onClick={propose}
-            disabled={busy !== null}
-            className="inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-[#101a2e] px-3 py-1.5 text-xs font-semibold text-[#8aa2ff] transition hover:bg-[#13203a] disabled:opacity-50"
-          >
-            {busy === 'propose' ? <Loader2 size={13} className="animate-spin" /> : <Bot size={13} />} Propose paper trade
-          </button>
+          <div className="relative">
+            {tourStep === 0 && (
+              <SaaSTooltip
+                title="Propose a trade"
+                body="Click this to ask the AI to evaluate an AAPL trade. The AI explains, and the deterministic code builds the order."
+                position="top"
+              />
+            )}
+            <button
+              type="button"
+              onClick={propose}
+              disabled={busy !== null}
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-[#101a2e] px-3 py-1.5 text-xs font-semibold text-[#8aa2ff] transition hover:bg-[#13203a] disabled:opacity-50"
+            >
+              {busy === 'propose' ? <Loader2 size={13} className="animate-spin" /> : <Bot size={13} />} Propose paper trade
+            </button>
+          </div>
         </div>
         <p className="mt-2 text-[9.5px] leading-snug text-[#6f7d8a]">
           The AI assesses readiness and explains; deterministic code builds the order; the risk engine gates it; you approve before any simulated fill. Research, not advice.
@@ -594,14 +629,32 @@ export function PaperBotView() {
               {(canApprove || canExecute) && (
                 <div className="flex items-center gap-2">
                   {canApprove && (
-                    <button type="button" onClick={approve} disabled={busy !== null} className="inline-flex items-center gap-1.5 rounded-md border border-[#9a6a1f] bg-[#2a1f0f] px-3 py-1.5 text-xs font-semibold text-[#f3a33a] transition hover:bg-[#332615] disabled:opacity-50">
-                      {busy === 'approve' ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} Approve for paper
-                    </button>
+                    <div className="relative">
+                      {tourStep === 2 && (
+                        <SaaSTooltip
+                          title="You are the gate"
+                          body="The AI cannot trade. Deterministic code cannot trade. Only you can approve this intent."
+                          position="top"
+                        />
+                      )}
+                      <button type="button" onClick={approve} disabled={busy !== null} className="inline-flex items-center gap-1.5 rounded-md border border-[#9a6a1f] bg-[#2a1f0f] px-3 py-1.5 text-xs font-semibold text-[#f3a33a] transition hover:bg-[#332615] disabled:opacity-50">
+                        {busy === 'approve' ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} Approve for paper
+                      </button>
+                    </div>
                   )}
                   {canExecute && (
-                    <button type="button" onClick={execute} disabled={busy !== null} className="inline-flex items-center gap-1.5 rounded-md border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 text-xs font-semibold text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-50">
-                      {busy === 'execute' ? <Loader2 size={13} className="animate-spin" /> : <ArrowRight size={13} />} Submit to paper
-                    </button>
+                    <div className="relative">
+                      {tourStep === 3 && (
+                        <SaaSTooltip
+                          title="Simulate Fill"
+                          body="Push it through the risk engine one last time and simulate a fill at the real price."
+                          position="top"
+                        />
+                      )}
+                      <button type="button" onClick={execute} disabled={busy !== null} className="inline-flex items-center gap-1.5 rounded-md border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 text-xs font-semibold text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-50">
+                        {busy === 'execute' ? <Loader2 size={13} className="animate-spin" /> : <ArrowRight size={13} />} Submit to paper
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

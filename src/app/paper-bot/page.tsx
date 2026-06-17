@@ -7,11 +7,18 @@ import { getDashboardData } from '@/lib/data';
  * Live trading is disabled by design; the AI explains, the user approves, deterministic code fills
  * on paper through the existing risk engine + simulator.
  */
-export default async function PaperBotPage() {
+export default async function PaperBotPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const isTour = params?.tour === 'true';
   const data = await getDashboardData();
+  
   return (
     <AppShell data={data}>
-      <PaperBotView />
+      <PaperBotView isTour={isTour} />
     </AppShell>
   );
 }

@@ -29,16 +29,19 @@ import { getDashboardData } from '@/lib/data';
 import { getMarketContext } from '@/lib/market-context';
 import { getMacroContext } from '@/lib/macro-context';
 import { getSetupStatus } from '@/lib/setup-status';
+import { getPaperAccountSummaryAuthAware } from '@/lib/trading/paper-account-repo';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass, trendArrow } from '@/lib/format';
+import { PaperBotStrip } from '@/components/paper-bot/PaperBotStrip';
 
 export default async function OverviewPage() {
   // These four are independent - fetch them concurrently instead of one-after-another
   // so the server render waits on the slowest, not the sum.
-  const [data, marketContext, macroContext, setupStatus] = await Promise.all([
+  const [data, marketContext, macroContext, setupStatus, paperAccount] = await Promise.all([
     getDashboardData(),
     getMarketContext(),
     getMacroContext(),
     getSetupStatus(),
+    getPaperAccountSummaryAuthAware(),
   ]);
   // Strongest setups: real strong_setup rows when they exist; otherwise fall back to
   // the top-scored names so the table is never blank (labelled honestly below).
@@ -79,6 +82,7 @@ export default async function OverviewPage() {
   const sections: CommandSectionNode[] = [
     { id: 'runners', node: <ExecutiveStrip panels={stripPanels} /> },
     { id: 'metrics', node: <MetricStrip data={data} /> },
+    { id: 'paper-bot', node: <PaperBotStrip account={paperAccount} /> },
     { id: 'ai-offer', node: <AiOfferCard /> },
     {
       id: 'context',
