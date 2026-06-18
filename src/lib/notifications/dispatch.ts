@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { sendWebPush, type StoredPushSubscription } from '@/lib/push/server';
 import { buildIdempotencyKey, routeNotification } from './router';
-import { renderNotificationText } from './templates';
+import { renderNotificationText, renderNotificationPushBody } from './templates';
 import { DEFAULT_NOTIFICATION_PREFERENCES, type ChannelType, type NotificationEvent, type NotificationPreferences, type NotificationType } from './types';
 import { sendTelegramMessage } from './telegram';
 import { sendWhatsAppMessage } from './whatsapp';
@@ -195,7 +195,8 @@ async function deliverPush(
     const idempotencyKey = `${event.id}:push:${subscription.id}`;
     const result = await sendWebPush(subscription, {
       title: event.title,
-      body: event.body,
+      // Push carries the same substance as chat (data line + Why + disclaimer), not a bare title.
+      body: renderNotificationPushBody(event),
       url: event.url,
       tag: event.dedupeKey,
       dedupeKey: event.dedupeKey,
@@ -233,7 +234,10 @@ async function deliverPush(
         .eq('user_id', event.userId);
     }
 
-    if (result.status === 'sent' || result.status === 'demo_logged') delivered.push('push');
+    // demo_logged = nothing actually sent (no real key/subscription). It must NOT count as
+    // delivered or the UI shows a false green "sent" and the audit is poisoned.
+    if (result.status === 'sent') delivered.push('push');
+    else if (result.status === 'demo_logged') suppressed.push('push');
     if (result.status === 'failed') errors.push(result.errorMessage || 'push failed');
   }
 
@@ -261,6 +265,7 @@ async function deliverChat(
 
   const text = renderNotificationText(event);
   const delivered: string[] = [];
+  const suppressed: string[] = [];
   const errors: string[] = [];
 
   for (const destination of destinations) {
@@ -284,11 +289,13 @@ async function deliverChat(
       idempotencyKey,
     });
 
-    if (result.status === 'sent' || result.status === 'demo_logged') delivered.push(channelType);
+    // demo_logged = nothing actually sent; do not report it as delivered (false green / bad audit).
+    if (result.status === 'sent') delivered.push(channelType);
+    else if (result.status === 'demo_logged') suppressed.push(channelType);
     if (result.status === 'failed') errors.push(result.errorMessage || `${channelType} failed`);
   }
 
-  return { delivered: Array.from(new Set(delivered)), suppressed: [], errors };
+  return { delivered: Array.from(new Set(delivered)), suppressed: Array.from(new Set(suppressed)), errors };
 }
 
 interface StoredEventRow {

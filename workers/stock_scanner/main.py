@@ -75,6 +75,30 @@ def _message_for_signal(signal: SignalResult, ticker: Ticker, previous_score: fl
     return build_telegram_message(signal, ticker, previous_score)
 
 
+def _signal_dispatch_body(signal: SignalResult) -> str:
+    """Concise stat line for the multi-channel dispatch body. The JS notification layer adds the
+    'Why' line and the 'Research, not advice.' suffix, so this stays a clean data line - unlike the
+    verbose legacy Telegram message (which carries its own multi-section framing + disclaimer)."""
+    metrics = signal.raw_payload or {}
+    head = f"Score {signal.signal_score:.0f}/100"
+    if signal.signal_score_delta is not None:
+        head += f" ({signal.signal_score_delta:+.0f})"
+    parts = [head]
+    rsi = metrics.get("rsi_14")
+    if rsi is not None:
+        parts.append(f"RSI {float(rsi):.0f}")
+    macd_hist = metrics.get("macd_histogram")
+    if macd_hist is not None:
+        parts.append(f"MACD hist {float(macd_hist):+.2f}")
+    vol = metrics.get("volume_ratio")
+    if vol is not None:
+        parts.append(f"vol {float(vol):.1f}x")
+    action = (signal.action_state or "").replace("_", " ")
+    if action:
+        parts.append(action)
+    return ", ".join(parts)
+
+
 def _route_signal_alert(repository, settings, signal_id, ticker, signal, decision, message) -> int:
     """Deliver a signal alert. Prefers multi-channel dispatch (web push + WhatsApp + Telegram)
     stamped with the operator user_id, and falls back to legacy single-operator Telegram ONLY when
@@ -101,7 +125,7 @@ def _route_signal_alert(repository, settings, signal_id, ticker, signal, decisio
             symbol=decision.symbol,
             alert_type=decision.alert_type,
             title=f"{decision.symbol} {decision.alert_type.replace('_', ' ')}",
-            body=message,
+            body=_signal_dispatch_body(signal),
             reason=decision.reason,
             payload=rich_payload,
             relevance_score=float(getattr(signal, "signal_score", 0) or 0),

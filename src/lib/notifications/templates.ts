@@ -126,3 +126,21 @@ export function renderNotificationText(event: NotificationEvent): string {
   const lines = [header, body, why, extra, suffix].filter((line) => line.length > 0);
   return clamp(lines.join('\n'), MAX_MESSAGE_LENGTH);
 }
+
+/**
+ * Push-tuned body. The OS notification already shows the title bold, so this omits the
+ * `[LABEL] title` header line but keeps the data body, the `Why:` provenance line, the per-type
+ * action line, and the `Research, not advice.` suffix. Used for web push so it carries the same
+ * substance as the Telegram/WhatsApp message instead of a bare title.
+ */
+export function renderNotificationPushBody(event: NotificationEvent): string {
+  const why = clamp(`Why: ${event.triggerReason}`, REASON_BUDGET);
+  const extra = typeExtraLine(event);
+  const suffix = SIGNAL_LIKE_TYPES.has(event.type) ? RESEARCH_SUFFIX : '';
+  const fixedLines = [why, extra, suffix].filter((line) => line.length > 0);
+  const fixedLength = fixedLines.reduce((sum, line) => sum + line.length, 0) + fixedLines.length;
+  const bodyBudget = MAX_MESSAGE_LENGTH - fixedLength;
+  const body = bodyBudget > 8 ? clamp(event.body.trim(), bodyBudget) : '';
+  const lines = [body, why, extra, suffix].filter((line) => line.length > 0);
+  return clamp(lines.join('\n'), MAX_MESSAGE_LENGTH);
+}
