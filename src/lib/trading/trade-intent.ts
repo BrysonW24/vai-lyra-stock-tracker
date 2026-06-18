@@ -20,6 +20,23 @@ const BUY_PATTERNS: RegExp[] = [
   new RegExp(String.raw`\b(?:i\s+)?(?:bought|purchased|added)\s+${SYMBOL}\s+(?:for|with|at)?\s*${AMOUNT}\b`, 'i'),
 ];
 
+const SELL_LOG_PATTERNS: RegExp[] = [
+  new RegExp(String.raw`\b(?:i\s+)?(?:sold|sell|closed|exited|dumped)\s+(?:my\s+|all\s+(?:my\s+)?|out\s+of\s+)?(?:${AMOUNT}\s+(?:of\s+)?)?${SYMBOL}\b`, 'i'),
+];
+
+/**
+ * True when the text is a declarative request to LOG a sell ("I sold $5k of NVDA", "closed my AMD"),
+ * which is NOT yet supported - so the caller can reply honestly instead of dropping it into a generic
+ * answer. Deliberately does NOT fire on research questions ("should I sell NVDA?", "is it time to
+ * sell?") so those still reach the AI as normal questions.
+ */
+export function detectSellLogIntent(text: string): boolean {
+  const input = text.trim();
+  if (!input) return false;
+  if (/\?\s*$/.test(input) || /^\s*(should|when|is\s+it|do\s+i|can\s+i|would|could|why|how|what|will)\b/i.test(input)) return false;
+  return SELL_LOG_PATTERNS.some((pattern) => pattern.test(input));
+}
+
 export function parseTradeLogIntent(text: string): ParsedTradeIntent | null {
   const input = text.trim();
   if (!input || /\b(sell|sold|short|option|call|put option|live|margin)\b/i.test(input)) return null;

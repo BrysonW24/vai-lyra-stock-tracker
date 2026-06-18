@@ -8,7 +8,8 @@ import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_CHAT_FORMAT, composeSystem, toneFo
 import { recordAiRun, hashInput } from '@/lib/ai/audit';
 import { recordQuestionSignal } from '@/lib/ai/question-signals';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
-import { parseTradeLogIntent } from '@/lib/trading/trade-intent';
+import { parseTradeLogIntent, detectSellLogIntent } from '@/lib/trading/trade-intent';
+import { lookupMarketQuote } from '@/lib/market/quote';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -27,6 +28,10 @@ interface ProposedAction {
   symbol: string;
   side?: 'buy';
   notional?: number;
+  /** Preview shown on the confirm card so the user approves a concrete fill, not a blind amount. */
+  estPrice?: number;
+  estShares?: number;
+  estCashAfter?: number;
 }
 
 const ACTION_VERBS: Record<string, ProposedAction['type']> = {
@@ -80,13 +85,48 @@ export async function POST(request: NextRequest) {
     }
 
     const explicitTrade = last?.role === 'user' ? parseTradeLogIntent(last.content) : null;
-    if (explicitTrade) {
+
+    // A request to LOG a sell is not supported yet - reply honestly instead of letting it fall
+    // through to a generic LLM answer (research questions like "should I sell NVDA?" are NOT caught
+    // here and still reach the AI normally).
+    if (!explicitTrade && last?.role === 'user' && detectSellLogIntent(last.content)) {
       recordQuestionSignal(last.content);
       return NextResponse.json({
         ok: true,
-        text: `I can log a ${money(explicitTrade.notional)} buy in ${explicitTrade.symbol}. I will price it at the latest market quote, deduct the cash from your available cash, and update your holding after you confirm.`,
-        suggestions: [`How much cash will I have left after ${explicitTrade.symbol}?`, `What does ${explicitTrade.symbol} do?`, 'Show my portfolio risk after this'],
-        action: { type: 'log_trade', symbol: explicitTrade.symbol, side: explicitTrade.side, notional: explicitTrade.notional },
+        text: "I can't log a sell yet - right now I only log buys. You can adjust or remove the holding directly in your Portfolio and I'll keep tracking it. (Sell logging is on the roadmap.)",
+        suggestions: ['Show my portfolio risk', 'What does my book look like now?', 'Which of my holdings has the weakest setup?'],
+      });
+    }
+
+    if (explicitTrade) {
+      recordQuestionSignal(last.content);
+      // Preview the live quote + remaining cash so the confirm card shows exactly what is being
+      // approved (shares, fill price, cash left), not a blind dollar amount. Best-effort: the server
+      // re-prices on confirm regardless, so a failed preview just falls back to the plain proposal.
+      const quote = await lookupMarketQuote(explicitTrade.symbol).catch(() => null);
+      const cash = (await getUserConstraints().catch(() => null))?.cashAvailable ?? null;
+      const price = quote && quote.valid && quote.price && quote.price > 0 ? quote.price : null;
+      const estShares = price ? Math.round((explicitTrade.notional / price) * 100) / 100 : undefined;
+      const estCashAfter = typeof cash === 'number' ? Math.round((cash - explicitTrade.notional) * 100) / 100 : undefined;
+      const overCash = typeof cash === 'number' && explicitTrade.notional > cash;
+      const detail = price
+        ? ` That is about ${estShares} shares at ${money(price)}${estCashAfter !== undefined ? `, leaving ${money(estCashAfter)} cash` : ''}.`
+        : '';
+      return NextResponse.json({
+        ok: true,
+        text: overCash
+          ? `A ${money(explicitTrade.notional)} buy in ${explicitTrade.symbol} is more than your ${money(cash as number)} available cash. I'll re-check on confirm - only confirm if you've topped up.`
+          : `I can log a ${money(explicitTrade.notional)} buy in ${explicitTrade.symbol}.${detail} I'll re-price at the live quote and update your holding after you confirm.`,
+        suggestions: [`What does ${explicitTrade.symbol} do?`, 'Show my portfolio risk after this', 'How much cash will I have left?'],
+        action: {
+          type: 'log_trade',
+          symbol: explicitTrade.symbol,
+          side: explicitTrade.side,
+          notional: explicitTrade.notional,
+          estPrice: price ?? undefined,
+          estShares,
+          estCashAfter,
+        },
       });
     }
 
