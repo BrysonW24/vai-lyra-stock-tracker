@@ -235,6 +235,15 @@ def calculate_signal(
             "rsi_state": latest.rsi_state,
             "volume_state": latest.volume_state,
             "trend_state": latest.trend_state,
+            # Component scores so the pure-Supabase read path can render the
+            # "what makes the score" breakdown bars (data.ts maps these by name)
+            # without the live overlay. Caps: rsi 25, macd 30, price location 15,
+            # trend 15, volume 15 - matching the frontend SCORE_COMPONENTS.
+            "rsi_score": score.rsi_score,
+            "macd_score": score.macd_score,
+            "price_location_score": score.price_location_score,
+            "trend_score": score.trend_score,
+            "volume_score": score.volume_score,
         }
     )
 

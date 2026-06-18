@@ -170,7 +170,6 @@ export function SignalTable({
               </th>
               <th className={`${rowPadding} w-48 font-semibold`}>Company</th>
               <th className={`${rowPadding} w-24 font-semibold`}>Price</th>
-              <th className={`${rowPadding} w-20 font-semibold`}>1H %</th>
               <th className={`${rowPadding} w-20 font-semibold`}>1D %</th>
               <th className={`${rowPadding} w-24 font-semibold`}>Score</th>
               <th className={`${rowPadding} w-24 font-semibold`}>Delta</th>
@@ -202,7 +201,6 @@ export function SignalTable({
                 </td>
                 <td className={`${rowPadding} truncate text-[#a8b5c2]`}>{signal.companyName}</td>
                 <td className={rowPadding}>{formatCurrency(signal.close)}</td>
-                <td className={`${rowPadding} ${toneClass(signal.priceChange1h)}`}>{formatSignedPercent(signal.priceChange1h)}</td>
                 <td className={`${rowPadding} ${toneClass(signal.priceChange1d)}`}>{formatSignedPercent(signal.priceChange1d)}</td>
                 <td className={`${rowPadding} text-lg font-semibold text-[#eef3f8]`}>{signal.score}</td>
                 <td className={`${rowPadding} ${toneClass(signal.scoreDelta)}`}>{formatSignedNumber(signal.scoreDelta, 0)}</td>

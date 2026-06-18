@@ -21,6 +21,17 @@ interface Face {
 
 const ORDER_KEY = 'lyra.metricStripOrder.v1';
 
+// Hourly cadence; flag the scan tile amber/red once the last scan failed/skipped or is
+// older than ~2x the cadence, so a dead cron never reads as a healthy scan. Local to
+// MetricStrip on purpose - format.ts is owned by another process.
+const STALE_AFTER_HOURS = 2;
+
+function scanHoursAgo(finishedAt: string): number {
+  const finished = new Date(finishedAt).getTime();
+  if (!Number.isFinite(finished)) return Infinity;
+  return (Date.now() - finished) / 3_600_000;
+}
+
 function FaceBlock({ face, icon: Icon }: { face: Face; icon: LucideIcon }) {
   return (
     <div>
@@ -64,6 +75,20 @@ export function MetricStrip({ data }: MetricStripProps) {
   const bestPerformer = [...data.portfolio].sort((a, b) => b.unrealisedPnlPercent - a.unrealisedPnlPercent)[0];
 
   const pnlTone = portfolioPnl >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]';
+
+  // Scan health: demo data is always treated as fresh; a live run is stale once it
+  // failed/skipped or has aged past the freshness window. Drives the scan tile colour
+  // and detail so a dead cron is visible at a glance rather than reading as healthy.
+  const runStatus = data.latestRun.status;
+  const runFailed = runStatus === 'failed' || runStatus === 'skipped';
+  const hoursAgo = scanHoursAgo(data.latestRun.finishedAt);
+  const scanStale = data.generatedFrom !== 'demo' && (runFailed || hoursAgo > STALE_AFTER_HOURS);
+  const scanTone = scanStale ? (runFailed ? 'text-[#ff6b6b]' : 'text-[#f3a33a]') : 'text-[#a8b5c2]';
+  const scanDetail = runFailed
+    ? `Scan ${runStatus} · ${formatNumber(data.latestRun.tickersScanned, 0)} tickers`
+    : scanStale
+      ? `Stale · expected hourly`
+      : `${formatNumber(data.latestRun.tickersScanned, 0)} · ${data.latestRun.timeframe.toUpperCase()}`;
 
   const tiles: { key: string; icon: LucideIcon; faces: Face[] }[] = [
     {
@@ -124,7 +149,7 @@ export function MetricStrip({ data }: MetricStripProps) {
       key: 'scan',
       icon: Activity,
       faces: [
-        { label: 'Scan', value: relativeTime(data.latestRun.finishedAt), detail: `${formatNumber(data.latestRun.tickersScanned, 0)} · ${data.latestRun.timeframe.toUpperCase()}`, tone: 'text-[#a8b5c2]' },
+        { label: scanStale ? (runFailed ? 'Scan failed' : 'Scan stale') : 'Scan', value: relativeTime(data.latestRun.finishedAt), detail: scanDetail, tone: scanTone, detailTone: scanStale ? scanTone : undefined },
         { label: 'Cadence', value: data.latestRun.timeframe.toUpperCase(), detail: 'Hourly · market hrs', tone: 'text-[#7fb0ff]' },
         { label: 'Coverage', value: formatNumber(data.latestRun.tickersScanned, 0), detail: 'US tech universe', tone: 'text-[#dbe5ee]' },
       ],

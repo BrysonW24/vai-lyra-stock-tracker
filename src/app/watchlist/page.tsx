@@ -21,7 +21,7 @@ export default async function WatchlistPage() {
             ['Watching', data.watchlist.length.toString(), 'text-[#eef3f8]'],
             ['Approaching', approaching.toString(), 'text-[#f3a33a]'],
             ['Triggered', triggered.toString(), triggered > 0 ? 'text-[#43d18b]' : 'text-[#8190a0]'],
-            ['Best momentum', bestScore.toString(), 'text-[#eef3f8]'],
+            ['Best setup', bestScore.toString(), 'text-[#eef3f8]'],
             ['Tracked', data.latestRun.watchlistOverlaysCreated.toString(), 'text-[#60a5fa]'],
             ['Alerts', 'Off', 'text-[#8190a0]'],
           ].map(([label, value, tone]) => (
@@ -37,7 +37,7 @@ export default async function WatchlistPage() {
             <div className="border-b border-[#1b2530] px-3 py-3">
               <h1 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Watchlist triggers</h1>
               <p className="mt-1 text-[11px] leading-relaxed text-[#8190a0]">
-                <span className="font-semibold text-[#a8b5c2]">Momentum score (0-100)</span> = how strong each setup looks right now, from five signals: RSI + MACD + price location + trend + volume. <span className="text-[#43d18b]">60+</span> = watchlist-worthy, <span className="text-[#f3a33a]">75+</span> = alert. Higher is a stronger momentum setup - it is not a price target or a fundamentals rating. Recomputed hourly.
+                <span className="font-semibold text-[#a8b5c2]">Setup score (0-100)</span> = how strongly each name reads as a beaten-down stock showing an early turn, from five signals: RSI in the reset band + an improving (still-negative) MACD histogram + price near its 60-day low + trend + volume. <span className="text-[#43d18b]">60+</span> = watchlist-worthy, <span className="text-[#f3a33a]">75+</span> = alert. Higher means a clearer early-turn setup - not buying strength, and not a price target or fundamentals rating. Recomputed hourly.
               </p>
             </div>
             <div className="hidden overflow-x-auto md:block">
@@ -50,7 +50,7 @@ export default async function WatchlistPage() {
                     <th className="px-3 py-2">Target Zone</th>
                     <th className="px-3 py-2">Current</th>
                     <th className="px-3 py-2">Distance</th>
-                    <th className="px-3 py-2" title="Momentum score 0-100 (RSI + MACD + price location + trend + volume). 60+ watchlist, 75+ alert.">Momentum</th>
+                    <th className="px-3 py-2" title="Setup score 0-100 (RSI reset + improving MACD histogram + price near 60-day low + trend + volume). 60+ watchlist, 75+ alert. A high score = a beaten-down name showing an early turn, not buying strength.">Setup</th>
                     <th className="px-3 py-2">Status</th>
                     <th className="px-3 py-2">Trigger</th>
                     <th className="px-3 py-2">RSI</th>
@@ -98,7 +98,7 @@ export default async function WatchlistPage() {
                       </div>
                     </div>
                     <div className="text-right font-mono">
-                      <p className="text-[8px] uppercase tracking-[0.12em] text-[#6f7d8a]">Momentum</p>
+                      <p className="text-[8px] uppercase tracking-[0.12em] text-[#6f7d8a]">Setup</p>
                       <p>{item.signalScore} <span className={toneClass(item.scoreDelta)}>{formatSignedNumber(item.scoreDelta, 0)}</span></p>
                       <p className="text-xs text-[#f3a33a]">{item.triggerState.replaceAll('_', ' ')}</p>
                     </div>

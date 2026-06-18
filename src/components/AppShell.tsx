@@ -102,6 +102,19 @@ interface AppShellProps {
   children: ReactNode;
 }
 
+// Hourly cadence; treat anything older than ~2x cadence as stale so a dead cron
+// stops wearing a confident green "Live" badge. Returns hours-since-scan so the
+// label can say exactly how old the data is. Kept local to AppShell on purpose -
+// format.ts is owned by another process.
+const STALE_AFTER_HOURS = 2;
+
+function scanFreshness(finishedAt: string): { stale: boolean; hoursAgo: number } {
+  const finished = new Date(finishedAt).getTime();
+  if (!Number.isFinite(finished)) return { stale: true, hoursAgo: 0 };
+  const hoursAgo = (Date.now() - finished) / 3_600_000;
+  return { stale: hoursAgo > STALE_AFTER_HOURS, hoursAgo };
+}
+
 export function AppShell({ data, children }: AppShellProps) {
   const pathname = usePathname();
   // Boundary-aware: /paper-bot must not also light up /paper (startsWith without the '/' boundary).
@@ -158,8 +171,10 @@ export function AppShell({ data, children }: AppShellProps) {
               <span className="truncate text-xs text-[#8190a0]">Search: NVDA</span>
             </div>
 
-            {/* Market status: honest about demo vs live. Green pulse + timeframe + last-scan when the
-                scan is live (Supabase-backed); amber static DEMO chip when showing sample data. */}
+            {/* Market status: honest about demo vs live vs stale. Green pulse when the scan is
+                live and fresh; amber static DEMO chip on sample data; amber/red "Stale" chip
+                when the last scan failed/skipped or is older than ~2x the scan cadence, so a
+                dead cron never keeps a confident green badge. */}
             {data.generatedFrom === 'demo' ? (
               <span
                 title="Demo data - illustrative sample signals, not a live market scan"
@@ -168,18 +183,44 @@ export function AppShell({ data, children }: AppShellProps) {
                 <span className="inline-flex h-2 w-2 rounded-full bg-[#f3a33a]" />
                 DEMO
               </span>
-            ) : (
-              <span
-                title={`Live · Last scan ${relativeTime(data.latestRun.finishedAt)} · ${data.latestRun.timeframe.toUpperCase()} timeframe`}
-                className="hidden items-center gap-1.5 rounded-md border border-[#1d4f3a] bg-[#0d251b] px-2 py-1.5 font-mono text-[11px] text-[#43d18b] sm:flex"
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#43d18b]" />
+            ) : (() => {
+              const runFailed = data.latestRun.status === 'failed' || data.latestRun.status === 'skipped';
+              const { stale, hoursAgo } = scanFreshness(data.latestRun.finishedAt);
+              if (runFailed || stale) {
+                const failed = runFailed;
+                return (
+                  <span
+                    title={
+                      failed
+                        ? `Last scan ${data.latestRun.status} - data may be incomplete (${relativeTime(data.latestRun.finishedAt)})`
+                        : `Stale - last scan ${relativeTime(data.latestRun.finishedAt)}, older than the ${STALE_AFTER_HOURS}h freshness window`
+                    }
+                    className={`hidden items-center gap-1.5 rounded-md border px-2 py-1.5 font-mono text-[11px] sm:flex ${
+                      failed
+                        ? 'border-[#5a1f1f] bg-[#2b0f0f] text-[#ff6b6b]'
+                        : 'border-[#5a4a1a] bg-[#231a08] text-[#f3a33a]'
+                    }`}
+                  >
+                    <span className={`inline-flex h-2 w-2 rounded-full ${failed ? 'bg-[#ff6b6b]' : 'bg-[#f3a33a]'}`} />
+                    {failed
+                      ? `Scan ${data.latestRun.status.toUpperCase()}`
+                      : `Stale · ${hoursAgo >= 24 ? `${Math.round(hoursAgo / 24)}d` : `${Math.round(hoursAgo)}h`} ago`}
+                  </span>
+                );
+              }
+              return (
+                <span
+                  title={`Live · Last scan ${relativeTime(data.latestRun.finishedAt)} · ${data.latestRun.timeframe.toUpperCase()} timeframe`}
+                  className="hidden items-center gap-1.5 rounded-md border border-[#1d4f3a] bg-[#0d251b] px-2 py-1.5 font-mono text-[11px] text-[#43d18b] sm:flex"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-[#43d18b]" />
+                  </span>
+                  {data.latestRun.timeframe.toUpperCase()} · {relativeTime(data.latestRun.finishedAt)}
                 </span>
-                {data.latestRun.timeframe.toUpperCase()} · {relativeTime(data.latestRun.finishedAt)}
-              </span>
-            )}
+              );
+            })()}
 
             <AlertStatusBadge />
 

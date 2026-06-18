@@ -68,21 +68,29 @@ export function matchStrategy(strategy: Strategy, signals: SignalRow[]): SignalR
 }
 
 /**
- * Preset strategies: ~7 research-grade momentum and mean-reversion patterns.
+ * Preset strategies: ~7 research-grade oversold-recovery and mean-reversion patterns.
  * All backtest stats are illustrative, derived from historical simulation.
  * NOT financial advice.
+ *
+ * UNIT NOTE: distanceFromLow, priceVsSma20/50/200 and priceChange1d are already
+ * percentages on SignalRow (e.g. distanceFromLow of 4.2 = 4.2% above the 60-day low),
+ * so every threshold over those fields must be expressed in whole percent (12, -8, 2),
+ * not fractions (0.12, -0.08, 0.02). rsi, rsiDelta, histDelta and volumeRatio are in
+ * their own native units (RSI points, raw MACD value, x-of-average ratio) and are
+ * compared as-is. Mixing the two (e.g. distanceFromLow <= 0.12 against a 4.2 field) is
+ * what produced "0 current matches" while the Radar showed those same names as setups.
  */
 
 export const PRESET_STRATEGIES: Strategy[] = [
   {
     id: 'momentum-recovery',
-    name: 'Momentum Recovery',
-    description: 'RSI oversold but trending up; early bounce catch.',
+    name: 'Oversold Recovery',
+    description: 'Beaten-down name turning up - RSI oversold but rising, near its 60-day low; early-turn catch.',
     rules: [
       { field: 'rsi', operator: 'between', value: [30, 50] },
       { field: 'rsiDelta', operator: 'gt', value: 0 },
       { field: 'histDelta', operator: 'gt', value: 0 },
-      { field: 'distanceFromLow', operator: 'lte', value: 0.12 },
+      { field: 'distanceFromLow', operator: 'lte', value: 12 },
       { field: 'volumeRatio', operator: 'gte', value: 0.9 },
     ],
     backtestStats: {
@@ -103,7 +111,7 @@ export const PRESET_STRATEGIES: Strategy[] = [
     rules: [
       { field: 'rsi', operator: 'lt', value: 30 },
       { field: 'volumeRatio', operator: 'gte', value: 1.2 },
-      { field: 'priceVsSma20', operator: 'lt', value: -0.08 },
+      { field: 'priceVsSma20', operator: 'lt', value: -8 },
     ],
     backtestStats: {
       winRate: 72,
@@ -123,7 +131,7 @@ export const PRESET_STRATEGIES: Strategy[] = [
     rules: [
       { field: 'rsi', operator: 'between', value: [50, 70] },
       { field: 'histDelta', operator: 'gt', value: 0 },
-      { field: 'priceVsSma200', operator: 'gt', value: 0.02 },
+      { field: 'priceVsSma200', operator: 'gt', value: 2 },
       { field: 'volumeRatio', operator: 'gte', value: 1.0 },
     ],
     backtestStats: {
@@ -143,9 +151,9 @@ export const PRESET_STRATEGIES: Strategy[] = [
     description: 'Consolidating near SMA200; elevated volume; breakout imminent.',
     rules: [
       { field: 'rsi', operator: 'between', value: [40, 60] },
-      { field: 'priceVsSma200', operator: 'between', value: [-0.02, 0.02] },
+      { field: 'priceVsSma200', operator: 'between', value: [-2, 2] },
       { field: 'volumeRatio', operator: 'gte', value: 1.1 },
-      { field: 'priceVsSma50', operator: 'lt', value: 0.05 },
+      { field: 'priceVsSma50', operator: 'lt', value: 5 },
     ],
     backtestStats: {
       winRate: 58,

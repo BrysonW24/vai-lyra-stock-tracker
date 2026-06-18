@@ -1,8 +1,8 @@
-# CLAUDE.md - Lyra Stock Momentum Radar
+# CLAUDE.md - Lyra Stock Oversold-Recovery Radar
 
 ## What is this?
 
-Lyra is a research-first tech stock momentum scanner. It tracks hourly OHLCV data, calculates RSI, MACD, moving averages, volume ratios, deterministic score components, signal lifecycle states, portfolio overlays, watchlist overlays, and alert payloads before presenting them in a dense dashboard.
+Lyra is a research-first tech stock oversold-recovery scanner. It looks for beaten-down names showing an early turn - the score rewards an RSI in the 35-50 reset band, a still-negative-but-improving MACD histogram, and price sitting within ~10% of its 60-period low. It tracks hourly OHLCV data, calculates RSI, MACD, moving averages, volume ratios, deterministic score components, signal lifecycle states, portfolio overlays, watchlist overlays, and alert payloads before presenting them in a dense dashboard. Note: it is a dip/early-turn (mean-reversion) strategy, not a buy-strength momentum strategy - a high score means "beaten-down name turning up," not "stock breaking out to new highs."
 
 It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supabase + a market-data source), and **AI** (bring your own key + model for plain-English explanations). Run `npm run doctor` to see which mode you're in.
 

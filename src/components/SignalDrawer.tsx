@@ -11,7 +11,7 @@ import { formatNumber, formatSignedNumber, toneClass, trendArrow } from '@/lib/f
 
 // Plain-English "what is this" for the metrics that drive the score.
 const HELP = {
-  score: 'A 0-100 momentum-recovery score built from RSI, MACD, price location, trend and volume. Higher = a stronger setup forming. Research, not advice.',
+  score: 'A 0-100 oversold-recovery score built from RSI, MACD, price location, trend and volume. Higher = a more beaten-down name showing an early turn (RSI in the reset band, a still-negative-but-improving MACD histogram, price near its 60-day low) - a dip catch, not buying strength. Research, not advice.',
   rsi: 'RSI (0-100): how hard the stock has been bought or sold lately. Low and turning up can mean it is recovering; very high can mean it has run hot.',
   macd: 'MACD histogram: recent momentum vs the slightly longer trend. Shrinking toward zero / turning up means selling pressure is easing - an early turn signal.',
   volume: 'Volume vs its own average. Above 1x means heavier-than-usual participation confirming the move.',
