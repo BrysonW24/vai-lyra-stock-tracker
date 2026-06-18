@@ -44,6 +44,7 @@ export default function OnboardingPage() {
   const [phase, setPhase] = useState<'reveal' | 'primer' | 'questionnaire' | 'complete'>('reveal');
   const [isSaving, setIsSaving] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Mount: resume from a saved checkpoint if one exists (so a returning user picks up where they
   // left off), otherwise start a fresh setup. Done in an effect (client-only) to avoid an SSR/
@@ -125,6 +126,41 @@ export default function OnboardingPage() {
   const handleFinish = async () => {
     if (isSaving) return;
     setIsSaving(true);
+    setSaveError(null);
+
+    // Collect REAL (non-demo) save failures. A 401 (server-side cookie not valid) or a 5xx must
+    // NOT be swallowed - if any real failure lands we keep the resumable checkpoint and let the
+    // user retry, instead of showing "You're all set" while their book silently dropped. Demo-mode
+    // ({demo:true}) responses are expected and never count as failures.
+    const realFailures: string[] = [];
+
+    // Post one watchlist item; returns 'ok' | 'demo' | 'failed'. Demo never blocks completion.
+    const postWatchlist = async (item: WatchlistItem): Promise<'ok' | 'demo' | 'failed'> => {
+      try {
+        const res = await fetch('/api/watchlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            symbol: item.symbol,
+            targetPrice: item.targetBuyPrice,
+            targetSignalScore: item.targetSignalScore,
+            referencePrice: item.lastPrice,
+            movementAlertPcts: item.alertPcts,
+            notes: item.notes,
+          }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (body?.demo) return 'demo';
+        // Treat a "already in your watchlist" duplicate as a soft success - the symbol is saved.
+        if (typeof body?.error === 'string' && /already in your watchlist/i.test(body.error)) return 'ok';
+        if (res.ok && body?.ok) return 'ok';
+        console.error(`Failed to add ${item.symbol} to watchlist:`, body?.error || `HTTP ${res.status}`);
+        return 'failed';
+      } catch (error) {
+        console.error(`Failed to add ${item.symbol} to watchlist:`, error);
+        return 'failed';
+      }
+    };
 
     try {
       // Sync operator profile + capital + strategy + alerts so AI can ground on user constraints.
@@ -137,6 +173,7 @@ export default function OnboardingPage() {
         });
         if (!result.ok && !result.demo) {
           console.error('[onboarding] profile/capital/alerts did not save to the cloud:', result.error);
+          realFailures.push('your profile and preferences');
         }
       }
 
@@ -154,30 +191,39 @@ export default function OnboardingPage() {
         document.cookie = 'lyra_onboarded=1; path=/; max-age=31536000; samesite=lax';
       }
 
-      // Submit watchlist items
+      // Submit watchlist items, capturing each HTTP result so a 401 is not swallowed.
+      let watchlistFailures = 0;
       for (const item of state.watchlist) {
-        try {
-          await fetch('/api/watchlist', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              symbol: item.symbol,
-              targetPrice: item.targetBuyPrice,
-              targetSignalScore: item.targetSignalScore,
-              referencePrice: item.lastPrice,
-              movementAlertPcts: item.alertPcts,
-              notes: item.notes,
-            }),
-          });
-        } catch (error) {
-          console.error(`Failed to add ${item.symbol} to watchlist:`, error);
-        }
+        const outcome = await postWatchlist(item);
+        if (outcome === 'failed') watchlistFailures += 1;
+      }
+      if (watchlistFailures > 0) {
+        realFailures.push(`${watchlistFailures} watchlist ${watchlistFailures === 1 ? 'ticker' : 'tickers'}`);
       }
 
-      // Submit portfolio holdings using the new atomic REPLACE endpoint
+      // Persist the tickers the user TYPED in the market-universe step. These were collected but
+      // never saved anywhere - convert them into watchlist inserts (deduped against tickers already
+      // in the watchlist) using the same endpoint above so they are not silently lost.
+      // NOTE: selectedCategories are intentionally NOT wired to a radar filter yet (deferred).
+      const alreadyWatched = new Set(state.watchlist.map((w) => w.symbol.toUpperCase().trim()));
+      const customTickers = (state.marketUniverse?.customTickers ?? [])
+        .map((t) => t.toUpperCase().trim())
+        .filter(Boolean)
+        .filter((t) => !alreadyWatched.has(t));
+      const dedupedCustomTickers = Array.from(new Set(customTickers));
+      let customFailures = 0;
+      for (const symbol of dedupedCustomTickers) {
+        const outcome = await postWatchlist({ symbol });
+        if (outcome === 'failed') customFailures += 1;
+      }
+      if (customFailures > 0) {
+        realFailures.push(`${customFailures} typed ${customFailures === 1 ? 'ticker' : 'tickers'}`);
+      }
+
+      // Submit portfolio holdings using the atomic REPLACE endpoint, capturing the result.
       if (state.portfolio.length > 0) {
         try {
-          await fetch('/api/portfolio', {
+          const res = await fetch('/api/portfolio', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -190,8 +236,14 @@ export default function OnboardingPage() {
               })),
             }),
           });
+          const body = await res.json().catch(() => ({}));
+          if (!body?.demo && !(res.ok && body?.ok)) {
+            console.error('Failed to replace portfolio:', body?.error || `HTTP ${res.status}`);
+            realFailures.push('your portfolio holdings');
+          }
         } catch (error) {
           console.error('Failed to replace portfolio:', error);
+          realFailures.push('your portfolio holdings');
         }
       }
 
@@ -206,6 +258,16 @@ export default function OnboardingPage() {
           notes: holding.notes,
         })),
       );
+
+      // Any real save failure: do NOT advance to the success beat and do NOT clear the resumable
+      // checkpoint. Surface an inline retry message so the user can press Finish again - their
+      // entered data is still in state and still checkpointed.
+      if (realFailures.length > 0) {
+        setSaveError(
+          `We could not save ${realFailures.join(', ')}. Your entries are kept - check your connection and tap Finish to retry.`,
+        );
+        return;
+      }
 
       // Snapshot the choices so the command centre personalises (no perpetual "New here?").
       saveOnboardingSummary({
@@ -304,7 +366,19 @@ export default function OnboardingPage() {
         return <AiInsightStep onNext={handleNext} />;
 
       case 9: // Summary / Ready
-        return <SetupSummaryCard state={state} onFinish={handleFinish} isSaving={isSaving} />;
+        return (
+          <div className="space-y-3">
+            <SetupSummaryCard state={state} onFinish={handleFinish} isSaving={isSaving} />
+            {saveError && (
+              <p
+                role="alert"
+                className="rounded-md border border-[#7a2230] bg-[#2a1115] px-3 py-2 text-[12px] leading-snug text-[#ff8a8a]"
+              >
+                {saveError}
+              </p>
+            )}
+          </div>
+        );
 
       default:
         return <div>Unknown step</div>;

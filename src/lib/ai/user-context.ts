@@ -18,6 +18,13 @@ export interface UserConstraints {
   primaryOutcome?: string | null;
   simulationEnabled?: boolean | null;
   strategyId?: string | null;
+  // Beginner branch answers (onboarding writes these when the user has never traded).
+  tradedBefore?: string | null;
+  beginnerMotivation?: string | null;
+  beginnerKnowledge?: string | null;
+  beginnerInvolvement?: string | null;
+  beginnerLearningStyle?: string | null;
+  beginnerHorizon?: string | null;
 }
 
 export async function getUserConstraints(): Promise<UserConstraints | null> {
@@ -32,7 +39,7 @@ export async function getUserConstraints(): Promise<UserConstraints | null> {
     const { data, error } = await supabase
       .from('operator_profiles')
       .select(
-        'experience_level, investing_style, preferred_timeframe, risk_comfort, primary_goal, cash_available, monthly_contribution, max_position_size_pct, default_trade_amount, primary_outcome, simulation_enabled, strategy_id',
+        'experience_level, investing_style, preferred_timeframe, risk_comfort, primary_goal, cash_available, monthly_contribution, max_position_size_pct, default_trade_amount, primary_outcome, simulation_enabled, strategy_id, traded_before, beginner_motivation, beginner_knowledge, beginner_involvement, beginner_learning_style, beginner_horizon',
       )
       .eq('user_id', user.id)
       .maybeSingle();
@@ -52,6 +59,12 @@ export async function getUserConstraints(): Promise<UserConstraints | null> {
       primaryOutcome: data.primary_outcome,
       simulationEnabled: data.simulation_enabled,
       strategyId: data.strategy_id,
+      tradedBefore: data.traded_before,
+      beginnerMotivation: data.beginner_motivation,
+      beginnerKnowledge: data.beginner_knowledge,
+      beginnerInvolvement: data.beginner_involvement,
+      beginnerLearningStyle: data.beginner_learning_style,
+      beginnerHorizon: data.beginner_horizon,
     };
   } catch {
     return null;
@@ -62,6 +75,13 @@ export function buildConstraintsBlock(c: UserConstraints): string {
   const lines: string[] = [];
   const cash = typeof c.cashAvailable === 'number' && c.cashAvailable > 0 ? c.cashAvailable : null;
 
+  // A user who answered "never traded before" is a brand-new beginner. Treat experience as
+  // beginner and lean conservative regardless of the intermediate/balanced form defaults, so
+  // suggestions are not pitched above their head.
+  const isBrandNew = c.tradedBefore === 'no';
+  const effectiveExperience = isBrandNew ? 'beginner' : c.experienceLevel;
+  const effectiveRisk = isBrandNew ? 'conservative' : c.riskComfort;
+
   if (cash !== null) lines.push(`- Cash available to deploy: ${formatCurrency(cash)}`);
   if (typeof c.maxPositionSizePct === 'number' && c.maxPositionSizePct > 0) {
     const ceiling = cash !== null ? ` (= ${formatCurrency(cash * (c.maxPositionSizePct / 100))} max per position)` : '';
@@ -69,12 +89,15 @@ export function buildConstraintsBlock(c: UserConstraints): string {
   }
   if (typeof c.defaultTradeAmount === 'number' && c.defaultTradeAmount > 0) lines.push(`- Typical trade size: ${formatCurrency(c.defaultTradeAmount)}`);
   if (typeof c.monthlyContribution === 'number' && c.monthlyContribution > 0) lines.push(`- Monthly top-up: ${formatCurrency(c.monthlyContribution)}`);
-  if (c.riskComfort) lines.push(`- Risk comfort: ${c.riskComfort}`);
+  if (effectiveRisk) lines.push(`- Risk comfort: ${effectiveRisk}`);
   if (c.primaryGoal) lines.push(`- Primary goal: ${c.primaryGoal.replace(/_/g, ' ')}`);
   if (c.primaryOutcome) lines.push(`- Desired outcome: ${c.primaryOutcome}`);
   if (c.investingStyle) lines.push(`- Investing style: ${c.investingStyle.replace(/_/g, ' ')}`);
   if (c.preferredTimeframe) lines.push(`- Preferred timeframe: ${c.preferredTimeframe}`);
-  if (c.experienceLevel) lines.push(`- Experience: ${c.experienceLevel}`);
+  if (effectiveExperience) lines.push(`- Experience: ${effectiveExperience}`);
+  if (isBrandNew) {
+    lines.push('- Brand-new investor (never placed a trade) - explain in plain English, keep ideas conservative, and avoid jargon.');
+  }
   if (c.simulationEnabled) lines.push('- Paper/simulation mode is ON - no real money is at stake.');
 
   if (!lines.length) return '';

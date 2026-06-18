@@ -1,10 +1,11 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertPreferences } from '@/lib/onboarding';
 import { Toggle } from '@/components/Toggle';
 import { BellRing, Smartphone } from 'lucide-react';
 import { faviconUrl } from '@/lib/ticker-logos';
+import { getPushSupportStatus, subscribeToPush } from '@/lib/push/client';
 
 interface AlertPreferencePanelProps {
   alerts: AlertPreferences;
@@ -59,7 +60,72 @@ function ChannelCard({ logo, name, status, on }: { logo: ReactNode; name: string
 }
 
 export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferencePanelProps) {
-  const handleToggle = (key: AlertToggleKey, value: boolean) => onChange({ ...alerts, [key]: value });
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushNote, setPushNote] = useState<string | null>(null);
+  const didResetPush = useRef(false);
+
+  // pushEnabled defaults to true in DEFAULT_ALERTS, but no browser subscription exists yet at the
+  // start of this step - so the default lies. Reset it to false on first mount so the toggle and
+  // the persisted value reflect reality; it only becomes true once a subscription actually
+  // succeeds via enablePush below. Skip the reset if a subscription is already live (e.g. the user
+  // resumed onboarding after enabling push).
+  useEffect(() => {
+    if (didResetPush.current) return;
+    didResetPush.current = true;
+    if (alerts.pushEnabled && getPushSupportStatus().permission !== 'granted') {
+      onChange({ ...alerts, pushEnabled: false });
+    }
+  }, [alerts, onChange]);
+
+  // Toggling push must register a REAL browser push subscription before we claim it is on -
+  // a cosmetic flag would silently break the headline notification promise. We reuse the same
+  // subscribe path the Settings panel uses (subscribeToPush + POST /api/push/subscribe) so the
+  // two surfaces stay in lockstep. pushEnabled is only set true if a subscription succeeds.
+  const enablePush = async () => {
+    setPushBusy(true);
+    setPushNote(null);
+    try {
+      const status = getPushSupportStatus();
+      // iOS has no web push unless the app is installed to the Home Screen.
+      if (!status.supported || !status.standalone) {
+        setPushNote('Add Lyra to your Home Screen, then finish enabling push from Settings.');
+        return;
+      }
+      const subscription = await subscribeToPush();
+      const response = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription: subscription.toJSON(),
+          platform: status.standalone ? 'pwa' : 'browser',
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.error || 'Could not save push subscription.');
+      }
+      onChange({ ...alerts, pushEnabled: true });
+      setPushNote('Push enabled on this device.');
+    } catch (err) {
+      setPushNote(err instanceof Error ? err.message : 'Could not enable push - finish from Settings later.');
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const handleToggle = (key: AlertToggleKey, value: boolean) => {
+    // Push is special: turning it on must subscribe for real, not just flip a flag.
+    if (key === 'pushEnabled') {
+      if (value) {
+        void enablePush();
+      } else {
+        setPushNote(null);
+        onChange({ ...alerts, pushEnabled: false });
+      }
+      return;
+    }
+    onChange({ ...alerts, [key]: value });
+  };
 
   return (
     <div className="space-y-3">
@@ -71,7 +137,7 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
           <ChannelCard
             on={alerts.pushEnabled}
             name="Push"
-            status={alerts.pushEnabled ? 'On' : 'Off'}
+            status={pushBusy ? 'Enabling' : alerts.pushEnabled ? 'On' : 'Off'}
             logo={<Smartphone size={15} className={alerts.pushEnabled ? 'text-[#43d18b]' : 'text-[#8190a0]'} />}
           />
           <ChannelCard
@@ -94,6 +160,11 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
         <p className="mt-1.5 text-[11px] leading-snug text-[#5d6b79]">
           Add Lyra to your home screen, then enable native push in Settings.
         </p>
+        {pushNote && (
+          <p className={`mt-1 text-[11px] leading-snug ${alerts.pushEnabled ? 'text-[#43d18b]' : 'text-[#f3a33a]'}`}>
+            {pushNote}
+          </p>
+        )}
       </div>
 
       {/* What to alert about - compact single-line rows with real iOS toggles */}
@@ -116,7 +187,12 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
             <div key={key}>
               <div className="flex items-center justify-between gap-3 px-3 py-1.5">
                 <span className="text-[13px] font-medium text-[#eef3f8]">{label}</span>
-                <Toggle checked={Boolean(alerts[key])} onChange={(v) => handleToggle(key, v)} label={label} />
+                <Toggle
+                  checked={Boolean(alerts[key])}
+                  onChange={(v) => handleToggle(key, v)}
+                  label={label}
+                  disabled={key === 'pushEnabled' && pushBusy}
+                />
               </div>
               {key === 'dailyDigest' && alerts.dailyDigest && (
                 <div className="flex items-center justify-between gap-3 bg-[#0b1119] px-3 py-1.5 pl-6">
