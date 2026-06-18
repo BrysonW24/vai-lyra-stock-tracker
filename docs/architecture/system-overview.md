@@ -144,7 +144,7 @@ This layer owns every decision. **Current:**
 | Var | Side | Layer | Notes |
 |---|---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | frontend | 3/4 read path | Zod-validated in `src/lib/env.ts`; optional - absence triggers demo mode |
-| `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_ENABLE_DEMO_FALLBACK` | frontend | UI | demo fallback keeps the app rendering with no keys |
+| `NEXT_PUBLIC_APP_URL` | frontend | UI | demo fallback (automatic when Supabase env is absent) keeps the app rendering with no keys |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | worker only | 1-4 write path | never frontend, never `NEXT_PUBLIC_*` |
 | `DEFAULT_USER_ID` | worker | 4 | stamps overlays for single-operator mode under RLS |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | worker only | 6 | outbound alerts |

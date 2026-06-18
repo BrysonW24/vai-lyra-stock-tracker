@@ -2,6 +2,7 @@ import { AppShell } from '@/components/AppShell';
 import { SmartMoneyCard } from '@/components/SmartMoneyCard';
 import { getDashboardData } from '@/lib/data';
 import { fetchLiveSmartMoney } from '@/lib/smart-money-live';
+import { pageTitleClass } from '@/lib/ui';
 
 export default async function SmartMoneyPage() {
   const data = await getDashboardData();
@@ -14,7 +15,7 @@ export default async function SmartMoneyPage() {
     <AppShell data={data}>
       <div className="space-y-3 pb-28 xl:pb-6">
         <section className="terminal-panel glass-hero rounded-md p-3">
-          <h1 className="text-sm font-semibold text-[#eef3f8]">Smart Money · Small Caps</h1>
+          <h1 className={pageTitleClass}>Smart Money · Small Caps</h1>
           <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-[#a8b5c2]">
             Follow government, big-tech and big-AI money into small caps - a news-driven edge that sits outside the price
             engine. Tap any name for the backing detail. {live ? 'Live from Finnhub news + AI extraction.' : 'Sample shape; live Finnhub + AI newsflow wires in when keys are set.'}

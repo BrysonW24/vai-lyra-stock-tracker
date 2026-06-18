@@ -13,6 +13,7 @@ import {
   toneClass,
   trendArrow,
 } from '@/lib/format';
+import { pageTitleClass } from '@/lib/ui';
 
 interface FundamentalsViewProps {
   reports: FundamentalsReport[];
@@ -92,7 +93,7 @@ export function FundamentalsView({ reports }: FundamentalsViewProps) {
         {/* Main table */}
         <div className="terminal-panel overflow-hidden rounded-md">
           <div className="border-b border-[#1b2530] px-3 py-3">
-            <h1 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">
+            <h1 className={pageTitleClass}>
               Fundamentals
             </h1>
             <p className="mt-1 font-mono text-xs text-[#8190a0]">

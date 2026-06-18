@@ -48,7 +48,7 @@ Grounding: the global 15px rem base in `src/app/globals.css` ("Global density ba
 
 With zero keys configured, the entire product runs on built-in demo data and makes no privileged calls. Every integration degrades to an honest no-op, never a crash and never a silent fake-success.
 
-Grounding: `NEXT_PUBLIC_ENABLE_DEMO_FALLBACK` (`.env.example`); "Demo mode is the safe default" (`SECURITY.md`); unset `TELEGRAM_BOT_TOKEN` / `WHATSAPP_ACCESS_TOKEN` produce `demo_logged` DeliveryRecords that say what WOULD have been sent (`src/lib/notifications/telegram.ts`, `whatsapp.ts`); unset webhook secrets fail closed (401/403); the worker no-ops safely with no Actions secrets (`.github/workflows/hourly-stock-scanner.yml` in the public repo).
+Grounding: demo fallback is automatic when the Supabase env vars are absent (`isSupabaseConfigured()` in `src/lib/supabase/client.ts`); "Demo mode is the safe default" (`SECURITY.md`); unset `TELEGRAM_BOT_TOKEN` / `WHATSAPP_ACCESS_TOKEN` produce `demo_logged` DeliveryRecords that say what WOULD have been sent (`src/lib/notifications/telegram.ts`, `whatsapp.ts`); unset webhook secrets fail closed (401/403); the worker no-ops safely with no Actions secrets (`.github/workflows/hourly-stock-scanner.yml` in the public repo).
 
 **Concretely forbids:** features that require keys to merely render; error screens in keyless mode; demo states that pretend to be live (the `demo_logged` status exists precisely so demo sends are never mistaken for real ones); committing any real `.env`.
 

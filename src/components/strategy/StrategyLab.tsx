@@ -12,8 +12,9 @@ import {
   describeRule,
   type Strategy,
 } from '@/lib/strategy';
-import { formatNumber, formatPercent, formatSignedNumber, toneClass } from '@/lib/format';
+import { formatNumber, formatSignedNumber, toneClass } from '@/lib/format';
 import { StatusBadge } from '@/components/StatusBadge';
+import { pageTitleClass } from '@/lib/ui';
 
 interface StrategyLabProps {
   signals: SignalRow[];
@@ -62,7 +63,7 @@ export function StrategyLab({ signals }: StrategyLabProps) {
         <div className="flex items-center gap-2">
           <TrendingUp className="text-[#60a5fa]" size={18} />
           <div>
-            <h1 className="text-base font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Strategy Lab</h1>
+            <h1 className={pageTitleClass}>Strategy Lab</h1>
             <p className="mt-1 font-mono text-xs text-[#8190a0]">
               Define rule-based strategies | {matches.length} current matches | demo backtest stats are illustrative
             </p>
@@ -92,7 +93,7 @@ export function StrategyLab({ signals }: StrategyLabProps) {
                 </div>
               </div>
               <div className="mt-2 flex items-center justify-between gap-2 font-mono text-xs">
-                <span className="text-[#f3a33a]">{strat.winRate}% win</span>
+                <span className="text-[#8190a0]">{getStrategyById(strat.id)?.rules.length ?? 0} rules</span>
                 <span
                   className={`rounded px-1.5 py-0.5 ${
                     strat.riskLevel === 'low'
@@ -108,7 +109,7 @@ export function StrategyLab({ signals }: StrategyLabProps) {
             </button>
           ))}
           <div className="rounded-md border border-[#263241] bg-[#0b1016] p-2 text-center text-[10px] text-[#8190a0]">
-            7 preset strategies. Backtest stats demo only.
+            {getStrategyList().length} preset strategies. No live backtest yet - stats are illustrative.
           </div>
         </aside>
 
@@ -158,25 +159,39 @@ export function StrategyLab({ signals }: StrategyLabProps) {
             )}
           </section>
 
-          {/* Backtest stats */}
-          <section className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
-            {([
-              ['Win Rate', `${selectedStrategy.backtestStats.winRate}%`, 'text-[#43d18b]', 'Share of backtested trades that ended in profit.'],
-              ['Avg Return', `${formatNumber(selectedStrategy.backtestStats.avgReturn, 1)}%`, toneClass(selectedStrategy.backtestStats.avgReturn), 'Average % move per trade across the backtest.'],
-              ['Median Return', `${formatNumber(selectedStrategy.backtestStats.medianReturn, 1)}%`, toneClass(selectedStrategy.backtestStats.medianReturn), 'The middle trade outcome - less skewed by outliers.'],
-              ['Max Drawdown', `${selectedStrategy.backtestStats.maxDrawdown}%`, 'text-[#ff6b6b]', 'Worst peak-to-trough drop along the way.'],
-              ['Best Sector', selectedStrategy.backtestStats.bestSector, 'text-[#60a5fa]', 'Where this strategy worked best historically.'],
-              ['Sample Size', selectedStrategy.backtestStats.sampleSize.toString(), 'text-[#a8b5c2]', 'How many trades the stats are based on.'],
-            ] as const).map(([label, value, tone, help]) => (
-              <div className="terminal-panel rounded-md p-2" key={label}>
-                <div className="flex items-center justify-between">
-                  <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
-                  <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-[#5e6b78]">demo</span>
-                </div>
-                <p className={`numeric mt-0.5 font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
-                <p className="mt-1 text-[10px] leading-snug text-[#8190a0]">{help}</p>
+          {/* Backtest stats - no live backtest engine yet, so these are presented as
+              an illustrative empty state. The layout and metric definitions stay so
+              the slots are ready when real signal_outcomes data lands; the concrete
+              numbers are deliberately withheld rather than faked. */}
+          <section className="space-y-1.5">
+            <div className="rounded-md border border-dashed border-[#2a3645] bg-[#0b1016] px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#dbe5ee]">Backtest stats</p>
+                <span className="rounded border border-[#3a4452] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-[#8190a0]">Illustrative</span>
               </div>
-            ))}
+              <p className="mt-1 text-[10px] leading-snug text-[#8190a0]">
+                Illustrative - no live backtest yet. These slots fill in once historical signal outcomes are recorded; Lyra never shows a fabricated win rate or trade count.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
+              {([
+                ['Win Rate', 'Share of backtested trades that ended in profit.'],
+                ['Avg Return', 'Average % move per trade across the backtest.'],
+                ['Median Return', 'The middle trade outcome - less skewed by outliers.'],
+                ['Max Drawdown', 'Worst peak-to-trough drop along the way.'],
+                ['Best Sector', 'Where this strategy worked best historically.'],
+                ['Sample Size', 'How many trades the stats are based on.'],
+              ] as const).map(([label, help]) => (
+                <div className="terminal-panel rounded-md p-2" key={label}>
+                  <div className="flex items-center justify-between">
+                    <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
+                    <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-[#5e6b78]">pending</span>
+                  </div>
+                  <p className="numeric mt-0.5 font-mono text-sm font-semibold text-[#5e6b78] md:text-base">-</p>
+                  <p className="mt-1 text-[10px] leading-snug text-[#8190a0]">{help}</p>
+                </div>
+              ))}
+            </div>
           </section>
 
           {/* Current matches table */}

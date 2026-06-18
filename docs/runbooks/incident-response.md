@@ -16,7 +16,7 @@ Lyra is research software. **No live broker execution exists** (`NullBrokerAdapt
 ## 1. First 15 minutes
 
 1. **Write down the time and the symptom** (one line; you will need it for the postmortem).
-2. **Establish data mode.** Is the deployment in demo mode or live mode? Demo mode (no Supabase env) means user-visible "wrong data" is almost certainly demo fixtures behaving as designed - check `NEXT_PUBLIC_ENABLE_DEMO_FALLBACK` and whether Supabase env is set before debugging anything else.
+2. **Establish data mode.** Is the deployment in demo mode or live mode? Demo mode (no Supabase env) means user-visible "wrong data" is almost certainly demo fixtures behaving as designed - demo fallback is automatic, so check whether the Supabase env vars are set before debugging anything else.
 3. **Capture evidence before changing anything.** Vercel function logs, the failing URL, GitHub Actions run logs (`Hourly Stock Scanner` in the public repo), a screenshot. Logs rotate; screenshots do not.
 4. **Contain using the kill-switch runbook** (`docs/runbooks/kill-switch.md`). Every layer has a today-workable off switch: notifications, AI, webhooks, scanner. Containment is reversible; investigate after.
 5. **If a secret is involved, rotate first, investigate second** - rule 4 in `SECURITY.md`. Rotation steps per channel are in the kill-switch runbook and the integration docs.

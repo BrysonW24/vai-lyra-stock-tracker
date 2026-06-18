@@ -10,6 +10,7 @@ import { PaperTickerInput } from './PaperTickerInput';
 import { PaperBotQuotes } from './PaperBotQuotes';
 import { Insight } from '@/components/Insight';
 import { PaperAccountCharts } from './PaperAccountCharts';
+import { pageTitleClass } from '@/lib/ui';
 
 interface MarketQuote {
   valid: boolean;
@@ -339,7 +340,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
             <Bot size={15} />
           </span>
           <div className="min-w-0">
-            <h1 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#c8d3de]">Paper Bot</h1>
+            <h1 className={pageTitleClass}>Paper Bot</h1>
             <p className="text-[10px] text-[#8190a0]">Practise the pipeline with fake money + real prices. AI explains; you approve; code fills on paper.</p>
           </div>
           <div className="ml-auto flex items-center gap-2">

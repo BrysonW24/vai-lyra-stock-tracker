@@ -112,7 +112,7 @@ Reference: `.env.example`. Three modes, additive.
 
 | Var | Where | Value |
 |---|---|---|
-| `NEXT_PUBLIC_ENABLE_DEMO_FALLBACK` | Vercel | `true` (keeps the dashboard on built-in demo data when Supabase is unset) |
+| (no demo-mode flag) | n/a | Demo fallback is automatic - the dashboard stays on built-in demo data whenever the Supabase env vars are unset. Nothing to set. |
 
 With nothing else set, the app deploys and runs entirely on demo data. This is by design - see `SECURITY.md` ("Demo mode is the safe default").
 

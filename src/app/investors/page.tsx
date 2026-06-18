@@ -2,6 +2,7 @@ import { AppShell } from '@/components/AppShell';
 import { InvestorRadar } from '@/components/investors/InvestorRadar';
 import { getDashboardData } from '@/lib/data';
 import { getInvestors, getSmallCapCompanies, getThemes } from '@/lib/world-radar';
+import { pageTitleClass } from '@/lib/ui';
 
 export default async function InvestorsPage() {
   const data = await getDashboardData();
@@ -16,7 +17,7 @@ export default async function InvestorsPage() {
     <AppShell data={data}>
       <div className="space-y-3 pb-28 xl:pb-6">
         <section className="terminal-panel glass-hero rounded-md p-3">
-          <h1 className="text-sm font-semibold text-[#eef3f8]">Investor Radar</h1>
+          <h1 className={pageTitleClass}>Investor Radar</h1>
           <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-[#a8b5c2]">
             What elite managers disclosed in their latest 13F filings - new positions, adds, trims and exits across
             every tracked book. Small-cap overlap is flagged on each move: disciplined money showing up in a small name

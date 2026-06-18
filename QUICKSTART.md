@@ -22,7 +22,7 @@ Open http://localhost:3042 and walk through `/onboarding`.
 ### 1. Demo mode (zero keys)
 Just `npm install` then `npm run dev`. The whole console runs on built-in demo data - explore the dashboard, onboarding, IPO radar, calendar, education, and charts with nothing to configure.
 
-> Keep `NEXT_PUBLIC_ENABLE_DEMO_FALLBACK=true` (the default) so the app falls back to demo data whenever Supabase isn't set.
+> Demo fallback is automatic - the app falls back to demo data whenever the Supabase env vars aren't set. There is no flag to toggle it.
 
 ### 2. Live mode (real scanning)
 To scan real stocks and store results you need **Supabase** and a **market-data source**:

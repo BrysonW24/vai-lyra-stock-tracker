@@ -26,6 +26,7 @@ import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { syncAccountProfile } from '@/lib/sync-onboarding';
 import { loadInterest, saveInterest, registerInterest } from '@/lib/interest';
 import { NotificationsSetup } from '@/components/NotificationsSetup';
+import { pageTitleClass } from '@/lib/ui';
 
 function Panel({ icon: Icon, title, subtitle, children }: { icon: typeof UserRound; title: string; subtitle: string; children: React.ReactNode }) {
   return (
@@ -218,7 +219,7 @@ export function AccountSettings() {
   return (
     <div className="space-y-2.5">
       <div className="terminal-panel rounded-md px-3 py-2.5">
-        <h1 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#c8d3de]">Account &amp; settings</h1>
+        <h1 className={pageTitleClass}>Account &amp; settings</h1>
         <p className="mt-0.5 text-[11px] leading-snug text-[#8190a0]">
           Stored locally in this browser - Lyra is research software, not a broker, and never holds your money or trades.
         </p>

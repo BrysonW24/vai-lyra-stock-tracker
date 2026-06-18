@@ -6,6 +6,7 @@ import { AddWatchRuleForm } from '@/components/watchlist/AddWatchRuleForm';
 import { TickerLogo } from '@/components/TickerLogo';
 import { getDashboardData } from '@/lib/data';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass } from '@/lib/format';
+import { pageTitleClass } from '@/lib/ui';
 
 export default async function WatchlistPage() {
   const data = await getDashboardData();
@@ -35,7 +36,7 @@ export default async function WatchlistPage() {
         <section className="grid gap-3 xl:grid-cols-[1fr_360px]">
           <div className="terminal-panel overflow-hidden rounded-md">
             <div className="border-b border-[#1b2530] px-3 py-3">
-              <h1 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Watchlist triggers</h1>
+              <h1 className={pageTitleClass}>Watchlist triggers</h1>
               <p className="mt-1 text-[11px] leading-relaxed text-[#8190a0]">
                 <span className="font-semibold text-[#a8b5c2]">Setup score (0-100)</span> = how strongly each name reads as a beaten-down stock showing an early turn, from five signals: RSI in the reset band + an improving (still-negative) MACD histogram + price near its 60-day low + trend + volume. <span className="text-[#43d18b]">60+</span> = watchlist-worthy, <span className="text-[#f3a33a]">75+</span> = alert. Higher means a clearer early-turn setup - not buying strength, and not a price target or fundamentals rating. Recomputed hourly.
               </p>

@@ -26,7 +26,7 @@ Anything prefixed `NEXT_PUBLIC_` is compiled into the browser bundle and is visi
 | Variable | Purpose | Where used | Exposure class | Rotation |
 |---|---|---|---|---|
 | `NEXT_PUBLIC_APP_URL` | Canonical app URL | Frontend | public | n/a |
-| `NEXT_PUBLIC_ENABLE_DEMO_FALLBACK` | Show demo data when Supabase unset | Frontend (`src/lib/demo-data.ts` consumers) | public | n/a |
+| (demo fallback) | Automatic when Supabase env is absent - no flag; driven by `isSupabaseConfigured()` | Frontend (`src/lib/demo-data.ts` consumers) | n/a | n/a |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Browser + server clients (`src/lib/supabase/*`), `src/middleware.ts` | public | Changes only if the project moves |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | RLS-enforced read/write as the signed-in user | Browser + server clients, middleware | public (safe only with RLS) | Supabase dashboard > Settings > API > rotate anon key; redeploy frontend |
 | `SUPABASE_URL` | Supabase URL for the Python worker | `workers/stock_scanner/` | identifier | With project move |

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { MATURITY_TONE, type Theme } from '@/lib/world-radar';
 import { TickerLogo } from '@/components/TickerLogo';
 import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
+import { pageTitleClass } from '@/lib/ui';
 
 const THEME_RADAR_TERMS: HelpTerm[] = [
   { term: 'Momentum', what: 'How strongly the theme is moving right now - price and participation building across its names. Higher is stronger.' },
@@ -66,7 +67,7 @@ export function ThemeRadar({ themes, topBySlug, latestEventBySlug }: ThemeRadarP
   return (
     <section className="space-y-2">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-        <h1 className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#7fb0ff]">World Radar</h1>
+        <h1 className={pageTitleClass}>World Radar</h1>
         <span className="font-mono text-[10px] text-[#8190a0]">{sorted.length} themes</span>
         <p className="text-[10px] text-[#6f7d8a]">
           Themes mapped from first principles - follow the bottlenecks, not the noise

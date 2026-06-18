@@ -3,6 +3,7 @@ import { AppShell } from '@/components/AppShell';
 import { SignalTable } from '@/components/SignalTable';
 import { getDashboardData } from '@/lib/data';
 import { formatNumber } from '@/lib/format';
+import { pageTitleClass } from '@/lib/ui';
 
 export default async function RadarPage() {
   const data = await getDashboardData();
@@ -15,7 +16,7 @@ export default async function RadarPage() {
         <section className="terminal-panel rounded-md px-3 py-3">
           <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
             <div>
-              <h1 className="text-base font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Signal Radar</h1>
+              <h1 className={pageTitleClass}>Signal Radar</h1>
               <p className="mt-1 font-mono text-xs text-[#8190a0]">
                 {formatNumber(data.signals.length, 0)} symbols | {strong} strong | {weakening} risk | frontend renders middleware signal truth
               </p>
