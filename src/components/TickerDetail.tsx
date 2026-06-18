@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { OutcomeHistoryPanel } from '@/components/tickers/OutcomeHistoryPanel';
 import { TickerInsightsPanel } from '@/components/tickers/TickerInsightsPanel';
 import { SaveButton } from '@/components/research/SaveButton';
+import { MetricHelp } from '@/components/education/MetricHelp';
 import { buildScoreBreakdown } from '@/lib/score-breakdown';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, formatSignedPercent, relativeTime, toneClass, trendArrow } from '@/lib/format';
 
@@ -97,21 +98,22 @@ export function TickerDetail({ signal, scoreHistory }: TickerDetailProps) {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Current metrics</p>
+              <p className="mt-1 text-[10px] leading-snug text-[#6f7d8a]">Tap the ? on any metric for what it means and a link into the academy.</p>
               <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 font-mono text-xs">
-                <span className="text-[#8190a0]">RSI</span>
+                <span className="inline-flex items-center gap-1 text-[#8190a0]">RSI <MetricHelp moduleId="rsi" /></span>
                 <span className="text-right text-[#dbe5ee]">{formatNumber(signal.rsi)} {trendArrow(signal.rsiDelta)} {formatSignedNumber(signal.rsiDelta)}</span>
-                <span className="text-[#8190a0]">MACD Hist</span>
+                <span className="inline-flex items-center gap-1 text-[#8190a0]">MACD Hist <MetricHelp moduleId="macd-histogram" /></span>
                 <span className="text-right text-[#dbe5ee]">{formatNumber(signal.macdHistogram, 2)} {trendArrow(signal.histDelta)} {formatSignedNumber(signal.histDelta, 2)}</span>
-                <span className="text-[#8190a0]">Volume ratio</span>
+                <span className="inline-flex items-center gap-1 text-[#8190a0]">Volume ratio <MetricHelp moduleId="volume-confirmation" /></span>
                 <span className="text-right text-[#dbe5ee]">{formatNumber(signal.volumeRatio, 2)}x</span>
-                <span className="text-[#8190a0]">60D low distance</span>
+                <span className="inline-flex items-center gap-1 text-[#8190a0]">60D low distance <MetricHelp moduleId="distance-from-low" /></span>
                 <span className="text-right text-[#dbe5ee]">{formatPercent(signal.distanceFromLow)}</span>
-                <span className="text-[#8190a0]">MACD state</span>
+                <span className="inline-flex items-center gap-1 text-[#8190a0]">MACD state <MetricHelp moduleId="macd" /></span>
                 <span className="text-right text-[#dbe5ee]">{signal.macdState}</span>
               </div>
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Price vs moving averages</p>
+              <p className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Price vs moving averages <MetricHelp moduleId="moving-averages" /></p>
               <div className="mt-3 space-y-3">
                 <MetricBar label="20MA" value={signal.priceVsSma20} />
                 <MetricBar label="50MA" value={signal.priceVsSma50} />

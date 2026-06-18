@@ -4,12 +4,27 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, Compass } from 'lucide-react';
 import { TickerLogo } from '@/components/TickerLogo';
+import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
 import { ACTION_TONE, SIZE_LABEL } from '@/lib/world-radar';
 import type { ScoredCompany, SmallCapBucket } from '@/lib/world-radar';
 import type { SmallCapResearchBackend, SmallCapResearchCandidate } from '@/lib/small-cap-research';
 
 const AVOID_BUCKET = 'Avoid - dilution/hype risk';
 const EMERGING_BUCKET = 'Emerging opportunities';
+
+const SMALL_CAP_TERMS: HelpTerm[] = [
+  { term: 'Theme fit', what: 'How squarely the company sits inside its theme thesis - core exposure scores higher than a loose, derivative connection.' },
+  { term: 'Bottleneck', what: 'How exposed the company is to a hard-to-replace link in the supply chain, where pricing power tends to concentrate.' },
+  { term: 'Evidence', what: 'Strength of the supporting evidence - filings, contracts, spend and disclosures behind the thesis, not just narrative.' },
+  { term: 'Momentum', what: 'The technical / price momentum component - whether the name is already turning rather than just cheap.', moduleId: 'momentum-recovery' },
+  { term: 'Quality', what: 'Financial-quality score - balance-sheet health, cash position and how sustainably the business is funded.', moduleId: 'free-cash-flow' },
+  { term: 'Liquidity', what: 'How easily the stock can be traded. Small caps are thin - low liquidity means wider spreads and harder exits.', moduleId: 'market-cap' },
+  { term: 'Capital', what: 'Capital-flow score - whether money (institutional, government, deals) is rotating into the name.' },
+  { term: 'Penalty', what: 'A negative deduction for risk flags - dilution, hype, governance or single-point-of-failure exposure. It drags the total down.' },
+  { term: 'Gov / Vol / Tech / Risk', what: 'The research-candidate sub-scores: Government spend exposure, Buyer-volume signal, Technical setup, and a negative Risk penalty.' },
+  { term: 'Paper bot ready', what: 'The candidate clears the bar to be tracked by a paper-only (simulated, no real money) trading bot. It is a research flag, never a trade instruction.' },
+  { term: 'Avoid - dilution/hype risk', what: 'A bucket for names where the risk penalty dominates - heavy share issuance, promotional hype or weak fundamentals outweigh the opportunity.' },
+];
 
 interface ThemeMeta {
   name: string;
@@ -256,6 +271,14 @@ export function SmallCapDiscovery({ buckets, themesBySlug, research }: SmallCapD
         <div className="flex items-center gap-2">
           <Compass size={16} className="text-[#7fb0ff]" />
           <h2 className="text-sm font-semibold text-[#eef3f8]">Discovery engine</h2>
+          <HelpDrawer
+            title="What the scores mean"
+            subtitle="The small-cap discovery score, by component"
+            ariaLabel="What the small-cap discovery scores mean"
+            intro="Each name carries a deterministic 0-100 opportunity score built from these components, minus a risk penalty. Here is what each one reads."
+            terms={SMALL_CAP_TERMS}
+            footnote="Discovery ranks are deterministic research scores - small caps carry real liquidity and dilution risk. Nothing here is a buy or sell call. Research only."
+          />
         </div>
 
         <div className="mt-2 grid grid-cols-3 gap-1.5">

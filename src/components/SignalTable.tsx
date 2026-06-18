@@ -2,13 +2,37 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowUpRight, ListFilter, Pin, Rows3, Search } from 'lucide-react';
+import { ArrowUpRight, Info, ListFilter, Pin, Rows3, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { SignalRow } from '@/types/scanner';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, formatSignedPercent, toneClass, trendArrow } from '@/lib/format';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TickerLogo } from '@/components/TickerLogo';
 import { SignalDrawer } from '@/components/SignalDrawer';
+import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
+
+// Per-column plain-English help + the academy module it deep-links to. Native title=
+// tooltips read this on hover; the header "?" drawer renders the same set so the two
+// can never drift. Definitions stay short - the module is the full explanation.
+const COLUMN_HELP: Array<HelpTerm & { tip: string }> = [
+  { term: 'Score', tip: '0-100 oversold-recovery score. Higher = a more beaten-down name showing an early turn.', what: '0-100 oversold-recovery score built from RSI, MACD, price location, trend and volume. Higher = a more beaten-down name showing an early turn - a dip catch, not buying strength.', moduleId: 'momentum-recovery' },
+  { term: 'Delta', tip: 'Change in score since the last scan. Positive = the setup is firming up.', what: 'How much the score moved since the previous scan. A rising delta means the composite picture is improving scan-over-scan.', moduleId: 'momentum-recovery' },
+  { term: 'Signal Status', tip: 'Lifecycle tag the engine assigns: strong / watchlist / weakening / overextended.', what: 'The setup tag the deterministic engine assigns - strong, watchlist, weakening, invalidated or overextended - based on where structure and momentum stand right now.', moduleId: 'momentum-recovery' },
+  { term: 'Action', tip: 'Suggested review state, e.g. trim_review. Research only - never advice.', what: 'The review state the engine flags for a holding, e.g. trim_review when a position looks overextended. It is a prompt to look, never a buy or sell instruction.', moduleId: 'overextension' },
+  { term: 'RSI', tip: 'Relative Strength Index (0-100). Low and turning up can mean recovery; very high can mean overbought.', what: 'How hard the stock has been bought or sold lately, 0-100. Low and turning up can mean it is recovering; very high can mean it has run hot.', moduleId: 'rsi' },
+  { term: 'RSI Delta', tip: 'Change in RSI since the last scan. Up = momentum accelerating.', what: 'The change in RSI scan-over-scan. A rising RSI off a low reading is an early sign momentum is turning back up.', moduleId: 'rsi' },
+  { term: 'MACD Hist', tip: 'MACD histogram: recent momentum vs the longer trend. Negative-but-rising is an early turn.', what: 'The gap between the MACD line and its signal line. Shrinking toward zero or turning up means selling pressure is easing - an early turn signal.', moduleId: 'macd-histogram' },
+  { term: 'Hist Delta', tip: 'Change in the MACD histogram since the last scan. Up arrow = momentum recovering.', what: 'The slope of the MACD histogram scan-over-scan. A negative-but-rising histogram is a core trigger for a momentum-recovery setup.', moduleId: 'macd-histogram' },
+  { term: 'MACD State', tip: 'Trend regime: bullish/bearish, above/below the signal line.', what: 'The MACD regime the engine tracks - bullish_above, bullish_below, bearish_above, bearish_below - summarising trend direction and where momentum sits versus its signal line.', moduleId: 'macd' },
+  { term: 'Vol Ratio', tip: 'Volume vs its own average. Above 1x = heavier-than-usual participation confirming the move.', what: 'Recent volume against its own average. Above 1x means heavier-than-usual participation; above ~1.2x suggests real conviction behind the move.', moduleId: 'volume-confirmation' },
+  { term: 'vs 20MA', tip: 'Price distance from the 20-day moving average. Near it in an uptrend often marks support.', what: 'How far price sits from the 20-day simple moving average. Pulling back near the 20MA in an uptrend often finds support.', moduleId: 'moving-averages' },
+  { term: 'vs 50MA', tip: 'Price distance from the 50-day moving average - the medium-term trend filter.', what: 'How far price sits from the 50-day simple moving average, a medium-term trend reference.', moduleId: 'moving-averages' },
+  { term: 'vs 200MA', tip: 'Price distance from the 200-day moving average. Above it = long-term uptrend.', what: 'How far price sits from the 200-day simple moving average. Above it indicates a long-term uptrend.', moduleId: 'moving-averages' },
+  { term: '60D Low', tip: 'How far price has risen above its 60-period low. Near the low = early in a recovery.', what: 'How far the current price has risen from its recent low, as a percentage. Near the low is early in a recovery; far from it risks running into resistance.', moduleId: 'distance-from-low' },
+  { term: 'Lifecycle', tip: 'Where the signal sits in its life: new, confirmed, maturing, fading.', what: 'Where the signal sits across its life - the engine tracks whether a setup is freshly fired, confirmed, maturing or fading.', moduleId: 'momentum-recovery' },
+];
+
+const tip = (term: string): string => COLUMN_HELP.find((c) => c.term === term)?.tip ?? '';
 
 type FilterMode =
   | 'all'
@@ -104,7 +128,16 @@ export function SignalTable({
     <section className="terminal-panel overflow-hidden rounded-md">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1b2530] px-3 py-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">{title}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">{title}</p>
+            <HelpDrawer
+              title="What do these columns mean?"
+              subtitle="Every column on the radar, in plain English"
+              ariaLabel="What do these columns mean?"
+              intro="The radar lists the deterministic signal fields the engine scores. Tap any term for the definition and a link into the academy."
+              terms={COLUMN_HELP}
+            />
+          </div>
           <p className="mt-1 font-mono text-xs text-[#a8b5c2]">{rows.length}/{signals.length} rows | middleware-owned signal fields</p>
         </div>
         {!compact && (
@@ -171,22 +204,23 @@ export function SignalTable({
               <th className={`${rowPadding} w-48 font-semibold`}>Company</th>
               <th className={`${rowPadding} w-24 font-semibold`}>Price</th>
               <th className={`${rowPadding} w-20 font-semibold`}>1D %</th>
-              <th className={`${rowPadding} w-24 font-semibold`}>Score</th>
-              <th className={`${rowPadding} w-24 font-semibold`}>Delta</th>
-              <th className={`${rowPadding} w-36 font-semibold`}>Signal Status</th>
-              <th className={`${rowPadding} w-32 font-semibold`}>Action</th>
-              <th className={`${rowPadding} w-20 font-semibold`}>RSI</th>
-              <th className={`${rowPadding} w-20 font-semibold`}>RSI Delta</th>
-              <th className={`${rowPadding} w-24 font-semibold`}>MACD Hist</th>
-              <th className={`${rowPadding} w-20 font-semibold`}>Hist Delta</th>
-              <th className={`${rowPadding} w-28 font-semibold`}>MACD State</th>
-              <th className={`${rowPadding} w-24 font-semibold`}>Vol Ratio</th>
-              <th className={`${rowPadding} w-24 font-semibold`}>vs 20MA</th>
-              <th className={`${rowPadding} w-24 font-semibold`}>vs 50MA</th>
-              <th className={`${rowPadding} w-24 font-semibold`}>vs 200MA</th>
-              <th className={`${rowPadding} w-24 font-semibold`}>60D Low</th>
-              <th className={`${rowPadding} w-28 font-semibold`}>Lifecycle</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Score')}>Score</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Delta')}>Delta</th>
+              <th className={`${rowPadding} w-36 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Signal Status')}>Signal Status</th>
+              <th className={`${rowPadding} w-32 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Action')}>Action</th>
+              <th className={`${rowPadding} w-20 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('RSI')}>RSI</th>
+              <th className={`${rowPadding} w-20 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('RSI Delta')}>RSI Delta</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('MACD Hist')}>MACD Hist</th>
+              <th className={`${rowPadding} w-20 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Hist Delta')}>Hist Delta</th>
+              <th className={`${rowPadding} w-28 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('MACD State')}>MACD State</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Vol Ratio')}>Vol Ratio</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('vs 20MA')}>vs 20MA</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('vs 50MA')}>vs 50MA</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('vs 200MA')}>vs 200MA</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('60D Low')}>60D Low</th>
+              <th className={`${rowPadding} w-28 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Lifecycle')}>Lifecycle</th>
               <th className={`${rowPadding} w-32 font-semibold`}>Last Alert</th>
+              <th className={`${rowPadding} w-12 font-semibold`}><span className="sr-only">Explain</span></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1b2530]">
@@ -218,6 +252,17 @@ export function SignalTable({
                 <td className={rowPadding}>{formatPercent(signal.distanceFromLow)}</td>
                 <td className={`${rowPadding} text-[#a8b5c2]`}>{signal.lifecycleState.replaceAll('_', ' ')}</td>
                 <td className={`${rowPadding} text-[#8190a0]`}>{signal.lastAlert ?? 'none'}</td>
+                <td className={rowPadding}>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(signal)}
+                    aria-label={`Explain ${signal.symbol} signal`}
+                    title="Explain this signal"
+                    className="grid h-6 w-6 place-items-center rounded border border-[#263241] bg-[#0d141c] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
+                  >
+                    <Info size={13} />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

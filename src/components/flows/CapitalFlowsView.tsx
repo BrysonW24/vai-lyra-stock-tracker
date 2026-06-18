@@ -1,9 +1,18 @@
 import { Factory, UserRound } from 'lucide-react';
 import { TickerLogo } from '@/components/TickerLogo';
 import { SourceFavicon } from '@/components/SourceFavicon';
+import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
 import { INSIDER_FLOW_SAMPLE, TX_META, listInsiderFlow } from '@/lib/insider-flow';
 import { CAPEX_SAMPLE, KIND_LABEL, listCapex } from '@/lib/capex-events';
 import { formatCompactCurrency, formatNumber } from '@/lib/format';
+
+const CAPITAL_FLOWS_TERMS: HelpTerm[] = [
+  { term: 'Form 4', what: 'An SEC filing a company insider (director, officer, large holder) must lodge within two business days of buying or selling their own stock. It is prompt, but a single filing proves little on its own.' },
+  { term: 'open-market vs planned', what: 'An open-market buy is a discretionary purchase and carries more signal. A planned (10b5-1) sale is pre-scheduled and routine, so it carries far less - read the context, not just the dollar value.' },
+  { term: 'cluster', what: 'Several insiders at the same company filing the same direction around the same time. Clustered, repeated open-market buying is a stronger tell than one lone transaction.' },
+  { term: '13F', what: 'A quarterly SEC filing where large institutions (>$100M) disclose their US equity holdings. It shows what big money owned at quarter-end - lagged, and blind to shorts and non-US books. Sits on the Investor Radar alongside this view.' },
+  { term: 'capex', what: 'Capital expenditure - money a company commits to physical expansion: factory builds, datacentres, procurement, hiring. It moves the outlook before it shows up in earnings.', moduleId: 'free-cash-flow' },
+];
 
 const TONE_CLASS: Record<'pos' | 'neg' | 'neutral', string> = {
   pos: 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]',
@@ -110,6 +119,17 @@ function CapexSection() {
 export function CapitalFlowsView() {
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2 px-1">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Capital flows - ownership intent + physical expansion</p>
+        <HelpDrawer
+          title="What the terms mean"
+          subtitle="Form 4, 13F, clusters and capex - in plain English"
+          ariaLabel="What the capital-flows terms mean"
+          intro="This layer reads who is buying or building before it shows up in earnings. Here is what each term on the cards means."
+          terms={CAPITAL_FLOWS_TERMS}
+          footnote="Insider and capex data are curated research context with source links. Lyra surfaces what is happening and why it matters - it never tells you to buy or sell. Research only."
+        />
+      </div>
       <InsiderSection />
       <CapexSection />
     </div>

@@ -3,7 +3,19 @@
 import { useState } from 'react';
 import { ArrowDown } from 'lucide-react';
 import { TickerLogo } from '@/components/TickerLogo';
+import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
 import { getNodesForTheme, getThemeCompanies, getThemes, type ExposureType } from '@/lib/world-radar';
+
+const SUPPLY_CHAIN_TERMS: HelpTerm[] = [
+  { term: 'btl', what: 'Bottleneck score (0-100) for a supply-chain node - how hard it is to substitute or scale around. A high bottleneck is where pricing power and durable margin tend to concentrate.' },
+  { term: 'Demand', what: 'The top tier - the end-market thesis pulling the whole chain. Demand flows down from here to the physical bottleneck at the bottom.' },
+  { term: 'Tier', what: 'An intermediate layer between end demand and the upstream bottleneck. Each tier feeds the one above it.' },
+  { term: 'Upstream / bottleneck', what: 'The bottom tier - the hardest-to-replace input the whole thesis depends on. This is the differentiated layer the supply-chain map is built to surface.' },
+  { term: 'direct', what: 'A company whose core revenue is the theme itself - the purest exposure.' },
+  { term: 'supplier', what: 'A company that supplies the direct players - exposed one step removed, often at a key bottleneck.' },
+  { term: 'second-order', what: 'A company that benefits indirectly or as a derivative play - the loosest exposure to the thesis.' },
+  { term: 'Falsifier', what: 'The condition that would break the thesis. Tracking what would prove you wrong is how the map stays honest rather than turning into a story you only confirm.' },
+];
 
 const EXPOSURE_CLASS: Record<ExposureType, string> = {
   direct: 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]',
@@ -36,6 +48,17 @@ export function SupplyChainGraph() {
 
   return (
     <section className="terminal-panel space-y-3 rounded-md p-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Supply-chain map - demand to bottleneck</p>
+        <HelpDrawer
+          title="What the terms mean"
+          subtitle="Tiers, bottleneck scores and exposure tags"
+          ariaLabel="What the supply-chain terms mean"
+          intro="This map traces a theme from end demand down to the hardest-to-replace input. Here is what each label means."
+          terms={SUPPLY_CHAIN_TERMS}
+          footnote="The map is curated, first-principles research context. Lyra shows where the bottlenecks and exposures sit - it never tells you to buy or sell. Research only."
+        />
+      </div>
       <div className="no-scrollbar flex gap-1.5 overflow-x-auto">
         {themes.map((t) => (
           <button

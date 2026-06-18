@@ -3,6 +3,18 @@
 import Link from 'next/link';
 import { MATURITY_TONE, type Theme } from '@/lib/world-radar';
 import { TickerLogo } from '@/components/TickerLogo';
+import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
+
+const THEME_RADAR_TERMS: HelpTerm[] = [
+  { term: 'Momentum', what: 'How strongly the theme is moving right now - price and participation building across its names. Higher is stronger.' },
+  { term: 'Capital', what: 'Capital-flow score - how much money is rotating into the theme (funds, capex, deals). Strong inflows tend to sustain a move.' },
+  { term: 'Policy', what: 'Policy-support score - whether government funding, subsidies or regulation are tailwinds (high) or headwinds (low) for the theme.' },
+  { term: 'SmallCap', what: 'Small-cap opportunity score - how much of the upside still sits in smaller, less-crowded names rather than the mega-caps.', moduleId: 'market-cap' },
+  { term: 'Crowding', what: 'Crowding-risk score - how consensus the trade already is. This one runs red when hot (>=60): a crowded theme has less edge left and more downside if sentiment turns.' },
+  { term: 'News', what: 'News-velocity score - how fast headlines and attention are accelerating around the theme.' },
+  { term: 'maturity', what: 'Where the theme sits in its life cycle - emerging, growing, mature - which shapes how much room and how much risk is left.' },
+  { term: 'Bottlenecks', what: 'The hardest-to-replace links the theme depends on, where pricing power tends to concentrate. The supply-chain map drills into these.' },
+];
 
 interface TopCompany {
   symbol: string;
@@ -53,12 +65,20 @@ export function ThemeRadar({ themes, topBySlug, latestEventBySlug }: ThemeRadarP
 
   return (
     <section className="space-y-2">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
         <h1 className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#7fb0ff]">World Radar</h1>
         <span className="font-mono text-[10px] text-[#8190a0]">{sorted.length} themes</span>
         <p className="text-[10px] text-[#6f7d8a]">
           Themes mapped from first principles - follow the bottlenecks, not the noise
         </p>
+        <HelpDrawer
+          title="What the scores mean"
+          subtitle="The six theme scores, maturity and bottlenecks"
+          ariaLabel="What the World Radar scores mean"
+          intro="Every theme card carries six deterministic 0-100 scores plus a maturity tag. Here is what each one reads."
+          terms={THEME_RADAR_TERMS}
+          footnote="Theme scores are deterministic research context mapped from first principles. Lyra surfaces where the energy and the bottlenecks are - it never tells you to buy or sell. Research only."
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
