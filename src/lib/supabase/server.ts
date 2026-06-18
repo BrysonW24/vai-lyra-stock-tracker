@@ -3,12 +3,27 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 /**
+ * Catch the silent split where the worker fills the DB (unprefixed SUPABASE_URL set) but the
+ * app serves demo because the browser-readable NEXT_PUBLIC_SUPABASE_URL is missing. The browser
+ * client can ONLY read NEXT_PUBLIC_* - so this must be set in the deploy env regardless. We warn
+ * once at module load rather than fail silently.
+ */
+if (process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  console.warn(
+    '[supabase] SUPABASE_URL is set but NEXT_PUBLIC_SUPABASE_URL is NOT - the browser will run in DEMO mode. ' +
+      'Set NEXT_PUBLIC_SUPABASE_URL (+ NEXT_PUBLIC_SUPABASE_ANON_KEY) in the deploy env to serve live data.',
+  );
+}
+
+/**
  * Server Supabase client (anon key + the request's auth cookies). RLS applies, so
  * queries automatically return only the signed-in user's private rows. Returns null
- * when Supabase isn't configured (demo mode).
+ * when Supabase isn't configured (demo mode). Falls back to the unprefixed SUPABASE_URL
+ * for the URL (the service client already does this) so server routes still work if only
+ * the public URL var is missing; the anon key remains required.
  */
 export async function createSupabaseServerClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
 

@@ -37,6 +37,12 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DEFAULT_USER_ID: ${{ secrets.DEFAULT_USER_ID }}
+          # Multi-channel notification dispatch (web push + WhatsApp). Without these the
+          # scanner can ONLY fire legacy single-operator Telegram - push never reaches users.
+          # APP_BASE_URL is the deployed Vercel URL; the worker derives the dispatch endpoint
+          # from it. NOTIFICATION_DISPATCH_SECRET must MATCH the Vercel function env value.
+          APP_BASE_URL: ${{ vars.APP_BASE_URL || secrets.APP_BASE_URL }}
+          NOTIFICATION_DISPATCH_SECRET: ${{ secrets.NOTIFICATION_DISPATCH_SECRET }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}

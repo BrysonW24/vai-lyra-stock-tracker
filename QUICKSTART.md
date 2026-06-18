@@ -27,7 +27,7 @@ Just `npm install` then `npm run dev`. The whole console runs on built-in demo d
 ### 2. Live mode (real scanning)
 To scan real stocks and store results you need **Supabase** and a **market-data source**:
 
-1. Create a Supabase project. Run the SQL in `sql/` (in order) in the Supabase SQL editor.
+1. Create a Supabase project. Run the migrations in `supabase/migrations/` (in numeric order, 001-025) in the Supabase SQL editor - this is the canonical schema (auth, RLS, notifications, trade logs, etc.). The older `sql/` directory is a stale scanner-only subset missing most tables; do not use it for setup.
 2. Put the **read-only** keys in the frontend vars:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`

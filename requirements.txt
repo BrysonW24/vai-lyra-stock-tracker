@@ -1,10 +1,14 @@
-pandas
-numpy
-yfinance
-ta
-supabase
-requests
-python-dotenv
-pydantic
-pytz
-pytest
+# Worker deps for the hourly scanner. Pinned to compatible ranges so a surprise upstream
+# major (e.g. a yfinance column rename) cannot silently break the hourly cron with no commit
+# to point at. For full reproducibility, generate a lock (pip-compile / uv) and add Dependabot
+# for controlled bumps.
+pandas>=2.0,<3
+numpy>=1.26,<3
+yfinance>=0.2.40,<0.3
+ta>=0.11,<0.12
+supabase>=2.0,<3
+requests>=2.31,<3
+python-dotenv>=1.0,<2
+pydantic>=2.5,<3
+pytz>=2024.1
+pytest>=8,<9
