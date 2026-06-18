@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { ensureTickerExists } from '@/lib/supabase/ticker';
 
 /**
  * Portfolio write API. Uses the cookie-aware (RLS-enforced) Supabase client and the
@@ -82,6 +83,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: 'symbol cannot be empty' }, { status: 400 });
     }
 
+    // Ensure ticker exists in the system universe (auto-registers if valid, returns error if not)
+    const tickerResult = await ensureTickerExists(symbol);
+    if (!tickerResult.ok) {
+      return NextResponse.json({ ok: false, error: tickerResult.error || 'Failed to register stock ticker.' }, { status: 400 });
+    }
+
     const { data, error } = await supabase
       .from('portfolio_positions')
       .insert([
@@ -100,7 +107,13 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ ok: false, error: error.message || 'Failed to add position' }, { status: 400 });
+      let friendlyError = error.message || 'Failed to add position';
+      if (error.message?.includes('unique') || error.code === '23505') {
+        friendlyError = `Ticker "${symbol}" is already in your portfolio.`;
+      } else if (error.message?.includes('foreign key') || error.code === '23503') {
+        friendlyError = `Ticker "${symbol}" is not supported or could not be initialised.`;
+      }
+      return NextResponse.json({ ok: false, error: friendlyError }, { status: 400 });
     }
 
     return NextResponse.json({ ok: true, data });
@@ -147,15 +160,34 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Step 2: insert new holdings, skipping any that are invalid.
+    // Step 2: resolve tickers and build new holding rows.
+    const distinctSymbols = Array.from(
+      new Set(
+        body.holdings
+          .map((h) => String(h.symbol ?? '').toUpperCase().trim())
+          .filter(Boolean)
+      )
+    );
+
+    const resolvedSymbols = new Set<string>();
     const skipped: string[] = [];
+
+    for (const sym of distinctSymbols) {
+      const res = await ensureTickerExists(sym);
+      if (res.ok) {
+        resolvedSymbols.add(sym);
+      } else {
+        skipped.push(sym);
+      }
+    }
+
     const rows = body.holdings
       .map((h) => {
         const symbol = String(h.symbol ?? '').toUpperCase().trim();
         const quantity = parseFloat(String(h.quantity ?? 0));
         const averageBuyPrice = parseFloat(String(h.averageBuyPrice ?? 0));
-        if (!symbol || quantity <= 0 || averageBuyPrice <= 0) {
-          if (symbol) skipped.push(symbol);
+        if (!symbol || !resolvedSymbols.has(symbol) || quantity <= 0 || averageBuyPrice <= 0) {
+          if (symbol && !skipped.includes(symbol)) skipped.push(symbol);
           return null;
         }
         return {

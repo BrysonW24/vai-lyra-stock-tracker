@@ -177,13 +177,13 @@ class WatchlistItem:
     id: str | None
     symbol: str
     target_price: float | None
-    target_signal_score: float = 75.0
-    rsi_min: float = 35.0
-    rsi_max: float = 50.0
-    require_macd_histogram_rising: bool = True
-    require_volume_ratio: float = 0.8
+    target_signal_score: float = 0.0
+    rsi_min: float = 0.0
+    rsi_max: float = 100.0
+    require_macd_histogram_rising: bool = False
+    require_volume_ratio: float = 0.0
     reference_price: float | None = None
-    movement_alert_pcts: tuple[int, ...] = (-15, -10, -5, 5, 10, 15)
+    movement_alert_pcts: tuple[int, ...] = (-10, -5, 5, 10)
     notes: str | None = None
     # Multi-user: which user owns this watchlist item. None in single-operator mode.
     user_id: str | None = None

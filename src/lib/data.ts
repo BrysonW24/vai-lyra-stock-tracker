@@ -52,6 +52,7 @@ type PortfolioPositionRecord = {
   quantity: number;
   average_buy_price: number;
   brokerage_fee: number | null;
+  purchase_date: string | null;
   notes: string | null;
   is_active: boolean | null;
 };
@@ -318,6 +319,9 @@ function mapPortfolio(
         riskState: (overlay?.risk_state ?? 'neutral') as PortfolioHolding['riskState'],
         suggestedAction: ACTION_SUGGESTION[action] ?? action.replaceAll('_', ' '),
         explanation: explanationFromPayload(overlay?.explanation ?? null, action),
+        purchaseDate: position.purchase_date,
+        notes: position.notes,
+        brokerageFee: position.brokerage_fee,
       };
     });
 
@@ -358,7 +362,7 @@ function mapWatchlist(
         scoreDelta: signal?.scoreDelta ?? 0,
         signalStatus: (overlay?.signal_status ?? signal?.status ?? 'watchlist_setup') as SignalStatus,
         triggerState,
-        targetSignalScore: item.target_signal_score ?? 75,
+        targetSignalScore: item.target_signal_score ?? 0,
         rsi: signal?.rsi ?? 0,
         macdHistogram: signal?.macdHistogram ?? 0,
         volumeRatio: signal?.volumeRatio ?? 0,

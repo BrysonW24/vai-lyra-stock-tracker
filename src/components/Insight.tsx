@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Lightbulb, Settings2 } from 'lucide-react';
 import { FINANCE_FACTS, type FactCategory } from '@/lib/finance-facts';
 
@@ -16,6 +17,7 @@ const CATEGORY_LABEL: Record<FactCategory, string> = {
   concept: 'Concept',
   au: 'Australia',
   fun: 'Fun fact',
+  advice: 'Advice',
 };
 
 /**
@@ -95,7 +97,7 @@ export function Insight() {
 
   return (
     <section className="terminal-panel rounded-md p-3">
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 flex-wrap">
         <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#f3a33a]">
           <Lightbulb size={13} />
         </span>
@@ -105,8 +107,27 @@ export function Insight() {
         <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-[#7fb0ff]">
           {CATEGORY_LABEL[fact.category]}
         </span>
-        <span className="ml-auto font-mono text-[9px] text-[#5e6b78]">tap for another</span>
-        <button type="button" onClick={toggle} aria-label="Switch insight view" title="Switch view" className="text-[#5e6b78] transition hover:text-[#a8b5c2]">
+        {fact.level && (
+          <span className={`rounded border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] ${
+            fact.level === 'beginner' ? 'border-[#43d18b]/30 bg-[#43d18b]/10 text-[#43d18b]' :
+            fact.level === 'intermediate' ? 'border-[#7fb0ff]/30 bg-[#7fb0ff]/10 text-[#7fb0ff]' :
+            fact.level === 'advanced' ? 'border-[#f3a33a]/30 bg-[#f3a33a]/10 text-[#f3a33a]' :
+            'border-[#ff6b6b]/30 bg-[#ff6b6b]/10 text-[#ff6b6b]'
+          }`}>
+            {fact.level}
+          </span>
+        )}
+        {fact.educationId ? (
+          <Link
+            href={`/education?module=${fact.educationId}`}
+            className="ml-auto inline-flex items-center gap-0.5 font-mono text-[9px] text-[#f3a33a] hover:underline"
+          >
+            Learn more →
+          </Link>
+        ) : (
+          <span className="ml-auto font-mono text-[9px] text-[#5e6b78]">tap for another</span>
+        )}
+        <button type="button" onClick={toggle} aria-label="Switch insight view" title="Switch view" className="text-[#5e6b78] transition hover:text-[#a8b5c2] ml-2">
           <Settings2 size={12} />
         </button>
       </div>

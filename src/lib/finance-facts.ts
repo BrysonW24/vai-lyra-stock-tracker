@@ -1,12 +1,14 @@
 import factsData from '@/lib/generated/finance-facts.json';
 
-export type FactCategory = 'definition' | 'history' | 'mechanics' | 'concept' | 'au' | 'fun';
+export type FactCategory = 'definition' | 'history' | 'mechanics' | 'concept' | 'au' | 'fun' | 'advice';
 
 export interface FinanceFact {
   id: string;
   term: string;
   body: string;
   category: FactCategory;
+  level?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  educationId?: string;
 }
 
 /**

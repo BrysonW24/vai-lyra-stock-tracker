@@ -276,6 +276,19 @@ export const EDUCATION_MODULES: EducationModule[] = [
     liveExampleHint:
       'Check the portfolio section to see your exposure per holding and note whether any single position dominates.',
   },
+  {
+    id: 'candle-closes',
+    title: 'Candle Closes & Timeframes',
+    category: 'Technical',
+    definition:
+      'A candlestick represents price action over a specific timeframe (e.g., 1m, 5m, 1h). Each candle has an Open, High, Low, and Close. The "close" is the final price of the period, which is crucial because a candle can change shape entirely while still forming.',
+    whyItMatters:
+      'Judging a candle before it closes is a classic rookie mistake. During a 5m window, a price spike from $203 to $205 can look extremely bullish. However, if sellers reject the move and push the price back down to $201.50 by the end of the 5-minute bracket, the candle closes weak with a large upper wick (a fakeout). Waiting for the close confirms if buyers actually maintained control.',
+    howConsoleUsesIt:
+      'Lyra scans, evaluates, and alerts on closed hourly candles to filter out high-frequency noise and false breakouts. Use the ticker detail to view multiple timeframes: 1m for entry precision, 5m for short-term trade windows, and 1h/daily to confirm structural changes.',
+    liveExampleHint:
+      'Watch a stock making an aggressive vertical move. Switch between the 1m and 5m charts. If the 1m spikes but the 5m closes weak with a long wick, that signals immediate buying pressure but failed structural follow-through.',
+  },
 ];
 
 export function getModulesByCategory(category: EducationCategory): EducationModule[] {

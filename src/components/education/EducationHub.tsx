@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ArrowUpRight, Search, X } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
 import { EDUCATION_MODULES, getCategories, getModule, getModulesByCategory } from '@/lib/education';
@@ -11,9 +12,22 @@ interface EducationHubProps {
 }
 
 export function EducationHub({ signals }: EducationHubProps) {
-  const [selectedModuleId, setSelectedModuleId] = useState<string>(EDUCATION_MODULES[0].id);
+  const searchParams = useSearchParams();
+  const moduleIdParam = searchParams.get('module');
+
+  const [selectedModuleId, setSelectedModuleId] = useState<string>(
+    moduleIdParam && EDUCATION_MODULES.some((m) => m.id === moduleIdParam)
+      ? moduleIdParam
+      : EDUCATION_MODULES[0].id
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (moduleIdParam && EDUCATION_MODULES.some((m) => m.id === moduleIdParam)) {
+      setSelectedModuleId(moduleIdParam);
+    }
+  }, [moduleIdParam]);
 
   const selectedModule = getModule(selectedModuleId);
   const categories = getCategories();
@@ -220,6 +234,112 @@ export function EducationHub({ signals }: EducationHubProps) {
                 <p className="mt-2 font-mono text-sm leading-relaxed text-[#dbe5ee]">
                   {selectedModule.liveExampleHint}
                 </p>
+              </div>
+            )}
+
+            {/* Custom Interactive / SVG Visualizations */}
+            {selectedModule.id === 'candle-closes' && (
+              <div className="space-y-4 rounded-lg border border-[#263241] bg-[#070b10] p-4">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#f3a33a]">
+                    Visual Concept 1: Timeframe Stitching (5m vs 1m)
+                  </p>
+                  <p className="mt-1 text-xs text-[#a8b5c2]">
+                    One 5-minute candle represents five consecutive 1-minute candles stitched together.
+                  </p>
+                  <div className="mt-3 flex flex-col items-center rounded bg-[#0b1016] p-3">
+                    <svg viewBox="0 0 400 145" className="w-full max-w-[360px] overflow-visible">
+                      <line x1="10" y1="110" x2="390" y2="110" stroke="#1b2530" strokeDasharray="3" />
+                      <g transform="translate(10, 0)">
+                        <line x1="30" y1="40" x2="30" y2="120" stroke="#43d18b" strokeWidth="1.5" />
+                        <rect x="23" y="50" width="14" height="50" fill="#43d18b" rx="2" />
+                        <text x="30" y="130" textAnchor="middle" className="font-mono text-[9px] fill-[#8190a0]">00:20</text>
+                        <line x1="80" y1="60" x2="80" y2="110" stroke="#ff6b6b" strokeWidth="1.5" />
+                        <rect x="73" y="70" width="14" height="30" fill="#ff6b6b" rx="2" />
+                        <text x="80" y="130" textAnchor="middle" className="font-mono text-[9px] fill-[#8190a0]">00:21</text>
+                        <line x1="130" y1="30" x2="130" y2="90" stroke="#43d18b" strokeWidth="1.5" />
+                        <rect x="123" y="40" width="14" height="40" fill="#43d18b" rx="2" />
+                        <text x="130" y="130" textAnchor="middle" className="font-mono text-[9px] fill-[#8190a0]">00:22</text>
+                        <line x1="180" y1="20" x2="180" y2="70" stroke="#43d18b" strokeWidth="1.5" />
+                        <rect x="173" y="25" width="14" height="35" fill="#43d18b" rx="2" />
+                        <text x="180" y="130" textAnchor="middle" className="font-mono text-[9px] fill-[#8190a0]">00:23</text>
+                        <line x1="230" y1="10" x2="230" y2="50" stroke="#ff6b6b" strokeWidth="1.5" />
+                        <rect x="223" y="15" width="14" height="25" fill="#ff6b6b" rx="2" />
+                        <text x="230" y="130" textAnchor="middle" className="font-mono text-[9px] fill-[#8190a0]">00:24</text>
+                      </g>
+                      <path d="M 35 15 L 10 15 L 10 5 L 260 5 L 260 15 L 235 15" fill="none" stroke="#263241" strokeWidth="1.5" transform="translate(10, 0)" />
+                      <line x1="145" y1="5" x2="145" y2="0" stroke="#263241" strokeWidth="1.5" />
+                      <path d="M 285 60 L 305 60" stroke="#f3a33a" strokeWidth="2" markerEnd="url(#arrow)" />
+                      <defs>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                          <path d="M 0 0 L 10 5 L 0 10 z" fill="#f3a33a" />
+                        </marker>
+                      </defs>
+                      <g transform="translate(320, 0)">
+                        <line x1="30" y1="10" x2="30" y2="120" stroke="#43d18b" strokeWidth="2.5" />
+                        <rect x="20" y="30" width="20" height="70" fill="#43d18b" rx="2" />
+                        <text x="30" y="130" textAnchor="middle" className="font-mono text-[9px] font-bold fill-[#f3a33a]">5m Close</text>
+                      </g>
+                    </svg>
+                  </div>
+                </div>
+                <div className="border-t border-[#1b2530] pt-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#f3a33a]">
+                    Visual Concept 2: Bullish Reclaim vs. Fakeout Wick
+                  </p>
+                  <p className="mt-1 text-xs text-[#a8b5c2]">
+                    A candle tells the truth only when it closes. Compare these two scenarios:
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="flex flex-col items-center rounded bg-[#0b1016] p-2 text-center">
+                      <p className="font-mono text-[10px] font-bold text-[#43d18b]">Scenario A: Bullish Close</p>
+                      <p className="text-[9px] text-[#8190a0] mt-0.5">Buyers sustain control</p>
+                      <svg viewBox="0 0 140 140" className="w-full max-w-[100px] mt-2 overflow-visible">
+                        <line x1="10" y1="50" x2="130" y2="50" stroke="#f3a33a" strokeDasharray="2" />
+                        <text x="135" y="53" className="font-mono text-[8px] fill-[#f3a33a]">Reclaim ($204)</text>
+                        <line x1="70" y1="15" x2="70" y2="120" stroke="#43d18b" strokeWidth="2" />
+                        <rect x="55" y="30" width="30" height="70" fill="#43d18b" rx="2" />
+                        <circle cx="70" cy="30" r="3" fill="#43d18b" />
+                        <text x="92" y="33" className="font-mono text-[9px] fill-[#eef3f8]">Close</text>
+                        <text x="92" y="103" className="font-mono text-[9px] fill-[#a8b5c2]">Open</text>
+                      </svg>
+                      <p className="text-[9px] text-[#a8b5c2] mt-1.5 leading-tight">
+                        Price closes near the high and holds above the reclaim zone.
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-center rounded bg-[#0b1016] p-2 text-center">
+                      <p className="font-mono text-[10px] font-bold text-[#ff6b6b]">Scenario B: Fakeout Wick</p>
+                      <p className="text-[9px] text-[#8190a0] mt-0.5">Sellers reject the spike</p>
+                      <svg viewBox="0 0 140 140" className="w-full max-w-[100px] mt-2 overflow-visible">
+                        <line x1="10" y1="50" x2="130" y2="50" stroke="#f3a33a" strokeDasharray="2" />
+                        <text x="135" y="53" className="font-mono text-[8px] fill-[#f3a33a]">Reclaim ($204)</text>
+                        <line x1="70" y1="15" x2="70" y2="120" stroke="#ff6b6b" strokeWidth="2" />
+                        <rect x="55" y="70" width="30" height="30" fill="#ff6b6b" rx="2" />
+                        <circle cx="70" cy="70" r="3" fill="#ff6b6b" />
+                        <path d="M 70 15 L 85 15" stroke="#8190a0" strokeWidth="0.8" />
+                        <text x="90" y="18" className="font-mono text-[8px] fill-[#8190a0]">Spike (High)</text>
+                        <text x="92" y="73" className="font-mono text-[9px] fill-[#eef3f8]">Close</text>
+                        <text x="92" y="103" className="font-mono text-[9px] fill-[#a8b5c2]">Open</text>
+                      </svg>
+                      <p className="text-[9px] text-[#a8b5c2] mt-1.5 leading-tight">
+                        Price wicks up to test reclaim but closes back down near the lows.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t border-[#1b2530] pt-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">
+                    Real Chart Examples & Strategy
+                  </p>
+                  <div className="mt-2 space-y-1.5 font-mono text-[11px] text-[#a8b5c2] leading-normal">
+                    <p>
+                      • <span className="text-[#eef3f8] font-bold">SPCX Reversal (17 Jun 2026):</span> Flush low at $195.13 was defended on a pullback at $200.50 (forming a higher low). Price bounced to $204.88, testing the middle Bollinger Band at $204.79.
+                    </p>
+                    <p>
+                      • <span className="text-[#eef3f8] font-bold">The Confirmation:</span> Chasing the immediate 1m candle spike at 00:20:14 when it was only 14s old was risky. The mature play was waiting for the 5m candle to close above $204.80 to confirm the higher low was actually held.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 

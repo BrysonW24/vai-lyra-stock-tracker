@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { ensureTickerExists } from '@/lib/supabase/ticker';
 
 /**
  * Watchlist write API. Uses the cookie-aware (RLS-enforced) Supabase client and the
@@ -59,14 +60,14 @@ export async function POST(request: NextRequest) {
     }
 
     const targetPrice = body.targetPrice ? parseFloat(String(body.targetPrice)) : null;
-    const targetSignalScore = body.targetSignalScore ? parseFloat(String(body.targetSignalScore)) : 75;
-    const rsiMin = body.rsiMin ? parseFloat(String(body.rsiMin)) : 35;
-    const rsiMax = body.rsiMax ? parseFloat(String(body.rsiMax)) : 50;
-    const requireVolumeRatio = body.requireVolumeRatio ? parseFloat(String(body.requireVolumeRatio)) : 0.8;
+    const targetSignalScore = body.targetSignalScore !== undefined ? parseFloat(String(body.targetSignalScore)) : 0;
+    const rsiMin = body.rsiMin !== undefined ? parseFloat(String(body.rsiMin)) : 0;
+    const rsiMax = body.rsiMax !== undefined ? parseFloat(String(body.rsiMax)) : 100;
+    const requireVolumeRatio = body.requireVolumeRatio !== undefined ? parseFloat(String(body.requireVolumeRatio)) : 0.0;
     const referencePrice = body.referencePrice ? parseFloat(String(body.referencePrice)) : null;
     const movementAlertPcts = Array.isArray(body.movementAlertPcts)
       ? Array.from(new Set(body.movementAlertPcts.map((value) => Math.trunc(Number(value))).filter((value) => value !== 0 && Math.abs(value) <= 100))).sort((a, b) => a - b)
-      : [-15, -10, -5, 5, 10, 15];
+      : [-10, -5, 5, 10];
 
     if (targetPrice !== null && (isNaN(targetPrice) || targetPrice <= 0)) {
       return NextResponse.json({ ok: false, error: 'targetPrice must be a positive number' }, { status: 400 });
@@ -83,11 +84,17 @@ export async function POST(request: NextRequest) {
     if (rsiMin >= rsiMax) {
       return NextResponse.json({ ok: false, error: 'rsiMin must be less than rsiMax' }, { status: 400 });
     }
-    if (isNaN(requireVolumeRatio) || requireVolumeRatio <= 0) {
-      return NextResponse.json({ ok: false, error: 'requireVolumeRatio must be a positive number' }, { status: 400 });
+    if (isNaN(requireVolumeRatio) || requireVolumeRatio < 0) {
+      return NextResponse.json({ ok: false, error: 'requireVolumeRatio must be a non-negative number' }, { status: 400 });
     }
     if (referencePrice !== null && (isNaN(referencePrice) || referencePrice <= 0)) {
       return NextResponse.json({ ok: false, error: 'referencePrice must be a positive number' }, { status: 400 });
+    }
+
+    // Ensure ticker exists in the system universe (auto-registers if valid, returns error if not)
+    const tickerResult = await ensureTickerExists(symbol);
+    if (!tickerResult.ok) {
+      return NextResponse.json({ ok: false, error: tickerResult.error || 'Failed to register stock ticker.' }, { status: 400 });
     }
 
     const { data, error } = await supabase
@@ -100,7 +107,7 @@ export async function POST(request: NextRequest) {
           target_signal_score: targetSignalScore,
           rsi_min: rsiMin,
           rsi_max: rsiMax,
-          require_macd_histogram_rising: body.requireMacdHistogramRising !== false,
+          require_macd_histogram_rising: body.requireMacdHistogramRising === true,
           require_volume_ratio: requireVolumeRatio,
           reference_price: referencePrice,
           movement_alert_pcts: movementAlertPcts,
@@ -112,7 +119,13 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ ok: false, error: error.message || 'Failed to add watchlist item' }, { status: 400 });
+      let friendlyError = error.message || 'Failed to add watchlist item';
+      if (error.message?.includes('unique') || error.code === '23505') {
+        friendlyError = `Ticker "${symbol}" is already in your watchlist.`;
+      } else if (error.message?.includes('foreign key') || error.code === '23503') {
+        friendlyError = `Ticker "${symbol}" is not supported or could not be initialised.`;
+      }
+      return NextResponse.json({ ok: false, error: friendlyError }, { status: 400 });
     }
 
     return NextResponse.json({ ok: true, data });

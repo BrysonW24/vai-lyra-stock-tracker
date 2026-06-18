@@ -420,17 +420,64 @@ export function PushNotificationSetup() {
           </button>
         </div>
 
-        <div className="divide-y divide-[#1b2530]">
-          <ToggleRow label="Instant alerts" checked={prefs.instantAlerts} onChange={(checked) => updatePrefs({ instantAlerts: checked })} />
-          <ToggleRow label="Quiet hours" checked={prefs.quietHoursEnabled} onChange={(checked) => updatePrefs({ quietHoursEnabled: checked })} />
-          <ToggleRow label="Watchlist trigger alerts" checked={prefs.watchlistMovementAlerts} onChange={(checked) => updatePrefs({ watchlistMovementAlerts: checked })} />
-          <ToggleRow label="Portfolio movement alerts" checked={prefs.portfolioMovementAlerts} onChange={(checked) => updatePrefs({ portfolioMovementAlerts: checked })} />
-          <ToggleRow label="Paper bot alerts" checked={prefs.paperTradeAlerts} onChange={(checked) => updatePrefs({ paperTradeAlerts: checked })} />
-          <ToggleRow label="Order approval alerts" checked={prefs.orderApprovalAlerts} onChange={(checked) => updatePrefs({ orderApprovalAlerts: checked })} />
-          <ToggleRow label="Theme alerts" checked={prefs.themeAlerts} onChange={(checked) => updatePrefs({ themeAlerts: checked })} />
-          <ToggleRow label="Macro alerts" checked={prefs.macroAlerts} onChange={(checked) => updatePrefs({ macroAlerts: checked })} />
-          <ToggleRow label="Daily digest" checked={prefs.dailyDigest} onChange={(checked) => updatePrefs({ dailyDigest: checked })} />
-          <ToggleRow label="Weekly report" checked={prefs.weeklyDigest} onChange={(checked) => updatePrefs({ weeklyDigest: checked })} />
+        <div className="space-y-4 my-4">
+          {/* Portfolio Card */}
+          <div className="rounded-md border border-[#1b2530] border-l-4 border-l-[#f3a33a] bg-[#0d141c]/50 p-3">
+            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-[#f3a33a] mb-2">
+              <span>💼</span> Portfolio-Driven Alerts
+            </h3>
+            <p className="text-[11px] text-[#8190a0] mb-3 leading-relaxed">
+              Triggers for risk events, price movements, and news updates related to stocks in your active portfolio.
+            </p>
+            <div className="divide-y divide-[#1b2530]/50">
+              <ToggleRow label="Portfolio movement alerts" checked={prefs.portfolioMovementAlerts} onChange={(checked) => updatePrefs({ portfolioMovementAlerts: checked })} />
+            </div>
+          </div>
+
+          {/* Watchlist Card */}
+          <div className="rounded-md border border-[#1b2530] border-l-4 border-l-[#3b5bdb] bg-[#0d141c]/50 p-3">
+            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-[#3b5bdb] mb-2">
+              <span>⭐</span> Watchlist-Driven Alerts
+            </h3>
+            <p className="text-[11px] text-[#8190a0] mb-3 leading-relaxed">
+              Triggers when watched stocks touch key support levels, breach RSI thresholds, or experience significant price swings.
+            </p>
+            <div className="divide-y divide-[#1b2530]/50">
+              <ToggleRow label="Watchlist trigger alerts" checked={prefs.watchlistMovementAlerts} onChange={(checked) => updatePrefs({ watchlistMovementAlerts: checked })} />
+            </div>
+          </div>
+
+          {/* Paper Bot Card */}
+          <div className="rounded-md border border-[#1b2530] border-l-4 border-l-[#43d18b] bg-[#0d141c]/50 p-3">
+            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-[#43d18b] mb-2">
+              <span>🤖</span> Paper Bot-Driven Alerts
+            </h3>
+            <p className="text-[11px] text-[#8190a0] mb-3 leading-relaxed">
+              Real-time notifications for filled simulated orders, stop-loss executions, and trade proposals requiring approval.
+            </p>
+            <div className="divide-y divide-[#1b2530]/50">
+              <ToggleRow label="Paper bot trade alerts" checked={prefs.paperTradeAlerts} onChange={(checked) => updatePrefs({ paperTradeAlerts: checked })} />
+              <ToggleRow label="Order approval alerts" checked={prefs.orderApprovalAlerts} onChange={(checked) => updatePrefs({ orderApprovalAlerts: checked })} />
+            </div>
+          </div>
+
+          {/* General Preferences Card */}
+          <div className="rounded-md border border-[#1b2530] border-l-4 border-l-[#8190a0] bg-[#0d141c]/50 p-3">
+            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-[#a8b5c2] mb-2">
+              <span>⚙️</span> Delivery & Digest Rules
+            </h3>
+            <p className="text-[11px] text-[#8190a0] mb-3 leading-relaxed">
+              Configure delivery windows, digests, quiet hours, and global alert settings.
+            </p>
+            <div className="divide-y divide-[#1b2530]/50">
+              <ToggleRow label="Instant alerts" checked={prefs.instantAlerts} onChange={(checked) => updatePrefs({ instantAlerts: checked })} />
+              <ToggleRow label="Quiet hours" checked={prefs.quietHoursEnabled} onChange={(checked) => updatePrefs({ quietHoursEnabled: checked })} />
+              <ToggleRow label="Theme alerts" checked={prefs.themeAlerts} onChange={(checked) => updatePrefs({ themeAlerts: checked })} />
+              <ToggleRow label="Macro alerts" checked={prefs.macroAlerts} onChange={(checked) => updatePrefs({ macroAlerts: checked })} />
+              <ToggleRow label="Daily digest" checked={prefs.dailyDigest} onChange={(checked) => updatePrefs({ dailyDigest: checked })} />
+              <ToggleRow label="Weekly report" checked={prefs.weeklyDigest} onChange={(checked) => updatePrefs({ weeklyDigest: checked })} />
+            </div>
+          </div>
         </div>
 
         <button type="button" onClick={() => savePrefs()} disabled={busy !== null} className={successButton}>

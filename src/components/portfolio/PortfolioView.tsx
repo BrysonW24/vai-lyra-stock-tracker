@@ -41,6 +41,8 @@ function buildFromLocal(local: LocalHolding[], signals: SignalRow[]): PortfolioH
     riskState: 'neutral' as PortfolioHolding['riskState'],
     suggestedAction: 'Hold',
     explanation: { action: (s?.actionState ?? 'hold') as ActionState, triggeredBecause: [], missingConfirmation: [], riskNotes: [] },
+    purchaseDate: h.purchaseDate,
+    notes: h.notes,
   }));
 }
 
@@ -65,8 +67,9 @@ export function PortfolioView({ data }: { data: DashboardData }) {
   useEffect(() => {
     function sync() {
       const local = loadLocalHoldings();
-      setHoldings(demo && local.length > 0 ? buildFromLocal(local, data.signals) : data.portfolio);
-      const dates = local.map((h) => h.purchaseDate).filter((d): d is string => Boolean(d)).sort();
+      const activeHoldings = demo && local.length > 0 ? buildFromLocal(local, data.signals) : data.portfolio;
+      setHoldings(activeHoldings);
+      const dates = activeHoldings.map((h) => h.purchaseDate).filter((d): d is string => Boolean(d)).sort();
       setLastTrade(dates.length ? formatShortDate(dates[dates.length - 1]) : '-');
     }
     sync();

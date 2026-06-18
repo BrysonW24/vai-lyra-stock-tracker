@@ -182,7 +182,7 @@ export const DEFAULT_ALERTS: AlertPreferences = {
   telegramConnected: false,
 };
 
-export const DEFAULT_WATCHLIST_ALERT_PCTS = [-15, -10, -5, 5, 10, 15];
+export const DEFAULT_WATCHLIST_ALERT_PCTS = [-10, -5, 5, 10];
 
 export const DEFAULT_STRATEGY: StrategySelection = {
   strategyId: 'momentum-recovery',

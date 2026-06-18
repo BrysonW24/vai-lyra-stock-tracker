@@ -298,6 +298,16 @@ export async function dispatchNotificationEvent(
   const deliveredChannels: string[] = [];
   const suppressedChannels: string[] = [];
 
+  let emoji = '';
+  if (input.type.startsWith('portfolio_') || input.type === 'portfolio_news' || input.type === 'portfolio_risk' || input.type === 'portfolio_price_move') {
+    emoji = '💼 ';
+  } else if (input.type.startsWith('watchlist_') || input.type === 'watchlist_price_move' || input.type === 'signal_alert') {
+    emoji = '⭐ ';
+  } else if (input.type.startsWith('paper_') || input.type.startsWith('order_') || input.type === 'risk_blocked') {
+    emoji = '🤖 ';
+  }
+  const embellishedTitle = emoji ? `${emoji}${input.title}` : input.title;
+
   if (input.dedupeKey) {
     const { data: existing } = await supabase
       .from('notification_events')
@@ -324,7 +334,7 @@ export async function dispatchNotificationEvent(
       user_id: input.userId,
       type: input.type,
       severity: input.severity ?? 'medium',
-      title: input.title,
+      title: embellishedTitle,
       body: input.body,
       trigger_reason: input.triggerReason ?? input.body,
       evidence_refs: input.evidenceRefs ?? [],
@@ -354,7 +364,7 @@ export async function dispatchNotificationEvent(
     severity: input.severity,
     userId: input.userId,
     triggerReason: input.triggerReason ?? input.body,
-    title: input.title,
+    title: inserted.title,
     body: input.body,
     evidenceRefs: input.evidenceRefs ?? [],
     relatedEntityType: inserted.related_entity_type ?? undefined,

@@ -128,6 +128,9 @@ export interface PortfolioHolding {
   riskState: 'low_risk' | 'neutral' | 'watch' | 'elevated_risk' | 'invalidated' | 'overextended' | 'opportunity';
   suggestedAction: string;
   explanation: SignalExplanation;
+  purchaseDate?: string | null;
+  notes?: string | null;
+  brokerageFee?: number | null;
 }
 
 export interface WatchlistRow {

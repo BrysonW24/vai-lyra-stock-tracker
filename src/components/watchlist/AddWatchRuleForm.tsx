@@ -11,11 +11,11 @@ export function AddWatchRuleForm() {
   const [formData, setFormData] = useState({
     symbol: '',
     targetPrice: '',
-    targetSignalScore: '75',
-    rsiMin: '35',
-    rsiMax: '50',
-    requireMacdHistogramRising: true,
-    requireVolumeRatio: '0.8',
+    targetSignalScore: '0',
+    rsiMin: '0',
+    rsiMax: '100',
+    requireMacdHistogramRising: false,
+    requireVolumeRatio: '0.0',
     notes: '',
   });
   const [status, setStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message?: string }>({
@@ -77,11 +77,11 @@ export function AddWatchRuleForm() {
       setFormData({
         symbol: '',
         targetPrice: '',
-        targetSignalScore: '75',
-        rsiMin: '35',
-        rsiMax: '50',
-        requireMacdHistogramRising: true,
-        requireVolumeRatio: '0.8',
+        targetSignalScore: '0',
+        rsiMin: '0',
+        rsiMax: '100',
+        requireMacdHistogramRising: false,
+        requireVolumeRatio: '0.0',
         notes: '',
       });
 
@@ -152,82 +152,18 @@ export function AddWatchRuleForm() {
           </div>
         )}
       </label>
-      <label className="grid gap-1">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Target price</span>
-        <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
-          placeholder="$180"
-          name="targetPrice"
-          type="number"
-          step="any"
-          value={formData.targetPrice}
-          onChange={handleChange}
-        />
-      </label>
-      <label className="grid gap-1">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Target score</span>
-        <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
-          placeholder="75"
-          name="targetSignalScore"
-          type="number"
-          value={formData.targetSignalScore}
-          onChange={handleChange}
-        />
-      </label>
-      <label className="grid gap-1">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">RSI min</span>
-        <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
-          placeholder="35"
-          name="rsiMin"
-          type="number"
-          value={formData.rsiMin}
-          onChange={handleChange}
-        />
-      </label>
-      <label className="grid gap-1">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">RSI max</span>
-        <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
-          placeholder="50"
-          name="rsiMax"
-          type="number"
-          value={formData.rsiMax}
-          onChange={handleChange}
-        />
-      </label>
-      <label className="grid gap-1">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Volume ratio</span>
-        <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
-          placeholder="0.8x"
-          name="requireVolumeRatio"
-          type="number"
-          step="any"
-          value={formData.requireVolumeRatio}
-          onChange={handleChange}
-        />
-      </label>
+      
       <label className="grid gap-1">
         <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Custom alert note</span>
         <input
-          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-sm text-[#dbe5ee] outline-none"
+          className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2.5 font-mono text-sm text-[#dbe5ee] outline-none focus:border-[#f3a33a]/50 focus:ring-1 focus:ring-[#f3a33a]/30 transition-all"
           placeholder="Review add zone"
           name="notes"
           value={formData.notes}
           onChange={handleChange}
         />
       </label>
-      <label className="flex items-center justify-between rounded border border-[#263241] bg-[#0d141c] px-2 py-2 text-xs text-[#a8b5c2]">
-        Require MACD histogram rising
-        <input
-          type="checkbox"
-          name="requireMacdHistogramRising"
-          checked={formData.requireMacdHistogramRising}
-          onChange={handleChange}
-        />
-      </label>
+
       <button
         className="mt-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#f3a33a] hover:bg-[#101720] disabled:opacity-50"
         type="submit"
