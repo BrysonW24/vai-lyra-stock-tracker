@@ -57,6 +57,29 @@ async function ensureTicker(symbol: string, quote: Awaited<ReturnType<typeof loo
   return { ok: true };
 }
 
+/** Persistent trade log - newest first, RLS-scoped to the signed-in user. Powers the Trade Log
+ * surface so undo is not trapped inside an ephemeral chat bubble. */
+export async function GET() {
+  try {
+    const supabase = await createSupabaseServerClient();
+    if (!supabase) return NextResponse.json({ ok: true, demo: true, logs: [] });
+
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return NextResponse.json({ ok: false, error: 'Sign in to view your trade log.', logs: [] }, { status: 401 });
+
+    const { data, error } = await supabase
+      .from('user_trade_logs')
+      .select('id, symbol, side, notional_value, quantity_delta, fill_price, cash_delta, status, source, created_at, undone_at')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) return NextResponse.json({ ok: false, error: error.message, logs: [] }, { status: 400 });
+
+    return NextResponse.json({ ok: true, logs: data ?? [] });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : 'Unknown error', logs: [] }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();

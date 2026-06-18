@@ -37,6 +37,7 @@ import {
   Star,
   Workflow,
   Wand2,
+  ReceiptText,
 } from 'lucide-react';
 import { useEffect, useRef, type ReactNode } from 'react';
 import type { DashboardData } from '@/types/scanner';
@@ -54,6 +55,7 @@ const navItems = [
   // -- Yours --
   { href: '/', label: 'Command', short: 'Command', icon: Gauge },
   { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness },
+  { href: '/trades', label: 'Trade Log', short: 'Trades', icon: ReceiptText },
   { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star },
   { href: '/charts', label: 'Charts', short: 'Charts', icon: PieChart },
   { href: '/saved', label: 'Saved', short: 'Saved', icon: Bookmark },
