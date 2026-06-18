@@ -1,6 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { DEFAULT_NOTIFICATION_PREFERENCES, type NotificationPreferences } from '@/lib/notifications/types';
+import { sendTelegramMessage } from '@/lib/notifications/telegram';
+import { sendWhatsAppMessage } from '@/lib/notifications/whatsapp';
 
 /**
  * Notification-channel write API. Saves where a user wants alerts delivered (Telegram
@@ -49,15 +52,74 @@ const demoResponse = () =>
 const unauthenticated = () =>
   NextResponse.json({ ok: false, error: 'Sign in to set up notifications.' }, { status: 401 });
 
+interface ChannelVerificationResult {
+  /** Real outcome of the first send - the source of truth for whether the channel works. */
+  status: 'sent' | 'demo_logged' | 'failed';
+  /** True only when the destination was actually reached; gates dispatch + the enabled flag. */
+  verified: boolean;
+  /** UI-facing line explaining what happened, in plain language. */
+  message: string;
+  /** Provider error (redacted by the adapter) when the send failed. */
+  error?: string;
+}
+
+/**
+ * Attempt a real first send to a freshly-saved chat destination and report the truth. This is the
+ * verification probe behind Fix 1: a raw chat id / phone number is only proven once a send to it
+ * actually lands. Never throws - the adapters return a status instead of raising. A 'demo_logged'
+ * result means no provider is configured server-side, so the destination genuinely cannot be
+ * verified yet (not a silent success). This probe is chat-only; it never touches web push.
+ */
+async function verifyChatChannel(channelType: ChannelType, destination: string): Promise<ChannelVerificationResult> {
+  const probeKey = `verify:${channelType}:${destination}:${randomUUID()}`;
+  const probeText =
+    'Lyra is confirming this channel. You are now set up to receive Lyra alerts here. Research, not advice.';
+
+  const result =
+    channelType === 'telegram'
+      ? await sendTelegramMessage(destination, probeText, probeKey)
+      : await sendWhatsAppMessage(destination, probeText, probeKey);
+
+  if (result.status === 'sent') {
+    return { status: 'sent', verified: true, message: 'Channel verified - we reached this chat. Alerts are on.' };
+  }
+  if (result.status === 'demo_logged') {
+    return {
+      status: 'demo_logged',
+      verified: false,
+      message:
+        channelType === 'telegram'
+          ? 'Saved, but not verified yet - the Telegram bot is not configured in this environment, so we could not confirm delivery. Open the bot and send /start, then save again.'
+          : 'Saved, but not verified yet - WhatsApp is not configured in this environment, so we could not confirm delivery.',
+    };
+  }
+  return {
+    status: 'failed',
+    verified: false,
+    message:
+      channelType === 'telegram'
+        ? 'We could not reach this chat yet - open the bot and send /start, then save again.'
+        : 'We could not reach this number yet - check it and try again, and make sure you have messaged the business number first.',
+    error: result.errorMessage,
+  };
+}
+
 function hhmm(value: string | null | undefined, fallback: string): string {
   if (!value) return fallback;
   const match = /^(\d{1,2}):(\d{2})/.exec(value);
   return match ? `${match[1].padStart(2, '0')}:${match[2]}` : fallback;
 }
 
-function coercePrefs(row: PreferenceRow | null | undefined, channels: Array<{ channel_type: string }>, activePushCount: number): NotificationPreferences {
-  const hasTelegram = channels.some((channel) => channel.channel_type === 'telegram');
-  const hasWhatsApp = channels.some((channel) => channel.channel_type === 'whatsapp');
+function coercePrefs(
+  row: PreferenceRow | null | undefined,
+  channels: Array<{ channel_type: string; is_verified?: boolean | null }>,
+  activePushCount: number,
+): NotificationPreferences {
+  // Only VERIFIED chat channels count as "on" - an unverified row exists but does not deliver
+  // (dispatch filters on is_verified), so the toggle must not claim it is active. Null is_verified
+  // (legacy rows) is treated as verified so pre-existing working channels are not regressed.
+  const hasTelegram = channels.some((channel) => channel.channel_type === 'telegram' && channel.is_verified !== false);
+  const hasWhatsApp = channels.some((channel) => channel.channel_type === 'whatsapp' && channel.is_verified !== false);
   const prefs = row || {};
 
   return {
@@ -98,7 +160,7 @@ export async function GET() {
       supabase.from('user_alert_preferences').select('*').eq('user_id', user.id).maybeSingle(),
       supabase
         .from('notification_channels')
-        .select('id, channel_type, destination, is_active, channel_label')
+        .select('id, channel_type, destination, is_active, is_verified, channel_label')
         .eq('user_id', user.id)
         .eq('is_active', true),
       supabase
@@ -190,7 +252,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // One active channel per type: deactivate existing, then upsert the chosen one.
+    // One active channel per type: deactivate existing, then upsert the chosen one. The row is saved
+    // UNVERIFIED (is_verified=false): a raw chat id / phone number is not proof we can actually reach
+    // that chat, so it must not deliver until a real send confirms it. dispatch only sends to verified
+    // chat channels (loadActiveChannels filters is_verified), so an unconfirmed destination can no
+    // longer silently black-hole alerts while the UI claims "saved".
     await supabase.from('notification_channels').update({ is_active: false }).eq('user_id', user.id).eq('channel_type', channelType);
 
     const { data, error } = await supabase
@@ -202,6 +268,8 @@ export async function POST(request: NextRequest) {
           destination,
           channel_label: body.label ?? null,
           is_active: true,
+          is_verified: false,
+          verified_at: null,
         },
         { onConflict: 'user_id,channel_type,destination' },
       )
@@ -212,16 +280,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: error.message || 'Failed to save channel' }, { status: 400 });
     }
 
-    await supabase.from('user_alert_preferences').upsert(
-      {
-        user_id: user.id,
-        [`${channelType}_enabled`]: true,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id' },
-    );
+    // Attempt a real first send to confirm the destination actually works, and report the truth.
+    // - 'sent'        => destination confirmed; mark the channel verified and enable the preference.
+    // - 'demo_logged' => no provider configured server-side; we genuinely cannot verify, so the
+    //                    channel stays unverified and the UI is told so (not a false "saved").
+    // - 'failed'      => the provider rejected the destination (e.g. wrong chat id, bad number);
+    //                    stays unverified and the real error is surfaced.
+    const verification = await verifyChatChannel(channelType, destination);
 
-    return NextResponse.json({ ok: true, data });
+    if (verification.status === 'sent') {
+      await supabase
+        .from('notification_channels')
+        .update({ is_verified: true, verified_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .eq('channel_type', channelType)
+        .eq('destination', destination);
+
+      await supabase.from('user_alert_preferences').upsert(
+        {
+          user_id: user.id,
+          [`${channelType}_enabled`]: true,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
+    }
+
+    return NextResponse.json({ ok: true, data, verification });
   } catch (err) {
     return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 });
   }

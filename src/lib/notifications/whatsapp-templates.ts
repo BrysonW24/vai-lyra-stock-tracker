@@ -15,6 +15,8 @@
  * any live mode).
  */
 
+import type { NotificationEvent } from './types';
+
 export type WhatsAppTemplateName =
   | 'lyra_signal_alert'
   | 'lyra_daily_digest'
@@ -206,4 +208,127 @@ export function buildOrderApprovalRequiredTemplate(
     input.strategyId,
     input.approvalCode,
   ]);
+}
+
+// --- event -> outbound message mapping --------------------------------------------
+
+/**
+ * Map a router-approved NotificationEvent onto the right approved WhatsApp template, using only
+ * the existing builders above. Every scanner/alert send is business-initiated (we message the
+ * user, not a reply inside their 24h window), so it must ride an approved template - Meta rejects
+ * business-initiated freeform text. This is the single seam the dispatcher uses for WhatsApp.
+ *
+ * Doctrine guard: AI never invents a number and we never fabricate one either. We only pour fields
+ * the deterministic event already carries (symbol from relatedEntityId, score from relevanceScore,
+ * state from severity/type, provenance from triggerReason, link from url) into template slots. The
+ * order-approval template needs side / quantity / notional / strategy / approval-code that the bare
+ * NotificationEvent does not carry; rather than fabricate those numbers we return a freeform text
+ * message for those types. Text outside the 24h window is itself constrained by Meta, but it is the
+ * honest fallback - it never fabricates a value and never throws. Pure and deterministic.
+ */
+
+const PORTFOLIO_RISK_EVENT_TYPES: ReadonlySet<NotificationEvent['type']> = new Set([
+  'portfolio_risk',
+  'portfolio_price_move',
+  'portfolio_news',
+  'risk_blocked',
+]);
+
+const DIGEST_EVENT_TYPES: ReadonlySet<NotificationEvent['type']> = new Set([
+  'daily_digest',
+  'weekly_report',
+]);
+
+/**
+ * Account-activity / order-lifecycle types. Their meaningful template (order-approval) needs
+ * structured order fields (side / quantity / notional / strategy / approval-code) that the bare
+ * NotificationEvent does not carry. We will not fabricate those numbers, so these fall back to a
+ * freeform text message rather than being mis-cast as a signal score.
+ */
+const TEXT_FALLBACK_EVENT_TYPES: ReadonlySet<NotificationEvent['type']> = new Set([
+  'order_approval_required',
+  'paper_approval_required',
+  'order_intent_created',
+  'order_rejected',
+  'kill_switch_enabled',
+  'paper_trade_opened',
+  'paper_trade_closed',
+  'paper_trade_stop_hit',
+  'paper_fill',
+  'paper_position_move',
+  'test_notification',
+]);
+
+/** Symbol slot from the event, or a neutral label when the event is not symbol-scoped. */
+function eventSymbol(event: NotificationEvent): string {
+  return (event.relatedEntityId || event.relatedEntityType || 'Portfolio').toString();
+}
+
+/** A short, deterministic state label derived from the event - never AI-originated. */
+function eventStateLabel(event: NotificationEvent): string {
+  return (event.severity ?? 'medium').toString();
+}
+
+/** Evidence link slot - the event url when set, otherwise the app root. */
+function eventEvidenceUrl(event: NotificationEvent): string {
+  return event.url && event.url.trim().length > 0 ? event.url : '/';
+}
+
+/** YYYY-MM-DD date label from the event timestamp, falling back to today if it is unparseable. */
+function eventDateLabel(event: NotificationEvent): string {
+  const parsed = new Date(event.createdAt);
+  const safe = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  return safe.toISOString().slice(0, 10);
+}
+
+/** Honest freeform text from the event's own fields - the no-template fallback. Never throws. */
+function eventTextMessage(event: NotificationEvent): WhatsAppTextMessage {
+  const lines = [event.title, event.body, event.triggerReason ? `Why: ${event.triggerReason}` : '']
+    .map((line) => (line ?? '').trim())
+    .filter((line) => line.length > 0);
+  return { kind: 'text', body: lines.join('\n').slice(0, 1024) };
+}
+
+export function buildWhatsAppMessageForEvent(event: NotificationEvent): WhatsAppOutboundMessage {
+  // Fail safe: a mapping error must never break the dispatch for other channels (push especially).
+  // Any unexpected throw degrades to the honest text fallback rather than propagating.
+  try {
+    if (TEXT_FALLBACK_EVENT_TYPES.has(event.type)) {
+      return eventTextMessage(event);
+    }
+
+    if (DIGEST_EVENT_TYPES.has(event.type)) {
+      return buildDailyDigestTemplate({
+        dateLabel: eventDateLabel(event),
+        // No fabricated movers - the digest body is the deterministic summary the engine produced.
+        topMovers: [],
+        watchlistTriggerCount: 0,
+        portfolioSummary: event.body || event.triggerReason,
+        digestUrl: eventEvidenceUrl(event),
+      });
+    }
+
+    if (PORTFOLIO_RISK_EVENT_TYPES.has(event.type)) {
+      return buildPortfolioRiskTemplate({
+        symbol: eventSymbol(event),
+        riskState: eventStateLabel(event),
+        detail: event.triggerReason || event.body,
+        evidenceUrl: eventEvidenceUrl(event),
+      });
+    }
+
+    // Signal-like events (signal_alert, theme_breakout, watchlist moves, discoveries, etc.) carry a
+    // symbol-or-theme and a deterministic relevance score - everything the signal template needs.
+    // scoreDelta is 0 because the bare event does not carry a previous-scan delta (never fabricate).
+    return buildSignalAlertTemplate({
+      symbol: eventSymbol(event),
+      signalScore: Math.round(Number.isFinite(event.relevanceScore) ? event.relevanceScore : 0),
+      scoreDelta: 0,
+      actionState: eventStateLabel(event),
+      triggerReason: event.triggerReason || event.body,
+      evidenceUrl: eventEvidenceUrl(event),
+    });
+  } catch {
+    return eventTextMessage(event);
+  }
 }

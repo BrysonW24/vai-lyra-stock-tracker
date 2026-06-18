@@ -5,6 +5,7 @@ import { renderNotificationText, renderNotificationPushBody } from './templates'
 import { DEFAULT_NOTIFICATION_PREFERENCES, type ChannelType, type NotificationEvent, type NotificationPreferences, type NotificationType } from './types';
 import { sendTelegramMessage } from './telegram';
 import { sendWhatsAppMessage } from './whatsapp';
+import { buildWhatsAppMessageForEvent } from './whatsapp-templates';
 
 type SupabaseLike = {
   from: (table: string) => any;
@@ -35,6 +36,7 @@ interface ChannelRow {
   channel_type: ChannelType;
   destination: string | null;
   is_active: boolean | null;
+  is_verified?: boolean | null;
 }
 
 interface PushSubscriptionRow extends StoredPushSubscription {
@@ -82,10 +84,17 @@ function hhmm(value: string | null | undefined, fallback: string): string {
 async function loadActiveChannels(supabase: SupabaseLike, userId: string): Promise<ChannelRow[]> {
   const { data } = await supabase
     .from('notification_channels')
-    .select('id, channel_type, destination, is_active')
+    .select('id, channel_type, destination, is_active, is_verified')
     .eq('user_id', userId)
     .eq('is_active', true);
-  return (data || []).filter((row: ChannelRow) => row.destination) as ChannelRow[];
+  // Chat channels (telegram/whatsapp) only ever deliver once verified - an unverified row
+  // means we have not yet confirmed we can actually reach that chat id / number, so sending
+  // to it would silently black-hole. A null is_verified (legacy rows from before the column
+  // existed) is treated as verified so existing working channels are not regressed. This gate
+  // is chat-only; web push lives in push_subscriptions and is never loaded here.
+  return (data || []).filter(
+    (row: ChannelRow) => row.destination && row.is_verified !== false,
+  ) as ChannelRow[];
 }
 
 async function loadPreferences(supabase: SupabaseLike, userId: string): Promise<{ prefs: NotificationPreferences; channels: ChannelRow[] }> {
@@ -264,6 +273,12 @@ async function deliverChat(
   }
 
   const text = renderNotificationText(event);
+  // WhatsApp business-initiated sends (every scanner/alert send is one - we are messaging the
+  // user, not replying inside their 24h customer-service window) MUST use a pre-approved Meta
+  // template, not freeform text, or Meta rejects them. Map the event's structured fields into a
+  // typed WhatsAppTemplateMessage via the existing builders. Freeform text is reserved for genuine
+  // in-window webhook replies, which do not flow through this dispatch path. Telegram keeps text.
+  const whatsAppMessage = channelType === 'whatsapp' ? buildWhatsAppMessageForEvent(event) : null;
   const delivered: string[] = [];
   const suppressed: string[] = [];
   const errors: string[] = [];
@@ -276,7 +291,7 @@ async function deliverChat(
             eventId: event.id,
             userId: event.userId,
           })
-        : await sendWhatsAppMessage(destination.destination!, text, idempotencyKey);
+        : await sendWhatsAppMessage(destination.destination!, whatsAppMessage ?? text, idempotencyKey);
 
     await insertDelivery(supabase, {
       eventId: event.id,

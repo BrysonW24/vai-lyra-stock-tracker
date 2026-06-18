@@ -19,7 +19,7 @@ type Channel = 'telegram' | 'whatsapp';
 interface NotificationApiState {
   ok?: boolean;
   preferences?: NotificationPreferences;
-  channels?: Array<{ channel_type: Channel; destination: string | null; is_active?: boolean }>;
+  channels?: Array<{ channel_type: Channel; destination: string | null; is_active?: boolean; is_verified?: boolean | null }>;
   push?: {
     activeSubscriptions: number;
     vapidPublicKey: string;
@@ -27,6 +27,19 @@ interface NotificationApiState {
   };
   error?: string;
   demo?: boolean;
+}
+
+interface ChannelVerification {
+  status: 'sent' | 'demo_logged' | 'failed';
+  verified: boolean;
+  message: string;
+  error?: string;
+}
+
+interface SaveChannelResponse {
+  ok?: boolean;
+  error?: string;
+  verification?: ChannelVerification;
 }
 
 const inputClass =
@@ -74,6 +87,12 @@ function channelDestination(channels: NotificationApiState['channels'], channel:
   return channels?.find((item) => item.channel_type === channel && item.destination)?.destination || '';
 }
 
+/** A saved chat channel counts as verified unless the row explicitly says is_verified === false. */
+function channelVerified(channels: NotificationApiState['channels'], channel: Channel): boolean {
+  const row = channels?.find((item) => item.channel_type === channel && item.destination);
+  return Boolean(row && row.is_verified !== false);
+}
+
 export function PushNotificationSetup() {
   const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_NOTIFICATION_PREFERENCES);
   const [support, setSupport] = useState<PushSupportStatus>({ supported: false, permission: 'unsupported', standalone: false });
@@ -87,6 +106,9 @@ export function PushNotificationSetup() {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<any>(null);
+  const [telegramVerified, setTelegramVerified] = useState(false);
+  const [whatsappVerified, setWhatsappVerified] = useState(false);
+  const [channelNotice, setChannelNotice] = useState<{ channel: Channel; verified: boolean; message: string } | null>(null);
 
   const pushEnabled = prefs.pushEnabled && activePushCount > 0;
   const permissionLabel = useMemo(() => {
@@ -119,6 +141,8 @@ export function PushNotificationSetup() {
       setPushConfigured(Boolean(data.push?.configured));
       setTelegramChatId(channelDestination(data.channels, 'telegram') || localChannels.telegramChatId || '');
       setWhatsappPhone(channelDestination(data.channels, 'whatsapp') || localChannels.whatsappPhone || '');
+      setTelegramVerified(channelVerified(data.channels, 'telegram'));
+      setWhatsappVerified(channelVerified(data.channels, 'whatsapp'));
     } catch {
       setError('Could not reach notification settings.');
     }
@@ -237,11 +261,11 @@ export function PushNotificationSetup() {
     }
     setBusy(channel);
     setError(null);
+    setChannelNotice(null);
 
     const current = loadNotifications();
     saveNotifications({
       ...current,
-      telegramEnabled: channel === 'telegram' ? true : current.telegramEnabled,
       telegramChatId: channel === 'telegram' ? destination : current.telegramChatId,
       whatsappPhone: channel === 'whatsapp' ? destination : current.whatsappPhone,
     });
@@ -252,12 +276,25 @@ export function PushNotificationSetup() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ channelType: channel, destination }),
       });
-      const data = await response.json().catch(() => ({}));
+      const data = (await response.json().catch(() => ({}))) as SaveChannelResponse;
       if (!response.ok || data.ok === false) throw new Error(data.error || `Could not save ${channel}.`);
-      updatePrefs(channel === 'telegram' ? { telegramEnabled: true } : { whatsappEnabled: true });
+
+      // The destination is only "on" once the first send actually reached it. Surface the real
+      // outcome instead of an unconditional "saved" - a wrong chat id / number stays unverified
+      // and will not silently black-hole alerts.
+      const verification = data.verification;
+      const verified = verification?.verified ?? false;
+      if (verified) {
+        updatePrefs(channel === 'telegram' ? { telegramEnabled: true } : { whatsappEnabled: true });
+      }
       await loadState();
-      setNotice(`${channel === 'telegram' ? 'Telegram' : 'WhatsApp'} saved.`);
-      setTimeout(() => setNotice(null), 2200);
+      setChannelNotice({
+        channel,
+        verified,
+        message:
+          verification?.message ??
+          (verified ? `${channel === 'telegram' ? 'Telegram' : 'WhatsApp'} verified.` : `${channel === 'telegram' ? 'Telegram' : 'WhatsApp'} saved but not verified yet.`),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : `Could not save ${channel}.`);
     } finally {
@@ -269,8 +306,14 @@ export function PushNotificationSetup() {
     <div className="space-y-4">
       <div className="flex flex-wrap gap-1.5">
         <StatusPill on={pushEnabled} label={`Push ${pushEnabled ? 'on' : 'off'}`} />
-        <StatusPill on={prefs.telegramEnabled} label={`Telegram ${prefs.telegramEnabled ? 'on' : 'off'}`} />
-        <StatusPill on={prefs.whatsappEnabled} label={`WhatsApp ${prefs.whatsappEnabled ? 'on' : 'off'}`} />
+        <StatusPill
+          on={prefs.telegramEnabled && telegramVerified}
+          label={telegramChatId && !telegramVerified ? 'Telegram unverified' : `Telegram ${prefs.telegramEnabled && telegramVerified ? 'on' : 'off'}`}
+        />
+        <StatusPill
+          on={prefs.whatsappEnabled && whatsappVerified}
+          label={whatsappPhone && !whatsappVerified ? 'WhatsApp unverified' : `WhatsApp ${prefs.whatsappEnabled && whatsappVerified ? 'on' : 'off'}`}
+        />
       </div>
 
       <section className="space-y-2 border-t border-[#1b2530] pt-3">
@@ -369,6 +412,29 @@ export function PushNotificationSetup() {
             </button>
           </div>
         </div>
+
+        {channelNotice && (
+          <div
+            className={`md:col-span-2 rounded border px-3 py-2 font-mono text-[11px] leading-snug ${
+              channelNotice.verified
+                ? 'border-[#1d7f55] bg-[#0d251b] text-[#43d18b]'
+                : 'border-[#7a5a22] bg-[#241a0d] text-[#f3a33a]'
+            }`}
+          >
+            {channelNotice.verified ? <Check size={11} className="mr-1 inline" /> : <X size={11} className="mr-1 inline" />}
+            {channelNotice.message}
+          </div>
+        )}
+        {!channelNotice && telegramChatId && !telegramVerified && (
+          <p className="md:col-span-2 font-mono text-[11px] text-[#f3a33a]">
+            Telegram needs verification - open the bot, send /start, then save again so we can confirm delivery.
+          </p>
+        )}
+        {!channelNotice && whatsappPhone && !whatsappVerified && (
+          <p className="md:col-span-2 font-mono text-[11px] text-[#f3a33a]">
+            WhatsApp needs verification - we have not confirmed a message can reach this number yet.
+          </p>
+        )}
       </section>
 
       <section className="space-y-3 border-t border-[#1b2530] pt-3">
