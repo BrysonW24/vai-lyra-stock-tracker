@@ -40,7 +40,10 @@ const ACTION_VERBS: Record<string, ProposedAction['type']> = {
   log_trade: 'log_trade',
 };
 
-const money = (n: number) => `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+const money = (n: number, currency = 'USD') =>
+  currency === 'USD'
+    ? `$${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+    : n.toLocaleString('en-US', { style: 'currency', currency, maximumFractionDigits: 2 });
 
 /**
  * Grounded chat. Mirrors /api/ai/brief: BYOK key forwarded from the browser, never logged or
@@ -104,19 +107,34 @@ export async function POST(request: NextRequest) {
       // approved (shares, fill price, cash left), not a blind dollar amount. Best-effort: the server
       // re-prices on confirm regardless, so a failed preview just falls back to the plain proposal.
       const quote = await lookupMarketQuote(explicitTrade.symbol).catch(() => null);
-      const cash = (await getUserConstraints().catch(() => null))?.cashAvailable ?? null;
+      const userConstraints = await getUserConstraints().catch(() => null);
+      const cash = userConstraints?.cashAvailable ?? null;
+      const baseCurrency = (userConstraints?.baseCurrency || 'USD').toUpperCase();
+      const tradeCurrency = (quote?.currency || 'USD').toUpperCase();
       const price = quote && quote.valid && quote.price && quote.price > 0 ? quote.price : null;
+
+      // Cross-currency guard mirrors log_buy_trade: cash is held in one base currency, so a trade
+      // priced in another (e.g. a .AX name in AUD) cannot be logged yet. Decline honestly here so we
+      // never present a confirm card that the server would only reject.
+      if (price && tradeCurrency !== baseCurrency) {
+        return NextResponse.json({
+          ok: true,
+          text: `${explicitTrade.symbol} trades in ${tradeCurrency}, but your account cash is in ${baseCurrency}. I can't log a cross-currency buy yet (no FX conversion), so the cash maths would be wrong. For now, add this holding manually in Portfolio, or trade a ${baseCurrency}-quoted name.`,
+          suggestions: [`What does ${explicitTrade.symbol} do?`, 'Show my portfolio', `Find ${baseCurrency} oversold setups`],
+        });
+      }
+
       const estShares = price ? Math.round((explicitTrade.notional / price) * 100) / 100 : undefined;
       const estCashAfter = typeof cash === 'number' ? Math.round((cash - explicitTrade.notional) * 100) / 100 : undefined;
       const overCash = typeof cash === 'number' && explicitTrade.notional > cash;
       const detail = price
-        ? ` That is about ${estShares} shares at ${money(price)}${estCashAfter !== undefined ? `, leaving ${money(estCashAfter)} cash` : ''}.`
+        ? ` That is about ${estShares} shares at ${money(price, tradeCurrency)}${estCashAfter !== undefined ? `, leaving ${money(estCashAfter, baseCurrency)} cash` : ''}.`
         : '';
       return NextResponse.json({
         ok: true,
         text: overCash
-          ? `A ${money(explicitTrade.notional)} buy in ${explicitTrade.symbol} is more than your ${money(cash as number)} available cash. I'll re-check on confirm - only confirm if you've topped up.`
-          : `I can log a ${money(explicitTrade.notional)} buy in ${explicitTrade.symbol}.${detail} I'll re-price at the live quote and update your holding after you confirm.`,
+          ? `A ${money(explicitTrade.notional, baseCurrency)} buy in ${explicitTrade.symbol} is more than your ${money(cash as number, baseCurrency)} available cash. I'll re-check on confirm - only confirm if you've topped up.`
+          : `I can log a ${money(explicitTrade.notional, baseCurrency)} buy in ${explicitTrade.symbol}.${detail} I'll re-price at the live quote and update your holding after you confirm.`,
         suggestions: [`What does ${explicitTrade.symbol} do?`, 'Show my portfolio risk after this', 'How much cash will I have left?'],
         action: {
           type: 'log_trade',

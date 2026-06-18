@@ -2,9 +2,10 @@ import { Suspense } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { FindingsFeed } from '@/components/findings/FindingsFeed';
 import { getDashboardData } from '@/lib/data';
+import { getLiveFindings } from '@/lib/findings/server';
 
 export default async function FindingsPage() {
-  const data = await getDashboardData();
+  const [data, liveFindings] = await Promise.all([getDashboardData(), getLiveFindings()]);
 
   return (
     <AppShell data={data}>
@@ -16,7 +17,7 @@ export default async function FindingsPage() {
           </p>
         </div>
         <Suspense fallback={<p className="text-[11px] text-[#8190a0]">Loading findings...</p>}>
-          <FindingsFeed />
+          <FindingsFeed findings={liveFindings} />
         </Suspense>
       </div>
     </AppShell>

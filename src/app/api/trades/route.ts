@@ -116,6 +116,8 @@ export async function POST(request: NextRequest) {
       p_fill_price: round4(quote.price),
       p_source: body.source || 'chat',
       p_raw_text: body.rawText || null,
+      // The RPC rejects a cross-currency trade (cash is held in the account base currency).
+      p_currency: quote.currency || 'USD',
     });
     if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
 

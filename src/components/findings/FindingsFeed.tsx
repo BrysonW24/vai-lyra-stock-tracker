@@ -38,6 +38,7 @@ function sectionFor(f: Finding): FeedSection {
 
 function deriveTitle(finding: Finding | null, item: DrawerStackItem): string {
   if (!finding) return item.id;
+  if (item.type === 'genui') return 'Generated view';
   if (item.type === 'finding') return finding.symbol || finding.title;
   if (item.type === 'evidence' || item.type === 'source_record') {
     return finding.evidence.find((e) => e.id === item.id)?.sourceName ?? item.id;
@@ -47,16 +48,20 @@ function deriveTitle(finding: Finding | null, item: DrawerStackItem): string {
   return finding.risks.find((r) => r.id === item.id)?.label ?? item.id;
 }
 
-export function FindingsFeed() {
+export function FindingsFeed({ findings }: { findings?: Finding[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
+  // Live findings projected from notification_events when present; demo fixtures otherwise.
+  const isLive = Boolean(findings && findings.length);
+  const all = useMemo(() => (isLive ? (findings as Finding[]) : DEMO_FINDINGS), [isLive, findings]);
+
   const stack = useMemo(() => parseStack(params.get('inv')), [params]);
   const activeFindingId = stack.find((s) => s.type === 'finding')?.id;
   const activeFinding = useMemo(
-    () => (activeFindingId ? DEMO_FINDINGS.find((f) => f.id === activeFindingId) ?? null : null),
-    [activeFindingId],
+    () => (activeFindingId ? all.find((f) => f.id === activeFindingId) ?? null : null),
+    [activeFindingId, all],
   );
 
   const setStack = useCallback(
@@ -74,16 +79,23 @@ export function FindingsFeed() {
 
   const groups = useMemo(
     () =>
-      SECTION_ORDER.map((sec) => ({ sec, findings: DEMO_FINDINGS.filter((f) => sectionFor(f) === sec) })).filter(
+      SECTION_ORDER.map((sec) => ({ sec, findings: all.filter((f) => sectionFor(f) === sec) })).filter(
         (g) => g.findings.length > 0,
       ),
-    [],
+    [all],
   );
 
   const titledStack = useMemo(() => stack.map((item) => ({ ...item, title: deriveTitle(activeFinding, item) })), [stack, activeFinding]);
 
   return (
     <div className="space-y-4 pb-28 xl:pb-6">
+      <p className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">
+        {isLive ? (
+          <span className="text-[#43d18b]">Live findings - projected from your alerts</span>
+        ) : (
+          <span>Demo findings - live findings appear here as the scanner surfaces setups for you</span>
+        )}
+      </p>
       {groups.map(({ sec, findings }) => (
         <section key={sec}>
           <h2 className="mb-1.5 text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{FEED_SECTION_LABELS[sec]}</h2>

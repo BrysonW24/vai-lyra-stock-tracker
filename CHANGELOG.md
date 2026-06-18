@@ -6,6 +6,67 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-18
+
+Currency-safe trade logging + the Investigation System taken from a single feed to a full
+investigation surface (the relationship graph, live data, and AI-generated views). Every change in
+this release was put through an adversarial multi-dimension review before merge; the seven defects it
+confirmed (including a critical cross-currency one) were fixed in the same pass - that history is
+recorded below under "Caught in review." Still research software, no live execution.
+
+### Added
+
+- **Investigation Graph at `/graph`** - one explorable relationship map across every finding.
+  Shared nodes collapse, so the map shows what the per-finding drawer cannot: which names sit on the
+  same supply-chain bottleneck, theme, or government buyer. Tap any node to open its drawer and walk
+  its evidence + connections; the drawer state is URL-persisted (shareable, reload-safe). Deterministic
+  layout, deterministic data.
+- **Live findings** - `/findings` now projects real `notification_events` (scanner signals, theme
+  moves, discoveries, portfolio risk) into the investigable Finding shape via a pure adapter, with a
+  lifecycle table (`findings`) for reversible promote/dismiss. Falls back to demo findings when signed
+  out or before the scanner has surfaced anything. The projection never invents a number.
+- **Generated views in the drawer (GenUI)** - "want to see what this looks like?" composes a compact
+  view on the spot: the AI chooses the layout + prose, but every number is engine-owned and pulled
+  from the deterministic finding. Guarded so the AI cannot smuggle a figure (digit OR spelled-out) or
+  an advice/"Buy" phrase into the view; with no model connected it renders a deterministic default,
+  never a blank.
+- **Richer entity drawers** - an entity now shows the evidence that touches it, walkable from both the
+  feed and the graph.
+
+### Changed
+
+- **Currency-aware trade logging.** Account cash is held in a base currency (owned by your profile).
+  A trade priced in a different currency (e.g. an ASX `.AX` name quoted in AUD against a USD account)
+  is now rejected with a clear message instead of silently corrupting the cash pool and average cost -
+  FX conversion is a later phase. Trade currency is stamped on positions + logs. The chat trade
+  preview declines a cross-currency buy up front rather than offering a confirm card that would fail.
+
+### Caught in review (fixed pre-merge)
+
+- **Cross-currency guard read the wrong table.** The base currency is written to `profiles`, but the
+  guard read `operator_profiles` (never written -> stuck at the `USD` default). For the default AUD
+  user this inverted the guard: it would have rejected valid AUD trades and *allowed* a USD trade to
+  corrupt an AUD book - the exact failure the feature exists to prevent. Now both the RPC and the chat
+  preview read the base currency from `profiles`. (Known limitation: base currency is set in Account
+  settings; until set it defaults to `USD`, so the guard fails safe by rejecting, never by corrupting.)
+- **GenUI advice + spelled-out numbers.** The fabrication guard checked digits only, so "strong buy,
+  load up" or "doubles to a forty dollar target" passed. Added a lexical advice/quantity filter; a hit
+  drops the block to the deterministic default.
+- **Live finding scores.** `relevance_score` (DB-defaults to 100) was being shown as the headline
+  composite, making non-scanner findings read a false 100/100. It is now kept as confidence only;
+  findings with no real composite read "NR" (not rated).
+- **Dismiss was permanent.** The lifecycle RPC never cleared `dismissed_at`, so a re-promote was a
+  silent no-op. A promote now clears the dismissal.
+- **Graph theme nodes overlapped.** Multiple zero-radius (center) theme nodes stacked on the exact
+  same point, rendering as one unclickable blob; they now spread on a small inner ring.
+- **GenUI breadcrumb** showed the raw finding id instead of "Generated view".
+
+### Ops
+
+- New migrations: `027_trade_currency.sql` (currency columns + currency-aware `log_buy_trade`),
+  `028_findings.sql` (findings lifecycle table + `set_finding_lifecycle`). Apply with 026 against the
+  live DB.
+
 ## [0.3.0] - 2026-06-18
 
 Dogfooding-readiness pass. A deep adversarial audit found the deterministic core was excellent but
@@ -161,6 +222,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/releases/tag/v0.1.0

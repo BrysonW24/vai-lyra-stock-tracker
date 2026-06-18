@@ -33,8 +33,8 @@ export function FindingCard({ finding, onOpen }: { finding: Finding; onOpen: (id
           <p className="mt-1 truncate text-[11px] text-[#a8b5c2]">{finding.title}</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="numeric font-mono text-base font-semibold text-[#eef3f8]">{s.total}</p>
-          <p className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">score</p>
+          <p className="numeric font-mono text-base font-semibold text-[#eef3f8]">{s.total > 0 ? s.total : 'NR'}</p>
+          <p className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{s.total > 0 ? 'score' : 'not rated'}</p>
         </div>
       </div>
 

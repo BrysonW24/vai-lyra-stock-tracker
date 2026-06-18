@@ -25,10 +25,10 @@ export function formatSignedPercent(value: number, digits = 1): string {
   return `${formatSignedNumber(value, digits)}%`;
 }
 
-export function formatCurrency(value: number): string {
+export function formatCurrency(value: number, currency = 'USD'): string {
   return value.toLocaleString('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency,
     maximumFractionDigits: 2,
   });
 }

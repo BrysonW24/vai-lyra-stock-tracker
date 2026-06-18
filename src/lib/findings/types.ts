@@ -187,7 +187,8 @@ export type DrawerType =
   | 'theme'
   | 'supply_chain_node'
   | 'investor'
-  | 'risk';
+  | 'risk'
+  | 'genui';
 
 export interface DrawerStackItem {
   type: DrawerType;

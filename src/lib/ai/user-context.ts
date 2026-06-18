@@ -12,6 +12,7 @@ export interface UserConstraints {
   riskComfort?: string;
   primaryGoal?: string;
   cashAvailable?: number | null;
+  baseCurrency?: string | null;
   monthlyContribution?: number | null;
   maxPositionSizePct?: number | null;
   defaultTradeAmount?: number | null;
@@ -46,6 +47,9 @@ export async function getUserConstraints(): Promise<UserConstraints | null> {
 
     if (error || !data) return null;
 
+    // Base currency is owned by profiles (written by the account API), not operator_profiles.
+    const { data: profile } = await supabase.from('profiles').select('base_currency').eq('id', user.id).maybeSingle();
+
     return {
       experienceLevel: data.experience_level ?? undefined,
       investingStyle: data.investing_style ?? undefined,
@@ -53,6 +57,7 @@ export async function getUserConstraints(): Promise<UserConstraints | null> {
       riskComfort: data.risk_comfort ?? undefined,
       primaryGoal: data.primary_goal ?? undefined,
       cashAvailable: data.cash_available,
+      baseCurrency: profile?.base_currency ?? 'USD',
       monthlyContribution: data.monthly_contribution,
       maxPositionSizePct: data.max_position_size_pct,
       defaultTradeAmount: data.default_trade_amount,

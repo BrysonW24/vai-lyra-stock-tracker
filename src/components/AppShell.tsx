@@ -24,6 +24,7 @@ import {
   Landmark,
   Megaphone,
   Microscope,
+  Network,
   Newspaper,
   PieChart,
   Radar,
@@ -56,6 +57,7 @@ const navItems = [
   // -- Yours --
   { href: '/', label: 'Command', short: 'Command', icon: Gauge },
   { href: '/findings', label: 'Findings', short: 'Find', icon: Telescope },
+  { href: '/graph', label: 'Investigation Graph', short: 'Graph', icon: Network },
   { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness },
   { href: '/trades', label: 'Trade Log', short: 'Trades', icon: ReceiptText },
   { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star },

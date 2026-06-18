@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { DrawerStackItem, Finding } from '@/lib/findings/types';
+import { loadAi } from '@/lib/account';
+import { buildAllowedMetrics, buildDefaultGenUIView, type GenUIView } from '@/lib/findings/genui';
 
 /**
  * The nested investigation drawer. Renders the TOP item of the stack as a right-side panel
@@ -58,6 +60,7 @@ export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClo
             <EntityBody finding={finding} entityId={top.id} onPush={onPush} />
           )}
           {top.type === 'risk' && <RiskBody finding={finding} riskId={top.id} />}
+          {top.type === 'genui' && <GenUIBody finding={finding} onPush={onPush} />}
         </div>
       </aside>
     </div>
@@ -81,6 +84,15 @@ function FindingBody({ finding, onPush }: { finding: Finding; onPush: (i: Drawer
         </h2>
         <p className="mt-1 text-[11px] leading-relaxed text-[#a8b5c2]">{finding.summary}</p>
       </div>
+
+      <button
+        type="button"
+        onClick={() => onPush({ type: 'genui', id: finding.id, title: 'Generated view' })}
+        className="flex w-full items-center justify-between rounded-md border border-[#234] bg-gradient-to-r from-[#0b1016] to-[#0d1a26] px-3 py-2 text-left hover:border-[#2b4a63]"
+      >
+        <span className="text-[11px] text-[#8fd0ff]">Want to see what this looks like? Generate a view -&gt;</span>
+        <span className="text-[10px] text-[#8190a0]">AI composes, Lyra owns the numbers</span>
+      </button>
 
       <div className="flex gap-1 border-b border-[#1b2530]">
         {TABS.map((t) => (
@@ -271,6 +283,8 @@ function EntityBody({ finding, entityId, onPush }: { finding: Finding; entityId:
       return other ? { other, rel: r.relationshipType } : null;
     })
     .filter((c): c is NonNullable<typeof c> => Boolean(c));
+  // Evidence that touches this entity - the proof attached to the node, walkable from the graph too.
+  const linkedEvidence = finding.evidence.filter((e) => e.linkedEntityIds.includes(entityId));
 
   return (
     <div className="space-y-3">
@@ -287,6 +301,23 @@ function EntityBody({ finding, entityId, onPush }: { finding: Finding; entityId:
               </div>
             ))}
           </dl>
+        </Section>
+      )}
+      {linkedEvidence.length > 0 && (
+        <Section title={`Evidence (${linkedEvidence.length})`}>
+          <div className="space-y-1">
+            {linkedEvidence.map((ev) => (
+              <button
+                key={ev.id}
+                type="button"
+                onClick={() => onPush({ type: 'evidence', id: ev.id, title: ev.sourceName })}
+                className="flex w-full items-center justify-between rounded border border-[#1b2530] px-2 py-1 text-left hover:border-[#2b3a4a]"
+              >
+                <span className="min-w-0 truncate text-[11px] text-[#dbe5ee]">{ev.sourceName}</span>
+                <span className={`shrink-0 text-[9px] uppercase ${confidenceTone[ev.confidence]}`}>{ev.confidence} -&gt;</span>
+              </button>
+            ))}
+          </div>
         </Section>
       )}
       {connections.length > 0 && (
@@ -313,6 +344,143 @@ function RiskBody({ finding, riskId }: { finding: Finding; riskId: string }) {
       <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">{r.label}</h2>
       <p className="text-[10px] uppercase text-[#f3a33a]">{r.severity} risk</p>
       <p className="text-[11px] leading-relaxed text-[#a8b5c2]">{r.detail}</p>
+    </div>
+  );
+}
+
+// ---- GenUI (AI-composed view, deterministic numbers) ----------------------------------------
+
+function GenUIBody({ finding, onPush }: { finding: Finding; onPush: (i: DrawerStackItem) => void }) {
+  const [view, setView] = useState<GenUIView | null>(null);
+  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
+
+  useEffect(() => {
+    let cancelled = false;
+    setState('loading');
+    fetch('/api/findings/genui', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ findingId: finding.id, ai: loadAi() }),
+    })
+      .then((r) => r.json())
+      .then((d: { ok: boolean; view?: GenUIView }) => {
+        if (cancelled) return;
+        // The API always returns a view (deterministic fallback) when ok; degrade to the local
+        // default if the request itself failed, so the view is never blank.
+        setView(d.ok && d.view ? d.view : buildDefaultGenUIView(finding));
+        setState('ready');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setView(buildDefaultGenUIView(finding));
+        setState('ready');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [finding]);
+
+  if (state === 'loading' || !view) {
+    return <p className="text-[11px] text-[#8190a0]">Generating a view...</p>;
+  }
+
+  const metricMap = new Map(buildAllowedMetrics(finding).map((m) => [m.key, m]));
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">{view.title}</h2>
+        {view.subtitle && <p className="mt-1 text-[11px] leading-relaxed text-[#a8b5c2]">{view.subtitle}</p>}
+      </div>
+
+      {view.blocks.map((b, i) => {
+        if (b.kind === 'metric_grid') {
+          const cells = b.metrics.map((m) => metricMap.get(m.key)).filter((m): m is NonNullable<typeof m> => Boolean(m));
+          if (!cells.length) return null;
+          return (
+            <Section key={i} title={b.title || 'Metrics'}>
+              <div className="grid grid-cols-3 gap-1.5">
+                {cells.map((m) => (
+                  <div key={m.key} className="rounded bg-[#0b1016] p-1.5">
+                    <p className="text-[9px] uppercase tracking-[0.1em] text-[#8190a0]">{m.label}</p>
+                    <p className="numeric font-mono text-sm font-semibold text-[#eef3f8]">{m.value}</p>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          );
+        }
+        if (b.kind === 'bullets') {
+          return (
+            <Section key={i} title={b.title || 'Notes'}>
+              <ul className="space-y-1">
+                {b.items.map((it, j) => (
+                  <li key={j} className="text-[11px] leading-relaxed text-[#a8b5c2]">- {it}</li>
+                ))}
+              </ul>
+            </Section>
+          );
+        }
+        if (b.kind === 'note') {
+          return <p key={i} className="text-[11px] leading-relaxed text-[#a8b5c2]">{b.text}</p>;
+        }
+        if (b.kind === 'evidence_list') {
+          return (
+            <Section key={i} title={b.title || 'Evidence'}>
+              <div className="space-y-1">
+                {finding.evidence.map((ev) => (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    onClick={() => onPush({ type: 'evidence', id: ev.id, title: ev.sourceName })}
+                    className="flex w-full items-center justify-between rounded border border-[#1b2530] px-2 py-1 text-left hover:border-[#2b3a4a]"
+                  >
+                    <span className="min-w-0 truncate text-[11px] text-[#dbe5ee]">{ev.sourceName}</span>
+                    <span className="shrink-0 text-[9px] uppercase text-[#8190a0]">{ev.freshness} -&gt;</span>
+                  </button>
+                ))}
+              </div>
+            </Section>
+          );
+        }
+        if (b.kind === 'risk_list') {
+          return (
+            <Section key={i} title={b.title || 'Risks'}>
+              <div className="space-y-1">
+                {finding.risks.map((r) => (
+                  <div key={r.id} className="rounded border border-[#1b2530] p-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-[#dbe5ee]">{r.label}</span>
+                      <span className={`text-[9px] uppercase ${r.severity === 'high' ? 'text-[#f1646c]' : r.severity === 'medium' ? 'text-[#f3a33a]' : 'text-[#8190a0]'}`}>{r.severity}</span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-[#a8b5c2]">{r.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          );
+        }
+        if (b.kind === 'timeline') {
+          return (
+            <Section key={i} title={b.title || 'Timeline'}>
+              <ol className="space-y-2 border-l border-[#1b2530] pl-3">
+                {finding.timeline.map((t, j) => (
+                  <li key={j} className="relative">
+                    <span className="absolute -left-[15px] top-1 h-1.5 w-1.5 rounded-full bg-[#60a5fa]" />
+                    <p className="text-[10px] text-[#8190a0]">{t.date}</p>
+                    <p className={`text-[11px] ${t.stateChange ? 'text-[#43d18b]' : 'text-[#a8b5c2]'}`}>{t.label}</p>
+                  </li>
+                ))}
+              </ol>
+            </Section>
+          );
+        }
+        return null;
+      })}
+
+      <p className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">
+        {view.source === 'ai' ? 'AI-composed layout - every number from Lyra\'s engine' : 'Deterministic view - connect a model for an AI-composed layout'}
+      </p>
     </div>
   );
 }
