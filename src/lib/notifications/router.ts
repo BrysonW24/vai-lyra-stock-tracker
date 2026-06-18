@@ -125,17 +125,40 @@ function parseTimeToMinutes(value: string): number | null {
 }
 
 /**
- * True when `now` (local time) falls inside the quiet window. Overnight windows
- * such as 22:00-07:00 wrap midnight: quiet when at-or-after start OR before end.
+ * Minutes-since-midnight of `now` evaluated in the given IANA timezone. The quiet window
+ * is stored as wall-clock "HH:MM" in the user's zone, so this MUST be computed in that zone -
+ * the server runs in UTC and `now.getHours()` would otherwise invert the window for any non-UTC
+ * user. Falls back to server-local time on a missing/invalid zone (never throws).
+ */
+function minutesSinceMidnightInZone(now: Date, timeZone?: string): number {
+  if (!timeZone) return now.getHours() * 60 + now.getMinutes();
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).formatToParts(now);
+    const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? '0') % 24;
+    const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? '0');
+    return hour * 60 + minute;
+  } catch {
+    return now.getHours() * 60 + now.getMinutes();
+  }
+}
+
+/**
+ * True when `now` falls inside the quiet window, evaluated in the user's timezone. Overnight
+ * windows such as 22:00-07:00 wrap midnight: quiet when at-or-after start OR before end.
  * Malformed or zero-length windows fail OPEN (no quiet hours) - silently deferring
  * every notification forever because of a bad preference string would be worse
  * than delivering during a window the user failed to configure.
  */
-export function isWithinQuietHours(now: Date, quietStart: string, quietEnd: string): boolean {
+export function isWithinQuietHours(now: Date, quietStart: string, quietEnd: string, timeZone?: string): boolean {
   const start = parseTimeToMinutes(quietStart);
   const end = parseTimeToMinutes(quietEnd);
   if (start === null || end === null || start === end) return false;
-  const minutesNow = now.getHours() * 60 + now.getMinutes();
+  const minutesNow = minutesSinceMidnightInZone(now, timeZone);
   if (start < end) return minutesNow >= start && minutesNow < end;
   return minutesNow >= start || minutesNow < end;
 }
@@ -288,8 +311,9 @@ export function routeNotification(
   }
 
   // 9. Quiet hours - non-critical events inside the window (including overnight
-  // windows like 22:00-07:00) defer into the next digest instead of pinging.
-  if (prefs.quietHoursEnabled && isWithinQuietHours(now, prefs.quietStart, prefs.quietEnd)) {
+  // windows like 22:00-07:00) defer to a held delayed-instant send instead of pinging.
+  // Evaluated in the user's timezone, not server UTC.
+  if (prefs.quietHoursEnabled && isWithinQuietHours(now, prefs.quietStart, prefs.quietEnd, prefs.timezone)) {
     return { deliver: true, channels, deferredToDigest: true };
   }
 

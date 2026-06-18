@@ -67,9 +67,12 @@ export interface NotificationPreferences {
   telegramEnabled: boolean;
   whatsappEnabled: boolean;
   quietHoursEnabled: boolean;
-  /** "22:00" 24h local. */
+  /** "22:00" 24h, wall-clock in `timezone`. */
   quietStart: string;
   quietEnd: string;
+  /** IANA timezone the quiet window is expressed in (e.g. "Australia/Sydney"). Optional so
+   * existing literals are unaffected; the routing path always sets it from the DB row or default. */
+  timezone?: string;
   mutedThemes: string[];
   mutedSymbols: string[];
   /** Events below this relevance are dropped. */
@@ -92,6 +95,7 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   quietHoursEnabled: true,
   quietStart: '22:00',
   quietEnd: '07:00',
+  timezone: 'Australia/Sydney',
   mutedThemes: [],
   mutedSymbols: [],
   minRelevanceScore: 40,

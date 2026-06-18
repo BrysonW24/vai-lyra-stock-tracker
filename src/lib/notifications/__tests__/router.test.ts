@@ -323,6 +323,18 @@ describe('isWithinQuietHours', () => {
     expect(isWithinQuietHours(LATE_NIGHT, 'garbage', '07:00')).toBe(false);
     expect(isWithinQuietHours(LATE_NIGHT, '22:00', '22:00')).toBe(false);
   });
+
+  it('evaluates the window in the given timezone, not server UTC (the AU inversion bug)', () => {
+    // 02:00 UTC == 12:00 noon in Sydney (AEST, UTC+10, no June DST). Window 22:00-07:00.
+    const instant = new Date('2026-06-18T02:00:00Z');
+    expect(isWithinQuietHours(instant, '22:00', '07:00', 'UTC')).toBe(true); // night in UTC -> quiet
+    expect(isWithinQuietHours(instant, '22:00', '07:00', 'Australia/Sydney')).toBe(false); // midday in Sydney -> NOT quiet
+
+    // 13:00 UTC == 23:00 in Sydney -> inside the overnight window there, daytime in UTC.
+    const evening = new Date('2026-06-18T13:00:00Z');
+    expect(isWithinQuietHours(evening, '22:00', '07:00', 'Australia/Sydney')).toBe(true);
+    expect(isWithinQuietHours(evening, '22:00', '07:00', 'UTC')).toBe(false);
+  });
 });
 
 describe('routeNotification - forceInstant', () => {

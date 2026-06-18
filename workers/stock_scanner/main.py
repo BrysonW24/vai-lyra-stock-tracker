@@ -75,6 +75,56 @@ def _message_for_signal(signal: SignalResult, ticker: Ticker, previous_score: fl
     return build_telegram_message(signal, ticker, previous_score)
 
 
+def _route_signal_alert(repository, settings, signal_id, ticker, signal, decision, message) -> int:
+    """Deliver a signal alert. Prefers multi-channel dispatch (web push + WhatsApp + Telegram)
+    stamped with the operator user_id, and falls back to legacy single-operator Telegram ONLY when
+    dispatch is unconfigured. Previously signal alerts hit legacy Telegram exclusively and never
+    reached web push - the core alert type the user actually watches."""
+    user_id = settings.default_user_id or None
+    rich_payload = {"reason": decision.reason, **decision.payload, "signal_score": getattr(signal, "signal_score", None)}
+
+    if user_id and settings.notification_dispatch_enabled:
+        # Respect the user's prefs (tz-aware quiet hours + per-type toggles) before dispatching.
+        user_prefs = repository.load_user_alert_preferences(user_id)
+        can_send, gate_reason = should_send_alert_to_user(user_prefs, {}, decision.alert_type)
+        if not can_send:
+            LOGGER.info("Signal alert gated for %s on %s: %s", user_id, decision.symbol, gate_reason)
+            repository.save_alert(
+                signal_id=signal_id, symbol=decision.symbol, alert_type=decision.alert_type,
+                channel="multi_channel", message=message, sent_status="gated",
+                error_message=gate_reason, payload=rich_payload, user_id=user_id,
+            )
+            return 0
+        dispatch_result = dispatch_notification(
+            settings,
+            user_id=user_id,
+            symbol=decision.symbol,
+            alert_type=decision.alert_type,
+            title=f"{decision.symbol} {decision.alert_type.replace('_', ' ')}",
+            body=message,
+            reason=decision.reason,
+            payload=rich_payload,
+            relevance_score=float(getattr(signal, "signal_score", 0) or 0),
+        )
+        repository.save_alert(
+            signal_id=signal_id, symbol=decision.symbol, alert_type=decision.alert_type,
+            channel="multi_channel", message=message,
+            sent_status="sent" if dispatch_result.ok else "failed",
+            error_message=dispatch_result.error_message,
+            payload={**rich_payload, "dispatch_response": dispatch_result.response, "deduped": dispatch_result.deduped},
+            user_id=user_id,
+        )
+        if dispatch_result.ok:
+            return 0 if dispatch_result.deduped else 1
+        return 0
+
+    # Legacy fallback: single-operator Telegram (dispatch unconfigured).
+    return _send_and_log_alert(
+        repository, signal_id, ticker, signal, decision.symbol, decision.alert_type,
+        message, {"reason": decision.reason, **decision.payload}, decision.cooldown_hours, settings,
+    )
+
+
 def _capture_market_context(repository: SupabaseRepository) -> None:
     """Best-effort market-context snapshot. Fully self-contained: any failure here
     (network, schema, parsing) is logged and swallowed so it can NEVER break the
@@ -94,6 +144,12 @@ def _capture_market_context(repository: SupabaseRepository) -> None:
 
 def main() -> None:
     settings = load_settings()
+    if settings.default_user_id and not settings.notification_dispatch_enabled:
+        LOGGER.warning(
+            "DEFAULT_USER_ID is set but notification dispatch is unconfigured "
+            "(APP_BASE_URL / NOTIFICATION_DISPATCH_SECRET) - web push + WhatsApp will NOT fire; "
+            "only legacy single-operator Telegram. Set them in the GitHub Actions Production env."
+        )
     repository = SupabaseRepository(settings)
     provider = create_provider(settings.market_data_provider)
 
@@ -160,18 +216,7 @@ def main() -> None:
                 previous_score_raw = previous_signal.get("signal_score") if previous_signal else None
                 previous_score = float(previous_score_raw) if previous_score_raw is not None else None
                 message = _message_for_signal(signal, ticker, previous_score, decision.alert_type)
-                alerts_sent += _send_and_log_alert(
-                    repository,
-                    signal_id,
-                    ticker,
-                    signal,
-                    decision.symbol,
-                    decision.alert_type,
-                    message,
-                    {"reason": decision.reason, **decision.payload},
-                    decision.cooldown_hours,
-                    settings,
-                )
+                alerts_sent += _route_signal_alert(repository, settings, signal_id, ticker, signal, decision, message)
 
         # PHASE 3: Per-user overlay loop
         # Load global positions/watchlist (single-operator mode) or active user IDs (multi-user)

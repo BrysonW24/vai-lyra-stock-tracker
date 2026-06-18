@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from workers.stock_scanner.config import Settings
 from workers.stock_scanner.models import PortfolioOverlay, SignalResult, WatchlistOverlay
@@ -182,11 +183,19 @@ def should_send_alert_to_user(
     if not user_prefs.get("alerts_enabled", True):
         return False, "User alerts disabled globally"
 
+    # Quiet hours are stored as wall-clock hours in the USER'S timezone (default Australia/Sydney),
+    # so the comparison must happen in that zone - not server UTC, or the window inverts.
+    tz_name = user_prefs.get("timezone") or "Australia/Sydney"
+    try:
+        local_now = current_time.astimezone(ZoneInfo(tz_name))
+    except Exception:  # noqa: BLE001 - unknown tz string falls back to the raw time, never fatal
+        local_now = current_time
+
     # Check quiet hours
     quiet_start = user_prefs.get("quiet_hours_start") or user_prefs.get("quiet_start")
     quiet_end = user_prefs.get("quiet_hours_end") or user_prefs.get("quiet_end")
     if quiet_start is not None and quiet_end is not None:
-        current_hour = current_time.hour
+        current_hour = local_now.hour
         if isinstance(quiet_start, str):
             quiet_start = int(quiet_start.split(":")[0])
         if isinstance(quiet_end, str):
@@ -218,6 +227,13 @@ def should_send_alert_to_user(
         return False, "Portfolio risk alerts disabled for user"
     if alert_type == "watchlist_upgrade" and not user_prefs.get("watchlist_trigger_enabled", True):
         return False, "Watchlist trigger alerts disabled for user"
+    # Signal-alert toggles map to the user_alert_preferences columns (not an enable_* key).
+    if alert_type == "strong_setup" and not user_prefs.get("strong_setup_enabled", True):
+        return False, "Strong-setup alerts disabled for user"
+    if alert_type == "score_jump" and not user_prefs.get("score_jump_enabled", True):
+        return False, "Score-jump alerts disabled for user"
+    if alert_type == "signal_invalidated" and not user_prefs.get("invalidation_enabled", True):
+        return False, "Invalidation alerts disabled for user"
 
     alert_toggle_key = f"enable_{alert_type}"
     if alert_toggle_key in user_prefs and not user_prefs[alert_toggle_key]:

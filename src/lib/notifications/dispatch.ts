@@ -20,6 +20,7 @@ interface PreferenceRow {
   quiet_hours_enabled?: boolean | null;
   quiet_start?: string | null;
   quiet_end?: string | null;
+  timezone?: string | null;
   min_signal_score?: number | null;
   paper_bot_alerts?: boolean | null;
   order_approval_alerts?: boolean | null;
@@ -110,6 +111,7 @@ async function loadPreferences(supabase: SupabaseLike, userId: string): Promise<
       quietHoursEnabled: prefsRow.quiet_hours_enabled ?? DEFAULT_NOTIFICATION_PREFERENCES.quietHoursEnabled,
       quietStart: hhmm(prefsRow.quiet_start, DEFAULT_NOTIFICATION_PREFERENCES.quietStart),
       quietEnd: hhmm(prefsRow.quiet_end, DEFAULT_NOTIFICATION_PREFERENCES.quietEnd),
+      timezone: prefsRow.timezone || DEFAULT_NOTIFICATION_PREFERENCES.timezone,
       minRelevanceScore: prefsRow.min_signal_score ?? DEFAULT_NOTIFICATION_PREFERENCES.minRelevanceScore,
       paperTradeAlerts: prefsRow.paper_bot_alerts ?? DEFAULT_NOTIFICATION_PREFERENCES.paperTradeAlerts,
       orderApprovalAlerts: prefsRow.order_approval_alerts ?? DEFAULT_NOTIFICATION_PREFERENCES.orderApprovalAlerts,
@@ -289,12 +291,112 @@ async function deliverChat(
   return { delivered: Array.from(new Set(delivered)), suppressed: [], errors };
 }
 
+interface StoredEventRow {
+  id: string;
+  type: NotificationType;
+  severity?: NotificationEvent['severity'] | null;
+  user_id: string;
+  title: string;
+  body: string;
+  trigger_reason?: string | null;
+  evidence_refs?: string[] | null;
+  related_entity_type?: string | null;
+  related_entity_id?: string | null;
+  relevance_score?: number | null;
+  dedupe_key?: string | null;
+  idempotency_key?: string | null;
+  url?: string | null;
+  created_at?: string | null;
+  symbol?: string | null;
+  theme?: string | null;
+}
+
+/** Reconstruct a NotificationEvent from a stored notification_events row (for held-event release). */
+function eventFromRow(row: StoredEventRow): NotificationEvent {
+  return {
+    id: row.id,
+    type: row.type,
+    severity: row.severity ?? 'medium',
+    userId: row.user_id,
+    triggerReason: row.trigger_reason ?? row.body,
+    title: row.title,
+    body: row.body,
+    evidenceRefs: row.evidence_refs ?? [],
+    relatedEntityType: row.related_entity_type ?? undefined,
+    relatedEntityId: row.related_entity_id ?? undefined,
+    relevanceScore: Number(row.relevance_score ?? 100),
+    dedupeKey: row.dedupe_key ?? row.id,
+    idempotencyKey: row.idempotency_key ?? `${row.id}:event`,
+    url: row.url ?? undefined,
+    createdAt: row.created_at ?? new Date().toISOString(),
+  };
+}
+
+/**
+ * Drain events that were HELD by quiet hours / instant-off, once the window has ended. Called at
+ * the top of each dispatch (hourly cron tick): every held event is re-routed against the current
+ * clock; if it is now deliverable (quiet window passed) it is sent to the live channels and the
+ * held row is marked released. This is the drainer the old "queued for digest" path lacked -
+ * nothing is lost, it just delivers late instead of never.
+ */
+export async function releaseHeldEvents(supabase: SupabaseLike, userId: string, now: Date): Promise<number> {
+  const { data: heldRows } = await supabase
+    .from('notification_deliveries')
+    .select('event_id')
+    .eq('user_id', userId)
+    .eq('channel', 'held')
+    .eq('status', 'held');
+  const eventIds = Array.from(
+    new Set(((heldRows as { event_id: string }[] | null) || []).map((r) => r.event_id)),
+  ).filter(Boolean);
+  if (eventIds.length === 0) return 0;
+
+  const { prefs, channels } = await loadPreferences(supabase, userId);
+  let released = 0;
+  for (const eventId of eventIds) {
+    const { data: row } = await supabase.from('notification_events').select('*').eq('id', eventId).maybeSingle();
+    if (!row) {
+      await supabase.from('notification_deliveries').update({ status: 'orphaned' }).eq('event_id', eventId).eq('channel', 'held');
+      continue;
+    }
+    const storedRow = row as StoredEventRow;
+    const event = eventFromRow(storedRow);
+    const decision = routeNotification(event, prefs, { now });
+    if (!decision.deliver || decision.deferredToDigest) continue; // still inside quiet hours - keep holding
+    const releaseInput: DispatchNotificationInput = {
+      userId,
+      type: event.type,
+      title: event.title,
+      body: event.body,
+      symbol: storedRow.symbol ?? undefined,
+      theme: storedRow.theme ?? undefined,
+    };
+    for (const channel of decision.channels) {
+      if (channel === 'push') await deliverPush(supabase, event, releaseInput);
+      else await deliverChat(supabase, event, channels, channel);
+    }
+    await supabase.from('notification_deliveries').update({ status: 'released' }).eq('event_id', eventId).eq('channel', 'held');
+    released += 1;
+  }
+  return released;
+}
+
 export async function dispatchNotificationEvent(
   supabase: SupabaseLike,
   input: DispatchNotificationInput,
 ): Promise<DispatchNotificationResult> {
   const now = input.now ?? new Date();
   const errors: string[] = [];
+
+  // Drain any events held by an earlier quiet window before processing the new one. Best-effort:
+  // a release failure must never block the incoming alert. Skipped for forced/test sends.
+  if (!input.forceInstant) {
+    try {
+      await releaseHeldEvents(supabase, input.userId, now);
+    } catch {
+      /* release is best-effort - never block the live dispatch */
+    }
+  }
   const deliveredChannels: string[] = [];
   const suppressedChannels: string[] = [];
 
@@ -398,18 +500,21 @@ export async function dispatchNotificationEvent(
   }
 
   if (decision.deferredToDigest) {
+    // HELD, not black-holed. Quiet-hours / instant-off deferral parks the event as 'held'; the
+    // next hourly dispatch (releaseHeldEvents) re-routes and delivers it once the window ends.
+    // The old 'digest'/'queued' row had no drainer, so deferred alerts were lost forever.
     await insertDelivery(supabase, {
       eventId: event.id,
       userId: event.userId,
-      channel: 'digest',
-      status: 'queued',
-      errorMessage: 'deferred by quiet hours or instant-alert setting',
-      idempotencyKey: `${event.id}:digest`,
+      channel: 'held',
+      status: 'held',
+      errorMessage: 'held by quiet hours / instant-alerts off - releases after the window ends',
+      idempotencyKey: `${event.id}:held`,
     });
     return {
       ok: true,
       eventId: event.id,
-      deliveredChannels: ['digest'],
+      deliveredChannels: ['held'],
       suppressedChannels,
       errors,
     };
