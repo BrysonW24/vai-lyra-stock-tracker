@@ -6,6 +6,68 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-18
+
+Dogfooding-readiness pass. A deep adversarial audit found the deterministic core was excellent but
+the app was "unplugged" - built fast in pieces and never wired end to end (each part passed in
+isolation; the seams did not). This release closes that last mile across nine systems and adds the
+Investigation surface. Still research software, no live execution.
+
+Design ethos worth recording: Lyra holds a strict dense / compact command-centre standard - small
+type scale, hairline dividers, miniaturised stat tiles, no wasted space. Density is a forcing
+function. It resists generic, padded "AI slop" layouts and lands on something production-grade far
+faster.
+
+### Added
+
+- **Investigation System (Phase 1)** at `/findings` - every surfaced setup is an Opportunity
+  Finding you can investigate by peeling back layers: finding -> evidence -> source record ->
+  entity -> connected pattern, in a nested drawer stack whose state is persisted in the URL
+  (shareable, reload-safe). Every evidence item carries an explicit "what it does not prove."
+- **Persistent Trade Log** at `/trades` - a durable view of logged buys with per-row undo, so
+  reversal is no longer trapped in an ephemeral chat bubble.
+- **Education in context** - jargon defined inline on the Signal Radar, Ticker Detail, and the
+  analytical spaces (tooltips + glossary drawers), each linking into the academy.
+- Conversational buy logging now previews the live quote (shares, fill price, cash left) before you
+  confirm; declarative sell-log requests get an honest "not yet" reply instead of a generic answer.
+
+### Fixed
+
+- **Notifications now actually deliver.** Signal alerts route multi-channel (web push / Telegram /
+  WhatsApp) stamped with the user id, not a hardcoded legacy channel; quiet hours are evaluated in
+  the user's timezone (was server UTC, which inverted the window); deferred alerts are held and
+  released on the next tick (was a digest queue with no drainer - silent loss); the hourly cron now
+  passes the dispatch env (was inert in production); chat channels are verified before delivery;
+  WhatsApp uses approved templates; push renders the full message (data + why + disclaimer);
+  demo_logged no longer counts as delivered.
+- **Trade undo can no longer corrupt a position** - undo is now reverse-chronological per symbol
+  (the prior absolute-snapshot restore wiped a later buy when an earlier one was undone).
+- **Onboarding no longer silently drops your book** - watchlist/portfolio saves check the result
+  and surface a retry instead of showing "all set"; typed tickers persist; the push toggle registers
+  a real browser subscription; beginner answers reach the AI's constraints.
+- **AI correctness** - the default Anthropic model was a retired id (a hard failure for BYO Claude
+  users); the fabrication guard is now actually called; education modules feed the AI corpus; the
+  run audit trail persists instead of evaporating on cold start.
+- **Signal honesty** - StrategyLab unit mismatch fixed (the default strategy showed 0 matches);
+  per-component score bars no longer read 0 in the live path; a dead or stale scan now shows an
+  amber/red badge instead of a confident green "Live"; fabricated backtest stats relabelled
+  illustrative.
+
+### Changed
+
+- **Renamed the strategy from "momentum" to "oversold-recovery"** end to end. The engine rewards an
+  RSI reset, an improving-but-still-negative MACD histogram, and price near its 60-day low, so a
+  high score means "a beaten-down name turning up," not "breaking out to new highs." The words now
+  match the math.
+- One shared page-title token for consistent typography; worker dependencies pinned to ranges; dead
+  code (GlassMomentumChart) and a dead env flag removed.
+
+### Ops
+
+- Vercel env + GitHub Actions secrets fully wired (the two-store model: app env vs scanner/CI
+  secrets, environment-scoped where needed); live DB migrated 022-026 (onboarding capture,
+  conversational trade logs, multi-channel push, the undo-order guard).
+
 ## [0.2.0] - 2026-06-12
 
 Lyra grows from a momentum scanner into a thematic-intelligence + research platform, with
