@@ -8,6 +8,7 @@
 import { THEMES, THEME_COMPANIES, SUPPLY_CHAIN_NODES } from '@/lib/world-radar';
 import iposData from '@/lib/generated/ipos.json';
 import { FINANCE_FACTS } from '@/lib/finance-facts';
+import { EDUCATION_MODULES, getModuleCorpusText, getModuleHref } from '@/lib/education';
 import { getDashboardData } from '@/lib/data';
 
 /** Matches the agent registry's evidenceItemSchema: { id, text }. */
@@ -42,6 +43,12 @@ const CORPUS: EvidenceItem[] = (() => {
   }
   for (const f of FINANCE_FACTS) {
     items.push({ id: `fact:${f.id}`, text: `${f.term}: ${f.body}` });
+  }
+  // Deep, console-grounded education modules. Each carries definition + why-it-matters +
+  // how-the-console-uses-it plus an academy link, so the AI can teach HOW a metric drives
+  // the deterministic score and point the user back into the academy (cite the `edu:<id>`).
+  for (const m of EDUCATION_MODULES) {
+    items.push({ id: `edu:${m.id}`, text: `${getModuleCorpusText(m)} Learn more: ${getModuleHref(m.id)}` });
   }
   return items;
 })();

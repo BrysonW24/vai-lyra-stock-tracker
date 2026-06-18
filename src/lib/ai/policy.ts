@@ -43,13 +43,21 @@ export const AI_MAY: readonly string[] = [
 
 // --- tool surface -------------------------------------------------------------
 
-/** The complete read-only tool surface available to ANY agent. */
+/**
+ * The complete read-only tool surface available to ANY agent.
+ *
+ * NOTE: `compose_alert_text` is the declared-but-NOT-WIRED AI notification-phrasing tool
+ * (AI-03/04). It stays in the policy so the fail-closed gate can recognise and govern it,
+ * but it is NOT connected to the notification layer - notifications are deterministic by
+ * design (the deterministic router owns every alert payload). Do not treat AI alert
+ * phrasing as a shipped capability until it is actually wired.
+ */
 export const ALL_AI_TOOLS = [
   'search_evidence',
   'read_signals',
   'read_portfolio_own',
   'read_themes',
-  'compose_alert_text',
+  'compose_alert_text', // NOT WIRED (AI-03/04) - see note above
   'draft_research_note',
   'classify_news',
   'explain_order_intent',
@@ -73,6 +81,12 @@ export type ForbiddenToolName = (typeof FORBIDDEN_TOOLS)[number];
 
 // --- agents -------------------------------------------------------------------
 
+/**
+ * NOTE: `alert_composer` is the declared-but-NOT-WIRED AI notification-phrasing agent
+ * (AI-03/04). It is defined here and in the registry so the policy/registry stay in sync
+ * and the gate can govern it, but no production code path invokes it - the notification
+ * layer is deterministic by design. Treat it as reserved, not shipped, until it is wired.
+ */
 export const AI_AGENT_NAMES = [
   'research_analyst',
   'risk_analyst',
@@ -80,7 +94,7 @@ export const AI_AGENT_NAMES = [
   'news_classifier',
   'filing_analyst',
   'portfolio_assistant',
-  'alert_composer',
+  'alert_composer', // NOT WIRED (AI-03/04) - see note above
   'trade_readiness',
 ] as const;
 

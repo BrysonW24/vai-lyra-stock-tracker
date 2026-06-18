@@ -27,4 +27,11 @@ describe('ai gateway · resolveModel', () => {
       expect(DEFAULT_MODELS[provider]).toBeTruthy();
     });
   });
+
+  it('defaults Anthropic to the current Haiku 4.5 id, not the retired 3.5 family', () => {
+    // Regression guard: 'claude-3-5-haiku-latest' resolved to the RETIRED claude-3.5-haiku
+    // family and hard-failed every BYO-Anthropic request.
+    expect(DEFAULT_MODELS.anthropic).toBe('claude-haiku-4-5');
+    expect(DEFAULT_MODELS.anthropic).not.toContain('3-5-haiku');
+  });
 });

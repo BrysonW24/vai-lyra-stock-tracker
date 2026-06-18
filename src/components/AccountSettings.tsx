@@ -60,7 +60,7 @@ const PROVIDER_META: Record<
 > = {
   google: { label: 'Google Gemini', modelPlaceholder: 'gemini-3.1-flash-lite', group: 'free', keyUrl: 'https://aistudio.google.com/apikey', keyHost: 'Google AI Studio', keyPlaceholder: 'AIza…' },
   openrouter: { label: 'Llama (OpenRouter)', modelPlaceholder: 'meta-llama/llama-3.1-70b-instruct', group: 'free', keyUrl: 'https://openrouter.ai/keys', keyHost: 'openrouter.ai', keyPlaceholder: 'sk-or-…' },
-  anthropic: { label: 'Anthropic (Claude)', modelPlaceholder: 'claude-3-5-haiku-latest', group: 'byo', keyUrl: 'https://console.anthropic.com/settings/keys', keyHost: 'console.anthropic.com', keyPlaceholder: 'sk-ant-…' },
+  anthropic: { label: 'Anthropic (Claude)', modelPlaceholder: 'claude-haiku-4-5', group: 'byo', keyUrl: 'https://console.anthropic.com/settings/keys', keyHost: 'console.anthropic.com', keyPlaceholder: 'sk-ant-…' },
   openai: { label: 'OpenAI (hosted)', modelPlaceholder: 'gpt-5.5', group: 'hosted', keyUrl: 'https://platform.openai.com/api-keys', keyHost: 'platform.openai.com', keyPlaceholder: 'optional sk-…' },
   xai: { label: 'xAI (Grok)', modelPlaceholder: 'grok-2-latest', group: 'byo', keyUrl: 'https://console.x.ai', keyHost: 'console.x.ai', keyPlaceholder: 'xai-…' },
 };

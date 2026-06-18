@@ -304,3 +304,18 @@ export function getCategories(): EducationCategory[] {
 export function getModule(id: string): EducationModule | undefined {
   return EDUCATION_MODULES.find((m) => m.id === id);
 }
+
+/** Deep-link into the academy for a given module - the citation/link the AI points users back to. */
+export function getModuleHref(id: string): string {
+  return `/education?module=${encodeURIComponent(id)}`;
+}
+
+/**
+ * Flatten one module into a single grounding string for the AI evidence corpus. Pulls
+ * together definition + why-it-matters + how-the-console-uses-it so the AI can teach HOW a
+ * metric drives the deterministic score, not just define it. Content is unchanged - only
+ * concatenated.
+ */
+export function getModuleCorpusText(module: EducationModule): string {
+  return `${module.title} (${module.category}): ${module.definition} Why it matters: ${module.whyItMatters} How the console uses it: ${module.howConsoleUsesIt}`;
+}

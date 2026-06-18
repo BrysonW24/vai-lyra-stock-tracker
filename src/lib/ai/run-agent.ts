@@ -10,11 +10,34 @@
 import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { getAgentDefinition } from '@/lib/ai/agents/registry';
 import type { AiAgentName, AiToolName } from '@/lib/ai/policy';
-import { validateAgentOutput } from '@/lib/ai/guardrails/schema';
+import { validateAgentOutput, assertNoFabricatedNumbers } from '@/lib/ai/guardrails/schema';
 import { recordAiRun, hashInput } from '@/lib/ai/audit';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, composeSystem } from '@/lib/ai/system-prompt';
 import { executeTool } from './tools/runtime';
 import type { EvidenceItem } from './tools';
+
+/** Every numeral (int/decimal, with optional thousands separators) present in a string. */
+function numeralsIn(text: string): string[] {
+  return text.match(/\d[\d,]*(?:\.\d+)?/g) ?? [];
+}
+
+/** Split text into sentences on terminal punctuation, keeping each sentence's own text. */
+function splitSentences(text: string): string[] {
+  return text.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 0);
+}
+
+/**
+ * Strip every sentence that contains a fabricated numeral (one absent from the grounding the
+ * agent was given). The free tier runs weak models that can invent a price/RSI/P&L - the
+ * deterministic engine owns numbers, so a fabricated one is removed rather than surfaced.
+ * Returns the cleaned text plus the numerals that were flagged.
+ */
+function stripFabricatedSentences(text: string, allowedNumbers: string[]): { text: string; fabricated: string[] } {
+  const overall = assertNoFabricatedNumbers(text, allowedNumbers);
+  if (overall.ok) return { text, fabricated: [] };
+  const kept = splitSentences(text).filter((sentence) => assertNoFabricatedNumbers(sentence, allowedNumbers).ok);
+  return { text: kept.join(' ').trim(), fabricated: overall.fabricated };
+}
 
 export interface AiCreds {
   provider: AiProvider;
@@ -42,6 +65,32 @@ function extractJson(text: string): unknown {
   }
 }
 
+/**
+ * Recursively rewrite every string in a parsed payload, leaving structure and non-string
+ * values intact. Used to sanitise fabricated numerals out of the free-text fields the model
+ * produced (summary, keyPoints, reasons, ...) without touching the schema shape.
+ */
+function mapStrings(value: unknown, fn: (s: string) => string): unknown {
+  if (typeof value === 'string') return fn(value);
+  if (Array.isArray(value)) return value.map((v) => mapStrings(v, fn));
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = mapStrings(v, fn);
+    return out;
+  }
+  return value;
+}
+
+/** True when any string field in the payload still carries a numeral absent from the grounding. */
+function payloadHasFabricatedNumber(payload: unknown, allowedNumbers: string[]): boolean {
+  let found = false;
+  mapStrings(payload, (s) => {
+    if (!assertNoFabricatedNumbers(s, allowedNumbers).ok) found = true;
+    return s;
+  });
+  return found;
+}
+
 /** Call the model for structured output, validate against the agent schema, and audit the run. */
 async function runStructured(opts: {
   agent: AiAgentName;
@@ -51,8 +100,10 @@ async function runStructured(opts: {
   toolsUsed: AiToolName[];
   evidenceIds: string[];
   inputForHash: unknown;
+  /** The grounding/evidence text the agent was given - numerals outside this set are fabricated. */
+  groundingText: string;
 }): Promise<AgentRunResult> {
-  const { agent, system, prompt, creds, toolsUsed, evidenceIds, inputForHash } = opts;
+  const { agent, system, prompt, creds, toolsUsed, evidenceIds, inputForHash, groundingText } = opts;
   const inputHash = hashInput(inputForHash);
   const started = Date.now();
   let text = '';
@@ -61,17 +112,35 @@ async function runStructured(opts: {
     const r = await complete({ provider: creds.provider, apiKey: creds.apiKey, model: creds.model, system, prompt, maxTokens: 700, temperature: 0.3 });
     text = r.text;
     model = r.model;
-  } catch {
+  } catch (err) {
     void recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: null, toolsUsed, injectionFlags: [], validationErrors: [], citationCount: 0, status: 'error', refusalReason: null, latencyMs: Date.now() - started }).catch(() => {});
-    return { ok: false, agent, error: 'model_error', evidenceIds, toolsUsed };
+    return { ok: false, agent, error: err instanceof Error ? err.message : 'model_error', evidenceIds, toolsUsed };
   }
   const latencyMs = Date.now() - started;
-  const parsed = extractJson(text);
+
+  // Fabricated-number guard. The deterministic engine owns numbers; AI only explains. Numerals
+  // allowed are exactly those present in the grounding the agent was given. On a violation we
+  // strip the offending sentence(s) from the model's free-text fields. If that empties the
+  // output (the whole answer hinged on an invented number), we refuse rather than ship it.
+  const allowedNumbers = numeralsIn(groundingText);
+  let parsed = extractJson(text);
+  let refusalReason: string | null = null;
+  if (parsed && typeof parsed === 'object') {
+    const sanitised = mapStrings(parsed, (s) => stripFabricatedSentences(s, allowedNumbers).text);
+    if (payloadHasFabricatedNumber(parsed, allowedNumbers)) {
+      refusalReason = 'fabricated_number';
+      // A required free-text field stripped to empty fails .strict() validation below and is
+      // reported as a refusal - the safe outcome for an answer built on an invented number.
+    }
+    parsed = sanitised;
+  }
+
   const validation = validateAgentOutput(agent, parsed);
   const citations = parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>).citations : undefined;
   const citationCount = Array.isArray(citations) ? citations.length : 0;
-  void recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: hashInput(text), toolsUsed, injectionFlags: [], validationErrors: validation.errors, citationCount, status: validation.ok ? 'ok' : 'validation_failed', refusalReason: null, latencyMs }).catch(() => {});
-  if (!validation.ok) return { ok: false, agent, error: validation.errors.join('; '), evidenceIds, toolsUsed };
+  const status = !validation.ok ? (refusalReason ? 'refused' : 'validation_failed') : 'ok';
+  void recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: hashInput(text), toolsUsed, injectionFlags: [], validationErrors: validation.errors, citationCount, status, refusalReason: validation.ok ? null : refusalReason, latencyMs }).catch(() => {});
+  if (!validation.ok) return { ok: false, agent, error: refusalReason ?? validation.errors.join('; '), evidenceIds, toolsUsed };
   return { ok: true, agent, result: parsed, evidenceIds, toolsUsed };
 }
 
@@ -109,6 +178,8 @@ export async function runResearchAnalyst(params: { symbol: string; question?: st
     toolsUsed: ['search_evidence'],
     evidenceIds: evidence.map((e) => e.id),
     inputForHash: { symbol, question, evidence },
+    // Allowed numerals: everything in the evidence the agent was given.
+    groundingText: evidence.map((e) => e.text).join(' '),
   });
 }
 
@@ -150,5 +221,8 @@ export async function runTradeReadiness(params: {
     toolsUsed: ['search_evidence'],
     evidenceIds,
     inputForHash: { symbol, signalSnapshot: params.signalSnapshot, evidenceRefs: evidenceIds },
+    // Allowed numerals: the deterministic signal snapshot (score/RSI/volume/etc.) plus the
+    // evidence the agent was given. Anything else the model writes is invented.
+    groundingText: `${JSON.stringify(params.signalSnapshot)} ${evidence.map((e) => e.text).join(' ')}`,
   });
 }

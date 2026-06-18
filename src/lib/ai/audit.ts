@@ -13,6 +13,7 @@
  * setAiRunWriter without touching any call site.
  */
 import { createHash, randomUUID } from 'node:crypto';
+import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import type { AiProvider } from './gateway';
 import type { AiAgentName, AiToolName } from './policy';
 
@@ -73,11 +74,79 @@ class InMemoryAiRunStore implements AiRunWriter {
 /** Default writer - inspectable in tests and dev via list()/clear(). */
 export const inMemoryAiRunStore = new InMemoryAiRunStore();
 
-let activeWriter: AiRunWriter = inMemoryAiRunStore;
+/**
+ * Supabase-backed writer for the already-migrated public.ai_runs table (migration 019).
+ * Server-side only - uses the service-role client (RLS-bypassing) so system + user runs
+ * both persist. Fails soft: if Supabase env is unset the admin client is null and we keep
+ * runs in memory; a transient write error is swallowed so auditing never breaks a request.
+ *
+ * Column mapping notes (camelCase record -> snake_case table):
+ * - user_id is a uuid FK to profiles(id). Non-uuid sentinels (e.g. 'local' for local/dev
+ *   runs) are stored as null - the table treats a null user_id as a system run.
+ * - Fields without a dedicated column (toolsUsed, injectionFlags, validationErrors,
+ *   citationCount, outputHash, refusalReason, latencyMs) are folded into output_payload so
+ *   nothing in the audit record is lost.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+class SupabaseAiRunWriter implements AiRunWriter {
+  async write(record: AiRunRecord): Promise<void> {
+    const client = createSupabaseAdminClient();
+    if (!client) return; // no Supabase env - nothing to persist to
+    const userId = UUID_RE.test(record.userId) ? record.userId : null;
+    const { error } = await client.from('ai_runs').insert({
+      id: record.id,
+      user_id: userId,
+      agent_name: record.agentName,
+      model_provider: record.provider,
+      model_name: record.model,
+      input_hash: record.inputHash,
+      output_payload: {
+        outputHash: record.outputHash,
+        toolsUsed: record.toolsUsed,
+        injectionFlags: record.injectionFlags,
+        validationErrors: record.validationErrors,
+        citationCount: record.citationCount,
+        refusalReason: record.refusalReason,
+        latencyMs: record.latencyMs,
+      },
+      status: record.status,
+      error_message: record.refusalReason,
+      created_at: record.createdAt,
+    });
+    if (error) {
+      // Audit must never break the caller - log and move on.
+      console.error('ai_runs insert failed', error.message);
+    }
+  }
+}
+
+/** Reusable Supabase writer instance. */
+export const supabaseAiRunStore = new SupabaseAiRunWriter();
+
+let activeWriter: AiRunWriter | null = null;
+let autoConfigured = false;
 
 /** Swap the persistence backend. Passing null restores the in-memory store. */
 export function setAiRunWriter(writer: AiRunWriter | null): void {
   activeWriter = writer ?? inMemoryAiRunStore;
+  autoConfigured = true; // explicit configuration wins over auto-selection
+}
+
+/**
+ * Resolve the writer to use. The first time a run is recorded without an explicit
+ * setAiRunWriter call, auto-select: use the Supabase writer when service-role env is present,
+ * otherwise the in-memory store. This persists the audit trail in production (where the in-
+ * memory store was empty on every serverless cold start) without touching any call site.
+ */
+function resolveWriter(): AiRunWriter {
+  if (activeWriter) return activeWriter;
+  if (!autoConfigured) {
+    autoConfigured = true;
+    activeWriter = createSupabaseAdminClient() ? supabaseAiRunStore : inMemoryAiRunStore;
+    return activeWriter;
+  }
+  return inMemoryAiRunStore;
 }
 
 /**
@@ -90,7 +159,7 @@ export async function recordAiRun(input: AiRunInput): Promise<AiRunRecord> {
     id: input.id ?? randomUUID(),
     createdAt: input.createdAt ?? new Date().toISOString(),
   };
-  await activeWriter.write(record);
+  await resolveWriter().write(record);
   return record;
 }
 
