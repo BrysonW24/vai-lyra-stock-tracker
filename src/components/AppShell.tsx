@@ -38,6 +38,7 @@ import {
   Workflow,
   Wand2,
   ReceiptText,
+  Telescope,
 } from 'lucide-react';
 import { useEffect, useRef, type ReactNode } from 'react';
 import type { DashboardData } from '@/types/scanner';
@@ -54,6 +55,7 @@ const navItems = [
   // then analysis tools, then the trading layer, then learn + settings.
   // -- Yours --
   { href: '/', label: 'Command', short: 'Command', icon: Gauge },
+  { href: '/findings', label: 'Findings', short: 'Find', icon: Telescope },
   { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness },
   { href: '/trades', label: 'Trade Log', short: 'Trades', icon: ReceiptText },
   { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star },
