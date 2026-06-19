@@ -2,9 +2,13 @@ import { Suspense } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { InvestigationGraph } from '@/components/findings/InvestigationGraph';
 import { getDashboardData } from '@/lib/data';
+import { getLiveFindings } from '@/lib/findings/server';
+
+// Per-user, RLS-scoped live findings - must render at request time, not a build-time demo snapshot.
+export const dynamic = 'force-dynamic';
 
 export default async function GraphPage() {
-  const data = await getDashboardData();
+  const [data, liveFindings] = await Promise.all([getDashboardData(), getLiveFindings()]);
 
   return (
     <AppShell data={data}>
@@ -16,7 +20,7 @@ export default async function GraphPage() {
           </p>
         </div>
         <Suspense fallback={<p className="text-[11px] text-[#8190a0]">Loading graph...</p>}>
-          <InvestigationGraph />
+          <InvestigationGraph findings={liveFindings} />
         </Suspense>
       </div>
     </AppShell>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { CapitalContext } from '@/lib/onboarding';
 import { Toggle } from '@/components/Toggle';
 
@@ -41,12 +42,37 @@ export function CapitalContextForm({ capital, onChange, onNext }: CapitalContext
     onChange({ ...capital, [key]: value });
   };
 
+  // Commit the AUD default on mount so an untouched select still persists a base currency (the
+  // trade guard reads it). Without this, an unchanged select would leave it undefined -> stuck at USD.
+  useEffect(() => {
+    if (!capital.baseCurrency) onChange({ ...capital, baseCurrency: 'AUD' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="space-y-2.5">
       <p className="text-[11px] leading-snug text-[#a8b5c2]">Optional - these personalise your portfolio simulations.</p>
 
       {/* 2-up grid: fills the horizontal space and halves the vertical footprint. */}
       <div className="grid gap-2.5 md:grid-cols-2">
+        <label className="grid content-start gap-1">
+          <span className={labelClass}>
+            Account currency <span className="font-normal lowercase tracking-normal text-[#5d6b79]">· your cash is held in this</span>
+          </span>
+          <select
+            className="h-8 rounded-md border border-[#263241] bg-[#0d141c] px-3 text-[13px] text-[#dbe5ee] outline-none focus:border-[#f3a33a]/50"
+            value={capital.baseCurrency || 'AUD'}
+            onChange={(e) => handleChange('baseCurrency', e.target.value)}
+          >
+            <option value="AUD">AUD - Australian dollar</option>
+            <option value="USD">USD - US dollar</option>
+            <option value="GBP">GBP - British pound</option>
+            <option value="EUR">EUR - Euro</option>
+            <option value="CAD">CAD - Canadian dollar</option>
+            <option value="NZD">NZD - New Zealand dollar</option>
+          </select>
+        </label>
+
         <label className="grid content-start gap-1">
           <span className={labelClass}>Cash available</span>
           <MoneyInput value={capital.cashAvailable} onChange={(v) => handleChange('cashAvailable', v)} placeholder="50,000" />

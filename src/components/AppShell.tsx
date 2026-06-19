@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { DualLauncher } from '@/components/DualLauncher';
+import { RatingPrompt } from '@/components/RatingPrompt';
 import {
   ArrowLeftRight,
   BarChart3,
@@ -308,6 +309,7 @@ export function AppShell({ data, children }: AppShellProps) {
       </nav>
 
       <DualLauncher />
+      <RatingPrompt />
     </div>
   );
 }

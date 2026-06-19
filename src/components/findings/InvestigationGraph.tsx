@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { buildInvestigationGraph, NODE_COLOR, type GraphNode } from '@/lib/findings/graph';
-import type { DrawerStackItem, DrawerType, Entity } from '@/lib/findings/types';
+import type { DrawerStackItem, DrawerType, Entity, Finding } from '@/lib/findings/types';
 import { encodeStack, parseStack } from '@/lib/findings/stack';
 import { InvestigationDrawerStack } from './InvestigationDrawerStack';
 
@@ -30,12 +30,14 @@ const LEGEND: { type: Entity['type']; label: string }[] = [
   { type: 'government_agency', label: 'Agency' },
 ];
 
-export function InvestigationGraph() {
+export function InvestigationGraph({ findings }: { findings?: Finding[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
-  const graph = useMemo(() => buildInvestigationGraph(), []);
+  // Build the graph from live findings when present; fall back to the curated demo set otherwise.
+  const isLive = Boolean(findings && findings.length);
+  const graph = useMemo(() => buildInvestigationGraph(isLive ? findings : undefined), [isLive, findings]);
   const [hovered, setHovered] = useState<string | null>(null);
 
   const stack = useMemo(() => parseStack(params.get('inv')), [params]);
@@ -145,6 +147,9 @@ export function InvestigationGraph() {
           </span>
         ))}
         <span className="text-[10px] text-[#8190a0]">Tap a node to investigate - bigger = more connected.</span>
+        <span className={`text-[10px] ${isLive ? 'text-[#43d18b]' : 'text-[#8190a0]'}`}>
+          {isLive ? 'Live - built from your findings' : 'Demo map - live findings populate this as the scanner surfaces setups'}
+        </span>
       </div>
 
       <InvestigationDrawerStack finding={graph.merged} stack={titledStack} onPush={push} onBack={back} onClose={close} />

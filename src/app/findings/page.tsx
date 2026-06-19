@@ -4,6 +4,9 @@ import { FindingsFeed } from '@/components/findings/FindingsFeed';
 import { getDashboardData } from '@/lib/data';
 import { getLiveFindings } from '@/lib/findings/server';
 
+// Per-user, RLS-scoped live findings - must render at request time, not a build-time demo snapshot.
+export const dynamic = 'force-dynamic';
+
 export default async function FindingsPage() {
   const [data, liveFindings] = await Promise.all([getDashboardData(), getLiveFindings()]);
 

@@ -6,6 +6,24 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Finding lifecycle controls.** The finding drawer now has live promote/dismiss actions (Watchlist
+  candidate / Deep research / Paper-bot queue / Review risk, plus "Dismiss as noise") wired to the
+  lifecycle API; they appear only on live findings and refresh the feed on save. (Were display-only.)
+- **Account currency in onboarding.** The capital step now captures your base currency (defaults AUD)
+  and writes it to your profile, so AUD/`.AX` trades log straight away instead of being rejected until
+  you visit Account settings.
+- **Two-week rating prompt.** After ~2 weeks of use, a compact "Has Lyra helped you trade?" 5-star
+  prompt appears once (never on day one); the rating routes through the existing feedback intake.
+  "Maybe later" snoozes a week. Preview any time with `?rate=now`.
+
+### Changed
+
+- **`/graph` is now live-wired** - the relationship map builds from your real findings (demo fallback
+  when none), and both `/findings` and `/graph` render at request time so per-user data actually shows
+  (they were being served from a build-time demo snapshot).
+
 ## [0.4.0] - 2026-06-18
 
 Currency-safe trade logging + the Investigation System taken from a single feed to a full

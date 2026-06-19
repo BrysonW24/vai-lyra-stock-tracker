@@ -85,6 +85,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Base currency lives in profiles (the table the cross-currency trade guard reads). Capturing it
+    // here means a new AU user's AUD trades work without first visiting Account settings. Best-effort:
+    // the profiles row exists from the signup trigger, so this only updates the one column.
+    if (body.capital?.baseCurrency) {
+      const { error: currencyError } = await supabase
+        .from('profiles')
+        .update({ base_currency: body.capital.baseCurrency, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+      if (currencyError) console.warn('Failed to save base currency:', currencyError.message);
+    }
+
     if (body.alerts) {
       const { error: alertsError } = await supabase
         .from('user_alert_preferences')

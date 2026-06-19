@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { DrawerStackItem, Finding } from '@/lib/findings/types';
+import type { DrawerStackItem, Finding, FindingState } from '@/lib/findings/types';
 import { loadAi } from '@/lib/account';
 import { buildAllowedMetrics, buildDefaultGenUIView, type GenUIView } from '@/lib/findings/genui';
 
@@ -20,11 +20,15 @@ interface Props {
   onPush: (item: DrawerStackItem) => void;
   onBack: () => void;
   onClose: () => void;
+  /** Live findings only: show the promote/dismiss lifecycle controls (writes to /api/findings/lifecycle). */
+  enableLifecycle?: boolean;
+  /** Called after a successful lifecycle write so the caller can refresh + close. */
+  onLifecycleChange?: () => void;
 }
 
 const confidenceTone: Record<string, string> = { high: 'text-[#43d18b]', medium: 'text-[#f3a33a]', low: 'text-[#8190a0]' };
 
-export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClose }: Props) {
+export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClose, enableLifecycle, onLifecycleChange }: Props) {
   if (stack.length === 0 || !finding) return null;
   const top = stack[stack.length - 1];
 
@@ -53,7 +57,9 @@ export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClo
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
-          {top.type === 'finding' && <FindingBody finding={finding} onPush={onPush} />}
+          {top.type === 'finding' && (
+            <FindingBody finding={finding} onPush={onPush} enableLifecycle={enableLifecycle} onLifecycleChange={onLifecycleChange} />
+          )}
           {top.type === 'evidence' && <EvidenceBody finding={finding} evidenceId={top.id} onPush={onPush} />}
           {top.type === 'source_record' && <SourceRecordBody finding={finding} evidenceId={top.id} />}
           {(top.type === 'company' || top.type === 'theme' || top.type === 'supply_chain_node' || top.type === 'investor') && (
@@ -72,7 +78,17 @@ export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClo
 type Tab = 'Summary' | 'Evidence' | 'Risk' | 'Timeline' | 'Actions';
 const TABS: Tab[] = ['Summary', 'Evidence', 'Risk', 'Timeline', 'Actions'];
 
-function FindingBody({ finding, onPush }: { finding: Finding; onPush: (i: DrawerStackItem) => void }) {
+function FindingBody({
+  finding,
+  onPush,
+  enableLifecycle,
+  onLifecycleChange,
+}: {
+  finding: Finding;
+  onPush: (i: DrawerStackItem) => void;
+  enableLifecycle?: boolean;
+  onLifecycleChange?: () => void;
+}) {
   const [tab, setTab] = useState<Tab>('Summary');
   const s = finding.scores;
 
@@ -180,18 +196,24 @@ function FindingBody({ finding, onPush }: { finding: Finding; onPush: (i: Drawer
       )}
 
       {tab === 'Actions' && (
-        <div className="flex flex-wrap gap-1.5">
-          {finding.actions.map((a) =>
-            a.href ? (
-              <a key={a.kind} href={a.href} className="rounded border border-[#1b2530] px-2.5 py-1 text-[11px] text-[#a8b5c2] hover:border-[#2b3a4a]">
-                {a.label}
-              </a>
-            ) : (
-              <span key={a.kind} className="rounded border border-[#1b2530] px-2.5 py-1 text-[11px] text-[#a8b5c2]">
-                {a.label}
-              </span>
-            ),
-          )}
+        <div className="space-y-3">
+          {enableLifecycle && <LifecycleControls finding={finding} onChange={onLifecycleChange} />}
+          <div>
+            <p className="mb-1 text-[9px] uppercase tracking-[0.14em] text-[#8190a0]">Research shortcuts</p>
+            <div className="flex flex-wrap gap-1.5">
+              {finding.actions.map((a) =>
+                a.href ? (
+                  <a key={a.kind} href={a.href} className="rounded border border-[#1b2530] px-2.5 py-1 text-[11px] text-[#a8b5c2] hover:border-[#2b3a4a]">
+                    {a.label}
+                  </a>
+                ) : (
+                  <span key={a.kind} className="rounded border border-[#1b2530] px-2.5 py-1 text-[11px] text-[#a8b5c2]">
+                    {a.label}
+                  </span>
+                ),
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -344,6 +366,74 @@ function RiskBody({ finding, riskId }: { finding: Finding; riskId: string }) {
       <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">{r.label}</h2>
       <p className="text-[10px] uppercase text-[#f3a33a]">{r.severity} risk</p>
       <p className="text-[11px] leading-relaxed text-[#a8b5c2]">{r.detail}</p>
+    </div>
+  );
+}
+
+// ---- Lifecycle (promote / dismiss live findings) --------------------------------------------
+
+const LIFECYCLE_STATES: FindingState[] = ['Watchlist candidate', 'Deep research candidate', 'Paper-bot research queue', 'Review risk'];
+
+function LifecycleControls({ finding, onChange }: { finding: Finding; onChange?: () => void }) {
+  const [pending, setPending] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const post = async (body: { state?: string; dismiss?: boolean }, key: string) => {
+    setPending(key);
+    setErr(null);
+    try {
+      const res = await fetch('/api/findings/lifecycle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          findingKey: finding.id,
+          type: finding.type,
+          symbol: finding.symbol,
+          theme: finding.themeId,
+          score: finding.scores.total,
+          ...body,
+        }),
+      });
+      const d = (await res.json()) as { ok: boolean; error?: string };
+      if (!d.ok) {
+        setErr(d.error || 'Could not save.');
+        setPending(null);
+        return;
+      }
+      onChange?.();
+    } catch {
+      setErr('Could not save.');
+      setPending(null);
+    }
+  };
+
+  return (
+    <div>
+      <p className="mb-1 text-[9px] uppercase tracking-[0.14em] text-[#8190a0]">Set status (research lifecycle)</p>
+      <div className="flex flex-wrap gap-1.5">
+        {LIFECYCLE_STATES.map((st) => (
+          <button
+            key={st}
+            type="button"
+            disabled={pending !== null}
+            onClick={() => post({ state: st }, st)}
+            className={`rounded border px-2 py-1 text-[10px] disabled:opacity-50 ${
+              finding.state === st ? 'border-[#60a5fa] text-[#eef3f8]' : 'border-[#1b2530] text-[#a8b5c2] hover:border-[#2b3a4a]'
+            }`}
+          >
+            {pending === st ? 'Saving...' : st}
+          </button>
+        ))}
+        <button
+          type="button"
+          disabled={pending !== null}
+          onClick={() => post({ dismiss: true }, 'dismiss')}
+          className="rounded border border-[#7f1d1d] px-2 py-1 text-[10px] text-[#ff6b6b] hover:border-[#a52a2a] disabled:opacity-50"
+        >
+          {pending === 'dismiss' ? 'Saving...' : 'Dismiss as noise'}
+        </button>
+      </div>
+      {err && <p className="mt-1 text-[10px] text-[#ff6b6b]">{err}</p>}
     </div>
   );
 }

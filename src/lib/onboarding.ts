@@ -92,6 +92,8 @@ export interface PortfolioHolding {
 }
 
 export interface CapitalContext {
+  /** Account base currency - cash is held in this; a trade in another currency is rejected (no FX yet). */
+  baseCurrency?: string;
   cashAvailable?: number;
   monthlyContribution?: number;
   maxPositionSizePct?: number;

@@ -107,7 +107,18 @@ export function FindingsFeed({ findings }: { findings?: Finding[] }) {
         </section>
       ))}
 
-      <InvestigationDrawerStack finding={activeFinding} stack={titledStack} onPush={push} onBack={back} onClose={close} />
+      <InvestigationDrawerStack
+        finding={activeFinding}
+        stack={titledStack}
+        onPush={push}
+        onBack={back}
+        onClose={close}
+        enableLifecycle={isLive}
+        onLifecycleChange={() => {
+          close();
+          router.refresh();
+        }}
+      />
     </div>
   );
 }
