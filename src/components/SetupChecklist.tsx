@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bell, Bot, BriefcaseBusiness, Check, ChevronRight, Compass, Star, X } from 'lucide-react';
+import { Bell, Bot, BriefcaseBusiness, Check, ChevronDown, ChevronRight, Compass, Star, X } from 'lucide-react';
 import type { SetupStatus } from '@/lib/setup-status';
 
 /**
@@ -11,6 +11,7 @@ import type { SetupStatus } from '@/lib/setup-status';
  * page where the user finishes them. Hidden in demo/logged-out mode and once complete.
  */
 const DISMISS_KEY = 'lyra.setupChecklistDismissed';
+const COLLAPSE_KEY = 'lyra.setupChecklistCollapsed';
 
 type IconType = typeof Compass;
 
@@ -25,14 +26,28 @@ interface Step {
 
 export function SetupChecklist({ status }: { status: SetupStatus }) {
   const [dismissed, setDismissed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     try {
       setDismissed(window.localStorage.getItem(DISMISS_KEY) === 'true');
+      setCollapsed(window.localStorage.getItem(COLLAPSE_KEY) === 'true');
     } catch {
       /* ignore */
     }
   }, []);
+
+  const toggleCollapse = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(COLLAPSE_KEY, String(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   const steps: Step[] = [
     { key: 'profile', label: 'Complete your profile', hint: 'Tailor Lyra to how you invest', href: '/onboarding', icon: Compass, done: status.profileComplete },
@@ -59,12 +74,19 @@ export function SetupChecklist({ status }: { status: SetupStatus }) {
   return (
     <section className="terminal-panel overflow-hidden rounded-md">
       <div className="flex items-center justify-between gap-3 border-b border-[#1b2530] px-4 py-3">
-        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleCollapse}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? 'Expand setup checklist' : 'Collapse setup checklist'}
+          className="flex items-center gap-2 text-left"
+        >
+          <ChevronDown size={15} className={`text-[#8190a0] transition-transform ${collapsed ? '-rotate-90' : ''}`} />
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Get started</p>
           <span className="rounded-full border border-[#263241] bg-[#0d141c] px-2 py-0.5 font-mono text-[11px] text-[#a8b5c2]">
             {completed}/{steps.length}
           </span>
-        </div>
+        </button>
         <button
           onClick={dismiss}
           type="button"
@@ -75,7 +97,7 @@ export function SetupChecklist({ status }: { status: SetupStatus }) {
         </button>
       </div>
 
-      <div className="divide-y divide-[#141c25]">
+      <div className={`divide-y divide-[#141c25] ${collapsed ? 'hidden' : ''}`}>
         {steps.map((step) => (
           <Link
             key={step.key}
