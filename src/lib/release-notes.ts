@@ -32,6 +32,57 @@ export const RELEASE_CATEGORIES: ReleaseCategory[] = ['Feature', 'Improvement', 
 
 export const releaseNotes: ReleaseNote[] = [
   {
+    id: 'rn-2026-06-20-version-changelog',
+    date: '2026-06-20',
+    week: 'Week of 15 Jun 2026',
+    category: 'Improvement',
+    title: 'Version numbers + an in-app changelog',
+    description:
+      'The landing page now shows the app version, so you can tell at a glance whether the deploy updated. The What\'s New page leads with a version history - every release, its date, and exactly what changed - so you can track along with what shipped.',
+    tags: ['Versioning', "What's New"],
+  },
+  {
+    id: 'rn-2026-06-20-rating-prompt',
+    date: '2026-06-20',
+    week: 'Week of 15 Jun 2026',
+    category: 'Feature',
+    title: 'Two-week rating prompt',
+    description:
+      'After a couple of weeks of use, a quick "Has Lyra helped you trade?" five-star prompt appears once - never on day one - so feedback shapes what gets built next. "Maybe later" snoozes it a week.',
+    tags: ['Feedback'],
+  },
+  {
+    id: 'rn-2026-06-20-finding-lifecycle',
+    date: '2026-06-20',
+    week: 'Week of 15 Jun 2026',
+    category: 'Feature',
+    title: 'Promote or dismiss findings',
+    description:
+      'Findings now carry research-lifecycle controls - move one to Watchlist candidate, Deep research, the Paper-bot queue or Review risk, or dismiss it as noise. The /graph relationship map is now built from your live findings too.',
+    tags: ['Findings', 'Investigation'],
+  },
+  {
+    id: 'rn-2026-06-18-investigation-system',
+    date: '2026-06-18',
+    week: 'Week of 15 Jun 2026',
+    category: 'Feature',
+    highlight: true,
+    title: 'The Investigation System - findings, graph, generated views',
+    description:
+      'Every surfaced setup is now an Opportunity Finding you can investigate by peeling back layers: finding -> evidence -> source record -> entity -> connected pattern, with an explicit "what it does not prove" on every piece of evidence. An Investigation Graph maps shared themes and bottlenecks across findings, and a generated view composes a research card on the spot - the AI lays it out, the deterministic engine owns every number.',
+    tags: ['Findings', 'Investigation', 'AI'],
+  },
+  {
+    id: 'rn-2026-06-18-currency-safe-trades',
+    date: '2026-06-18',
+    week: 'Week of 15 Jun 2026',
+    category: 'Improvement',
+    title: 'Currency-safe trade logging',
+    description:
+      'Your cash is held in an account base currency (set it in onboarding or Account settings). A trade priced in a different currency - an ASX .AX name in AUD against a USD account - is now rejected with a clear message instead of silently corrupting your cash balance and average cost.',
+    tags: ['Trading', 'Currency'],
+  },
+  {
     id: 'rn-2026-06-11-paper-trading',
     date: '2026-06-11',
     week: 'Week of 8 Jun 2026',

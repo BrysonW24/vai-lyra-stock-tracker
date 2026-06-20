@@ -1,7 +1,9 @@
 import { Sparkles } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { WhatsNewFeed } from '@/components/WhatsNewFeed';
+import { VersionHistory } from '@/components/VersionHistory';
 import { getDashboardData } from '@/lib/data';
+import { APP_VERSION } from '@/lib/version';
 
 export const metadata = {
   title: "What's New · Stock Momentum Radar",
@@ -24,12 +26,15 @@ export default async function WhatsNewPage() {
                 <p className="mt-0.5 font-mono text-xs text-[#a8b5c2]">What&apos;s new in the console</p>
               </div>
             </div>
+            <span className="rounded-full border border-[#1d7f55] bg-[#0d251b] px-2 py-0.5 font-mono text-[10px] text-[#43d18b]">v{APP_VERSION}</span>
           </div>
           <p className="px-3 py-2.5 text-[13px] leading-relaxed text-[#a8b5c2]">
-            Every user-visible change ships here first - filterable by area, grouped by week. This is the
-            release log for the console; the deterministic signal engine and live charts evolve under it.
+            The version history below is the release log by version. Under it, every user-visible change
+            also ships to the activity feed - filterable by area, grouped by week.
           </p>
         </section>
+
+        <VersionHistory />
 
         <WhatsNewFeed />
       </div>

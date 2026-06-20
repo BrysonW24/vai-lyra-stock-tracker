@@ -3,6 +3,7 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import { ArrowRight, BellRing, Gauge, Newspaper, ShieldCheck, Wallet } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
+import { VersionBadge } from '@/components/VersionBadge';
 import { BrandHeroGlass } from '@/components/BrandHeroGlass';
 import { ArtisticTradingView } from '@/components/ArtisticTradingView';
 import { PortfolioTile, BriefTile, AlertTile } from '@/components/FeatureTiles';
@@ -51,12 +52,13 @@ export default function WelcomePage() {
       </div>
 
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-6">
-        {/* Top bar - classic Vivacity.ai mark + Lyra product lockup */}
-        <header className="flex items-center">
+        {/* Top bar - classic Vivacity.ai mark + Lyra product lockup, version badge on the right */}
+        <header className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <BrandLogo size={34} />
             <span className="text-[17px] font-semibold tracking-tight text-[#0E1E3A]">{BRAND_NAME}</span>
           </div>
+          <VersionBadge variant="light" />
         </header>
 
         {/* Hero */}

@@ -6,8 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-20
+
+Dogfooding gap-closers from the functionality audit, plus a visible version number on the landing
+page and a version-numbered in-app changelog (`/whats-new`) so what is deployed is always legible.
+
 ### Added
 
+- **App version + in-app changelog.** The landing page shows the current version (so you can tell at
+  a glance whether the deploy updated), and `/whats-new` leads with a version history. Single source of
+  truth: `src/lib/version.ts` (kept in lockstep with this file + `package.json`).
 - **Finding lifecycle controls.** The finding drawer now has live promote/dismiss actions (Watchlist
   candidate / Deep research / Paper-bot queue / Review risk, plus "Dismiss as noise") wired to the
   lifecycle API; they appear only on live findings and refresh the feed on save. (Were display-only.)
@@ -240,7 +248,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.1.0...v0.2.0
