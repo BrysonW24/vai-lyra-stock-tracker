@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-06-20
+
+Brand + UI polish, Find/Graph fixes.
+
+### Changed
+
+- Fixed Find and Graph: push-test and system notifications were showing up as "findings" (and left the graph blank). Those are now filtered out, so Find shows real setups (or the demo set until the scanner surfaces yours) and the graph is never empty.
+- Find and Graph moved down the navigation - they were over-promoted to the #2/#3 mobile slots; your daily surfaces (Portfolio, Trades, Watchlist) now come first.
+- New Lyra logo - the app-icon arrow (a white up-right arrow on the gradient square) is now the in-app logo, the loading screen and the browser-tab icon, matching your home-screen and email icon.
+- The Getting started checklist is now collapsible (and renamed from "Get started").
+- The app version and its release date are now visible on the landing page and in the account menu, both linking to this changelog.
+
 ## [0.5.0] - 2026-06-20
 
 Dogfooding gap-closers from the functionality audit, plus a visible version number on the landing
@@ -248,7 +260,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.2.0...v0.3.0

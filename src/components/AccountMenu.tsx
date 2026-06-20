@@ -14,6 +14,7 @@ import {
 } from '@/lib/alert-prefs';
 import { OPEN_ACCOUNT_MENU_EVENT } from '@/components/AlertStatusBadge';
 import { createSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { APP_VERSION, APP_VERSION_DATE, formatVersionDate } from '@/lib/version';
 
 /**
  * Header account button: the user's emoji avatar + a dropdown (alert mode, name, settings,
@@ -217,6 +218,18 @@ export function AccountMenu() {
               <LogOut size={15} /> Sign out
             </button>
           )}
+
+          <Link
+            href="/whats-new"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-between gap-2 border-t border-[#1b2530] px-3 py-2.5 text-[11px] text-[#5d6b79] transition hover:bg-[#101720] hover:text-[#a8b5c2]"
+          >
+            <span>What&apos;s new</span>
+            <span className="font-mono">
+              v{APP_VERSION} <span className="opacity-60">· {formatVersionDate(APP_VERSION_DATE)}</span>
+            </span>
+          </Link>
         </div>
       )}
     </div>

@@ -189,9 +189,19 @@ export function findingFromEvent(ev: NotificationEventRow): Finding {
  * Project a batch of events into findings, applying lifecycle overrides (dismissed events drop out;
  * a promoted state replaces the default Monitor). Newest first.
  */
+/** Only these event types are investigable findings. Test/system/channel events (e.g.
+ * test_notification, channel verification) are NOT findings and must never appear in the feed
+ * or the graph - projecting them produced junk cards ("Lyra test alert") and a node-less graph. */
+const INVESTIGABLE_EVENT_TYPES = new Set(Object.keys(EVENT_TYPE_TO_FINDING));
+
+export function isInvestigableEvent(type: string): boolean {
+  return INVESTIGABLE_EVENT_TYPES.has(type);
+}
+
 export function findingsFromEvents(events: NotificationEventRow[], lifecycle: FindingLifecycle[] = []): Finding[] {
   const byKey = new Map(lifecycle.map((l) => [l.finding_key, l]));
   return events
+    .filter((ev) => isInvestigableEvent(ev.type))
     .map((ev) => {
       const f = findingFromEvent(ev);
       const lc = byKey.get(ev.id);

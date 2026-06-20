@@ -1,16 +1,18 @@
 /**
  * Single source of truth for the app version + the in-product, version-numbered changelog.
  *
- * APP_VERSION is shown on the landing page (so you can tell at a glance whether the deploy updated)
- * and on the What's New page. RELEASES is the semver changelog rendered in-app at /whats-new, so the
- * founder now - and users later - can track exactly what changed in each version. Keep this in lockstep
- * with CHANGELOG.md and package.json: when you cut a release, bump APP_VERSION, prepend a RELEASES
- * entry, move the CHANGELOG [Unreleased] section to the same version, and set package.json "version".
+ * To cut a release you edit ONE thing: prepend a new entry to RELEASES below. APP_VERSION and
+ * APP_VERSION_DATE derive from RELEASES[0], so they can never drift. Then run `npm run release` to sync
+ * package.json + CHANGELOG.md, commit and push. A pre-push git hook (scripts/check-version-bump.mjs)
+ * BLOCKS a push that changes shippable code (src / supabase / workers / public) without a version bump,
+ * so shipping a change without a version number is no longer possible (bypass: VD_SKIP_VERSION=1).
+ *
+ * The version is shown on the landing page (with its date) and in the account menu, both linking here.
  */
 
 export interface Release {
   version: string;
-  /** ISO date the version shipped. */
+  /** ISO date the version shipped (yyyy-mm-dd). */
   date: string;
   /** One-line theme for the version. */
   title: string;
@@ -18,10 +20,20 @@ export interface Release {
   highlights: string[];
 }
 
-export const APP_VERSION = '0.5.0';
-
-/** Newest first. The first entry is the current build. */
+/** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
+  {
+    version: '0.5.1',
+    date: '2026-06-20',
+    title: 'Brand + UI polish, Find/Graph fixes',
+    highlights: [
+      'Fixed Find and Graph: push-test and system notifications were showing up as "findings" (and left the graph blank). Those are now filtered out, so Find shows real setups (or the demo set until the scanner surfaces yours) and the graph is never empty.',
+      'Find and Graph moved down the navigation - they were over-promoted to the #2/#3 mobile slots; your daily surfaces (Portfolio, Trades, Watchlist) now come first.',
+      'New Lyra logo - the app-icon arrow (a white up-right arrow on the gradient square) is now the in-app logo, the loading screen and the browser-tab icon, matching your home-screen and email icon.',
+      'The Getting started checklist is now collapsible (and renamed from "Get started").',
+      'The app version and its release date are now visible on the landing page and in the account menu, both linking to this changelog.',
+    ],
+  },
   {
     version: '0.5.0',
     date: '2026-06-20',
@@ -81,3 +93,16 @@ export const RELEASES: Release[] = [
     ],
   },
 ];
+
+/** Current version + its release date, derived from the newest release so they can never drift. */
+export const APP_VERSION = RELEASES[0].version;
+export const APP_VERSION_DATE = RELEASES[0].date;
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Format an ISO date (yyyy-mm-dd) as "20 Jun 2026" without Date()/timezone drift. */
+export function formatVersionDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  return `${d} ${MONTHS[m - 1]} ${y}`;
+}

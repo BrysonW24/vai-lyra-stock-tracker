@@ -6,7 +6,7 @@ import { Bell, Bot, BriefcaseBusiness, Check, ChevronDown, ChevronRight, Compass
 import type { SetupStatus } from '@/lib/setup-status';
 
 /**
- * In-app "Get started" checklist (Vercel-style). Each step reflects real per-user DB
+ * In-app "Getting started" checklist (Vercel-style). Each step reflects real per-user DB
  * state from getSetupStatus(). Completed steps are ticked; the rest deep-link to the
  * page where the user finishes them. Hidden in demo/logged-out mode and once complete.
  */
@@ -82,7 +82,7 @@ export function SetupChecklist({ status }: { status: SetupStatus }) {
           className="flex items-center gap-2 text-left"
         >
           <ChevronDown size={15} className={`text-[#8190a0] transition-transform ${collapsed ? '-rotate-90' : ''}`} />
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Get started</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Getting started</p>
           <span className="rounded-full border border-[#263241] bg-[#0d141c] px-2 py-0.5 font-mono text-[11px] text-[#a8b5c2]">
             {completed}/{steps.length}
           </span>

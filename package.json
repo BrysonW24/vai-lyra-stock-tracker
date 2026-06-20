@@ -1,6 +1,6 @@
 {
   "name": "vai-lyra-stock-tracker",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "description": "Hourly tech stock momentum scanner dashboard and Python worker.",
   "scripts": {
@@ -14,9 +14,12 @@
     "worker:scan": "python -m workers.stock_scanner.main",
     "worker:test": "python -m pytest tests",
     "content:build": "node scripts/build-content.mjs",
+    "release": "node scripts/release.mjs",
+    "check:version": "node scripts/check-version-bump.mjs",
     "predev": "node scripts/build-content.mjs",
     "prebuild": "node scripts/build-content.mjs",
-    "pretype-check": "node scripts/build-content.mjs"
+    "pretype-check": "node scripts/build-content.mjs",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

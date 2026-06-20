@@ -45,6 +45,25 @@ It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supa
 - AI explains; the deterministic engine decides. The AI never invents a number and never gives advice - research only.
 - Use a plain hyphen `-` in copy, never an em dash.
 
+## Releasing (every shipped change bumps the version - enforced)
+
+The app version is the single source of truth in `src/lib/version.ts`: `APP_VERSION` derives from
+`RELEASES[0]`, which also drives the landing-page badge and the in-app changelog (`/whats-new`).
+
+To ship a user-visible change:
+
+1. Prepend a new entry to `RELEASES` at the top of `src/lib/version.ts` (version, date, title, highlights).
+2. Run `npm run release` - syncs `package.json` and inserts the `CHANGELOG.md` section from that entry.
+3. Commit + push.
+
+This is **enforced**: a `pre-push` git hook (`.githooks/pre-push` -> `scripts/check-version-bump.mjs`)
+BLOCKS a push that changes shippable code (`src` / `supabase` / `workers` / `public`) without a version
+bump, and fails if `package.json` and `version.ts` have drifted. The hook is wired by `npm install`
+(the `prepare` script sets `core.hooksPath .githooks`). Emergency bypass: `VD_SKIP_VERSION=1 git push`.
+
+Do not bump the version by hand-editing `package.json` or `CHANGELOG.md` - edit `RELEASES` and run
+`npm run release` so all three stay in lockstep.
+
 ## Environment Variables
 
 See `.env.example`. Frontend variables are `NEXT_PUBLIC_*`; worker-only secrets are unprefixed and must stay backend-only.

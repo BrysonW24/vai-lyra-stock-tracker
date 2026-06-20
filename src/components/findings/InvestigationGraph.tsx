@@ -35,9 +35,16 @@ export function InvestigationGraph({ findings }: { findings?: Finding[] }) {
   const pathname = usePathname();
   const params = useSearchParams();
 
-  // Build the graph from live findings when present; fall back to the curated demo set otherwise.
-  const isLive = Boolean(findings && findings.length);
-  const graph = useMemo(() => buildInvestigationGraph(isLive ? findings : undefined), [isLive, findings]);
+  // Build from live findings, but ONLY use them if they actually produce nodes - a graph with no
+  // company/theme/bottleneck nodes would render as a blank canvas. Otherwise fall back to the demo map
+  // so the surface is never empty (and is honestly labelled below).
+  const { graph, isLive } = useMemo(() => {
+    if (findings && findings.length) {
+      const live = buildInvestigationGraph(findings);
+      if (live.nodes.length > 0) return { graph: live, isLive: true };
+    }
+    return { graph: buildInvestigationGraph(), isLive: false };
+  }, [findings]);
   const [hovered, setHovered] = useState<string | null>(null);
 
   const stack = useMemo(() => parseStack(params.get('inv')), [params]);

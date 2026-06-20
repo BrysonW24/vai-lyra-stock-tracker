@@ -1,0 +1,4 @@
+#!/bin/sh
+# Blocks a push that ships code without a version bump. See scripts/check-version-bump.mjs.
+# Bypass (rare): VD_SKIP_VERSION=1 git push
+node scripts/check-version-bump.mjs || exit 1

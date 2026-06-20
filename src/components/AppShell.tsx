@@ -57,11 +57,13 @@ const navItems = [
   // then analysis tools, then the trading layer, then learn + settings.
   // -- Yours --
   { href: '/', label: 'Command', short: 'Command', icon: Gauge },
-  { href: '/findings', label: 'Findings', short: 'Find', icon: Telescope },
-  { href: '/graph', label: 'Investigation Graph', short: 'Graph', icon: Network },
   { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness },
   { href: '/trades', label: 'Trade Log', short: 'Trades', icon: ReceiptText },
   { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star },
+  // Investigation surfaces - research, not daily-driver, so they sit after the personal surfaces
+  // (were #2/#3, which over-promoted them on the mobile bottom bar before they earned it).
+  { href: '/findings', label: 'Findings', short: 'Find', icon: Telescope },
+  { href: '/graph', label: 'Investigation Graph', short: 'Graph', icon: Network },
   { href: '/charts', label: 'Charts', short: 'Charts', icon: PieChart },
   { href: '/saved', label: 'Saved', short: 'Saved', icon: Bookmark },
   { href: '/wire', label: 'Live Wire', short: 'Wire', icon: Rss },

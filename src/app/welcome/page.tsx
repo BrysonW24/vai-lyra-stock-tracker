@@ -58,7 +58,7 @@ export default function WelcomePage() {
             <BrandLogo size={34} />
             <span className="text-[17px] font-semibold tracking-tight text-[#0E1E3A]">{BRAND_NAME}</span>
           </div>
-          <VersionBadge variant="light" />
+          <VersionBadge variant="light" showDate />
         </header>
 
         {/* Hero */}
