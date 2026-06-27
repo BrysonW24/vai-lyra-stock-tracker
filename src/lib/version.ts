@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.6.0',
+    date: '2026-06-27',
+    title: 'TradingView Copilot + Pine strategy export',
+    highlights: [
+      'Export any name as a TradingView strategy - click "Pine" on the chart toolbar to copy a backtestable Pine v5 strategy that reproduces Lyra\'s exact oversold-recovery score. Paste it into TradingView and backtest the same logic that surfaced the setup.',
+      'The generated Pine is a faithful, drift-guarded mirror of the scanner engine (signal_engine.py): same RSI reset band, MACD-histogram recovery, 60-period-low distance, trend and volume rules, capped at 100.',
+      'New TradingView Copilot runbook (docs/tradingview-copilot.md): drive your TradingView Desktop from Claude over the Chrome DevTools Protocol - read the live chart, switch symbol/timeframe, inject + backtest the Lyra strategy, run replay, and screenshot back into a Finding. All local, research only.',
+    ],
+  },
+  {
     version: '0.5.1',
     date: '2026-06-20',
     title: 'Brand + UI polish, Find/Graph fixes',

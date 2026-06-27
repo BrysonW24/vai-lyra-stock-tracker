@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { TradingViewChart, DEFAULT_CHART_INDICATORS, type ChartIndicators } from '@/components/TradingViewChart';
+import { PineExportButton } from '@/components/PineExportButton';
 
 const ALL_ON: ChartIndicators = { bb: true, rsi: true, macd: true };
 const STORE_KEY = 'lyra.chartIndicators.v2';
@@ -107,6 +108,8 @@ export function TickerChartView({
         >
           Full setup
         </button>
+        <span className="mx-0.5 h-3.5 w-px bg-[#263241]" />
+        <PineExportButton symbol={symbol} />
       </div>
       <TradingViewChart symbol={symbol} exchange={exchange} companyName={companyName} indicators={indicators} />
     </div>
