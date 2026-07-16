@@ -19,3 +19,6 @@ tmp/
 *.duckdb
 .fuse_hidden*
 .vercel
+
+# Local MCP tooling config - project-specific, not part of the shareable app
+.mcp.json
