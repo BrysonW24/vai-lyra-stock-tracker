@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-07-16
+
+The calendar tells the truth and every dialog behaves: live events, a real clock, and one shared focus system.
+
+### Changed
+
+- The calendar was frozen in time - a hardcoded "today" of June 3rd meant every countdown in the app was weeks wrong. It now runs on a real clock, reads the nightly-synced event tables when configured (bounded to the 30-day board window so earnings season cannot truncate it), and honestly labels live vs sample data.
+- IPO listings now appear on the live calendar too: they live in their own table, so the live board synthesizes their entries with importance scaled by valuation - previously flipping to live mode silently deleted the entire IPO event class the sample set had.
+- The sample calendar can never age out: demo events re-anchor to today on every request (not once at server start), so a self-hosted demo deploy that has been up for a month shows the same fresh month of events as a cold start - pinned by a test.
+- Every dialog now behaves like a dialog: focus moves in on open and returns on close (screen readers were being stranded behind the backdrop), Tab is contained with hidden elements filtered out, overlapping overlays negotiate via a shared dialog stack instead of fighting over keystrokes, and the feedback sheet joins the same system with Esc-to-close.
+- Esc in a deep investigation now steps back one level - matching the on-screen Back button - instead of throwing away the whole trail, and the event drawer shares the exact clock and event set as the board that opened it, so the two can never disagree near midnight.
+
 ## [0.15.0] - 2026-07-16
 
 On the move: fresh IPO data, live-refreshing drawers, and a console that respects your thumb.
@@ -413,7 +425,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.12.0...v0.13.0

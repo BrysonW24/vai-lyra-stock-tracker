@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { X, Send, Loader2, Sparkles, ShieldCheck, KeyRound, SquarePen, ArrowUpRight, Star, Plus, Check, Undo2, RotateCcw } from 'lucide-react';
 import { loadAi, loadProfile, loadAgent, type AiSettings } from '@/lib/account';
+import { containFocus, registerDialog } from '@/lib/focus-trap';
 import { loadOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadSavedPrompts, toggleSavedPrompt } from '@/lib/saved-prompts';
 import type { ChatProfile } from '@/lib/ai/chat-context';
@@ -159,6 +160,8 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   const newChat = () => {
     setMessages([]);
@@ -202,20 +205,33 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, status]);
 
-  // Esc closes (parity with every other drawer) and the page behind stops scrolling
-  // while the sheet is up - touch scroll otherwise chains through the backdrop.
+  // Dialog lifecycle: move focus IN on open and return it on close (aria-modal without
+  // this strands screen readers on the inert launcher behind the backdrop), register in
+  // the dialog stack, and stop the page behind from scrolling. Keyed on [open] only so a
+  // re-render cannot re-capture in-dialog focus as the restore target.
+  useEffect(() => {
+    if (!open) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    closeBtnRef.current?.focus();
+    const unregister = sheetRef.current ? registerDialog(sheetRef.current) : undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      unregister?.();
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus?.();
+    };
+  }, [open]);
+
+  // Esc closes (parity with every other drawer); Tab is contained inside the sheet.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
+      containFocus(sheetRef.current, e);
     };
     document.addEventListener('keydown', onKey);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previousOverflow;
-    };
+    return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
   // Still waiting for the /api/ai/status response (fetch in-flight).
@@ -319,6 +335,10 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
       onClick={onClose}
     >
       <div
+        ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Lyra copilot chat"
         className="flex h-[78vh] max-h-[680px] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d1117] shadow-2xl sm:h-[70vh]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -344,7 +364,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 <SquarePen size={11} /> New
               </button>
             )}
-            <button type="button" onClick={onClose} aria-label="Close" className="ml-1 text-[#8190a0] transition hover:text-[#eef3f8]">
+            <button ref={closeBtnRef} type="button" onClick={onClose} aria-label="Close" className="ml-1 text-[#8190a0] transition hover:text-[#eef3f8]">
               <X size={16} />
             </button>
           </div>

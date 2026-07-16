@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { containFocus, registerDialog } from '@/lib/focus-trap';
 import type { DrawerStackItem, Finding, FindingState } from '@/lib/findings/types';
 import { loadAi } from '@/lib/account';
 import { buildAllowedMetrics, buildDefaultGenUIView, type GenUIView } from '@/lib/findings/genui';
@@ -30,16 +31,42 @@ const confidenceTone: Record<string, string> = { high: 'text-[#43d18b]', medium:
 
 export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClose, enableLifecycle, onLifecycleChange }: Props) {
   const isOpen = stack.length > 0 && Boolean(finding);
-  // Lock the page while the stack is up - the nested scroller otherwise chains
-  // into scrolling the feed underneath on mobile touch.
+  const asideRef = useRef<HTMLElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const depthRef = useRef(stack.length);
+  depthRef.current = stack.length;
+
+  // Dialog lifecycle: focus in on open + restore on close (aria-modal demands it),
+  // register in the dialog stack, lock the page scroll behind. Keyed on [isOpen] only
+  // so pushing deeper into the stack cannot re-capture the restore target.
   useEffect(() => {
     if (!isOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    closeBtnRef.current?.focus();
+    const unregister = asideRef.current ? registerDialog(asideRef.current) : undefined;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
+      unregister?.();
       document.body.style.overflow = previousOverflow;
+      previousFocus?.focus?.();
     };
   }, [isOpen]);
+
+  // Esc mirrors the on-screen Back affordance: pop one level while deep in an
+  // investigation, close only from the top level. Tab stays contained.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (depthRef.current > 1) onBack();
+        else onClose();
+      }
+      containFocus(asideRef.current, e);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, onBack, onClose]);
 
   if (stack.length === 0 || !finding) return null;
   const top = stack[stack.length - 1];
@@ -47,7 +74,7 @@ export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClo
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden />
-      <aside className="flex h-full w-full max-w-xl flex-col border-l border-[#1b2530] bg-[#070b10] shadow-2xl md:w-[34rem]">
+      <aside ref={asideRef} role="dialog" aria-modal="true" aria-label="Investigation detail" className="flex h-full w-full max-w-xl flex-col border-l border-[#1b2530] bg-[#070b10] shadow-2xl md:w-[34rem]">
         {/* breadcrumb + controls */}
         <div className="flex items-center gap-2 border-b border-[#1b2530] px-3 py-2">
           {stack.length > 1 && (
@@ -63,7 +90,7 @@ export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClo
               </span>
             ))}
           </nav>
-          <button type="button" onClick={onClose} className="rounded border border-[#1b2530] px-2 py-0.5 text-[10px] text-[#a8b5c2] hover:border-[#2b3a4a]">
+          <button ref={closeBtnRef} type="button" onClick={onClose} className="rounded border border-[#1b2530] px-2 py-0.5 text-[10px] text-[#a8b5c2] hover:border-[#2b3a4a]">
             Close
           </button>
         </div>

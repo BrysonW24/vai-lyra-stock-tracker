@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { containFocus, registerDialog } from '@/lib/focus-trap';
 import { MessageSquarePlus, X, Loader2, Check } from 'lucide-react';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
@@ -31,12 +32,38 @@ export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidget
   const [email, setEmail] = useState('');
   const [botInterest, setBotInterest] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<() => void>(() => {});
 
   const close = () => {
     if (isControlled) onClose?.();
     else setInternalOpen(false);
     setStatus('idle');
   };
+  closeRef.current = close;
+
+  // Same dialog contract as every drawer: focus in + restore, dialog-stack
+  // registration, page scroll lock, Esc to close, Tab contained in the sheet.
+  useEffect(() => {
+    if (!open) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    closeBtnRef.current?.focus();
+    const unregister = sheetRef.current ? registerDialog(sheetRef.current) : undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeRef.current();
+      containFocus(sheetRef.current, e);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      unregister?.();
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus?.();
+    };
+  }, [open]);
 
   const submit = async () => {
     if (!message.trim() || status === 'sending') return;
@@ -82,13 +109,17 @@ export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidget
           onClick={close}
         >
           <div
+            ref={sheetRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Send feedback"
             className="w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-[#0d1117] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <p className="text-sm font-semibold text-[#eef3f8]">Suggest a feature or report a bug</p>
-              <button type="button" onClick={close} aria-label="Close" className="text-[#8190a0] transition hover:text-[#eef3f8]">
+              <button ref={closeBtnRef} type="button" onClick={close} aria-label="Close" className="text-[#8190a0] transition hover:text-[#eef3f8]">
                 <X size={16} />
               </button>
             </div>

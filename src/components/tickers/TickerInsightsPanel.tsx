@@ -1,7 +1,7 @@
 import { Activity, CalendarClock, Newspaper } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
 import { demoIntelligenceFeed, type Sentiment } from '@/lib/intelligence';
-import { demoCalendarEvents } from '@/lib/calendar';
+import { getDemoCalendarEvents } from '@/lib/calendar';
 import { SourceFavicon } from '@/components/SourceFavicon';
 import { formatNumber, formatSignedNumber, relativeTime } from '@/lib/format';
 
@@ -53,7 +53,7 @@ export function TickerInsightsPanel({ signal }: { signal: SignalRow }) {
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .slice(0, 3);
 
-  const earnings = demoCalendarEvents.filter((e) => e.type === 'earnings' && e.ticker === signal.symbol);
+  const earnings = getDemoCalendarEvents().filter((e) => e.type === 'earnings' && e.ticker === signal.symbol);
   const upcoming = earnings.filter((e) => daysFromToday(e.date) >= 0).sort((a, b) => a.date.localeCompare(b.date));
   const past = earnings.filter((e) => daysFromToday(e.date) < 0).sort((a, b) => b.date.localeCompare(a.date));
   const nextEarnings = upcoming[0] ?? null;

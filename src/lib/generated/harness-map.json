@@ -4,7 +4,7 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 24,
+    "sections": 25,
     "chains": 12,
     "gates": 3,
     "layers": 5
@@ -108,7 +108,8 @@
         "src/lib/simulation.ts",
         "src/lib/strategy.ts",
         "src/lib/trade-snapshots.ts",
-        "src/lib/universe.ts"
+        "src/lib/universe.ts",
+        "src/lib/twin/"
       ],
       "chains": [
         "signal-quality"
@@ -270,6 +271,7 @@
         "src/lib/intelligence.ts",
         "src/lib/interest.ts",
         "src/lib/ipos.ts",
+        "src/lib/ipos-live.ts",
         "src/lib/macro-context.ts",
         "src/lib/market-board.ts",
         "src/lib/market-context.ts",
@@ -294,10 +296,20 @@
         "src/app/api/watchlist/",
         "src/app/api/small-caps/",
         "src/app/api/ticker-lookup/",
-        "src/app/api/ingestion/"
+        "src/app/api/ingestion/",
+        "src/app/api/interaction/"
       ],
       "chains": [
         "data-integrity"
+      ]
+    },
+    {
+      "section": "Signal engine route",
+      "paths": [
+        "src/app/api/signals/"
+      ],
+      "chains": [
+        "signal-quality"
       ]
     },
     {
@@ -413,6 +425,7 @@
         "src/app/tickers/",
         "src/app/trades/",
         "src/app/trading/",
+        "src/app/twin/",
         "src/app/watchlist/",
         "src/app/wire/"
       ],

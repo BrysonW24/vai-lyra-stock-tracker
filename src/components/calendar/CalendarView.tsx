@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
 import {
-  demoCalendarEvents,
   daysUntil,
   eventRiskForTicker,
   eventTypeLabel,
@@ -20,19 +19,25 @@ import { CalendarEventDrawer } from '@/components/calendar/CalendarEventDrawer';
 
 interface CalendarViewProps {
   signals: SignalRow[];
+  /** Server-fetched set: live nightly-synced tables when configured, re-anchored sample otherwise. */
+  events: CalendarEvent[];
+  source: 'live' | 'sample';
+  /** Server-computed ISO day so SSR and hydration agree on what "today" is. */
+  todayIso: string;
 }
 
-export function CalendarView({ signals }: CalendarViewProps) {
+export function CalendarView({ signals, events: allEvents, source, todayIso }: CalendarViewProps) {
   const [viewMode, setViewMode] = useState<'agenda' | 'month'>('agenda');
   const [filterType, setFilterType] = useState<string | null>(null);
   const [showPortfolioOnly, setShowPortfolioOnly] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const today = new Date(todayIso + 'T00:00:00Z');
 
   // Get portfolio symbols from signals for "my portfolio" context
   const portfolioSymbols = new Set(signals.map((s) => s.symbol));
 
   // Filter events based on active filters
-  const filteredEvents = demoCalendarEvents.filter((event) => {
+  const filteredEvents = allEvents.filter((event) => {
     // Filter by type if selected
     if (filterType && event.type !== filterType) {
       return false;
@@ -44,19 +49,19 @@ export function CalendarView({ signals }: CalendarViewProps) {
     }
 
     // Include future and today
-    const days = daysUntil(event.date);
+    const days = daysUntil(event.date, today);
     return days >= 0 && days <= 29;
   });
 
   // Find tickers with elevated event risk
   const elevatedRiskTickers = signals
     .filter((signal) => {
-      const risk = eventRiskForTicker(signal.symbol, signals);
+      const risk = eventRiskForTicker(signal.symbol, signals, allEvents, today);
       return risk === 'elevated' || risk === 'moderate';
     })
     .sort((a, b) => {
-      const riskA = eventRiskForTicker(a.symbol, signals);
-      const riskB = eventRiskForTicker(b.symbol, signals);
+      const riskA = eventRiskForTicker(a.symbol, signals, allEvents, today);
+      const riskB = eventRiskForTicker(b.symbol, signals, allEvents, today);
       // Sort "elevated" first, then "moderate"
       if (riskA === 'elevated' && riskB !== 'elevated') return -1;
       if (riskA !== 'elevated' && riskB === 'elevated') return 1;
@@ -76,15 +81,15 @@ export function CalendarView({ signals }: CalendarViewProps) {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {elevatedRiskTickers.map((signal) => {
-              const risk = eventRiskForTicker(signal.symbol, signals);
-              const upcomingEvent = demoCalendarEvents.find(
+              const risk = eventRiskForTicker(signal.symbol, signals, allEvents, today);
+              const upcomingEvent = allEvents.find(
                 (e) =>
                   e.ticker === signal.symbol &&
-                  daysUntil(e.date) >= 0 &&
-                  daysUntil(e.date) <= 7 &&
+                  daysUntil(e.date, today) >= 0 &&
+                  daysUntil(e.date, today) <= 7 &&
                   e.importance === 'high',
               );
-              const days = upcomingEvent ? daysUntil(upcomingEvent.date) : null;
+              const days = upcomingEvent ? daysUntil(upcomingEvent.date, today) : null;
 
               return (
                 <div
@@ -139,8 +144,11 @@ export function CalendarView({ signals }: CalendarViewProps) {
             </button>
           </div>
 
-          <div className="text-xs text-[#8190a0]">
+          <div className="text-right text-xs text-[#8190a0]">
             {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} upcoming
+            <span className="block font-mono text-[9px] uppercase tracking-[0.1em] text-[#5a6b7d]">
+              {source === 'live' ? 'Live - synced nightly' : 'Sample set - live sync lights up with Supabase + Finnhub'}
+            </span>
           </div>
         </div>
       </section>
@@ -160,7 +168,7 @@ export function CalendarView({ signals }: CalendarViewProps) {
               </div>
             ) : (
               groupEventsByDate(filteredEvents).map(({ date, events }) => {
-                const days = daysUntil(date);
+                const days = daysUntil(date, today);
                 const dayLabel =
                   days === 0
                     ? 'Today'
@@ -222,10 +230,11 @@ export function CalendarView({ signals }: CalendarViewProps) {
       )}
 
       {/* Month View */}
-      {viewMode === 'month' && <MonthCalendar events={filteredEvents} onSelectEvent={setSelectedEvent} />}
+      {viewMode === 'month' && <MonthCalendar events={filteredEvents} todayIso={todayIso} onSelectEvent={setSelectedEvent} />}
+
 
       {/* Event detail drawer (reusable right-slide explainer) */}
-      <CalendarEventDrawer event={selectedEvent} signals={signals} onClose={() => setSelectedEvent(null)} />
+      <CalendarEventDrawer event={selectedEvent} signals={signals} events={allEvents} todayIso={todayIso} onClose={() => setSelectedEvent(null)} />
     </div>
   );
 }
@@ -235,17 +244,22 @@ export function CalendarView({ signals }: CalendarViewProps) {
  */
 function MonthCalendar({
   events,
+  todayIso,
   onSelectEvent,
 }: {
-  events: typeof demoCalendarEvents;
+  events: CalendarEvent[];
+  todayIso: string;
   onSelectEvent: (event: CalendarEvent) => void;
 }) {
   const MIN_OFFSET = 0;
   const MAX_OFFSET = 6; // current month plus six forward
   const [monthOffset, setMonthOffset] = useState(0);
 
-  const today = new Date('2026-06-03T00:00:00Z');
-  const viewDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  // Parse the ISO day into LOCAL year/month/day components: local getters on a
+  // UTC-midnight instant put the today-highlight on yesterday's cell for every user
+  // west of UTC, contradicting the agenda's 'Today' label on the same page.
+  const [todayYear, todayMonthOneBased, todayDay] = todayIso.split('-').map(Number);
+  const viewDate = new Date(todayYear, todayMonthOneBased - 1 + monthOffset, 1);
   const currentMonth = viewDate.getMonth();
   const currentYear = viewDate.getFullYear();
 
@@ -325,7 +339,7 @@ function MonthCalendar({
                         : `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const dayEvents = dateStr ? eventsByDate.get(dateStr) : undefined;
                     const isToday =
-                      day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+                      day === todayDay && currentMonth === todayMonthOneBased - 1 && currentYear === todayYear;
 
                     return (
                       <td

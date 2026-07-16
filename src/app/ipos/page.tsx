@@ -4,8 +4,9 @@ import { getDashboardData } from '@/lib/data';
 import { getIposLive } from '@/lib/ipos-live';
 
 export const metadata = { title: 'IPO Radar' };
-// Explicit freshness contract: re-render at most hourly so the nightly Finnhub sync
-// reaches users without relying on the page being incidentally dynamic via cookies().
+// Applies to the statically-cacheable DEMO render only: configured deploys are
+// per-request dynamic because the Supabase server client reads cookies() (which also
+// means every live request sees the nightly Finnhub sync immediately).
 export const revalidate = 3600;
 
 export default async function IposPage() {

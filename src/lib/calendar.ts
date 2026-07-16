@@ -13,15 +13,18 @@ export interface CalendarEvent {
   importance: EventImportance;
 }
 
+/** The date the sample event set was authored around - anchorCalendarEvents shifts from here. */
+export const DEMO_ANCHOR_ISO = '2026-06-03';
+
 /**
- * Deterministic demo events spanning ~30 days from 2026-06-03.
+ * Deterministic demo event seeds spanning ~30 days from the authoring anchor.
  * Two kinds: company events (tagged to ticker) and macro events (tagged 'MACRO').
  * Each event is either high-, medium-, or low-importance.
  *
  * Rule: Event risk is "elevated" when a ticker has a strong_setup or watchlist_setup signal
  * AND a high-importance event is within 7 days.
  */
-export const demoCalendarEvents: CalendarEvent[] = [
+const DEMO_EVENT_SEEDS: CalendarEvent[] = [
   // This week (June 3-9, 2026)
   {
     id: 'macro-fomc-20260604',
@@ -233,14 +236,47 @@ export const demoCalendarEvents: CalendarEvent[] = [
   },
 ];
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function isoDay(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
 /**
- * Calculate days until a given ISO date from today (2026-06-03).
+ * Shift a set of events so the authoring anchor lands on `todayIso`, preserving the
+ * relative spacing between events. This is how the SAMPLE calendar stays a calendar:
+ * without it the seeds age out and every surface reads "43d ago" forever. Pure.
  */
-export function daysUntil(isoDate: string): number {
-  const today = new Date('2026-06-03T00:00:00Z');
+export function anchorCalendarEvents(events: CalendarEvent[], anchorIso: string, todayIso: string): CalendarEvent[] {
+  const shiftDays = Math.round(
+    (new Date(todayIso + 'T00:00:00Z').getTime() - new Date(anchorIso + 'T00:00:00Z').getTime()) / DAY_MS,
+  );
+  if (shiftDays === 0) return events;
+  return events.map((event) => ({
+    ...event,
+    date: isoDay(new Date(new Date(event.date + 'T00:00:00Z').getTime() + shiftDays * DAY_MS)),
+  }));
+}
+
+/**
+ * The sample events, re-anchored so "today" always sits at the start of the window.
+ * A GETTER, deliberately not a module-level const: a const anchors once at process
+ * start, so a long-lived server (Coolify/Docker demo deploy) would watch the sample
+ * window slide into the past and the board empty - the exact age-out bug the anchor
+ * exists to fix. Call it per request/render.
+ */
+export function getDemoCalendarEvents(now: Date = new Date()): CalendarEvent[] {
+  return anchorCalendarEvents(DEMO_EVENT_SEEDS, DEMO_ANCHOR_ISO, isoDay(now));
+}
+
+/**
+ * Calendar days until a given ISO date. Today by default - the old hardcoded
+ * 2026-06-03 "today" froze every countdown in the app at authoring time.
+ */
+export function daysUntil(isoDate: string, today: Date = new Date()): number {
+  const todayUtc = new Date(isoDay(today) + 'T00:00:00Z');
   const target = new Date(isoDate + 'T00:00:00Z');
-  const diffMs = target.getTime() - today.getTime();
-  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  return Math.ceil((target.getTime() - todayUtc.getTime()) / DAY_MS);
 }
 
 /**
@@ -249,7 +285,13 @@ export function daysUntil(isoDate: string): number {
  * AND a high-importance event is within 7 days.
  * Otherwise "moderate" if medium-importance event within 7 days, or "low".
  */
-export function eventRiskForTicker(ticker: string, signals: SignalRow[]): EventRisk {
+export function eventRiskForTicker(
+  ticker: string,
+  signals: SignalRow[],
+  events?: CalendarEvent[],
+  today: Date = new Date(),
+): EventRisk {
+  const pool = events ?? getDemoCalendarEvents(today);
   const signal = signals.find((s) => s.symbol === ticker);
 
   // Only consider tickers with strong or watchlist setups
@@ -258,8 +300,8 @@ export function eventRiskForTicker(ticker: string, signals: SignalRow[]): EventR
   }
 
   // Find upcoming events for this ticker
-  const upcomingEvents = demoCalendarEvents.filter(
-    (event) => event.ticker === ticker && daysUntil(event.date) >= 0 && daysUntil(event.date) <= 7,
+  const upcomingEvents = pool.filter(
+    (event) => event.ticker === ticker && daysUntil(event.date, today) >= 0 && daysUntil(event.date, today) <= 7,
   );
 
   // Check if any high-importance event within 7 days

@@ -3,13 +3,13 @@ import { LiveWire } from '@/components/LiveWire';
 import { getDashboardData } from '@/lib/data';
 import { buildLiveWire } from '@/lib/feed';
 import { demoIntelligenceFeed } from '@/lib/intelligence';
-import { demoCalendarEvents } from '@/lib/calendar';
+import { getDemoCalendarEvents } from '@/lib/calendar';
 
 export const metadata = { title: 'Live Wire' };
 
 export default async function WirePage() {
   const data = await getDashboardData();
-  const items = buildLiveWire(data.signalChanges, demoIntelligenceFeed, demoCalendarEvents);
+  const items = buildLiveWire(data.signalChanges, demoIntelligenceFeed, getDemoCalendarEvents());
 
   return (
     <AppShell data={data}>

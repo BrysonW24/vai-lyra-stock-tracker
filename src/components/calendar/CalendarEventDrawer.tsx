@@ -27,15 +27,22 @@ function exchangeFor(ticker: string): string {
 export function CalendarEventDrawer({
   event,
   signals,
+  events,
+  todayIso,
   onClose,
 }: {
   event: CalendarEvent | null;
   signals: SignalRow[];
+  /** The board's event set so the drawer's risk read matches it (live or sample). */
+  events?: CalendarEvent[];
+  /** The board's clock - without it the drawer disagrees with the agenda near UTC midnight. */
+  todayIso?: string;
   onClose: () => void;
 }) {
   if (!event) return null;
 
-  const days = daysUntil(event.date);
+  const today = todayIso ? new Date(todayIso + 'T00:00:00Z') : new Date();
+  const days = daysUntil(event.date, today);
   const when = days === 0 ? 'Today' : days < 0 ? `${Math.abs(days)}d ago` : `in ${days}d`;
   const isEarnings = event.type === 'earnings';
 
@@ -75,7 +82,7 @@ export function CalendarEventDrawer({
           </div>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-[#8190a0]">Event risk</span>
-            <span className="text-[#dbe5ee]">{eventRiskForTicker(event.ticker, signals)}</span>
+            <span className="text-[#dbe5ee]">{eventRiskForTicker(event.ticker, signals, events, today)}</span>
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { containFocus, registerDialog } from '@/lib/focus-trap';
 
 interface DetailDrawerProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface DetailDrawerProps {
 export function DetailDrawer({ open, onClose, title, subtitle, badge, children }: DetailDrawerProps) {
   const [shown, setShown] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const asideRef = useRef<HTMLElement>(null);
   // Portal to <body> so the fixed overlay escapes any ancestor with a
   // backdrop-filter / transform (e.g. .terminal-panel), which would otherwise
   // become the containing block for `position: fixed` and trap the drawer
@@ -38,6 +40,7 @@ export function DetailDrawer({ open, onClose, title, subtitle, badge, children }
     const id = requestAnimationFrame(() => setShown(true));
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
+      containFocus(asideRef.current, e);
     }
     document.addEventListener('keydown', onKey);
     // Lock the page behind the drawer: without this, reaching the end of the drawer's
@@ -47,10 +50,12 @@ export function DetailDrawer({ open, onClose, title, subtitle, badge, children }
     // Move focus in so Esc/tab act on the dialog, and return it on close.
     const previousFocus = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
+    const unregister = asideRef.current ? registerDialog(asideRef.current) : undefined;
     return () => {
       cancelAnimationFrame(id);
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = previousOverflow;
+      unregister?.();
       previousFocus?.focus?.();
     };
   }, [open, onClose]);
@@ -64,6 +69,7 @@ export function DetailDrawer({ open, onClose, title, subtitle, badge, children }
         onClick={onClose}
       />
       <aside
+        ref={asideRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
