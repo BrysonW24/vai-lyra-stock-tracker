@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { isAllowedPushEndpoint } from '@/lib/push/server';
 
 interface SubscribeBody {
   subscription?: {
@@ -34,6 +35,12 @@ export async function POST(request: NextRequest) {
 
     if (!endpoint || !p256dh || !auth) {
       return NextResponse.json({ ok: false, error: 'Invalid push subscription payload.' }, { status: 400 });
+    }
+
+    // SSRF fence: only persist endpoints on a real push service (https). Without this a
+    // caller could store an internal URL and make the server POST to it on every dispatch.
+    if (!isAllowedPushEndpoint(endpoint)) {
+      return NextResponse.json({ ok: false, error: 'Push endpoint is not a recognised push service.' }, { status: 400 });
     }
 
     const { data, error } = await supabase

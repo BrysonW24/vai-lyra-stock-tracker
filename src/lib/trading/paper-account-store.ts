@@ -219,3 +219,30 @@ export async function getPaperAccountSummary(): Promise<PaperAccountSummary> {
     dataSource: 'demo',
   };
 }
+
+/**
+ * A zero-state summary. Used when Supabase IS configured but the caller has no session: the
+ * process-global in-memory store aggregates every operator's fills, so an anonymous caller in
+ * a live deploy must get an empty account, never the shared store (cross-tenant leak).
+ */
+export function emptyPaperAccountSummary(): PaperAccountSummary {
+  return {
+    positions: [],
+    totalInvested: 0,
+    marketValue: 0,
+    unrealisedPnl: 0,
+    unrealisedPnlPct: 0,
+    openPositions: 0,
+    fillCount: 0,
+    startingEquity: STARTING_PAPER_CASH,
+    equity: STARTING_PAPER_CASH,
+    equityCurve: [STARTING_PAPER_CASH],
+    realisedPnl: 0,
+    closedTrades: 0,
+    winRate: 0,
+    avgWin: 0,
+    avgLoss: 0,
+    expectancy: 0,
+    dataSource: 'demo',
+  };
+}

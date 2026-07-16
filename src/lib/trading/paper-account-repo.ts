@@ -13,7 +13,7 @@
  */
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getDashboardData } from '@/lib/data';
-import { getPaperAccountSummary as getInMemorySummary, computeTradeAnalytics, type PaperAccountSummary } from './paper-account-store';
+import { getPaperAccountSummary as getInMemorySummary, emptyPaperAccountSummary, computeTradeAnalytics, type PaperAccountSummary } from './paper-account-store';
 import type { OrderIntent } from './types';
 import type { PaperFill } from './paper-bot';
 
@@ -330,6 +330,7 @@ async function readPersistedSummary(
  * session summary (demo). This is what the /api/trading/paper-account endpoint + the CLI should read.
  */
 export async function getPaperAccountSummaryAuthAware(): Promise<PaperAccountSummary> {
+  const supabaseConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL);
   try {
     const auth = await resolveAuthed();
     if (auth) {
@@ -338,9 +339,14 @@ export async function getPaperAccountSummaryAuthAware(): Promise<PaperAccountSum
         const summary = await readPersistedSummary(auth.supabase, auth.userId, account);
         if (summary) return summary;
       }
+    } else if (supabaseConfigured) {
+      // Configured deploy, no session: the shared in-memory store holds other operators' fills,
+      // so return an empty account rather than leak them. Only demo mode reads the in-memory store.
+      return emptyPaperAccountSummary();
     }
   } catch {
-    /* fall through to in-memory */
+    // In a configured deploy an auth/read failure must not fall back to the shared store.
+    if (supabaseConfigured) return emptyPaperAccountSummary();
   }
   return getInMemorySummary();
 }

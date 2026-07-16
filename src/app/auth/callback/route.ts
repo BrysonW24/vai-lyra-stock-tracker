@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { safeInternalPath } from '@/lib/auth/safe-redirect';
 
 /**
  * Exchanges the email-confirmation / OAuth code for a session, then redirects in.
@@ -10,7 +11,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/';
+  const next = safeInternalPath(searchParams.get('next'));
 
   if (!code) {
     return NextResponse.redirect(`${origin}/auth/login?error=missing_code`);

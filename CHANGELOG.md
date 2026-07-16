@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-07-16
+
+Security hardening: SSRF fences, tenant isolation, founder-gating.
+
+### Changed
+
+- Web Push endpoints are now fenced to the real push services (Chrome, Apple, Firefox, Windows) over https, at both save and send time - a subscription can no longer point the server at an internal address, and failed sends no longer echo the remote response.
+- The founder-only insights view is now authorized, not just authenticated: it reads cross-tenant question text, so it is gated to a FOUNDER_EMAILS allowlist and fails closed when unset.
+- The paper-account view returns an empty account for an unauthenticated request on a live deploy, instead of ever falling back to the shared in-memory store - no cross-tenant positions can leak.
+- The post-login redirect only accepts same-origin paths, closing an open-redirect that could bounce a visitor off the trusted domain.
+- All four hardened by an adversarial security audit; the SSRF allowlist and the redirect guard are pinned by tests.
+
 ## [0.10.0] - 2026-07-16
 
 AI you can measure: quality evals, a learned recovery model, hybrid retrieval, AI-ops.
@@ -331,7 +343,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.8.0...v0.9.0

@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.11.0',
+    date: '2026-07-16',
+    title: 'Security hardening: SSRF fences, tenant isolation, founder-gating',
+    highlights: [
+      'Web Push endpoints are now fenced to the real push services (Chrome, Apple, Firefox, Windows) over https, at both save and send time - a subscription can no longer point the server at an internal address, and failed sends no longer echo the remote response.',
+      'The founder-only insights view is now authorized, not just authenticated: it reads cross-tenant question text, so it is gated to a FOUNDER_EMAILS allowlist and fails closed when unset.',
+      'The paper-account view returns an empty account for an unauthenticated request on a live deploy, instead of ever falling back to the shared in-memory store - no cross-tenant positions can leak.',
+      'The post-login redirect only accepts same-origin paths, closing an open-redirect that could bounce a visitor off the trusted domain.',
+      'All four hardened by an adversarial security audit; the SSRF allowlist and the redirect guard are pinned by tests.',
+    ],
+  },
+  {
     version: '0.10.0',
     date: '2026-07-16',
     title: 'AI you can measure: quality evals, a learned recovery model, hybrid retrieval, AI-ops',
