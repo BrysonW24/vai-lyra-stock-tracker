@@ -5,8 +5,9 @@
  * illustrative demo data. `modelEstimate` is a DETERMINISTIC research scenario
  * (bear/base/bull), never a forecast presented as fact and never a recommendation.
  *
- * A future events/IPO worker will mirror these field names in SQL (table `ipos`)
- * and flip this to live data behind a Finnhub key. Until then this is demo-safe.
+ * Live data: the nightly events worker (workers/events_worker) fills the Supabase
+ * `ipos` table from Finnhub when FINNHUB_API_KEY is set; the server-side read with
+ * demo fallback lives in src/lib/ipos-live.ts (this module stays client-safe).
  *
  * AI-native content: the editorial seed records live in content/ipos.jsonl (one per
  * line, easy for an agent or human to edit) and are compiled to the imported JSON by
@@ -71,7 +72,7 @@ export interface IpoCompany {
   modelEstimate: IpoModelEstimate;
 }
 
-type IpoSeed = Omit<IpoCompany, 'modelEstimate'>;
+export type IpoSeed = Omit<IpoCompany, 'modelEstimate'>;
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -111,6 +112,43 @@ function buildEstimate(s: IpoSeed): IpoModelEstimate {
   ];
 
   return { bearPrice, basePrice, bullPrice, horizonMonths: 12, confidence, rationale };
+}
+
+/** Seed -> full IpoCompany with the deterministic research scenario attached. */
+export function hydrateIpoSeed(seed: IpoSeed): IpoCompany {
+  return { ...seed, modelEstimate: buildEstimate(seed) };
+}
+
+/**
+ * Status derived from the calendar, not the (possibly stale) stored field: an IPO
+ * whose date has passed can no longer be "upcoming" - without a live tape we can only
+ * say it has traded, so it becomes "recent". Stored "priced"/"recent" pass through.
+ * Pure so both the static seed and the live table get the same treatment.
+ */
+export function effectiveIpoStatus(ipo: Pick<IpoCompany, 'status' | 'ipoDate'>, now: Date): IpoStatus {
+  if (ipo.status === 'upcoming' && ipo.ipoDate < now.toISOString().slice(0, 10)) return 'recent';
+  return ipo.status;
+}
+
+/** Apply effectiveIpoStatus across a set so tiles, filters and rows all agree. */
+export function withEffectiveStatus(ipos: IpoCompany[], now: Date): IpoCompany[] {
+  return ipos.map((i) => {
+    const status = effectiveIpoStatus(i, now);
+    return status === i.status ? i : { ...i, status };
+  });
+}
+
+/**
+ * Date ordering a human means by "sorted by date": future IPOs first (soonest at the
+ * top - the ones you can still act on), then past IPOs newest-first. A plain
+ * descending string sort buried the next listing under the farthest-future one.
+ */
+export function compareIpoDates(a: Pick<IpoCompany, 'ipoDate'>, b: Pick<IpoCompany, 'ipoDate'>, now: Date): number {
+  const today = now.toISOString().slice(0, 10);
+  const aFuture = a.ipoDate >= today;
+  const bFuture = b.ipoDate >= today;
+  if (aFuture !== bFuture) return aFuture ? -1 : 1;
+  return aFuture ? a.ipoDate.localeCompare(b.ipoDate) : b.ipoDate.localeCompare(a.ipoDate);
 }
 
 // Editorial seed records now live in content/ipos.jsonl (one record per line) and are

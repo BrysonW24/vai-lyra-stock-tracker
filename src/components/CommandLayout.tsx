@@ -83,7 +83,7 @@ export function CommandLayout({ sections, leading }: CommandLayoutProps) {
           disabled={refreshing}
           aria-label="Refresh data"
           title="Refresh - re-pull the latest scan"
-          className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8] disabled:opacity-60"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8] disabled:opacity-60 sm:h-[26px] sm:w-[26px]"
         >
           <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
         </button>

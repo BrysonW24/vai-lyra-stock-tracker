@@ -19,6 +19,9 @@ type FilterKey = 'ticker' | 'category' | 'sentiment' | 'relevance';
  */
 export function IntelligenceFeed({ feed, hypeMap }: IntelligenceFeedProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Mobile: the four filter groups folded a full screen of chips above the feed -
+  // collapsed by default behind a "Filters (n)" toggle; sm+ always shows them.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<{
     ticker?: string;
     category?: IntelligenceCategory;
@@ -109,19 +112,31 @@ export function IntelligenceFeed({ feed, hypeMap }: IntelligenceFeedProps) {
 
       {/* Filter bar */}
       <section className="terminal-panel rounded-md p-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Filters</h2>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((v) => !v)}
+            aria-expanded={filtersOpen}
+            className="flex min-h-[44px] items-center gap-1.5 text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee] sm:pointer-events-none sm:min-h-0"
+          >
+            Filters
+            {(() => {
+              const active = Object.values(filters).filter((v) => v !== undefined).length;
+              return active > 0 ? <span className="font-mono text-[10px] text-[#f3a33a]">({active})</span> : null;
+            })()}
+            <ChevronDown size={13} className={`text-[#8190a0] transition-transform sm:hidden ${filtersOpen ? 'rotate-180' : ''}`} />
+          </button>
           {Object.values(filters).some((v) => v !== undefined) && (
             <button
               onClick={clearFilters}
-              className="text-xs text-[#f3a33a] transition hover:text-[#eef3f8]"
+              className="min-h-[44px] text-xs text-[#f3a33a] transition hover:text-[#eef3f8] sm:min-h-0"
             >
               Clear all
             </button>
           )}
         </div>
 
-        <div className="mt-3 space-y-3">
+        <div className={`mt-3 space-y-3 ${filtersOpen ? '' : 'hidden sm:block'}`}>
           {/* Ticker filter */}
           <div>
             <p className="mb-2 text-xs uppercase tracking-[0.1em] text-[#a8b5c2]">Ticker</p>
@@ -259,8 +274,9 @@ export function IntelligenceFeed({ feed, hypeMap }: IntelligenceFeedProps) {
                       <p className="mt-0.5 font-mono text-[10px] text-[#8190a0] sm:hidden">{relativeTime(item.publishedAt)}</p>
                     </div>
 
-                    {/* Sentiment dot */}
-                    <div className="hidden gap-2 xs:flex xs:items-center">
+                    {/* Sentiment dot (xs: was a dead breakpoint - no xs screen exists
+                        in the Tailwind config, so this stayed permanently hidden) */}
+                    <div className="hidden gap-2 sm:flex sm:items-center">
                       <div
                         className={`h-2 w-2 rounded-full ${
                           item.sentiment === 'positive'

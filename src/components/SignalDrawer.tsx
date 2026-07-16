@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowUpRight, LineChart } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowUpRight, LineChart, Sparkles } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
 import { DetailDrawer } from '@/components/DetailDrawer';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TickerLogo } from '@/components/TickerLogo';
+import { loadAi } from '@/lib/account';
 import { buildScoreBreakdown } from '@/lib/score-breakdown';
 import { formatNumber, formatSignedNumber, toneClass, trendArrow } from '@/lib/format';
 
@@ -31,14 +33,88 @@ function Bar({ label, value, max, pct }: { label: string; value: number; max: nu
   );
 }
 
+interface FreshSignal {
+  asOf: string;
+  signal: Partial<SignalRow>;
+  outcome: { summary: string; sampleSize: number; source: 'live' | 'sample' } | null;
+}
+
+/**
+ * Optional AI phrasing of the open signal. Grounding is server-owned (the route
+ * recomputes the signal deterministically from the symbol alone), so this can never
+ * show a number the engine did not produce. Renders nothing when AI is unavailable.
+ */
+function SignalAiNarration({ symbol }: { symbol: string }) {
+  const [text, setText] = useState<string | null>(null);
+
+  useEffect(() => {
+    setText(null);
+    const ai = loadAi();
+    const hasKey = !!ai.apiKey?.trim();
+    const serverBacked = ai.provider === 'openai' || ai.provider === 'google';
+    if (!hasKey && !serverBacked) return;
+
+    let cancelled = false;
+    fetch('/api/ai/explain-signal', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ symbol, ai }),
+    })
+      .then((res) => res.json())
+      .then((data: { ok?: boolean; text?: string }) => {
+        if (!cancelled && data?.ok && data.text) setText(data.text);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [symbol]);
+
+  if (!text) return null;
+
+  return (
+    <div className="rounded-md border border-[#3a2f1d] bg-[#141009] p-2.5">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#f3a33a]">
+        <Sparkles size={11} /> Lyra
+      </div>
+      <p className="mt-1 text-[11px] leading-snug text-[#dbe5ee]">{text}</p>
+    </div>
+  );
+}
+
 /**
  * Signal explainer drawer - tap a row to learn what the Score / RSI / MACD / Volume
  * actually mean for this stock, the component breakdown, the plain-English read, why the
  * setup fired, and what is still missing. Built on the reusable DetailDrawer.
+ *
+ * On open it refetches its ONE symbol from /api/signals/[symbol] so a drawer opened
+ * minutes after page load shows current engine numbers, plus how similar past setups
+ * actually resolved - falling back silently to the page-load snapshot.
  */
-export function SignalDrawer({ signal, onClose }: { signal: SignalRow | null; onClose: () => void }) {
-  if (!signal) return null;
+export function SignalDrawer({ signal: snapshot, onClose }: { signal: SignalRow | null; onClose: () => void }) {
+  const symbol = snapshot?.symbol ?? null;
+  const [fresh, setFresh] = useState<FreshSignal | null>(null);
 
+  useEffect(() => {
+    setFresh(null);
+    if (!symbol) return;
+    let cancelled = false;
+    fetch(`/api/signals/${symbol}`)
+      .then((res) => res.json())
+      .then((data: { ok?: boolean } & Partial<FreshSignal>) => {
+        if (!cancelled && data?.ok && data.signal && data.asOf) {
+          setFresh({ asOf: data.asOf, signal: data.signal, outcome: data.outcome ?? null });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [symbol]);
+
+  if (!snapshot) return null;
+
+  const signal: SignalRow = fresh?.signal ? { ...snapshot, ...fresh.signal } : snapshot;
   const b = signal.scoreBreakdown;
 
   return (
@@ -56,6 +132,12 @@ export function SignalDrawer({ signal, onClose }: { signal: SignalRow | null; on
       }
     >
       <p className="text-[11px] leading-snug text-[#a8b5c2]">{HELP.score}</p>
+
+      <p className="font-mono text-[10px] text-[#5a6b7d]">
+        {fresh
+          ? `Refreshed ${new Date(fresh.asOf).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - live engine numbers`
+          : 'As of last page load - refreshing live numbers…'}
+      </p>
 
       {/* Score component breakdown - point contribution per factor (value / max),
           shared with the ticker page via buildScoreBreakdown so they never drift.
@@ -98,6 +180,8 @@ export function SignalDrawer({ signal, onClose }: { signal: SignalRow | null; on
         </div>
       </div>
 
+      <SignalAiNarration symbol={signal.symbol} />
+
       {/* Why it fired / what's missing / risks */}
       {signal.explanation.triggeredBecause.length > 0 && (
         <div>
@@ -124,6 +208,20 @@ export function SignalDrawer({ signal, onClose }: { signal: SignalRow | null; on
         <span className="text-[#8190a0]">Action state</span>
         <span className="text-[#f3a33a]">{signal.actionState.replaceAll('_', ' ')}</span>
       </div>
+
+      {/* How similar setups resolved - engine-measured outcomes, honestly labeled. */}
+      {fresh?.outcome && (
+        <div className="rounded-md border border-[#263241] bg-[#0d141c] p-2.5">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">How setups like this resolved</p>
+            <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-[#5a6b7d]">
+              {fresh.outcome.source === 'live' ? 'measured history' : 'sample data'}
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] leading-snug text-[#c8d3de]">{fresh.outcome.summary}</p>
+          <p className="mt-1 text-[10px] leading-snug text-[#5a6b7d]">Past resolution is not a prediction. Research, not advice.</p>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <Link

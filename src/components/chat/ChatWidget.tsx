@@ -202,6 +202,22 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, status]);
 
+  // Esc closes (parity with every other drawer) and the page behind stops scrolling
+  // while the sheet is up - touch scroll otherwise chains through the backdrop.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, onClose]);
+
   // Still waiting for the /api/ai/status response (fetch in-flight).
   const checkingRuntime =
     ai != null &&

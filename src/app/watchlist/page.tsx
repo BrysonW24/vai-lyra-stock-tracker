@@ -41,9 +41,17 @@ export default async function WatchlistPage() {
           <div className="terminal-panel overflow-hidden rounded-md">
             <div className="border-b border-[#1b2530] px-3 py-3">
               <h1 className={pageTitleClass}>Watchlist triggers</h1>
-              <p className="mt-1 text-[11px] leading-relaxed text-[#8190a0]">
+              {/* Desktop: help copy always visible. Mobile: collapsed behind a native
+                  <details> so six lines of explanation stop pushing the list below the fold. */}
+              <p className="mt-1 hidden text-[11px] leading-relaxed text-[#8190a0] md:block">
                 <span className="font-semibold text-[#a8b5c2]">Setup score (0-100)</span> = how strongly each name reads as a beaten-down stock showing an early turn, from five signals: RSI in the reset band + an improving (still-negative) MACD histogram + price near its 60-day low + trend + volume. <span className="text-[#43d18b]">60+</span> = watchlist-worthy, <span className="text-[#f3a33a]">75+</span> = alert. Higher means a clearer early-turn setup - not buying strength, and not a price target or fundamentals rating. Recomputed hourly.
               </p>
+              <details className="mt-1 md:hidden">
+                <summary className="cursor-pointer list-none py-1 font-mono text-[11px] text-[#8aa2ff]">What does the setup score mean?</summary>
+                <p className="pb-1 text-[11px] leading-relaxed text-[#8190a0]">
+                  <span className="font-semibold text-[#a8b5c2]">Setup score (0-100)</span> = how strongly each name reads as a beaten-down stock showing an early turn, from five signals: RSI in the reset band + an improving (still-negative) MACD histogram + price near its 60-day low + trend + volume. <span className="text-[#43d18b]">60+</span> = watchlist-worthy, <span className="text-[#f3a33a]">75+</span> = alert. Recomputed hourly.
+                </p>
+              </details>
             </div>
             <div className="hidden overflow-x-auto md:block">
               <table className="min-w-[1120px] text-left text-xs">
@@ -127,7 +135,10 @@ export default async function WatchlistPage() {
               </div>
             </section>
 
-            <section className="terminal-panel rounded-md p-3">
+            {/* xl-only: on mobile this re-listed the ENTIRE watchlist directly under the
+                card list - the user scrolled every name twice. The cards already carry
+                trigger state; full explanations live on each ticker page. */}
+            <section className="terminal-panel hidden rounded-md p-3 xl:block">
               <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Trigger explanations</h2>
               <div className="mt-3 space-y-3">
                 {data.watchlist.map((item) => (

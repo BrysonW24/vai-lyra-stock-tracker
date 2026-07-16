@@ -29,11 +29,8 @@ export function ExecutiveStrip({ panels }: { panels: StripPanel[] }) {
       <div className="flex items-center justify-between gap-2 px-3 pb-1.5 pt-2">
         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">{panel.label} · tap a tile</p>
         <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-[#43d18b]">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-60" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#43d18b]" />
-          </span>
-          Live
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#43d18b]" />
+          As of last scan
         </span>
       </div>
       <div className="grid grid-cols-4 gap-1.5 px-3 pb-2.5">

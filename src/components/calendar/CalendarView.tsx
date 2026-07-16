@@ -67,7 +67,7 @@ export function CalendarView({ signals }: CalendarViewProps) {
     <div className="space-y-3 pb-20 md:pb-0">
       {/* Event Risk Callout */}
       {elevatedRiskTickers.length > 0 && (
-        <section className="terminal-panel rounded-md border-l-4 border-[#ff6b6b] p-4">
+        <section className="terminal-panel rounded-md border-l-4 border-[#ff6b6b] p-3">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#ff6b6b]">⚠ Event Risk Alert</h2>
           <p className="mt-2 text-xs text-[#a8b5c2]">
             {elevatedRiskTickers.length} ticker

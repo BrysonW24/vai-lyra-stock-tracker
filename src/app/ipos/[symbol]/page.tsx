@@ -4,8 +4,11 @@ import { ArrowLeft } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { SourceFavicon } from '@/components/SourceFavicon';
 import { getDashboardData } from '@/lib/data';
-import { getIpoBySymbol, ipoCategoryLabel, ipoStatusClass } from '@/lib/ipos';
+import { getIpoBySymbolLive } from '@/lib/ipos-live';
+import { ipoCategoryLabel, ipoStatusClass } from '@/lib/ipos';
 import { formatCurrency, formatPercent, formatSignedPercent, formatNumber, toneClass } from '@/lib/format';
+
+export const revalidate = 3600;
 
 function billions(usdM: number): string {
   return `$${(usdM / 1000).toFixed(1)}B`;
@@ -13,7 +16,7 @@ function billions(usdM: number): string {
 
 export default async function IpoDetailPage({ params }: { params: Promise<{ symbol: string }> }) {
   const { symbol } = await params;
-  const ipo = getIpoBySymbol(symbol);
+  const ipo = await getIpoBySymbolLive(symbol);
   if (!ipo) {
     notFound();
   }

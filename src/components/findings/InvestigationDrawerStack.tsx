@@ -29,6 +29,18 @@ interface Props {
 const confidenceTone: Record<string, string> = { high: 'text-[#43d18b]', medium: 'text-[#f3a33a]', low: 'text-[#8190a0]' };
 
 export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClose, enableLifecycle, onLifecycleChange }: Props) {
+  const isOpen = stack.length > 0 && Boolean(finding);
+  // Lock the page while the stack is up - the nested scroller otherwise chains
+  // into scrolling the feed underneath on mobile touch.
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   if (stack.length === 0 || !finding) return null;
   const top = stack[stack.length - 1];
 

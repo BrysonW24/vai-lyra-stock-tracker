@@ -31,7 +31,7 @@ export function SmartMoneyCard({ items = SMART_MONEY, live = false }: { items?: 
           <p className="mt-0.5 text-[10px] text-[#a8b5c2]">Small caps catching government + big-tech/AI money - news-driven</p>
         </div>
         {live ? (
-          <span className="shrink-0 rounded border border-[#1d4f3a] bg-[#0d251b] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[#43d18b]">Live</span>
+          <span className="shrink-0 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[#a8b5c2]">As of last scan</span>
         ) : (
           <span className="shrink-0 rounded border border-[#9a6a1f] bg-[#2a1f0f] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[#f3a33a]">Sample</span>
         )}

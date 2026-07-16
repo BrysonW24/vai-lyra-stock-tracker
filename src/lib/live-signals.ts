@@ -281,7 +281,9 @@ function summaryFor(s: Snap): SignalRow['summary'] {
 
 // ---- Public API ------------------------------------------------------------
 
-async function buildLiveSignal(symbol: string): Promise<Partial<SignalRow> | null> {
+// Exported for the per-symbol refresh route (/api/signals/[symbol]) so an open
+// drawer can pull current engine numbers instead of the page-load snapshot.
+export async function buildLiveSignal(symbol: string): Promise<Partial<SignalRow> | null> {
   const ohlcv = await fetchOhlcv(symbol);
   if (!ohlcv) return null;
 

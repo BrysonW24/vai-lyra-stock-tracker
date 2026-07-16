@@ -54,34 +54,11 @@ function ExposureChip({ item }: { item: string }) {
   );
 }
 
-function CatalystCard({ catalyst }: { catalyst: ScoredCatalyst }) {
-  const Icon = CATEGORY_ICON[catalyst.category];
-  const tier = TIER[catalyst.tier];
+/** The tall half of a catalyst card: priority matrix, value chain, setup, chips. */
+function CatalystBody({ catalyst }: { catalyst: ScoredCatalyst }) {
   const showFlow = Boolean(catalyst.priceNote || catalyst.accessNote);
-
   return (
-    <div className="px-3 py-2.5">
-      <div className="flex items-start gap-2">
-        <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#7fb0ff]">
-          <Icon size={13} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[12px] font-semibold leading-snug text-[#eef3f8]">{catalyst.title}</span>
-            <span className={`rounded border px-1.5 py-0.5 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] ${tier.chip}`}>{tier.label}</span>
-            <span className="font-mono text-[9px] text-[#8190a0]">{whenLabel(catalyst.daysUntil)}</span>
-            {catalyst.dateConfidence !== 'confirmed' && (
-              <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-[#5e6b78]">{catalyst.dateConfidence}</span>
-            )}
-          </div>
-          <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">{catalyst.why}</p>
-        </div>
-        <div className="shrink-0 text-right">
-          <p className={`font-mono text-lg font-semibold leading-none ${tier.heat}`}>{catalyst.heat}</p>
-          <p className="font-mono text-[8px] uppercase tracking-[0.12em] text-[#5e6b78]">heat</p>
-        </div>
-      </div>
-
+    <>
       {/* The priority matrix - the three axes feeding Heat. */}
       <div className="mt-2 space-y-1 rounded-md border border-[#1b2530] bg-[#0b1016] px-2.5 py-1.5">
         <MatrixBar label="Timing" value={catalyst.timing} />
@@ -125,6 +102,48 @@ function CatalystCard({ catalyst }: { catalyst: ScoredCatalyst }) {
           ))}
         </div>
       )}
+    </>
+  );
+}
+
+function CatalystCard({ catalyst }: { catalyst: ScoredCatalyst }) {
+  const Icon = CATEGORY_ICON[catalyst.category];
+  const tier = TIER[catalyst.tier];
+
+  return (
+    <div className="px-3 py-2.5">
+      <div className="flex items-start gap-2">
+        <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#7fb0ff]">
+          <Icon size={13} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[12px] font-semibold leading-snug text-[#eef3f8]">{catalyst.title}</span>
+            <span className={`rounded border px-1.5 py-0.5 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] ${tier.chip}`}>{tier.label}</span>
+            <span className="font-mono text-[9px] text-[#8190a0]">{whenLabel(catalyst.daysUntil)}</span>
+            {catalyst.dateConfidence !== 'confirmed' && (
+              <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-[#5e6b78]">{catalyst.dateConfidence}</span>
+            )}
+          </div>
+          <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">{catalyst.why}</p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className={`font-mono text-lg font-semibold leading-none ${tier.heat}`}>{catalyst.heat}</p>
+          <p className="font-mono text-[8px] uppercase tracking-[0.12em] text-[#5e6b78]">heat</p>
+        </div>
+      </div>
+
+      {/* Desktop: full card. Mobile: header + heat only, tall body folded behind a
+          native <details> - nine fully-expanded cards were an entire screen each. */}
+      <div className="hidden md:block">
+        <CatalystBody catalyst={catalyst} />
+      </div>
+      <details className="md:hidden">
+        <summary className="-mx-1 mt-1 min-h-[44px] cursor-pointer list-none rounded px-1 py-2 font-mono text-[11px] text-[#8aa2ff]">
+          Heat breakdown + how to set up
+        </summary>
+        <CatalystBody catalyst={catalyst} />
+      </details>
     </div>
   );
 }

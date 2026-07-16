@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpRight, Info, ListFilter, Pin, Rows3, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SignalRow } from '@/types/scanner';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, formatSignedPercent, toneClass, trendArrow } from '@/lib/format';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -82,6 +82,37 @@ export function SignalTable({
   const [sort, setSort] = useState<SortMode>('score');
   const [dense, setDense] = useState(true);
   const [selected, setSelected] = useState<SignalRow | null>(null);
+  // Mobile card list is capped so 80 signals never become one endless thumb-scroll;
+  // "Show more" extends in pages. Desktop table is unaffected.
+  const [mobileVisible, setMobileVisible] = useState(12);
+
+  // The drawer is URL-routed (?signal=SYM) so an open explainer survives refresh and
+  // can be shared/deep-linked ("look at NVDA's setup"). history.replaceState keeps it
+  // out of the router (no re-render, no history spam); the mount effect below restores it.
+  const restoredFromUrl = useRef(false);
+  const writeSignalParam = (symbol: string | null) => {
+    const url = new URL(window.location.href);
+    if (symbol) url.searchParams.set('signal', symbol);
+    else url.searchParams.delete('signal');
+    window.history.replaceState(null, '', url);
+  };
+  const openSignal = useCallback((signal: SignalRow) => {
+    setSelected(signal);
+    writeSignalParam(signal.symbol);
+  }, []);
+  const closeSignal = useCallback(() => {
+    setSelected(null);
+    writeSignalParam(null);
+  }, []);
+
+  useEffect(() => {
+    if (restoredFromUrl.current) return;
+    restoredFromUrl.current = true;
+    const fromUrl = searchParams.get('signal');
+    if (!fromUrl) return;
+    const match = signals.find((s) => s.symbol.toUpperCase() === fromUrl.toUpperCase());
+    if (match) setSelected(match);
+  }, [searchParams, signals]);
 
   const portfolioSet = useMemo(() => new Set(portfolioSymbols), [portfolioSymbols]);
   const watchlistSet = useMemo(() => new Set(watchlistSymbols), [watchlistSymbols]);
@@ -272,7 +303,7 @@ export function SignalTable({
                 <td className={rowPadding}>
                   <button
                     type="button"
-                    onClick={() => setSelected(signal)}
+                    onClick={() => openSignal(signal)}
                     aria-label={`Explain ${signal.symbol} signal`}
                     title="Explain this signal"
                     className="grid h-6 w-6 place-items-center rounded border border-[#263241] bg-[#0d141c] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
@@ -292,10 +323,10 @@ export function SignalTable({
             No signals match{search ? ` "${search}"` : ''} with the current filter.
           </p>
         )}
-        {rows.map((signal) => (
+        {rows.slice(0, mobileVisible).map((signal) => (
           <button
             type="button"
-            onClick={() => setSelected(signal)}
+            onClick={() => openSignal(signal)}
             className="block w-full px-3 py-2 text-left transition hover:bg-[#101720]"
             key={signal.symbol}
           >
@@ -318,9 +349,18 @@ export function SignalTable({
             </div>
           </button>
         ))}
+        {rows.length > mobileVisible && (
+          <button
+            type="button"
+            onClick={() => setMobileVisible((n) => n + 20)}
+            className="block min-h-[44px] w-full px-3 py-3 text-center font-mono text-xs font-semibold uppercase tracking-[0.12em] text-[#8aa2ff] transition hover:bg-[#101720]"
+          >
+            Show {Math.min(20, rows.length - mobileVisible)} more of {rows.length}
+          </button>
+        )}
       </div>
 
-      <SignalDrawer signal={selected} onClose={() => setSelected(null)} />
+      <SignalDrawer signal={selected} onClose={closeSignal} />
     </section>
   );
 }

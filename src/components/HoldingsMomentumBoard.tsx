@@ -191,7 +191,7 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
                 aria-pressed={indicators[key]}
                 title={`Toggle ${label} on the live charts`}
                 className={[
-                  'rounded border px-1.5 py-1 font-mono text-[10px] transition',
+                  'min-h-[44px] rounded border px-1.5 py-1 font-mono text-[10px] transition sm:min-h-0',
                   indicators[key]
                     ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
                     : 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:text-[#dbe5ee]',
@@ -253,7 +253,7 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
                     <select
                       value={symbol}
                       onChange={(event) => changeSlot(index, event.target.value)}
-                      className="max-w-[92px] rounded border border-[#263241] bg-[#0d141c] px-1.5 py-1 font-mono text-[11px] text-[#a8b5c2] outline-none transition focus:ring-1 focus:ring-[#f3a33a]/40"
+                      className="min-h-[44px] max-w-[92px] rounded border border-[#263241] bg-[#0d141c] px-1.5 py-1 font-mono text-[11px] text-[#a8b5c2] outline-none transition focus:ring-1 focus:ring-[#f3a33a]/40 sm:min-h-0"
                       aria-label="Choose ticker for this panel"
                     >
                       {options.map((option) => (

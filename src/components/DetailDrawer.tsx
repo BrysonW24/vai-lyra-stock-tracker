@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
@@ -20,6 +20,7 @@ interface DetailDrawerProps {
  */
 export function DetailDrawer({ open, onClose, title, subtitle, badge, children }: DetailDrawerProps) {
   const [shown, setShown] = useState(false);
+  const closeRef = useRef<HTMLButtonElement>(null);
   // Portal to <body> so the fixed overlay escapes any ancestor with a
   // backdrop-filter / transform (e.g. .terminal-panel), which would otherwise
   // become the containing block for `position: fixed` and trap the drawer
@@ -39,9 +40,18 @@ export function DetailDrawer({ open, onClose, title, subtitle, badge, children }
       if (e.key === 'Escape') onClose();
     }
     document.addEventListener('keydown', onKey);
+    // Lock the page behind the drawer: without this, reaching the end of the drawer's
+    // scroll chains into scrolling the page underneath (worst on mobile touch).
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    // Move focus in so Esc/tab act on the dialog, and return it on close.
+    const previousFocus = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
     return () => {
       cancelAnimationFrame(id);
       document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus?.();
     };
   }, [open, onClose]);
 
@@ -54,6 +64,9 @@ export function DetailDrawer({ open, onClose, title, subtitle, badge, children }
         onClick={onClose}
       />
       <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className={`absolute right-0 top-0 flex h-full w-full max-w-[440px] flex-col overflow-y-auto border-l border-[#1b2530] bg-[#0b1016] shadow-2xl transition-transform duration-300 ${
           shown ? 'translate-x-0' : 'translate-x-full'
         }`}
@@ -65,6 +78,7 @@ export function DetailDrawer({ open, onClose, title, subtitle, badge, children }
             {subtitle && <p className="mt-0.5 truncate font-mono text-[11px] text-[#8190a0]">{subtitle}</p>}
           </div>
           <button
+            ref={closeRef}
             onClick={onClose}
             type="button"
             aria-label="Close"
@@ -73,7 +87,10 @@ export function DetailDrawer({ open, onClose, title, subtitle, badge, children }
             <X size={15} />
           </button>
         </div>
-        <div className="space-y-4 px-4 py-4">{children}</div>
+        {/* Bottom padding clears the iOS home indicator (same pattern as AppShell). */}
+        <div className="space-y-4 px-4 py-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+          {children}
+        </div>
       </aside>
     </div>,
     document.body,

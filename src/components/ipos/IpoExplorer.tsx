@@ -5,7 +5,7 @@ import { SourceFavicon } from '@/components/SourceFavicon';
 import { IpoDrawer } from '@/components/ipos/IpoDrawer';
 import { RotatingFaces } from '@/components/RotatingFaces';
 import {
-  getIpos,
+  compareIpoDates,
   ipoCategoryLabel,
   ipoStatusClass,
   type IpoCompany,
@@ -37,8 +37,14 @@ function billions(usdM: number): string {
   return `$${(usdM / 1000).toFixed(1)}B`;
 }
 
-export function IpoExplorer() {
-  const all = useMemo(() => getIpos(), []);
+interface IpoExplorerProps {
+  /** Server-fetched set: live Supabase rows when configured, bundled sample otherwise. */
+  ipos: IpoCompany[];
+  source: 'live' | 'sample';
+  updatedAt: string | null;
+}
+
+export function IpoExplorer({ ipos: all, source, updatedAt }: IpoExplorerProps) {
   const [statusFilter, setStatusFilter] = useState<IpoStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<IpoCategory | 'all'>('all');
   const [sortKey, setSortKey] = useState<SortKey>('ipoDate');
@@ -50,11 +56,13 @@ export function IpoExplorer() {
         (statusFilter === 'all' || i.status === statusFilter) &&
         (categoryFilter === 'all' || i.category === categoryFilter),
     );
+    // Stable "now" per memo so SSR and hydration sort identically within the pass.
+    const now = new Date();
     return [...filtered].sort((a, b) => {
-      const av = (a[sortKey] ?? -Infinity) as number | string;
-      const bv = (b[sortKey] ?? -Infinity) as number | string;
-      if (sortKey === 'ipoDate') return String(bv).localeCompare(String(av));
-      return (bv as number) - (av as number);
+      if (sortKey === 'ipoDate') return compareIpoDates(a, b, now);
+      const av = (a[sortKey] ?? -Infinity) as number;
+      const bv = (b[sortKey] ?? -Infinity) as number;
+      return bv - av;
     });
   }, [all, statusFilter, categoryFilter, sortKey]);
 
@@ -162,16 +170,24 @@ export function IpoExplorer() {
         <div className="flex flex-wrap items-center gap-2 border-b border-[#1b2530] px-3 py-3">
           <div>
             <h1 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">IPO radar - sorted by date</h1>
-            <p className="mt-1 font-mono text-xs text-[#8190a0]">Upcoming first. Tap a row for the dense detail drawer. Research only - not advice.</p>
+            <p className="mt-1 font-mono text-xs text-[#8190a0]">
+              Soonest first. Tap a row for the dense detail drawer. Research only - not advice.{' '}
+              <span className="text-[#5a6b7d]">
+                {source === 'live'
+                  ? `Live calendar${updatedAt ? ` · synced ${updatedAt.slice(0, 10)}` : ''}`
+                  : 'Sample set - live nightly sync lights up with Supabase + Finnhub'}
+              </span>
+            </p>
           </div>
+          {/* h-11 on mobile = the 44px touch floor; sm+ returns to the dense 24px row. */}
           <div className="ml-auto flex w-full flex-nowrap gap-1 font-mono sm:w-auto">
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as IpoStatus | 'all')} className="h-6 min-w-0 flex-1 rounded border border-[#263241] bg-[#0d141c] px-1.5 text-[10px] text-[#dbe5ee] outline-none sm:flex-none">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as IpoStatus | 'all')} className="h-11 min-w-0 flex-1 rounded border border-[#263241] bg-[#0d141c] px-1.5 text-[10px] text-[#dbe5ee] outline-none sm:h-6 sm:flex-none">
               {statuses.map((s) => <option key={s} value={s}>{s === 'all' ? 'All status' : s}</option>)}
             </select>
-            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value as IpoCategory | 'all')} className="h-6 min-w-0 flex-1 rounded border border-[#263241] bg-[#0d141c] px-1.5 text-[10px] text-[#dbe5ee] outline-none sm:flex-none">
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value as IpoCategory | 'all')} className="h-11 min-w-0 flex-1 rounded border border-[#263241] bg-[#0d141c] px-1.5 text-[10px] text-[#dbe5ee] outline-none sm:h-6 sm:flex-none">
               {categories.map((c) => <option key={c} value={c}>{c === 'all' ? 'All sectors' : ipoCategoryLabel(c)}</option>)}
             </select>
-            <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)} className="h-6 min-w-0 flex-1 rounded border border-[#263241] bg-[#0d141c] px-1.5 text-[10px] text-[#dbe5ee] outline-none sm:flex-none">
+            <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)} className="h-11 min-w-0 flex-1 rounded border border-[#263241] bg-[#0d141c] px-1.5 text-[10px] text-[#dbe5ee] outline-none sm:h-6 sm:flex-none">
               <option value="valuationUsdM">Sort: Valuation</option>
               <option value="proceedsUsdM">Sort: Raised</option>
               <option value="returnSinceIpoPct">Sort: Return</option>

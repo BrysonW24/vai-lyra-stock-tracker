@@ -183,7 +183,30 @@ export default async function OverviewPage() {
               Radar <ArrowUpRight size={12} />
             </Link>
           </div>
-          <div className="no-scrollbar overflow-x-auto">
+          {/* Mobile cards - this was the one table in the app with no card fallback,
+              forcing sideways scrolling at 375px. Mirrors the SignalTable card shape. */}
+          <div className="divide-y divide-[#1b2530] md:hidden">
+            {strongSignals.map((signal) => (
+              <Link href={`/tickers/${signal.symbol}`} className="block px-3 py-2.5" key={signal.symbol}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-sm font-semibold text-[#eef3f8]">{signal.symbol}</span>
+                      <StatusBadge status={signal.status} />
+                    </div>
+                    <p className="mt-0.5 truncate font-mono text-[10px] text-[#a8b5c2]">
+                      RSI {formatNumber(signal.rsi)}{trendArrow(signal.rsiDelta)} | Hist {formatNumber(signal.macdHistogram, 2)}{trendArrow(signal.histDelta)} | Vol {formatNumber(signal.volumeRatio, 2)}x | Low {formatPercent(signal.distanceFromLow)}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right font-mono">
+                    <p className="text-base font-semibold leading-none text-[#eef3f8]">{signal.score}</p>
+                    <p className={`text-[11px] ${toneClass(signal.scoreDelta)}`}>{formatSignedNumber(signal.scoreDelta, 0)}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <div className="no-scrollbar hidden overflow-x-auto md:block">
             <table className="min-w-[640px] text-left text-xs md:min-w-full">
               <thead className="bg-[#0b1016] font-mono uppercase text-[#8190a0]">
                 <tr>

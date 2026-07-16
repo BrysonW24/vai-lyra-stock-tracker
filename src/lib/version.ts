@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.15.0',
+    date: '2026-07-16',
+    title: 'On the move: fresh IPO data, live-refreshing drawers, and a console that respects your thumb',
+    highlights: [
+      'The IPO radar now serves the live calendar: the nightly Finnhub sync (which was filling a table nothing read) feeds the page hourly, a past-dated "upcoming" IPO can no longer pretend it has not happened, the date sort finally puts the soonest listing on top, and the page says honestly whether you are looking at the live calendar or the sample set.',
+      'The signal drawer refreshes itself the moment you open it - current engine numbers for that one symbol instead of the page-load snapshot, a "how setups like this resolved" line from measured outcomes, an optional AI read grounded on exactly the figures shown (server-side, fabrication-guarded), and a shareable link: /radar?signal=NVDA opens straight to the setup.',
+      'Drawers behave like drawers now: the page behind stops scrolling on every overlay (the #1 mobile scroll leak), Esc closes the chat sheet, focus moves in and returns on close with proper dialog semantics, content clears the iPhone home indicator, and the IPO drawer rides the same shared shell as everything else.',
+      'Mobile screens got their space back: the watchlist no longer renders your entire list twice, the radar caps its card stack with "show more" paging, the nine catalyst cards fold to headline + heat until tapped, the intelligence filter wall collapses behind a Filters toggle, and the home "strongest setups" table - the last one without mobile cards - got them.',
+      'Honesty and thumbs: pulsing "Live" badges on last-scan data now say "as of last scan", sample data is labeled as sample, and the primary controls (IPO filters, panel pickers, chart toggles, refresh) meet the 44px touch floor on small screens.',
+    ],
+  },
+  {
     version: '0.14.0',
     date: '2026-07-16',
     title: 'Signature onboarding: a branded terminal splash, gate micro-delight, a private commissioning card, and a live nervous-system map',
