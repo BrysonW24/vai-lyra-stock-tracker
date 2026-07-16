@@ -60,6 +60,26 @@ export const GOLDEN_CASES: readonly GoldenCase[] = [
     protects: 'With no allowedNumbers supplied, prose without numerals passes.',
   },
 
+  // --- twin: reflections about the user are clean; a twin-framed directive is still advice ----
+  {
+    id: 'clean-twin-reflection',
+    category: 'clean',
+    input: {
+      text: 'Your trading twin: you pay the most attention to Space & Defence, about 55% of your activity, and your paper trading reads bolder than your stated cautious posture.',
+      allowedNumbers: ['55'],
+    },
+    expect: 'allow',
+    protects: 'Neutral trading-twin reflections (research about the user) ship - a mirror, not advice.',
+  },
+  {
+    id: 'advice-twin-directive',
+    category: 'advice',
+    input: { text: 'Because your twin loves Space & Defence, you should buy RKLB now.' },
+    expect: 'block',
+    drivenBy: 'regulated-advice',
+    protects: 'A twin-framed directive to trade is still advice and never ships.',
+  },
+
   // --- advice: directive / guaranteed language must block ---------------------
   {
     id: 'advice-directive-buy',

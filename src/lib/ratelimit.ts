@@ -66,3 +66,43 @@ export function rateLimit(identity: string, opts: RateLimitOptions, nowMs: numbe
 export function resetRateLimits(): void {
   registries.clear();
 }
+
+/**
+ * Multi-instance rate limiter backed by an Upstash fixed-window counter (INCR + EXPIRE), for the
+ * higher-frequency capture paths a single-instance in-memory bucket cannot guard. Degrades to the
+ * in-memory rateLimit() when Upstash is unconfigured OR unreachable - so it never fails open on error.
+ * Same interface as rateLimit(); swapping the store stays a one-call change per route.
+ */
+export async function rateLimitShared(
+  identity: string,
+  opts: RateLimitOptions,
+  nowMs: number = Date.now(),
+): Promise<RateLimitResult> {
+  const { scope, capacity, windowMs } = opts;
+  const windowSec = Math.max(1, Math.ceil(windowMs / 1000));
+  const bucketId = Math.floor(nowMs / windowMs);
+  const key = `rl:${scope}:${identity}:${bucketId}`;
+
+  try {
+    const { upstashCommand } = await import('@/lib/cache');
+    const raw = await upstashCommand(['INCR', key]);
+    if (raw === null) return rateLimit(identity, opts, nowMs); // not configured -> in-memory
+    const count = Number(raw);
+    if (count === 1) {
+      // First hit in this window - set its TTL. Best-effort; a missed EXPIRE just lets the key linger.
+      try {
+        await upstashCommand(['EXPIRE', key, windowSec]);
+      } catch {
+        /* ignore */
+      }
+    }
+    if (count > capacity) {
+      const retryAfterSec = Math.max(1, Math.ceil(((bucketId + 1) * windowMs - nowMs) / 1000));
+      return { allowed: false, remaining: 0, retryAfterSec };
+    }
+    return { allowed: true, remaining: Math.max(0, capacity - count), retryAfterSec: 0 };
+  } catch {
+    // Upstash unreachable -> degrade to the in-memory limiter rather than failing open.
+    return rateLimit(identity, opts, nowMs);
+  }
+}

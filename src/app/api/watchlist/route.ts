@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ensureTickerExists } from '@/lib/supabase/ticker';
+import { stateAtAdd } from '@/lib/twin/state-at-add';
 
 /**
  * Watchlist write API. Uses the cookie-aware (RLS-enforced) Supabase client and the
@@ -97,6 +98,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: tickerResult.error || 'Failed to register stock ticker.' }, { status: 400 });
     }
 
+    // Freeze "the state a name was in when you added it" for the trading twin (migration 034).
+    // Best-effort: a miss leaves the columns null, which the twin model tolerates.
+    const snapshot = await stateAtAdd(symbol);
+
     const { data, error } = await supabase
       .from('watchlist_items')
       .insert([
@@ -113,6 +118,9 @@ export async function POST(request: NextRequest) {
           movement_alert_pcts: movementAlertPcts,
           notes: body.notes || null,
           is_active: true,
+          signal_score_at_add: snapshot.signalScore,
+          lifecycle_stage_at_add: snapshot.lifecycleStage,
+          backing_strength_at_add: snapshot.backingStrength,
         },
       ])
       .select()

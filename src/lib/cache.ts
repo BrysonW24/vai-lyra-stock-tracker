@@ -64,6 +64,26 @@ function upstashBackend(cfg: { url: string; token: string }): CacheBackend {
   };
 }
 
+/**
+ * Low-level Upstash REST command for callers that need more than get/set (e.g. INCR/EXPIRE for a
+ * shared rate limiter). Returns null when Upstash is NOT configured (caller falls back). Throws on a
+ * transport error so the caller can decide how to degrade.
+ */
+export async function upstashCommand(cmd: (string | number)[]): Promise<unknown | null> {
+  const cfg = upstashConfig();
+  if (!cfg) return null;
+  const res = await fetch(cfg.url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${cfg.token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(cmd),
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error(`upstash ${res.status}`);
+  const json = (await res.json()) as { result?: unknown; error?: string };
+  if (json.error) throw new Error(json.error);
+  return json.result ?? null;
+}
+
 // --- In-process fallback backend -----------------------------------------------------------
 
 const MEMORY_MAX_ENTRIES = 500;

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
 import { TickerDetail } from '@/components/TickerDetail';
 import { TickerChartView } from '@/components/TickerChartView';
+import { TwinCaptureBeacon } from '@/components/twin/TwinCaptureBeacon';
 import { getDashboardData } from '@/lib/data';
 import { buildScoreHistory } from '@/lib/score-history';
 
@@ -28,6 +29,7 @@ export default async function TickerPage({ params, searchParams }: TickerPagePro
   return (
     <AppShell data={data}>
       <div className="space-y-3 pb-28 xl:pb-6">
+        <TwinCaptureBeacon eventType="ticker_open" entityType="ticker" entityId={signal.symbol} meta={{ stage: signal.status }} />
         <TickerChartView
           symbol={signal.symbol}
           exchange={exchange}

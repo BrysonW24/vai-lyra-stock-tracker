@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { ThemeDossier } from '@/components/themes/ThemeDossier';
+import { TwinCaptureBeacon } from '@/components/twin/TwinCaptureBeacon';
 import { getDashboardData } from '@/lib/data';
 import {
   getCapitalEvents,
@@ -38,6 +39,7 @@ export default async function ThemeDetailPage({ params }: { params: Promise<{ sl
   return (
     <AppShell data={data}>
       <div className="space-y-3 pb-28 xl:pb-6">
+        <TwinCaptureBeacon eventType="theme_open" entityType="theme" entityId={slug} />
         <Link
           href="/themes"
           className="inline-flex items-center gap-1 font-mono text-xs text-[#8190a0] transition hover:text-[#eef3f8]"

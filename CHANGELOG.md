@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-07-16
+
+Your digital trading twin: Lyra now learns your interests, habits, and risk posture - and reflects them back.
+
+### Changed
+
+- New "Your Twin" surface (/twin): a private, research-only mirror of how you actually trade - your top themes, the signal kinds you trust, your stage lean, and the gap between the risk posture you stated at onboarding and the one your paper trades reveal. A mirror, never advice - the deterministic engine still owns every signal.
+- A real deterministic preference model computes your affinities and revealed-risk stats (average position size vs your stated cap, sizing up after a losing close, late-stage chase, theme concentration) from data Lyra already holds - no LLM, fully unit-tested.
+- Opt-in, inspectable, portable, deletable: a consent switch gates all behavioural capture (default off), with server-side inspect (GET /api/account), export (a versioned JSON snapshot of your profile + twin), and true delete (wipes every server row) - and the old "nothing is uploaded" copy is now honest.
+- The copilot can cite your twin (a read-only read_trading_twin tool) and remembers you across sessions (opt-in conversational memory), and the command centre now surfaces equally-scored names you care about first - with an enforced anti-bubble duty so risk is never hidden.
+- Row-level-security hardening: tightened the read policies on the paper-trading tables so your simulated trades are strictly owner-only, plus a migration-scanning test that fails the build if a future change ever re-opens them.
+
 ## [0.12.0] - 2026-07-16
 
 The agent harness: every section of the codebase now has an owning maintenance chain, enforced in CI.
@@ -377,7 +389,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.11.2...v0.12.0
 [0.11.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.11.0...v0.11.1

@@ -7,7 +7,7 @@
  */
 import { canAgentUseTool } from '@/lib/ai/policy';
 import type { AiAgentName, AiToolName } from '@/lib/ai/policy';
-import { searchEvidence, readSignals, readConvergence, readPortfolioOwn, readThemes } from './index';
+import { searchEvidence, readSignals, readConvergence, readPortfolioOwn, readThemes, readTradingTwin } from './index';
 
 export class ToolDeniedError extends Error {
   constructor(message: string) {
@@ -42,6 +42,8 @@ export async function executeTool(
       return readPortfolioOwn();
     case 'read_themes':
       return readThemes(args.slug ? String(args.slug) : undefined);
+    case 'read_trading_twin':
+      return readTradingTwin();
     default:
       // Output-shaping tools (compose_alert_text, draft_research_note, classify_news,
       // explain_order_intent) are produced by the agent's own structured output, not executed here.

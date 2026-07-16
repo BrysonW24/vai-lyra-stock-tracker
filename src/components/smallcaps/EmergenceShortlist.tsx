@@ -6,6 +6,7 @@ import { TickerLogo } from '@/components/TickerLogo';
 import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
 import { ValueChainMap } from '@/components/smallcaps/ValueChainMap';
 import { StoryDrawer } from '@/components/smallcaps/StoryDrawer';
+import { captureInteraction } from '@/lib/twin/capture';
 import {
   LIFECYCLE_ORDER,
   LIFECYCLE_LABEL,
@@ -157,7 +158,10 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, pos
               <button
                 key={c.symbol}
                 type="button"
-                onClick={() => setSelected(c.symbol)}
+                onClick={() => {
+                  setSelected(c.symbol);
+                  captureInteraction({ eventType: 'drawer_open', entityType: 'candidate', entityId: c.symbol, meta: { stage: c.stage } });
+                }}
                 className={`w-full rounded-md border p-2 text-left transition ${
                   isSel ? 'border-[#43d18b] bg-[#0c1f16]' : 'border-[#1b2530] bg-[#0d1117] hover:bg-[#101720]'
                 }`}

@@ -146,9 +146,40 @@ export function validateGenUIView(raw: unknown, finding: Finding): GenUIView | n
   };
 }
 
+/**
+ * Optional, read-only per-user framing (the trading twin). It only tunes EMPHASIS - which blocks to
+ * foreground and the tone - never the numbers, never the allowed blocks/keys. Qualitative on purpose:
+ * no raw figures cross into the prompt, so nothing personal can leak into the (number-free) prose.
+ */
+export interface GenUIFraming {
+  /** Qualitative risk posture: 'cautious' | 'balanced' | 'bold'. */
+  riskPosture?: string;
+  /** Signal-kind labels this user trusts, to foreground where relevant. */
+  preferredSignalKinds?: string[];
+  /** 'compact' | 'comfortable'. */
+  density?: string;
+}
+
+function framingHasContent(f?: GenUIFraming): f is GenUIFraming {
+  return !!f && (!!f.riskPosture || (f.preferredSignalKinds?.length ?? 0) > 0 || !!f.density);
+}
+
 /** The strict-JSON instruction for the composing model. Numbers are forbidden in prose by design. */
-export function buildGenUIPrompt(finding: Finding): string {
+export function buildGenUIPrompt(finding: Finding, framing?: GenUIFraming): string {
   const metrics = buildAllowedMetrics(finding);
+  const personalisation = framingHasContent(framing)
+    ? [
+        '',
+        'PERSONALISATION (frame EMPHASIS for this user - never invent or change numbers, never echo these as facts, never let them override the anti-bias duty below):',
+        framing.riskPosture ? `- Risk posture: ${framing.riskPosture} - match the framing tone.` : '',
+        framing.preferredSignalKinds?.length
+          ? `- They pay most attention to: ${framing.preferredSignalKinds.join(', ')} - foreground these where the finding supports them.`
+          : '',
+        framing.density ? `- Preferred density: ${framing.density}.` : '',
+        '- ANTI-BIAS DUTY: personalisation may raise emphasis but must NEVER hide risk. Always keep the risks/falsifier at least as visible as the supporting case.',
+      ].filter(Boolean)
+    : [];
+
   return [
     'Compose a compact "generated view" for this research finding as STRICT JSON matching:',
     '{ "title": string, "subtitle"?: string, "blocks": Block[] }',
@@ -166,6 +197,7 @@ export function buildGenUIPrompt(finding: Finding): string {
     '- Put NO numbers anywhere in prose (title, subtitle, bullets, note). Numbers live only in metric_grid, which Lyra fills in. This is non-negotiable.',
     '- Prose is plain English, research framing, never advice, never "Buy". Use a plain hyphen, never an em dash.',
     '- Choose 2-4 blocks that best explain WHY this surfaced and what to look at. Lead with the score breakdown.',
+    ...personalisation,
     '',
     `FINDING: ${finding.title}`,
     `SUMMARY: ${finding.summary}`,

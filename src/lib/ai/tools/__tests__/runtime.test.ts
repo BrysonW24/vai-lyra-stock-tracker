@@ -59,3 +59,19 @@ describe('ai tool runtime · read_convergence', () => {
     await expect(executeTool('filing_analyst', 'read_convergence')).rejects.toBeInstanceOf(ToolDeniedError);
   });
 });
+
+describe('ai tool runtime · read_trading_twin', () => {
+  it('is granted to the portfolio assistant and returns a research-only twin marker', async () => {
+    // With no Supabase env in tests, the twin has no signed-in user -> not-enough-data marker.
+    const result = (await executeTool('portfolio_assistant', 'read_trading_twin')) as {
+      hasEnoughData: boolean;
+      note?: string;
+    };
+    expect(result).toHaveProperty('hasEnoughData');
+    expect(result.hasEnoughData).toBe(false);
+  });
+
+  it('is denied to an agent without the grant (news_classifier)', async () => {
+    await expect(executeTool('news_classifier', 'read_trading_twin')).rejects.toBeInstanceOf(ToolDeniedError);
+  });
+});

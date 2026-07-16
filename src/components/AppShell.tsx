@@ -41,6 +41,7 @@ import {
   Wand2,
   ReceiptText,
   Telescope,
+  Fingerprint,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { DashboardData } from '@/types/scanner';
@@ -49,6 +50,7 @@ import { APP_VERSION } from '@/lib/version';
 import { BrandLogo } from '@/components/BrandLogo';
 import { AlertStatusBadge } from '@/components/AlertStatusBadge';
 import { AccountMenu } from '@/components/AccountMenu';
+import { captureInteraction } from '@/lib/twin/capture';
 
 // Full section map. Desktop shows it as an icon rail (scrollable, with visible group
 // dividers); below xl the same list renders as an always-on, horizontally-scrollable
@@ -61,6 +63,7 @@ const navItems = [
   { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness, group: 'yours' },
   { href: '/trades', label: 'Trade Log', short: 'Trades', icon: ReceiptText, group: 'yours' },
   { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star, group: 'yours' },
+  { href: '/twin', label: 'Your Twin', short: 'Twin', icon: Fingerprint, group: 'yours' },
   // Investigation surfaces - research, not daily-driver, so they sit after the personal surfaces
   // (were #2/#3, which over-promoted them on the mobile bottom bar before they earned it).
   { href: '/findings', label: 'Findings', short: 'Find', icon: Telescope, group: 'investigate' },
@@ -130,6 +133,12 @@ export function AppShell({ data, children }: AppShellProps) {
   // Boundary-aware: /paper-bot must not also light up /paper (startsWith without the '/' boundary).
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/'));
   const navScrollRef = useRef<HTMLDivElement>(null);
+
+  // Trading-twin cadence: one session_open per full load (deduped in the capture helper). Inert until
+  // the user opts in - the server enforces the consent gate.
+  useEffect(() => {
+    captureInteraction({ eventType: 'session_open' });
+  }, []);
 
   // What's New dot: only when THIS version has not been seen. A hardcoded always-on badge
   // trains users to ignore it - the whole point of the megaphone. Visiting /whats-new

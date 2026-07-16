@@ -4,7 +4,9 @@ import { resolveAiCredentials } from '@/lib/ai/credentials';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 import { getDemoFinding } from '@/lib/findings/demo-findings';
 import { getLiveFindings } from '@/lib/findings/server';
-import { buildDefaultGenUIView, buildGenUIPrompt, validateGenUIView } from '@/lib/findings/genui';
+import { buildDefaultGenUIView, buildGenUIPrompt, validateGenUIView, type GenUIFraming } from '@/lib/findings/genui';
+import { getUserConstraints } from '@/lib/ai/user-context';
+import { loadTwinReflection } from '@/lib/twin/repo';
 import type { Finding } from '@/lib/findings/types';
 
 /**
@@ -58,13 +60,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, view: fallback, reason: 'no_key' });
     }
 
+    // Read-only twin framing (authenticated users only). It tunes emphasis, never the numbers.
+    let framing: GenUIFraming | undefined;
+    if (guard.authenticated) {
+      const [constraints, twin] = await Promise.all([
+        getUserConstraints().catch(() => null),
+        loadTwinReflection().catch(() => null),
+      ]);
+      framing = {
+        riskPosture: twin?.reconciliation.statedRisk && twin.reconciliation.statedRisk !== 'unknown'
+          ? twin.reconciliation.statedRisk
+          : constraints?.riskComfort,
+        preferredSignalKinds: twin?.topSignalKinds.map((k) => k.label),
+      };
+    }
+
     try {
       const { text } = await complete({
         provider: creds.provider,
         apiKey: creds.apiKey,
         model: creds.model,
         system: 'You compose compact research UIs as strict JSON. You never invent numbers and never give financial advice.',
-        prompt: buildGenUIPrompt(finding),
+        prompt: buildGenUIPrompt(finding, framing),
         maxTokens: 500,
       });
       const validated = validateGenUIView(parseJsonLoose(text), finding);

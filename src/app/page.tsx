@@ -30,6 +30,8 @@ import { getMarketContext } from '@/lib/market-context';
 import { getMacroContext } from '@/lib/macro-context';
 import { getSetupStatus } from '@/lib/setup-status';
 import { getPaperAccountSummaryAuthAware } from '@/lib/trading/paper-account-repo';
+import { loadTwinAffinity } from '@/lib/twin/repo';
+import { applyAffinityTiebreak, affinityFor } from '@/lib/twin/ranking';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass, trendArrow } from '@/lib/format';
 import { PaperBotStrip } from '@/components/paper-bot/PaperBotStrip';
 
@@ -38,18 +40,24 @@ export const metadata = { title: 'Command' };
 export default async function OverviewPage() {
   // These four are independent - fetch them concurrently instead of one-after-another
   // so the server render waits on the slowest, not the sum.
-  const [data, marketContext, macroContext, setupStatus, paperAccount] = await Promise.all([
+  const [data, marketContext, macroContext, setupStatus, paperAccount, twinAffinity] = await Promise.all([
     getDashboardData(),
     getMarketContext(),
     getMacroContext(),
     getSetupStatus(),
     getPaperAccountSummaryAuthAware(),
+    loadTwinAffinity().catch(() => null),
   ]);
   // Strongest setups: real strong_setup rows when they exist; otherwise fall back to
   // the top-scored names so the table is never blank (labelled honestly below).
   const trueStrong = data.signals.filter((signal) => signal.status === 'strong_setup');
   const hasStrong = trueStrong.length > 0;
-  const strongSignals = hasStrong ? trueStrong.slice(0, 5) : [...data.signals].sort((a, b) => b.score - a.score).slice(0, 5);
+  const strongBase = hasStrong ? trueStrong.slice(0, 5) : [...data.signals].sort((a, b) => b.score - a.score).slice(0, 5);
+  // Twin-affinity tiebreak: reorders ONLY equal-score names toward the user's interests. The score
+  // still gates - a lower-scored name can never jump a higher one - and nothing is hidden (anti-bubble).
+  const strongSignals = twinAffinity
+    ? applyAffinityTiebreak(strongBase, (s) => s.score, (s) => affinityFor(s.symbol, twinAffinity))
+    : strongBase;
   const watchlistNearTrigger = [...data.watchlist].sort((a, b) => b.scoreDelta - a.scoreDelta).slice(0, 5);
   const portfolioRows = data.portfolio.slice(0, 4);
   const sigBySymbol = new Map(data.signals.map((s) => [s.symbol, s]));

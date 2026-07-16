@@ -4,6 +4,7 @@ import { Radar, Landmark, Cpu, Wallet, Building2, Gauge, TrendingUp, Layers } fr
 import { TickerLogo } from '@/components/TickerLogo';
 import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
 import { SIGNAL_KIND_LABEL, type SignalConvergence, type SignalKind, type SignalDataPoint } from '@/lib/signal-intelligence';
+import { captureInteraction } from '@/lib/twin/capture';
 
 /**
  * Signal Intelligence Board - the "where attention belongs now" surface. Renders the deterministic
@@ -91,7 +92,15 @@ export function SignalIntelligenceBoard({ convergence, stats, generatedAt }: Sig
 
       <div className="space-y-1.5">
         {top.map((c) => (
-          <details key={c.entity} className="group overflow-hidden rounded-md border border-[#1b2530] bg-[#0d1117]">
+          <details
+            key={c.entity}
+            className="group overflow-hidden rounded-md border border-[#1b2530] bg-[#0d1117]"
+            onToggle={(e) => {
+              if (e.currentTarget.open) {
+                captureInteraction({ eventType: 'convergence_expand', entityType: 'convergence', entityId: c.entity });
+              }
+            }}
+          >
             <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 py-2 transition hover:bg-[#101720]">
               <TickerLogo symbol={c.entity} companyName={c.name} size={13} />
               <span className="shrink-0 font-mono text-[11px] font-semibold text-[#eef3f8]">{c.entity}</span>

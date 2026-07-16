@@ -88,6 +88,8 @@ export function AccountSettings() {
   const [lockNote, setLockNote] = useState<string | null>(null);
   const [botInterest, setBotInterest] = useState(false);
   const [agentActions, setAgentActions] = useState(false);
+  const [serverDeleteBusy, setServerDeleteBusy] = useState(false);
+  const [privacyNote, setPrivacyNote] = useState<string | null>(null);
   const emojiInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -214,6 +216,30 @@ export function AccountSettings() {
     setLock(DEFAULT_LOCK);
     setLockNote('All local data cleared.');
     setTimeout(() => setLockNote(null), 3000);
+  }
+
+  // Server-side erase: deletes the signed-in user's account and every user-keyed row via
+  // DELETE /api/account (auth.admin.deleteUser -> on-delete cascade). Honest backing for the
+  // privacy promise, distinct from the local-only wipe above.
+  async function deleteServerAccount() {
+    if (!window.confirm('Permanently delete your Lyra account and ALL server-side data (profile, settings, watchlist, paper-trade history)? This cannot be undone.')) return;
+    setServerDeleteBusy(true);
+    setPrivacyNote(null);
+    try {
+      const res = await fetch('/api/account', { method: 'DELETE' });
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (res.ok && data.ok) {
+        clearAllLocalData();
+        setPrivacyNote('Your account and all server-side data were deleted. Signing you out...');
+        setTimeout(() => { window.location.href = '/'; }, 1600);
+      } else {
+        setPrivacyNote(data.error || 'Could not delete server data. Please try again.');
+      }
+    } catch {
+      setPrivacyNote('Could not reach the server. Please try again.');
+    } finally {
+      setServerDeleteBusy(false);
+    }
   }
 
   return (
@@ -503,18 +529,39 @@ export function AccountSettings() {
           </Panel>
         </div>
 
-        <Panel icon={Trash2} title="Data &amp; privacy" subtitle="Everything is local to this browser.">
+        <Panel icon={Trash2} title="Data &amp; privacy" subtitle="See it, keep it, or delete it - your call.">
           <div className="space-y-3">
             <p className="text-xs leading-relaxed text-[#a8b5c2]">
-              Lyra stores your profile, preferences, board layout and any AI key in this browser&apos;s local storage. Nothing is uploaded. Clearing data removes all of it from this device.
+              On this device, Lyra keeps your profile, preferences, board layout and any AI key in local storage. When you are signed in, your profile, settings, watchlist and paper-trade history are also saved to your private Lyra account so they follow you across devices - visible only to you, never sold. Behavioural &ldquo;twin&rdquo; capture stays off until you opt in.
             </p>
-            <button
-              type="button"
-              onClick={wipeEverything}
-              className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 font-mono text-xs text-[#ff6b6b] transition hover:bg-[#3a1518]"
-            >
-              <Trash2 size={13} /> Clear all local data
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={wipeEverything}
+                className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 font-mono text-xs text-[#ff6b6b] transition hover:bg-[#3a1518]"
+              >
+                <Trash2 size={13} /> Clear local data (this device)
+              </button>
+              {isSupabaseConfigured() && (
+                <>
+                  <a
+                    href="/api/account/export"
+                    className="inline-flex items-center gap-1.5 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 font-mono text-xs text-[#7fb0ff] transition hover:bg-[#101a2e]"
+                  >
+                    <ClipboardPaste size={13} /> Export my data
+                  </a>
+                  <button
+                    type="button"
+                    onClick={deleteServerAccount}
+                    disabled={serverDeleteBusy}
+                    className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 font-mono text-xs text-[#ff6b6b] transition hover:bg-[#3a1518] disabled:opacity-40"
+                  >
+                    <Trash2 size={13} /> {serverDeleteBusy ? 'Deleting…' : 'Delete my account data'}
+                  </button>
+                </>
+              )}
+            </div>
+            {privacyNote && <p className="text-[11px] leading-snug text-[#f3a33a]">{privacyNote}</p>}
           </div>
         </Panel>
       </div>

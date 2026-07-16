@@ -11,6 +11,7 @@ import { FINANCE_FACTS } from '@/lib/finance-facts';
 import { EDUCATION_MODULES, getModuleCorpusText, getModuleHref } from '@/lib/education';
 import { getDashboardData } from '@/lib/data';
 import { buildSignalIntelligence, topConvergence, SIGNAL_KIND_LABEL } from '@/lib/signal-intelligence';
+import { loadTwinReflection } from '@/lib/twin/repo';
 
 /** Matches the agent registry's evidenceItemSchema: { id, text }. */
 export interface EvidenceItem {
@@ -145,6 +146,31 @@ export async function readPortfolioOwn() {
     unrealisedPnlPercent: h.unrealisedPnlPercent,
     portfolioWeight: Math.round(h.portfolioWeight),
   }));
+}
+
+/**
+ * The requesting user's own trading twin - a deterministic, research-only model of their interests,
+ * habits, and revealed risk posture (from their watchlist + paper trades). RLS-scoped to the caller;
+ * returns a not-enough-data marker when the twin is too thin or the user is not signed in. This is
+ * EVIDENCE the agent may cite to meet the user where they are ("you usually lean into gov-award
+ * names") - never a control, never advice. The reflection text is already neutral and guardrailed.
+ */
+export async function readTradingTwin() {
+  const reflection = await loadTwinReflection();
+  if (!reflection || !reflection.hasEnoughData) {
+    return { hasEnoughData: false, note: 'The user does not have enough trading history yet for a twin profile.' };
+  }
+  return {
+    hasEnoughData: true,
+    observations: reflection.observations,
+    statedRisk: reflection.reconciliation.statedRisk,
+    revealedRisk: reflection.reconciliation.revealedRisk,
+    riskGap: reflection.reconciliation.gap,
+    topThemes: reflection.topThemes,
+    trustedSignalKinds: reflection.topSignalKinds.map((k) => k.label),
+    stageLean: reflection.stageLean,
+    disclaimer: 'Research about the user, from their own behaviour. Cite to personalise framing; never turn into advice.',
+  };
 }
 
 /** Theme context (or one theme by slug). */

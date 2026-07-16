@@ -14,6 +14,7 @@ import { resolveAiCredentials } from '@/lib/ai/credentials';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 import { parseTradeLogIntent, detectSellLogIntent } from '@/lib/trading/trade-intent';
 import { lookupMarketQuote } from '@/lib/market/quote';
+import { loadRecentChatTurns, appendChatTurns } from '@/lib/twin/chat-memory';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -195,7 +196,16 @@ export async function POST(request: NextRequest) {
       `CONTEXT (deterministic, from the latest scan):\n${buildGrounding(data, new Date())}`,
       knowledgeBlock || false,
     ]);
-    const history = screenedTurns.map((m) => `${m.role === 'user' ? 'User' : 'Lyra'}: ${m.content}`).join('\n');
+    // Cross-session memory: on a fresh session (short in-session history) seed context from the user's
+    // OWN prior turns (opt-in, RLS-scoped). Recalled user turns are injection-screened exactly like
+    // live ones, so a poisoned memory cannot smuggle in instructions.
+    let recalled: ChatMessage[] = [];
+    if (authenticated && messages.length <= 2) {
+      const prior = await loadRecentChatTurns(HISTORY_TURNS).catch(() => [] as ChatMessage[]);
+      recalled = prior.filter((m) => !(m.role === 'user' && detectInjectionAttempt(m.content)));
+    }
+    const historyTurns = [...recalled, ...screenedTurns];
+    const history = historyTurns.map((m) => `${m.role === 'user' ? 'User' : 'Lyra'}: ${m.content}`).join('\n');
     const prompt = `${history}\nLyra:`;
 
     const startedAt = Date.now();
@@ -292,6 +302,14 @@ export async function POST(request: NextRequest) {
       latencyMs,
     }).catch(() => {});
     if (last?.role === 'user') recordQuestionSignal(last.content);
+
+    // Persist this exchange for cross-session recall (opt-in + RLS enforced inside; best-effort).
+    if (authenticated && last?.role === 'user') {
+      void appendChatTurns([
+        { role: 'user', content: last.content },
+        { role: 'assistant', content: finalText },
+      ]).catch(() => {});
+    }
 
     return NextResponse.json({ ok: true, text: finalText, suggestions, action });
   } catch {
