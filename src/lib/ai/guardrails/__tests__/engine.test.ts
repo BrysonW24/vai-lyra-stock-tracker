@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateGuardrails, STOCK_OPS_GUARDS, type GuardStatus } from '../engine';
+import { evaluateGuardrails, STOCK_OPS_GUARDS, GUARDRAILS_VERSION, type GuardStatus } from '../engine';
 
 /** A benign, grounded research sentence that should sail through every guard. */
 const CLEAN = 'MP Materials scores 72 on the oversold-recovery signal; RSI is 41 and the MACD histogram is improving.';
@@ -114,5 +114,35 @@ describe('guardrails engine · evaluateGuardrails', () => {
 
   it('throws (fail-closed) on an unknown guardId', () => {
     expect(() => evaluateGuardrails({ text: CLEAN }, ['does-not-exist'])).toThrow(/unknown guardId/);
+  });
+
+  it('exposes a monotonic guard-set version', () => {
+    expect(GUARDRAILS_VERSION).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('guardrails engine · secret + PII guards', () => {
+  it('blocks an API key echoed in the output', () => {
+    const v = evaluateGuardrails({ text: 'The key is sk-ABCDEFGHIJKLMNOPQRSTUVWXYZ012345.' });
+    expect(v.decision).toBe('block');
+    expect(v.guardResults.find((r) => r.guardId === 'secret-leakage')?.status).toBe('fail');
+  });
+
+  it('blocks a database connection string with credentials', () => {
+    const v = evaluateGuardrails({ text: 'Use postgres://admin:hunter2@db.internal:5432/lyra.' });
+    expect(v.decision).toBe('block');
+    expect(v.blockedReasons.join(' ')).toMatch(/connection string/);
+  });
+
+  it('reviews (not blocks) an email address in the output', () => {
+    const v = evaluateGuardrails({ text: 'Contact jane.doe@example.com for details.' });
+    expect(v.decision).toBe('review');
+    expect(v.guardResults.find((r) => r.guardId === 'pii-exposure')?.status).toBe('warn');
+  });
+
+  it('does not flag a clean research answer as secret or PII', () => {
+    const v = evaluateGuardrails({ text: CLEAN, allowedNumbers: CLEAN_NUMBERS });
+    expect(v.guardResults.find((r) => r.guardId === 'secret-leakage')?.status).toBe('pass');
+    expect(v.guardResults.find((r) => r.guardId === 'pii-exposure')?.status).toBe('pass');
   });
 });

@@ -4,6 +4,8 @@ import { getDashboardData } from '@/lib/data';
 import { COMMODITIES } from '@/lib/commodities';
 import { pageTitleClass } from '@/lib/ui';
 
+export const metadata = { title: 'Commodities' };
+
 export default async function CommoditiesPage() {
   const data = await getDashboardData();
   const aiCount = COMMODITIES.filter((c) => c.ai).length;

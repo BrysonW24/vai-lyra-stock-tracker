@@ -58,7 +58,14 @@ if (remoteSrc && changed !== null) {
   const shippable = changed
     .split('\n')
     .filter(Boolean)
-    .filter((f) => /^(src|supabase|workers|public)\//.test(f));
+    // content/ compiles into src/lib/generated at build time, sql/ is live setup material,
+    // contracts/ is the notification wire contract, and the root config files change runtime
+    // behavior - all of these previously shipped gate-free through the src-only regex.
+    .filter(
+      (f) =>
+        /^(src|supabase|workers|public|content|sql|contracts)\//.test(f) ||
+        /^(next\.config\.js|Dockerfile|vercel\.json)$/.test(f),
+    );
 
   if (shippable.length > 0 && remoteVersion && localVersion === remoteVersion) {
     fail([

@@ -2,6 +2,8 @@ import { AppShell } from '@/components/AppShell';
 import { GovAwardsView } from '@/components/gov/GovAwardsView';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'Gov Awards' };
+
 export default async function AwardsPage() {
   const data = await getDashboardData();
 

@@ -2,6 +2,8 @@ import { AppShell } from '@/components/AppShell';
 import { SupplyChainGraph } from '@/components/supply-chain/SupplyChainGraph';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'Supply Chain' };
+
 export default async function SupplyChainPage() {
   const data = await getDashboardData();
 

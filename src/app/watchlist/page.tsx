@@ -8,6 +8,8 @@ import { getDashboardData } from '@/lib/data';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass } from '@/lib/format';
 import { pageTitleClass } from '@/lib/ui';
 
+export const metadata = { title: 'Watchlist' };
+
 export default async function WatchlistPage() {
   const data = await getDashboardData();
   const approaching = data.watchlist.filter((item) => item.triggerState === 'approaching').length;
@@ -24,7 +26,9 @@ export default async function WatchlistPage() {
             ['Triggered', triggered.toString(), triggered > 0 ? 'text-[#43d18b]' : 'text-[#8190a0]'],
             ['Best setup', bestScore.toString(), 'text-[#eef3f8]'],
             ['Tracked', data.latestRun.watchlistOverlaysCreated.toString(), 'text-[#60a5fa]'],
-            ['Alerts', 'Off', 'text-[#8190a0]'],
+            // Engine truth from the latest run - this tile used to hardcode 'Off', which was
+            // simply false for anyone with alerts configured.
+            ['Alerts sent', data.latestRun.alertsSent.toString(), data.latestRun.alertsSent > 0 ? 'text-[#43d18b]' : 'text-[#8190a0]'],
           ].map(([label, value, tone]) => (
             <div className="terminal-panel rounded-md p-2" key={label}>
               <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>

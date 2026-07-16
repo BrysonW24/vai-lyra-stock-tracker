@@ -140,3 +140,28 @@ Journey grades: landing B+, demo B, auth C+, onboarding A-, activation C, settin
 ---
 
 *Audit artifacts: six agent reports synthesized 2026-07-16. Re-run pattern: spawn one scoped read-only auditor per vertical, then reconcile into this register. Suggested cadence: after each minor-version release.*
+
+---
+
+## Remediation addendum (same day, 2026-07-16 evening)
+
+A full remediation batch shipped the same day, targeting the two systemic patterns. Status of the P0 register:
+
+| # | P0 | Status |
+|---|---|---|
+| 1 | RLS-less `sql/` tables | **Fixed** - migration `030_rls_scanner_tables.sql` + the same guarded block appended to `sql/_apply_all_scanner_schema.sql` (24 tables: RLS on, read-only to clients, service-role writes) |
+| 2 | Nav rail clips items | **Fixed** - `overflow-y-auto` + visible group dividers on the rail (`AppShell.tsx`) |
+| 3 | No error boundaries | **Fixed** - branded `error.tsx`, `not-found.tsx`, `global-error.tsx` |
+| 4 | Signup wall on configured deploys | **Fixed** - `/api/demo` sets a read-only tour cookie the middleware honours; "Explore the demo first" CTA on /welcome |
+| 5 | Demo watchlist lost + no migration | **Fixed** - `local-watchlist.ts` demo fallback + alert-prefs seeding on finish; onboarding prefills from local demo data after sign-up ("bring your demo book") |
+| 6 | Chat/brief unchecked model output | **Fixed** - `guardrails/prose.ts` (`guardProse`): grounding-derived allow-set, fabricated-sentence stripping (digits + spelled-out figures), full engine verdict; wired into both routes |
+| 7 | 3 of 4 workers never run | **Fixed** - CLI entrypoints on all three + scheduled in `nightly-maintenance.yml` |
+| 8 | Digest is vapor | **Fixed** - `digest_job.py` composes daily digest (weekly report Fridays) from engine-persisted rows; scheduled nightly |
+| 9 | Quiet-hours alerts lost | **Fixed** - worker defers quiet-hours gating to the JS router (`ignore_quiet_hours`); router holds + releases; nightly sweep releases strands |
+| 10 | Partial-bar repainting | **Fixed** - `drop_incomplete_last_candle` in `market_data.py` (+ yfinance retry/backoff) |
+| 11 | Version guard client-side only | **Fixed** - `version-guard` job in CI replays the guard against the PR base / pre-push commit; shippable regex widened to content/sql/contracts/config |
+| 12 | Zero route tests | **Fixed (started)** - dispatch route security contract pinned (`route.test.ts`); dispatch sweep + contracts drift + prose guard + breaker + budget tests added (~35 new JS tests, 21 new Python tests) |
+
+Built-but-not-wired items also closed: outcome labeling live (`outcome_job.py` -> `signal_outcomes` + `signal_followup` coaching notifications), budget guard wired (`budget-tracker.ts` in chat/brief), contracts enforced by test, activation telemetry (`activation_events` migration + beacons), delivery retry + held-release sweep (`sweepNotifications` + endpoint), circuit breaker + hosted-429 policy in the gateway, `/api/ai/status` auth-gated with breaker visibility, `/api/health` `lastScanAt` freshness, doctor self-integrity checks, cron failure alerts + keepalive on both workflows.
+
+Still open (documented, not silently dropped): Zod schemas on every first-party route body, atomic portfolio replace RPC, server-side paper-bot intent persistence, per-route `loading.tsx` skeletons, `AppShell` into a shared layout, lifecycle email, and full component-test coverage. These are the next `/production-keeper` targets.

@@ -9,6 +9,8 @@ import { buildEmergenceShortlist, buildLifecycleCandidates, stageDistribution } 
 import { traceThemeChain, companyChainPosition, type ValueChain, type CompanyChainPosition } from '@/lib/value-chain';
 import { buildSignalIntelligence } from '@/lib/signal-intelligence';
 
+export const metadata = { title: 'Small Caps' };
+
 export default async function SmallCapsPage() {
   const data = await getDashboardData();
   const momentumBySymbol = Object.fromEntries(data.signals.map((s) => [s.symbol, s.score]));

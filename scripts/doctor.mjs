@@ -7,6 +7,7 @@
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { execSync } from 'node:child_process';
 
 const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';
@@ -52,6 +53,29 @@ console.log(`\n${BOLD}Lyra setup doctor${RESET}\n`);
 const major = Number(process.versions.node.split('.')[0]);
 if (major >= 18) ok(`Node ${process.versions.node}`);
 else bad(`Node ${process.versions.node} - Next 15 needs Node 18+`);
+
+// 1b. Guardrail self-integrity - the doctor should also verify the rails protecting this
+// repo, not just the env. An unwired hooksPath means the version guard never runs locally.
+const trySh = (cmd) => {
+  try {
+    return execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  } catch {
+    return null;
+  }
+};
+const hooksPath = trySh('git config core.hooksPath');
+if (hooksPath === '.githooks') ok('Version-guard hook wired (core.hooksPath = .githooks)');
+else warn(`Pre-push version guard NOT wired (core.hooksPath = ${hooksPath || 'unset'}) - run: npm install`);
+
+const pythonBin = existsSync(resolve(root, '.venv'))
+  ? '.venv'
+  : trySh('python3 --version')
+    ? 'python3'
+    : trySh('python --version')
+      ? 'python'
+      : null;
+if (pythonBin) ok(`Python available for the worker (${pythonBin === '.venv' ? 'repo .venv' : pythonBin})`);
+else warn('No Python found - npm run worker:scan / worker:test will fail (install Python 3.11+)');
 
 // 2. Frontend Supabase (read-only)
 const feSupabase = has('NEXT_PUBLIC_SUPABASE_URL') && has('NEXT_PUBLIC_SUPABASE_ANON_KEY');

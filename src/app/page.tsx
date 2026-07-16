@@ -33,6 +33,8 @@ import { getPaperAccountSummaryAuthAware } from '@/lib/trading/paper-account-rep
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass, trendArrow } from '@/lib/format';
 import { PaperBotStrip } from '@/components/paper-bot/PaperBotStrip';
 
+export const metadata = { title: 'Command' };
+
 export default async function OverviewPage() {
   // These four are independent - fetch them concurrently instead of one-after-another
   // so the server render waits on the slowest, not the sum.

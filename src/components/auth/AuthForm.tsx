@@ -16,7 +16,7 @@ const inputClass =
  * In demo mode (no Supabase configured) the form is shown as a preview and the button
  * drops straight into the demo console.
  */
-export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
+export function AuthForm({ mode, initialError = null }: { mode: 'login' | 'signup'; initialError?: string | null }) {
   const router = useRouter();
   const supabase = createSupabaseBrowserClient();
   const demo = !supabase;
@@ -25,7 +25,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [pin, setPin] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -87,8 +87,9 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
 
       {demo && (
         <p className="mb-3 rounded-md border border-[#9a6a1f]/40 bg-[#2a1f0f]/60 px-3 py-2 text-[11px] leading-snug text-[#f3a33a]">
-          Demo mode - accounts aren&apos;t live yet. When they are, sign-{mode === 'signup' ? 'up' : 'in'} is
-          just your email and a 6-digit PIN.
+          Demo mode - this deployment has no Supabase configured, so there are no accounts to sign
+          {mode === 'signup' ? ' up for' : ' into'}. Continue straight into the demo console; add
+          the Supabase env vars (see .env.example) to turn real accounts on.
         </p>
       )}
 

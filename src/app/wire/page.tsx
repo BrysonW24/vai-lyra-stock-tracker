@@ -5,6 +5,8 @@ import { buildLiveWire } from '@/lib/feed';
 import { demoIntelligenceFeed } from '@/lib/intelligence';
 import { demoCalendarEvents } from '@/lib/calendar';
 
+export const metadata = { title: 'Live Wire' };
+
 export default async function WirePage() {
   const data = await getDashboardData();
   const items = buildLiveWire(data.signalChanges, demoIntelligenceFeed, demoCalendarEvents);

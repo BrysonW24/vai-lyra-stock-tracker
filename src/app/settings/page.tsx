@@ -2,6 +2,8 @@ import { AppShell } from '@/components/AppShell';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'Strategy Rules' };
+
 export default async function SettingsPage() {
   const data = await getDashboardData();
 

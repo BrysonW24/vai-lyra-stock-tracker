@@ -45,7 +45,13 @@ export interface AiGuardBlocked {
   response: NextResponse;
 }
 
-function clientIp(request: NextRequest): string {
+/**
+ * Best-effort caller identity for anonymous rate limiting. The first x-forwarded-for hop is
+ * client-influenced on some hosts, so treat this as abuse damping, not authentication - the
+ * per-user budget (session id) and hosted-key auth gate carry the real weight. Exported for
+ * the other open routes (feedback, ticker-lookup) so they share one definition.
+ */
+export function clientIp(request: NextRequest): string {
   const fwd = request.headers.get('x-forwarded-for');
   if (fwd) return fwd.split(',')[0]!.trim();
   return request.headers.get('x-real-ip')?.trim() || 'anon';

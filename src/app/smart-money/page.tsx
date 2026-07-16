@@ -4,6 +4,8 @@ import { getDashboardData } from '@/lib/data';
 import { fetchLiveSmartMoney } from '@/lib/smart-money-live';
 import { pageTitleClass } from '@/lib/ui';
 
+export const metadata = { title: 'Smart Money' };
+
 export default async function SmartMoneyPage() {
   const data = await getDashboardData();
   const { items, live } = await fetchLiveSmartMoney();

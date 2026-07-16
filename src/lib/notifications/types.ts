@@ -19,6 +19,7 @@ export const isVoiceId = (value: unknown): value is VoiceId => VOICE_IDS.include
 
 export type NotificationType =
   | 'signal_alert'
+  | 'signal_followup'
   | 'theme_breakout'
   | 'small_cap_discovery'
   | 'capital_event'

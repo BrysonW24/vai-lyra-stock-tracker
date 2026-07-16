@@ -2,6 +2,8 @@ import { AppShell } from '@/components/AppShell';
 import { CapitalFlowsView } from '@/components/flows/CapitalFlowsView';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'Capital Flows' };
+
 export default async function FlowsPage() {
   const data = await getDashboardData();
 

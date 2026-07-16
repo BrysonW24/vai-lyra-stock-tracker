@@ -11,7 +11,9 @@ import {
   calculateSetupCompleteness,
 } from '@/lib/onboarding';
 import { syncOperatorProfile } from '@/lib/sync-onboarding';
-import { saveLocalHoldings } from '@/lib/local-portfolio';
+import { saveLocalHoldings, loadLocalHoldings } from '@/lib/local-portfolio';
+import { saveLocalWatchlist, loadLocalWatchlist } from '@/lib/local-watchlist';
+import { saveAlertPrefs, type AlertMode } from '@/lib/alert-prefs';
 import { saveOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadOnboardingProgress, saveOnboardingProgress, clearOnboardingProgress } from '@/lib/onboarding-progress';
 import { isSupabaseConfigured, createSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -35,6 +37,20 @@ import { LyraReveal } from '@/components/activation/LyraReveal';
 import { SceneSlider } from '@/components/activation/SceneSlider';
 import { SetupCompleteBeat } from '@/components/activation/SetupCompleteBeat';
 
+/** Fire-and-forget activation beacon (closed slug set; server no-ops in demo/anon). */
+function logActivation(event: string, detail: { step?: number; path?: string } = {}): void {
+  try {
+    void fetch('/api/activation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event, ...detail }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* telemetry must never break the flow */
+  }
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [state, setState] = useState<OnboardingState | null>(null);
@@ -54,7 +70,33 @@ export default function OnboardingPage() {
       setCurrentStep(saved.currentStep);
       setPhase(saved.phase);
     } else {
-      setState(createInitialOnboardingState('full_setup'));
+      const fresh = createInitialOnboardingState('full_setup');
+      // Demo-to-account migration: a user who explored demo mode arrives here (post sign-up)
+      // with a local book and watchlist in this browser. Prefill setup with them so finishing
+      // onboarding uploads the demo data to the account instead of forcing a from-scratch
+      // re-entry - previously everything they built in demo was simply lost.
+      if (isSupabaseConfigured()) {
+        const localHoldings = loadLocalHoldings();
+        if (localHoldings.length > 0) {
+          fresh.portfolio = localHoldings.map((holding) => ({
+            symbol: holding.symbol,
+            quantity: holding.quantity,
+            averageBuyPrice: holding.averageBuyPrice,
+            purchaseDate: holding.purchaseDate,
+            notes: holding.notes,
+          }));
+        }
+        const localWatch = loadLocalWatchlist();
+        if (localWatch.length > 0) {
+          fresh.watchlist = localWatch.map((item) => ({
+            symbol: item.symbol,
+            targetBuyPrice: item.targetBuyPrice,
+            notes: item.notes,
+          }));
+        }
+      }
+      setState(fresh);
+      logActivation('onboarding_started');
     }
     setHydrated(true);
   }, []);
@@ -96,6 +138,7 @@ export default function OnboardingPage() {
     // Mark Welcome (steps[0]) complete and advance to the first real step of the chosen path.
     setState({ ...createInitialOnboardingState(path), completedSteps: [steps[0]] });
     setCurrentStep(steps[1] ?? steps[0]);
+    logActivation('path_chosen', { path });
   };
 
   const handleNext = () => {
@@ -104,6 +147,7 @@ export default function OnboardingPage() {
     const next = idx >= 0 ? effectiveSteps[idx + 1] ?? null : null;
 
     setState({ ...state, completedSteps: Array.from(new Set([...state.completedSteps, currentStep])) });
+    logActivation('step_completed', { step: currentStep, path: state.path });
     if (next !== null) {
       setCurrentStep(next);
     }
@@ -256,6 +300,30 @@ export default function OnboardingPage() {
         })),
       );
 
+      // Same demo fallback for the watchlist (including typed universe tickers) - without
+      // this, /api/watchlist answered {demo:true} and DROPPED every item while the banner
+      // showed "Watchlist done". Live mode ignores it: the DB rows above are the truth.
+      saveLocalWatchlist([
+        ...state.watchlist.map((item) => ({
+          symbol: item.symbol,
+          targetBuyPrice: item.targetBuyPrice,
+          notes: item.notes,
+        })),
+        ...dedupedCustomTickers.map((symbol) => ({ symbol })),
+      ]);
+
+      // Seed the in-app alert controls from the onboarding alert choices - previously the
+      // panel choices went nowhere in demo mode and the alert badge ignored them entirely.
+      if (state.alerts) {
+        const anyInstant =
+          state.alerts.strongSetupAlerts || state.alerts.watchlistTriggerAlerts || state.alerts.portfolioRiskAlerts;
+        const mode: AlertMode = anyInstant ? 'live' : state.alerts.dailyDigest ? 'quiet' : 'muted';
+        saveAlertPrefs({
+          mode,
+          frequency: state.alerts.hourlyDigest ? '1h' : state.alerts.dailyDigest && !anyInstant ? 'digest' : '1h',
+        });
+      }
+
       // Any real save failure: do NOT advance to the success beat and do NOT clear the resumable
       // checkpoint. Surface an inline retry message so the user can press Finish again - their
       // entered data is still in state and still checkpointed.
@@ -278,6 +346,7 @@ export default function OnboardingPage() {
 
       // Onboarding done - drop the resumable checkpoint so a re-visit starts clean.
       clearOnboardingProgress();
+      logActivation('onboarding_finished', { path: state.path });
 
       // Show the success beat only AFTER all saves are done; it navigates to the command centre when done.
       setPhase('complete');

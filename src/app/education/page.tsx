@@ -4,6 +4,8 @@ import { EducationHub } from '@/components/education/EducationHub';
 import { LearningPath } from '@/components/education/LearningPath';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'Education' };
+
 export default async function EducationPage() {
   const data = await getDashboardData();
 

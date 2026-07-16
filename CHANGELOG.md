@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-16
+
+AI you can measure: quality evals, a learned recovery model, hybrid retrieval, AI-ops.
+
+### Changed
+
+- Lyra now proves its AI is good, not just safe: a labelled question-and-answer test set scores every answer for whether its numbers are grounded, its citations are real, it covers the facts it should, and it refuses questions it should not answer - so a fabricated or advice-y answer turns the build red.
+- A learned, calibrated recovery-probability model sits alongside the deterministic score: trained and backtested out-of-sample (it beats a naive baseline), it attaches a research-only probability band to a setup. It informs, it never decides - the engine still owns the action, and the model card is public.
+- Smarter in-app doc answers: retrieval now blends exact keywords with a fuzzy character-level match (so "deploying" finds the deploy doc), measured with real retrieval metrics and gated so it can never get worse - all still offline, no embeddings, no new services.
+- Stronger safety: new guards block secrets (API keys, tokens, connection strings) and flag personal data in any answer, plus an adversarial red-team test set (jailbreaks, injection, exfiltration) - and a structural check that no AI screen can reach the model without passing the guards.
+- New AI Ops dashboard (/ai-ops) surfaces how the AI layer is behaving: throughput, latency, refusal and guard-block rates, circuit-breaker state, and the model card - plus a public AI System Card (/api/ai/system-card) that reads live from the code.
+
 ## [0.9.1] - 2026-07-16
 
 Review hardening: honest copy, fresh fill prices, smarter doc answers.
@@ -319,7 +331,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.7.0...v0.8.0

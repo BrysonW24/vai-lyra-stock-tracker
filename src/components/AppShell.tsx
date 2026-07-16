@@ -42,59 +42,60 @@ import {
   ReceiptText,
   Telescope,
 } from 'lucide-react';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { DashboardData } from '@/types/scanner';
 import { relativeTime } from '@/lib/format';
+import { APP_VERSION } from '@/lib/version';
 import { BrandLogo } from '@/components/BrandLogo';
 import { AlertStatusBadge } from '@/components/AlertStatusBadge';
 import { AccountMenu } from '@/components/AccountMenu';
 
-// Full section map. Desktop shows it as an icon rail; below xl the same list
-// renders as an always-on, horizontally-scrollable bottom bar so every surface
-// (Education included) is permanently reachable without opening a menu.
+// Full section map. Desktop shows it as an icon rail (scrollable, with visible group
+// dividers); below xl the same list renders as an always-on, horizontally-scrollable
+// bottom bar so every surface (Education included) is permanently reachable without
+// opening a menu. `group` renders as a divider on the rail whenever it changes - the
+// grouping used to live only in comments, which left 32 identical dots to memorise.
 const navItems = [
-  // Grouped for a daily user: your account, then signals/live, then research,
-  // then analysis tools, then the trading layer, then learn + settings.
   // -- Yours --
-  { href: '/', label: 'Command', short: 'Command', icon: Gauge },
-  { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness },
-  { href: '/trades', label: 'Trade Log', short: 'Trades', icon: ReceiptText },
-  { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star },
+  { href: '/', label: 'Command', short: 'Command', icon: Gauge, group: 'yours' },
+  { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness, group: 'yours' },
+  { href: '/trades', label: 'Trade Log', short: 'Trades', icon: ReceiptText, group: 'yours' },
+  { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star, group: 'yours' },
   // Investigation surfaces - research, not daily-driver, so they sit after the personal surfaces
   // (were #2/#3, which over-promoted them on the mobile bottom bar before they earned it).
-  { href: '/findings', label: 'Findings', short: 'Find', icon: Telescope },
-  { href: '/graph', label: 'Investigation Graph', short: 'Graph', icon: Network },
-  { href: '/charts', label: 'Charts', short: 'Charts', icon: PieChart },
-  { href: '/saved', label: 'Saved', short: 'Saved', icon: Bookmark },
-  { href: '/wire', label: 'Live Wire', short: 'Wire', icon: Rss },
-  { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper },
-  { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays },
+  { href: '/findings', label: 'Findings', short: 'Find', icon: Telescope, group: 'investigate' },
+  { href: '/graph', label: 'Investigation Graph', short: 'Graph', icon: Network, group: 'investigate' },
+  { href: '/charts', label: 'Charts', short: 'Charts', icon: PieChart, group: 'investigate' },
+  { href: '/saved', label: 'Saved', short: 'Saved', icon: Bookmark, group: 'investigate' },
+  { href: '/wire', label: 'Live Wire', short: 'Wire', icon: Rss, group: 'investigate' },
+  { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper, group: 'investigate' },
+  { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays, group: 'investigate' },
   // -- Signals --
-  { href: '/radar', label: 'Signal Radar', short: 'Radar', icon: Radar },
-  { href: '/smart-money', label: 'Smart Money', short: 'Smart $', icon: Banknote },
+  { href: '/radar', label: 'Signal Radar', short: 'Radar', icon: Radar, group: 'signals' },
+  { href: '/smart-money', label: 'Smart Money', short: 'Smart $', icon: Banknote, group: 'signals' },
   // -- Research --
-  { href: '/themes', label: 'World Radar', short: 'Themes', icon: Globe },
-  { href: '/supply-chain', label: 'Supply Chain', short: 'Chain', icon: Workflow },
-  { href: '/small-caps', label: 'Small Caps', short: 'SmCaps', icon: Microscope },
-  { href: '/investors', label: 'Investor Radar', short: 'Funds', icon: Landmark },
-  { href: '/awards', label: 'Gov Awards', short: 'Awards', icon: ScrollText },
-  { href: '/flows', label: 'Capital Flows', short: 'Flows', icon: ArrowLeftRight },
-  { href: '/filings', label: 'Filings & Evidence', short: 'Filings', icon: FileText },
-  { href: '/ipos', label: 'IPO Radar', short: 'IPOs', icon: Rocket },
-  { href: '/commodities', label: 'Commodities', short: 'Commod', icon: Gem },
-  { href: '/fundamentals', label: 'Fundamentals', short: 'Fundies', icon: BarChart3 },
+  { href: '/themes', label: 'World Radar', short: 'Themes', icon: Globe, group: 'research' },
+  { href: '/supply-chain', label: 'Supply Chain', short: 'Chain', icon: Workflow, group: 'research' },
+  { href: '/small-caps', label: 'Small Caps', short: 'SmCaps', icon: Microscope, group: 'research' },
+  { href: '/investors', label: 'Investor Radar', short: 'Funds', icon: Landmark, group: 'research' },
+  { href: '/awards', label: 'Gov Awards', short: 'Awards', icon: ScrollText, group: 'research' },
+  { href: '/flows', label: 'Capital Flows', short: 'Flows', icon: ArrowLeftRight, group: 'research' },
+  { href: '/filings', label: 'Filings & Evidence', short: 'Filings', icon: FileText, group: 'research' },
+  { href: '/ipos', label: 'IPO Radar', short: 'IPOs', icon: Rocket, group: 'research' },
+  { href: '/commodities', label: 'Commodities', short: 'Commod', icon: Gem, group: 'research' },
+  { href: '/fundamentals', label: 'Fundamentals', short: 'Fundies', icon: BarChart3, group: 'research' },
   // -- Analysis tools --
-  { href: '/comparison', label: 'Comparison Lab', short: 'Compare', icon: GitCompare },
-  { href: '/simulation', label: 'Simulation Lab', short: 'Simulate', icon: Calculator },
-  { href: '/strategy-lab', label: 'Strategy Lab', short: 'Strategy', icon: FlaskConical },
-  { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins },
+  { href: '/comparison', label: 'Comparison Lab', short: 'Compare', icon: GitCompare, group: 'analysis' },
+  { href: '/simulation', label: 'Simulation Lab', short: 'Simulate', icon: Calculator, group: 'analysis' },
+  { href: '/strategy-lab', label: 'Strategy Lab', short: 'Strategy', icon: FlaskConical, group: 'analysis' },
+  { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins, group: 'analysis' },
   // -- Trading layer --
-  { href: '/paper-bot', label: 'Paper Bot', short: 'Paper Bot', icon: Bot },
-  { href: '/trading', label: 'Live Bot', short: 'Live Bot', icon: ShieldCheck },
+  { href: '/paper-bot', label: 'Paper Bot', short: 'Paper Bot', icon: Bot, group: 'trading' },
+  { href: '/trading', label: 'Live Bot', short: 'Live Bot', icon: ShieldCheck, group: 'trading' },
   // -- Learn & settings --
-  { href: '/education', label: 'Education', short: 'Learn', icon: GraduationCap },
-  { href: '/whats-new', label: "What's New", short: 'New', icon: Sparkles },
-  { href: '/settings', label: 'Strategy Rules', short: 'Rules', icon: SlidersHorizontal },
+  { href: '/education', label: 'Education', short: 'Learn', icon: GraduationCap, group: 'learn' },
+  { href: '/whats-new', label: "What's New", short: 'New', icon: Sparkles, group: 'learn' },
+  { href: '/settings', label: 'Strategy Rules', short: 'Rules', icon: SlidersHorizontal, group: 'learn' },
 ];
 
 // Lyra colour ramp - nav icons ascend through the brand palette and descend back
@@ -130,6 +131,23 @@ export function AppShell({ data, children }: AppShellProps) {
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/'));
   const navScrollRef = useRef<HTMLDivElement>(null);
 
+  // What's New dot: only when THIS version has not been seen. A hardcoded always-on badge
+  // trains users to ignore it - the whole point of the megaphone. Visiting /whats-new
+  // stamps the version; state starts false so SSR and first client paint agree.
+  const [hasUnseenRelease, setHasUnseenRelease] = useState(false);
+  useEffect(() => {
+    try {
+      if (pathname === '/whats-new') {
+        localStorage.setItem('lyra.seenVersion', APP_VERSION);
+        setHasUnseenRelease(false);
+      } else {
+        setHasUnseenRelease(localStorage.getItem('lyra.seenVersion') !== APP_VERSION);
+      }
+    } catch {
+      /* storage unavailable (private mode) - no dot beats a permanent dot */
+    }
+  }, [pathname]);
+
   // Each page renders its own AppShell, so the mobile bottom-nav re-mounts on every
   // navigation and its horizontal scroll resets to the start (Command first). Keep the
   // active tab scrolled into view so the user never has to scroll back to find it.
@@ -140,28 +158,35 @@ export function AppShell({ data, children }: AppShellProps) {
 
   return (
     <div className="min-h-screen bg-[#080a0d] text-[#eef3f8]">
-      <aside className="glass-chrome fixed bottom-0 left-0 top-0 z-30 hidden w-[72px] border-r border-[#1b2530] xl:block">
-        <Link href="/" className="grid h-14 place-items-center border-b border-[#1b2530]">
+      <aside className="glass-chrome fixed bottom-0 left-0 top-0 z-30 hidden w-[72px] flex-col border-r border-[#1b2530] xl:flex">
+        <Link href="/" className="grid h-14 shrink-0 place-items-center border-b border-[#1b2530]">
           <BrandLogo size={30} />
         </Link>
-        <nav className="mt-2 flex flex-col items-center gap-1">
+        {/* overflow-y-auto is load-bearing: 32 items x 48px outruns a 1080p viewport, and a
+            fixed aside without it silently CLIPS everything below the fold (Paper Bot,
+            Education, Settings were unreachable from the rail). */}
+        <nav className="mt-2 flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {navItems.map((item, i) => (
-            <Link
-              href={item.href}
-              key={item.href}
-              title={item.label}
-              aria-current={isActive(item.href) ? 'page' : undefined}
-              className={`group relative grid h-11 w-11 place-items-center rounded-md transition ${
-                isActive(item.href)
-                  ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40'
-                  : 'hover:bg-[#151c25]'
-              }`}
-            >
-              <item.icon size={18} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-75 transition group-hover:opacity-100'} />
-              <span className="pointer-events-none absolute left-14 z-20 hidden whitespace-nowrap rounded-md border border-[#263241] bg-[#101720] px-2 py-1 text-xs text-[#dbe5ee] shadow-xl group-hover:block">
-                {item.label}
-              </span>
-            </Link>
+            <div key={item.href} className="flex flex-col items-center">
+              {i > 0 && item.group !== navItems[i - 1].group && (
+                <span aria-hidden className="mb-1 mt-1 h-px w-7 shrink-0 bg-[#1b2530]" />
+              )}
+              <Link
+                href={item.href}
+                title={item.label}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+                className={`group relative grid h-11 w-11 place-items-center rounded-md transition ${
+                  isActive(item.href)
+                    ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40'
+                    : 'hover:bg-[#151c25]'
+                }`}
+              >
+                <item.icon size={18} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-75 transition group-hover:opacity-100'} />
+                <span className="pointer-events-none absolute left-14 z-20 hidden whitespace-nowrap rounded-md border border-[#263241] bg-[#101720] px-2 py-1 text-xs text-[#dbe5ee] shadow-xl group-hover:block group-focus-visible:block">
+                  {item.label}
+                </span>
+              </Link>
+            </div>
           ))}
         </nav>
       </aside>
@@ -248,7 +273,7 @@ export function AppShell({ data, children }: AppShellProps) {
               </span>
             </Link>
 
-            {/* Megaphone -> in-product changelog (Wiz pattern). Amber dot = new updates. */}
+            {/* Megaphone -> in-product changelog (Wiz pattern). Amber dot = an UNSEEN release. */}
             <Link
               href="/whats-new"
               title="What's new"
@@ -256,7 +281,9 @@ export function AppShell({ data, children }: AppShellProps) {
               className="relative grid h-9 w-9 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8]"
             >
               <Megaphone size={16} />
-              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#f3a33a] ring-2 ring-[#0d141c]" />
+              {hasUnseenRelease && (
+                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#f3a33a] ring-2 ring-[#0d141c]" />
+              )}
             </Link>
 
             <Link

@@ -4,6 +4,8 @@ import { InvestigationGraph } from '@/components/findings/InvestigationGraph';
 import { getDashboardData } from '@/lib/data';
 import { getLiveFindings } from '@/lib/findings/server';
 
+export const metadata = { title: 'Investigation Graph' };
+
 // Per-user, RLS-scoped live findings - must render at request time, not a build-time demo snapshot.
 export const dynamic = 'force-dynamic';
 

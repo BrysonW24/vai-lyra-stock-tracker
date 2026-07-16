@@ -3,6 +3,8 @@ import type { DailyBrief } from '@/lib/daily-brief';
 import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_BRIEF_FORMAT, composeSystem } from '@/lib/ai/system-prompt';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
+import { guardProse } from '@/lib/ai/guardrails/prose';
+import { chargeHostedBudget } from '@/lib/ai/budget-tracker';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 
@@ -72,6 +74,12 @@ export async function POST(request: NextRequest) {
     const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated });
     if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
+    // Hosted/shared key rides the house budget; BYOK spends the user's own quota untouched.
+    if (creds.source !== 'user') {
+      const budget = chargeHostedBudget(creds.source, 220);
+      if (budget.decision === 'block') return NextResponse.json({ ok: false, reason: 'budget' });
+    }
+
     const prompt = `${factsBlock(brief)}\n\nWrite the brief.${audience(profile)}`;
     const { text } = await complete({
       provider: creds.provider,
@@ -80,10 +88,17 @@ export async function POST(request: NextRequest) {
       system: SYSTEM,
       prompt,
       maxTokens: 220,
+      retryOn429: creds.source === 'user',
     });
 
     if (!text) return NextResponse.json({ ok: false, reason: 'empty' });
-    return NextResponse.json({ ok: true, text });
+
+    // Output-side guardrails: the allow-set is the facts block the model was given. A weak
+    // model inventing a figure or slipping into advice loses the sentence (or the whole
+    // phrasing); ok:false sends the client back to the deterministic brief, which always renders.
+    const guarded = guardProse(text, [prompt]);
+    if (!guarded.ok) return NextResponse.json({ ok: false, reason: 'guardrail' });
+    return NextResponse.json({ ok: true, text: guarded.text });
   } catch {
     // Never surface provider errors to the UI - the client falls back to deterministic.
     return NextResponse.json({ ok: false, reason: 'error' });

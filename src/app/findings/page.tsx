@@ -4,6 +4,8 @@ import { FindingsFeed } from '@/components/findings/FindingsFeed';
 import { getDashboardData } from '@/lib/data';
 import { getLiveFindings } from '@/lib/findings/server';
 
+export const metadata = { title: 'Findings' };
+
 // Per-user, RLS-scoped live findings - must render at request time, not a build-time demo snapshot.
 export const dynamic = 'force-dynamic';
 

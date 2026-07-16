@@ -2,6 +2,8 @@ import { AppShell } from '@/components/AppShell';
 import { ChartsView } from '@/components/charts/ChartsView';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'Charts' };
+
 export default async function ChartsPage() {
   const data = await getDashboardData();
 

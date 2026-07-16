@@ -5,6 +5,8 @@ import { getDashboardData } from '@/lib/data';
 import { formatNumber } from '@/lib/format';
 import { pageTitleClass } from '@/lib/ui';
 
+export const metadata = { title: 'Signal Radar' };
+
 export default async function RadarPage() {
   const data = await getDashboardData();
   const strong = data.signals.filter((signal) => signal.status === 'strong_setup').length;

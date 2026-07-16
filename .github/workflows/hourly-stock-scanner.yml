@@ -52,3 +52,31 @@ jobs:
           ENABLE_TELEGRAM_ALERTS: ${{ vars.ENABLE_TELEGRAM_ALERTS || 'true' }}
           ENABLE_MARKET_HOURS_GUARD: ${{ vars.ENABLE_MARKET_HOURS_GUARD || 'true' }}
         run: python -m workers.stock_scanner.main
+
+      # A silent scanner death was invisible except as a stale badge in the app header.
+      # On failure, page the operator on every channel that has credentials configured.
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_FEEDBACK_WEBHOOK_URL }}
+        run: |
+          MSG="Lyra hourly scanner FAILED - run ${{ github.run_id }} on ${{ github.repository }}. https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+            curl -sf -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode text="$MSG" > /dev/null || true
+          fi
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -sf -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\":rotating_light: $MSG\"}" "$SLACK_WEBHOOK" > /dev/null || true
+          fi
+
+      # GitHub auto-disables scheduled workflows after 60 days without repo activity.
+      # Re-enabling via the API on every run resets that clock, so the cron cannot
+      # silently die during a quiet development stretch.
+      - name: Keepalive (reset the 60-day cron auto-disable clock)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/hourly-stock-scanner.yml/enable" || true

@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { coerceFeedbackType, deliverFeedback } from '@/lib/feedback';
+import { rateLimit } from '@/lib/ratelimit';
+import { clientIp } from '@/lib/api/ai-guard';
 
 /**
  * In-app feedback intake. The point: a non-technical user types one box and hits
@@ -9,6 +11,12 @@ import { coerceFeedbackType, deliverFeedback } from '@/lib/feedback';
  */
 
 export async function POST(request: NextRequest) {
+  // Each submission can open a GitHub issue + post to Slack - dampen drive-by spam.
+  const rl = rateLimit(`ip:${clientIp(request)}`, { scope: 'feedback', capacity: 5, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json({ ok: false, error: 'Too many submissions - wait a minute and try again.' }, { status: 429 });
+  }
+
   let body: { type?: string; message?: string; email?: string };
   try {
     body = await request.json();

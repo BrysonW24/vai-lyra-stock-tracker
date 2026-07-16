@@ -153,7 +153,7 @@ export function SignalTable({
             </label>
             <label className="flex h-8 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-[11px] text-[#8190a0]">
               <ListFilter size={14} />
-              <select className="bg-transparent font-mono text-xs text-[#dbe5ee] outline-none" value={sort} onChange={(event) => setSort(event.target.value as SortMode)}>
+              <select aria-label="Sort signals by" className="bg-transparent font-mono text-xs text-[#dbe5ee] outline-none" value={sort} onChange={(event) => setSort(event.target.value as SortMode)}>
                 <option value="score">Score</option>
                 <option value="delta">Score Delta</option>
                 <option value="ticker">Ticker</option>
@@ -224,6 +224,23 @@ export function SignalTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1b2530]">
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={21} className="px-3 py-8 text-center font-mono text-xs text-[#8190a0]">
+                  No signals match{search ? ` "${search}"` : ''} with the current filter.{' '}
+                  <button
+                    type="button"
+                    className="text-[#f3a33a] underline decoration-dotted underline-offset-2 hover:text-[#f7b95e]"
+                    onClick={() => {
+                      setSearch('');
+                      setFilter('all');
+                    }}
+                  >
+                    Clear filters
+                  </button>
+                </td>
+              </tr>
+            )}
             {rows.map((signal) => (
               <tr className="font-mono text-[#dbe5ee] transition hover:bg-[#101720]" key={signal.symbol}>
                 <td className={`${rowPadding} sticky left-0 z-10 bg-[#0d1117] font-semibold text-[#eef3f8]`}>
@@ -270,6 +287,11 @@ export function SignalTable({
       </div>
 
       <div className="divide-y divide-[#1b2530] md:hidden">
+        {rows.length === 0 && (
+          <p className="px-3 py-6 text-center font-mono text-xs text-[#8190a0]">
+            No signals match{search ? ` "${search}"` : ''} with the current filter.
+          </p>
+        )}
         {rows.map((signal) => (
           <button
             type="button"

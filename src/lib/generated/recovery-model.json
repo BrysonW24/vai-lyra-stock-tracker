@@ -1,0 +1,213 @@
+{
+  "version": 1,
+  "trainedAt": "2026-07-16",
+  "algorithm": "logistic-regression (stdlib GD, L2)",
+  "featureOrder": [
+    "reset_band",
+    "rsi_improving",
+    "macd_recovering",
+    "near_low",
+    "trend",
+    "volume",
+    "score"
+  ],
+  "mean": [
+    0.24837821,
+    -0.01730029,
+    0.00508777,
+    -0.49147146,
+    0.00125,
+    0.55785106,
+    0.01634499
+  ],
+  "std": [
+    0.31859642,
+    0.70351603,
+    0.64938018,
+    0.64153578,
+    0.49999844,
+    0.49351171,
+    1.16877836
+  ],
+  "weights": [
+    0.43541735,
+    0.63181909,
+    0.63438296,
+    0.49800881,
+    0.34083431,
+    0.1369021,
+    0.86423983
+  ],
+  "bias": 0.04679865,
+  "metrics": {
+    "oos_auc": 0.8021,
+    "oos_brier": 0.1821,
+    "baseline_brier": 0.2502,
+    "n_oos": 3200,
+    "base_rate": 0.5034
+  },
+  "training": {
+    "seed": 42,
+    "n": 4000,
+    "folds": 5
+  },
+  "provenance": "Fit on a reproducible reference dataset whose data-generating process encodes the engine recovery hypothesis. Proves the learning+calibration machinery and its out-of-sample lift. Refit on real historical bars before production reliance. Research only - informs a probability, never decides an action.",
+  "fixtures": [
+    {
+      "raw": {
+        "rsi": 37.95,
+        "rsiDelta": -2.09,
+        "macdHist": -0.05,
+        "macdHistDelta": -1.03,
+        "distFromLowPct": 18.76,
+        "aboveSma200": true,
+        "volumeRatio": 0.71,
+        "score": 53.1
+      },
+      "prob": 0.24424139
+    },
+    {
+      "raw": {
+        "rsi": 41.16,
+        "rsiDelta": -1.8,
+        "macdHist": -1.46,
+        "macdHistDelta": -0.6,
+        "distFromLowPct": 26.6,
+        "aboveSma200": true,
+        "volumeRatio": 1.33,
+        "score": 68.2
+      },
+      "prob": 0.55510704
+    },
+    {
+      "raw": {
+        "rsi": 27.09,
+        "rsiDelta": -2.48,
+        "macdHist": -0.78,
+        "macdHistDelta": -0.94,
+        "distFromLowPct": 31.54,
+        "aboveSma200": true,
+        "volumeRatio": 1.62,
+        "score": 38.2
+      },
+      "prob": 0.08774917
+    },
+    {
+      "raw": {
+        "rsi": 25.76,
+        "rsiDelta": -0.36,
+        "macdHist": -1.01,
+        "macdHistDelta": -0.21,
+        "distFromLowPct": 32.46,
+        "aboveSma200": true,
+        "volumeRatio": 0.92,
+        "score": 30.5
+      },
+      "prob": 0.19535655
+    },
+    {
+      "raw": {
+        "rsi": 29.76,
+        "rsiDelta": 0.02,
+        "macdHist": -0.46,
+        "macdHistDelta": 0.86,
+        "distFromLowPct": 3.59,
+        "aboveSma200": true,
+        "volumeRatio": 1.74,
+        "score": 57.3
+      },
+      "prob": 0.88467763
+    },
+    {
+      "raw": {
+        "rsi": 25.49,
+        "rsiDelta": -2.33,
+        "macdHist": -0.82,
+        "macdHistDelta": 0.44,
+        "distFromLowPct": 4.85,
+        "aboveSma200": true,
+        "volumeRatio": 1.04,
+        "score": 74.4
+      },
+      "prob": 0.75721521
+    },
+    {
+      "raw": {
+        "rsi": 34.07,
+        "rsiDelta": 2.77,
+        "macdHist": -1.62,
+        "macdHistDelta": 0.49,
+        "distFromLowPct": 2.98,
+        "aboveSma200": true,
+        "volumeRatio": 2.5,
+        "score": 27.8
+      },
+      "prob": 0.89945768
+    },
+    {
+      "raw": {
+        "rsi": 28.5,
+        "rsiDelta": -0.56,
+        "macdHist": -1.99,
+        "macdHistDelta": -0.98,
+        "distFromLowPct": 20.89,
+        "aboveSma200": true,
+        "volumeRatio": 1.35,
+        "score": 18.5
+      },
+      "prob": 0.0784707
+    },
+    {
+      "raw": {
+        "rsi": 44.78,
+        "rsiDelta": 0.34,
+        "macdHist": 0.43,
+        "macdHistDelta": -0.43,
+        "distFromLowPct": 11.23,
+        "aboveSma200": false,
+        "volumeRatio": 1.52,
+        "score": 40.5
+      },
+      "prob": 0.5909345
+    },
+    {
+      "raw": {
+        "rsi": 34.17,
+        "rsiDelta": -0.33,
+        "macdHist": -0.89,
+        "macdHistDelta": -0.55,
+        "distFromLowPct": 11.77,
+        "aboveSma200": false,
+        "volumeRatio": 2.35,
+        "score": 87.5
+      },
+      "prob": 0.65923864
+    },
+    {
+      "raw": {
+        "rsi": 30.37,
+        "rsiDelta": 2.08,
+        "macdHist": 0.29,
+        "macdHistDelta": -0.59,
+        "distFromLowPct": 17.34,
+        "aboveSma200": true,
+        "volumeRatio": 1.84,
+        "score": 77.0
+      },
+      "prob": 0.75200702
+    },
+    {
+      "raw": {
+        "rsi": 40.5,
+        "rsiDelta": 2.6,
+        "macdHist": -0.31,
+        "macdHistDelta": -1.04,
+        "distFromLowPct": 1.37,
+        "aboveSma200": true,
+        "volumeRatio": 0.92,
+        "score": 41.8
+      },
+      "prob": 0.83578837
+    }
+  ]
+}

@@ -2,6 +2,8 @@ import { AppShell } from '@/components/AppShell';
 import { FilingsView } from '@/components/filings/FilingsView';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'Filings & Evidence' };
+
 export default async function FilingsPage() {
   const data = await getDashboardData();
 

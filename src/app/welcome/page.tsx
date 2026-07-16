@@ -14,7 +14,8 @@ import { StackSection } from '@/components/landing/StackSection';
 import { BRAND_NAME } from '@/lib/brand';
 
 export const metadata: Metadata = {
-  title: `${BRAND_NAME} - see the setup first`,
+  // absolute: the landing page opts out of the root "%s · Lyra" template (no double brand).
+  title: { absolute: `${BRAND_NAME} - see the setup first` },
   description: 'US tech signals - scored, explained, overlaid on your book. Alerts hit your phone before the crowd catches on.',
 };
 
@@ -103,6 +104,17 @@ export default function WelcomePage() {
               <Link href="/auth/login" className="inline-flex items-center gap-2 rounded-md border border-[#0E1E3A]/10 bg-white/70 px-5 py-3 text-sm font-medium text-[#0E1E3A] backdrop-blur transition hover:border-[#1E63FF]/30">
                 Sign in
               </Link>
+              {supabaseConfigured && (
+                // See-before-signup doctrine: a cold visitor can walk the real console read-only
+                // (via the lyra_demo cookie the middleware honours) before creating an account.
+                <Link
+                  href="/api/demo"
+                  prefetch={false}
+                  className="inline-flex items-center gap-2 rounded-md border border-[#1E63FF]/25 bg-[#1E63FF]/5 px-5 py-3 text-sm font-medium text-[#1E63FF] backdrop-blur transition hover:border-[#1E63FF]/50"
+                >
+                  Explore the demo first
+                </Link>
+              )}
             </div>
             <p className="mt-4 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
               <ShieldCheck size={12} /> Research only - not financial advice. {BRAND_NAME} never trades for you.

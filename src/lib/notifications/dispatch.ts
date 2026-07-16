@@ -277,6 +277,9 @@ async function deliverChat(
   channels: ChannelRow[],
   channelType: Extract<ChannelType, 'telegram' | 'whatsapp' | 'slack'>,
   voiceOpts: { voice: NotificationPreferences['voice']; name?: string } = { voice: 'analyst' },
+  // Distinguishes a sweep retry from the original attempt so the adapters' in-memory
+  // idempotency dedupe does not swallow it and the delivery log shows attempt lineage.
+  idempotencySuffix = '',
 ): Promise<{ delivered: string[]; suppressed: string[]; errors: string[] }> {
   const destinations = channels.filter((channel) => channel.channel_type === channelType && channel.destination);
   if (destinations.length === 0) {
@@ -303,7 +306,7 @@ async function deliverChat(
   const errors: string[] = [];
 
   for (const destination of destinations) {
-    const idempotencyKey = `${buildIdempotencyKey(event.id, channelType)}:${destination.id}`;
+    const idempotencyKey = `${buildIdempotencyKey(event.id, channelType)}:${destination.id}${idempotencySuffix}`;
     const result =
       channelType === 'telegram'
         ? await sendTelegramMessage(destination.destination!, text, idempotencyKey, {
@@ -429,6 +432,118 @@ export async function releaseHeldEvents(supabase: SupabaseLike, userId: string, 
     released += 1;
   }
   return released;
+}
+
+const RETRYABLE_CHAT_CHANNELS = ['telegram', 'whatsapp', 'slack'] as const;
+const RETRY_SUFFIX = ':retry1';
+const RETRY_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+export interface SweepResult {
+  usersSwept: number;
+  released: number;
+  retried: number;
+  errors: string[];
+}
+
+/**
+ * Scheduled maintenance pass over the delivery log - the drainer that makes deferral and
+ * failure recoverable instead of terminal. Called by the nightly workflow (and on demand
+ * via POST /api/notifications/dispatch {sweep:true} with the dispatch secret). Two jobs:
+ *
+ * 1. Release held events for EVERY user with a held row. releaseHeldEvents previously ran
+ *    only when a NEW event arrived for that user, so a quiet night stranded holds forever.
+ * 2. Retry recently failed chat deliveries exactly once. A 'failed' row used to be
+ *    terminal; one bounded retry recovers transient provider errors without ever looping.
+ */
+export async function sweepNotifications(supabase: SupabaseLike, now: Date = new Date()): Promise<SweepResult> {
+  const errors: string[] = [];
+
+  // 1. Held-event release across all users.
+  const { data: heldRows } = await supabase
+    .from('notification_deliveries')
+    .select('user_id')
+    .eq('channel', 'held')
+    .eq('status', 'held');
+  const heldUsers = Array.from(
+    new Set(((heldRows as { user_id: string }[] | null) || []).map((row) => row.user_id)),
+  ).filter(Boolean);
+  let released = 0;
+  for (const userId of heldUsers) {
+    try {
+      released += await releaseHeldEvents(supabase, userId, now);
+    } catch (error) {
+      errors.push(`release failed for ${userId}: ${error instanceof Error ? error.message : 'unknown'}`);
+    }
+  }
+
+  // 2. Retry-once for failed chat deliveries inside the retry window.
+  const since = new Date(now.getTime() - RETRY_WINDOW_MS).toISOString();
+  const { data: failedRows } = await supabase
+    .from('notification_deliveries')
+    .select('event_id, user_id, channel, idempotency_key')
+    .eq('status', 'failed')
+    .in('channel', [...RETRYABLE_CHAT_CHANNELS])
+    .gte('created_at', since);
+  type FailedRow = { event_id: string; user_id: string; channel: string; idempotency_key: string | null };
+  const failures = ((failedRows as FailedRow[] | null) || []).filter(
+    // A failed row whose key carries the retry suffix IS the retry - never retry a retry.
+    (row) => row.event_id && !(row.idempotency_key || '').endsWith(RETRY_SUFFIX),
+  );
+  const candidates = new Map<string, FailedRow>();
+  for (const row of failures) candidates.set(`${row.event_id}:${row.channel}`, row);
+
+  let retried = 0;
+  if (candidates.size > 0) {
+    const eventIds = Array.from(new Set(Array.from(candidates.values()).map((row) => row.event_id)));
+    const { data: historyRows } = await supabase
+      .from('notification_deliveries')
+      .select('event_id, channel, status, idempotency_key')
+      .in('event_id', eventIds);
+    type HistoryRow = { event_id: string; channel: string; status: string; idempotency_key: string | null };
+    const history = (historyRows as HistoryRow[] | null) || [];
+
+    for (const candidate of candidates.values()) {
+      const attempts = history.filter(
+        (row) => row.event_id === candidate.event_id && row.channel === candidate.channel,
+      );
+      const alreadyDelivered = attempts.some((row) => row.status === 'sent');
+      const alreadyRetried = attempts.some((row) => (row.idempotency_key || '').endsWith(RETRY_SUFFIX));
+      if (alreadyDelivered || alreadyRetried) continue;
+
+      try {
+        const { data: eventRow } = await supabase
+          .from('notification_events')
+          .select('*')
+          .eq('id', candidate.event_id)
+          .maybeSingle();
+        if (!eventRow) continue;
+        const event = eventFromRow(eventRow as StoredEventRow);
+        const { prefs, channels, displayName } = await loadPreferences(supabase, candidate.user_id);
+        const decision = routeNotification(event, prefs, { now });
+        // Prefs may have changed since the failure; a retry must still obey the router.
+        // Deferred means inside quiet hours right now - leave it for a later sweep.
+        if (!decision.deliver || decision.deferredToDigest) continue;
+        const channelType = candidate.channel as Extract<ChannelType, 'telegram' | 'whatsapp' | 'slack'>;
+        if (!decision.channels.includes(channelType)) continue;
+        const result = await deliverChat(
+          supabase,
+          event,
+          channels,
+          channelType,
+          { voice: prefs.voice, name: displayName },
+          RETRY_SUFFIX,
+        );
+        if (result.delivered.length > 0) retried += 1;
+        errors.push(...result.errors);
+      } catch (error) {
+        errors.push(
+          `retry failed for ${candidate.event_id}:${candidate.channel}: ${error instanceof Error ? error.message : 'unknown'}`,
+        );
+      }
+    }
+  }
+
+  return { usersSwept: heldUsers.length, released, retried, errors };
 }
 
 export async function dispatchNotificationEvent(

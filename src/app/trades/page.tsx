@@ -2,6 +2,8 @@ import { AppShell } from '@/components/AppShell';
 import { TradeLogView } from '@/components/trades/TradeLogView';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'Trade Log' };
+
 export default async function TradesPage() {
   const data = await getDashboardData();
 

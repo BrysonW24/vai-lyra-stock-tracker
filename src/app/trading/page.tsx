@@ -13,6 +13,8 @@ import { ALL_KILL_SWITCHES, buildIdempotencyKey, runPreTradeChecks } from '@/lib
 import { DEFAULT_TRADING_SETTINGS } from '@/lib/trading/types';
 import type { KillSwitchState, OrderIntent, PreTradeContext } from '@/lib/trading/types';
 
+export const metadata = { title: 'Live Bot' };
+
 export default async function TradingPage() {
   const data = await getDashboardData();
 

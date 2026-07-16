@@ -3,6 +3,8 @@ import { AppShell } from '@/components/AppShell';
 import { StrategyLab } from '@/components/strategy/StrategyLab';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'Strategy Lab' };
+
 export default async function StrategyLabPage() {
   const data = await getDashboardData();
 

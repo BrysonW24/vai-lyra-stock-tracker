@@ -18,7 +18,7 @@ It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supa
 - Data access: Supabase anon key for read-only dashboard queries.
 - Worker: Python with pandas, yfinance, ta, Supabase Python client, requests, pytest.
 - AI: provider/model-agnostic gateway (`src/lib/ai/gateway.ts`) - Anthropic, OpenAI, OpenRouter, Gemini. Bring your own key + model.
-- Scheduler: GitHub Actions workflow at `.github/workflows/hourly-stock-scanner.yml`.
+- Scheduler: GitHub Actions - `.github/workflows/hourly-stock-scanner.yml` (hourly scan, failure alert + cron keepalive) and `.github/workflows/nightly-maintenance.yml` (post-close: horizon-2 workers, outcome labeling + coaching follow-ups, daily digest / Friday weekly report, notification delivery sweep). `.github/workflows/ci.yml` gates every push/PR (version-guard, type-check, lint, vitest, build, pytest).
 - Notifications: multi-channel dispatch (`src/lib/notifications/`) - Web Push, Telegram Bot API, Slack incoming webhooks (per-user, SSRF-fenced to hooks.slack.com), WhatsApp Cloud API (template-gated). Worker credentials stay server-side; the Slack webhook is the user's own secret.
 
 ## Project Structure
@@ -43,7 +43,10 @@ It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supa
 - `npm run type-check` - run TypeScript checks.
 - `npm run test` - run frontend unit tests (Vitest).
 - `npm run doctor` - report which mode you're in and what's configured.
+- `npm run lint` - run ESLint (CI fails on lint errors, so run it before pushing).
 - `npm run worker:scan` - run the scanner worker locally.
+- `npm run worker:outcomes` - label signal outcomes + send coaching follow-ups (nightly job, runnable locally).
+- `npm run worker:digest` - compose + send the daily digest (weekly report on Fridays).
 - `npm run worker:test` - run worker tests.
 
 ## Conventions

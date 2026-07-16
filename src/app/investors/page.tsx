@@ -4,6 +4,8 @@ import { getDashboardData } from '@/lib/data';
 import { getInvestors, getSmallCapCompanies, getThemes } from '@/lib/world-radar';
 import { pageTitleClass } from '@/lib/ui';
 
+export const metadata = { title: 'Investor Radar' };
+
 export default async function InvestorsPage() {
   const data = await getDashboardData();
 

@@ -2,6 +2,8 @@ import { AppShell } from '@/components/AppShell';
 import { ResearchQueueView, type CurrentSnapshot } from '@/components/research/ResearchQueueView';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'Saved' };
+
 export default async function SavedPage() {
   const data = await getDashboardData();
   const current: Record<string, CurrentSnapshot> = {};

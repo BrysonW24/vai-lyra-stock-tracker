@@ -21,6 +21,7 @@ export type EventFamily = 'research' | 'portfolio' | 'watchlist' | 'paper' | 'or
 
 const FAMILY_BY_TYPE: Record<NotificationType, EventFamily> = {
   signal_alert: 'research',
+  signal_followup: 'research',
   theme_breakout: 'research',
   small_cap_discovery: 'research',
   capital_event: 'research',

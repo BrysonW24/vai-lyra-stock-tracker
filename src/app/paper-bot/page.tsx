@@ -2,6 +2,8 @@ import { AppShell } from '@/components/AppShell';
 import { PaperBotView } from '@/components/paper-bot/PaperBotView';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'Paper Bot' };
+
 /**
  * Paper Bot page - the human-in-the-loop surface for the deterministic, paper-only spine.
  * Live trading is disabled by design; the AI explains, the user approves, deterministic code fills

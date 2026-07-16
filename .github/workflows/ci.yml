@@ -14,6 +14,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Server-side version enforcement. The pre-push hook is client-side only: a clone that
+  # never ran npm install, a GitHub web edit, or VD_SKIP_VERSION=1 all bypass it silently.
+  # This job replays the same guard against the PR base (or the pre-push commit), so
+  # unversioned shippable changes cannot land no matter how they were pushed.
+  version-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Enforce version bump on shippable changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          # Point the ref the guard compares against at the true base of this change set.
+          if [ -n "$BASE_SHA" ] && git cat-file -e "$BASE_SHA" 2>/dev/null; then
+            git update-ref refs/remotes/origin/main "$BASE_SHA"
+          fi
+          node scripts/check-version-bump.mjs
+
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 15

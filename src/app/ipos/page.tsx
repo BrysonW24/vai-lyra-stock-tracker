@@ -2,6 +2,8 @@ import { AppShell } from '@/components/AppShell';
 import { IpoExplorer } from '@/components/ipos/IpoExplorer';
 import { getDashboardData } from '@/lib/data';
 
+export const metadata = { title: 'IPO Radar' };
+
 export default async function IposPage() {
   const data = await getDashboardData();
 

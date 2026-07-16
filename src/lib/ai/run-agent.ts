@@ -16,16 +16,10 @@ import { recordAiRun, hashInput } from '@/lib/ai/audit';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, composeSystem } from '@/lib/ai/system-prompt';
 import { executeTool } from './tools/runtime';
 import type { EvidenceItem } from './tools';
-
-/** Every numeral (int/decimal, with optional thousands separators) present in a string. */
-function numeralsIn(text: string): string[] {
-  return text.match(/\d[\d,]*(?:\.\d+)?/g) ?? [];
-}
-
-/** Split text into sentences on terminal punctuation, keeping each sentence's own text. */
-function splitSentences(text: string): string[] {
-  return text.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 0);
-}
+// Shared with the free-text prose guard (chat/brief). Kept digit-only here on purpose:
+// agent output is schema-validated JSON where prose.ts's spelled-figure stripping ("double",
+// "percent") would mangle legitimate field text; the structured path relies on numerals.
+import { numeralsIn, splitSentences } from '@/lib/ai/guardrails/prose';
 
 /**
  * Strip every sentence that contains a fabricated numeral (one absent from the grounding the

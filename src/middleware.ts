@@ -54,6 +54,12 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api'); // API routes enforce their own auth (401)
 
   if (!data.user && !isPublic) {
+    // Read-only demo tour (set by /api/demo): doctrine says a visitor sees the product
+    // BEFORE signing up. Reads work via the anon key's read-only RLS; every write API
+    // still requires a session, so the tour cannot touch data.
+    if (request.cookies.get('lyra_demo')?.value === '1') {
+      return response;
+    }
     // Send signed-out visitors to the public marketing landing (which links to sign in /
     // sign up) rather than straight to the login form.
     const landingUrl = new URL('/welcome', request.url);

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
+import { guardProse } from '@/lib/ai/guardrails/prose';
+import { chargeHostedBudget } from '@/lib/ai/budget-tracker';
 import { getDashboardData } from '@/lib/data';
 import { buildGrounding, type ChatProfile } from '@/lib/ai/chat-context';
-import { buildKnowledgeBlock } from '@/lib/knowledge/retrieve';
+import { buildHybridKnowledgeBlock } from '@/lib/knowledge/hybrid';
 import { getUserConstraints, buildConstraintsBlock } from '@/lib/ai/user-context';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_CHAT_FORMAT, composeSystem, toneFor } from '@/lib/ai/system-prompt';
 import { recordAiRun, hashInput } from '@/lib/ai/audit';
@@ -70,6 +72,12 @@ export async function POST(request: NextRequest) {
     const creds = resolveAiCredentials(ai, { authenticated });
     if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
+    // Hosted/shared key rides the house budget; BYOK spends the user's own quota untouched.
+    if (creds.source !== 'user') {
+      const budget = chargeHostedBudget(creds.source, 600);
+      if (budget.decision === 'block') return NextResponse.json({ ok: false, reason: 'budget' });
+    }
+
     const last = messages[messages.length - 1];
     const inputHash = hashInput({ messages, profile });
     // Screen EVERY turn that will enter the prompt, not just the final message - an attacker
@@ -79,7 +87,7 @@ export async function POST(request: NextRequest) {
     const injectionInHistory = screenedTurns.some((m) => detectInjectionAttempt(m.content));
     if (injectionInHistory || (last?.role === 'user' && detectInjectionAttempt(last.content))) {
       void recordAiRun({
-        userId: 'local',
+        userId: guard.identity,
         agentName: 'portfolio_assistant',
         provider: creds.provider,
         model: creds.model || 'n/a',
@@ -165,8 +173,9 @@ export async function POST(request: NextRequest) {
     const constraintsBlock = constraints ? buildConstraintsBlock(constraints) : '';
     // Knowledge layer: when the question is about Lyra itself (setup, deployment, costs, how
     // the score works), retrieve the relevant doc sections so the answer is grounded and
-    // citable. Deterministic lexical retrieval; '' for ordinary market/portfolio questions.
-    const knowledgeBlock = last?.role === 'user' ? buildKnowledgeBlock(last.content) : '';
+    // citable. Deterministic HYBRID retrieval (lexical gate + char-trigram cosine rerank);
+    // '' for ordinary market/portfolio questions.
+    const knowledgeBlock = last?.role === 'user' ? buildHybridKnowledgeBlock(last.content) : '';
     const system = composeSystem([
       LYRA_IDENTITY,
       'The user is chatting with you. Answer their question directly.',
@@ -190,7 +199,15 @@ export async function POST(request: NextRequest) {
     const prompt = `${history}\nLyra:`;
 
     const startedAt = Date.now();
-    const { text, model: usedModel } = await complete({ provider: creds.provider, apiKey: creds.apiKey, model: creds.model, system, prompt, maxTokens: 600 });
+    const { text, model: usedModel } = await complete({
+      provider: creds.provider,
+      apiKey: creds.apiKey,
+      model: creds.model,
+      system,
+      prompt,
+      maxTokens: 600,
+      retryOn429: creds.source === 'user',
+    });
     const latencyMs = Date.now() - startedAt;
     if (!text) return NextResponse.json({ ok: false, reason: 'empty' });
     // Strip an echoed "Lyra:" turn label, then split off the FOLLOW_UPS line into suggestion chips.
@@ -228,16 +245,46 @@ export async function POST(request: NextRequest) {
         .slice(0, 3);
     }
 
+    // Output-side guardrails - the same doctrine the agent/GenUI paths already enforce
+    // mechanically. The allow-set is every numeral in the grounding the model actually saw
+    // (system context + the screened history, so the user's own figures are echoable).
+    // Fabricated-figure sentences are stripped; advice / injection-echo still blocks.
+    // Suggestion chips are user-voice questions, not factual claims - they stay unguarded.
+    const guarded = guardProse(answer || cleaned, [system, history]);
+    if (!guarded.ok) {
+      void recordAiRun({
+        userId: guard.identity,
+        agentName: 'portfolio_assistant',
+        provider: creds.provider,
+        model: usedModel,
+        inputHash,
+        outputHash: hashInput(answer),
+        toolsUsed: [],
+        injectionFlags: guarded.verdict.blockedReasons,
+        validationErrors: [],
+        citationCount: 0,
+        status: 'refused',
+        refusalReason: `guardrail_block: ${guarded.verdict.blockedReasons.join('; ') || 'empty after strip'}`,
+        latencyMs,
+      }).catch(() => {});
+      return NextResponse.json({
+        ok: true,
+        text: 'I drafted an answer that tripped Lyra\'s research-only guardrails (an ungrounded figure or advice-style wording), so I stopped it. Ask me to explain the data behind your question and I\'ll ground every number in the latest scan.',
+        suggestions,
+      });
+    }
+    const finalText = guarded.text;
+
     // Durable-by-design audit (hash-only) + the Listening layer (captures the question on purpose).
     void recordAiRun({
-      userId: 'local',
+      userId: guard.identity,
       agentName: 'portfolio_assistant',
       provider: creds.provider,
       model: usedModel,
       inputHash,
-      outputHash: hashInput(answer),
+      outputHash: hashInput(finalText),
       toolsUsed: [],
-      injectionFlags: [],
+      injectionFlags: [...guarded.verdict.warnings, ...guarded.strippedFigures.map((f) => `stripped:${f}`)],
       validationErrors: [],
       citationCount: 0,
       status: 'ok',
@@ -246,7 +293,7 @@ export async function POST(request: NextRequest) {
     }).catch(() => {});
     if (last?.role === 'user') recordQuestionSignal(last.content);
 
-    return NextResponse.json({ ok: true, text: answer || cleaned, suggestions, action });
+    return NextResponse.json({ ok: true, text: finalText, suggestions, action });
   } catch {
     return NextResponse.json({ ok: false, reason: 'error' });
   }

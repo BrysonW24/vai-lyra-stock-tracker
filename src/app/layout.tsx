@@ -7,8 +7,26 @@ import { PinGate } from '@/components/PinGate';
 import { UsageTracker } from '@/components/UsageTracker';
 
 export const metadata: Metadata = {
-  title: `${BRAND_NAME} - ${BRAND_TAGLINE}`,
+  // Template so every page can set a one-word title and still carry the brand -
+  // 40 tabs all reading the identical brand string made history/bookmarks useless.
+  title: {
+    default: `${BRAND_NAME} - ${BRAND_TAGLINE}`,
+    template: `%s · ${BRAND_NAME}`,
+  },
   description: 'Deterministic momentum, portfolio, watchlist, and market-intelligence console for US technology stocks.',
+  openGraph: {
+    title: `${BRAND_NAME} - ${BRAND_TAGLINE}`,
+    description: 'US tech signals - scored, explained, overlaid on your book. Alerts hit your phone before the crowd catches on.',
+    siteName: BRAND_NAME,
+    type: 'website',
+    images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: `${BRAND_NAME} logo` }],
+  },
+  twitter: {
+    card: 'summary',
+    title: `${BRAND_NAME} - ${BRAND_TAGLINE}`,
+    description: 'US tech signals - scored, explained, overlaid on your book.',
+    images: ['/icons/icon-512.png'],
+  },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,

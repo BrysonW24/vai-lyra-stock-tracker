@@ -63,6 +63,22 @@ export function loadAlertPrefs(): AlertPrefs {
   return ALERT_DEFAULTS;
 }
 
+/**
+ * Commit a prefs patch outside React (onboarding finish seeds the demo prefs this way -
+ * previously onboarding alert choices went nowhere in demo mode). Read-modify-write against
+ * storage so other listeners see the committed value; returns the committed prefs.
+ */
+export function saveAlertPrefs(patch: Partial<AlertPrefs>): AlertPrefs {
+  const next = { ...loadAlertPrefs(), ...patch };
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(next));
+  } catch {
+    /* ignore */
+  }
+  window.dispatchEvent(new Event(EVENT));
+  return next;
+}
+
 /** Shared alert-prefs state: read, update, and the derived status used by the header badge. */
 export function useAlertPrefs() {
   const [prefs, setPrefs] = useState<AlertPrefs>(ALERT_DEFAULTS);
@@ -85,15 +101,7 @@ export function useAlertPrefs() {
   }, []);
 
   const update = (patch: Partial<AlertPrefs>) => {
-    // Read-modify-write against storage so other listeners see the committed value.
-    const next = { ...loadAlertPrefs(), ...patch };
-    try {
-      window.localStorage.setItem(KEY, JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
-    setPrefs(next);
-    window.dispatchEvent(new Event(EVENT));
+    setPrefs(saveAlertPrefs(patch));
   };
 
   const tempMuted = prefs.mutedUntil !== null && prefs.mutedUntil > now;

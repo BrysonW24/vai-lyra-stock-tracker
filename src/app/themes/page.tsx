@@ -3,6 +3,8 @@ import { ThemeRadar } from '@/components/themes/ThemeRadar';
 import { getDashboardData } from '@/lib/data';
 import { getCapitalEvents, getThemes, scoreThemeCompanies } from '@/lib/world-radar';
 
+export const metadata = { title: 'World Radar' };
+
 export default async function ThemesPage() {
   const data = await getDashboardData();
   const momentumBySymbol: Record<string, number> = Object.fromEntries(

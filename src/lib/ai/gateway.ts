@@ -16,7 +16,7 @@
  * or persisted. See docs/ai-engine-plan.md.
  */
 
-import { withRetry, BackpressureLimiter } from '@/lib/ai/resilience';
+import { withRetry, defaultIsRetryable, BackpressureLimiter } from '@/lib/ai/resilience';
 
 export type AiProvider = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'xai';
 
@@ -30,6 +30,11 @@ export interface AiCompleteParams {
   prompt: string;
   maxTokens?: number;
   temperature?: number;
+  /**
+   * Retry a 429? True (default) for BYOK - it is the user's own quota. Pass false for
+   * hosted/shared-key calls: retrying the house key into a provider rate limit amplifies it.
+   */
+  retryOn429?: boolean;
 }
 
 export interface AiCompleteResult {
@@ -271,12 +276,62 @@ async function dispatchCompletion(params: AiCompleteParams, model: string, maxTo
   }
 }
 
+// --- per-provider circuit breaker --------------------------------------------
+// A hard-down provider used to cost EVERY request up to 3 attempts x 30s, and six hung
+// calls saturate the shared limiter - stalling all AI surfaces process-wide. The breaker
+// opens after N consecutive failed completions and fast-fails during a cooldown; after
+// the cooldown one half-open probe is allowed (success closes it, failure re-opens).
+
+const BREAKER_THRESHOLD = 5;
+const BREAKER_COOLDOWN_MS = 60_000;
+
+interface BreakerState {
+  consecutiveFailures: number;
+  openedAt: number | null;
+}
+
+const breakers = new Map<AiProvider, BreakerState>();
+
+export class CircuitOpenError extends Error {
+  constructor(provider: AiProvider) {
+    super(`ai_gateway: ${provider} circuit open - provider is failing, retry after cooldown`);
+    this.name = 'CircuitOpenError';
+  }
+}
+
+function breakerFor(provider: AiProvider): BreakerState {
+  let state = breakers.get(provider);
+  if (!state) {
+    state = { consecutiveFailures: 0, openedAt: null };
+    breakers.set(provider, state);
+  }
+  return state;
+}
+
+/** Breaker visibility for the (authenticated) status route. */
+export function providerBreakerStatus(): Record<string, { open: boolean; consecutiveFailures: number }> {
+  const now = Date.now();
+  const out: Record<string, { open: boolean; consecutiveFailures: number }> = {};
+  for (const [provider, state] of breakers) {
+    out[provider] = {
+      open: state.openedAt !== null && now - state.openedAt < BREAKER_COOLDOWN_MS,
+      consecutiveFailures: state.consecutiveFailures,
+    };
+  }
+  return out;
+}
+
+/** Test hook - breaker state is process-global by design. */
+export function resetProviderBreakersForTests(): void {
+  breakers.clear();
+}
+
 /**
  * Run one grounded completion against the chosen provider/model with the user's key. Each attempt is
  * time-bounded and runs under a shared backpressure limiter; a TRANSIENT failure (429 / 5xx /
- * network) is retried with bounded exponential backoff + jitter (withRetry). Throws on missing key
- * or a permanent/exhausted error - callers decide the fallback (the brief + composer always fall
- * back to the deterministic render).
+ * network) is retried with bounded exponential backoff + jitter (withRetry). Throws on missing key,
+ * an open circuit, or a permanent/exhausted error - callers decide the fallback (the brief +
+ * composer always fall back to the deterministic render).
  */
 export async function complete(params: AiCompleteParams): Promise<AiCompleteResult> {
   const { provider, apiKey } = params;
@@ -285,9 +340,31 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
   const model = resolveModel(provider, params.model);
   const maxTokens = params.maxTokens ?? DEFAULT_MAX_TOKENS;
 
-  const text = await withRetry(
-    () => providerLimiter.run(() => withTimeout(dispatchCompletion(params, model, maxTokens), ATTEMPT_TIMEOUT_MS, `${provider} completion`)),
-    { policy: { maxAttempts: 3, baseDelayMs: 400, maxDelayMs: 4000 } },
-  );
-  return { text, provider, model };
+  const breaker = breakerFor(provider);
+  if (breaker.openedAt !== null) {
+    if (Date.now() - breaker.openedAt < BREAKER_COOLDOWN_MS) throw new CircuitOpenError(provider);
+    breaker.openedAt = null; // cooldown elapsed - half-open: this call is the probe
+  }
+
+  const retryOn429 = params.retryOn429 ?? true;
+  const isRetryable = (err: unknown): boolean => {
+    if (!retryOn429 && /\b429\b/.test(err instanceof Error ? err.message : String(err))) return false;
+    return defaultIsRetryable(err);
+  };
+
+  try {
+    const text = await withRetry(
+      () => providerLimiter.run(() => withTimeout(dispatchCompletion(params, model, maxTokens), ATTEMPT_TIMEOUT_MS, `${provider} completion`)),
+      { policy: { maxAttempts: 3, baseDelayMs: 400, maxDelayMs: 4000 }, isRetryable },
+    );
+    breaker.consecutiveFailures = 0;
+    breaker.openedAt = null;
+    return { text, provider, model };
+  } catch (error) {
+    breaker.consecutiveFailures += 1;
+    if (breaker.consecutiveFailures >= BREAKER_THRESHOLD) {
+      breaker.openedAt = Date.now();
+    }
+    throw error;
+  }
 }

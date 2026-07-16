@@ -4,6 +4,8 @@ import { Insight } from '@/components/Insight';
 import { getDashboardData } from '@/lib/data';
 import { demoIntelligenceFeed, demoTickerHypeMap } from '@/lib/intelligence';
 
+export const metadata = { title: 'Intelligence' };
+
 /**
  * Intelligence page - async server component wrapping the client feed, with a rotating
  * "Good to know" finance fact under the Intel banner.

@@ -21,6 +21,7 @@ const REASON_BUDGET = 130;
 /** Compact uppercase label per type - the first thing the eye hits in a chat list. */
 const TYPE_LABELS: Record<NotificationType, string> = {
   signal_alert: 'SIGNAL',
+  signal_followup: 'SIGNAL FOLLOW-UP',
   theme_breakout: 'THEME BREAKOUT',
   small_cap_discovery: 'SMALL CAP',
   capital_event: 'CAPITAL EVENT',
@@ -53,6 +54,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
  */
 const SIGNAL_LIKE_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'signal_alert',
+  'signal_followup',
   'theme_breakout',
   'small_cap_discovery',
   'capital_event',

@@ -22,6 +22,7 @@ interface SlackTypeStyle {
 
 const TYPE_STYLE: Record<NotificationType, SlackTypeStyle> = {
   signal_alert: { emoji: ':dart:', label: 'Signal', framing: 'A setup crossed your alert threshold.' },
+  signal_followup: { emoji: ':stopwatch:', label: 'Signal follow-up', framing: 'How an earlier setup actually played out - engine-measured.' },
   theme_breakout: { emoji: ':rocket:', label: 'Theme breakout', framing: 'A theme you track is moving as a group.' },
   small_cap_discovery: { emoji: ':microscope:', label: 'Small-cap discovery', framing: 'A new name surfaced by the discovery scan.' },
   capital_event: { emoji: ':bank:', label: 'Capital event', framing: 'A raise, buyback, or balance-sheet event hit a tracked name.' },
@@ -56,6 +57,7 @@ const SEVERITY_TAG: Record<NotificationSeverity, string> = {
 /** Same research/account split as templates.ts - research output carries the suffix, account activity does not. */
 const SIGNAL_LIKE_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'signal_alert',
+  'signal_followup',
   'theme_breakout',
   'small_cap_discovery',
   'capital_event',

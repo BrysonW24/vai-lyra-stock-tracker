@@ -944,3 +944,35 @@ create index if not exists idx_event_risks_event_risk
 create index if not exists idx_event_risks_symbol_date
   on event_risks(symbol, risk_date desc);
 
+
+
+-- ============================================================
+-- RLS backstop (mirrors supabase/migrations/030_rls_scanner_tables.sql)
+-- ============================================================
+-- Every table this script creates is worker-owned research data with no user_id.
+-- Without this block, Supabase default grants let the public anon key WRITE these
+-- tables. RLS on + read-only policies; the worker's service-role key bypasses RLS.
+-- Idempotent - safe to re-run, safe regardless of migration/sql apply order.
+
+do $$
+declare
+  t text;
+  scanner_tables text[] := array[
+    'stock_tickers','stock_candles','stock_indicators','stock_signal_scores','stock_signals',
+    'stock_scanner_runs',
+    'market_context_snapshots','signal_outcomes',
+    'backtest_runs','backtest_results','backtest_trades','paper_trades','paper_portfolio_snapshots',
+    'trade_day_snapshots',
+    'news_items','ticker_news_map','hype_scores','sentiment_scores',
+    'fundamental_snapshots','valuation_metrics',
+    'company_events','market_calendar_events','ipos','event_risks'
+  ];
+begin
+  foreach t in array scanner_tables loop
+    if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = t) then
+      execute format('alter table public.%I enable row level security;', t);
+      execute format('drop policy if exists %I on public.%I;', t || '_read', t);
+      execute format('create policy %I on public.%I for select to anon, authenticated using (true);', t || '_read', t);
+    end if;
+  end loop;
+end $$;
