@@ -53,6 +53,20 @@ writeFileSync(
 );
 console.log(`content: ${files.length} domain(s), ${total} record(s) compiled`);
 
+// The Setup Companion is authored once in docs/onboarding/ and SERVED from public/. Regenerate
+// the served copy here so the two can never drift - no manual `cp`, no stale in-app companion.
+const companionSrc = join(root, 'docs', 'onboarding', 'setup-companion.html');
+const companionOut = join(root, 'public', 'setup-companion.html');
+if (existsSync(companionSrc)) {
+  const html = readFileSync(companionSrc, 'utf8');
+  if (!existsSync(companionOut) || readFileSync(companionOut, 'utf8') !== html) {
+    writeFileSync(companionOut, html);
+    console.log('companion: public/setup-companion.html synced from docs/onboarding/');
+  } else {
+    console.log('companion: public copy already in sync');
+  }
+}
+
 // The knowledge pipeline rides the same hook (predev / prebuild / pretype-check), so the
 // retrievable-docs layer can never go stale relative to the docs on disk.
 await import('./build-knowledge.mjs');

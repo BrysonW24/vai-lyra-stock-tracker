@@ -53,6 +53,8 @@ jobs:
         run: npm run type-check
       - name: Lint
         run: npm run lint
+      - name: Onboarding parity (human + html + agent surfaces vs the codebase)
+        run: npm run check:onboarding
       - name: Unit tests
         run: npm run test
       - name: Build

@@ -60,6 +60,9 @@ is plain markdown with explicit stages and gates. The non-negotiables:
   this.
 - TypeScript strict, no `any`, plain hyphens (never an em dash) in user-visible copy.
 - Conventions live in [CLAUDE.md](CLAUDE.md) - read it before editing.
+- If your change touches the stack, costs, routes, env vars, walkthroughs, or version, the
+  onboarding surfaces may now be stale. Run `npm run check:onboarding` (CI enforces it) and, if it
+  flags drift, the `/onboarding-parity` skill chain to fix it.
 
 ## Where everything lives
 

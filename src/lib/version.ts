@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.11.2',
+    date: '2026-07-16',
+    title: 'Onboarding stays honest: a parity gate + skill chain across the human, in-app, and agent surfaces',
+    highlights: [
+      'The three onboarding surfaces - the human walkthroughs, the in-app Setup Companion, and the agent front door - now have a deterministic parity gate (npm run check:onboarding) that runs in CI, so they cannot silently drift from the stack, costs, routes, or walkthroughs the code actually ships.',
+      'A new /onboarding-parity skill chain (with per-surface skills for human, companion, and agent docs) restores parity in one pass and proves it with the gate.',
+      'The in-app Setup Companion copy is now generated from its source at build time, so the served page can never fall behind the authored one.',
+    ],
+  },
+  {
     version: '0.11.1',
     date: '2026-07-16',
     title: 'The loop closes: measured outcomes, real digests, follow-up coaching + a console that cannot silently fail',
