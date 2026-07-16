@@ -70,3 +70,8 @@ if (existsSync(companionSrc)) {
 // The knowledge pipeline rides the same hook (predev / prebuild / pretype-check), so the
 // retrievable-docs layer can never go stale relative to the docs on disk.
 await import('./build-knowledge.mjs');
+
+// The nervous-system map (public/harness-map.html + src/lib/generated/harness-map.json) is
+// generated from SKILL-CHAIN.md + HARNESS.md on the same hook, so the rails view can never
+// drift from the rails themselves.
+await import('./build-harness-map.mjs');

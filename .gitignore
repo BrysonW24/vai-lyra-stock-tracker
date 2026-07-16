@@ -3,6 +3,9 @@ node_modules/
 .next-verify/
 out/
 coverage/
+# Per-clone commissioning receipts - private local keepsakes, never committed.
+/commission/
+/COMMISSIONED.md
 .env
 .env.local
 .env.*.local

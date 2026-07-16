@@ -109,6 +109,12 @@ window.SETUP_STATE = {
   }
   .meta span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--l2); }
   .meta b { color: var(--blue); font-weight: 600; }
+  .soundtoggle {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font: inherit; font-size: 11px;
+    border: 1px solid var(--border); background: rgba(255,255,255,.7); color: var(--body);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 999px; padding: 5px 12px;
+  }
+  .soundtoggle.on { border-color: #c3e8d5; color: var(--green); background: var(--green-soft); }
 
   section { margin-bottom: 44px; }
   .sec-label {
@@ -185,6 +191,14 @@ window.SETUP_STATE = {
     animation: pulse 1.4s ease-in-out infinite;
   }
   @keyframes pulse { 0%,100% { opacity: .45; transform: scale(.85);} 50% { opacity: 1; transform: scale(1.12);} }
+  /* Gate micro-delight: a one-shot tri-gradient shine sweeps a card the moment it clears. */
+  .stage.justdone { overflow: hidden; }
+  .stage::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transform: translateX(-120%);
+    background: linear-gradient(100deg, transparent 32%, rgba(67,209,139,.34) 46%, rgba(59,91,219,.30) 54%, rgba(243,163,58,.32) 62%, transparent 74%);
+  }
+  .stage.justdone::after { animation: gateSweep .95s cubic-bezier(.22,.61,.36,1); }
+  @keyframes gateSweep { 0% { transform: translateX(-120%); opacity: 0; } 12% { opacity: 1; } 100% { transform: translateX(120%); opacity: 0; } }
   .stage-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .chip {
     font-family: ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 700;
@@ -339,7 +353,7 @@ window.SETUP_STATE = {
   @keyframes slidein { to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) {
     .gin { transition: none; }
-    .stage.active .dot::after, .goal.future .gface::before { animation: none; }
+    .stage.active .dot::after, .goal.future .gface::before, .stage.justdone::after { animation: none; }
     .viz .arm, .blip, .core { animation: none; }
     .drawline, .equity { stroke-dashoffset: 0; animation: none; }
     .wbar { transform: none; animation: none; }
@@ -397,6 +411,7 @@ window.SETUP_STATE = {
     <span>Chosen path: <b id="m-path"></b></span>
     <span>Local app: <b><a id="m-app" href="#" target="_blank"></a></b></span>
     <span id="m-deploy-wrap" style="display:none">Deployed: <b><a id="m-deploy" href="#" target="_blank"></a></b></span>
+    <button id="gate-sound" class="soundtoggle" type="button" aria-pressed="false" title="Play one soft tone when a stage clears">🔕 Sound off</button>
   </div>
 
   <section>
@@ -732,6 +747,75 @@ window.SETUP_STATE = {
     var note = el.querySelector('.note');
     if (st.note) { note.textContent = st.note; note.style.display = 'block'; }
   });
+
+  /* Gate micro-delight: when a stage newly clears, sweep its card with the tri-gradient
+     and, only if the human opted in, play one soft tone. prefers-reduced-motion disables
+     the sweep; the sweep is the default and the tone is strictly opt-in. */
+  var reduceMotion = false;
+  try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var gateAudio = null;
+  function playGateTone() {
+    var on = false;
+    try { on = sessionStorage.getItem('lyraGateSound') === '1'; } catch (e) {}
+    if (!on) return;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      gateAudio = gateAudio || new AC();
+      if (gateAudio.state === 'suspended') gateAudio.resume();
+      var t = gateAudio.currentTime;
+      [[660, t], [990, t + 0.11]].forEach(function (n) {
+        var osc = gateAudio.createOscillator(), g = gateAudio.createGain();
+        osc.type = 'sine'; osc.frequency.value = n[0];
+        g.gain.setValueAtTime(0.0001, n[1]);
+        g.gain.exponentialRampToValueAtTime(0.05, n[1] + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, n[1] + 0.2);
+        osc.connect(g); g.connect(gateAudio.destination);
+        osc.start(n[1]); osc.stop(n[1] + 0.22);
+      });
+    } catch (e) {}
+  }
+  var soundBtn = document.getElementById('gate-sound');
+  if (soundBtn) {
+    var syncSound = function () {
+      var on = false;
+      try { on = sessionStorage.getItem('lyraGateSound') === '1'; } catch (e) {}
+      soundBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      soundBtn.classList.toggle('on', on);
+      soundBtn.textContent = on ? '🔔 Sound on' : '🔕 Sound off';
+    };
+    syncSound();
+    soundBtn.addEventListener('click', function () {
+      var on = false;
+      try { on = sessionStorage.getItem('lyraGateSound') === '1'; } catch (e) {}
+      on = !on;
+      try { sessionStorage.setItem('lyraGateSound', on ? '1' : '0'); } catch (e) {}
+      syncSound();
+      if (on) playGateTone(); /* immediate feedback while we still have the click gesture */
+    });
+  }
+  /* Celebrate only genuine transitions. Seed a baseline first so opening the page
+     mid-setup (several stages already done) never triggers a burst of sweeps. */
+  var curStatus = {};
+  document.querySelectorAll('.stage').forEach(function (el) {
+    var id = el.getAttribute('data-stage');
+    curStatus[id] = ((s.stages || {})[id] || {}).status || 'pending';
+  });
+  var prevStatus = null;
+  try { prevStatus = JSON.parse(sessionStorage.getItem('lyraStagePrev') || 'null'); } catch (e) {}
+  if (prevStatus) {
+    Object.keys(curStatus).forEach(function (id) {
+      if (curStatus[id] === 'done' && prevStatus[id] !== 'done') {
+        var el = document.querySelector('.stage[data-stage="' + id + '"]');
+        if (el && !reduceMotion) {
+          el.classList.add('justdone');
+          setTimeout(function () { el.classList.remove('justdone'); }, 1000);
+        }
+        playGateTone();
+      }
+    });
+  }
+  try { sessionStorage.setItem('lyraStagePrev', JSON.stringify(curStatus)); } catch (e) {}
 
   /* Goal cards: click (or Enter/Space) flips front <-> back. The flip set survives
      the 5s meta-refresh via sessionStorage, restored without animation. */

@@ -129,6 +129,12 @@ Walkthrough: `docs/walkthroughs/04-deploy-your-own.md`. Offer both paths with co
 
 ## Wrap up
 
+- **Write the commissioning card.** Once the deploy gate is green (or the demo/live gate for
+  shorter paths), run `npm run commission -- --minutes <elapsed> --url <their-deploy-url>`
+  (drop `--url` for demo/local; add `--name <their name>` if you know it). It reads the real
+  version + mode from `/api/health` and writes a private branded receipt - `commission/card.svg`
+  plus `COMMISSIONED.md` - into the clone. Both are gitignored; it is a local keepsake, never
+  shared anywhere. Show them where it landed and offer to `open` it.
 - Summarise what is running where (local / Supabase / Actions / host), what it costs per month
   (from `COSTS.md`), and where the keys live.
 - Point them at `docs/walkthroughs/05-understand-the-score.md` (how the score works) and

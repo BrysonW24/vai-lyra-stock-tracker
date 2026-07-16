@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lyra - nervous system</title>
+<style>
+  :root {
+    --bg:#F7F6F2; --ink:#0E1E3A; --body:#5A6B82; --faint:#8290a0;
+    --blue:#1E63FF; --blue-soft:#eaf1ff; --l1:#3b5bdb; --l2:#43d18b; --l3:#f3a33a;
+    --border:rgba(14,30,58,.10); --card:rgba(255,255,255,.72); --green:#189a66; --green-soft:#e7f6ef;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--ink); font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; padding:32px 20px 64px; }
+  .mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .wrap { max-width:1020px; margin:0 auto; }
+  header { display:flex; flex-direction:column; gap:4px; margin-bottom:6px; }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .mark { width:30px; height:30px; border-radius:9px; background:linear-gradient(135deg,var(--l1),var(--l2),var(--l3)); }
+  .brand b { font-size:20px; font-weight:700; }
+  .brand .by { color:var(--body); font-size:12px; }
+  h1 { font-size:28px; font-weight:700; letter-spacing:-.02em; margin-top:14px; }
+  h1 .grad { background:linear-gradient(100deg,var(--l1),var(--l2),var(--l3)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .sub { color:var(--body); max-width:70ch; margin-top:6px; }
+  .stats { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 8px; }
+  .stat { border:1px solid var(--border); background:rgba(255,255,255,.7); border-radius:999px; padding:5px 12px; font-size:12px; color:var(--body); }
+  .stat b { color:var(--blue); }
+  .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:18px 0 6px; position:sticky; top:0; background:var(--bg); padding:8px 0; z-index:5; }
+  #filter { flex:1; min-width:200px; border:1px solid var(--border); border-radius:10px; padding:9px 12px; font:inherit; background:#fff; }
+  #clear { border:1px solid var(--border); background:#fff; border-radius:10px; padding:9px 14px; cursor:pointer; font:inherit; color:var(--body); }
+  .hint { color:var(--faint); font-size:12px; }
+  .sec-label { font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--faint); margin:28px 0 12px; font-weight:700; }
+  .chains { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:10px; }
+  .chain { text-align:left; border:1px solid var(--border); background:var(--card); backdrop-filter:blur(10px); border-radius:12px; padding:12px 14px; cursor:pointer; display:flex; flex-direction:column; gap:4px; transition:border-color .15s, box-shadow .15s, transform .1s; }
+  .chain:hover { transform:translateY(-1px); }
+  .chain .cid { font-family:ui-monospace,Menlo,monospace; font-weight:700; color:var(--blue); font-size:13px; }
+  .chain .cwhen { font-size:11.5px; color:var(--faint); }
+  .chain .cjob { font-size:12.5px; color:var(--ink); }
+  .chain.on { border-color:rgba(59,91,219,.55); box-shadow:0 0 0 1px rgba(67,209,139,.3), 0 14px 34px rgba(59,91,219,.14); }
+  .areas { display:flex; flex-direction:column; gap:9px; }
+  .area { border:1px solid var(--border); background:var(--card); backdrop-filter:blur(10px); border-radius:12px; padding:12px 14px; }
+  .area.dim { opacity:.28; }
+  .area.hide { display:none; }
+  .aname { font-weight:650; font-size:14px; }
+  .apaths { margin:6px 0; display:flex; flex-wrap:wrap; gap:5px; }
+  .apaths code, .layer code, td code { font-family:ui-monospace,Menlo,monospace; font-size:11.5px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:1px 6px; color:var(--body); }
+  .aowners { display:flex; flex-wrap:wrap; gap:6px; }
+  .badge { font-family:ui-monospace,Menlo,monospace; font-size:11px; font-weight:700; border:1px solid #cdddff; color:var(--blue); background:var(--blue-soft); border-radius:999px; padding:2px 9px; cursor:pointer; }
+  .badge.on { background:var(--green-soft); border-color:#c3e8d5; color:var(--green); }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  th, td { text-align:left; padding:9px 12px; font-size:12.5px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { background:#fff; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--faint); }
+  tr:last-child td { border-bottom:none; }
+  .gname { font-weight:650; } .gruns { color:var(--body); }
+  .layers { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:10px; margin-top:12px; }
+  .layer { border:1px solid var(--border); background:var(--card); backdrop-filter:blur(10px); border-radius:12px; padding:13px 15px; }
+  .layer h3 { font-size:13.5px; margin-bottom:8px; }
+  .layer ul, .contract ol { padding-left:18px; }
+  .layer li, .contract li { font-size:12.5px; color:var(--body); margin:5px 0; }
+  .contract { border-left:3px solid var(--l2); background:var(--green-soft); border-radius:0 10px 10px 0; padding:12px 16px; margin-top:12px; }
+  footer { color:var(--faint); font-size:11.5px; margin-top:34px; border-top:1px solid var(--border); padding-top:14px; }
+  @media (prefers-reduced-motion: reduce) { .chain { transition:none; } .chain:hover { transform:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="mark"></span><b>Lyra</b><span class="by">nervous system · by Vivacity.ai</span></div>
+  </header>
+  <h1>How this repo <span class="grad">keeps itself honest</span>.</h1>
+  <p class="sub">Every part of the codebase has an owning maintenance chain, and a set of deterministic gates
+  that fail loudly on drift. This map is generated straight from SKILL-CHAIN.md and HARNESS.md - it cannot lie
+  about the rails, because it is built from them.</p>
+
+  <div class="stats">
+    <span class="stat"><b>24</b> mapped sections</span>
+    <span class="stat"><b>12</b> skill chains</span>
+    <span class="stat"><b>3</b> deterministic gates</span>
+    <span class="stat"><b>5</b> enforcement layers</span>
+    <span class="stat"><b>0</b> orphans <span class="hint">(CI-enforced)</span></span>
+  </div>
+
+  <div class="toolbar">
+    <input id="filter" type="search" placeholder="Filter sections by name, path, or chain..." aria-label="Filter sections">
+    <button id="clear" type="button">Clear</button>
+    <span class="hint" id="focushint">Tip: click a chain to focus the sections it owns.</span>
+  </div>
+
+  <p class="sec-label">The chains - staged, gate-checked maintenance playbooks</p>
+  <div class="chains">
+      <button class="chain" data-chain="setup" type="button" aria-pressed="false">
+        <span class="cid">/setup</span>
+        <span class="cwhen">Fresh clone, new user or agent</span>
+        <span class="cjob">Stage-gated end-to-end setup, demo to deployed</span>
+      </button>
+      <button class="chain" data-chain="production-keeper" type="button" aria-pressed="false">
+        <span class="cid">/production-keeper</span>
+        <span class="cwhen">Scheduled, pre-deploy, &quot;is it healthy?&quot;</span>
+        <span class="cjob">Static/test/build/runtime/drift gates -&gt; fix -&gt; ship</span>
+      </button>
+      <button class="chain" data-chain="feedback-loop" type="button" aria-pressed="false">
+        <span class="cid">/feedback-loop</span>
+        <span class="cwhen">Feedback accumulated, or on a cadence</span>
+        <span class="cjob">Pull all channels -&gt; triage -&gt; engineer -&gt; ship -&gt; close loop</span>
+      </button>
+      <button class="chain" data-chain="signal-quality" type="button" aria-pressed="false">
+        <span class="cid">/signal-quality</span>
+        <span class="cwhen">Outcomes accumulated, scoring change proposed</span>
+        <span class="cjob">Measure edge -&gt; evidence-backed tuning -&gt; mirrors in lockstep</span>
+      </button>
+      <button class="chain" data-chain="ai-quality" type="button" aria-pressed="false">
+        <span class="cid">/ai-quality</span>
+        <span class="cwhen">AI change, model drift suspected, monthly</span>
+        <span class="cjob">Evals -&gt; guardrails red-team -&gt; cost/resilience -&gt; system card</span>
+      </button>
+      <button class="chain" data-chain="notification-health" type="button" aria-pressed="false">
+        <span class="cid">/notification-health</span>
+        <span class="cwhen">Delivery doubts, new notification type</span>
+        <span class="cjob">Measure delivery -&gt; template completeness -&gt; root-cause fixes</span>
+      </button>
+      <button class="chain" data-chain="onboarding-funnel" type="button" aria-pressed="false">
+        <span class="cid">/onboarding-funnel</span>
+        <span class="cwhen">Activation data accumulated, funnel change</span>
+        <span class="cjob">Measure drop-offs -&gt; fix worst friction -&gt; demo promise audit</span>
+      </button>
+      <button class="chain" data-chain="onboarding-parity" type="button" aria-pressed="false">
+        <span class="cid">/onboarding-parity</span>
+        <span class="cwhen">Stack/costs/routes/env/version changed</span>
+        <span class="cjob">Sync human + companion + agent onboarding surfaces (npm run check:onboarding)</span>
+      </button>
+      <button class="chain" data-chain="data-integrity" type="button" aria-pressed="false">
+        <span class="cid">/data-integrity</span>
+        <span class="cwhen">Schema change, new data module, RLS doubts</span>
+        <span class="cjob">Migrations lockstep -&gt; RLS audit -&gt; demo parity -&gt; ingest wired</span>
+      </button>
+      <button class="chain" data-chain="security-sweep" type="button" aria-pressed="false">
+        <span class="cid">/security-sweep</span>
+        <span class="cwhen">New route/secret/dependency, quarterly</span>
+        <span class="cjob">Secrets -&gt; authz fail-closed -&gt; abuse limits -&gt; deps triage</span>
+      </button>
+      <button class="chain" data-chain="ux-surface" type="button" aria-pressed="false">
+        <span class="cid">/ux-surface</span>
+        <span class="cwhen">A surface feels rough, after feature work</span>
+        <span class="cjob">One surface to premium: demo render, 375px, states, a11y, engine truth</span>
+      </button>
+      <button class="chain" data-chain="logs-to-genui" type="button" aria-pressed="false">
+        <span class="cid">/logs-to-genui</span>
+        <span class="cwhen">Operational question needs a view</span>
+        <span class="cjob">Logs/events -&gt; deterministic metrics -&gt; GenUI (AI does layout only)</span>
+      </button>
+  </div>
+
+  <p class="sec-label">Coverage map - every section, its paths, and its owning chain(s)</p>
+  <div class="areas" id="areas">
+      <div class="area" data-chains="signal-quality" data-text="scanner + scoring engine workers/stock_scanner/ signal-quality">
+        <div class="aname">Scanner + scoring engine</div>
+        <div class="apaths"><code>workers/stock_scanner/</code></div>
+        <div class="aowners"><button class="badge" data-chain="signal-quality" type="button">/signal-quality</button></div>
+      </div>
+      <div class="area" data-chains="signal-quality" data-text="signal + scoring libs src/lib/candle-series.ts src/lib/live-signals.ts src/lib/outcomes.ts src/lib/paper-trading.ts src/lib/prime-setups.ts src/lib/score-breakdown.ts src/lib/score-history.ts src/lib/signal-events.ts src/lib/signal-intelligence.ts src/lib/simulation.ts src/lib/strategy.ts src/lib/trade-snapshots.ts src/lib/universe.ts signal-quality">
+        <div class="aname">Signal + scoring libs</div>
+        <div class="apaths"><code>src/lib/candle-series.ts</code> <code>src/lib/live-signals.ts</code> <code>src/lib/outcomes.ts</code> <code>src/lib/paper-trading.ts</code> <code>src/lib/prime-setups.ts</code> <code>src/lib/score-breakdown.ts</code> <code>src/lib/score-history.ts</code> <code>src/lib/signal-events.ts</code> <code>src/lib/signal-intelligence.ts</code> <code>src/lib/simulation.ts</code> <code>src/lib/strategy.ts</code> <code>src/lib/trade-snapshots.ts</code> <code>src/lib/universe.ts</code></div>
+        <div class="aowners"><button class="badge" data-chain="signal-quality" type="button">/signal-quality</button></div>
+      </div>
+      <div class="area" data-chains="signal-quality" data-text="pine mirror + recovery model + paper spine src/lib/pine/ src/lib/ml/ src/lib/trading/ signal-quality">
+        <div class="aname">Pine mirror + recovery model + paper spine</div>
+        <div class="apaths"><code>src/lib/pine/</code> <code>src/lib/ml/</code> <code>src/lib/trading/</code></div>
+        <div class="aowners"><button class="badge" data-chain="signal-quality" type="button">/signal-quality</button></div>
+      </div>
+      <div class="area" data-chains="notification-health signal-quality" data-text="worker dispatch seam workers/stock_scanner/notification_dispatch.py workers/stock_scanner/digest_job.py notification-health signal-quality">
+        <div class="aname">Worker dispatch seam</div>
+        <div class="apaths"><code>workers/stock_scanner/notification_dispatch.py</code> <code>workers/stock_scanner/digest_job.py</code></div>
+        <div class="aowners"><button class="badge" data-chain="notification-health" type="button">/notification-health</button> <button class="badge" data-chain="signal-quality" type="button">/signal-quality</button></div>
+      </div>
+      <div class="area" data-chains="ai-quality" data-text="ai layer src/lib/ai/ src/lib/knowledge/ src/lib/api/ src/lib/daily-brief.ts src/lib/saved-prompts.ts content/ ai-quality">
+        <div class="aname">AI layer</div>
+        <div class="apaths"><code>src/lib/ai/</code> <code>src/lib/knowledge/</code> <code>src/lib/api/</code> <code>src/lib/daily-brief.ts</code> <code>src/lib/saved-prompts.ts</code> <code>content/</code></div>
+        <div class="aowners"><button class="badge" data-chain="ai-quality" type="button">/ai-quality</button></div>
+      </div>
+      <div class="area" data-chains="ai-quality" data-text="ai routes + founder ops surface src/app/api/ai/ src/app/ai-ops/ ai-quality">
+        <div class="aname">AI routes + founder ops surface</div>
+        <div class="apaths"><code>src/app/api/ai/</code> <code>src/app/ai-ops/</code></div>
+        <div class="aowners"><button class="badge" data-chain="ai-quality" type="button">/ai-quality</button></div>
+      </div>
+      <div class="area" data-chains="notification-health" data-text="notification spine + channels src/lib/notifications/ src/lib/push/ src/lib/alert-prefs.ts contracts/ notification-health">
+        <div class="aname">Notification spine + channels</div>
+        <div class="apaths"><code>src/lib/notifications/</code> <code>src/lib/push/</code> <code>src/lib/alert-prefs.ts</code> <code>contracts/</code></div>
+        <div class="aowners"><button class="badge" data-chain="notification-health" type="button">/notification-health</button></div>
+      </div>
+      <div class="area" data-chains="notification-health" data-text="notification routes src/app/api/notifications/ src/app/api/push/ src/app/api/webhooks/ notification-health">
+        <div class="aname">Notification routes</div>
+        <div class="apaths"><code>src/app/api/notifications/</code> <code>src/app/api/push/</code> <code>src/app/api/webhooks/</code></div>
+        <div class="aowners"><button class="badge" data-chain="notification-health" type="button">/notification-health</button></div>
+      </div>
+      <div class="area" data-chains="onboarding-funnel" data-text="onboarding + activation libs src/lib/onboarding.ts src/lib/onboarding-progress.ts src/lib/onboarding-summary.ts src/lib/sync-onboarding.ts src/lib/setup-status.ts src/lib/local-watchlist.ts src/lib/local-portfolio.ts src/lib/activation/ onboarding-funnel">
+        <div class="aname">Onboarding + activation libs</div>
+        <div class="apaths"><code>src/lib/onboarding.ts</code> <code>src/lib/onboarding-progress.ts</code> <code>src/lib/onboarding-summary.ts</code> <code>src/lib/sync-onboarding.ts</code> <code>src/lib/setup-status.ts</code> <code>src/lib/local-watchlist.ts</code> <code>src/lib/local-portfolio.ts</code> <code>src/lib/activation/</code></div>
+        <div class="aowners"><button class="badge" data-chain="onboarding-funnel" type="button">/onboarding-funnel</button></div>
+      </div>
+      <div class="area" data-chains="onboarding-funnel" data-text="funnel pages + routes src/app/welcome/ src/app/onboarding/ src/app/auth/ src/app/api/activation/ src/app/api/onboarding/ src/app/api/demo/ src/middleware.ts onboarding-funnel">
+        <div class="aname">Funnel pages + routes</div>
+        <div class="apaths"><code>src/app/welcome/</code> <code>src/app/onboarding/</code> <code>src/app/auth/</code> <code>src/app/api/activation/</code> <code>src/app/api/onboarding/</code> <code>src/app/api/demo/</code> <code>src/middleware.ts</code></div>
+        <div class="aowners"><button class="badge" data-chain="onboarding-funnel" type="button">/onboarding-funnel</button></div>
+      </div>
+      <div class="area" data-chains="onboarding-parity setup" data-text="onboarding docs + companion docs/walkthroughs/ docs/onboarding/ onboarding.md agent-onboarding.md quickstart.md public/setup-companion.html onboarding-parity setup">
+        <div class="aname">Onboarding docs + companion</div>
+        <div class="apaths"><code>docs/walkthroughs/</code> <code>docs/onboarding/</code> <code>ONBOARDING.md</code> <code>AGENT-ONBOARDING.md</code> <code>QUICKSTART.md</code> <code>public/setup-companion.html</code></div>
+        <div class="aowners"><button class="badge" data-chain="onboarding-parity" type="button">/onboarding-parity</button> <button class="badge" data-chain="setup" type="button">/setup</button></div>
+      </div>
+      <div class="area" data-chains="data-integrity" data-text="schema + sql supabase/ sql/ data-integrity">
+        <div class="aname">Schema + SQL</div>
+        <div class="apaths"><code>supabase/</code> <code>sql/</code></div>
+        <div class="aowners"><button class="badge" data-chain="data-integrity" type="button">/data-integrity</button></div>
+      </div>
+      <div class="area" data-chains="data-integrity" data-text="supabase access layers src/lib/supabase/ src/lib/cache.ts src/lib/data.ts src/lib/demo-data.ts src/lib/ingestion/ src/lib/market/ src/lib/generated/ data-integrity">
+        <div class="aname">Supabase access layers</div>
+        <div class="apaths"><code>src/lib/supabase/</code> <code>src/lib/cache.ts</code> <code>src/lib/data.ts</code> <code>src/lib/demo-data.ts</code> <code>src/lib/ingestion/</code> <code>src/lib/market/</code> <code>src/lib/generated/</code></div>
+        <div class="aowners"><button class="badge" data-chain="data-integrity" type="button">/data-integrity</button></div>
+      </div>
+      <div class="area" data-chains="data-integrity" data-text="market-intel data libs src/lib/calendar.ts src/lib/capex-events.ts src/lib/catalysts.ts src/lib/commodities.ts src/lib/feed.ts src/lib/filings.ts src/lib/finance-facts.ts src/lib/fundamentals.ts src/lib/gov-awards.ts src/lib/insider-flow.ts src/lib/intelligence.ts src/lib/interest.ts src/lib/ipos.ts src/lib/macro-context.ts src/lib/market-board.ts src/lib/market-context.ts src/lib/small-cap-lifecycle.ts src/lib/small-cap-research.ts src/lib/smart-money.ts src/lib/smart-money-live.ts src/lib/transcripts.ts src/lib/value-chain.ts src/lib/world-radar.ts data-integrity">
+        <div class="aname">Market-intel data libs</div>
+        <div class="apaths"><code>src/lib/calendar.ts</code> <code>src/lib/capex-events.ts</code> <code>src/lib/catalysts.ts</code> <code>src/lib/commodities.ts</code> <code>src/lib/feed.ts</code> <code>src/lib/filings.ts</code> <code>src/lib/finance-facts.ts</code> <code>src/lib/fundamentals.ts</code> <code>src/lib/gov-awards.ts</code> <code>src/lib/insider-flow.ts</code> <code>src/lib/intelligence.ts</code> <code>src/lib/interest.ts</code> <code>src/lib/ipos.ts</code> <code>src/lib/macro-context.ts</code> <code>src/lib/market-board.ts</code> <code>src/lib/market-context.ts</code> <code>src/lib/small-cap-lifecycle.ts</code> <code>src/lib/small-cap-research.ts</code> <code>src/lib/smart-money.ts</code> <code>src/lib/smart-money-live.ts</code> <code>src/lib/transcripts.ts</code> <code>src/lib/value-chain.ts</code> <code>src/lib/world-radar.ts</code></div>
+        <div class="aowners"><button class="badge" data-chain="data-integrity" type="button">/data-integrity</button></div>
+      </div>
+      <div class="area" data-chains="data-integrity" data-text="data api routes src/app/api/portfolio/ src/app/api/trades/ src/app/api/trading/ src/app/api/watchlist/ src/app/api/small-caps/ src/app/api/ticker-lookup/ src/app/api/ingestion/ data-integrity">
+        <div class="aname">Data API routes</div>
+        <div class="apaths"><code>src/app/api/portfolio/</code> <code>src/app/api/trades/</code> <code>src/app/api/trading/</code> <code>src/app/api/watchlist/</code> <code>src/app/api/small-caps/</code> <code>src/app/api/ticker-lookup/</code> <code>src/app/api/ingestion/</code></div>
+        <div class="aowners"><button class="badge" data-chain="data-integrity" type="button">/data-integrity</button></div>
+      </div>
+      <div class="area" data-chains="data-integrity" data-text="ingest workers (horizon 2) workers/events_worker/ workers/fundamentals_worker/ workers/intelligence_worker/ data-integrity">
+        <div class="aname">Ingest workers (horizon 2)</div>
+        <div class="apaths"><code>workers/events_worker/</code> <code>workers/fundamentals_worker/</code> <code>workers/intelligence_worker/</code></div>
+        <div class="aowners"><button class="badge" data-chain="data-integrity" type="button">/data-integrity</button></div>
+      </div>
+      <div class="area" data-chains="security-sweep" data-text="auth, env, abuse, account src/lib/auth/ src/lib/env.ts src/lib/ratelimit.ts src/lib/account.ts src/app/api/account/ security.md privacy.md docs/security/ security-sweep">
+        <div class="aname">Auth, env, abuse, account</div>
+        <div class="apaths"><code>src/lib/auth/</code> <code>src/lib/env.ts</code> <code>src/lib/ratelimit.ts</code> <code>src/lib/account.ts</code> <code>src/app/api/account/</code> <code>SECURITY.md</code> <code>PRIVACY.md</code> <code>docs/security/</code></div>
+        <div class="aowners"><button class="badge" data-chain="security-sweep" type="button">/security-sweep</button></div>
+      </div>
+      <div class="area" data-chains="logs-to-genui" data-text="findings + genui src/lib/findings/ src/lib/next-best-actions.ts src/app/findings/ src/app/api/findings/ logs-to-genui">
+        <div class="aname">Findings + GenUI</div>
+        <div class="apaths"><code>src/lib/findings/</code> <code>src/lib/next-best-actions.ts</code> <code>src/app/findings/</code> <code>src/app/api/findings/</code></div>
+        <div class="aowners"><button class="badge" data-chain="logs-to-genui" type="button">/logs-to-genui</button></div>
+      </div>
+      <div class="area" data-chains="feedback-loop" data-text="feedback intake src/lib/feedback.ts src/app/api/feedback/ feedback-loop">
+        <div class="aname">Feedback intake</div>
+        <div class="apaths"><code>src/lib/feedback.ts</code> <code>src/app/api/feedback/</code></div>
+        <div class="aowners"><button class="badge" data-chain="feedback-loop" type="button">/feedback-loop</button></div>
+      </div>
+      <div class="area" data-chains="production-keeper" data-text="release + health plumbing src/lib/version.ts src/lib/release-notes.ts src/app/whats-new/ src/app/api/health/ scripts/ tests/ src/lib/__tests__/ .githooks/ .github/ changelog.md production-keeper">
+        <div class="aname">Release + health plumbing</div>
+        <div class="apaths"><code>src/lib/version.ts</code> <code>src/lib/release-notes.ts</code> <code>src/app/whats-new/</code> <code>src/app/api/health/</code> <code>scripts/</code> <code>tests/</code> <code>src/lib/__tests__/</code> <code>.githooks/</code> <code>.github/</code> <code>CHANGELOG.md</code></div>
+        <div class="aowners"><button class="badge" data-chain="production-keeper" type="button">/production-keeper</button></div>
+      </div>
+      <div class="area" data-chains="production-keeper" data-text="harness self-maintenance .claude/commands/ skill-chain.md harness.md claude.md production-keeper">
+        <div class="aname">Harness self-maintenance</div>
+        <div class="apaths"><code>.claude/commands/</code> <code>SKILL-CHAIN.md</code> <code>HARNESS.md</code> <code>CLAUDE.md</code></div>
+        <div class="aowners"><button class="badge" data-chain="production-keeper" type="button">/production-keeper</button></div>
+      </div>
+      <div class="area" data-chains="ux-surface" data-text="feature pages src/app/account/ src/app/awards/ src/app/calculators/ src/app/calendar/ src/app/charts/ src/app/commodities/ src/app/comparison/ src/app/education/ src/app/filings/ src/app/flows/ src/app/fundamentals/ src/app/graph/ src/app/intelligence/ src/app/investors/ src/app/ipos/ src/app/paper/ src/app/paper-bot/ src/app/portfolio/ src/app/privacy/ src/app/radar/ src/app/saved/ src/app/settings/ src/app/simulation/ src/app/small-caps/ src/app/smart-money/ src/app/strategy-lab/ src/app/supply-chain/ src/app/themes/ src/app/tickers/ src/app/trades/ src/app/trading/ src/app/watchlist/ src/app/wire/ ux-surface">
+        <div class="aname">Feature pages</div>
+        <div class="apaths"><code>src/app/account/</code> <code>src/app/awards/</code> <code>src/app/calculators/</code> <code>src/app/calendar/</code> <code>src/app/charts/</code> <code>src/app/commodities/</code> <code>src/app/comparison/</code> <code>src/app/education/</code> <code>src/app/filings/</code> <code>src/app/flows/</code> <code>src/app/fundamentals/</code> <code>src/app/graph/</code> <code>src/app/intelligence/</code> <code>src/app/investors/</code> <code>src/app/ipos/</code> <code>src/app/paper/</code> <code>src/app/paper-bot/</code> <code>src/app/portfolio/</code> <code>src/app/privacy/</code> <code>src/app/radar/</code> <code>src/app/saved/</code> <code>src/app/settings/</code> <code>src/app/simulation/</code> <code>src/app/small-caps/</code> <code>src/app/smart-money/</code> <code>src/app/strategy-lab/</code> <code>src/app/supply-chain/</code> <code>src/app/themes/</code> <code>src/app/tickers/</code> <code>src/app/trades/</code> <code>src/app/trading/</code> <code>src/app/watchlist/</code> <code>src/app/wire/</code></div>
+        <div class="aowners"><button class="badge" data-chain="ux-surface" type="button">/ux-surface</button></div>
+      </div>
+      <div class="area" data-chains="ux-surface" data-text="component estate + shared ui libs src/components/ src/lib/brand.ts src/lib/calculators.ts src/lib/chart-pack.ts src/lib/command-layout.ts src/lib/comparison.ts src/lib/education.ts src/lib/format.ts src/lib/gradient.ts src/lib/research-queue.ts src/lib/ticker-logos.ts src/lib/ui.ts public/ ux-surface">
+        <div class="aname">Component estate + shared UI libs</div>
+        <div class="apaths"><code>src/components/</code> <code>src/lib/brand.ts</code> <code>src/lib/calculators.ts</code> <code>src/lib/chart-pack.ts</code> <code>src/lib/command-layout.ts</code> <code>src/lib/comparison.ts</code> <code>src/lib/education.ts</code> <code>src/lib/format.ts</code> <code>src/lib/gradient.ts</code> <code>src/lib/research-queue.ts</code> <code>src/lib/ticker-logos.ts</code> <code>src/lib/ui.ts</code> <code>public/</code></div>
+        <div class="aowners"><button class="badge" data-chain="ux-surface" type="button">/ux-surface</button></div>
+      </div>
+      <div class="area" data-chains="production-keeper" data-text="docs estate docs/ readme.md costs.md production-keeper">
+        <div class="aname">Docs estate</div>
+        <div class="apaths"><code>docs/</code> <code>README.md</code> <code>COSTS.md</code></div>
+        <div class="aowners"><button class="badge" data-chain="production-keeper" type="button">/production-keeper</button></div>
+      </div>
+  </div>
+
+  <p class="sec-label">Layer 1 - deterministic gates (a red gate is a fact)</p>
+  <table>
+    <thead><tr><th>Gate</th><th>Command</th><th>Enforces</th><th>Runs in</th></tr></thead>
+    <tbody>
+        <tr>
+          <td class="gname">Version bump</td>
+          <td><code>npm run check:version</code></td>
+          <td>shippable change =&gt; RELEASES entry; package.json/version.ts/CHANGELOG.md lockstep</td>
+          <td class="gruns">pre-push hook + CI version-guard</td>
+        </tr>
+        <tr>
+          <td class="gname">Onboarding parity</td>
+          <td><code>npm run check:onboarding</code></td>
+          <td>human + companion + agent onboarding surfaces match the codebase (stack, costs, env, routes, version)</td>
+          <td class="gruns">CI</td>
+        </tr>
+        <tr>
+          <td class="gname">Chain coverage</td>
+          <td><code>npm run check:chains</code></td>
+          <td>every code section has an owning skill chain; no dead paths or orphan chains in the map</td>
+          <td class="gruns">CI</td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p class="sec-label">Enforcement layers</p>
+  <div class="layers">
+      <div class="layer">
+        <h3>Layer 1 - Deterministic gates (`scripts/check-*.mjs`)</h3>
+        <ul></ul>
+      </div>
+      <div class="layer">
+        <h3>Layer 2 - Git hooks + CI</h3>
+        <ul><li>Pre-push hook (.githooks/pre-push, wired by npm install via the prepare script): blocks any push that changes shippable code (src/supabase/workers/ public/content/sql/contracts) without a version bump. Emergency bypass VD_SKIP_VERSION=1 exists; normal flow never uses it.</li><li>CI (.github/workflows/ci.yml) on every push/PR: version-guard (server-side, so the local hook cannot be dodged), type-check (strict TS, no any), lint, Vitest, production build, pytest, and the parity/coverage gates.</li></ul>
+      </div>
+      <div class="layer">
+        <h3>Layer 3 - The test harness</h3>
+        <ul><li>Frontend/unit: Vitest - npm run test (tests/*.test.ts + colocated src/**/__tests__/). Route handlers get direct-invocation tests; Supabase is faked with thenable query fakes (see dispatch-sweep.test.ts for the pattern).</li><li>Worker: pytest - npm run worker:test (via scripts/py.mjs, venv-aware). Engine logic is tested against fixed candle fixtures; repos are faked (FakeRepo pattern in test_outcome_job.py).</li><li>Evals as tests: AI groundedness/quality gates and knowledge retrieval evals run inside the Vitest suite - eval regressions fail CI like any other red test.</li><li>Contracts as tests: contracts/notifications/ is pinned by a test, so a template or type added without its counterparts fails immediately.</li></ul>
+      </div>
+      <div class="layer">
+        <h3>Layer 4 - Runtime guards (the product protects itself)</h3>
+        <ul><li>Fabrication guard - guardProse (src/lib/ai/guardrails/prose.ts) + the guardrails engine gate every AI completion; GenUI layouts are validated and fall back to deterministic views. The AI never invents a number and never gives advice.</li><li>Spend guard - hosted-key token budget (src/lib/ai/budget-tracker.ts) and a circuit breaker in the gateway; hosted 429s never retry.</li><li>Access guards - RLS on every table, fail-closed founder gating, timing-safe secret checks, SSRF-fenced webhooks, rate limits on open routes.</li><li>Delivery guards - quiet-hours hold/release, idempotency keys, retry-once sweep.</li></ul>
+      </div>
+      <div class="layer">
+        <h3>Layer 5 - Scheduled loops (GitHub Actions)</h3>
+        <ul><li>hourly-stock-scanner.yml - the scan, plus failure alerts (Telegram/Slack) and a cron keepalive (GitHub disables idle schedules after 60 days).</li><li>nightly-maintenance.yml - horizon-2 workers, outcome labeling + coaching follow-ups, digest/weekly report, notification sweep.</li></ul>
+      </div>
+  </div>
+
+  <p class="sec-label">The agent operating contract</p>
+  <div class="contract"><ol>
+        <li>Start: npm run doctor, git status --short (another agent may share this live</li>
+        <li>Work through the owning chain: find your section in</li>
+        <li>Execute, don&#39;t advise: chains end with shipped, verified work. Placeholder copy,</li>
+        <li>Explain: every ship carries a RELEASES entry a user can understand, and a</li>
+        <li>Never bypass: no VD_SKIP_VERSION, no --no-verify, no deleted eval case to go</li>
+        <li>Finish: all gates green, version bumped (RELEASES -&gt; npm run release -&gt;</li>
+  </ol></div>
+
+  <footer>Generated by scripts/build-harness-map.mjs from SKILL-CHAIN.md + HARNESS.md. Regenerate: <span class="mono">npm run content:build</span>. Lyra is research software, not financial advice.</footer>
+</div>
+
+<script>
+(function () {
+  var areas = Array.prototype.slice.call(document.querySelectorAll('.area'));
+  var chains = Array.prototype.slice.call(document.querySelectorAll('.chain'));
+  var badges = Array.prototype.slice.call(document.querySelectorAll('.badge'));
+  var filter = document.getElementById('filter');
+  var clearBtn = document.getElementById('clear');
+  var hint = document.getElementById('focushint');
+  var active = '';
+
+  function apply() {
+    var q = (filter.value || '').trim().toLowerCase();
+    areas.forEach(function (a) {
+      var owns = !active || (' ' + a.getAttribute('data-chains') + ' ').indexOf(' ' + active + ' ') !== -1;
+      var matches = !q || a.getAttribute('data-text').indexOf(q) !== -1;
+      a.classList.toggle('hide', !matches);
+      a.classList.toggle('dim', matches && active && !owns);
+    });
+    chains.forEach(function (c) {
+      var on = active && c.getAttribute('data-chain') === active;
+      c.classList.toggle('on', !!on);
+      c.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    badges.forEach(function (b) { b.classList.toggle('on', active && b.getAttribute('data-chain') === active); });
+    hint.textContent = active ? ('Focused: /' + active + ' - click it again to clear.') : 'Tip: click a chain to focus the sections it owns.';
+  }
+  function focusChain(id) { active = active === id ? '' : id; apply(); }
+
+  chains.forEach(function (c) { c.addEventListener('click', function () { focusChain(c.getAttribute('data-chain')); }); });
+  badges.forEach(function (b) { b.addEventListener('click', function () { focusChain(b.getAttribute('data-chain')); }); });
+  filter.addEventListener('input', apply);
+  clearBtn.addEventListener('click', function () { filter.value = ''; active = ''; apply(); filter.focus(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { filter.value = ''; active = ''; apply(); } });
+})();
+</script>
+</body>
+</html>

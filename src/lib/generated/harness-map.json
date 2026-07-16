@@ -1,0 +1,522 @@
+{
+  "source": [
+    "SKILL-CHAIN.md",
+    "HARNESS.md"
+  ],
+  "stats": {
+    "sections": 24,
+    "chains": 12,
+    "gates": 3,
+    "layers": 5
+  },
+  "chains": [
+    {
+      "id": "setup",
+      "file": ".claude/commands/setup.md",
+      "runWhen": "Fresh clone, new user or agent",
+      "job": "Stage-gated end-to-end setup, demo to deployed"
+    },
+    {
+      "id": "production-keeper",
+      "file": ".claude/commands/production-keeper.md",
+      "runWhen": "Scheduled, pre-deploy, \"is it healthy?\"",
+      "job": "Static/test/build/runtime/drift gates -> fix -> ship"
+    },
+    {
+      "id": "feedback-loop",
+      "file": ".claude/commands/feedback-loop.md",
+      "runWhen": "Feedback accumulated, or on a cadence",
+      "job": "Pull all channels -> triage -> engineer -> ship -> close loop"
+    },
+    {
+      "id": "signal-quality",
+      "file": ".claude/commands/signal-quality.md",
+      "runWhen": "Outcomes accumulated, scoring change proposed",
+      "job": "Measure edge -> evidence-backed tuning -> mirrors in lockstep"
+    },
+    {
+      "id": "ai-quality",
+      "file": ".claude/commands/ai-quality.md",
+      "runWhen": "AI change, model drift suspected, monthly",
+      "job": "Evals -> guardrails red-team -> cost/resilience -> system card"
+    },
+    {
+      "id": "notification-health",
+      "file": ".claude/commands/notification-health.md",
+      "runWhen": "Delivery doubts, new notification type",
+      "job": "Measure delivery -> template completeness -> root-cause fixes"
+    },
+    {
+      "id": "onboarding-funnel",
+      "file": ".claude/commands/onboarding-funnel.md",
+      "runWhen": "Activation data accumulated, funnel change",
+      "job": "Measure drop-offs -> fix worst friction -> demo promise audit"
+    },
+    {
+      "id": "onboarding-parity",
+      "file": ".claude/commands/onboarding-parity.md",
+      "runWhen": "Stack/costs/routes/env/version changed",
+      "job": "Sync human + companion + agent onboarding surfaces (npm run check:onboarding)"
+    },
+    {
+      "id": "data-integrity",
+      "file": ".claude/commands/data-integrity.md",
+      "runWhen": "Schema change, new data module, RLS doubts",
+      "job": "Migrations lockstep -> RLS audit -> demo parity -> ingest wired"
+    },
+    {
+      "id": "security-sweep",
+      "file": ".claude/commands/security-sweep.md",
+      "runWhen": "New route/secret/dependency, quarterly",
+      "job": "Secrets -> authz fail-closed -> abuse limits -> deps triage"
+    },
+    {
+      "id": "ux-surface",
+      "file": ".claude/commands/ux-surface.md",
+      "runWhen": "A surface feels rough, after feature work",
+      "job": "One surface to premium: demo render, 375px, states, a11y, engine truth"
+    },
+    {
+      "id": "logs-to-genui",
+      "file": ".claude/commands/logs-to-genui.md",
+      "runWhen": "Operational question needs a view",
+      "job": "Logs/events -> deterministic metrics -> GenUI (AI does layout only)"
+    }
+  ],
+  "sections": [
+    {
+      "section": "Scanner + scoring engine",
+      "paths": [
+        "workers/stock_scanner/"
+      ],
+      "chains": [
+        "signal-quality"
+      ]
+    },
+    {
+      "section": "Signal + scoring libs",
+      "paths": [
+        "src/lib/candle-series.ts",
+        "src/lib/live-signals.ts",
+        "src/lib/outcomes.ts",
+        "src/lib/paper-trading.ts",
+        "src/lib/prime-setups.ts",
+        "src/lib/score-breakdown.ts",
+        "src/lib/score-history.ts",
+        "src/lib/signal-events.ts",
+        "src/lib/signal-intelligence.ts",
+        "src/lib/simulation.ts",
+        "src/lib/strategy.ts",
+        "src/lib/trade-snapshots.ts",
+        "src/lib/universe.ts"
+      ],
+      "chains": [
+        "signal-quality"
+      ]
+    },
+    {
+      "section": "Pine mirror + recovery model + paper spine",
+      "paths": [
+        "src/lib/pine/",
+        "src/lib/ml/",
+        "src/lib/trading/"
+      ],
+      "chains": [
+        "signal-quality"
+      ]
+    },
+    {
+      "section": "Worker dispatch seam",
+      "paths": [
+        "workers/stock_scanner/notification_dispatch.py",
+        "workers/stock_scanner/digest_job.py"
+      ],
+      "chains": [
+        "notification-health",
+        "signal-quality"
+      ]
+    },
+    {
+      "section": "AI layer",
+      "paths": [
+        "src/lib/ai/",
+        "src/lib/knowledge/",
+        "src/lib/api/",
+        "src/lib/daily-brief.ts",
+        "src/lib/saved-prompts.ts",
+        "content/"
+      ],
+      "chains": [
+        "ai-quality"
+      ]
+    },
+    {
+      "section": "AI routes + founder ops surface",
+      "paths": [
+        "src/app/api/ai/",
+        "src/app/ai-ops/"
+      ],
+      "chains": [
+        "ai-quality"
+      ]
+    },
+    {
+      "section": "Notification spine + channels",
+      "paths": [
+        "src/lib/notifications/",
+        "src/lib/push/",
+        "src/lib/alert-prefs.ts",
+        "contracts/"
+      ],
+      "chains": [
+        "notification-health"
+      ]
+    },
+    {
+      "section": "Notification routes",
+      "paths": [
+        "src/app/api/notifications/",
+        "src/app/api/push/",
+        "src/app/api/webhooks/"
+      ],
+      "chains": [
+        "notification-health"
+      ]
+    },
+    {
+      "section": "Onboarding + activation libs",
+      "paths": [
+        "src/lib/onboarding.ts",
+        "src/lib/onboarding-progress.ts",
+        "src/lib/onboarding-summary.ts",
+        "src/lib/sync-onboarding.ts",
+        "src/lib/setup-status.ts",
+        "src/lib/local-watchlist.ts",
+        "src/lib/local-portfolio.ts",
+        "src/lib/activation/"
+      ],
+      "chains": [
+        "onboarding-funnel"
+      ]
+    },
+    {
+      "section": "Funnel pages + routes",
+      "paths": [
+        "src/app/welcome/",
+        "src/app/onboarding/",
+        "src/app/auth/",
+        "src/app/api/activation/",
+        "src/app/api/onboarding/",
+        "src/app/api/demo/",
+        "src/middleware.ts"
+      ],
+      "chains": [
+        "onboarding-funnel"
+      ]
+    },
+    {
+      "section": "Onboarding docs + companion",
+      "paths": [
+        "docs/walkthroughs/",
+        "docs/onboarding/",
+        "ONBOARDING.md",
+        "AGENT-ONBOARDING.md",
+        "QUICKSTART.md",
+        "public/setup-companion.html"
+      ],
+      "chains": [
+        "onboarding-parity",
+        "setup"
+      ]
+    },
+    {
+      "section": "Schema + SQL",
+      "paths": [
+        "supabase/",
+        "sql/"
+      ],
+      "chains": [
+        "data-integrity"
+      ]
+    },
+    {
+      "section": "Supabase access layers",
+      "paths": [
+        "src/lib/supabase/",
+        "src/lib/cache.ts",
+        "src/lib/data.ts",
+        "src/lib/demo-data.ts",
+        "src/lib/ingestion/",
+        "src/lib/market/",
+        "src/lib/generated/"
+      ],
+      "chains": [
+        "data-integrity"
+      ]
+    },
+    {
+      "section": "Market-intel data libs",
+      "paths": [
+        "src/lib/calendar.ts",
+        "src/lib/capex-events.ts",
+        "src/lib/catalysts.ts",
+        "src/lib/commodities.ts",
+        "src/lib/feed.ts",
+        "src/lib/filings.ts",
+        "src/lib/finance-facts.ts",
+        "src/lib/fundamentals.ts",
+        "src/lib/gov-awards.ts",
+        "src/lib/insider-flow.ts",
+        "src/lib/intelligence.ts",
+        "src/lib/interest.ts",
+        "src/lib/ipos.ts",
+        "src/lib/macro-context.ts",
+        "src/lib/market-board.ts",
+        "src/lib/market-context.ts",
+        "src/lib/small-cap-lifecycle.ts",
+        "src/lib/small-cap-research.ts",
+        "src/lib/smart-money.ts",
+        "src/lib/smart-money-live.ts",
+        "src/lib/transcripts.ts",
+        "src/lib/value-chain.ts",
+        "src/lib/world-radar.ts"
+      ],
+      "chains": [
+        "data-integrity"
+      ]
+    },
+    {
+      "section": "Data API routes",
+      "paths": [
+        "src/app/api/portfolio/",
+        "src/app/api/trades/",
+        "src/app/api/trading/",
+        "src/app/api/watchlist/",
+        "src/app/api/small-caps/",
+        "src/app/api/ticker-lookup/",
+        "src/app/api/ingestion/"
+      ],
+      "chains": [
+        "data-integrity"
+      ]
+    },
+    {
+      "section": "Ingest workers (horizon 2)",
+      "paths": [
+        "workers/events_worker/",
+        "workers/fundamentals_worker/",
+        "workers/intelligence_worker/"
+      ],
+      "chains": [
+        "data-integrity"
+      ]
+    },
+    {
+      "section": "Auth, env, abuse, account",
+      "paths": [
+        "src/lib/auth/",
+        "src/lib/env.ts",
+        "src/lib/ratelimit.ts",
+        "src/lib/account.ts",
+        "src/app/api/account/",
+        "SECURITY.md",
+        "PRIVACY.md",
+        "docs/security/"
+      ],
+      "chains": [
+        "security-sweep"
+      ]
+    },
+    {
+      "section": "Findings + GenUI",
+      "paths": [
+        "src/lib/findings/",
+        "src/lib/next-best-actions.ts",
+        "src/app/findings/",
+        "src/app/api/findings/"
+      ],
+      "chains": [
+        "logs-to-genui"
+      ]
+    },
+    {
+      "section": "Feedback intake",
+      "paths": [
+        "src/lib/feedback.ts",
+        "src/app/api/feedback/"
+      ],
+      "chains": [
+        "feedback-loop"
+      ]
+    },
+    {
+      "section": "Release + health plumbing",
+      "paths": [
+        "src/lib/version.ts",
+        "src/lib/release-notes.ts",
+        "src/app/whats-new/",
+        "src/app/api/health/",
+        "scripts/",
+        "tests/",
+        "src/lib/__tests__/",
+        ".githooks/",
+        ".github/",
+        "CHANGELOG.md"
+      ],
+      "chains": [
+        "production-keeper"
+      ]
+    },
+    {
+      "section": "Harness self-maintenance",
+      "paths": [
+        ".claude/commands/",
+        "SKILL-CHAIN.md",
+        "HARNESS.md",
+        "CLAUDE.md"
+      ],
+      "chains": [
+        "production-keeper"
+      ]
+    },
+    {
+      "section": "Feature pages",
+      "paths": [
+        "src/app/account/",
+        "src/app/awards/",
+        "src/app/calculators/",
+        "src/app/calendar/",
+        "src/app/charts/",
+        "src/app/commodities/",
+        "src/app/comparison/",
+        "src/app/education/",
+        "src/app/filings/",
+        "src/app/flows/",
+        "src/app/fundamentals/",
+        "src/app/graph/",
+        "src/app/intelligence/",
+        "src/app/investors/",
+        "src/app/ipos/",
+        "src/app/paper/",
+        "src/app/paper-bot/",
+        "src/app/portfolio/",
+        "src/app/privacy/",
+        "src/app/radar/",
+        "src/app/saved/",
+        "src/app/settings/",
+        "src/app/simulation/",
+        "src/app/small-caps/",
+        "src/app/smart-money/",
+        "src/app/strategy-lab/",
+        "src/app/supply-chain/",
+        "src/app/themes/",
+        "src/app/tickers/",
+        "src/app/trades/",
+        "src/app/trading/",
+        "src/app/watchlist/",
+        "src/app/wire/"
+      ],
+      "chains": [
+        "ux-surface"
+      ]
+    },
+    {
+      "section": "Component estate + shared UI libs",
+      "paths": [
+        "src/components/",
+        "src/lib/brand.ts",
+        "src/lib/calculators.ts",
+        "src/lib/chart-pack.ts",
+        "src/lib/command-layout.ts",
+        "src/lib/comparison.ts",
+        "src/lib/education.ts",
+        "src/lib/format.ts",
+        "src/lib/gradient.ts",
+        "src/lib/research-queue.ts",
+        "src/lib/ticker-logos.ts",
+        "src/lib/ui.ts",
+        "public/"
+      ],
+      "chains": [
+        "ux-surface"
+      ]
+    },
+    {
+      "section": "Docs estate",
+      "paths": [
+        "docs/",
+        "README.md",
+        "COSTS.md"
+      ],
+      "chains": [
+        "production-keeper"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "name": "Version bump",
+      "command": "npm run check:version",
+      "enforces": "shippable change => RELEASES entry; package.json/version.ts/CHANGELOG.md lockstep",
+      "runsIn": "pre-push hook + CI version-guard"
+    },
+    {
+      "name": "Onboarding parity",
+      "command": "npm run check:onboarding",
+      "enforces": "human + companion + agent onboarding surfaces match the codebase (stack, costs, env, routes, version)",
+      "runsIn": "CI"
+    },
+    {
+      "name": "Chain coverage",
+      "command": "npm run check:chains",
+      "enforces": "every code section has an owning skill chain; no dead paths or orphan chains in the map",
+      "runsIn": "CI"
+    }
+  ],
+  "layers": [
+    {
+      "title": "Layer 1 - Deterministic gates (`scripts/check-*.mjs`)",
+      "items": []
+    },
+    {
+      "title": "Layer 2 - Git hooks + CI",
+      "items": [
+        "Pre-push hook (.githooks/pre-push, wired by npm install via the prepare script): blocks any push that changes shippable code (src/supabase/workers/ public/content/sql/contracts) without a version bump. Emergency bypass VD_SKIP_VERSION=1 exists; normal flow never uses it.",
+        "CI (.github/workflows/ci.yml) on every push/PR: version-guard (server-side, so the local hook cannot be dodged), type-check (strict TS, no any), lint, Vitest, production build, pytest, and the parity/coverage gates."
+      ]
+    },
+    {
+      "title": "Layer 3 - The test harness",
+      "items": [
+        "Frontend/unit: Vitest - npm run test (tests/*.test.ts + colocated src/**/__tests__/). Route handlers get direct-invocation tests; Supabase is faked with thenable query fakes (see dispatch-sweep.test.ts for the pattern).",
+        "Worker: pytest - npm run worker:test (via scripts/py.mjs, venv-aware). Engine logic is tested against fixed candle fixtures; repos are faked (FakeRepo pattern in test_outcome_job.py).",
+        "Evals as tests: AI groundedness/quality gates and knowledge retrieval evals run inside the Vitest suite - eval regressions fail CI like any other red test.",
+        "Contracts as tests: contracts/notifications/ is pinned by a test, so a template or type added without its counterparts fails immediately."
+      ]
+    },
+    {
+      "title": "Layer 4 - Runtime guards (the product protects itself)",
+      "items": [
+        "Fabrication guard - guardProse (src/lib/ai/guardrails/prose.ts) + the guardrails engine gate every AI completion; GenUI layouts are validated and fall back to deterministic views. The AI never invents a number and never gives advice.",
+        "Spend guard - hosted-key token budget (src/lib/ai/budget-tracker.ts) and a circuit breaker in the gateway; hosted 429s never retry.",
+        "Access guards - RLS on every table, fail-closed founder gating, timing-safe secret checks, SSRF-fenced webhooks, rate limits on open routes.",
+        "Delivery guards - quiet-hours hold/release, idempotency keys, retry-once sweep."
+      ]
+    },
+    {
+      "title": "Layer 5 - Scheduled loops (GitHub Actions)",
+      "items": [
+        "hourly-stock-scanner.yml - the scan, plus failure alerts (Telegram/Slack) and a cron keepalive (GitHub disables idle schedules after 60 days).",
+        "nightly-maintenance.yml - horizon-2 workers, outcome labeling + coaching follow-ups, digest/weekly report, notification sweep."
+      ]
+    }
+  ],
+  "contract": [
+    "Start: npm run doctor, git status --short (another agent may share this live",
+    "Work through the owning chain: find your section in",
+    "Execute, don't advise: chains end with shipped, verified work. Placeholder copy,",
+    "Explain: every ship carries a RELEASES entry a user can understand, and a",
+    "Never bypass: no VD_SKIP_VERSION, no --no-verify, no deleted eval case to go",
+    "Finish: all gates green, version bumped (RELEASES -> npm run release ->"
+  ]
+}

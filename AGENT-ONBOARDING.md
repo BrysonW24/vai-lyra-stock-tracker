@@ -76,6 +76,7 @@ is plain markdown with explicit stages and gates. The non-negotiables:
 | The complete onboarding asset ledger | [ONBOARDING.md](ONBOARDING.md) |
 | The agent harness (gates, hooks, CI, guards) | [HARNESS.md](HARNESS.md) |
 | Skill-chain registry + section ownership map | [SKILL-CHAIN.md](SKILL-CHAIN.md) |
+| The harness + coverage map, rendered visually | `/harness-map.html` (generated from the two files above) |
 | The stage-by-stage setup playbook | [.claude/commands/setup.md](.claude/commands/setup.md) |
 | Human-paced deep dives | [docs/walkthroughs/](docs/walkthroughs/README.md) |
 | Deploy: Vercel CLI path | [docs/walkthroughs/04-deploy-your-own.md](docs/walkthroughs/04-deploy-your-own.md) |

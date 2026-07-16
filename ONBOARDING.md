@@ -19,6 +19,7 @@ deployed if they choose.
 | [AGENT-ONBOARDING.md](AGENT-ONBOARDING.md) | Any coding agent | The agent's front door: mission, ground rules, the setup contract, verification gates |
 | [HARNESS.md](HARNESS.md) | Any coding agent | The agent harness: deterministic gates (`scripts/check-*.mjs`), hooks, CI, runtime guards, the operating contract |
 | [SKILL-CHAIN.md](SKILL-CHAIN.md) | Any coding agent | Skill-chain registry + coverage map: every code section's owning maintenance chain, enforced by `npm run check:chains` (CI) |
+| `/harness-map.html` ([scripts/build-harness-map.mjs](scripts/build-harness-map.mjs)) | Agents + humans | The nervous-system map: SKILL-CHAIN.md + HARNESS.md rendered as one interactive page - chains, the coverage map (click a chain to focus the sections it owns), the deterministic gates, and the enforcement layers. Generated on the content pipeline so it cannot drift; also emits `src/lib/generated/harness-map.json` |
 | [.claude/commands/setup.md](.claude/commands/setup.md) | Claude Code (readable by any agent) | The `/setup` playbook: stage-by-stage E2E setup with verification gates, companion wiring, Vercel CLI path |
 | [docs/onboarding/setup-companion.html](docs/onboarding/setup-companion.html) | The human, in their browser | Live premium spec + progress board the agent opens during setup (spec below) |
 | [public/setup-companion.html](public/setup-companion.html) | The human, in the app | Same companion served at `/setup-companion.html` as an in-app resource - GENERATED from the docs copy by `npm run content:build` (never hand-copied) |
@@ -26,6 +27,8 @@ deployed if they choose.
 | [docs/walkthroughs/](docs/walkthroughs/README.md) | Humans, self-paced | The clone-to-live replication path, 6 walkthroughs: 01 tour, 02 run it yourself, 03 your own data spine, 04 deploy your own (incl. the agent-friendly Vercel CLI subsection), 05 understand the score, 06 alerts on your phone |
 | `/welcome` landing sections | Prospective users | "The ultimate goal" (6 flip cards) + "The stack" (16 cost-badged tiles) ported from the companion - [src/components/landing/UltimateGoals.tsx](src/components/landing/UltimateGoals.tsx), [src/components/landing/StackSection.tsx](src/components/landing/StackSection.tsx) |
 | `/onboarding` in-app flow | Signed-in users | Console setup after account creation (demo mode goes straight there) |
+| `npm run dev` splash ([scripts/splash.mjs](scripts/splash.mjs)) | Humans + agents | Branded first-run moment: the Lyra wordmark in the tri-gradient + "by Vivacity.ai" prints just before Next hands you the localhost URL (truecolor, gracefully plain on non-TTY, always exits 0) |
+| `npm run commission` ([scripts/commission-card.mjs](scripts/commission-card.mjs)) | The human, after setup | Private branded receipt written into the clone once the deploy is healthy - `commission/card.svg` + `COMMISSIONED.md`, both gitignored. A local keepsake, never shared. Version + mode read from `/api/health` |
 | `npm run doctor` | Humans + agents | Reports which mode you are in (demo / live / AI) and what is configured |
 | `/api/health` | Agents + hosting | Public liveness + version probe - the "done looks like" gate for deploys |
 | [COSTS.md](COSTS.md) | Humans deciding to go live | Fully-itemised stack costs, free-tier limits, the gotchas that bite |
@@ -72,6 +75,11 @@ self-contained HTML file (no network requests, all assets embedded as data URIs)
   (or Enter/Space) flips to the detail; flip state survives the 5s refresh via
   sessionStorage. Cards: small-cap signal radar, auditable analysis, BYOK AI, alerts
   channels, paper bot, and the human-gated live bot (honestly badged "the destination").
+- **Gate micro-delight**: the moment a stage flips to `done`, its card gets a one-shot
+  tri-gradient shine sweep, and (only if the human opts in via the `🔕 Sound off` toggle)
+  one soft two-note tone. Transitions are baseline-seeded in sessionStorage so opening the
+  page mid-setup never bursts; `prefers-reduced-motion` disables the sweep and the tone is
+  strictly opt-in.
 - **Mobile pass is imperative**: single-column cards, 2-up stack grid, centred lockup,
   scrollable architecture strip. `prefers-reduced-motion` disables all animation.
 - **Honest statuses everywhere**: WhatsApp is architecture-only, the live bot is not

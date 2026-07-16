@@ -26,6 +26,14 @@ This repo is built to be **shared as a link and replicated end to end**. Four th
 
 ## 0 - How to Access Lyra
 
+**The best way to share Lyra depends on who you are sharing with - and it is almost never "clone it".**
+
+- **Anyone you want to _show_** (friends, prospects, "look what I built") - send the live link: **[vai-lyra-stock-tracker.vercel.app](https://vai-lyra-stock-tracker.vercel.app)**. Demo mode runs on built-in data with **zero setup, no account, no keys**, so they land straight in the real console. On mobile they can Add to Home Screen (below) for an app-like icon.
+- **Developers who want their _own_ copy** - point them at this repo to **fork** (not clone-to-browse) and run the guided setup: Claude Code users run **`/setup`**, everyone else follows the [walkthroughs](./docs/walkthroughs/README.md). The path from demo to deployed is fully gated.
+- **AI coding agents** (in case they do clone) - the front door is **[AGENT-ONBOARDING.md](./AGENT-ONBOARDING.md)**: it hands them the `/setup` contract and the verification gates, and if they change code, the enforcement map ([HARNESS.md](./HARNESS.md)) and the skill-chain coverage map ([SKILL-CHAIN.md](./SKILL-CHAIN.md)) that keep the repo honest.
+
+_Rule of thumb: **link** for humans, **fork** for builders, **AGENT-ONBOARDING.md** for agents. The clone is for people who want to run their own Lyra, not for people who just want to see it._
+
 <p align="center">
   <img src="image-2.png" width="30%"
   alt="Three Dots - Share Button" />

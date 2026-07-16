@@ -6,6 +6,10 @@ that fail loudly, skill chains that encode how each vertical is maintained, runt
 guards inside the product itself, and a scheduler that keeps the loops running. An agent
 that follows this page cannot silently ship drift.
 
+> An interactive version of this whole map - the chains, the coverage map, the gates, and
+> these layers - is generated from this file plus [SKILL-CHAIN.md](SKILL-CHAIN.md) and served
+> at `/harness-map.html` (built by `scripts/build-harness-map.mjs` on the content pipeline).
+
 Two conventions carry the whole design:
 
 - **`.claude/commands/*.md` are the skill chains** - staged, gate-checked playbooks for

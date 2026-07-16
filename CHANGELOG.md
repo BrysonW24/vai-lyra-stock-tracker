@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-07-16
+
+Signature onboarding: a branded terminal splash, gate micro-delight, a private commissioning card, and a live nervous-system map.
+
+### Changed
+
+- npm run dev now opens with a branded first-run splash - the Lyra wordmark in the tri-gradient with "by Vivacity.ai" - printed right before the localhost URL. Truecolor, gracefully plain on a non-TTY, and it can never block the dev server.
+- The Setup Companion celebrates progress: the moment a stage clears, its card gets a one-shot tri-gradient shine sweep, plus an opt-in soft tone. Transitions are baseline-seeded so opening the page mid-setup never bursts, and prefers-reduced-motion is fully respected.
+- A private commissioning card: once a fresh clone reaches a healthy deploy, npm run commission writes a branded receipt (commission/card.svg + COMMISSIONED.md) into the clone - a local keepsake, read from /api/health, gitignored and never shared anywhere.
+- A new nervous-system map at /harness-map.html renders SKILL-CHAIN.md + HARNESS.md as one interactive page - click a chain to focus the sections it owns, filter by path, and see every deterministic gate. Generated on the content pipeline so it can never drift from the rails it describes.
+- The README now spells out how to share Lyra by audience - a live link for humans, a fork for builders, AGENT-ONBOARDING.md for agents - and the onboarding ledger records every new asset.
+
 ## [0.13.0] - 2026-07-16
 
 Your digital trading twin: Lyra now learns your interests, habits, and risk posture - and reflects them back.
@@ -389,7 +401,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.11.2...v0.12.0
 [0.11.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.11.1...v0.11.2
