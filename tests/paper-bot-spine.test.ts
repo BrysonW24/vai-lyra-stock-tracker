@@ -5,7 +5,8 @@ import { buildPaperOrderIntent } from '@/lib/trading/order-intent-builder';
 import { simulatePaperFill, requiresApproval } from '@/lib/trading/paper-bot';
 import { runPreTradeChecks } from '@/lib/trading/risk-engine';
 import { DEFAULT_TRADING_SETTINGS, type PreTradeContext, type TradingSettings } from '@/lib/trading/types';
-import { PAPER_FEE_RATE, PAPER_SLIPPAGE_RATE } from '@/lib/paper-trading';
+import { PAPER_SLIPPAGE_RATE } from '@/lib/paper-trading';
+import { commissionFor } from '@/lib/edge/costs';
 
 const paperSettings = (): TradingSettings => ({
   ...DEFAULT_TRADING_SETTINGS,
@@ -93,11 +94,13 @@ describe('paper-bot spine - deterministic order + fill', () => {
     expect(intent.idempotencyKey).toContain('lyra_paper_bot');
   });
 
-  it('paper fill applies slippage and commission, never touches a broker', () => {
+  it('paper fill applies slippage and a realistic floored commission, never touches a broker', () => {
     const intent = sampleIntent();
     const fill = simulatePaperFill(intent, 200);
     expect(fill.fillPrice).toBeCloseTo(200 * (1 + PAPER_SLIPPAGE_RATE), 2);
-    expect(fill.simulatedFee).toBeCloseTo(fill.notional * PAPER_FEE_RATE, 2);
+    // Commission uses the fixed-floor model, not a flat percentage: on a ~$2k fill the $3 floor binds.
+    expect(fill.simulatedFee).toBeCloseTo(commissionFor(fill.notional), 2);
+    expect(fill.simulatedFee).toBe(3);
     expect(fill.quantity).toBe(10);
     expect(fill.sourceOrderIntentId).toBe(intent.id);
   });

@@ -13,6 +13,7 @@
  */
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getDashboardData } from '@/lib/data';
+import { DEFAULT_PAPER_STARTING_CASH } from '@/lib/edge/costs';
 import { getPaperAccountSummary as getInMemorySummary, emptyPaperAccountSummary, computeTradeAnalytics, type PaperAccountSummary } from './paper-account-store';
 import type { OrderIntent } from './types';
 import type { PaperFill } from './paper-bot';
@@ -130,9 +131,19 @@ async function getOrCreateAccount(supabase: ServerClient, userId: string): Promi
     .limit(1)
     .maybeSingle();
   if (existing) return existing as { id: string; starting_cash: number };
+  // Start a NEW account from the user's real available cash, not a $100k fantasy - a beginner
+  // should build a track record at the size they can actually deploy. Fall back to a realistic
+  // small-account default when no cash is on file yet.
+  const { data: profile } = await supabase
+    .from('operator_profiles')
+    .select('cash_available')
+    .eq('user_id', userId)
+    .maybeSingle();
+  const realCash = Number(profile?.cash_available);
+  const startingCash = Number.isFinite(realCash) && realCash > 0 ? Math.round(realCash) : DEFAULT_PAPER_STARTING_CASH;
   const { data: created, error } = await supabase
     .from('paper_accounts')
-    .insert([{ user_id: userId, name: PAPER_ACCOUNT_NAME, starting_cash: 100000, current_cash: 100000, currency: 'USD' }])
+    .insert([{ user_id: userId, name: PAPER_ACCOUNT_NAME, starting_cash: startingCash, current_cash: startingCash, currency: 'USD' }])
     .select('id, starting_cash')
     .single();
   if (error || !created) return null;
@@ -318,7 +329,7 @@ async function readPersistedSummary(
     positions: ((posRows ?? []) as DbPosition[]).map((p) => ({ symbol: p.symbol, quantity: Number(p.quantity), average_price: Number(p.average_price) })),
     feesBySymbol,
     priceOf,
-    startingCash: Number(account.starting_cash) || 100000,
+    startingCash: Number(account.starting_cash) || DEFAULT_PAPER_STARTING_CASH,
     equityCurve: ((snapRows ?? []) as Array<{ equity: number }>).map((s) => Number(s.equity)),
     fillCount: tradeRows.length,
     closedRealisedPnls,

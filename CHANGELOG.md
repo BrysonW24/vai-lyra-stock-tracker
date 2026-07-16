@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-07-17
+
+Portfolio-aware, honest about capital: no more fantasy $100k account, real small-account costs, and win rates that never masquerade as a track record.
+
+### Changed
+
+- The paper account no longer starts from a fantasy $100,000 balance: a new account begins from the cash you actually have on file (or a realistic small-account example when none is set), so you practise the position sizes you can really take instead of ones that only work on paper.
+- Simulated fills now charge a realistic fixed commission floor instead of a flat 0.05% - the cost that most distorts a small account, where a $3 minimum is a real slice of a $500 trade but a rounding error on a $30k one. Your paper track record is now honest about the drag a beginner actually pays.
+- The Trade Plan is now portfolio-aware, not just single-position: it reads your open positions and flags when adding a name over-deploys the whole account (little dry powder left) or piles too much into one correlated theme - the concentration risks that sink small accounts even when each trade looks fine alone.
+- Onboarding honesty fix: the strategy picker used to show win rates like "68% win" with no label, reading as a measured fact on the very first screen. Those figures are now clearly marked illustrative - what the strategy aims at, not proof of what it returns.
+- The signal-intelligence board now says plainly that its conviction score has no measured track record yet: high agreement between signals today is not a proven hit rate. No number in the app should feel more certain than the evidence behind it.
+
 ## [0.17.0] - 2026-07-17
 
 Honest edge and a real trade plan: sizing to your own capital, netting costs against the signal, and never dressing up a guess as history.
@@ -437,7 +449,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.14.0...v0.15.0

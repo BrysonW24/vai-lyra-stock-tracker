@@ -22,6 +22,10 @@ export interface PlanSymbolContext {
   lifecycleStage?: string;
   outcome: ExpectancyInput | null;
   provenance?: 'illustrative' | 'measured';
+  /** Human label for the name's theme/cohort (drives the concentration guard note). */
+  themeLabel?: string;
+  /** Capital already deployed in the SAME theme as this name (from open positions). */
+  sameThemeValue?: number;
 }
 
 interface Props {
@@ -31,6 +35,8 @@ interface Props {
   defaultMaxPositionPct: number;
   crossCurrencyDefault: boolean;
   hasCapitalOnFile: boolean;
+  /** Total value already deployed in open positions - enables the portfolio-heat guard. Undefined when unknown. */
+  openPositionsValue?: number;
 }
 
 const FLAG_META: Record<TradePlanFlag, { label: string; tone: 'danger' | 'warn' | 'info' }> = {
@@ -38,6 +44,8 @@ const FLAG_META: Record<TradePlanFlag, { label: string; tone: 'danger' | 'warn' 
   'capital-too-small': { label: 'Priced out of reach for this account', tone: 'danger' },
   'exceeds-account': { label: 'Would require leverage', tone: 'danger' },
   'over-concentration': { label: 'Capped by the concentration limit', tone: 'info' },
+  'portfolio-heat-high': { label: 'Portfolio over-deployed', tone: 'warn' },
+  'theme-concentration': { label: 'Concentrated in one theme', tone: 'warn' },
   'cost-drag-high': { label: 'High round-trip friction', tone: 'warn' },
   'cost-exceeds-edge': { label: 'Costs wipe out the edge', tone: 'danger' },
   'negative-expectancy': { label: 'Negative expectancy', tone: 'danger' },
@@ -55,7 +63,7 @@ const toneClass: Record<'danger' | 'warn' | 'info', string> = {
 const labelCls = 'text-[11px] uppercase tracking-[0.14em] text-[#8190a0]';
 const inputCls = 'mt-1 w-full rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-sm text-[#eef3f8] focus:border-[#3a4c60] focus:outline-none';
 
-export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defaultMaxPositionPct, crossCurrencyDefault, hasCapitalOnFile }: Props) {
+export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defaultMaxPositionPct, crossCurrencyDefault, hasCapitalOnFile, openPositionsValue }: Props) {
   const sorted = useMemo(() => [...symbols].sort((a, b) => a.symbol.localeCompare(b.symbol)), [symbols]);
   const [symbol, setSymbol] = useState(sorted[0]?.symbol ?? '');
   const ctx = useMemo(() => sorted.find((s) => s.symbol === symbol), [sorted, symbol]);
@@ -96,8 +104,11 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
         lifecycleStage: ctx?.lifecycleStage,
         outcome: ctx?.outcome ?? null,
         provenance: ctx?.provenance,
+        openPositionsValue,
+        sameThemeValue: ctx?.sameThemeValue,
+        themeLabel: ctx?.themeLabel,
       }),
-    [symbol, entryPrice, stopPrice, targetPrice, accountSize, riskPct, maxPositionPct, wholeShares, crossCurrency, ctx],
+    [symbol, entryPrice, stopPrice, targetPrice, accountSize, riskPct, maxPositionPct, wholeShares, crossCurrency, ctx, openPositionsValue],
   );
 
   const cur = (n: number | null) => (n === null ? '-' : formatCurrency(n, baseCurrency));
@@ -199,6 +210,13 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
             <Row label="Risk budget" value={`${cur(plan.riskDollars)} (${plan.riskPercentPerTrade}%)`} />
             <Row label="Worst case (stop hit)" value={cur(plan.worstCaseLossDollars)} tone={plan.worstCaseLossDollars !== null ? 'danger' : undefined} />
             <Row label="Reward-to-risk" value={plan.rMultipleToTarget !== null ? `${plan.rMultipleToTarget}:1 (break-even win ${plan.breakEvenWinRatePct}%)` : '-'} />
+            {plan.portfolioHeatPct !== null && (
+              <Row
+                label="Portfolio heat (after)"
+                value={`${plan.portfolioHeatPct}% deployed${plan.themeExposurePct !== null ? ` · ${plan.themeExposurePct}% in theme` : ''}`}
+                tone={plan.flags.includes('portfolio-heat-high') || plan.flags.includes('theme-concentration') ? 'warn' : undefined}
+              />
+            )}
             <div className="my-2 border-t border-[#1b2530]" />
             <Row label="Round-trip cost" value={`${cur(plan.cost.roundTripCost)} (${plan.cost.breakEvenMovePct}% to break even)`} tone={plan.cost.breakEvenMovePct > 2 ? 'warn' : undefined} />
             <Row label="  commission / fx / slip" value={`${cur(plan.cost.commission)} / ${cur(plan.cost.fx)} / ${cur(plan.cost.slippage)}`} muted />

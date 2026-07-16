@@ -14,7 +14,8 @@ import { buildPaperOrderIntent } from './order-intent-builder';
 import { runPreTradeChecks } from './risk-engine';
 import { DEFAULT_TRADING_SETTINGS } from './types';
 import type { OrderIntent, PreTradeContext, PreTradeReport, TradingSettings } from './types';
-import { PAPER_FEE_RATE, PAPER_SLIPPAGE_RATE } from '@/lib/paper-trading';
+import { PAPER_SLIPPAGE_RATE } from '@/lib/paper-trading';
+import { commissionFor } from '@/lib/edge/costs';
 import { getDashboardData } from '@/lib/data';
 import { recordPaperFill, closePaperPosition } from './paper-account-store';
 import { recordFlag } from './notifications-store';
@@ -89,7 +90,12 @@ function buildPaperContext(settings: TradingSettings, portfolioValue: number): P
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-/** Pure deterministic paper fill: market fill at reference + slippage, plus commission. No broker. */
+/**
+ * Pure deterministic paper fill: market fill at reference + slippage, plus commission. No broker.
+ * Commission uses the realistic fixed-floor model (a $3 per-side floor), not a flat percentage, so
+ * a small-account fill reflects the friction that actually dominates it - a $500 fill pays the floor,
+ * not a trivial 0.05%. Slippage stays at the reference per-fill rate.
+ */
 export function simulatePaperFill(intent: OrderIntent, referencePrice: number): PaperFill {
   const dir = intent.side === 'buy' ? 1 : -1;
   const fillPrice = round2(referencePrice * (1 + dir * PAPER_SLIPPAGE_RATE));
@@ -100,7 +106,7 @@ export function simulatePaperFill(intent: OrderIntent, referencePrice: number): 
     quantity: intent.quantity,
     fillPrice,
     notional,
-    simulatedFee: round2(notional * PAPER_FEE_RATE),
+    simulatedFee: commissionFor(notional),
     simulatedSlippage: round2(referencePrice * intent.quantity * PAPER_SLIPPAGE_RATE),
     fillTimestamp: new Date().toISOString(),
     sourceOrderIntentId: intent.id,

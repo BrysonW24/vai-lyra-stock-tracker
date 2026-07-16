@@ -5,8 +5,11 @@ import { getUserConstraints } from '@/lib/ai/user-context';
 import { getThemeCompanies } from '@/lib/world-radar';
 import { backingFor, stageFor } from '@/lib/small-cap-lifecycle';
 import { getOutcomeDistribution, expectancyFromOutcome } from '@/lib/outcomes';
+import { getPaperAccountSummaryAuthAware } from '@/lib/trading/paper-account-repo';
 
 export const metadata = { title: 'Trade Plan' };
+
+const humanizeTheme = (slug: string) => slug.replace(/-/g, ' ');
 
 /**
  * The trade-plan surface: a cost-aware, expectancy-aware sizing sketch for one name against the
@@ -19,12 +22,30 @@ export default async function PlanPage() {
   const constraints = await getUserConstraints().catch(() => null);
   const companies = getThemeCompanies();
 
+  // Real portfolio context so the plan is portfolio-aware, not just single-position: total open
+  // exposure feeds the portfolio-heat guard, and same-theme exposure feeds the concentration guard.
+  const paper = await getPaperAccountSummaryAuthAware().catch(() => null);
+  const openPositions = paper?.positions ?? [];
+  const openPositionsValue = openPositions.reduce((sum, p) => sum + (p.marketValue ?? 0), 0);
+  const themeOf = (sym: string) => companies.find((c) => c.symbol.toUpperCase() === sym.toUpperCase())?.theme;
+  const themeValue = new Map<string, number>();
+  for (const p of openPositions) {
+    const t = themeOf(p.symbol);
+    if (t) themeValue.set(t, (themeValue.get(t) ?? 0) + (p.marketValue ?? 0));
+  }
+
   const symbols: PlanSymbolContext[] = data.signals
     .slice(0, 80)
     .map((s) => {
       const company = companies.find((c) => c.symbol.toUpperCase() === s.symbol.toUpperCase());
       const lifecycleStage = company ? stageFor(company, backingFor(company.symbol), s.score ?? 50) : undefined;
       const dist = getOutcomeDistribution('momentum_recovery_v1', String(s.status));
+      // Same-theme capital already deployed EXCLUDING this name (the guard adds this position on top).
+      const theme = company?.theme;
+      const selfInTheme = openPositions.some((p) => p.symbol.toUpperCase() === s.symbol.toUpperCase() && themeOf(p.symbol) === theme)
+        ? (openPositions.find((p) => p.symbol.toUpperCase() === s.symbol.toUpperCase())?.marketValue ?? 0)
+        : 0;
+      const sameThemeValue = theme ? Math.max(0, (themeValue.get(theme) ?? 0) - selfInTheme) : undefined;
       return {
         symbol: s.symbol,
         name: s.companyName,
@@ -34,6 +55,8 @@ export default async function PlanPage() {
         lifecycleStage,
         outcome: expectancyFromOutcome(dist),
         provenance: dist?.provenance,
+        themeLabel: theme ? humanizeTheme(theme) : undefined,
+        sameThemeValue,
       };
     })
     .filter((x) => x.close > 0);
@@ -53,6 +76,7 @@ export default async function PlanPage() {
         defaultMaxPositionPct={defaultMaxPositionPct}
         crossCurrencyDefault={baseCurrency.toUpperCase() !== 'USD'}
         hasCapitalOnFile={hasCapitalOnFile}
+        openPositionsValue={openPositions.length > 0 ? openPositionsValue : undefined}
       />
     </AppShell>
   );

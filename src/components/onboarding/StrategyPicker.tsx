@@ -239,7 +239,7 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
                     <p className={`text-sm font-semibold ${sel ? 'text-[#f3a33a]' : 'text-[#eef3f8]'}`}>{strat.name}</p>
                     <p className="mt-1 text-[11px] leading-4 text-[#a8b5c2]">{PLAIN_SUMMARY[strat.name] ?? strat.description}</p>
                     <p className="mt-1.5 font-mono text-[10px] text-[#8190a0]">
-                      {strat.winRate}% win · {RISK_LABEL[strat.riskLevel] ?? strat.riskLevel}
+                      {strat.winRate}% win (illustrative) · {RISK_LABEL[strat.riskLevel] ?? strat.riskLevel}
                     </p>
                   </button>
                 );
@@ -260,10 +260,14 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
               ].map(([label, val, tone]) => (
                 <div key={label} className="rounded-md border border-[#263241] bg-[#0d141c] p-2.5">
                   <p className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{label}</p>
-                  <p className={`mt-1 font-mono text-sm font-semibold ${tone}`}>{val} <span className="text-[10px] text-[#8190a0]">demo</span></p>
+                  <p className={`mt-1 font-mono text-sm font-semibold ${tone}`}>{val} <span className="text-[10px] text-[#8190a0]">illustrative</span></p>
                 </div>
               ))}
             </div>
+            <p className="text-[10px] leading-4 text-[#8190a0]">
+              These figures are illustrative reference numbers, not a measured track record - no live
+              backtest has run yet. Treat them as what the strategy is aiming at, not proof of what it returns.
+            </p>
           </div>
         )}
       </section>

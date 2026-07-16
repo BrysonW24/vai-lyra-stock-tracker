@@ -22,6 +22,8 @@ export type TradePlanFlag =
   | 'capital-too-small'
   | 'exceeds-account'
   | 'over-concentration'
+  | 'portfolio-heat-high'
+  | 'theme-concentration'
   | 'cost-drag-high'
   | 'cost-exceeds-edge'
   | 'negative-expectancy'
@@ -53,6 +55,12 @@ export interface TradePlanInput {
   /** Where the outcome base rate came from - drives the honesty label. */
   provenance?: 'measured' | 'illustrative';
   costModel?: CostModel;
+  /** Value already deployed in OTHER open positions (excludes this name). Enables portfolio-heat. */
+  openPositionsValue?: number;
+  /** Value already deployed in the SAME theme/cohort as this name. Enables theme-concentration. */
+  sameThemeValue?: number;
+  /** Human label for the theme/cohort, used in the concentration note. */
+  themeLabel?: string;
 }
 
 export interface TradePlan {
@@ -70,6 +78,10 @@ export interface TradePlan {
   shares: number;
   positionValue: number;
   positionPctOfAccount: number;
+  /** Total account deployed after this position (open positions + this one) as % of account. Null when unknown. */
+  portfolioHeatPct: number | null;
+  /** Same-theme exposure after this position as % of account. Null when unknown. */
+  themeExposurePct: number | null;
   /** Worst-case loss if the stop is hit, including entry-side friction. Null when no stop. */
   worstCaseLossDollars: number | null;
   /** Reward-to-risk to the target (null when no target/stop). */
@@ -91,6 +103,8 @@ const clampPos = (n: number) => (Number.isFinite(n) && n > 0 ? n : 0);
 const COST_DRAG_HIGH_PCT = 2; // round-trip friction above this is a serious drag on a small account
 const WIDE_STOP_PCT = 25; // a stop this far below entry risks a large loss per share
 const ILLIQUID_BELOW = 40; // liquidity score under this is thin for a retail fill
+const MAX_PORTFOLIO_HEAT_PCT = 80; // total account deployed above this leaves little dry powder / diversification
+const MAX_THEME_EXPOSURE_PCT = 40; // same-theme exposure above this is a correlated concentration risk
 
 /**
  * Build a full trade plan. Sizing is risk-first (risk$ / stop distance), then capped by the
@@ -146,6 +160,33 @@ export function buildTradePlan(input: TradePlanInput): TradePlan {
   if (positionValue > accountSize && accountSize > 0) {
     flags.push('exceeds-account');
     notes.push('The position value exceeds the account balance - this would require leverage the plan does not assume.');
+  }
+
+  // Portfolio-level guards: a plan that is safe in isolation can still over-concentrate the book.
+  // Total heat = capital already in other open positions + this one; theme heat = same-cohort exposure.
+  const openPositionsValue = clampPos(input.openPositionsValue ?? 0);
+  const portfolioHeatPct =
+    accountSize > 0 && input.openPositionsValue !== undefined
+      ? round2(((openPositionsValue + positionValue) / accountSize) * 100)
+      : null;
+  if (portfolioHeatPct !== null && portfolioHeatPct > MAX_PORTFOLIO_HEAT_PCT && positionValue > 0) {
+    flags.push('portfolio-heat-high');
+    notes.push(
+      `Adding this position takes total deployed capital to ${portfolioHeatPct}% of the account (over ${MAX_PORTFOLIO_HEAT_PCT}%) - little dry powder is left and the book is under-diversified.`,
+    );
+  }
+
+  const sameThemeValue = clampPos(input.sameThemeValue ?? 0);
+  const themeExposurePct =
+    accountSize > 0 && input.sameThemeValue !== undefined
+      ? round2(((sameThemeValue + positionValue) / accountSize) * 100)
+      : null;
+  if (themeExposurePct !== null && themeExposurePct > MAX_THEME_EXPOSURE_PCT && positionValue > 0) {
+    flags.push('theme-concentration');
+    const theme = input.themeLabel ? `the ${input.themeLabel} theme` : 'this theme';
+    notes.push(
+      `Same-theme exposure would reach ${themeExposurePct}% of the account (over ${MAX_THEME_EXPOSURE_PCT}%). Correlated names in ${theme} tend to fall together, so this concentrates risk rather than spreading it.`,
+    );
   }
 
   const cost = computeTradeCost({
@@ -210,6 +251,8 @@ export function buildTradePlan(input: TradePlanInput): TradePlan {
     shares,
     positionValue,
     positionPctOfAccount,
+    portfolioHeatPct,
+    themeExposurePct,
     worstCaseLossDollars,
     rMultipleToTarget,
     breakEvenWinRatePct,

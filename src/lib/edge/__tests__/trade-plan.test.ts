@@ -103,6 +103,37 @@ describe('buildTradePlan cost + expectancy', () => {
   });
 });
 
+describe('buildTradePlan portfolio guards', () => {
+  it('leaves portfolio heat null and unflagged when no open-position context is given', () => {
+    const p = buildTradePlan(base);
+    expect(p.portfolioHeatPct).toBeNull();
+    expect(p.themeExposurePct).toBeNull();
+    expect(p.flags).not.toContain('portfolio-heat-high');
+    expect(p.flags).not.toContain('theme-concentration');
+  });
+
+  it('flags portfolio-heat-high when adding this position over-deploys the account', () => {
+    // 50-share $500 position + $4000 already open = 90% of a $5000 account (> 80%).
+    const p = buildTradePlan({ ...base, openPositionsValue: 4000 });
+    expect(p.portfolioHeatPct).toBe(90);
+    expect(p.flags).toContain('portfolio-heat-high');
+  });
+
+  it('does not flag heat when total deployment stays under the ceiling', () => {
+    const p = buildTradePlan({ ...base, openPositionsValue: 1000 }); // (1000+500)/5000 = 30%
+    expect(p.portfolioHeatPct).toBe(30);
+    expect(p.flags).not.toContain('portfolio-heat-high');
+  });
+
+  it('flags theme-concentration when same-theme exposure exceeds the cap', () => {
+    // $500 position + $1800 already in the same theme = 46% of the account (> 40%).
+    const p = buildTradePlan({ ...base, sameThemeValue: 1800, themeLabel: 'nuclear-uranium' });
+    expect(p.themeExposurePct).toBe(46);
+    expect(p.flags).toContain('theme-concentration');
+    expect(p.notes.join(' ')).toContain('nuclear-uranium');
+  });
+});
+
 describe('renderTradePlanText', () => {
   it('renders a neutral, research-only summary with no advice verbs', () => {
     const text = renderTradePlanText(buildTradePlan({ ...base, targetPrice: 13, outcome: { winRatePct: 60, avgWinPct: 10, avgLossPct: 5 }, provenance: 'illustrative' }));

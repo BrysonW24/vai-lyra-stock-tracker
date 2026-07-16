@@ -1,5 +1,29 @@
 import { describe, it, expect } from 'vitest';
-import { computeTradeCost, effectiveSlippagePct, DEFAULT_COST_MODEL } from '../costs';
+import { computeTradeCost, effectiveSlippagePct, commissionFor, DEFAULT_COST_MODEL, DEFAULT_PAPER_STARTING_CASH } from '../costs';
+
+describe('commissionFor', () => {
+  it('charges the fixed floor on a small fill where the percentage would be trivial', () => {
+    // 0.1% of $500 = $0.50, well under the $3 floor -> the floor dominates.
+    expect(commissionFor(500)).toBe(3);
+  });
+
+  it('charges the percentage once the fill is large enough to exceed the floor', () => {
+    // 0.1% of $10,000 = $10 > $3 floor.
+    expect(commissionFor(10000)).toBe(10);
+  });
+
+  it('never returns a negative or NaN commission', () => {
+    expect(commissionFor(-100)).toBe(DEFAULT_COST_MODEL.minCommission);
+    expect(commissionFor(Number.NaN)).toBe(DEFAULT_COST_MODEL.minCommission);
+  });
+});
+
+describe('DEFAULT_PAPER_STARTING_CASH', () => {
+  it('is a realistic small-account balance, not a six-figure fantasy', () => {
+    expect(DEFAULT_PAPER_STARTING_CASH).toBeLessThanOrEqual(10000);
+    expect(DEFAULT_PAPER_STARTING_CASH).toBeGreaterThan(0);
+  });
+});
 
 describe('effectiveSlippagePct', () => {
   it('returns the base for a deep-liquidity name', () => {

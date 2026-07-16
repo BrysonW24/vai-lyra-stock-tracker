@@ -31,6 +31,13 @@ export const DEFAULT_COST_MODEL: CostModel = {
   baseSlippagePct: 0.1,
 };
 
+/**
+ * A realistic starting balance for a small-account practitioner. Replaces the $100,000 fantasy
+ * balance the paper systems used to default to - a figure that flatters returns and teaches
+ * position sizes a real user can never take. Used only when the user has no real cash on file.
+ */
+export const DEFAULT_PAPER_STARTING_CASH = 5000;
+
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const round4 = (n: number) => Math.round(n * 10000) / 10000;
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
@@ -45,6 +52,16 @@ export function effectiveSlippagePct(baseSlippagePct: number, liquidity0to100: n
   const liquidity = Number.isFinite(liquidity0to100 as number) ? clamp(liquidity0to100 as number, 0, 100) : 60;
   const scarcity = (100 - liquidity) / 100; // 0 (deep) .. 1 (illiquid)
   return round4(Math.max(0, baseSlippagePct) * (1 + scarcity * 4));
+}
+
+/**
+ * Commission for a single fill, floored. This is the cost that most distorts a small account:
+ * a $3 floor is 0.6% of a $500 trade but 0.01% of a $30k one. Exposed on its own so the paper
+ * fill simulator can charge a realistic per-side commission instead of a flat percentage.
+ */
+export function commissionFor(notional: number, model: CostModel = DEFAULT_COST_MODEL): number {
+  const n = Math.max(0, Number.isFinite(notional) ? notional : 0);
+  return round2(Math.max((n * model.commissionRatePct) / 100, model.minCommission));
 }
 
 export interface TradeCostInput {

@@ -209,7 +209,7 @@ export function SignalDrawer({ signal: snapshot, onClose }: { signal: SignalRow 
         <span className="text-[#f3a33a]">{signal.actionState.replaceAll('_', ' ')}</span>
       </div>
 
-      {/* How similar setups resolved - engine-measured outcomes, honestly labeled. */}
+      {/* How similar setups resolved - live rows are engine-measured, sample rows are illustrative; the badge says which. */}
       {fresh?.outcome && (
         <div className="rounded-md border border-[#263241] bg-[#0d141c] p-2.5">
           <div className="flex items-center justify-between">

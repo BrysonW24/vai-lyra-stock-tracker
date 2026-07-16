@@ -9,12 +9,20 @@
  * pipeline with fake money + real prices, building an auditable track record before any real money.
  */
 import { getDashboardData } from '@/lib/data';
+import { DEFAULT_PAPER_STARTING_CASH } from '@/lib/edge/costs';
 import { maybeFlagPositionMove } from './notifications-store';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-// Notional starting paper cash so equity (cash + positions) reads like a real account.
-const STARTING_PAPER_CASH = 100000;
+// Starting paper cash for the in-memory (demo) account. Defaults to a realistic small-account
+// balance, NOT a $100k fantasy - a beginner should practise the position sizes they can actually
+// take. setPaperStartingCash lets a caller align it to the user's real cash on file.
+let STARTING_PAPER_CASH = DEFAULT_PAPER_STARTING_CASH;
+
+/** Align the demo paper account's starting balance to the user's real available cash. */
+export function setPaperStartingCash(cash: number): void {
+  if (Number.isFinite(cash) && cash > 0) STARTING_PAPER_CASH = round2(cash);
+}
 
 // A live, session-scoped equity curve: equity = starting cash + cumulative unrealised P/L, sampled
 // each time the account is marked. Durable cross-restart history lands with Supabase persistence.

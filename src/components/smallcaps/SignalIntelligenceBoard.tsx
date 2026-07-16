@@ -89,6 +89,10 @@ export function SignalIntelligenceBoard({ convergence, stats, generatedAt }: Sig
         Where multiple independent signals line up right now - government backing, capital, institutional buying,
         supply-chain bottlenecks and turning momentum - ranked by conviction. The most effective data points, first.
       </p>
+      <p className="text-[10px] leading-snug text-[#5a6b7d]">
+        Conviction measures how strongly signals agree today - it is not a track record. No forward-return outcomes are
+        recorded for convergence yet, so a high score has no proven hit rate behind it. Research only.
+      </p>
 
       <div className="space-y-1.5">
         {top.map((c) => (
