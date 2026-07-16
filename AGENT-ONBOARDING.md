@@ -55,6 +55,11 @@ is plain markdown with explicit stages and gates. The non-negotiables:
 
 ## If you change code
 
+- **Work through the harness.** [HARNESS.md](HARNESS.md) is the enforcement map
+  (deterministic gates, hooks, CI, runtime guards); [SKILL-CHAIN.md](SKILL-CHAIN.md)
+  assigns every code section an owning skill chain - find your section in its coverage
+  map and follow that chain's stages and gates. `npm run check:chains` fails CI if you
+  add a section without an owner.
 - Every shippable change bumps the version: prepend an entry to `RELEASES` in
   `src/lib/version.ts`, run `npm run release`, commit + push. A pre-push hook enforces
   this.
@@ -69,6 +74,8 @@ is plain markdown with explicit stages and gates. The non-negotiables:
 | You need | Go to |
 |---|---|
 | The complete onboarding asset ledger | [ONBOARDING.md](ONBOARDING.md) |
+| The agent harness (gates, hooks, CI, guards) | [HARNESS.md](HARNESS.md) |
+| Skill-chain registry + section ownership map | [SKILL-CHAIN.md](SKILL-CHAIN.md) |
 | The stage-by-stage setup playbook | [.claude/commands/setup.md](.claude/commands/setup.md) |
 | Human-paced deep dives | [docs/walkthroughs/](docs/walkthroughs/README.md) |
 | Deploy: Vercel CLI path | [docs/walkthroughs/04-deploy-your-own.md](docs/walkthroughs/04-deploy-your-own.md) |

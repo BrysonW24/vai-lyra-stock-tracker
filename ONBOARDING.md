@@ -17,6 +17,8 @@ deployed if they choose.
 | Asset | Audience | What it delivers |
 |---|---|---|
 | [AGENT-ONBOARDING.md](AGENT-ONBOARDING.md) | Any coding agent | The agent's front door: mission, ground rules, the setup contract, verification gates |
+| [HARNESS.md](HARNESS.md) | Any coding agent | The agent harness: deterministic gates (`scripts/check-*.mjs`), hooks, CI, runtime guards, the operating contract |
+| [SKILL-CHAIN.md](SKILL-CHAIN.md) | Any coding agent | Skill-chain registry + coverage map: every code section's owning maintenance chain, enforced by `npm run check:chains` (CI) |
 | [.claude/commands/setup.md](.claude/commands/setup.md) | Claude Code (readable by any agent) | The `/setup` playbook: stage-by-stage E2E setup with verification gates, companion wiring, Vercel CLI path |
 | [docs/onboarding/setup-companion.html](docs/onboarding/setup-companion.html) | The human, in their browser | Live premium spec + progress board the agent opens during setup (spec below) |
 | [public/setup-companion.html](public/setup-companion.html) | The human, in the app | Same companion served at `/setup-companion.html` as an in-app resource - GENERATED from the docs copy by `npm run content:build` (never hand-copied) |

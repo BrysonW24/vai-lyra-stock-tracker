@@ -135,3 +135,6 @@ Walkthrough: `docs/walkthroughs/04-deploy-your-own.md`. Offer both paths with co
   `docs/tradingview-copilot.md` (backtest the same logic in TradingView).
 - Remind them: if they change shippable code, the repo's pre-push guard requires a version bump -
   `CLAUDE.md` "Releasing" has the one-step flow.
+- If an agent will keep working in this repo: `HARNESS.md` is the enforcement map (gates,
+  hooks, CI, runtime guards) and `SKILL-CHAIN.md` assigns every code section an owning
+  maintenance chain - future work starts from the owning chain, not from scratch.

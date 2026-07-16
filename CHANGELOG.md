@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-07-16
+
+The agent harness: every section of the codebase now has an owning maintenance chain, enforced in CI.
+
+### Changed
+
+- New HARNESS.md maps the full enforcement system - deterministic gates (scripts/check-*.mjs), git hooks, CI jobs, the test harness, runtime guards, and scheduled loops - so any agent (or human) can see exactly what keeps this repo honest and how to work inside it.
+- New SKILL-CHAIN.md registry assigns every code section an owning skill chain via a machine-checked coverage map: 254 sections, 12 chains, zero orphans - an unowned section now fails CI (npm run check:chains).
+- Seven new skill chains join setup, production-keeper, feedback-loop, onboarding-parity, and logs-to-genui: /signal-quality (evidence-backed scoring), /ai-quality (evals + guardrails + system card), /notification-health (delivery + template completeness), /onboarding-funnel (activation drop-offs + the demo promise), /data-integrity (migrations, RLS, demo parity), /security-sweep (secrets, fail-closed authz, abuse limits), and /ux-surface (one surface to premium per loop).
+- Every chain carries the same contract: staged gates, execution over advice, and explainability - each run ends with shipped, verified work and a plain-language report backed by engine-owned numbers.
+- The harness is wired into onboarding: AGENT-ONBOARDING.md, the ONBOARDING.md ledger, CLAUDE.md, and the /setup wrap-up all route new agents through HARNESS.md and the coverage map.
+
 ## [0.11.2] - 2026-07-16
 
 Onboarding stays honest: a parity gate + skill chain across the human, in-app, and agent surfaces.
@@ -365,7 +377,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.11.2...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.11.2...v0.12.0
 [0.11.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.10.0...v0.11.0
