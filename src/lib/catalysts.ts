@@ -113,6 +113,36 @@ export function deriveCatalystRadar(now: Date, catalysts: Catalyst[] = CATALYSTS
 }
 
 /**
+ * The date this editorial catalyst set was last curated. This is static hand-authored data, so the
+ * board must be honest about when it was last refreshed - a curated list silently ageing out (every
+ * event passing until the board renders empty) reads as "nothing is coming" when it means "nobody
+ * updated the list". Update this whenever CATALYSTS changes.
+ */
+export const CATALYSTS_CURATED_AS_OF = '2026-06-13';
+
+export interface CatalystRadarState {
+  items: ScoredCatalyst[];
+  /** When the underlying editorial list was last curated. */
+  asOf: string;
+  /** True when nothing upcoming/recent survives - the board would otherwise render empty. */
+  isEmpty: boolean;
+  /** Days since the most recent catalyst in the list passed (0 while any are still upcoming). */
+  stalenessDays: number;
+}
+
+/**
+ * Radar state WITH honest freshness. Wraps deriveCatalystRadar and reports whether the board is
+ * empty and how stale the curated set is, so the UI can show an explicit "last curated on / refresh
+ * due" state instead of rendering nothing.
+ */
+export function catalystRadarState(now: Date, catalysts: Catalyst[] = CATALYSTS): CatalystRadarState {
+  const items = deriveCatalystRadar(now, catalysts);
+  const latestDaysUntil = catalysts.reduce((max, c) => Math.max(max, daysUntil(c.date, now)), -Infinity);
+  const stalenessDays = Number.isFinite(latestDaysUntil) && latestDaysUntil < 0 ? Math.abs(latestDaysUntil) : 0;
+  return { items, asOf: CATALYSTS_CURATED_AS_OF, isEmpty: items.length === 0, stalenessDays };
+}
+
+/**
  * Curated big moments. Editorial data - dates carry an explicit confidence flag and
  * everything is framed as research context, never a prediction or recommendation.
  */

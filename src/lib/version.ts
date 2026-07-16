@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.19.0',
+    date: '2026-07-17',
+    title: 'Quantified upside and honest freshness: the high-upside shortlist finally puts a number on the payoff, the live scanner covers the small caps, and stale boards say so',
+    highlights: [
+      'The emergence shortlist now QUANTIFIES upside instead of only ranking it: each name carries a deterministic bear/base/bull re-rate estimate, a base-case upside %, and an asymmetry ratio (upside vs downside), plus a tier - Asymmetric, Balanced, Limited, or Lottery. It is a model estimate of payoff shape from disclosed factors, clearly labelled as such - never a price target or a promised return.',
+      'The live scanner now covers the 14 small-cap emergence names it never touched before. Previously the scan universe was 100% large-cap, so every high-upside name fell back to a neutral momentum reading and the "market is turning" signal was structurally dead for the exact list the app exists to surface - that leg is now wired to real momentum.',
+      'Honest catalyst freshness: the Catalyst Radar and the countdown are hand-curated editorial lists, and when every event passes they used to silently render nothing - reading as "all quiet" when it meant "nobody refreshed the list". They now show the curation date and an explicit "refresh due" state so an empty board can never masquerade as a calm calendar.',
+      'The position-size calculator now links straight to the Trade Plan, so working out a size flows into sizing it against a real name, your own cash, and the round-trip cost and expectancy - the decision-moment surface is one click from the math.',
+      'Every new upside and conviction number ships with the same discipline: it is a deterministic estimate of shape, it says when no measured track record stands behind it, and it never reads as a proven return.',
+    ],
+  },
+  {
     version: '0.18.0',
     date: '2026-07-17',
     title: 'Portfolio-aware, honest about capital: no more fantasy $100k account, real small-account costs, and win rates that never masquerade as a track record',

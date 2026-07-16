@@ -2,7 +2,7 @@ import { Banknote, CalendarClock, Cpu, DollarSign, Landmark, Link2, Radar as Rad
 import { TickerLogo } from '@/components/TickerLogo';
 import { SourceFavicon } from '@/components/SourceFavicon';
 import { CatalystRadarHelp } from '@/components/CatalystRadarHelp';
-import { deriveCatalystRadar, type CatalystCategory, type CatalystTier, type ScoredCatalyst } from '@/lib/catalysts';
+import { catalystRadarState, type CatalystCategory, type CatalystTier, type ScoredCatalyst } from '@/lib/catalysts';
 
 const CATEGORY_ICON: Record<CatalystCategory, LucideIcon> = {
   ipo: Rocket,
@@ -155,7 +155,7 @@ function CatalystCard({ catalyst }: { catalyst: ScoredCatalyst }) {
  * also threads the value chain - when, expected price, how to access. Research only.
  */
 export function CatalystRadar() {
-  const catalysts = deriveCatalystRadar(new Date());
+  const { items: catalysts, asOf, isEmpty, stalenessDays } = catalystRadarState(new Date());
   const actNow = catalysts.filter((c) => c.tier === 'now').length;
 
   return (
@@ -178,14 +178,26 @@ export function CatalystRadar() {
         </div>
       </div>
 
-      <div className="divide-y divide-[#141c25]">
-        {catalysts.map((catalyst) => (
-          <CatalystCard key={catalyst.id} catalyst={catalyst} />
-        ))}
-      </div>
+      {isEmpty ? (
+        <div className="px-3 py-6 text-center">
+          <p className="text-[12px] font-semibold text-[#dbe5ee]">No fresh catalysts on the board</p>
+          <p className="mx-auto mt-1 max-w-md text-[11px] leading-snug text-[#a8b5c2]">
+            Every event in the curated set has passed. This is a hand-maintained editorial list, last curated on{' '}
+            <span className="font-mono text-[#f3a33a]">{asOf}</span>
+            {stalenessDays > 0 ? ` (${stalenessDays}d ago)` : ''} - an empty board means it is due a refresh, not that
+            nothing is coming.
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y divide-[#141c25]">
+          {catalysts.map((catalyst) => (
+            <CatalystCard key={catalyst.id} catalyst={catalyst} />
+          ))}
+        </div>
+      )}
 
       <p className="border-t border-[#1b2530] px-3 py-1.5 font-mono text-[10px] text-[#5e6b78]">
-        Deterministic priority: timing x impact x attention. Research context for what is coming - never a buy/sell instruction.
+        Deterministic priority: timing x impact x attention. Curated list as of {asOf}. Research context for what is coming - never a buy/sell instruction.
       </p>
     </section>
   );

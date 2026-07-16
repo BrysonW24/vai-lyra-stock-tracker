@@ -13,6 +13,8 @@ import {
   LIFECYCLE_BLURB,
   type LifecycleCandidate,
   type LifecycleStage,
+  type UpsideEstimate,
+  type UpsideTier,
 } from '@/lib/small-cap-lifecycle';
 import type { ValueChain, CompanyChainPosition } from '@/lib/value-chain';
 
@@ -44,6 +46,7 @@ const HELP_TERMS: HelpTerm[] = [
   { term: 'Big-tech backing', what: 'A hyperscaler / big-tech or big-AI player is funding or partnering with the name (from capital events or news-driven smart-money).' },
   { term: 'Smart money', what: 'A tracked institutional filer (13F) holds the name - a new, increased or held position counts as conviction. 13F data is delayed and long-only.' },
   { term: 'Emergence score', what: 'A deterministic 0-100 ranking that rewards EARLY + BACKED + REAL on a genuine bottleneck, and penalises crowding and hype. It is a research rank, never a buy signal.' },
+  { term: 'Upside estimate', what: 'A deterministic MODEL ESTIMATE of the payoff shape from disclosed factors: a bear/base/bull re-rate multiple, a base-case upside %, and an asymmetry ratio (upside vs downside). It quantifies how asymmetric the thesis is - it is NOT a price target, a forecast, or a claim about actual returns, and no measured track record stands behind it yet.' },
 ];
 
 function BackingBadges({ candidate }: { candidate: LifecycleCandidate }) {
@@ -77,6 +80,32 @@ function scoreTone(total: number): string {
   if (total >= 55) return 'text-[#f3a33a]';
   if (total >= 42) return 'text-[#a8b5c2]';
   return 'text-[#f0758a]';
+}
+
+const UPSIDE_TIER_LABEL: Record<UpsideTier, string> = {
+  lottery: 'Lottery',
+  asymmetric: 'Asymmetric',
+  balanced: 'Balanced',
+  limited: 'Limited',
+};
+
+const UPSIDE_TONE: Record<UpsideTier, string> = {
+  lottery: 'border-[#7a2630] bg-[#260f12] text-[#f0758a]',
+  asymmetric: 'border-[#1f5132] bg-[#0f2417] text-[#5fd08a]',
+  balanced: 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]',
+  limited: 'border-[#263241] bg-[#0d141c] text-[#8190a0]',
+};
+
+/** Compact model-estimated asymmetry badge: base-case upside % and the upside:downside ratio. */
+function UpsideBadge({ upside }: { upside: UpsideEstimate }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded border px-1 py-0.5 font-mono text-[9px] ${UPSIDE_TONE[upside.tier]}`}
+      title={`Model estimate of asymmetry (NOT a price target): bear ${upside.bearMultiple}x / base ${upside.baseMultiple}x / bull ${upside.bullMultiple}x. Downside ${upside.downsideRiskPct}%, asymmetry ${upside.asymmetryRatio}:1.`}
+    >
+      {UPSIDE_TIER_LABEL[upside.tier]} · +{Math.round(upside.impliedUpsidePct)}% base · {upside.asymmetryRatio}:1
+    </span>
+  );
 }
 
 /** The lifecycle arc - a horizontal maturity timeline with the universe count under each stage. */
@@ -140,6 +169,10 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, pos
           Catch them early: names still concept-to-contracted in an emerging market, already carrying government
           or big-tech capital and real evidence, ranked by the emergence engine. Select one to trace it end-to-end.
         </p>
+        <p className="mt-1 max-w-2xl text-[10px] leading-snug text-[#5a6b7d]">
+          The emergence score and upside tier are deterministic model estimates of shape, not price targets or a proven
+          hit rate - no forward-return outcomes are tracked for these names yet. Research only.
+        </p>
 
         <div className="mt-2.5">
           <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">
@@ -184,6 +217,9 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, pos
                 </div>
                 <div className="mt-1.5">
                   <BackingBadges candidate={c} />
+                </div>
+                <div className="mt-1.5">
+                  <UpsideBadge upside={c.upside} />
                 </div>
               </button>
             );

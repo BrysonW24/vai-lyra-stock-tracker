@@ -53,6 +53,26 @@ NASDAQ_TECH_UNIVERSE: list[Ticker] = [
     Ticker("CRM", "CRM", "Salesforce", "Technology", "CRM Software", "enterprise_software", "NYSE"),
     Ticker("SHOP", "SHOP", "Shopify", "Technology", "Commerce Platform", "software", "NYSE"),
     Ticker("UBER", "UBER", "Uber", "Technology", "Mobility Platform", "consumer_internet", "NYSE"),
+    # --- Small-cap emergence names (the flagship high-upside shortlist) ---------------------------
+    # These are the small/micro caps the World-Radar / lifecycle engine surfaces as early + backed.
+    # They were previously NEVER scanned - the live universe was 100% large-cap, so every high-upside
+    # name fell back to a neutral momentum of 50 and the "market is turning" leg was structurally dead.
+    # Scanning them here wires real momentum into the emergence shortlist. Thin names may have sparse
+    # data; the scanner tolerates missing bars per-symbol without failing the run.
+    Ticker("POWL", "POWL", "Powell Industries", "Industrials", "Electrical Equipment", "small_cap_emergence", "NASDAQ"),
+    Ticker("APLD", "APLD", "Applied Digital", "Technology", "Data Center Infrastructure", "small_cap_emergence", "NASDAQ"),
+    Ticker("LUNR", "LUNR", "Intuitive Machines", "Industrials", "Aerospace", "small_cap_emergence", "NASDAQ"),
+    Ticker("RDW", "RDW", "Redwire", "Industrials", "Aerospace", "small_cap_emergence", "NYSE"),
+    Ticker("BKSY", "BKSY", "BlackSky Technology", "Industrials", "Geospatial Intelligence", "small_cap_emergence", "NYSE"),
+    Ticker("FLNC", "FLNC", "Fluence Energy", "Industrials", "Energy Storage", "small_cap_emergence", "NASDAQ"),
+    Ticker("LEU", "LEU", "Centrus Energy", "Energy", "Nuclear Fuel", "small_cap_emergence", "NYSE"),
+    Ticker("UUUU", "UUUU", "Energy Fuels", "Energy", "Uranium", "small_cap_emergence", "NYSE"),
+    Ticker("NB", "NB", "NioCorp Developments", "Materials", "Critical Minerals", "small_cap_emergence", "NASDAQ"),
+    Ticker("CAMT", "CAMT", "Camtek", "Technology", "Semiconductor Equipment", "small_cap_emergence", "NASDAQ"),
+    Ticker("ONDS", "ONDS", "Ondas Holdings", "Industrials", "Drones", "small_cap_emergence", "NASDAQ"),
+    Ticker("HSAI", "HSAI", "Hesai Group", "Technology", "Lidar", "small_cap_emergence", "NASDAQ"),
+    Ticker("SERV", "SERV", "Serve Robotics", "Technology", "Robotics", "small_cap_emergence", "NASDAQ"),
+    Ticker("RGTI", "RGTI", "Rigetti Computing", "Technology", "Quantum Computing", "small_cap_emergence", "NASDAQ"),
 ]
 
 

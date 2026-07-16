@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import {
   calculateCompoundInterest,
@@ -569,6 +570,18 @@ export function CalculatorsView() {
                   <p className="text-xs text-[#8190a0]">Max Shares (100% account)</p>
                   <p className="mt-1 font-semibold text-[#dbe5ee]">{formatNumber(posResult.maxShares, 0)}</p>
                 </div>
+              </div>
+              <div className="border-t border-[#1b2530] px-3 py-2.5">
+                <Link
+                  href="/plan"
+                  className="flex items-center justify-between gap-2 rounded border border-[#27496b] bg-[#0d1b2b] px-2.5 py-2 text-[11px] text-[#7fb0ff] transition hover:bg-[#0f2236]"
+                >
+                  <span>
+                    Take this to the <span className="font-semibold">Trade Plan</span> - sizes against a real name and your own
+                    cash, then nets round-trip cost and expectancy against it.
+                  </span>
+                  <span className="shrink-0 font-mono">{'->'}</span>
+                </Link>
               </div>
             </div>
           )}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Banknote, CalendarClock, Cpu, Landmark, Rocket, Timer, type LucideIcon } from 'lucide-react';
-import { CATALYSTS, scoreCatalyst, type CatalystCategory, type ScoredCatalyst } from '@/lib/catalysts';
+import { CATALYSTS, CATALYSTS_CURATED_AS_OF, scoreCatalyst, type CatalystCategory, type ScoredCatalyst } from '@/lib/catalysts';
 
 const CATEGORY_ICON: Record<CatalystCategory, LucideIcon> = {
   ipo: Rocket,
@@ -69,7 +69,27 @@ export function CatalystCountdown() {
     .sort((a, b) => (b.heat !== a.heat ? b.heat - a.heat : a.daysUntil - b.daysUntil))
     .slice(0, 3);
 
-  if (featured.length === 0) return null;
+  // No upcoming moments left in the curated set. Say so honestly (with the curation date) instead of
+  // rendering nothing - a silent disappearance reads as "all quiet" when it means "list needs a refresh".
+  if (featured.length === 0) {
+    return (
+      <section className="terminal-panel overflow-hidden rounded-md">
+        <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+          <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+            <Timer size={13} className="text-[#5e6b78]" /> Big moments
+          </p>
+          <a href="#catalyst-radar" className="shrink-0 font-mono text-[10px] text-[#8190a0] transition hover:text-[#dbe5ee]">
+            All catalysts →
+          </a>
+        </div>
+        <p className="px-3 pb-2.5 text-[11px] leading-snug text-[#a8b5c2]">
+          No upcoming moments in the curated set - it was last refreshed on{' '}
+          <span className="font-mono text-[#f3a33a]">{CATALYSTS_CURATED_AS_OF}</span> and is due an update. An empty
+          countdown means the list needs curating, not that the calendar is clear.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="terminal-panel overflow-hidden rounded-md">

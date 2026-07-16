@@ -9,6 +9,7 @@ import {
   type LifecycleCandidate,
   type LifecycleStage,
   type BackerKind,
+  type UpsideTier,
 } from '@/lib/small-cap-lifecycle';
 import type { CompanyChainPosition, RawMaterial } from '@/lib/value-chain';
 
@@ -107,8 +108,23 @@ function scoreTone(total: number): string {
   return 'text-[#f0758a]';
 }
 
+const UPSIDE_TIER_LABEL: Record<UpsideTier, string> = {
+  lottery: 'Lottery-tier',
+  asymmetric: 'Asymmetric',
+  balanced: 'Balanced',
+  limited: 'Limited',
+};
+
+const UPSIDE_TIER_TONE: Record<UpsideTier, string> = {
+  lottery: 'text-[#f0758a]',
+  asymmetric: 'text-[#43d18b]',
+  balanced: 'text-[#f3a33a]',
+  limited: 'text-[#8190a0]',
+};
+
 export function StoryDrawer({ candidate: c, position }: StoryDrawerProps) {
   const e = c.emergence;
+  const u = c.upside;
   return (
     <section className="terminal-panel space-y-2 rounded-md p-2.5">
       {/* Header line */}
@@ -132,6 +148,34 @@ export function StoryDrawer({ candidate: c, position }: StoryDrawerProps) {
         <MiniBar label="Bottleneck" value={e.bottleneck} />
         <MiniBar label="Momentum" value={e.momentum} />
         <MiniBar label="Penalty" value={-e.riskPenalty} />
+      </div>
+
+      {/* Upside asymmetry - a deterministic MODEL estimate of shape, never a price target */}
+      <div className="rounded border border-[#1b2530] bg-[#0d1117] p-1.5">
+        <div className="mb-1 flex items-center gap-1">
+          <p className="text-[8px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">Upside asymmetry</p>
+          <span className={`ml-auto font-mono text-[9px] font-semibold ${UPSIDE_TIER_TONE[u.tier]}`}>{UPSIDE_TIER_LABEL[u.tier]}</span>
+        </div>
+        <div className="grid grid-cols-3 gap-1 text-center">
+          <div className="rounded bg-[#0d141c] py-1">
+            <p className="text-[7px] uppercase tracking-[0.1em] text-[#8190a0]">Bear</p>
+            <p className="numeric font-mono text-[11px] font-semibold text-[#f0758a]">{u.bearMultiple}x</p>
+          </div>
+          <div className="rounded bg-[#0d141c] py-1">
+            <p className="text-[7px] uppercase tracking-[0.1em] text-[#8190a0]">Base</p>
+            <p className="numeric font-mono text-[11px] font-semibold text-[#dbe5ee]">{u.baseMultiple}x</p>
+          </div>
+          <div className="rounded bg-[#0d141c] py-1">
+            <p className="text-[7px] uppercase tracking-[0.1em] text-[#8190a0]">Bull</p>
+            <p className="numeric font-mono text-[11px] font-semibold text-[#43d18b]">{u.bullMultiple}x</p>
+          </div>
+        </div>
+        <p className="mt-1 font-mono text-[9px] text-[#a8b5c2]">
+          +{Math.round(u.impliedUpsidePct)}% base upside vs -{Math.round(u.downsideRiskPct)}% downside · {u.asymmetryRatio}:1 asymmetry
+        </p>
+        <p className="mt-0.5 text-[8px] leading-snug text-[#5a6b7d]">
+          Deterministic model estimate of payoff shape from disclosed factors - not a price target, forecast, or proven return.
+        </p>
       </div>
 
       {/* Backing story - dense rows */}

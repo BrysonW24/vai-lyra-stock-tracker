@@ -88,6 +88,29 @@ export interface EmergenceBreakdown {
   total: number;
 }
 
+export type UpsideTier = 'lottery' | 'asymmetric' | 'balanced' | 'limited';
+
+/**
+ * A deterministic estimate of the ASYMMETRY the founder's thesis is chasing - how much a name could
+ * re-rate if the early+backed+bottleneck thesis plays out, versus how far it could fall if it does
+ * not. This turns the engine's factor scores into a magnitude, so "high upside" is a number the user
+ * can weigh, not just a vibe. It is a MODEL ESTIMATE of asymmetry from disclosed factors - NOT a
+ * price target, forecast, or claim about actual returns. Every field is deterministic.
+ */
+export interface UpsideEstimate {
+  /** Bear/base/bull re-rate multiples of the current price (0.4 = -60%, 3.0 = +200%). */
+  bearMultiple: number;
+  baseMultiple: number;
+  bullMultiple: number;
+  /** Base-case implied upside %, = (baseMultiple - 1) * 100. */
+  impliedUpsidePct: number;
+  /** Deterministic downside risk %, = (1 - bearMultiple) * 100. */
+  downsideRiskPct: number;
+  /** impliedUpside / downsideRisk. Above ~2 is a favourable payoff shape. */
+  asymmetryRatio: number;
+  tier: UpsideTier;
+}
+
 export interface LifecycleCandidate {
   symbol: string;
   name: string;
@@ -98,6 +121,8 @@ export interface LifecycleCandidate {
   stage: LifecycleStage;
   backing: BackingProfile;
   emergence: EmergenceBreakdown;
+  /** Deterministic model estimate of the upside/downside asymmetry. */
+  upside: UpsideEstimate;
   /** The deterministic World Radar opportunity total, for cross-reference. */
   opportunityTotal: number;
   whyItMatters: string;
@@ -266,6 +291,59 @@ export function emergenceFor(
   };
 }
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// How much re-rate the base/bull cases can imply at full conviction, and how deep the bear can cut.
+const MAX_BASE_UPLIFT = 2.5; // base case up to +250% (baseMultiple 3.5) at max upside potential
+const MAX_BULL_UPLIFT = 6; // bull case up to +600% (bullMultiple 7.0)
+const MAX_DRAWDOWN = 0.85; // bear case down to -85% at max downside (a concept can approach a wipeout)
+
+/**
+ * Quantify the upside/downside asymmetry from the engine's own factor scores. Deterministic and
+ * bounded. Upside potential rewards being EARLY (optionality), sitting on a real BOTTLENECK
+ * (defensibility), being BACKED (a credible path), and a high theme small-cap opportunity. Downside
+ * risk rises with dilution, hype and crowding, and with being unbacked/unproven (concept with no
+ * money behind it can round-trip to nothing). The result is a model estimate of shape, not a target.
+ */
+export function computeUpside(
+  company: ThemeCompany,
+  backing: BackingProfile,
+  stage: LifecycleStage,
+  emergence: EmergenceBreakdown,
+): UpsideEstimate {
+  const theme = getTheme(company.theme);
+  const smallCapOpp = theme?.smallCapOpportunity ?? 50;
+
+  // Upside potential 0-100: earliness (optionality) + bottleneck (defensible re-rate) + backing
+  // (credible path to it) + theme headroom. A crowded, obvious name has little re-rate left.
+  const upsidePotential = clamp(
+    emergence.earliness * 0.3 + emergence.bottleneck * 0.25 + emergence.backing * 0.2 + smallCapOpp * 0.25,
+  );
+
+  // Downside risk 0-100: dilution + hype + crowding, plus an unbacked/unproven penalty (a concept
+  // with no money behind it has the furthest to fall).
+  const unprovenPenalty = (stage === 'concept' ? 25 : stage === 'funded' ? 12 : 0) + (backing.strength === 0 ? 20 : 0);
+  const downsideRisk = clamp((company.dilutionRisk + company.hypeRisk + company.crowding) / 3 + unprovenPenalty);
+
+  const baseMultiple = round2(1 + (upsidePotential / 100) * MAX_BASE_UPLIFT);
+  const bullMultiple = round2(1 + (upsidePotential / 100) * MAX_BULL_UPLIFT);
+  const bearMultiple = round2(Math.max(0.1, 1 - (downsideRisk / 100) * MAX_DRAWDOWN));
+
+  const impliedUpsidePct = round2((baseMultiple - 1) * 100);
+  const downsideRiskPct = round2((1 - bearMultiple) * 100);
+  const asymmetryRatio = round2(impliedUpsidePct / Math.max(downsideRiskPct, 1));
+
+  // Tier: a concept with big upside AND big downside is a lottery ticket; a strong ratio with a
+  // survivable bear is asymmetric; otherwise balanced or limited.
+  let tier: UpsideTier;
+  if ((stage === 'concept' || backing.strength === 0) && impliedUpsidePct >= 120 && downsideRiskPct >= 50) tier = 'lottery';
+  else if (asymmetryRatio >= 2.5) tier = 'asymmetric';
+  else if (asymmetryRatio >= 1.2) tier = 'balanced';
+  else tier = 'limited';
+
+  return { bearMultiple, baseMultiple, bullMultiple, impliedUpsidePct, downsideRiskPct, asymmetryRatio, tier };
+}
+
 /** Deterministic one-liner explaining why a name is on the shortlist right now. */
 function whyNowFor(company: ThemeCompany, backing: BackingProfile, stage: LifecycleStage): string {
   const parts: string[] = [];
@@ -300,6 +378,7 @@ export function buildLifecycleCandidates(momentumBySymbol: Record<string, number
       const backing = backingFor(company.symbol);
       const stage = stageFor(company, backing, momentum);
       const emergence = emergenceFor(company, backing, stage, momentum);
+      const upside = computeUpside(company, backing, stage, emergence);
       const opportunity = scoreCompany(company, momentumBySymbol[company.symbol]);
       const theme = getTheme(company.theme);
       return {
@@ -312,6 +391,7 @@ export function buildLifecycleCandidates(momentumBySymbol: Record<string, number
         stage,
         backing,
         emergence,
+        upside,
         opportunityTotal: opportunity.total,
         whyItMatters: company.whyItMatters,
         evidenceSummary: company.evidenceSummary,

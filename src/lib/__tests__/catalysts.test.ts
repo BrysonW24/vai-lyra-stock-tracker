@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CATALYSTS, daysUntil, deriveCatalystRadar, scoreCatalyst, type Catalyst } from '@/lib/catalysts';
+import { CATALYSTS, CATALYSTS_CURATED_AS_OF, catalystRadarState, daysUntil, deriveCatalystRadar, scoreCatalyst, type Catalyst } from '@/lib/catalysts';
 
 const REF = new Date('2026-06-13T12:00:00');
 
@@ -51,6 +51,25 @@ describe('scoreCatalyst', () => {
   it('pushes a distant, quiet moment to the horizon tier', () => {
     const s = scoreCatalyst(make({ date: '2026-08-01', impact: 2, attention: 2 }), REF);
     expect(s.tier).toBe('horizon');
+  });
+});
+
+describe('catalystRadarState (honest freshness)', () => {
+  it('reports a healthy board with items and zero staleness while events are upcoming', () => {
+    const state = catalystRadarState(REF, [make({ date: '2026-06-20' }), make({ id: 'b', date: '2026-06-25' })]);
+    expect(state.items.length).toBe(2);
+    expect(state.isEmpty).toBe(false);
+    expect(state.stalenessDays).toBe(0);
+    expect(state.asOf).toBe(CATALYSTS_CURATED_AS_OF);
+  });
+
+  it('flags an empty, stale board when every event has passed', () => {
+    // All events well before REF -> filtered out AND staleness measured from the most recent one.
+    const state = catalystRadarState(REF, [make({ date: '2026-05-01' }), make({ id: 'b', date: '2026-05-20' })]);
+    expect(state.items.length).toBe(0);
+    expect(state.isEmpty).toBe(true);
+    expect(state.stalenessDays).toBe(daysUntil('2026-05-20', REF) * -1);
+    expect(state.stalenessDays).toBeGreaterThan(0);
   });
 });
 

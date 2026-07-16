@@ -3,6 +3,7 @@ import {
   backingFor,
   stageFor,
   emergenceFor,
+  computeUpside,
   buildLifecycleCandidates,
   buildEmergenceShortlist,
   stageDistribution,
@@ -132,6 +133,41 @@ describe('buildLifecycleCandidates + shortlist', () => {
       .filter((c) => c.backing.strength === 0)
       .map((c) => c.symbol);
     expect(unbacked, `unbacked small caps: ${unbacked.join(', ')}`).toEqual([]);
+  });
+});
+
+describe('computeUpside', () => {
+  const upsideFor = (company: ThemeCompany, backing = noBacking, momentum = 50) => {
+    const stage = stageFor(company, backing, momentum);
+    const emergence = emergenceFor(company, backing, stage, momentum);
+    return { stage, upside: computeUpside(company, backing, stage, emergence) };
+  };
+
+  it('keeps the multiples internally consistent and the bear floored', () => {
+    const { upside: u } = upsideFor(mk({ evidence: 40 }));
+    expect(u.impliedUpsidePct).toBeCloseTo((u.baseMultiple - 1) * 100, 1);
+    expect(u.downsideRiskPct).toBeCloseTo((1 - u.bearMultiple) * 100, 1);
+    expect(u.bearMultiple).toBeGreaterThanOrEqual(0.1);
+    expect(u.bullMultiple).toBeGreaterThanOrEqual(u.baseMultiple);
+  });
+
+  it('flags a concept with big upside and big downside as lottery-tier', () => {
+    // Unbacked concept, high hype/dilution/crowding downside, high-bottleneck theme for big upside.
+    const { stage, upside } = upsideFor(
+      mk({ theme: 'agi-infrastructure', evidence: 20, crowding: 60, hypeRisk: 80, dilutionRisk: 80 }),
+      noBacking,
+    );
+    expect(stage).toBe('concept');
+    expect(upside.tier).toBe('lottery');
+    expect(upside.downsideRiskPct).toBeGreaterThanOrEqual(50);
+  });
+
+  it('rates a proven, low-hype name as more balanced than a raw concept', () => {
+    const gov = { government: true, bigTech: false, smartMoney: false, strength: 1, sources: [] };
+    const proven = upsideFor(mk({ evidence: 70, crowding: 30, hypeRisk: 20, dilutionRisk: 20 }), gov).upside;
+    const concept = upsideFor(mk({ evidence: 15, crowding: 50, hypeRisk: 80, dilutionRisk: 80 }), noBacking).upside;
+    expect(proven.downsideRiskPct).toBeLessThan(concept.downsideRiskPct);
+    expect(proven.tier === 'asymmetric' || proven.tier === 'balanced' || proven.tier === 'limited').toBe(true);
   });
 });
 
