@@ -109,10 +109,10 @@ _Rule of thumb: **link** for humans, **fork** for builders, **AGENT-ONBOARDING.m
 
 <p align="center">
   <em>Alerts, where you live:</em><br /><br />
-  <img src="https://img.shields.io/badge/Telegram-26A5E4?logo=telegram&logoColor=white" alt="Telegram" />
-  <img src="https://img.shields.io/badge/Slack-4A154B?logo=slack&logoColor=white" alt="Slack" />
-  <img src="https://img.shields.io/badge/WhatsApp-25D366?logo=whatsapp&logoColor=white" alt="WhatsApp" />
-  <img src="https://img.shields.io/badge/Web_Push-1E63FF" alt="Web Push" />
+  <a href="./docs/walkthroughs/06-alerts-on-your-phone.md#step-3---telegram-works-today-the-recommended-phone-channel"><img src="https://img.shields.io/badge/Telegram-26A5E4?logo=telegram&logoColor=white" alt="Set up Telegram alerts" /></a>
+  <a href="./docs/walkthroughs/06-alerts-on-your-phone.md#step-4---slack-your-own-webhook-2-minutes"><img src="https://img.shields.io/badge/Slack-4A154B?logo=slack&logoColor=white" alt="Set up Slack alerts" /></a>
+  <a href="./docs/walkthroughs/06-alerts-on-your-phone.md#step-5---whatsapp-architecture-only---read-before-spending-time-here"><img src="https://img.shields.io/badge/WhatsApp-25D366?logo=whatsapp&logoColor=white" alt="WhatsApp alerts (architecture)" /></a>
+  <a href="./docs/walkthroughs/06-alerts-on-your-phone.md#step-2---web-push-zero-phone-number-needed"><img src="https://img.shields.io/badge/Web_Push-1E63FF" alt="Set up Web Push alerts" /></a>
 </p>
 
 ---
