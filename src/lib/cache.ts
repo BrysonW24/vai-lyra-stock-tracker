@@ -18,6 +18,8 @@ interface CacheBackend {
   readonly name: 'upstash' | 'memory';
   get(key: string): Promise<string | null>;
   set(key: string, value: string, ttlSeconds: number): Promise<void>;
+  /** Liveness probe (network backends only). Throws when the backend is unreachable. */
+  ping?(): Promise<void>;
 }
 
 /** Namespace every key so a shared Redis can host more than one app safely. */
@@ -33,12 +35,13 @@ function upstashConfig(): { url: string; token: string } | null {
 
 function upstashBackend(cfg: { url: string; token: string }): CacheBackend {
   // Single-command endpoint: POST the command as a JSON array, get { result } back.
-  const command = async (cmd: (string | number)[]): Promise<unknown> => {
+  const command = async (cmd: (string | number)[], signal?: AbortSignal): Promise<unknown> => {
     const res = await fetch(cfg.url, {
       method: 'POST',
       headers: { Authorization: `Bearer ${cfg.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(cmd),
       cache: 'no-store',
+      signal,
     });
     if (!res.ok) throw new Error(`upstash ${res.status}`);
     const json = (await res.json()) as { result?: unknown; error?: string };
@@ -53,6 +56,10 @@ function upstashBackend(cfg: { url: string; token: string }): CacheBackend {
     },
     async set(key, value, ttlSeconds) {
       await command(['SET', PREFIX + key, value, 'EX', Math.max(1, Math.floor(ttlSeconds))]);
+    },
+    async ping() {
+      // Short deadline: health checks must stay fast even when Redis is unreachable.
+      await command(['PING'], AbortSignal.timeout(800));
     },
   };
 }
@@ -98,9 +105,26 @@ function getBackend(): CacheBackend {
   return backend;
 }
 
-/** Which backend is live - surfaced on /api/health for ops visibility. */
+/** Which backend is SELECTED from env (no liveness implied) - see cacheBackendStatus(). */
 export function cacheBackendName(): 'upstash' | 'memory' {
   return getBackend().name;
+}
+
+/**
+ * Verified backend status for /api/health. Because every cache operation swallows errors
+ * (cache is an optimisation, never a requirement), this probe is the ONE place a broken
+ * Redis can surface: a dead/revoked Upstash reports 'upstash-unreachable' instead of
+ * silently missing forever. Never throws; bounded at ~800ms; health's ok stays unconditional.
+ */
+export async function cacheBackendStatus(): Promise<'upstash' | 'upstash-unreachable' | 'memory'> {
+  const b = getBackend();
+  if (b.name !== 'upstash') return 'memory';
+  try {
+    await b.ping?.();
+    return 'upstash';
+  } catch {
+    return 'upstash-unreachable';
+  }
 }
 
 /** Test seam: reset backend selection (e.g. after changing env in a test). */
@@ -118,7 +142,9 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
   }
 }
 
-/** Store a JSON value best-effort. Callers should not await unless they need ordering. */
+/** Store a JSON value best-effort. AWAIT this (it never throws): on serverless, un-awaited
+ *  work can be frozen mid-flight when the response is sent, silently dropping the write.
+ *  The Upstash REST SET is single-digit ms; the memory backend is synchronous in practice. */
 export async function cacheSet<T>(key: string, value: T, ttlSeconds: number): Promise<void> {
   try {
     await getBackend().set(key, JSON.stringify(value), ttlSeconds);
@@ -137,6 +163,7 @@ export async function cached<T>(key: string, ttlSeconds: number, fn: () => Promi
   const hit = await cacheGet<T>(key);
   if (hit !== null) return hit;
   const value = await fn();
-  void cacheSet(key, value, ttlSeconds);
+  // Awaited deliberately: fire-and-forget writes get dropped on serverless freeze.
+  await cacheSet(key, value, ttlSeconds);
   return value;
 }

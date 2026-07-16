@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-07-16
+
+Review hardening: honest copy, fresh fill prices, smarter doc answers.
+
+### Changed
+
+- The BYOK copy now tells the exact truth: your AI key is held by your browser and sent only with your own requests to your own deployment - never stored server-side.
+- Logged trade fills are priced fresh: the trade-confirm path bypasses the 60s quote cache, so a recorded fill price can never come from a cached preview.
+- In-app doc answers got sharper and safer: natural questions ("what is lyra?", "how much does this cost?", "how do I set this up?") now find the right doc, while market and advice questions can never pull doc examples into the prompt.
+- /api/health now verifies the Redis cache with a real PING (reports upstash-unreachable when it is down), and cache writes are awaited so serverless deploys cannot silently drop them.
+- Goal-card accessibility: only the visible face is read by screen readers, keyboard focus survives the Setup Companion refresh, all animation respects reduced-motion - and cost badges no longer wrap broken on phones.
+
 ## [0.9.0] - 2026-07-16
 
 Continuous intelligence + a robust agent harness.
@@ -307,7 +319,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.6.0...v0.7.0

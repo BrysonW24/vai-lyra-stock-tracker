@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cached, cacheGet, cacheSet, cacheBackendName, resetCacheForTests } from '@/lib/cache';
+import { cached, cacheGet, cacheSet, cacheBackendName, cacheBackendStatus, resetCacheForTests } from '@/lib/cache';
 
 /**
  * The cache contract: Redis (Upstash REST) when configured, in-process fallback otherwise,
@@ -8,6 +8,13 @@ import { cached, cacheGet, cacheSet, cacheBackendName, resetCacheForTests } from
 describe('cache', () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
+    // Hermetic: a developer/CI shell may export REAL Upstash creds (they are in
+    // .env.example) - blank all four selection vars so the memory suite can never
+    // pick the upstash backend and write to a live Redis from a unit test.
+    vi.stubEnv('UPSTASH_REDIS_REST_URL', '');
+    vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', '');
+    vi.stubEnv('KV_REST_API_URL', '');
+    vi.stubEnv('KV_REST_API_TOKEN', '');
     vi.unstubAllGlobals();
     resetCacheForTests();
   });
@@ -43,6 +50,17 @@ describe('cache', () => {
       expect(await cached('k3', 60, fn)).toEqual({ n: 42 });
       expect(fn).toHaveBeenCalledTimes(1);
     });
+
+    it('caps entries at 500 with insertion-order eviction (no unbounded growth)', async () => {
+      for (let i = 0; i < 501; i++) await cacheSet(`ev:${i}`, i, 600);
+      expect(await cacheGet('ev:0')).toBeNull(); // evicted as the oldest
+      expect(await cacheGet('ev:1')).toBe(1);
+      expect(await cacheGet('ev:500')).toBe(500);
+    });
+
+    it('reports memory status without any network probe', async () => {
+      expect(await cacheBackendStatus()).toBe('memory');
+    });
   });
 
   describe('upstash backend (REST env set)', () => {
@@ -65,11 +83,15 @@ describe('cache', () => {
       expect(cacheBackendName()).toBe('upstash');
     });
 
-    it('SETs with EX ttl and GETs the value back through the REST protocol', async () => {
+    it('SETs with EX ttl and GETs the value back through the REST protocol (URL + auth asserted)', async () => {
       const calls: unknown[][] = [];
-      stubUpstash((async (_url: string, init: RequestInit) => {
+      const urls: string[] = [];
+      const auths: (string | undefined)[] = [];
+      stubUpstash((async (url: string, init: RequestInit) => {
         const cmd = JSON.parse(String(init.body)) as unknown[];
         calls.push(cmd);
+        urls.push(String(url));
+        auths.push((init.headers as Record<string, string>)?.Authorization);
         if (cmd[0] === 'GET') return new Response(JSON.stringify({ result: JSON.stringify({ hit: true }) }));
         return new Response(JSON.stringify({ result: 'OK' }));
       }) as unknown as typeof fetch);
@@ -79,6 +101,28 @@ describe('cache', () => {
 
       expect(await cacheGet('quote:AAPL')).toEqual({ hit: true });
       expect(calls[1]).toEqual(['GET', 'lyra:quote:AAPL']);
+      // A regression that posts to the wrong endpoint or drops the bearer must fail here.
+      expect(urls.every((u) => u === 'https://example-redis.upstash.io')).toBe(true);
+      expect(auths.every((a) => a === 'Bearer test-token')).toBe(true);
+    });
+
+    it('treats an Upstash { error } body as a miss, never a throw', async () => {
+      stubUpstash((async () =>
+        new Response(JSON.stringify({ error: 'WRONGPASS invalid token' }))) as unknown as typeof fetch);
+      expect(await cacheGet('anything')).toBeNull();
+      await expect(cacheSet('anything', 1, 60)).resolves.toBeUndefined();
+    });
+
+    it('cacheBackendStatus PINGs: healthy -> upstash, dead -> upstash-unreachable', async () => {
+      stubUpstash((async (_url: string, init: RequestInit) => {
+        const cmd = JSON.parse(String(init.body)) as unknown[];
+        expect(cmd).toEqual(['PING']);
+        return new Response(JSON.stringify({ result: 'PONG' }));
+      }) as unknown as typeof fetch);
+      expect(await cacheBackendStatus()).toBe('upstash');
+
+      stubUpstash((async () => new Response('nope', { status: 401 })) as unknown as typeof fetch);
+      expect(await cacheBackendStatus()).toBe('upstash-unreachable');
     });
 
     it('degrades to a miss (and computes) when Redis errors - never throws to the caller', async () => {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { APP_VERSION, APP_VERSION_DATE } from '@/lib/version';
 import { env } from '@/lib/env';
-import { cacheBackendName } from '@/lib/cache';
+import { cacheBackendStatus } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +17,8 @@ export async function GET() {
     version: APP_VERSION,
     versionDate: APP_VERSION_DATE,
     mode: env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'live' : 'demo',
-    cache: cacheBackendName(),
+    // Verified liveness (best-effort PING, ~800ms bound), not just env-derived selection -
+    // this is the only surface where a dead Redis can appear; cache errors are swallowed.
+    cache: await cacheBackendStatus(),
   });
 }

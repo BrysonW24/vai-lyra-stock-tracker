@@ -65,6 +65,13 @@
       "text": "```\nsrc/app/                  Next.js pages (overview, radar, ticker, alerts, settings)\nsrc/components/           Dashboard + analytics components\nsrc/lib/                  Fetch helpers, demo data, env validation, AI gateway, Pine export\ncontracts/notifications/  JSON contracts for the AI notification layer\nworkers/stock_scanner/    Python scanner (indicators, scoring, overlays, alerts)\nsql/                      Supabase schema + seed\ntests/                    Worker tests\ndocs/walkthroughs/        Clone-to-live walkthroughs (start here to replicate)\ndocs/runbooks/            Deploy + operations runbooks (Coolify, kill switch, ...)\ndocs/                     Architecture, AI engine plan, production hardening\n.claude/commands/         /setup - agent playbook for Claude Code users\nDockerfile                Self-hosting image (Coolify/Docker); Vercel ignores it\nCOSTS.md                  Every service in the stack, priced\n```\n\n---"
     },
     {
+      "id": "readme-md--on-the-roadmap-your-digital-trading-twin",
+      "source": "README.md",
+      "docTitle": "📈 Lyra - Stock Momentum Radar",
+      "heading": "🧬 On the roadmap - your Digital Trading Twin",
+      "text": "A **digital trading twin** is a private, per-user model of *what you pay attention to, how you weigh risk, and which setups you actually act on* - learned quietly from how you use Lyra. It does two things: it **reflects your own habits back to you** (are you catching names early or chasing them late? do you size up right after a loss?), and it lets Lyra **compose the screen for you** instead of for everyone. Down the line, a twin becomes portable - a new user could be *onboarded into* an existing twin (your own across devices, or a mentor's) as a starting posture rather than a blank slate.\n\nIt stays strictly inside Lyra's contract: the twin is a **preference and attention model, never a decision model.** It learns *where you look*, never \"what to buy\"; it never places an order and never gives advice. The deterministic engine still owns every number and every decision - the twin only decides what to show you first and how to frame it for your risk posture, and it ships with an **anti-bubble guarantee** (personalisation may raise attention but may never lower the visibility of risk or disconfirming evidence).\n\n📄 **Full pitch:** `docs/strategy/2026-07-16-digital-trading-twin.md` - concept, what it learns, the onboarding-into-a-twin future, the architecture that keeps the contract, a phased roadmap, and an honest \"what would make us not build this.\"\n\n---"
+    },
+    {
       "id": "readme-md--disclaimer",
       "source": "README.md",
       "docTitle": "📈 Lyra - Stock Momentum Radar",

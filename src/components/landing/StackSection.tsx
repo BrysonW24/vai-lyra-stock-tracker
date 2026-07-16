@@ -28,7 +28,7 @@ const TILES: Tile[] = [
   { name: 'GitHub Actions', role: 'Runs the scanner hourly. Free in public repos.', logo: '/logos/githubactions.svg', badge: 'free', cost: '$0 public repo' },
   { name: 'Market data', role: 'yfinance free, Finnhub as backup.', glyph: '📈', badge: 'free', cost: '$0 hobby use' },
   { name: 'Vercel', role: 'One-command hosting. Free Hobby tier.', logo: '/logos/vercel.svg', badge: 'opt', cost: 'optional · $0' },
-  { name: 'Docker + Coolify', role: 'Or self-host on your own server - Dockerfile included.', logo: '/logos/docker.svg', badge: 'opt', cost: 'optional · ~US$12/mo' },
+  { name: 'Docker + Coolify', role: 'Or self-host on your own server - Dockerfile included.', logo: '/logos/docker.svg', badge: 'opt', cost: 'optional · ~$12/mo' },
   { name: 'Redis (Upstash)', role: 'Serverless cache. Falls back to in-memory.', logo: '/logos/upstash.svg', badge: 'opt', cost: 'optional · $0 tier' },
   { name: 'Telegram Bot', role: 'Urgent setups straight to your phone.', logo: '/logos/telegram.svg', badge: 'opt', cost: 'optional · $0' },
   { name: 'Slack', role: 'Feedback + alerts piped into your channel.', logo: '/logos/slack.svg', badge: 'opt', cost: 'optional · $0' },
@@ -62,7 +62,9 @@ export function StackSection() {
               <h3 className="text-[13px] font-semibold text-[#0E1E3A]">{t.name}</h3>
             </div>
             <p className="flex-1 text-[11.5px] leading-snug text-[#5A6B82]">{t.role}</p>
-            <span className={`self-start rounded-full border px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.06em] ${BADGE_CLASS[t.badge]}`}>
+            {/* whitespace-nowrap + tighter mobile sizing: pills must never wrap into two
+                broken lines inside the 2-column grid at 375px */}
+            <span className={`self-start whitespace-nowrap rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.03em] sm:text-[9.5px] sm:tracking-[0.06em] ${BADGE_CLASS[t.badge]}`}>
               {t.cost}
             </span>
           </div>

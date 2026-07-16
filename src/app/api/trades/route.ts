@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient, createSupabaseServiceClient } from '@/lib/supabase/server';
-import { lookupMarketQuote } from '@/lib/market/quote';
+import { lookupMarketQuote, lookupMarketQuoteUncached } from '@/lib/market/quote';
 
 interface LogTradeRequest {
   side: 'buy';
@@ -98,7 +98,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Provide a symbol and positive notional value.' }, { status: 400 });
     }
 
-    const quote = await lookupMarketQuote(rawSymbol);
+    // Cache-bypassing on purpose: this price becomes the logged fill price (p_fill_price),
+    // so it must not come from the 60s quote cache that serves previews.
+    const quote = await lookupMarketQuoteUncached(rawSymbol);
     if (!quote.valid || !quote.symbol || !quote.price || quote.price <= 0) {
       return NextResponse.json({ ok: false, error: quote.error || `No market price found for ${rawSymbol}.` }, { status: 400 });
     }

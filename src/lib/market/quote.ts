@@ -38,7 +38,9 @@ async function lookupYahoo(symbol: string): Promise<YahooMeta | null> {
   }
 }
 
-/** Quotes stay fresh enough for previews at 60s; the server re-prices on trade confirm anyway. */
+/** 60s bounds preview staleness. The trade-confirm leg (POST /api/trades) deliberately uses
+ *  lookupMarketQuoteUncached so a logged fill price never comes from this cache - though it
+ *  still rides the Yahoo fetch's pre-existing `next: { revalidate: 300 }` window above. */
 const QUOTE_TTL_SECONDS = 60;
 
 export async function lookupMarketQuote(rawSymbol: string): Promise<MarketQuote> {
@@ -52,11 +54,17 @@ export async function lookupMarketQuote(rawSymbol: string): Promise<MarketQuote>
   const hit = await cacheGet<MarketQuote>(`quote:${raw}`);
   if (hit) return hit;
   const quote = await lookupMarketQuoteUncached(raw);
-  if (quote.valid) void cacheSet(`quote:${raw}`, quote, QUOTE_TTL_SECONDS);
+  // Awaited: fire-and-forget writes can be dropped when a serverless instance freezes.
+  if (quote.valid) await cacheSet(`quote:${raw}`, quote, QUOTE_TTL_SECONDS);
   return quote;
 }
 
-async function lookupMarketQuoteUncached(raw: string): Promise<MarketQuote> {
+/** Cache-bypassing lookup for the paths where staleness matters (logging a fill price). */
+export async function lookupMarketQuoteUncached(rawIn: string): Promise<MarketQuote> {
+  const raw = rawIn.toUpperCase().trim();
+  if (!raw || !/^[A-Z0-9.\-]{1,12}$/.test(raw)) {
+    return { valid: false, symbol: raw, name: null, price: null, currency: null, exchange: null, changePercent: null, error: 'Enter a ticker symbol.' };
+  }
   let resolved = raw;
   let meta = await lookupYahoo(raw);
   if (!meta && !raw.includes('.')) {

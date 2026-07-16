@@ -143,8 +143,8 @@ const CARDS: GoalCard[] = [
   },
   {
     title: 'AI that explains - keys you own',
-    lede: 'Bring your own AI key - it never leaves your browser.',
-    back: "Paste any provider's key in Settings - it stays in your browser. The engine decides every number; the AI only phrases it, and every surface has a no-AI fallback.",
+    lede: 'Bring your own AI key - held in your browser, never stored server-side.',
+    back: "Paste any provider's key in Settings - your browser holds it and sends it only with your own requests to your own deployment; it is never stored server-side. The engine decides every number; the AI only phrases it.",
     badge: 'opt', status: 'live in the app · BYOK', viz: <ByokViz />,
   },
   {
@@ -188,13 +188,15 @@ export function UltimateGoals() {
             role="button"
             tabIndex={0}
             aria-pressed={flipped[i]}
+            aria-label={`${c.title} - flip for detail`}
             onClick={() => toggle(i)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(i); }
             }}
           >
             <div className="ug-gin">
-              <div className="ug-face">
+              {/* Only the visible face is exposed to assistive tech */}
+              <div className="ug-face" aria-hidden={flipped[i]}>
                 <span className="ug-hint">more</span>
                 <div className={`ug-viz${c.viz && (i === 2 || i === 3) ? ' ug-flow' : ''}`}>{c.viz}</div>
                 <div className="ug-body">
@@ -203,7 +205,7 @@ export function UltimateGoals() {
                 </div>
                 <span className={`ug-badge ${BADGE_CLASS[c.badge]}`}>{c.status}</span>
               </div>
-              <div className="ug-face ug-back">
+              <div className="ug-face ug-back" aria-hidden={!flipped[i]}>
                 <span className="ug-hint">back</span>
                 <p className="ug-bl">{i + 1} · {c.title}</p>
                 <p className="ug-backtext">{c.back}</p>
@@ -312,6 +314,7 @@ export function UltimateGoals() {
         @keyframes ug-slidein { to { opacity: 1; transform: none; } }
         @media (prefers-reduced-motion: reduce) {
           .ug-gin { transition: none; }
+          .ug-future .ug-face::before { animation: none; }
           .ug-arm, .ug-blip, .ug-core { animation: none; }
           .ug-drawline, .ug-equity { stroke-dashoffset: 0; animation: none; }
           .ug-wbar { transform: none; animation: none; }
