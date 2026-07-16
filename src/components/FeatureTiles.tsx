@@ -92,7 +92,7 @@ export function AlertTile() {
           <p className="text-[10px] text-[#5A6B82]">RSI recovering · volume confirming</p>
         </div>
       </div>
-      <p className="mt-2 font-mono text-[9px] uppercase tracking-wider text-[#5A6B82]">Telegram · WhatsApp · quiet hours</p>
+      <p className="mt-2 font-mono text-[9px] uppercase tracking-wider text-[#5A6B82]">Telegram · Slack · WhatsApp · quiet hours</p>
     </div>
   );
 }

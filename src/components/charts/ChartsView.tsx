@@ -5,7 +5,7 @@ import { TickerLogo } from '@/components/TickerLogo';
 import { PortfolioDonut } from '@/components/charts/PortfolioDonut';
 import { ChartsTabs } from '@/components/charts/ChartsTabs';
 import { buildScoreHistory } from '@/lib/score-history';
-import { formatCurrency, formatSignedPercent, toneClass } from '@/lib/format';
+import { formatCurrency, formatSignedPercent } from '@/lib/format';
 
 function scoreSeries(signal: SignalRow): number[] {
   return buildScoreHistory({

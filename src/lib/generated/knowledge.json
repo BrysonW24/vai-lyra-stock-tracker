@@ -1,0 +1,1069 @@
+{
+  "version": 1,
+  "chunks": [
+    {
+      "id": "readme-md--lyra-stock-momentum-radar",
+      "source": "README.md",
+      "docTitle": "📈 Lyra - Stock Momentum Radar",
+      "heading": "📈 Lyra - Stock Momentum Radar",
+      "text": "> An hourly tech-stock momentum scanner that spots recovery setups before they're obvious - and explains them in plain English. **Research, not advice.**\n\nLyra watches the market on an hourly cadence and scores each stock on momentum recovery: RSI lift, MACD histogram turning up, price location, trend context, and volume participation. A deterministic engine owns every number; an optional AI layer just phrases it for you. Runs on **built-in demo data with zero setup**, and scales up to a live, alerting, AI-explained console when you want it.\n\n```bash\ngit clone https://github.com/BrysonW24/vai-lyra-stock-tracker.git\ncd vai-lyra-stock-tracker\nnpm install && npm run dev -- -p 3042      # ✨ runs on demo data, no keys needed\n```\n\nOpen http://localhost:3042 and you're in. 🎉"
+    },
+    {
+      "id": "readme-md--make-it-yours-clone-set-up-deploy-all-guided",
+      "source": "README.md",
+      "docTitle": "📈 Lyra - Stock Momentum Radar",
+      "heading": "🧭 Make it yours - clone, set up, deploy, all guided",
+      "text": "This repo is built to be **shared as a link and replicated end to end**. Four things get you from clone to your own live console:\n\n1. **Setup instructions** - agent-paced or human-paced, your pick:\n   - **Have Claude Code?** Open it in the clone and run **`/setup`** - the repo ships an agent playbook (`.claude/commands/setup.md`) that sets everything up for you, stage by stage, with a verification gate at every step.\n   - **Prefer to drive?** Follow the walkthroughs: what Lyra is -> run it in 5 minutes -> go live with your own Supabase -> put it online -> understand the score.\n2. **An AI key (optional)** - set `OPENAI_API_KEY` server-side for hosted explanations, or paste any provider's key in **Settings -> AI** (BYOK, stays in your browser). The console is fully usable with no AI key at all.\n3. **Hosting (optional)** - free on Vercel, or your own server with **Coolify** using the included `Dockerfile`: deploy walkthrough + Coolify runbook.\n4. **Alerts where you live** - urgent setups and hourly summaries pushed to you: web push with zero accounts, Telegram in ~10 minutes, Slack via your own incoming webhook (paste it in Settings -> Notifications), WhatsApp honestly scoped: alerts walkthrough.\n5. **Costs, fully itemised** - every service in the stack priced in `COSTS.md`. Demo mode is $0; a fully live, always-on setup can run on free tiers."
+    },
+    {
+      "id": "readme-md--what-you-get",
+      "source": "README.md",
+      "docTitle": "📈 Lyra - Stock Momentum Radar",
+      "heading": "✨ What you get",
+      "text": "- 🛰️ **Momentum radar** - every tracked stock scored 0-100 with a clear signal state (strong setup / building / near trigger / invalidated)\n- 🧮 **Deterministic engine** - RSI, MACD, trend, volume and score are computed in code, never guessed by an AI\n- 📊 **Dense command center** - overview, signal radar, per-ticker detail, alerts, and settings\n- 💼 **Portfolio + watchlist overlays** - on-the-spot valuation and price-alert thresholds (-10 / -5 / +5 / +10%)\n- 🔔 **Alerts on your channels** - strong setups and invalidations pushed to Telegram, Slack (your own webhook), WhatsApp, or web push (all opt-in)\n- 🤖 **Optional AI co-pilot** - plain-English briefs and explanations, grounded strictly in the engine's numbers\n- 🧪 **Demo-safe everywhere** - no backend? It runs on realistic sample data so you can explore instantly\n\n  <em>Alerts, where you live:</em><br /><br />\n  \n  \n  \n  \n\n---"
+    },
+    {
+      "id": "readme-md--hosted-openai-beta-optional-byok",
+      "source": "README.md",
+      "docTitle": "📈 Lyra - Stock Momentum Radar",
+      "heading": "🔑 Hosted OpenAI beta. Optional BYOK.",
+      "text": "The beta AI layer is wired for a server-side hosted OpenAI key so friends can test Lyra without pasting provider credentials. User keys are still supported and override the hosted key.\n\n- **Hosted default** - set server-side `OPENAI_API_KEY` and new users default to OpenAI (`gpt-5.5`, configurable with `LYRA_HOSTED_OPENAI_MODEL`).\n- **Bring your own key (BYOK)** - paste your own API key in **Settings -> AI**. It stays in this browser and is never stored by Lyra.\n- **Bring your own model (BYOM)** - pick the exact model you want. Leave it blank for the provider default, or name any model your key can access.\n- **Provider-agnostic gateway** - OpenAI, Anthropic, OpenRouter, Gemini, and xAI all route through one server-side gateway.\n\n> The AI **explains**; the deterministic engine **decides**. The model is only ever given facts the engine already computed - it never invents a number and never gives buy/sell advice.\n\nEvery brief and explanation has a deterministic fallback, so the app still works if a model call fails.\n\n---"
+    },
+    {
+      "id": "readme-md--three-modes-use-as-much-as-you-want",
+      "source": "README.md",
+      "docTitle": "📈 Lyra - Stock Momentum Radar",
+      "heading": "🛠️ Three modes - use as much as you want",
+      "text": "| Mode | What you need | What you get |\n|------|---------------|--------------|\n| 🎮 **Demo** | nothing | The full console on built-in sample data. Just `npm run dev`. |\n| 📡 **Live** | Supabase + a market-data source | Real hourly scanning, your own tickers, portfolio + watchlist overlays. |\n| 🤖 **AI** | `OPENAI_API_KEY` server-side, or a user's BYOK | Hosted beta chat/briefs plus optional user-selected models. |\n\nRun **`npm run doctor`** anytime to see exactly what's configured, what's missing, and which mode you're in. 🩺\n\nCopy `.env.example` to `.env.local` and fill in only what you need. See `QUICKSTART.md` for the friendly walkthrough and `SECURITY.md` for key-handling rules (never put a secret in a `NEXT_PUBLIC_*` variable).\n\n---"
+    },
+    {
+      "id": "readme-md--commands-the-full-set",
+      "source": "README.md",
+      "docTitle": "📈 Lyra - Stock Momentum Radar",
+      "heading": "🧰 Commands - the full set",
+      "text": "Everything is an npm script; you never need to remember a raw command.\n\n### Day to day\n\n| Command | What it does |\n|---|---|\n| `npm install` | Install dependencies (also wires the git hooks) |\n| `npm run dev -- -p 3042` | Run the dashboard locally at http://localhost:3042 (demo data if no keys) |\n| `npm run doctor` | Diagnose your setup: which mode you're in, what's configured, what's missing |\n| `npm run build` | Production build of the frontend |\n| `npm run type-check` | TypeScript strict check (run before committing) |\n| `npm run test` | Frontend unit tests (Vitest) |\n\n### Scanner (live mode)\n\n| Command | What it does |\n|---|---|\n| `npm run worker:scan` | Run the Python scanner once, right now (needs worker deps: `pip install -r requirements.txt`) |\n| `npm run worker:test` | Run the Python worker test suite (pytest) |\n\n### Content + releases (contributors)\n\n| Command | What it does |\n|---|---|\n| `npm run content:build` | Compile `content/*.jsonl` into importable JSON (runs automatically before dev/build) |\n| `npm run release` | Cut a release: syncs `package.json` + `CHANGELOG.md` from `src/lib/version.ts` |\n| `npm run check:version` | The pre-push version guard, runnable by hand |\n\nStep-by-step instructions for every stage - from first clone to your own deployed, alerting Lyra - live in the walkthroughs, and Claude Code users can just run **`/setup`**.\n\n---"
+    },
+    {
+      "id": "readme-md--going-live-optional",
+      "source": "README.md",
+      "docTitle": "📈 Lyra - Stock Momentum Radar",
+      "heading": "📡 Going live (optional)",
+      "text": "1. **Supabase** - apply the migrations in `supabase/migrations/` in numeric order (the canonical schema - auth, RLS, scanner, trades), then run `sql/_apply_all_scanner_schema.sql` once (idempotent worker-schema reconciliation). Set `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (read-only, frontend) and `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (worker only). Full guide: go live with your own Supabase.\n2. **Scan** - `npm run worker:scan` runs the Python scanner once. The included GitHub Actions workflow at `.github/workflows/hourly-stock-scanner.yml` runs it hourly (add your secrets in the repo settings).\n3. **Alerts** - add `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` to receive pushes, and/or paste your own Slack incoming-webhook URL in **Settings -> Notifications** (no server env needed - it persists per user).\n4. **Host it** - free on Vercel, or self-host with Docker/Coolify: deploy walkthrough + Coolify runbook. Verify any deploy with `/api/health` (returns the running version + mode). Costs: `COSTS.md`.\n\n---"
+    },
+    {
+      "id": "readme-md--tech-stack",
+      "source": "README.md",
+      "docTitle": "📈 Lyra - Stock Momentum Radar",
+      "heading": "🧱 Tech stack",
+      "text": "- **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS\n- **Worker:** Python (pandas, yfinance, `ta`, Supabase client) + pytest\n- **Data:** Supabase (Postgres) with row-level security; read-only on the frontend\n- **AI:** provider/model-agnostic gateway in `src/lib/ai/gateway.ts`\n- **Scheduler:** GitHub Actions (hourly)\n- **Alerts:** Telegram Bot API, Slack incoming webhooks, WhatsApp Cloud API, Web Push"
+    },
+    {
+      "id": "readme-md--project-structure",
+      "source": "README.md",
+      "docTitle": "📈 Lyra - Stock Momentum Radar",
+      "heading": "📁 Project structure",
+      "text": "```\nsrc/app/                  Next.js pages (overview, radar, ticker, alerts, settings)\nsrc/components/           Dashboard + analytics components\nsrc/lib/                  Fetch helpers, demo data, env validation, AI gateway, Pine export\ncontracts/notifications/  JSON contracts for the AI notification layer\nworkers/stock_scanner/    Python scanner (indicators, scoring, overlays, alerts)\nsql/                      Supabase schema + seed\ntests/                    Worker tests\ndocs/walkthroughs/        Clone-to-live walkthroughs (start here to replicate)\ndocs/runbooks/            Deploy + operations runbooks (Coolify, kill switch, ...)\ndocs/                     Architecture, AI engine plan, production hardening\n.claude/commands/         /setup - agent playbook for Claude Code users\nDockerfile                Self-hosting image (Coolify/Docker); Vercel ignores it\nCOSTS.md                  Every service in the stack, priced\n```\n\n---"
+    },
+    {
+      "id": "readme-md--disclaimer",
+      "source": "README.md",
+      "docTitle": "📈 Lyra - Stock Momentum Radar",
+      "heading": "⚠️ Disclaimer",
+      "text": "Lyra is **research software, not financial advice**. It surfaces and explains technical signals; it does not tell you what to buy or sell. Markets are risky - do your own research and never invest more than you can afford to lose."
+    },
+    {
+      "id": "quickstart-md--tl-dr",
+      "source": "QUICKSTART.md",
+      "docTitle": "Quickstart - Lyra (Stock Momentum Radar)",
+      "heading": "TL;DR",
+      "text": "```bash\ngit clone <repo-url>\ncd vai-lyra-stock-tracker\nnpm install\ncp .env.example .env.local      # optional - works without it in demo mode\nnpm run doctor                  # checks your setup and tells you what's missing\nnpm run dev -- -p 3042\n```\n\nOpen http://localhost:3042 and walk through `/onboarding`.\n\n---"
+    },
+    {
+      "id": "quickstart-md--three-modes-pick-how-far-you-want-to-go",
+      "source": "QUICKSTART.md",
+      "docTitle": "Quickstart - Lyra (Stock Momentum Radar)",
+      "heading": "Three modes - pick how far you want to go",
+      "text": "### 1. Demo mode (zero keys)\nJust `npm install` then `npm run dev`. The whole console runs on built-in demo data - explore the dashboard, onboarding, IPO radar, calendar, education, and charts with nothing to configure.\n\n> Demo fallback is automatic - the app falls back to demo data whenever the Supabase env vars aren't set. There is no flag to toggle it.\n\n### 2. Live mode (real scanning)\nTo scan real stocks and store results you need **Supabase** and a **market-data source**:\n\n1. Create a Supabase project. Run the migrations in `supabase/migrations/` (all of them, in numeric order) in the Supabase SQL editor - this is the canonical schema (auth, RLS, notifications, trade logs, etc.). Then run `sql/_apply_all_scanner_schema.sql` once (idempotent reconciliation for the worker's schema). The other numbered files in `sql/` are legacy - skip them.\n2. Put the **read-only** keys in the frontend vars:\n   - `NEXT_PUBLIC_SUPABASE_URL`\n   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`\n3. Put the **server** keys in the worker-only vars (never `NEXT_PUBLIC_*`):\n   - `SUPABASE_URL`\n   - `SUPABASE_SERVICE_ROLE_KEY`\n4. Market data uses `yfinance` by default (no key). Run the worker:\n   ```bash\n   python -m venv .venv && source .venv/bin/activate\n   pip install -r requirements.txt\n   npm run worker:scan\n   ```\n\n### 3. Alerts (optional)\nTo receive Telegram alerts, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`. See `TELEGRAM_SETUP.md` (pairing flow). Alert behaviour (mode, mute, quiet hours, scope) is controlled from the top bar of the Command Centre.\n\n### 4. AI mode (optional)\nAdd server-side `OPENAI_API_KEY` to unlock the hosted beta default for keyless users. Optional:\n- `LYRA_HOSTED_OPENAI_MODEL=gpt-5.5`\n- `LYRA_OPENAI_REASONING_EFFORT=low`\n- `GOOGLE_AI_KEY` for the older shared Gemini fallback"
+    },
+    {
+      "id": "quickstart-md--three-modes-pick-how-far-you-want-to-go--1",
+      "source": "QUICKSTART.md",
+      "docTitle": "Quickstart - Lyra (Stock Momentum Radar)",
+      "heading": "Three modes - pick how far you want to go",
+      "text": "Users can still paste their own provider key in Settings -> AI; browser keys override the hosted key for that user.\n\n---"
+    },
+    {
+      "id": "quickstart-md--what-needs-which-key",
+      "source": "QUICKSTART.md",
+      "docTitle": "Quickstart - Lyra (Stock Momentum Radar)",
+      "heading": "What needs which key",
+      "text": "| You want to... | Keys needed |\n|---|---|\n| Explore the UI | none (demo mode) |\n| Scan real stocks | Supabase + market data |\n| Receive alerts | + Telegram bot token & chat id |\n| Hosted AI beta | + OpenAI key |\n\nRun `npm run doctor` anytime to see exactly what's configured and what's missing."
+    },
+    {
+      "id": "quickstart-md--safety",
+      "source": "QUICKSTART.md",
+      "docTitle": "Quickstart - Lyra (Stock Momentum Radar)",
+      "heading": "Safety",
+      "text": "Never expose server secrets in `NEXT_PUBLIC_*` vars and never commit `.env.local`. See `SECURITY.md`."
+    },
+    {
+      "id": "onboarding-md--onboarding-md-the-ledger-of-everything-lyra-offers-a-new-developer",
+      "source": "ONBOARDING.md",
+      "docTitle": "ONBOARDING.md - the ledger of everything Lyra offers a new developer",
+      "heading": "ONBOARDING.md - the ledger of everything Lyra offers a new developer",
+      "text": "This file is the single register of every onboarding asset, spec, and experience in the\nrepo - for humans and for agents. If you add, move, or materially change an onboarding\nsurface, update this ledger in the same change. (Agents: your entry point is\nAGENT-ONBOARDING.md; this file tells you what exists and why.)"
+    },
+    {
+      "id": "onboarding-md--the-experience-in-one-line",
+      "source": "ONBOARDING.md",
+      "docTitle": "ONBOARDING.md - the ledger of everything Lyra offers a new developer",
+      "heading": "The experience, in one line",
+      "text": "A developer points their AI agent at this repo; the agent runs the setup end to end,\nopens a live **Setup Companion** page in the developer's browser so they can watch and\nunderstand every stage, and hands over a working console - demo in minutes, live and\ndeployed if they choose."
+    },
+    {
+      "id": "onboarding-md--asset-register",
+      "source": "ONBOARDING.md",
+      "docTitle": "ONBOARDING.md - the ledger of everything Lyra offers a new developer",
+      "heading": "Asset register",
+      "text": "| Asset | Audience | What it delivers |\n|---|---|---|\n| AGENT-ONBOARDING.md | Any coding agent | The agent's front door: mission, ground rules, the setup contract, verification gates |\n| .claude/commands/setup.md | Claude Code (readable by any agent) | The `/setup` playbook: stage-by-stage E2E setup with verification gates, companion wiring, Vercel CLI path |\n| docs/onboarding/setup-companion.html | The human, in their browser | Live premium spec + progress board the agent opens during setup (spec below) |\n| public/setup-companion.html | The human, in the app | Same companion served at `/setup-companion.html` as an in-app resource - keep in sync with the docs copy |\n| QUICKSTART.md | Humans in a hurry | 5-minute demo-mode path, no keys |\n| docs/walkthroughs/ | Humans, self-paced | The clone-to-live replication path, 6 walkthroughs: 01 tour, 02 run it yourself, 03 your own data spine, 04 deploy your own (incl. the agent-friendly Vercel CLI subsection), 05 understand the score, 06 alerts on your phone |\n| `/welcome` landing sections | Prospective users | \"The ultimate goal\" (6 flip cards) + \"The stack\" (16 cost-badged tiles) ported from the companion - src/components/landing/UltimateGoals.tsx, src/components/landing/StackSection.tsx |\n| `/onboarding` in-app flow | Signed-in users | Console setup after account creation (demo mode goes straight there) |\n| `npm run doctor` | Humans + agents | Reports which mode you are in (demo / live / AI) and what is configured |\n| `/api/health` | Agents + hosting | Public liveness + version probe - the \"done looks like\" gate for deploys |\n| COSTS.md | Humans deciding to go live | Fully-itemised stack costs, free-tier limits, the gotchas that bite |\n| SECURITY.md + DISCLAIMER.md | Everyone | Key handling rules; research-not-advice framing |\n| `/whats-new` + version badge | Returning users | Enforced changelog - every shipped change bumps `src/lib/version.ts` |\n| public/logos/ | Shared | The verified brand-logo library (SVG/PNG) used by the companion and the landing sections |"
+    },
+    {
+      "id": "onboarding-md--setup-companion-the-spec",
+      "source": "ONBOARDING.md",
+      "docTitle": "ONBOARDING.md - the ledger of everything Lyra offers a new developer",
+      "heading": "Setup Companion - the spec",
+      "text": "The companion is the heart of the developer-with-agent experience. It is a single\nself-contained HTML file (no network requests, all assets embedded as data URIs)."
+    },
+    {
+      "id": "onboarding-md--setup-companion-the-spec--1",
+      "source": "ONBOARDING.md",
+      "docTitle": "ONBOARDING.md - the ledger of everything Lyra offers a new developer",
+      "heading": "Setup Companion - the spec",
+      "text": "- **Duo brand**: Lyra colouring on the Vivacity.ai light glass system. Stacked lockup -\n  Lyra mark / \"by\" / Vivacity.ai logo + wordmark. Left-aligned on desktop, centred on\n  mobile. Tokens: bg `#F7F6F2`, ink `#0E1E3A`, body `#5A6B82`, blue `#1E63FF -> #5BC8FF`,\n  Lyra tri-gradient `#3b5bdb -> #43d18b -> #f3a33a`, glass `rgba(255,255,255,.72)` + blur.\n- **Live progress board**: the page self-refreshes every 5s; the agent edits ONLY the\n  `SETUP_STATE` object between the `SETUP_STATE_START/END` markers at every stage\n  transition (statuses: pending / active / done / blocked / skipped, plus a one-line note).\n- **Stage cards** (s0-s5 + s3b): emoji-structured rows - \"What happens\", \"Why it\n  matters\", \"Done looks like\" - so the human always knows what the agent is doing.\n- **Architecture strip**: the three moving parts (GitHub Actions scanner -> Supabase <-\n  Next.js app) as an aligned ASCII diagram.\n- **The stack**: 16 glass tiles, every technology with its REAL embedded logo\n  (multicolor Slack, real OpenAI blossom, Anthropic Claude tile, two-tone Python) and an\n  honest cost badge (free / optional / paid).\n- **The ultimate goal**: 6 animated flip cards - punchy one-liner on the front, click\n  (or Enter/Space) flips to the detail; flip state survives the 5s refresh via\n  sessionStorage. Cards: small-cap signal radar, auditable analysis, BYOK AI, alerts\n  channels, paper bot, and the human-gated live bot (honestly badged \"the destination\").\n- **Mobile pass is imperative**: single-column cards, 2-up stack grid, centred lockup,\n  scrollable architecture strip. `prefers-reduced-motion` disables all animation.\n- **Honest statuses everywhere**: WhatsApp is architecture-only, the live bot is not\n  live - the companion never oversells."
+    },
+    {
+      "id": "onboarding-md--experience-principles-apply-to-every-onboarding-surface",
+      "source": "ONBOARDING.md",
+      "docTitle": "ONBOARDING.md - the ledger of everything Lyra offers a new developer",
+      "heading": "Experience principles (apply to every onboarding surface)",
+      "text": "1. **Agent-first, human-visible** - the agent does the work; the human watches a real\n   page, not a terminal scroll.\n2. **Punchy front, detail on demand** - one-line fronts, flip/click for depth. No\n   banner blindness.\n3. **Honest statuses** - live things say live; scaffolded things say so.\n4. **Research, never advice** - every surface keeps the disclaimer framing.\n5. **Secrets never in chat** - keys go into `.env.local` / host env vars only; the\n   companion and playbooks repeat this rule.\n6. **Plain hyphens** - never an em dash in user-visible copy.\n7. **Verification gates** - nothing is \"done\" until its gate passes (`doctor`, build,\n   `/api/health`, probe sends)."
+    },
+    {
+      "id": "onboarding-md--maintenance-rules",
+      "source": "ONBOARDING.md",
+      "docTitle": "ONBOARDING.md - the ledger of everything Lyra offers a new developer",
+      "heading": "Maintenance rules",
+      "text": "- Companion edits: change `docs/onboarding/setup-companion.html`, then\n  `cp docs/onboarding/setup-companion.html public/setup-companion.html` - the two copies\n  must never drift.\n- The knowledge layer compiles the reference docs (including the walkthroughs) into the\n  in-app AI's retrieval corpus - if you rename or move a doc, update `SOURCES` in\n  `scripts/build-knowledge.mjs` or the build fails loudly.\n- Landing sections and companion share content deliberately (goals + stack) - if the\n  product story changes, update both plus this ledger."
+    },
+    {
+      "id": "agent-onboarding-md--agent-onboarding-md-hello-agent",
+      "source": "AGENT-ONBOARDING.md",
+      "docTitle": "AGENT-ONBOARDING.md - hello, agent 👋",
+      "heading": "AGENT-ONBOARDING.md - hello, agent 👋",
+      "text": "You are an AI coding agent, and your human just pointed you at Lyra. This page is for\nyou. Read it once (about 2 minutes of your context), then run the setup. Your mission:\na working console your human understands - not a wall of terminal output."
+    },
+    {
+      "id": "agent-onboarding-md--60-second-orientation",
+      "source": "AGENT-ONBOARDING.md",
+      "docTitle": "AGENT-ONBOARDING.md - hello, agent 👋",
+      "heading": "60-second orientation",
+      "text": "Lyra is a research-grade stock oversold-recovery radar. A **deterministic engine**\ncomputes every number (RSI, MACD, trend, volume -> a 0-100 score); an optional AI layer\nonly phrases explanations. It runs in three modes:\n\n1. **Demo** - no keys. `npm install && npm run dev`. Full console on built-in data.\n2. **Live** - your human's own Supabase + an hourly GitHub Actions scanner + alerts.\n3. **AI** - bring-your-own-key explanations on any provider (OpenAI, Anthropic, Gemini,\n   OpenRouter).\n\n`npm run doctor` tells you which mode the current checkout is in."
+    },
+    {
+      "id": "agent-onboarding-md--the-setup-contract",
+      "source": "AGENT-ONBOARDING.md",
+      "docTitle": "AGENT-ONBOARDING.md - hello, agent 👋",
+      "heading": "The setup contract",
+      "text": "The full playbook is .claude/commands/setup.md. In Claude\nCode it runs as `/setup`; any other agent can read it top to bottom and follow it - it\nis plain markdown with explicit stages and gates. The non-negotiables:\n\n1. **Open the Setup Companion first.** Copy\n   `docs/onboarding/setup-companion.html` to a temp dir and open it in the human's\n   browser (`open` / `xdg-open` / `start`). It is their live window into what you are\n   doing - a spec page plus a progress board that self-refreshes every 5 seconds.\n2. **Keep the board honest.** At every stage transition, edit ONLY the `SETUP_STATE`\n   object between the `SETUP_STATE_START` / `SETUP_STATE_END` markers - status\n   (`pending|active|done|blocked|skipped`) plus a one-line note. Never touch the rest\n   of the file.\n3. **Ask before you provision.** Choosing demo vs live vs AI, creating cloud projects,\n   and anything that costs money is the human's call. Present the options; let them pick.\n4. **Verification gates are the definition of done.** A stage is not done because the\n   command exited 0 - it is done when its gate passes:\n   - install/dev: the app answers on its port\n   - schema: migrations applied, then `sql/_apply_all_scanner_schema.sql` once\n   - scanner: a real scan writes rows\n   - alerts: the probe send actually arrives\n   - deploy: `https://<domain>/api/health` returns ok with the right version\n5. **Report back like a colleague.** Finish with: what mode, what URLs, where the keys\n   live, what it costs (see COSTS.md), and what they can do next."
+    },
+    {
+      "id": "agent-onboarding-md--ground-rules-security-no-exceptions",
+      "source": "AGENT-ONBOARDING.md",
+      "docTitle": "AGENT-ONBOARDING.md - hello, agent 👋",
+      "heading": "Ground rules (security - no exceptions)",
+      "text": "- **Never paste secrets into chat, logs, or echo them.** Keys go into `.env.local`\n  (local) or host env vars (deploys). Confirm receipt by variable NAME only.\n- **Never expose `SUPABASE_SERVICE_ROLE_KEY` to the frontend** or put any secret in a\n  `NEXT_PUBLIC_*` variable. See SECURITY.md.\n- **Never claim something works that you have not verified.** Honest statuses only -\n  the product itself says \"architecture-only\" where that is true; match that bar.\n- Lyra is research software, never financial advice. Do not add advicey copy."
+    },
+    {
+      "id": "agent-onboarding-md--if-you-change-code",
+      "source": "AGENT-ONBOARDING.md",
+      "docTitle": "AGENT-ONBOARDING.md - hello, agent 👋",
+      "heading": "If you change code",
+      "text": "- Every shippable change bumps the version: prepend an entry to `RELEASES` in\n  `src/lib/version.ts`, run `npm run release`, commit + push. A pre-push hook enforces\n  this.\n- TypeScript strict, no `any`, plain hyphens (never an em dash) in user-visible copy.\n- Conventions live in CLAUDE.md - read it before editing."
+    },
+    {
+      "id": "agent-onboarding-md--where-everything-lives",
+      "source": "AGENT-ONBOARDING.md",
+      "docTitle": "AGENT-ONBOARDING.md - hello, agent 👋",
+      "heading": "Where everything lives",
+      "text": "| You need | Go to |\n|---|---|\n| The complete onboarding asset ledger | ONBOARDING.md |\n| The stage-by-stage setup playbook | .claude/commands/setup.md |\n| Human-paced deep dives | docs/walkthroughs/ |\n| Deploy: Vercel CLI path | docs/walkthroughs/04-deploy-your-own.md |\n| Deploy: self-host (Docker/Coolify) | docs/runbooks/coolify-deploy.md |\n| Costs, free tiers, gotchas | COSTS.md |\n| Key handling rules | SECURITY.md |\n\nWelcome to the new world. Your human is watching the companion - make it a good show."
+    },
+    {
+      "id": "costs-md--costs-md-what-lyra-costs-to-run-fully-itemised",
+      "source": "COSTS.md",
+      "docTitle": "COSTS.md - what Lyra costs to run, fully itemised",
+      "heading": "COSTS.md - what Lyra costs to run, fully itemised",
+      "text": "Every service in the stack, priced. All prices are **USD, verified on the provider's own\npricing page on 2026-07-16** unless marked otherwise. Prices drift - if this file is more\nthan a few months old, spot-check the sources before budgeting."
+    },
+    {
+      "id": "costs-md--tl-dr-four-cost-scenarios",
+      "source": "COSTS.md",
+      "docTitle": "COSTS.md - what Lyra costs to run, fully itemised",
+      "heading": "TL;DR - four cost scenarios",
+      "text": "| Scenario | What you get | Monthly cost |\n|---|---|---|\n| **Demo** | The full console on your machine, built-in data | **$0** |\n| **Live, free-tier** | Your own Supabase + hourly scanner (GitHub Actions) + Vercel Hobby hosting + Telegram alerts | **$0** (+ ~US$11/yr if you want a domain) |\n| **Self-hosted 24/7** | Same, but the web app on your own server (Coolify on a 2GB droplet) | **~US$13/mo** (US$12 droplet + domain amortised) |\n| **First paid upgrades** | Supabase Pro when the DB passes 500MB or egress passes 5GB; Vercel Pro only if you commercialise while staying on Vercel | +US$25/mo and/or +US$20/mo |\n\nAI explanations add roughly **US$0.50/mo at hobby volume** (see the AI section) and are\nentirely optional - the deterministic engine works without any AI key."
+    },
+    {
+      "id": "costs-md--full-price-table",
+      "source": "COSTS.md",
+      "docTitle": "COSTS.md - what Lyra costs to run, fully itemised",
+      "heading": "Full price table",
+      "text": "### Hosting the web app (pick ONE path)\n\n| Service | Tier | Price | What you get / limits |\n|---|---|---|---|\n| Vercel | Hobby | **$0** | 100GB transfer/mo, 1M function invocations/mo. **Personal, non-commercial use only** (their FAQ) - fine for a free beta, not once it charges users |\n| Vercel | Pro | US$20/user/mo | Commercial use allowed, usage billing beyond quotas |\n| Coolify (self-hosted) | Open source | **$0** forever | The PaaS layer itself: deploys, SSL, cron, services. You pay only for the server under it |\n| Coolify Cloud | Managed | US$5/mo (+US$3/server after 2) | They host the Coolify dashboard only - the server is still yours to pay for |\n| DigitalOcean droplet | 1GB Basic | US$6/mo | Too tight: Coolify recommends 2GB minimum; 1GB OOMs during Docker builds unless you add swap |\n| DigitalOcean droplet | **2GB Basic (realistic floor)** | **US$12/mo** | 1 vCPU / 2GB / 50GiB SSD, 2,000 GiB outbound (overage US$0.01/GiB, inbound free) |\n| DigitalOcean droplet | 4GB Basic | US$24/mo | Comfortable: app + side services with headroom |\n\n### Data + backend"
+    },
+    {
+      "id": "costs-md--full-price-table--1",
+      "source": "COSTS.md",
+      "docTitle": "COSTS.md - what Lyra costs to run, fully itemised",
+      "heading": "Full price table",
+      "text": "| Service | Tier | Price | What you get / limits |\n|---|---|---|---|\n| Supabase | Free | **$0** | 500MB DB, 50k MAUs, 5GB egress + 5GB cached/mo, 2 active projects. **Pauses after 1 week of inactivity**; no paid overage - exceeding limits restricts the project |\n| Supabase | Pro | from US$25/mo | 8GB disk (then $0.125/GB), 100k MAUs, 250GB egress (then $0.09/GB), no pausing |\n| GitHub Actions | Public repo | **$0** | Standard GitHub-hosted runners are unconditionally free in public repos (the hourly scanner is genuinely $0). See gotchas below |\n| Upstash Redis | Free | **$0** | Optional cache (quotes + hot reads) over serverless REST; the Vercel marketplace integration injects the env vars. Free tier is command-metered; without it Lyra falls back to a built-in in-process cache at no cost. Pricing page not re-verified line-by-line on 2026-07-16 - treat limits as indicative |\n| yfinance | Open-source library | **$0** | Unofficial Yahoo Finance access, personal use only, no SLA - Yahoo intermittently rate-limits or breaks it. Fine for a hobby scanner, never a commercial data source |\n| Finnhub | Free | **$0** | Free API key; hard 30 calls/sec global cap (verified on provider docs). The commonly cited 60 calls/min free limit + US$12-100/mo paid bundles could not be re-confirmed on their JS-rendered pricing page on 2026-07-16 - treat as indicative. Personal use, no redistribution |\n\n### Notifications"
+    },
+    {
+      "id": "costs-md--full-price-table--2",
+      "source": "COSTS.md",
+      "docTitle": "COSTS.md - what Lyra costs to run, fully itemised",
+      "heading": "Full price table",
+      "text": "| Service | Tier | Price | What you get / limits |\n|---|---|---|---|\n| Telegram Bot API | Standard | **$0** | \"Bots are able to message their users at no cost\" (their FAQ). ~1 msg/sec per chat; the paid broadcast tier only exists above 30 msg/sec AND 100k+ MAU - irrelevant here |\n| Web Push (VAPID) | W3C standard | **$0** | Browser-native push, self-generated keypair, no vendor account. Free by design of the standard (no pricing page exists to verify) |\n| WhatsApp Cloud API | Meta | not costed | Lyra's WhatsApp layer is architecture-only today (see `docs/walkthroughs/06-alerts-on-your-phone.md`); Meta conversation pricing applies if you ever wire it |\n\n### AI (optional)\n\n| Service | Tier | Price per 1M tokens | Notes |\n|---|---|---|---|\n| OpenAI gpt-5.4-nano | Standard | US$0.20 in / US$1.25 out | Cheapest text tier; cached input US$0.02 |\n| OpenAI gpt-5.4-mini | Standard | US$0.75 in / US$4.50 out | The sensible hosted-beta default; cached input US$0.075 |\n| OpenAI gpt-5.6-sol (flagship, for reference) | Standard | US$5.00 in / US$30.00 out | Overkill for chat briefs |\n\nWorked example at hobby volume: 50 chats/day at ~3k input + 500 output tokens each on\ngpt-5.4-mini is roughly **US$0.45/mo**. Prompt caching (10% of input price) makes the static\nsystem prompt nearly free. BYOK users pay on their own key; with no key at all, every surface\nfalls back to deterministic text."
+    },
+    {
+      "id": "costs-md--full-price-table--3",
+      "source": "COSTS.md",
+      "docTitle": "COSTS.md - what Lyra costs to run, fully itemised",
+      "heading": "Full price table",
+      "text": "If you set a hosted `OPENAI_API_KEY` so signed-in users get AI without their own key, your spend\nis bounded by design: the hosted key is only reachable by an **authenticated** session, is\n**rate-limited per user**, and the **model is server-pinned** (a caller cannot select a pricier\nmodel on your key). An anonymous visitor can never spend it. Leave the env var unset to stay\nstrictly bring-your-own-key.\n\n> Note: Lyra's hosted default `gpt-5.5` still resolves on the OpenAI API (verified against\n> the live models endpoint 2026-07-16) but no longer appears on the current pricing page,\n> whose lineup is gpt-5.4-mini / gpt-5.4-nano / gpt-5.6-sol. Its per-token price is therefore\n> not listed above; if it is ever retired, switch with `LYRA_HOSTED_OPENAI_MODEL`.\n\n### Domain (optional)\n\n| Service | Price | Notes |\n|---|---|---|\n| .com (Porkbun) | US$11.08/yr | Registration = renewal; mainstream registrars cluster at US$10-15/yr. Avoid cheap-year-1 / expensive-renewal registrars |\n| .com.au (Porkbun) | US$13.70/yr (promo US$7.67 on 2026-07-16) | Requires an Australian presence (ABN/ACN). Budget the regular price |"
+    },
+    {
+      "id": "costs-md--the-gotchas-that-actually-bite-a-24-7-hobby-deployment",
+      "source": "COSTS.md",
+      "docTitle": "COSTS.md - what Lyra costs to run, fully itemised",
+      "heading": "The gotchas that actually bite a 24/7 hobby deployment",
+      "text": "1. **Supabase free tier pauses after 7 days of inactivity.** The hourly scanner's writes\n   normally keep it alive - which couples your app's availability to scanner health. If the\n   GitHub Action silently fails for a week, the database (and the whole app) goes down until\n   manually restored.\n2. **GitHub scheduled workflows auto-disable after 60 days without repository activity.**\n   A set-and-forget scanner WILL stop. Commit occasionally or add a keepalive. Also: cron\n   fires are delayed at the top of the hour under load - schedule at an odd minute (e.g. 17 past).\n3. **Vercel Hobby is non-commercial.** The moment Lyra charges users or promotes a business,\n   you need Pro (US$20/user/mo) - or sidestep it entirely by self-hosting on the Coolify box.\n4. **RAM, not bandwidth, is the droplet constraint.** 1,000-4,000 GiB outbound is far beyond\n   this app's needs and overage is only $0.01/GiB. The US$12 2GB droplet is the realistic\n   floor; 1GB OOMs during Docker builds.\n5. **Free market data is contractually gray.** yfinance rides Yahoo's personal-use endpoints\n   with no SLA; pin versions, add retry/backoff, keep Finnhub as fallback, and never build a\n   paid product on it as the sole source."
+    },
+    {
+      "id": "costs-md--sources",
+      "source": "COSTS.md",
+      "docTitle": "COSTS.md - what Lyra costs to run, fully itemised",
+      "heading": "Sources",
+      "text": "DigitalOcean pricing + bandwidth docs, coolify.io/pricing, supabase.com/pricing,\nvercel.com/pricing, GitHub Actions billing docs, pypi.org/project/yfinance,\nfinnhub.io/docs/api/rate-limit, developers.openai.com/api/docs/pricing,\ncore.telegram.org/bots/faq, porkbun.com/products/domains - all fetched 2026-07-16.\n\nLyra is research software, not financial advice - and this file is cost research, not tax\nor accounting advice."
+    },
+    {
+      "id": "security-md--security",
+      "source": "SECURITY.md",
+      "docTitle": "Security",
+      "heading": "Security",
+      "text": "Lyra (Stock Momentum Radar) is research software. Treat keys and tokens carefully."
+    },
+    {
+      "id": "security-md--golden-rules",
+      "source": "SECURITY.md",
+      "docTitle": "Security",
+      "heading": "Golden rules",
+      "text": "1. **Never put secrets in `NEXT_PUBLIC_*` variables.** Anything prefixed `NEXT_PUBLIC_` is bundled into the browser and visible to everyone. Only the read-only Supabase anon URL/key belong there.\n2. **Server secrets stay server-side.** `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`, `VAPID_PRIVATE_KEY`, `NOTIFICATION_DISPATCH_SECRET`, `OPENAI_API_KEY`, `GOOGLE_AI_KEY`, `ANTHROPIC_API_KEY`, and `FINNHUB_API_KEY` must only ever be set as unprefixed (worker/server) variables - never exposed to the frontend.\n3. **Never commit `.env.local`** (or any real `.env`). Only `.env.example` (placeholders) is committed. `.gitignore` should cover `.env*` except `.env.example`.\n4. **Rotate anything that leaks.** If a key is committed or shared by accident, rotate it in the provider immediately."
+    },
+    {
+      "id": "security-md--supabase",
+      "source": "SECURITY.md",
+      "docTitle": "Security",
+      "heading": "Supabase",
+      "text": "- The frontend uses the **anon / publishable** key with **Row Level Security** enforced. Do not rely on hiding data in the client.\n- The **service-role / secret** key bypasses RLS - it belongs only to the Python worker and server routes, never the browser bundle.\n- Apply least-privilege RLS policies before pointing real data at a shared deployment."
+    },
+    {
+      "id": "security-md--telegram",
+      "source": "SECURITY.md",
+      "docTitle": "Security",
+      "heading": "Telegram",
+      "text": "- The bot token can post to any chat the bot is in - keep it server-side only.\n- Store the resolved `chat_id` per user; do not log tokens."
+    },
+    {
+      "id": "security-md--web-push",
+      "source": "SECURITY.md",
+      "docTitle": "Security",
+      "heading": "Web Push",
+      "text": "- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` is intentionally public; browsers need it to subscribe.\n- `VAPID_PRIVATE_KEY` and `NOTIFICATION_DISPATCH_SECRET` are server-side only. Never prefix either with `NEXT_PUBLIC_`.\n- Notifications wake the user to review evidence. They do not create, approve, or execute trades."
+    },
+    {
+      "id": "security-md--demo-mode-is-the-safe-default",
+      "source": "SECURITY.md",
+      "docTitle": "Security",
+      "heading": "Demo mode is the safe default",
+      "text": "With no keys configured the app runs entirely on built-in demo data and makes no privileged calls. This is the recommended way to share the UI with friends before anyone wires up live keys."
+    },
+    {
+      "id": "security-md--hosted-ai-beta",
+      "source": "SECURITY.md",
+      "docTitle": "Security",
+      "heading": "Hosted AI beta",
+      "text": "If `OPENAI_API_KEY` is set server-side, keyless beta users can chat with Lyra through the hosted OpenAI gateway. Do not put this key in any `NEXT_PUBLIC_*` variable. Optional browser-entered BYOK keys are stored locally by the user's browser and override the hosted key for that user's requests."
+    },
+    {
+      "id": "security-md--reporting",
+      "source": "SECURITY.md",
+      "docTitle": "Security",
+      "heading": "Reporting",
+      "text": "Found a vulnerability? Open a private issue or contact the maintainer directly rather than filing a public issue with details."
+    },
+    {
+      "id": "disclaimer-md--disclaimer-research-not-advice",
+      "source": "DISCLAIMER.md",
+      "docTitle": "Disclaimer - Research, Not Advice",
+      "heading": "Disclaimer - Research, Not Advice",
+      "text": "Lyra (Stock Momentum Radar) is **research and educational software**. It is **not financial,\ninvestment, trading, tax, or legal advice**, and nothing it produces is a recommendation to\nbuy, sell, or hold any security. Read this before you act on anything you see in the app."
+    },
+    {
+      "id": "disclaimer-md--what-lyra-is",
+      "source": "DISCLAIMER.md",
+      "docTitle": "Disclaimer - Research, Not Advice",
+      "heading": "What Lyra is",
+      "text": "- A deterministic momentum scanner. It computes indicators (RSI, MACD, moving averages,\n  volume) and a 0-100 momentum-recovery score, and presents them clearly.\n- A way to surface names that are **worth a closer look**. Lyra never tells you to buy or\n  sell. The decision, and the risk, are always yours."
+    },
+    {
+      "id": "disclaimer-md--what-lyra-is-not",
+      "source": "DISCLAIMER.md",
+      "docTitle": "Disclaimer - Research, Not Advice",
+      "heading": "What Lyra is not",
+      "text": "- **Not a broker or financial adviser.** It does not hold funds, connect to your accounts,\n  or place trades.\n- **Not a guarantee.** Markets are uncertain. Past momentum does not predict future returns,\n  and any signal can be wrong.\n- **Not always live data.** Lyra ships with demo and illustrative data. Figures may be\n  sample, delayed, or modelled. Private, pre-IPO valuations are editorial estimates, not\n  quotes, and are clearly labelled as such."
+    },
+    {
+      "id": "disclaimer-md--your-responsibility",
+      "source": "DISCLAIMER.md",
+      "docTitle": "Disclaimer - Research, Not Advice",
+      "heading": "Your responsibility",
+      "text": "Do your own research. Consider your own circumstances and risk tolerance. Where appropriate,\nconsult a licensed financial professional before making any investment decision. You are\nsolely responsible for any decisions you make and any outcomes that follow."
+    },
+    {
+      "id": "disclaimer-md--no-warranty-no-liability",
+      "source": "DISCLAIMER.md",
+      "docTitle": "Disclaimer - Research, Not Advice",
+      "heading": "No warranty, no liability",
+      "text": "This software is provided \"as is\", without warranty of any kind (see `LICENSE`). To the\nmaximum extent permitted by law, the authors and contributors are not liable for any loss\nor damage arising from use of this software or reliance on its output."
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--what-is-lyra-the-10-minute-tour",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "What is Lyra - the 10-minute tour",
+      "text": "> Lyra is research and educational software. It is **not financial advice**. Nothing it shows is a recommendation to buy or sell anything. See DISCLAIMER.md.\n\nThis is the first walkthrough in the series. It explains what Lyra is, how to think about it, and what every screen does - then points you at the setup walkthroughs. The full series index is at README.md."
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--the-one-idea",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "The one idea",
+      "text": "Lyra is an **oversold-recovery scanner**. It watches a universe of US tech stocks on an hourly cadence and asks one question per stock: \"has this name been beaten down, and is it now showing the first mechanical signs of turning back up?\"\n\nThat is a **mean-reversion** style (buying weakness that is starting to recover), and it is explicitly **not** buy-strength momentum (buying things that are already going up). A stock at all-time highs with a screaming RSI scores badly in Lyra on purpose. The stocks Lyra surfaces look ugly on a chart - that is the point.\n\nJargon, defined once:\n\n| Term | Meaning |\n|------|---------|\n| RSI | Relative Strength Index, a 0-100 gauge of recent price momentum. Low = beaten down. |\n| MACD | Moving Average Convergence Divergence, a trend-momentum indicator. Its \"histogram\" going from negative toward zero = downside pressure easing. |\n| SMA | Simple Moving Average of price over N periods (e.g. SMA200 = 200-period average). |\n| Mean reversion | Betting that a stretched price snaps back toward its average. |\n| BYOK | Bring Your Own Key - you paste your own AI provider API key instead of using a hosted one. |"
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--the-deterministic-score-owns-every-number",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "The deterministic score owns every number",
+      "text": "Every stock gets a **0-100 score** computed by plain arithmetic in `workers/stock_scanner/signal_engine.py` (mirrored exactly in `src/lib/pine/lyra-strategy.ts` for TradingView export). No AI is involved in scoring. The optional AI layer only **phrases** what the engine already computed - it never invents a number, and if the AI is off the numbers are identical.\n\nThe five blocks and their caps, verified against `signal_engine.py`:\n\n| Block | Max | What earns points |\n|-------|-----|-------------------|\n| RSI | 25 | +10 RSI inside the 35-50 reset band, +10 RSI rising over 1 period, +5 rising over 2 |\n| MACD | 30 | +8 histogram still negative, +12 histogram improving over 1 period, +5 over 2, +5 MACD below signal while improving |\n| Price location | 15 | +10 price within 10% of the 60-period low, +5 near/below the 50 SMA |\n| Trend | 15 | +10/+5 long-trend posture (SMA200 terms, mutually exclusive) plus SMA20-vs-SMA50 |\n| Volume | 15 | +5 x 3 volume-participation steps |\n\nThe sum is capped at 100. Thresholds (defaults from `workers/stock_scanner/config.py`, overridable via `ALERT_SCORE_THRESHOLD` / `WATCHLIST_SCORE_THRESHOLD`):\n\n| Score | Status | Action state shown |\n|-------|--------|--------------------|\n| >= 75 | `strong_setup` | buy_review |\n| >= 60 | `watchlist_setup` | watch |\n| Fell from strong to below 60 | `invalidated` | invalidated |\n| Dropped more than 8 points | `weakening` | do_not_add |\n| Otherwise | `no_signal` | hold |\n\n\"Action state\" is a research label, not an instruction. Lyra never places trades for you on real money without the separate, explicitly-armed trading layer."
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--hourly-cadence",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "Hourly cadence",
+      "text": "The scanner is a Python package at `workers/stock_scanner/`, run once an hour by GitHub Actions (`.github/workflows/hourly-stock-scanner.yml`, cron `5 * * * *` UTC). A market-hours guard skips runs outside US trading hours unless you set `FORCE_SCAN=true`. Each run fetches candles, computes indicators, scores everything, writes results to Supabase (a hosted Postgres platform), and fires alerts for status changes.\n\nThe web app never computes scanner numbers itself - it reads what the last run wrote. That separation is why the dashboard can run with zero infrastructure (demo mode, below)."
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--the-three-run-modes",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "The three run modes",
+      "text": "| Mode | Keys needed | What you get |\n|------|-------------|--------------|\n| Demo | **None** | Full UI on built-in demo data. Just `npm run dev`. |\n| Live | Supabase (4 vars below) | Real hourly scanning of your tickers, portfolio and watchlist overlays, Telegram / web-push alerts. |\n| AI | Live + one AI key | Chat, daily briefs, and plain-English phrasing of the deterministic numbers. |\n\nDemo fallback is automatic: whenever the Supabase env vars are absent, `src/lib/data.ts` serves `demo-data` instead. There is no flag to toggle.\n\nUser-specific values (full setup is in walkthroughs 02-03; this is just so the names mean something):\n\n| Variable | Where to get it | Example shape |\n|----------|-----------------|---------------|\n| `NEXT_PUBLIC_SUPABASE_URL` | Your own Supabase project > Settings > API | `https://abcdefgh.supabase.co` |\n| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Same page, \"anon public\" key | `eyJhbGciOi...` (long JWT) |\n| `SUPABASE_URL` | Same URL as above (worker-side copy) | `https://abcdefgh.supabase.co` |\n| `SUPABASE_SERVICE_ROLE_KEY` | Same page, \"service_role\" key - **secret, worker only** | `eyJhbGciOi...` (long JWT) |\n| `OPENAI_API_KEY` | platform.openai.com > API keys (optional, server-side hosted AI) | `sk-...` |\n| `TELEGRAM_BOT_TOKEN` | Telegram @BotFather (optional, alerts) | `123456789:AAE...` |\n\nImportant: you create **your own** Supabase project. The founder's project is separate; nothing in this repo points you at shared infrastructure. Schema comes from `supabase/migrations/` (28 numbered files) plus the worker tables in `sql/` (run `sql/_apply_all_scanner_schema.sql`)."
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--see-it-in-two-minutes-demo-zero-keys",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "See it in two minutes (demo, zero keys)",
+      "text": "Prerequisite: Node.js 20+ and npm 10+ (`package.json` engines).\n\n```bash\nnode -v\n```\n\nYou know it worked when: it prints `v20.x` or higher. Lower than 18 and Next.js 15 will not run.\n\n```bash\ngit clone <repo-url>\ncd vai-lyra-stock-tracker\nnpm install\n```\n\nYou know it worked when: install finishes without errors (the `prepare` step quietly wires git hooks; that is expected).\n\n```bash\nnpm run doctor\n```\n\nYou know it worked when: you see the `Lyra setup doctor` banner, a green check for your Node version, and the yellow line `Frontend Supabase not set - dashboard runs on demo data`. That yellow line is correct for demo mode, not a failure.\n\n```bash\nnpm run dev\n```\n\nYou know it worked when: the terminal first runs the content build (`predev` runs `scripts/build-content.mjs` automatically), then Next.js reports ready, and http://localhost:3000 redirects a first-time visitor to the `/welcome` landing page. Click \"Set up my console\" and complete `/onboarding`, after which `/` shows the command centre populated with demo stocks. (Returning visitors with the `lyra_onboarded` cookie land on the command centre directly.)\n\n```bash\ncurl http://localhost:3000/api/health\n```\n\nYou know it worked when: you get JSON like `{\"ok\":true,\"version\":\"0.6.0\",\"versionDate\":\"2026-06-27\",\"mode\":\"demo\"}` (version will match whatever `src/lib/version.ts` says is current). `\"mode\":\"demo\"` confirms you are on built-in data."
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--tour-of-the-surfaces",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "Tour of the surfaces",
+      "text": "All routes live under `src/app/`; the sidebar nav (`src/components/AppShell.tsx`) covers the main surfaces, grouped roughly like this - `/tickers/[symbol]` is reached from any ticker row and `/account` from the account menu (`src/components/AccountMenu.tsx`), not the sidebar:\n\n**Yours - the daily-driver row**\n\n| Route | Name | What it is |\n|-------|------|------------|\n| `/` | Command | The command centre: daily brief, strongest setups, watchlist triggers, holdings momentum, market and macro context strips, paper-bot strip. |\n| `/portfolio` | Portfolio | Add what you own; signals become personal (what to review, what is cooling). |\n| `/trades` | Trade Log | Your logged trades and snapshots. |\n| `/watchlist` | Watchlist | Setups you want to catch, with target triggers. |\n\n**Investigation system**\n\n| Route | Name | What it is |\n|-------|------|------------|\n| `/findings` | Findings | Structured research findings you capture and revisit. |\n| `/graph` | Investigation Graph | The findings connected as a graph - entities, theses, evidence. |\n| `/charts`, `/saved`, `/wire`, `/intelligence`, `/calendar` | Charts / Saved / Live Wire / Intelligence / Calendar | Chart gallery, saved items, live news wire, intelligence feed, events calendar. |\n\n**Signals and research**"
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--tour-of-the-surfaces--1",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "Tour of the surfaces",
+      "text": "| Route | Name | What it is |\n|-------|------|------------|\n| `/radar` | Signal Radar | Every tracked stock scored 0-100, ranked. The heart of the product. |\n| `/smart-money` | Smart Money | Institutional positioning signals. |\n| `/themes`, `/supply-chain`, `/small-caps`, `/investors`, `/awards`, `/flows`, `/filings`, `/ipos`, `/commodities`, `/fundamentals` | Research surfaces | World themes, supply chains, small-cap research, investor radar, government awards, capital flows, SEC filings, IPO radar, commodities, fundamentals. |\n\n**Analysis and trading layer**\n\n| Route | Name | What it is |\n|-------|------|------------|\n| `/comparison`, `/simulation`, `/strategy-lab`, `/calculators` | Analysis tools | Compare names, simulate scenarios, tune strategy variants, position calculators. |\n| `/paper-bot` | Paper Bot | Automated paper trading (fake money) driven by the signal engine. |\n| `/trading` | Live Bot | The real-money layer - heavily gated, off by default. Research tooling first; arming is a deliberate, separate act. |\n\n**Ticker detail, learning, meta**"
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--tour-of-the-surfaces--2",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "Tour of the surfaces",
+      "text": "| Route | Name | What it is |\n|-------|------|------------|\n| `/tickers/[symbol]` | Ticker detail | Per-stock evidence: score breakdown plus an embedded TradingView chart, with a **Pine** button (`src/components/PineExportButton.tsx`) that copies a TradingView Pine v5 strategy reproducing Lyra's exact score, so you can backtest the same logic in TradingView. |\n| `/education` | Education (Learn) | Every metric explained in plain English. |\n| `/whats-new` | What's New | The in-product changelog, rendered from `RELEASES` in `src/lib/version.ts`. |\n| `/settings` | Strategy Rules | Shows the live thresholds (strong setup, watchlist, signal change) the worker is using. |\n| `/account` | Account | Profile plus notification preferences (Telegram chat ID, push). Alerts themselves are delivered by the worker via Telegram and web push. |"
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--troubleshooting",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "Troubleshooting",
+      "text": "Real failure modes, derived from the code:\n\n**Health endpoint says `\"mode\":\"demo\"` even though you set Supabase keys.** `NEXT_PUBLIC_*` variables are inlined at build time (see the comment in `Dockerfile` and `src/app/api/health/route.ts`). Locally: stop and restart `npm run dev` after editing `.env.local`. In Docker/Coolify: pass them as **build args**, not runtime env, then rebuild.\n\n**`npm run worker:scan` runs but writes nothing.** With `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` unset, `SupabaseRepository` (in `workers/stock_scanner/supabase_repo.py`) leaves its client as `None` and every write returns early - a deliberate safe no-op so the GitHub Action never crashes on a fork with no secrets. Set both vars to actually persist scans.\n\n**Worker logs `Scanner skipped by market-hours guard`.** Working as designed outside US market hours (`ENABLE_MARKET_HOURS_GUARD=true` is the default). For a one-off test run, set `FORCE_SCAN=true`.\n\n**`ModuleNotFoundError: No module named 'workers'`.** You ran the scanner from the wrong directory. It is a package invoked with `python -m workers.stock_scanner.main` from the repo root - which is exactly what `npm run worker:scan` does. If instead the missing module is `supabase` or `yfinance`, run `pip install -r requirements.txt` (Python 3.11+).\n\n**`git push` rejected with a version-bump error.** The pre-push hook (`scripts/check-version-bump.mjs`) blocks pushes that change shippable code (`src/`, `supabase/`, `workers/`, `public/`) without a version bump. Fix: prepend a new entry to `RELEASES` in `src/lib/version.ts`, then `npm run release`. Emergency bypass: `VD_SKIP_VERSION=1 git push` (use sparingly)."
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--troubleshooting--1",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "Troubleshooting",
+      "text": "**Port 3000 already in use.** Run on another port: `npm run dev -- -p 3042` (the repo's own QUICKSTART.md uses 3042, matching the `NEXT_PUBLIC_APP_URL` default in `.env.example`).\n\n**Doctor prints a red Node line.** `Node X - Next 15 needs Node 18+` means your Node is too old; install Node 20+ to match the `engines` field in `package.json`."
+    },
+    {
+      "id": "docs-walkthroughs-01-what-is-lyra-md--where-to-next",
+      "source": "docs/walkthroughs/01-what-is-lyra.md",
+      "docTitle": "What is Lyra - the 10-minute tour",
+      "heading": "Where to next",
+      "text": "| Walkthrough | Read it when |\n|-------------|--------------|\n| 02 - Run it yourself | You want the demo running on your machine, step by step. |\n| 03 - Go live with Supabase | You are ready to create your own Supabase project and run real hourly scans. |\n| 04 - Deploy your own | You want to self-host (Docker/Coolify) and understand the versioning discipline. |\n| 05 - Understand the score | You want the full anatomy of the 0-100 engine and its Pine export. |\n\nIf any of those links do not resolve yet, the authoritative index is README.md.\n\nReminder one more time, because it matters: Lyra surfaces research candidates. It does not know your situation and it is not advice."
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--run-lyra-yourself-in-5-minutes-demo-mode-zero-keys",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "text": "Lyra is a stock momentum research console - a Next.js web app plus a Python scanner that scores tech stocks on momentum recovery. This walkthrough gets the web app running on your own machine in **demo mode**: no API keys, no database, no accounts. You get the full UI on built-in demo data.\n\nLyra is research tooling, not financial advice. Nothing it shows is a recommendation to buy or sell anything.\n\nOther walkthroughs in this series live in the index - go there next when you want live scanning, alerts, or the AI layer."
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--what-demo-mode-means",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "What \"demo mode\" means",
+      "text": "The app checks two environment variables at startup: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Supabase is the hosted Postgres database Lyra uses in live mode). If either is missing, the app automatically runs on demo data. There is no flag to flip - absence of keys IS demo mode. Since you will not set any environment variables in this walkthrough, you get demo mode by default."
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--prerequisites",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "Prerequisites",
+      "text": "| Requirement | Version | Why |\n|---|---|---|\n| Node.js | >= 20 | Enforced by the `engines` field in `package.json` (`node >= 20.0.0`) |\n| npm | >= 10 | Also enforced by `engines` (`npm >= 10.0.0`); ships with current Node 20 LTS releases (Node 20.9+). Very early Node 20.x carried npm 9 - if `npm -v` shows 9.x, update Node to the latest 20.x or run `npm install -g npm@10` |\n| git | any recent | To clone the repo |\n\nCheck what you have:\n\n```bash\nnode -v\nnpm -v\ngit --version\n```\n\n**You know it worked when:** `node -v` prints `v20.x.x` or higher and `npm -v` prints `10.x.x` or higher. If Node is older than 20, see Troubleshooting below.\n\nYou do NOT need Python for this walkthrough. Python is only for the scanner worker (`workers/stock_scanner/`), which needs a database to write to and therefore does nothing useful in demo mode."
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--step-1-clone-the-repo",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "Step 1 - Clone the repo",
+      "text": "```bash\ngit clone https://github.com/BrysonW24/vai-lyra-stock-tracker.git\ncd vai-lyra-stock-tracker\n```\n\n**You know it worked when:** `ls` shows `package.json`, `src/`, `workers/`, and `content/` in the new directory."
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--step-2-install-dependencies",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "Step 2 - Install dependencies",
+      "text": "```bash\nnpm install\n```\n\nThis installs the JavaScript dependencies (Next.js 15, React 19, the Supabase client, Tailwind, Vitest, and friends). It also runs a `prepare` script that points git at the repo's `.githooks/` directory - that installs a pre-push guard which blocks pushes that ship code without a version bump. Harmless for you; it only matters if you ever push commits.\n\n**You know it worked when:** the command exits without errors and a `node_modules/` directory exists. Warnings about deprecated transitive packages are normal."
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--step-3-start-the-dev-server",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "Step 3 - Start the dev server",
+      "text": "```bash\nnpm run dev\n```\n\nTwo things happen, in order:\n\n1. **The content pipeline runs first.** The `predev` hook runs `scripts/build-content.mjs`, which compiles the editable JSONL files in `content/` (IPO facts, market themes, supply-chain nodes, finance-education facts, and so on - one JSON record per line) into importable JSON under `src/lib/generated/`. Client components cannot read the filesystem at runtime, so this bake step is how curated content reaches the UI. You will see one line per domain, like `content: ipos -> 51 records`, ending with a summary such as `content: 9 domain(s), 326 record(s) compiled`.\n2. **Next.js starts.** You will see `▲ Next.js 15.x.x` and `- Local: http://localhost:3000`.\n\n### Which port? (3000 vs 3042 - the honest answer)\n\nThe `dev` script in `package.json` is plain `next dev`, and Next.js defaults to **port 3000**. So a bare `npm run dev` serves at `http://localhost:3000`.\n\nHowever, the project's own convention is port **3042**: the README's quickstart already uses `npm run dev -- -p 3042` and opens `http://localhost:3042`, `QUICKSTART.md` and `npm run doctor` tell you the same, and `.env.example` sets `NEXT_PUBLIC_APP_URL=http://localhost:3042`.\n\nEither port works fine for demo mode. To follow the project convention:\n\n```bash\nnpm run dev -- -p 3042\n```\n\n| Choice | Command | Open in browser |\n|---|---|---|\n| Next.js default | `npm run dev` | http://localhost:3000 |\n| Project convention | `npm run dev -- -p 3042` | http://localhost:3042 |\n\n**You know it worked when:** the terminal shows `✓ Ready in ...` with a `Local:` URL, and opening that URL in a browser loads a page (the first compile after opening can take a few seconds - that is Next.js compiling routes on demand in dev mode)."
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--step-4-what-you-will-see-first-welcome-and-onboarding",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "Step 4 - What you will see first: /welcome and onboarding",
+      "text": "In demo mode there are no user accounts, but the app still has a front door. The middleware (`src/middleware.ts`) checks for a browser cookie named `lyra_onboarded`:\n\n- **First visit** (no cookie): you are redirected to `/welcome`, a public landing page. Its \"Set up my console\" call-to-action leads into `/onboarding`.\n- **Onboarding** is a short guided setup (risk framing, picking what you care about). When you finish it, the app sets `lyra_onboarded=1` as a cookie valid for one year.\n- **Every visit after that:** you land straight in the app.\n\nOnboarding is mandatory - until the cookie is set, any page outside the public funnel (`/welcome`, `/onboarding`, `/auth`, `/privacy`, and `/api` routes) redirects you back to `/welcome`. If you ever want to see the first-run flow again, delete the `lyra_onboarded` cookie in your browser dev tools (or use a private window).\n\n**You know it worked when:** visiting `http://localhost:3000/` redirects you to `/welcome` on first visit, and after completing onboarding the same URL shows the Command Centre dashboard instead."
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--step-5-confirm-your-mode-with-the-doctor",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "Step 5 - Confirm your mode with the doctor",
+      "text": "In a second terminal (leave the dev server running):\n\n```bash\nnpm run doctor\n```\n\nThis is a dependency-free script (`scripts/doctor.mjs`) that reads your environment and reports what is configured. With zero keys you will see mostly yellow `•` warnings - that is expected and correct for demo mode:\n\n```\n✓ Node 20.x.x\n• Frontend Supabase not set - dashboard runs on demo data\n• Worker Supabase not set - the scanner cannot persist results\n• Telegram not configured - alerts are off (optional)\n...\nMode: Demo mode (no keys) - exploring the UI on demo data\n```\n\n**You know it worked when:** the last section prints `Mode: Demo mode (no keys) - exploring the UI on demo data`.\n\nYou can also hit the health endpoint (`src/app/api/health/route.ts`), which hosting platforms use as a liveness probe:\n\n```bash\ncurl http://localhost:3000/api/health\n```\n\n**You know it worked when:** you get JSON shaped like `{\"ok\":true,\"version\":\"0.6.0\",\"versionDate\":\"...\",\"mode\":\"demo\"}`. The `version` comes from `src/lib/version.ts` and `mode` is `\"demo\"` because the Supabase vars are absent."
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--what-works-in-demo-mode-and-what-does-not",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "What works in demo mode - and what does not",
+      "text": "### Works\n\n| Area | What you get |\n|---|---|\n| Command Centre (`/`) | The main dashboard: scored signals, score breakdowns, portfolio and watchlist panels, recent signal changes |\n| Signal scores | Real math, not canned numbers: the server computes the deterministic momentum-recovery score (RSI, MACD, price location, trend, volume - capped at 100, strong >= 75, watchlist >= 60) from real daily prices fetched from Yahoo, via `src/lib/live-signals.ts`. If the fetch fails (e.g. you are offline), each symbol falls back to its static demo value silently |\n| Exploration surfaces | IPO radar (`/ipos`), themes (`/themes`), supply-chain map (`/supply-chain`), calendar (`/calendar`), commodities, smart money, charts, comparison, and more - all fed by the baked `content/` data and demo fixtures |\n| Education + calculators | `/education` and `/calculators` are fully static-friendly |\n| Portfolio entry | Holdings you add are kept in your browser's localStorage (`src/lib/local-portfolio.ts`) so the dashboard reflects your book - browser-local only, never sent anywhere |\n| Onboarding + welcome flow | The full first-run experience |\n\n### Does not work (by design, without keys)"
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--what-works-in-demo-mode-and-what-does-not--1",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "What works in demo mode - and what does not",
+      "text": "| Area | Why not |\n|---|---|\n| Real hourly scanning | The Python worker (`npm run worker:scan`) needs `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` to persist results. In production it runs hourly via the GitHub Actions workflow `.github/workflows/hourly-stock-scanner.yml` |\n| Your own ticker list | Tickers live in the database; demo mode shows the built-in demo set |\n| Sign-in / accounts | Auth is Supabase-backed; without Supabase the app runs open with no login |\n| Telegram / web-push alerts | Need bot tokens and VAPID keys respectively |\n| AI chat and briefs | Need a server-side `OPENAI_API_KEY` (or your own key entered in the UI) |\n| Cross-device persistence | Portfolio/watchlist edits stay in the one browser's localStorage |\n\nSetting those up is what the live-mode and scanner walkthroughs in the index cover - each needs your OWN Supabase project (free tier is fine), not anyone else's."
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--prove-the-checkout-is-healthy",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "Prove the checkout is healthy",
+      "text": "Two commands, both key-free:\n\n```bash\nnpm run type-check   # bakes content, then runs tsc --noEmit (TypeScript strict check)\nnpm run test         # runs the frontend Vitest suite\n```\n\n**You know it worked when:** `type-check` exits silently after the `content: ... compiled` lines (no output from `tsc` means no type errors), and `test` ends with all test files passing - as of v0.6.0 that is `Test Files 28 passed (28)` and `Tests 255 passed (255)`. Exact counts will grow over time; what matters is zero failures.\n\n(`npm run worker:test` runs the Python scanner tests - skip it here, it needs a Python environment with `requirements.txt` installed.)"
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--troubleshooting",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "Troubleshooting",
+      "text": "### \"Unsupported engine\" warning or weird syntax errors on startup\n\nYour Node is too old. The repo requires Node >= 20 (`engines` in `package.json`). Check with `node -v`. Install Node 20+ via nodejs.org or a version manager (`nvm install 20 && nvm use 20`). Note: `npm run doctor` only flags Node below 18 (Next 15's hard floor), but match the repo's declared 20+ to stay off the unsupported path.\n\n### Port already in use (`EADDRINUSE`)\n\nSomething else is on 3000 (or 3042). Either stop it, or pick another port:\n\n```bash\nnpm run dev -- -p 3105\n```\n\nThen open `http://localhost:3105`. Any free port works in demo mode.\n\n### Dev server refuses to start with `content: <file>:<line> invalid JSON`\n\nThe content pipeline (`predev`) validates every line of every `content/*.jsonl` file and exits with code 1 on the first malformed line, which aborts `npm run dev`. The error names the exact file and line number. Fix that line (each non-comment line must be a complete JSON object) and rerun. Blank lines and lines starting with `//` are allowed.\n\n### I keep getting bounced to /welcome\n\nThat is the middleware doing its job: no `lyra_onboarded=1` cookie means you have not finished onboarding. Complete the onboarding flow once, or if you did and it still bounces, check that your browser accepts cookies from localhost (private windows drop cookies when closed).\n\n### The doctor says things are \"missing\" - is that bad?"
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--troubleshooting--1",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "Troubleshooting",
+      "text": "No. In demo mode every `•` warning about Supabase, Telegram, VAPID, Finnhub, and OpenAI is expected. Only red `✗` lines are problems - the one to genuinely never ignore is the security check that fires if `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY` is set. Note the doctor checks exactly that one variable name - it cannot detect a service-role key hidden in any other `NEXT_PUBLIC_*` variable, so never put secrets in `NEXT_PUBLIC_*` at all (see `SECURITY.md`).\n\n### Signal numbers differ from a screenshot or from someone else's machine\n\nExpected. Demo mode still computes scores from real current Yahoo price data when it can, so scores move with the market. Offline, you get the static demo snapshot instead. Both are correct behaviour.\n\n### `npm run worker:scan` fails\n\nIn demo mode it is supposed to be unused. It runs `python -m workers.stock_scanner.main`, which needs Python, `pip install -r requirements.txt`, and Supabase credentials. Leave it for the scanner walkthrough."
+    },
+    {
+      "id": "docs-walkthroughs-02-run-it-yourself-md--where-to-next",
+      "source": "docs/walkthroughs/02-run-it-yourself.md",
+      "docTitle": "Run Lyra yourself in 5 minutes (demo mode, zero keys)",
+      "heading": "Where to next",
+      "text": "- Back to the walkthrough index for the rest of the series - going live with your own Supabase project, running the scanner, wiring alerts, and the AI layer.\n- `QUICKSTART.md` at the repo root is the condensed version of all modes.\n- `DISCLAIMER.md` - worth an actual read: Lyra is research software, and every score it produces is an input to your own thinking, not advice."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--go-live-your-own-supabase-the-hourly-scanner",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Go live - your own Supabase + the hourly scanner",
+      "text": "This walkthrough takes Lyra from demo mode (built-in sample data) to live mode: your own free Supabase project storing real scan results, produced by the Python scanner worker, refreshed every hour by GitHub Actions.\n\nTwo bits of jargon up front:\n\n- **Supabase** is a hosted Postgres database with built-in authentication and a REST API. The free tier is enough for Lyra. You create your own project - you do not share anyone else's.\n- **The scanner worker** is the Python package at `workers/stock_scanner/`. It downloads hourly price candles, computes indicators (RSI, MACD, moving averages, volume), scores each stock 0-100, and writes everything into your Supabase tables. The Next.js dashboard only reads.\n\nLyra is research tooling, not financial advice. A score is a structured observation about price behaviour, never a recommendation to buy or sell.\n\nBack to the index: README.md."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--what-you-need-before-starting",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "What you need before starting",
+      "text": "- The repo cloned and `npm install` done (the app already runs in demo mode with `npm run dev -- -p 3042`).\n- Node 20+ (`package.json` requires `node >= 20`), Python 3.11 or newer (the hourly workflow pins 3.11), and a terminal.\n- A free account at supabase.com and a GitHub account (for the hourly automation later)."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-1-create-your-supabase-project",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 1 - create your Supabase project",
+      "text": "1. Sign in at supabase.com and click **New project**.\n2. Pick any name (for example `lyra`), set a strong database password (you will not need it for this walkthrough, but store it), choose a region near you, and create the project.\n3. Wait for provisioning to finish (about a minute).\n\nYou know it worked when: the project dashboard loads and the left sidebar shows **Table Editor**, **SQL Editor**, and **Authentication**."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-2-apply-the-database-schema",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 2 - apply the database schema",
+      "text": "The repo ships two SQL sets. Know which is which:\n\n| Location | What it is | Role |\n|---|---|---|\n| `supabase/migrations/` | 28 numbered files, `001_extensions.sql` through `028_findings.sql` | The canonical multi-user schema: auth profiles, RLS policies, portfolio, watchlist, notifications, trade logs, seeds. Apply all of these, in numeric order. |\n| `sql/` | `001_create_stock_scanner_tables.sql` through `009_events_ipos.sql`, plus `_apply_all_scanner_schema.sql` | The legacy scanner-only schema. `_apply_all_scanner_schema.sql` concatenates all nine into one idempotent reconciliation script that \"brings an existing app-migration DB up to the worker's expected schema\" (its own header). No drops, no deletes, safe to run repeatedly. |\n\nThe simplest safe method is the dashboard SQL editor - no CLI, no local Postgres:\n\n1. In your Supabase project, open **SQL Editor** and click **New query**.\n2. Open `supabase/migrations/001_extensions.sql` in your editor, copy the whole file, paste it into the SQL editor, click **Run**.\n3. Repeat for every file in numeric order: 001, 002, ... up to 028. The migrations are idempotent (`create table if not exists`), so re-running one after an error is safe.\n4. Finally, paste and run `sql/_apply_all_scanner_schema.sql` once. This adds any scanner-expected columns and tables the worker writes to that the app migrations do not cover.\n\nOrder matters within the migrations (015 creates RLS policies over tables from earlier files; 016 seeds data into tables from 004 and 012), so do not skip around.\n\nYou know it worked when: each run reports \"Success. No rows returned\", and this checkpoint query returns `universes = 5` and `education_modules = 4` (seeded by `016_seed_initial_data.sql`):"
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-2-apply-the-database-schema--1",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 2 - apply the database schema",
+      "text": "```sql\nselect\n  (select count(*) from public.stock_universes) as universes,\n  (select count(*) from public.education_modules) as education_modules;\n```"
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-3-enable-email-auth",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 3 - enable email auth",
+      "text": "Lyra signs users in with email plus a 6-digit PIN (the PIN is stored as the Supabase password - see `src/components/auth/AuthForm.tsx`).\n\n1. In Supabase go to **Authentication -> Sign In / Providers** and make sure the **Email** provider is enabled (it is on by default in new projects).\n2. Note the confirmation behaviour: new projects have **Confirm email** switched on, so a new account cannot sign in until the user clicks the link Supabase emails them. Lyra's sign-up form expects this and tells the user \"We've sent a confirmation link ... Tap it to verify, then come back and sign in with your PIN.\"\n3. In **Authentication -> URL Configuration**, set the **Site URL** to `http://localhost:3042` (or add `http://localhost:3042/**` to **Redirect URLs**). The sign-up form asks Supabase to send the confirmation link back to `/auth/callback` on your app's origin (`src/components/auth/AuthForm.tsx`), but Supabase only honours redirect targets on this allow-list - a new project's Site URL defaults to `http://localhost:3000`, so without this change the confirmation link lands on a dead page.\n4. Optional polish: `supabase/email-templates/` contains Lyra-branded HTML for the confirm-signup, magic-link, and recovery emails, with paste-in instructions in `supabase/email-templates/README.md`.\n\nYou know it worked when: **Authentication -> Sign In / Providers** shows Email enabled, and **URL Configuration** points at `http://localhost:3042`. (You will prove the full flow in step 7.)"
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-4-collect-your-keys",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 4 - collect your keys",
+      "text": "Everything you need is in the Supabase dashboard under **Project Settings -> API** (newer projects split this across \"API Keys\" and \"Data API\" pages).\n\n| Variable | Where to get it | Example shape |\n|---|---|---|\n| `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_URL` | Project Settings -> API -> Project URL (same value for both variables) | `https://abcdefghijklmnop.supabase.co` |\n| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Same page - the key labelled **anon public** (older projects) or **Publishable key** (newer projects). Either works; the app passes it straight to the Supabase client. | `eyJhbGciOiJIUzI1NiIs...` or `sb_publishable_...` |\n| `SUPABASE_SERVICE_ROLE_KEY` | Same page - the key labelled **service_role** (or **Secret key**). Treat it like a password. | `eyJhbGciOiJIUzI1NiIs...` or `sb_secret_...` |\n| `DEFAULT_USER_ID` | Authentication -> Users, after you sign up in step 7. It is your account's UUID. | `1c9e4a7b-2f3d-4e5a-9b8c-0d1e2f3a4b5c` |\n\nWhy two kinds of key:\n\n- The **anon/publishable key** is safe to expose in the browser. It can only do what Row Level Security allows. RLS (Row Level Security) is Postgres enforcing per-row access rules: in Lyra's schema (`supabase/migrations/015_rls_policies.sql`), shared market data is readable by everyone, while portfolio, watchlist, and alerts rows are readable only by the user whose `user_id` matches.\n- The **service role key** bypasses RLS entirely. Only the Python worker uses it, server-side, to write scan results. It must never appear in any `NEXT_PUBLIC_*` variable or reach a browser - `npm run doctor` flags this as a SECURITY failure if you get it wrong."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-4-collect-your-keys--1",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 4 - collect your keys",
+      "text": "You know it worked when: you have three values saved (project URL, anon/publishable key, service-role key) and each matches the example shape in the table - `DEFAULT_USER_ID` intentionally waits until you sign up in step 7."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-5-fill-in-env-local",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 5 - fill in .env.local",
+      "text": "From the repo root:\n\n```bash\ncp .env.example .env.local\n```\n\nThen edit `.env.local` and set these five (leave everything else as-is for now):\n\n```bash\nNEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co\nNEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR-ANON-OR-PUBLISHABLE-KEY\nSUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co\nSUPABASE_SERVICE_ROLE_KEY=YOUR-SERVICE-ROLE-KEY\nDEFAULT_USER_ID=\n```\n\nThe `NEXT_PUBLIC_*` pair is what the frontend uses for read-only, RLS-respecting queries. The unprefixed pair is worker-only. `DEFAULT_USER_ID` stays blank until step 8 - per the comment in `.env.example`, it makes the worker stamp your portfolio and watchlist overlays with your user id \"so they show up under RLS\"; blank means legacy single-operator mode where overlays are written with a null `user_id` (and are then invisible to a signed-in user - see Troubleshooting).\n\nNever commit `.env.local`. It is already gitignored.\n\nYou know it worked when: `npm run doctor` prints green checks for both key pairs and the mode line changes:\n\n```\n✓ Frontend Supabase keys present (NEXT_PUBLIC_*)\n✓ Worker Supabase secrets present\n✓ Supabase URL reachable\nMode: Live mode - real scanning enabled\n```"
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-6-run-the-scanner-once-locally",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 6 - run the scanner once locally",
+      "text": "The worker's Python dependencies live in `requirements.txt` at the repo root (pandas, numpy, yfinance, ta, supabase, requests, python-dotenv, pydantic, pytz, pytest). Install them in a virtual environment:\n\n```bash\ncd /path/to/vai-lyra-stock-tracker\npython3 -m venv .venv\nsource .venv/bin/activate\npip install -r requirements.txt\n```\n\nCheckpoint for the install: this prints nothing (no ImportError):\n\n```bash\npython -c \"import pandas, yfinance, ta, supabase\"\n```\n\nTwo things the code makes true, worth knowing before you run:\n\n- `npm run worker:scan` is just `python -m workers.stock_scanner.main` (see `package.json`), so the venv must be active - inside it, `python` resolves - and you must run from the repo root so the `workers` package is importable.\n- The worker reads plain environment variables only (`workers/stock_scanner/config.py` uses `os.getenv`; nothing in `workers/` calls `load_dotenv`, even though python-dotenv is installed). Your shell has to export the values from `.env.local` itself.\n\nThere is also a market-hours guard (`workers/stock_scanner/scheduler_guard.py`): scans only proceed Monday-Friday between 13:00 and 23:59 UTC, unless `FORCE_SCAN=true`. So for a first run at any hour:\n\n```bash\nset -a; source .env.local; set +a\nFORCE_SCAN=true npm run worker:scan\n```\n\nWith no `TICKER_SYMBOLS` set, it scans the built-in universe of 49 tech names (`workers/stock_scanner/universe.py`) - expect a few minutes on the first run while yfinance downloads 180 days of hourly candles per symbol.\n\nYou know it worked when: the log shows lines like these (from `workers/stock_scanner/main.py`):\n\n```\nScanning 49 tickers with yfinance\nFetching AAPL (AAPL)\n...\nScanner finished: tickers=49 candles=... indicators=49 signals=49 portfolio_overlays=0 watchlist_overlays=0 alerts=0\n```"
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-6-run-the-scanner-once-locally--1",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 6 - run the scanner once locally",
+      "text": "and this query in the Supabase SQL editor shows the run:\n\n```sql\nselect status, tickers_scanned, candles_saved, signals_created\nfrom public.stock_scanner_runs\norder by started_at desc limit 1;\n```\n\nExpect `status = success` and `tickers_scanned = 49`. Zero overlays and zero alerts is correct at this point - you have no portfolio or watchlist yet."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-7-sign-up-in-the-app-and-see-live-data",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 7 - sign up in the app and see live data",
+      "text": "```bash\nnpm run dev -- -p 3042\n```\n\n1. Open http://localhost:3042. With the Supabase keys set, the middleware (`src/middleware.ts`) now gates the whole app behind sign-in: a signed-out visitor is redirected to the public `/welcome` marketing page instead of the dashboard. Landing on `/welcome` is itself your first proof that live-auth mode is on.\n2. Confirm via the health endpoint - API paths bypass the auth gate, and it reports which mode the build sees:\n\n   ```bash\n   curl -s http://localhost:3042/api/health\n   ```\n\n   Expected: `{\"ok\":true,\"version\":\"...\",\"versionDate\":\"...\",\"mode\":\"live\"}`.\n3. From `/welcome`, go to the sign-up page, enter first name, last name, email, and a 6-digit PIN. You should see \"Account created. We've sent a confirmation link to ...\".\n4. Open the email, click the confirmation link (it lands on `/auth/callback` thanks to the URL configuration from step 3), then sign in with your email and PIN.\n5. Complete onboarding. The same middleware funnels a signed-in user who has not finished onboarding into the mandatory `/onboarding` flow - you cannot reach the rest of the app until it is done.\n6. Now, on the dashboard, verify the amber **DEMO** chip and the \"Demo data - signals shown are illustrative samples\" banner are gone - the top-bar market status now uses live data (the dashboard's `generatedFrom` flag flips from `demo` to `supabase` in `src/lib/data.ts`).\n\nSigning up also auto-provisions your starter rows: a database trigger (`supabase/migrations/017_profile_bootstrap.sql`) inserts your `profiles`, `user_settings`, `onboarding_progress`, and alert-preference rows the moment the auth user is created."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-7-sign-up-in-the-app-and-see-live-data--1",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 7 - sign up in the app and see live data",
+      "text": "You know it worked when: you are signed in, past onboarding, on a dashboard with no DEMO chip, and in Supabase **Authentication -> Users** your email appears with a confirmed status. Bonus check in the SQL editor: `select id, email from public.profiles;` shows your row."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-8-set-default-user-id-and-rescan",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 8 - set DEFAULT_USER_ID and rescan",
+      "text": "Copy your user UUID from **Authentication -> Users** (or the `profiles` query above) into `.env.local`:\n\n```bash\nDEFAULT_USER_ID=your-uuid-here\n```\n\nThen rescan so overlays get stamped with your id:\n\n```bash\nset -a; source .env.local; set +a\nFORCE_SCAN=true npm run worker:scan\n```\n\nYou know it worked when: after you add a holding or watchlist item in the app and rescan, the `Scanner finished:` line shows non-zero `portfolio_overlays` / `watchlist_overlays`, and those panels populate for your signed-in account."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-9-automate-hourly-with-github-actions",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 9 - automate hourly with GitHub Actions",
+      "text": "The workflow `.github/workflows/hourly-stock-scanner.yml` runs `python -m workers.stock_scanner.main` on GitHub's servers every hour at :05 UTC (cron `5 * * * *`), on Python 3.11, installing `requirements.txt` each run. The market-hours guard still decides whether a given hour actually scans. With no secrets configured, the worker no-ops safely.\n\nThe job declares `environment: Production`, so put the secrets in a GitHub **environment** with that exact name:\n\n1. Push your clone (or fork) to your own GitHub repository.\n2. Repo **Settings -> Environments -> New environment**, name it `Production` exactly.\n3. Add these environment secrets (the workflow reads exactly these names):\n\n| Secret | Required? | Value |\n|---|---|---|\n| `SUPABASE_URL` | Yes | Your project URL from step 4 |\n| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Your service role key |\n| `DEFAULT_USER_ID` | Recommended | Your user UUID from step 8 |\n| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Optional | Only for Telegram alerts |\n| `FINNHUB_API_KEY` | Optional | Free Finnhub key for news/fundamentals |\n| `APP_BASE_URL`, `NOTIFICATION_DISPATCH_SECRET` | Optional | Only for a deployed app with web push; skip for now |\n\n4. Optionally add environment **variables** (all have safe defaults): `MARKET_DATA_PROVIDER` (default `yfinance`), `TICKER_SYMBOLS`, `DEFAULT_TIMEFRAME` (default `1h`), `ENABLE_TELEGRAM_ALERTS` (default `true`), `ENABLE_MARKET_HOURS_GUARD` (default `true`), `APP_BASE_URL`.\n5. Test it now: **Actions** tab -> **Hourly Stock Scanner** -> **Run workflow** (the workflow includes `workflow_dispatch` for exactly this)."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--step-9-automate-hourly-with-github-actions--1",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Step 9 - automate hourly with GitHub Actions",
+      "text": "You know it worked when: the manual run goes green and its \"Run scanner\" step log ends with `Scanner finished: tickers=49 ...` - or, outside US market hours, `Scanner skipped by market-hours guard`, which is the guard working, not a failure. From then on, `stock_scanner_runs` gains a new row every hour during US market hours, and the dashboard's \"last scan\" freshness stays green."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--troubleshooting",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Troubleshooting",
+      "text": "**Signed in, but portfolio / watchlist / alerts are empty while the main signal grid works.**\nThis is RLS doing its job. Shared market tables (`stock_signals`, `stock_candles`, ...) are readable by everyone, but user-private tables are owner-only (`auth.uid() = user_id` in `015_rls_policies.sql`). If the worker ran with `DEFAULT_USER_ID` blank, it wrote overlay and alert rows with a null `user_id`, which no signed-in user can see. Fix: set `DEFAULT_USER_ID` to your UUID (step 8) and rerun the scanner. Verify with the service-role-backed SQL editor: `select user_id, count(*) from public.watchlist_signal_overlay group by 1;` - null `user_id` rows are the giveaway.\n\n**Sign-in fails with \"Email not confirmed\".**\nYou created the account but never clicked the confirmation link. Resend or find the email, or confirm manually in Supabase: **Authentication -> Users -> your user -> ... -> Confirm email**. (Turning off \"Confirm email\" in the provider settings also works for private instances, but keep it on for anything public.)"
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--troubleshooting--1",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Troubleshooting",
+      "text": "**Worker runs but nothing appears in Supabase, log ends `candles=0 indicators=0`.**\n`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` were not in the worker's environment. The repository layer silently no-ops without them - every `save_*` in `workers/stock_scanner/supabase_repo.py` bails out early (returning 0 or None) when the client is absent, so the finished line shows `candles=0 indicators=0` (`signals=49` still appears because the counter in `main.py` increments even though nothing was persisted). The scan still fetches and scores, it just persists nothing. Locally, remember the worker does not read `.env.local` by itself: run `set -a; source .env.local; set +a` in the same shell first. `npm run doctor` warning \"Worker Supabase not set - the scanner cannot persist results\" confirms this state.\n\n**Log says `Scanner skipped by market-hours guard`.**\nNot an error. Scans only run Monday-Friday 13:00-23:59 UTC (US market hours plus a margin). For an out-of-hours test, prefix `FORCE_SCAN=true`. The run row is recorded with `status = skipped`.\n\n**`ModuleNotFoundError: No module named 'workers'` or `python: command not found`.**\nRun from the repo root (the `-m` module path is relative to your working directory) with the venv activated (`source .venv/bin/activate` provides the plain `python` the npm script calls).\n\n**Dashboard still shows the DEMO chip after filling .env.local.**\nNext.js inlines `NEXT_PUBLIC_*` values when the dev server starts - restart `npm run dev` after editing `.env.local`. Also check for stray quotes or spaces around values, then trust `npm run doctor`: if it says live mode, the env file is right."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--troubleshooting--2",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Troubleshooting",
+      "text": "**`npm run doctor` prints `SECURITY: service-role key is exposed via NEXT_PUBLIC_*`.**\nYou pasted the service role key into a `NEXT_PUBLIC_` variable. Remove it immediately, move the value to `SUPABASE_SERVICE_ROLE_KEY`, and rotate the key in Supabase (Project Settings -> API) since anything `NEXT_PUBLIC_*` may have reached a browser bundle."
+    },
+    {
+      "id": "docs-walkthroughs-03-go-live-supabase-md--where-to-next",
+      "source": "docs/walkthroughs/03-go-live-supabase.md",
+      "docTitle": "Go live - your own Supabase + the hourly scanner",
+      "heading": "Where to next",
+      "text": "- Back to the walkthrough index: README.md - it links the sibling walkthroughs for local setup, the scoring model, alerts, and deployment.\n- Optional layers from `.env.example` once live mode works: Telegram alerts (`TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`), Finnhub news/fundamentals (`FINNHUB_API_KEY`), and hosted AI chat (`OPENAI_API_KEY`).\n\nEverything the scanner writes and the dashboard shows is research tooling - structured observations to investigate, not signals to act on."
+    },
+    {
+      "id": "docs-walkthroughs-04-deploy-your-own-md--put-lyra-online-vercel-or-your-own-server-docker-coolify",
+      "source": "docs/walkthroughs/04-deploy-your-own.md",
+      "docTitle": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "heading": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "text": "This walkthrough takes the Lyra web app from \"runs on my laptop\" to \"has a real URL\".\nThere are two paths:\n\n- **Path A - Vercel**: a hosting platform that builds and serves Next.js apps for you. Simplest, free on the Hobby plan, zero servers to manage.\n- **Path B - self-host with Docker**: build the container image from the `Dockerfile` at the repo root and run it anywhere - your own VPS, a home server, or a Coolify instance (Coolify is a self-hosted, open-source Vercel-alternative you run on your own machine).\n\nEither way, remember the framing: Lyra is research tooling, not financial advice. Putting it on the internet does not change that - the deployed app surfaces scores and signals for your own study, nothing more. See ../../DISCLAIMER.md.\n\nBefore starting you should have:\n\n- The repo pushed to a GitHub account you control (a fork is fine).\n- Your OWN Supabase project if you want live mode - the founder's project is not shared. Setting that up is covered in the earlier walkthroughs; see the index. Without Supabase keys the deployed app still works, it just serves built-in demo data.\n\nOne fact that applies to BOTH paths: **the web deploy is only the dashboard + API routes. The Python scanner is not part of it.** The scanner (`workers/stock_scanner/`) runs hourly on GitHub Actions (`.github/workflows/hourly-stock-scanner.yml`, cron `5 * * * *` UTC) and writes to Supabase. Deploying the website does not deploy, move, or duplicate the scanner - it keeps running from your GitHub repo either way."
+    },
+    {
+      "id": "docs-walkthroughs-04-deploy-your-own-md--which-path-should-i-pick",
+      "source": "docs/walkthroughs/04-deploy-your-own.md",
+      "docTitle": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "heading": "Which path should I pick?",
+      "text": "| You are... | Pick | Why |\n|---|---|---|\n| Just trying Lyra out, want a URL in 10 minutes | Path A (Vercel) | Free Hobby tier, auto-deploys on every push, no server |\n| Allergic to accounts on big platforms, or already run a VPS | Path B (Docker) | One image, runs anywhere Docker runs |\n| Already running Coolify for other apps | Path B (Coolify section) | The Dockerfile was written with Coolify in mind |\n| Unsure | Path A | You can always switch later - the same repo supports both (`next.config.js` sets `output: 'standalone'` for Docker, which Vercel simply ignores) |\n\nRunning costs for both paths are near zero: Vercel's Hobby plan is free, and the Docker path costs whatever you already pay for the machine it runs on. Every service in the stack is priced, with free-tier limits and the gotchas that actually bite, in COSTS.md."
+    },
+    {
+      "id": "docs-walkthroughs-04-deploy-your-own-md--path-a-vercel-simplest",
+      "source": "docs/walkthroughs/04-deploy-your-own.md",
+      "docTitle": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "heading": "Path A - Vercel (simplest)",
+      "text": "Two ways to drive it: the **dashboard** (clicks, below) or the **CLI** (terminal, further below -\nthis is also the way an agent like Claude Code does it for you in `/setup`).\n\n### A1. Import the repo\n\n1. Sign in at https://vercel.com (the free Hobby plan is enough).\n2. Click **Add New... -> Project** and import your GitHub repo.\n3. Vercel auto-detects Next.js. The repo also ships a `vercel.json` that pins the framework, `npm install` / `npm run build`, and the `iad1` region - accept the defaults.\n\nYou know it worked when the import screen shows **Framework Preset: Next.js** and the Build Command reads `npm run build`.\n\n### A1-alt. The CLI way (agent-friendly, no dashboard)\n\nFrom the repo root:\n\n```bash\nnpm install -g vercel        # or prefix every command below with npx\nvercel login                 # opens a browser auth flow; finish it there\nvercel whoami                # prints your username when login worked\nvercel link                  # choose your scope -> \"create a new project\" -> accept the name\nprintf '%s' \"https://YOUR-REF.supabase.co\" | vercel env add NEXT_PUBLIC_SUPABASE_URL production\nprintf '%s' \"YOUR-ANON-KEY\"                | vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production\nvercel --prod                # builds and deploys; prints your production URL\nvercel git connect           # optional: auto-deploy every push to your fork\n```\n\nYou know it worked when `vercel --prod` prints a production URL and step A3's health check passes\nagainst it. Skip the two `env add` lines to deploy in demo mode.\n\n### A2. Set environment variables\n\nIn the import screen (or later under **Project -> Settings -> Environment Variables**), add:"
+    },
+    {
+      "id": "docs-walkthroughs-04-deploy-your-own-md--path-a-vercel-simplest--1",
+      "source": "docs/walkthroughs/04-deploy-your-own.md",
+      "docTitle": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "heading": "Path A - Vercel (simplest)",
+      "text": "| Variable | Where to get it | Example shape |\n|---|---|---|\n| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project -> Settings -> API -> Project URL | `https://abcdefghijkl.supabase.co` |\n| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Same page -> the `anon` / publishable key | long token starting `eyJ...` or `sb_publishable_...` |\n\nThese two are safe to expose - the anon key is designed for browsers and your database's row-level security does the real gatekeeping. **Never** put `SUPABASE_SERVICE_ROLE_KEY` in any `NEXT_PUBLIC_*` variable (see ../../SECURITY.md).\n\nOptional server-only secrets, used by the API routes if present (all from `.env.example`):\n\n| Variable | Enables | Where to get it |\n|---|---|---|\n| `OPENAI_API_KEY` | Hosted keyless AI chat/briefs (users can still bring their own key) | platform.openai.com |\n| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` + `VAPID_SUBJECT` | Browser push notifications (VAPID = the standard key pair web push requires) | `npx web-push generate-vapid-keys` |\n| `NOTIFICATION_DISPATCH_SECRET` | Lets the GitHub Actions scanner call `/api/notifications/dispatch` on this deploy | Invent a long random string - it must MATCH the same-named GitHub Actions secret |\n| `FINNHUB_API_KEY` | Live news / fundamentals / earnings data | finnhub.io free tier |\n| `TELEGRAM_WEBHOOK_SECRET` | Secures the Telegram webhook route | Invent it; set the same value when registering the webhook |\n\nSkip everything optional on a first deploy - you can add them and redeploy later.\n\nYou know it worked when both `NEXT_PUBLIC_SUPABASE_*` variables appear under **Project -> Settings -> Environment Variables** (and, once A3 deploys, `/api/health` reports `\"mode\":\"live\"`).\n\n### A3. Deploy and verify"
+    },
+    {
+      "id": "docs-walkthroughs-04-deploy-your-own-md--path-a-vercel-simplest--2",
+      "source": "docs/walkthroughs/04-deploy-your-own.md",
+      "docTitle": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "heading": "Path A - Vercel (simplest)",
+      "text": "Click **Deploy**. First build takes a couple of minutes (it runs `scripts/build-content.mjs` as a `prebuild` step, then `next build`).\n\nYou know it worked when Vercel shows a green **Ready** deployment and opening the URL shows the Lyra landing page.\n\nNow verify the deploy identity with the health endpoint:\n\n```bash\ncurl -s https://YOUR-PROJECT.vercel.app/api/health\n```\n\nExpected:\n\n```json\n{\"ok\":true,\"version\":\"0.6.0\",\"versionDate\":\"...\",\"mode\":\"live\"}\n```\n\n- `version` must equal the top entry of `RELEASES` in `src/lib/version.ts` on the commit you deployed (`0.6.0` at the time of writing). If it does not, you are looking at a stale deploy.\n- `mode` is `\"live\"` when both `NEXT_PUBLIC_SUPABASE_*` vars were present at build time, `\"demo\"` otherwise.\n\n### A4. Auto-deploy on push\n\nNothing to configure - Vercel redeploys on every push to the default branch. Note the repo's pre-push git hook blocks any push that changes shippable code (`src` / `supabase` / `workers` / `public`) without a version bump, so the flow for shipping a change is: prepend an entry to `RELEASES` in `src/lib/version.ts`, run `npm run release`, commit, push.\n\nYou know it worked when, after a push, `curl .../api/health` reports the NEW version number within a few minutes."
+    },
+    {
+      "id": "docs-walkthroughs-04-deploy-your-own-md--path-b-self-host-with-docker",
+      "source": "docs/walkthroughs/04-deploy-your-own.md",
+      "docTitle": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "heading": "Path B - self-host with Docker",
+      "text": "### B1. Understand the one non-obvious rule: build args vs runtime env\n\nThe repo root `Dockerfile` is multi-stage (`deps` -> `builder` -> `runner`) and treats configuration in two different ways on purpose:\n\n- **`NEXT_PUBLIC_*` variables are BUILD arguments.** Next.js inlines them into the client JavaScript bundle at build time - the browser has no access to your server's environment, so the values are literally baked into the compiled files. Passing them at `docker run` time does nothing to the already-compiled bundle. If you change one, you must rebuild the image.\n- **Server-only secrets** (`OPENAI_API_KEY`, `VAPID_PRIVATE_KEY`, `NOTIFICATION_DISPATCH_SECRET`, ...) are **runtime env vars** (`docker run -e ...`). They are read by API routes on each request, never enter the image, and never reach the browser.\n\nThe Dockerfile accepts four build args: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`. The `.dockerignore` keeps `.env*` files (except the secret-free `.env.example` template), the Python worker (`workers/`, `tests/`), `sql/`, `supabase/`, and docs out of the build context; the final image contains only the standalone server output.\n\n### B2. Build and run locally (proof it works)\n\nFrom the repo root:\n\n```bash\ndocker build -t lyra \\\n  --build-arg NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co \\\n  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR-ANON-KEY \\\n  .\n```\n\n(Leave both `--build-arg` lines off to build a demo-mode image - useful for a first smoke test with zero credentials.)\n\nYou know it worked when the build finishes with an exported image and `docker images lyra` lists it.\n\nRun it:\n\n```bash\ndocker run --rm -p 3000:3000 lyra\n```"
+    },
+    {
+      "id": "docs-walkthroughs-04-deploy-your-own-md--path-b-self-host-with-docker--1",
+      "source": "docs/walkthroughs/04-deploy-your-own.md",
+      "docTitle": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "heading": "Path B - self-host with Docker",
+      "text": "Add runtime secrets only if you use those features, for example:\n\n```bash\ndocker run --rm -p 3000:3000 \\\n  -e OPENAI_API_KEY=sk-... \\\n  -e VAPID_PRIVATE_KEY=... \\\n  -e VAPID_SUBJECT=mailto:you@example.com \\\n  -e NOTIFICATION_DISPATCH_SECRET=... \\\n  lyra\n```\n\nVerify:\n\n```bash\ncurl -s http://localhost:3000/api/health\n```\n\nYou know it worked when you get `{\"ok\":true,\"version\":\"0.6.0\",...,\"mode\":\"live\"}` (or `\"mode\":\"demo\"` for a no-args build), and `docker ps` shows the container as `(healthy)` after ~30 seconds - the image has a built-in `HEALTHCHECK` that probes `/api/health` every 30s.\n\nNotes on the image: it serves the Next.js standalone output (`node server.js`) as a non-root `nextjs` user on port 3000, with `NODE_ENV=production` and telemetry disabled.\n\n### B3. Coolify (brief version)\n\nCoolify drives the same Dockerfile; the short version:\n\n1. **Create application** from your GitHub repo, and choose the **Dockerfile** build pack (not Nixpacks) so the repo `Dockerfile` is used.\n2. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (plus `NEXT_PUBLIC_APP_URL` = your final domain, and `NEXT_PUBLIC_VAPID_PUBLIC_KEY` if you use push) as environment variables and **mark each one as a Build Variable** - that is Coolify's way of passing them as Docker build args. This is the step everyone misses.\n3. Add server-only secrets (`OPENAI_API_KEY`, `VAPID_PRIVATE_KEY`, etc.) as normal (runtime) environment variables - NOT build variables.\n4. Set the port to `3000` and the health check path to `/api/health`.\n5. Attach your domain and deploy.\n\nYou know it worked when Coolify shows the container **Running (healthy)** and `curl -s https://your-domain/api/health` returns `\"mode\":\"live\"` with the expected version."
+    },
+    {
+      "id": "docs-walkthroughs-04-deploy-your-own-md--path-b-self-host-with-docker--2",
+      "source": "docs/walkthroughs/04-deploy-your-own.md",
+      "docTitle": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "heading": "Path B - self-host with Docker",
+      "text": "For the full founder-grade version with screenshots-level detail (server prep, domains, TLS, redeploy discipline), see the runbook: ../runbooks/coolify-deploy.md."
+    },
+    {
+      "id": "docs-walkthroughs-04-deploy-your-own-md--don-t-forget-the-scanner",
+      "source": "docs/walkthroughs/04-deploy-your-own.md",
+      "docTitle": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "heading": "Don't forget the scanner",
+      "text": "Whichever path you chose, the hourly scanner still lives in GitHub Actions. For a live deploy, go to your GitHub repo -> **Settings -> Environments -> Production** and make sure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_BASE_URL` (your new deployed URL), and `NOTIFICATION_DISPATCH_SECRET` (matching the web deploy's value) are set there. With no secrets set, the workflow no-ops safely and your dashboard stays on demo data.\n\nYou know it worked when the **Hourly Stock Scanner** workflow run (trigger one manually via **Actions -> Hourly Stock Scanner -> Run workflow**) goes green and fresh rows appear on the dashboard."
+    },
+    {
+      "id": "docs-walkthroughs-04-deploy-your-own-md--troubleshooting",
+      "source": "docs/walkthroughs/04-deploy-your-own.md",
+      "docTitle": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "heading": "Troubleshooting",
+      "text": "| Symptom | Cause | Fix |\n|---|---|---|\n| `/api/health` says `\"mode\":\"demo\"` on Vercel | The two `NEXT_PUBLIC_SUPABASE_*` vars were absent (or added after the last build) - Vercel env changes only apply on the next build | Check both names for typos, then **Deployments -> Redeploy** |\n| `/api/health` says `\"mode\":\"demo\"` in Docker even though you passed `-e NEXT_PUBLIC_SUPABASE_URL=...` at run time | `NEXT_PUBLIC_*` is inlined at BUILD time; runtime env cannot change it | Rebuild with `--build-arg NEXT_PUBLIC_SUPABASE_URL=... --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=...` |\n| Same, but you swear the build args were set | An empty string counts as unset - `src/lib/env.ts` converts blank values to `undefined` | Make sure the arg values are non-empty and the URL is a valid `https://...` URL (Zod validates it) |\n| Coolify container loops between starting and unhealthy | Health check hitting the wrong port or path | Port must be `3000`, health check path `/api/health`; do not override the `PORT` env var |\n| `git push` rejected with a version-bump error | The repo's pre-push hook (`scripts/check-version-bump.mjs`) blocks shippable-code pushes without a version bump | Prepend an entry to `RELEASES` in `src/lib/version.ts`, run `npm run release`, commit, push (emergency bypass: `VD_SKIP_VERSION=1 git push`) |\n| Vercel build fails immediately | Node too old on a custom setting, or a broken lockfile | The repo requires Node >= 20 (`engines` in `package.json`); leave Vercel's Node version at its default (22) |\n| Deployed site works but dashboard is empty in live mode | `mode: \"live\"` only means the keys were present - the tables are empty until the scanner writes | Set the GitHub Actions secrets (section above) and trigger a manual workflow run |\n| AI chat says no key is configured | `OPENAI_API_KEY` is a server-side runtime var and was not set on the host | Add it in Vercel env vars (then redeploy) or `docker run -e OPENAI_API_KEY=...`; or just use bring-your-own-key in the app settings |\n| Push notifications never prompt/arrive | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` missing at build time, or `VAPID_PRIVATE_KEY` missing at runtime | Generate a pair with `npx web-push generate-vapid-keys`; public half = build arg / Vercel env, private half = runtime secret |\n| Scanner runs green but no push/WhatsApp notifications | `APP_BASE_URL` or `NOTIFICATION_DISPATCH_SECRET` missing in the Actions \"Production\" environment, or the secret does not match the web deploy | Set both; the secret value must be identical on both sides |"
+    },
+    {
+      "id": "docs-walkthroughs-04-deploy-your-own-md--troubleshooting--1",
+      "source": "docs/walkthroughs/04-deploy-your-own.md",
+      "docTitle": "Put Lyra online - Vercel or your own server (Docker/Coolify)",
+      "heading": "Troubleshooting",
+      "text": "Still stuck? `npm run doctor` (locally) prints exactly which keys are present and which mode you are in, and the other walkthroughs in the index cover Supabase setup and the scanner in depth."
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--understand-the-score-how-lyra-decides-a-name-is-turning",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "Understand the score - how Lyra decides a name is turning",
+      "text": "Lyra's core output is a single number from 0 to 100 for every ticker it scans. This walkthrough explains exactly how that number is built - every rule, every point value, straight from the code - and, just as importantly, what the number does and does not mean.\n\nTwo things to hold in your head the whole way through:\n\n1. **The score is deterministic.** No AI, no randomness, no opinion. The same candle data always produces the same score. The AI layer (when you enable it) only explains the score in plain English - it never changes a number.\n2. **Lyra is research tooling, not financial advice.** A high score is a flag that says \"this beaten-down name is showing early signs of a turn - worth a look.\" It is not a buy signal, a prediction, or a recommendation.\n\nBack to the index: README.md"
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--where-the-score-lives",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "Where the score lives",
+      "text": "The score is computed in four places that are kept in lockstep:\n\n| Place | File | Role |\n|-------|------|------|\n| Python scanner (source of truth) | `workers/stock_scanner/signal_engine.py` - `calculate_score()` | Runs hourly via GitHub Actions, writes scores to Supabase |\n| Frontend score model | `src/lib/pine/lyra-strategy.ts` - `LYRA_SCORE_MODEL` | Mirrors every weight and band; generates the Pine export |\n| Frontend breakdown renderer | `src/lib/score-breakdown.ts` - `SCORE_COMPONENTS` | Draws the per-component bars on the ticker page and signal drawer |\n| Server-side live overlay | `src/lib/live-signals.ts` - `scoreSnap()` | Recomputes the same score server-side from Yahoo daily OHLCV so the dashboard panels agree with the live chart; applied by `data.ts` via `applyLiveSignals()` |\n\nThe indicators the score reads (RSI, MACD, SMAs, volume ratio) are computed in `workers/stock_scanner/indicators.py`. Each side pins itself to the documented constants with its own suite: the 10-test vitest suite (`src/lib/pine/__tests__/lyra-strategy.test.ts`) holds the Pine export in lockstep with `LYRA_SCORE_MODEL` and pins the model to the constants in the tables below, while `npm run worker:test` (`tests/test_signal_engine.py`) pins the Python engine's component totals. A weight change in the Python engine is caught by the Python suite; updating `LYRA_SCORE_MODEL` to match is a manual step - the frontend suite only fails if the TS model and the Pine output disagree with each other or with the pinned constants. The live overlay in `src/lib/live-signals.ts` is not covered by the parity suite at all, so it must be updated by hand whenever a weight changes."
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--jargon-primer",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "Jargon primer",
+      "text": "If you already know technical analysis, skip ahead. Everything below runs on hourly candles by default (`DEFAULT_TIMEFRAME=1h`), so \"period\" means \"one hour\" unless you change that.\n\n| Term | What it means in Lyra |\n|------|----------------------|\n| Candle / period | One bar of open-high-low-close-volume (OHLCV) data. Default: 1 hour. |\n| RSI(14) | Relative Strength Index over 14 periods. Scale 0-100. Low values = the stock has been sold hard; high values = bought hard. Around 30 is conventionally \"oversold\". |\n| MACD (12, 26, 9) | Moving Average Convergence Divergence: the gap between a fast (12) and slow (26) exponential moving average, plus a 9-period signal line smoothing it. |\n| MACD histogram | MACD line minus signal line. Negative = downward momentum still in charge. A negative histogram that is shrinking = selling pressure easing. |\n| SMA20 / SMA50 / SMA200 | Simple moving averages of the close over 20, 50, and 200 periods. Rough short / medium / long trend lines. |\n| Volume ratio | This candle's volume divided by the 20-period average volume. 1.0 = normal participation. |\n| 60-period low | The lowest low of the last 60 candles. \"Near the low\" means the dip is recent and price has not already run away. |\n| Delta 1 / delta 2 | Current value minus the value 1 or 2 candles ago. Positive delta = the indicator is rising. |"
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--the-philosophy-dip-recovery-not-breakout",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "The philosophy: dip recovery, not breakout",
+      "text": "Lyra hunts one specific pattern: **a beaten-down name showing the first mechanical signs of turning up**. Every block below rewards some version of \"the damage was done, and the pressure is now easing\":\n\n- RSI has reset low but is climbing back through the 35-50 band.\n- The MACD histogram is still negative (the downtrend is real) but improving (it is losing force).\n- Price is still pinned near its recent low (you are early, not chasing).\n- The longer trend is not broken (this is a dip in an intact name, not a collapse).\n- Volume confirms real participation in the turn.\n\nThis is a mean-reversion pattern. It is the opposite of a breakout strategy. A stock making new all-time highs with RSI at 75 will score terribly here - by design."
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--the-five-blocks-rule-by-rule",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "The five blocks, rule by rule",
+      "text": "These point values are lifted directly from `calculate_score()` in `workers/stock_scanner/signal_engine.py`. Every rule is independent: each one that is true adds its points. If an indicator is not yet computable (for example, SMA200 needs 200 candles of history), the engine treats it as `None` and the rule simply awards nothing - it never guesses.\n\n### Block 1: RSI - max 25 points\n\nRewards an RSI that has reset into the recovery band and is rising.\n\n| Rule | Points |\n|------|--------|\n| RSI(14) is between 35 and 50 inclusive (the \"reset band\") | +10 |\n| RSI is higher than 1 candle ago (`rsi_delta_1 > 0`) | +10 |\n| RSI is higher than 2 candles ago (`rsi_delta_2 > 0`) | +5 |\n\nWhy 35-50 and not below 30? Below 35 the knife may still be falling. Lyra wants the reset to have *already happened* and the recovery to have started - RSI climbing back through the band, not sitting at the bottom of it.\n\n### Block 2: MACD - max 30 points\n\nThe heaviest block. Rewards downward momentum that is real but visibly easing.\n\n| Rule | Points |\n|------|--------|\n| MACD histogram is negative | +8 |\n| Histogram is higher than 1 candle ago (`macd_histogram_delta_1 > 0`) | +12 |\n| Histogram is higher than 2 candles ago (`macd_histogram_delta_2 > 0`) | +5 |\n| MACD line is still below the signal line AND the histogram is improving | +5 |\n\nNote the shape this rewards: histogram below zero but rising. That is the classic \"momentum trough\" - the selling has not reversed yet (no bullish cross), but it is decelerating. The +5 bonus explicitly rewards being *before* the cross, because after the cross you are later to the move.\n\n### Block 3: Price location - max 15 points\n\nRewards being early - price still near the damage, not already recovered."
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--the-five-blocks-rule-by-rule--1",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "The five blocks, rule by rule",
+      "text": "| Rule | Points |\n|------|--------|\n| Close is within 10% of the 60-period low (`distance_from_60_period_low <= 10`) | +10 |\n| Close is at or below SMA50 x 1.03 (near or under the medium trend line) | +5 |\n\n### Block 4: Trend - max 15 points\n\nRewards dips inside a structurally intact name. The two SMA200 rules are mutually exclusive (it is an if / elif in the code), so this block maxes at 10 + 5 = 15.\n\n| Rule | Points |\n|------|--------|\n| Close is at or above SMA200 | +10 |\n| ...otherwise, close is within 5% below SMA200 (`close >= sma_200 * 0.95`) | +5 |\n| SMA20 is within 5% of SMA50 (`sma_20 >= sma_50 * 0.95`) | +5 |\n\nA stock trading 30% under its SMA200 gets zero trend points - Lyra treats that as a broken name, not a dip.\n\n### Block 5: Volume - max 15 points\n\nRewards real participation. The two ratio rules stack: a ratio of 1.2 earns both.\n\n| Rule | Points |\n|------|--------|\n| Volume ratio >= 0.8 (at least 80% of the 20-period average) | +5 |\n| Volume ratio >= 1.0 (at or above average) | +5 |\n| Volume is higher than the previous candle's volume | +5 |\n\n### The total\n\n```\nfinal_score = min(rsi + macd + price_location + trend + volume, 100)\n```\n\nThe block maxes are 25 + 30 + 15 + 15 + 15 = 100 exactly, so the `min(..., 100)` cap is a defensive guard rather than something a normal score hits."
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--from-score-to-status",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "From score to status",
+      "text": "`assign_signal_status()` in the same file turns the number into a label. The thresholds are environment-configurable (see `.env.example`) with these defaults:\n\n| Status | Rule (with defaults) | Action state shown in the app |\n|--------|----------------------|-------------------------------|\n| `strong_setup` | score >= 75 (`ALERT_SCORE_THRESHOLD`) | `buy_review` |\n| `watchlist_setup` | score >= 60 (`WATCHLIST_SCORE_THRESHOLD`) | `watch` |\n| `invalidated` | was a strong setup last scan, now below 60 | `invalidated` |\n| `weakening` | score fell more than 8 points (`SIGNAL_CHANGE_THRESHOLD`) vs last scan | `do_not_add` |\n| `no_signal` | everything else | `hold` |\n\nNote that even the strongest label is `buy_review` - \"a human should review this\" - never \"buy\". That is deliberate."
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--a-fully-worked-example",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "A fully worked example",
+      "text": "Hypothetical ticker ACME, 1-hour candles, close at $42.10. (Every number here is invented to illustrate the math - this is not a real stock or a real signal.)\n\n**RSI block:**\n- RSI(14) = 41.2 -> inside 35-50: **+10**\n- RSI one candle ago was 39.4, so delta 1 = +1.8 -> rising: **+10**\n- RSI two candles ago was 41.6, so delta 2 = -0.4 -> not rising over 2: **+0**\n- RSI block: **20 / 25**\n\n**MACD block:**\n- Histogram = -0.12 -> negative: **+8**\n- Histogram delta 1 = +0.04 -> improving: **+12**\n- Histogram delta 2 = +0.07 -> improving over 2: **+5**\n- MACD line -0.35 < signal line -0.23, and delta 1 is positive -> below-signal-while-improving bonus: **+5**\n- MACD block: **30 / 30**\n\n**Price location block:**\n- 60-period low = $39.80. Distance = (42.10 - 39.80) / 39.80 = 5.8% -> within 10%: **+10**\n- SMA50 = $43.00. Threshold = 43.00 x 1.03 = $44.29. Close 42.10 <= 44.29: **+5**\n- Price block: **15 / 15**\n\n**Trend block:**\n- SMA200 = $44.00. Close 42.10 is below it -> no +10. But 44.00 x 0.95 = $41.80, and 42.10 >= 41.80 -> within 5% below: **+5**\n- SMA20 = $41.50, SMA50 = $43.00. Threshold = 43.00 x 0.95 = $40.85. 41.50 >= 40.85: **+5**\n- Trend block: **10 / 15**\n\n**Volume block:**\n- Volume ratio = 0.9 -> at least 0.8: **+5**; not at least 1.0: **+0**\n- This candle's volume 1.4M > previous candle's 1.1M: **+5**\n- Volume block: **10 / 15**\n\n**Total: 20 + 30 + 15 + 10 + 10 = 85.** That clears the 75 threshold, so ACME is a `strong_setup` with action state `buy_review`. The app's breakdown bars would show exactly these five component values, because the scanner stores each block's score alongside the total."
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--what-a-high-score-means-and-does-not-mean",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "What a high score means - and does not mean",
+      "text": "**It means:** by five mechanical, backward-looking measures, this beaten-down name is showing the early signature of a turn. The selling has reset the indicators, the downward momentum is easing, price is still near the low, the longer trend is intact, and volume is participating.\n\n**It does not mean:**\n\n- **A breakout.** A high score is \"dip recovering\", never \"strength continuing\". Names at fresh highs score low here on purpose.\n- **A prediction.** The score reads the past. Nothing in it knows about earnings tomorrow, a filing today, or news five minutes ago. The engine's own explanation payload carries this exact caveat: \"Signal is technical only and does not include earnings, filings, or news context.\"\n- **Advice.** Lyra is research tooling. `strong_setup` maps to `buy_review` - review, decide, and own the decision yourself. Any backtest of this logic produces hypothetical results."
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--backtest-the-same-math-in-tradingview",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "Backtest the same math in TradingView",
+      "text": "Because the score is deterministic, it can be exported. `src/lib/pine/lyra-strategy.ts` generates a Pine Script v5 strategy (Pine is TradingView's scripting language) that reproduces the score bar-by-bar: same RSI(14), same MACD(12, 26, 9), same 60-period low, same point values, same 75 / 60 thresholds. In the app, the export button lives on the ticker chart view.\n\nThe mirror is held honest by 10 parity tests in `src/lib/pine/__tests__/lyra-strategy.test.ts` - they assert every weight, band, threshold, and the cap-at-100 against `LYRA_SCORE_MODEL`. Each side is pinned to the same documented constants by its own suite (pytest for the engine, the 10-test vitest suite for the model and Pine export), so most weight changes fail one suite - but the suites do not compare the two implementations directly, and keeping them matched is a manual step. Full walkthrough of the TradingView side: ../tradingview-copilot.md.\n\nOne honest caveat: identical *logic* does not guarantee identical *numbers* on every bar. TradingView's data feed, session handling, and indicator warm-up can differ slightly from the scanner's data source, so a given candle's score may differ by a few points between the two. The rules are the same; the inputs can differ."
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--verify-the-rules-yourself",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "Verify the rules yourself",
+      "text": "You do not have to take this document's word for any number. Two commands re-check the whole model (run them from the repo root after you have done the setup walkthroughs):\n\n```bash\nnpm run test\n```\n\nYou know it worked when: the Vitest summary shows `src/lib/pine/__tests__/lyra-strategy.test.ts` passing with 10 tests and the run ends with all test files passed.\n\n```bash\nnpm run worker:test\n```\n\nYou know it worked when: pytest's final line reports `passed` with 0 failures - this suite includes `tests/test_signal_engine.py`, which asserts the component scores and the `buy_review` action mapping.\n\nAnd the primary sources, if you want to read the rules in the code:\n\n```bash\ngrep -n \"score +=\" workers/stock_scanner/signal_engine.py\n```\n\nYou know it worked when: you see the exact point values from the tables above (+10/+10/+5 RSI, +8/+12/+5/+5 MACD, and so on)."
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--troubleshooting",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "Troubleshooting",
+      "text": "| Symptom | Cause | Fix |\n|---------|-------|-----|\n| A ticker's trend (or another) block is stuck at 0 | Not enough history: SMA200 needs 200 candles, the 60-period low needs 60. The engine skips any rule whose input is `None` - it never guesses. | Wait for more scans, or raise `LOOKBACK_PERIOD_DAYS` (default 180) so the worker fetches more history per run. |\n| Scores flip between `strong_setup` and `watchlist_setup` at different numbers than 75 / 60 | Thresholds are env-configurable and someone changed them. | Check `ALERT_SCORE_THRESHOLD`, `WATCHLIST_SCORE_THRESHOLD`, and `SIGNAL_CHANGE_THRESHOLD` in your worker environment (`.env.example` documents the defaults: 75 / 60 / 8). |\n| The TradingView backtest score differs by a few points from the app on the same candle | Different data feed, session handling, or indicator warm-up window between TradingView and the scanner's data source. The logic is identical; the inputs are not always. | Expected. Compare the direction and shape of the score, not single-bar values. See ../tradingview-copilot.md. |\n| A component value in the app's breakdown bars looks wrong | The bars render backend-owned values, which come either from the scanner's stored row or from the server-side live overlay (`src/lib/live-signals.ts`, computed from Yahoo daily OHLCV at request time - it falls back to the stored row per symbol only when the live fetch fails). The frontend itself never recalculates trading logic (a hard rule in this repo). | Re-run `npm run worker:test` to confirm the engine, then check whether the value came from the live overlay (per-symbol fallback) before inspecting the stored signal row in Supabase. |\n| You changed a weight in the Python engine and `npm run worker:test` went red | `tests/test_signal_engine.py` pins the component totals - that is its job. The frontend parity suite does not read the Python file, so it stays green until you mirror the change. | Update the Python test expectations, then manually mirror the change into `LYRA_SCORE_MODEL` in `src/lib/pine/lyra-strategy.ts`, the pinned constants in `src/lib/pine/__tests__/lyra-strategy.test.ts`, `scoreSnap()` in `src/lib/live-signals.ts`, and `SCORE_COMPONENTS` in `src/lib/score-breakdown.ts` if a block cap changed, then re-run `npm run test`. |"
+    },
+    {
+      "id": "docs-walkthroughs-05-understand-the-score-md--where-to-next",
+      "source": "docs/walkthroughs/05-understand-the-score.md",
+      "docTitle": "Understand the score - how Lyra decides a name is turning",
+      "heading": "Where to next",
+      "text": "- Back to the walkthrough index: README.md\n- Backtest this exact logic in TradingView: ../tradingview-copilot.md\n\nResearch tooling, not financial advice. Every score is a prompt to investigate, never an instruction to trade."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--get-lyra-alerts-on-your-phone-urgent-pings-hourly-summaries",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "text": "By the end of this walkthrough your phone buzzes when the scanner finds a strong setup, when a\nsignal it previously flagged falls apart, or when a holding or watchlist stock moves through a\nthreshold you care about. Everything arrives at most once per hourly scan, gated by your quiet\nhours and per-type toggles.\n\nThis builds on walkthrough 3 - Go live with Supabase. You need live\nmode working (your own Supabase, the scanner runs, you can sign in) before alerts have anything\nto say.\n\nFour channels, four very different maturity levels - this doc is honest about each:\n\n| Channel | Status today | What you need |\n|---|---|---|\n| Web push (browser / iPhone Home Screen) | Works today | Two generated keys, no phone number, no third-party account |\n| Telegram | Works today - the recommended phone channel | A free bot from BotFather (2 minutes) |\n| Slack | Works today - the recommended desk channel | Your own incoming webhook (2 minutes, no server env) |\n| WhatsApp | Architecture only - do not rely on it | A verified Meta Business account + template approval (days of Meta process) |\n\nLyra is research tooling, not financial advice. An alert is a structured observation (\"this\nscore crossed 75\"), never a recommendation to buy or sell. Every message the system sends ends\nwith a disclaimer saying exactly that - see `RESEARCH_SUFFIX` in\n`src/lib/notifications/templates.ts` and the \"Not financial advice.\" footer in\n`workers/stock_scanner/telegram.py`.\n\nBack to the index: README.md."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-1-understand-what-lyra-can-send-and-when",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 1 - understand what Lyra can send, and when",
+      "text": "The Python scanner (`workers/stock_scanner/`) runs hourly via GitHub Actions\n(`.github/workflows/hourly-stock-scanner.yml`, cron `5 * * * *` UTC, with a US market-hours\nguard). After each scan it decides whether anything is alert-worthy. The decision logic lives in\n`workers/stock_scanner/alert_engine.py`:\n\n| Alert type | Fires when | Cooldown* |\n|---|---|---|\n| `strong_setup` | A ticker's score crosses `ALERT_SCORE_THRESHOLD` (default 75) and it was not already a strong setup | 6h per symbol |\n| `signal_invalidated` | A previously-flagged setup falls below the watchlist threshold - the \"this stopped working\" ping | 6h |\n| `score_jump` | The score jumps by at least `SIGNAL_CHANGE_THRESHOLD` (default 8) in one scan | 6h |\n| `watchlist_upgrade` | A ticker enters watchlist-setup territory (score >= 60) - only when `ENABLE_WATCHLIST_ALERTS=true` | 12h |\n| `portfolio_risk` | A holding you entered in the app enters `invalidated`, `elevated_risk`, or `overextended` | 6h |\n| `portfolio_price_move_*` / `watchlist_price_move_*` | A holding or watchlist item crosses a +/-5%, 10%, or 15% move from its cost basis / add-time price | once per threshold |\n\n\\* The hour-based cooldowns are enforced on the legacy single-operator Telegram path only\n(`recently_alerted` checks in `workers/stock_scanner/main.py`). On the recommended multi-channel\ndispatch path (step 2d), signal alerts are instead deduped once per UTC day per symbol/type via\nthe dispatch dedupe key (`signal_alert:{symbol}:{alert_type}:{UTC day}`, built in\n`workers/stock_scanner/notification_dispatch.py`) - which can be looser than 6h across a UTC\nmidnight and stricter than 6h within one UTC day. Price-move alerts keep their own\nonce-per-threshold dedupe key on both paths."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-1-understand-what-lyra-can-send-and-when--1",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 1 - understand what Lyra can send, and when",
+      "text": "Three worker env toggles control the firehose (`workers/stock_scanner/config.py`, defaults shown):\n\n```bash\nENABLE_TELEGRAM_ALERTS=true     # master switch for worker-sent alerts\nENABLE_WATCHLIST_ALERTS=false   # also alert on watchlist-tier setups (score 60-74) - noisier\nENABLE_HOURLY_DIGEST=false      # see honesty note below\n```\n\n**The urgency model.** Not everything pings you at 2am. The notification router\n(`src/lib/notifications/router.ts`) treats a small set of types as safety-critical\n(`kill_switch_enabled`, `order_approval_required`, `paper_approval_required`, `risk_blocked`) -\nthose always deliver instantly and ignore quiet hours. Everything else passes through, in order:\na minimum-score floor you set, symbol/theme mutes, same-day dedupe, per-type toggles, and quiet\nhours - inside your quiet window a non-critical alert is deferred instead of pinging.\n\n**Honesty note on \"hourly digest\".** `ENABLE_HOURLY_DIGEST` exists in `.env.example` and is\nloaded into the worker's `Settings`, but as of this writing nothing in the worker reads it\nbeyond loading it - there is no digest builder in `workers/stock_scanner/`. The web layer has\n`daily_digest` / `weekly_report` notification types, routing rules, UI toggles, and even a\nWhatsApp template, but no scheduler generates digest events yet. What IS real: the scanner runs\nhourly, so instant alerts arrive at an hourly cadence at most. Treat \"digest\" toggles as\ndeclared preferences waiting for a sender.\n\nYou know it worked when: you can answer \"which alerts would fire by default?\" - strong setups,\ninvalidations, score jumps, and portfolio risk/moves; watchlist-tier alerts and digests are off."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-2-web-push-zero-phone-number-needed",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 2 - web push (zero phone number needed)",
+      "text": "Web push sends real notifications to your browser or iPhone through the browser's push service.\nNo phone number, no bot, no third-party account - just a keypair you generate once.\n\n### 2a - generate VAPID keys\n\nVAPID keys identify YOUR deployment to the browser push services. Generate a pair:\n\n```bash\nnpx web-push generate-vapid-keys\n```\n\nAdd the output to `.env.local` (local dev) and to your deployment's env (Vercel project\nsettings, or Coolify - note `NEXT_PUBLIC_*` is a BUILD-time arg in the Docker path, see\n`docs/runbooks/coolify-deploy.md`):\n\n```bash\nNEXT_PUBLIC_VAPID_PUBLIC_KEY=BPz...   # the \"Public Key\" line - safe to expose\nVAPID_PRIVATE_KEY=x7f...              # the \"Private Key\" line - server-side only\nVAPID_SUBJECT=mailto:you@example.com  # contact URI push services can reach you at\n```\n\nThe public key is served to the browser (`src/lib/push/client.ts`); the private key signs sends\nserver-side (`src/lib/push/server.ts`). Restart the dev server after editing `.env.local`.\n\nYou know it worked when: `npm run doctor` prints \"Web Push VAPID keys present\" instead of the\n\"Web Push VAPID keys missing - iPhone/browser push is disabled\" warning.\n\n### 2b - enable push in the app\n\n1. Sign in and open **Account** (`/account`), then the **Notifications** panel.\n2. On iPhone: first add Lyra to your Home Screen (Share -> Add to Home Screen) and open it from\n   there - iOS only allows web push for installed web apps, and the panel tells you so.\n3. Click **Enable push** and accept the browser's permission prompt."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-2-web-push-zero-phone-number-needed--1",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 2 - web push (zero phone number needed)",
+      "text": "Under the hood this registers the service worker (`public/sw.js`), subscribes via the browser's\npush manager, and saves the subscription to your account through `POST /api/push/subscribe`\n(`src/app/api/push/subscribe/route.ts` - requires a signed-in Supabase user, writes a row to\n`push_subscriptions`, and flips `push_enabled` in your alert preferences).\n\nYou know it worked when: the status pill at the top of the panel reads \"Push on\" and the panel\nshows \"Active devices: 1\" (or more).\n\n### 2c - send yourself a test\n\nClick **Send test** in the same panel. This calls `POST /api/push/test`\n(`src/app/api/push/test/route.ts`), which dispatches a real `test_notification` event through\nthe full router with `forceInstant: true`.\n\nYou know it worked when: a \"Lyra test alert\" notification lands on the device AND the panel\nshows \"Test push sent\" with `channels: push` in the result detail. \"Test logged but suppressed\"\nmeans the send was a `demo_logged` no-op - see the troubleshooting table.\n\n### 2d - connect the scanner to push\n\nThe Python worker cannot talk to browser push services directly. It POSTs alert events to your\ndeployed app's dispatch endpoint (`/api/notifications/dispatch`), which fans out to every\nchannel you enabled (`workers/stock_scanner/notification_dispatch.py` ->\n`src/app/api/notifications/dispatch/route.ts` -> `src/lib/notifications/dispatch.ts`).\n\nSet three more values where the worker runs (GitHub repo -> Settings -> Secrets and variables\n-> Actions, matching what walkthrough 3 set up):\n\n```bash\nDEFAULT_USER_ID=<your profiles.id UUID>        # who the alerts belong to\nAPP_BASE_URL=https://your-deployed-app.example # worker derives <APP_BASE_URL>/api/notifications/dispatch\nNOTIFICATION_DISPATCH_SECRET=$(openssl rand -hex 32)\n```"
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-2-web-push-zero-phone-number-needed--2",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 2 - web push (zero phone number needed)",
+      "text": "The same `NOTIFICATION_DISPATCH_SECRET` value must ALSO be set in the deployed app's env - the\ndispatch route authenticates the worker by comparing the `x-notification-secret` header against\nit. Without all three, the worker logs a warning and falls back to legacy single-operator\nTelegram only (`workers/stock_scanner/main.py` prints \"DEFAULT_USER_ID is set but notification\ndispatch is unconfigured\" when you get this half-right).\n\nYou know it worked when: after the next scan that finds something alert-worthy, the alert row in\nyour Supabase `alerts` table shows `channel = 'multi_channel'` (not `'telegram'`), and the push\narrives on your phone. **Send test** rehearses the same channel fan-out (router -> push /\nTelegram / WhatsApp senders) but NOT the worker-to-app leg this step configures - it runs\nthrough your signed-in session, so it can pass even with `DEFAULT_USER_ID`, `APP_BASE_URL`, and\n`NOTIFICATION_DISPATCH_SECRET` completely wrong. The only true end-to-end rehearsal of this step\nis a scan that fires an alert (or manually POSTing to `/api/notifications/dispatch` with the\n`x-notification-secret` header) and then checking for `channel = 'multi_channel'` in the\n`alerts` table."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-3-telegram-works-today-the-recommended-phone-channel",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 3 - Telegram (works today, the recommended phone channel)",
+      "text": "Telegram is the most mature phone channel: the worker has sent alerts through it since day one,\ndelivery is free, and no business verification is involved. Full operational reference:\ndocs/integrations/telegram.md.\n\n### 3a - create a bot with BotFather (2 minutes)\n\n1. In Telegram, message `@BotFather` and send `/newbot`.\n2. Pick a display name, then a unique username ending in `bot` (e.g. `my_lyra_alerts_bot`).\n3. BotFather replies with a token like `123456789:AAF...`. That is your `TELEGRAM_BOT_TOKEN`.\n   Treat it like a password - server-side env only, never in a `NEXT_PUBLIC_*` variable.\n4. Optional hardening via BotFather: `/setjoingroups` -> Disable, `/setprivacy` -> Enable.\n\nYou know it worked when: this returns your bot's username in the JSON:\n\n```bash\ncurl -s \"https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe\"\n```\n\n### 3b - get your chat id and pair the two\n\nA Telegram bot cannot message you until you message it first - so open your new bot in Telegram\nand send it anything (`/start` is traditional). Then read your chat id:\n\n```bash\ncurl -s \"https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates\"\n```\n\nYour numeric id is at `message.chat.id` in the response. (Shortcut: message `@userinfobot` and\nit tells you your id - the in-app settings panel links to it.)\n\nNow wire it up. Two paths, use both:\n\n**Worker path (alerts from the hourly scan).** Set in the worker's env / GitHub Actions secrets:\n\n```bash\nTELEGRAM_BOT_TOKEN=123456789:AAF...\nTELEGRAM_CHAT_ID=123456789\nENABLE_TELEGRAM_ALERTS=true   # already the default\n```"
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-3-telegram-works-today-the-recommended-phone-channel--1",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 3 - Telegram (works today, the recommended phone channel)",
+      "text": "**App path (per-account channel + verified delivery).** Set `TELEGRAM_BOT_TOKEN` in the deployed\nweb app's env too, then in **Account -> Notifications** paste your chat id into \"Telegram chat\nID\" and hit save. The server does not just store the id - it attempts a real probe send\n(\"Lyra is confirming this channel...\") and only marks the channel verified if that message\nactually reached you (`verifyChatChannel` in `src/app/api/notifications/route.ts`). Unverified\nchannels never receive alerts, so a typo'd chat id cannot silently black-hole your pings.\n\nYou know it worked when: the probe message from your bot appears in Telegram and the panel shows\n\"Channel verified - we reached this chat. Alerts are on.\" with the Telegram status pill on.\n\n### 3c - what an alert looks like when it arrives\n\nFrom the worker's legacy path (`workers/stock_scanner/telegram.py`) you get the verbose format:\ntitle, symbol, score /100, status, action state, RSI / MACD histogram / volume ratio / distance\nfrom the 60-period low, up to five \"Triggered because\" reasons, and the \"Not financial advice.\"\nfooter. Through the multi-channel dispatch path you get the compact router format\n(`src/lib/notifications/templates.ts`): type tag, title, data line, \"Why:\" trigger reason, and\n\"Research, not advice.\"\n\nYou know it worked when: the next `strong_setup` or `signal_invalidated` the scanner finds lands\nin your Telegram chat. To rehearse now instead of waiting, re-save your chat id in the panel -\nthe verification probe is a real send through the real sender.\n\n### 3d - optional: inbound commands via the webhook"
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-3-telegram-works-today-the-recommended-phone-channel--2",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 3 - Telegram (works today, the recommended phone channel)",
+      "text": "You can also talk BACK to the bot (`/status`, `/mute`, `/help`). That requires registering a\nwebhook so Telegram POSTs updates to your deployment at\n`src/app/api/webhooks/telegram/route.ts`. The route fails closed: with no\n`TELEGRAM_WEBHOOK_SECRET` set, every inbound request gets a 401.\n\n```bash\nopenssl rand -hex 32   # set the output as TELEGRAM_WEBHOOK_SECRET in the deployment, then:\n\ncurl -s \"https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook\" \\\n  -H \"content-type: application/json\" \\\n  -d '{\n    \"url\": \"https://<your-domain>/api/webhooks/telegram\",\n    \"secret_token\": \"<your TELEGRAM_WEBHOOK_SECRET value>\",\n    \"allowed_updates\": [\"message\"],\n    \"drop_pending_updates\": true\n  }'\n```\n\nTelegram echoes the secret back in the `X-Telegram-Bot-Api-Secret-Token` header on every\ndelivery, and the route compares it in constant time. Inbound text is parsed into a closed\ncommand enum - it is never fed to an LLM and there is no free-form path.\n\nHonesty notes on what commands do today: `/status` and `/help` answer usefully; account-scoped\ncommands (`/portfolio`, `/watchlist`, `/today`) reply with a \"pair your account\" stub because\nthe pairing-completion flow (`/start <code>` linking a chat to a user) is designed but not\nshipped - the `channel_pairing_codes` table exists (migration\n`supabase/migrations/020_trading_foundations.sql`), but no code issues codes or looks them up\nyet, and the webhook says so honestly. `/mute` and `/unmute` silence webhook REPLIES for the chat, in memory only, resetting\non redeploy. Full command table and rate-limit details:\ndocs/integrations/telegram.md."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-3-telegram-works-today-the-recommended-phone-channel--3",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 3 - Telegram (works today, the recommended phone channel)",
+      "text": "You know it worked when: `curl -s \"https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo\"`\nshows your URL with an empty `last_error_message`, and sending `/status` to the bot gets a reply.\n\n### 3e - quiet hours, mutes, and scope\n\nAll durable alert preferences live in the app under **Account -> Notifications**, stored in\n`user_alert_preferences`, and BOTH delivery paths honour them (the worker via\n`should_send_alert_to_user` in `workers/stock_scanner/alert_engine.py`, the web dispatcher via\n`routeNotification` in `src/lib/notifications/router.ts`):\n\n- **Quiet hours** - default on, 22:00-07:00, evaluated as wall-clock time in your stored\n  timezone (default `Australia/Sydney`), wrap-around-midnight windows handled. The two paths\n  differ here: on the web dispatch path, non-critical alerts inside the window are held and\n  delivered after the window ends (`releaseHeldEvents`); on the worker path, the pre-dispatch\n  gate records the alert with `sent_status = 'gated'` and does NOT retry it later - a scanner\n  alert that fires inside your quiet window is dropped, not deferred. The settings UI exposes\n  the start/end times; the timezone comes from your preference row rather than a visible\n  control.\n- **Minimum signal score** - the slider sets a relevance floor; alerts scoring below it are\n  dropped outright.\n- **Per-type toggles** - portfolio movement, watchlist triggers, paper-bot trades, order\n  approvals, instant alerts, theme/macro, daily digest, weekly report - each a switch in the\n  panel.\n- **Per-ticker mute** - the schema and worker gate support muting a single symbol until a\n  timestamp (`ticker_alert_preferences.is_muted` / `muted_until`, checked in\n  `should_send_alert_to_user`), but no settings UI writes those rows yet - honest gap."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-3-telegram-works-today-the-recommended-phone-channel--4",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 3 - Telegram (works today, the recommended phone channel)",
+      "text": "You know it worked when: a real (non-test) alert dispatched inside your quiet window shows up\nas a `held` row in `notification_deliveries`, then gets released and delivered after the window\nends (`releaseHeldEvents` drains held rows on the next dispatch). Note that **Send test** cannot\nrehearse quiet hours: it runs with `forceInstant: true` (section 2c), which deliberately bypasses\nthe quiet-hours rule and always delivers instantly."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-4-slack-your-own-webhook-2-minutes",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 4 - Slack (your own webhook, ~2 minutes)",
+      "text": "Alerts land in any Slack channel you choose, delivered through **your own incoming webhook** -\nno server credentials, no bot token, nothing in `.env`. The webhook is saved per user, so every\nuser of your deployment can point alerts at their own workspace.\n\n1. Create the webhook: api.slack.com/apps -> your app (or\n   **Create New App -> From scratch**) -> **Incoming Webhooks** -> toggle **On** ->\n   **Add New Webhook to Workspace** -> pick the channel -> **Allow** -> copy the URL\n   (it starts with `https://hooks.slack.com/services/`).\n2. In Lyra: **Settings -> Notifications -> Slack webhook** - paste the URL and hit the\n   Slack button to save.\n3. Saving fires a **real verification message** at the webhook. The channel only turns on\n   when that message actually lands - if the URL is wrong or revoked, the UI tells you and\n   nothing silently black-holes.\n\n**Verify:** the confirmation message appears in your Slack channel and the status pill reads\n\"Slack on\".\n\nWhat the messages look like: each event type has its own emoji and framing (a :dart: signal, a\n:coffee: daily digest, a :bell: approval request...), followed by the full grain of data the\nengine computed - the trigger reason, symbol, relevance score, evidence count, and a deep link\nback into Lyra. Research-type alerts always end with \"Research, not advice.\" The formatting is\ndeterministic (`src/lib/notifications/slack-templates.ts`) - the AI never writes these."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-4-slack-your-own-webhook-2-minutes--1",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 4 - Slack (your own webhook, ~2 minutes)",
+      "text": "You can also pick the **agent personality** - how alerts are worded. The same notifications\npanel has a personality picker with a live preview: Analyst (the house voice), Coach (greets you\nby first name - \"Bryson, worth a look...\"), Minimal (no prose, data only), or Narrator (story\nflavour). Personalities are pre-written templates with variables\n(`src/lib/notifications/voice.ts`); they reword the framing line only - the title, trigger\nreason, and every number are identical in all of them.\n\nA security note worth knowing: the webhook URL is a secret (anyone holding it can post to your\nchannel). Lyra stores it in your own RLS-scoped `notification_channels` row (or this browser's\nlocalStorage in demo mode), only ever POSTs to `hooks.slack.com`, and delivery logs keep a\nredacted form of the URL - never the full secret."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-5-whatsapp-architecture-only-read-before-spending-time-here",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 5 - WhatsApp (architecture only - read before spending time here)",
+      "text": "Straight from `.env.example`: \"WhatsApp Cloud API (Part 9 - architecture only)\". Here is exactly\nwhat that means, so you can decide whether to bother. Full reference:\ndocs/integrations/whatsapp.md.\n\n**What exists in the repo today:**\n\n- The full env contract: `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`,\n  `WHATSAPP_BUSINESS_ACCOUNT_ID`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`,\n  `WHATSAPP_API_VERSION` (defaults `v21.0`).\n- A hardened inbound webhook (`src/app/api/webhooks/whatsapp/route.ts`): GET `hub.challenge`\n  verification and per-request HMAC-SHA256 signature checks\n  (`src/lib/notifications/whatsapp-signature.ts`, unit tested). Both fail closed when env is\n  unset.\n- An outbound send adapter (`src/lib/notifications/whatsapp.ts`) that resolves to an honest\n  `demo_logged` no-op unless the env is configured, plus four typed message templates\n  (`src/lib/notifications/whatsapp-templates.ts`).\n- The settings UI accepts a WhatsApp number and runs the same verification probe as Telegram -\n  which today reports \"Saved, but not verified yet - WhatsApp is not configured in this\n  environment.\"\n\n**What YOU would still need before a single real WhatsApp alert arrives:**\n\n1. A Meta Business Portfolio with completed business verification (a multi-day Meta process).\n2. A Meta app with the WhatsApp product, a phone number id, and a long-lived system-user token.\n3. All four templates registered in Meta Business Manager, byte-identical to\n   `WHATSAPP_TEMPLATE_BODIES` - business-initiated messages MUST use pre-approved templates.\n4. While the app is in Meta's development mode, every recipient added to a tester allow-list."
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--step-5-whatsapp-architecture-only-read-before-spending-time-here--1",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Step 5 - WhatsApp (architecture only - read before spending time here)",
+      "text": "Also: inbound WhatsApp commands are parsed and logged only, and the pairing lookup is a stub\nthat always returns unpaired (fails safe). Bottom line - the security architecture is real and\ntested, but as a user channel it is not switched on. Use Telegram.\n\nYou know it worked when: (nothing to verify here - the checkpoint is that you did NOT spend an\nafternoon on Meta Business verification expecting alerts at the end of it.)"
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--troubleshooting",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Troubleshooting",
+      "text": "| Symptom | Likely cause | Fix |\n|---|---|---|\n| **Enable push** button is greyed out / panel says \"VAPID keys are not configured in this environment\" | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` missing where the app runs | Step 2a. On Docker/Coolify remember `NEXT_PUBLIC_*` is a build-time arg (`docs/runbooks/coolify-deploy.md`); on local dev restart after editing `.env.local` |\n| Push permission shows \"Blocked\" | You (or a past you) denied the browser prompt | Re-allow notifications for the site in browser settings, then reload and enable again |\n| iPhone: enable does nothing / unsupported | Lyra opened in Safari tab, not installed | Add to Home Screen and open from there - the panel's \"Home Screen\" pill must be on before enabling |\n| Test says \"Test logged but suppressed\" | The send was a `demo_logged` no-op: VAPID keys absent where the ROUTE runs, or no active subscription for this account | Check the panel's \"Active devices\" count and step 2a env on the deployment, then re-enable on the device |\n| Push worked, then silently stopped on one device | The push service expired the subscription (HTTP 404/410); Lyra auto-disables that row | Open the app on that device and **Enable push** again |\n| Scanner alerts reach Telegram but never push | Worker is on the legacy fallback - dispatch not configured | Step 2d: set `DEFAULT_USER_ID`, `APP_BASE_URL`, `NOTIFICATION_DISPATCH_SECRET` in the worker env AND the same secret in the app env |\n| Worker log: \"DEFAULT_USER_ID is set but notification dispatch is unconfigured\" | Exactly what it says - you set the user but not the dispatch URL/secret | Same fix as above |\n| Telegram save says \"Saved, but not verified yet - the Telegram bot is not configured in this environment\" | `TELEGRAM_BOT_TOKEN` unset where the WEB APP runs (worker env alone is not enough for the app path) | Set the token in the deployment env and save the chat id again |\n| Telegram save says \"We could not reach this chat yet\" | You never messaged the bot first (bots cannot initiate), or the chat id is wrong | Open the bot, send `/start`, re-check the id via `getUpdates` or `@userinfobot`, save again |\n| No Telegram alerts from the scanner despite a green run | `ENABLE_TELEGRAM_ALERTS=false`, token/chat-id missing (the worker skips silently with `sent_status=skipped`), a 6h/12h cooldown, or nothing crossed a threshold | Check the `alerts` table rows for `sent_status` and `error_message` - the worker logs every decision, including skips |\n| Alerts arrive at odd hours / not at all during your evening | Quiet hours are evaluated in the preference row's timezone (default `Australia/Sydney`), which may not be yours | Adjust the quiet-hours window in Account -> Notifications to your wall clock |\n| Bot never replies to `/status` | No webhook registered, or `TELEGRAM_WEBHOOK_SECRET` unset (route 401s everything, by design) | Step 3d; verify with `getWebhookInfo` |\n| `getUpdates` returns nothing while testing | A webhook is registered - webhooks and polling are mutually exclusive | `curl -s \"https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/deleteWebhook\"` first |\n| `/portfolio` answers \"pair your account\" forever | Pairing completion is not built yet - documented current state, not a bug | Nothing to fix; see docs/integrations/telegram.md section 8 |\n| WhatsApp sends stay `demo_logged` | Expected - architecture-only channel | Use Telegram, or complete the full Meta setup in docs/integrations/whatsapp.md |"
+    },
+    {
+      "id": "docs-walkthroughs-06-alerts-on-your-phone-md--where-to-go-next",
+      "source": "docs/walkthroughs/06-alerts-on-your-phone.md",
+      "docTitle": "Get Lyra alerts on your phone - urgent pings + hourly summaries",
+      "heading": "Where to go next",
+      "text": "- docs/integrations/telegram.md - the full Telegram security and\n  operations reference (rate limits, idempotency, local dev without a public URL).\n- docs/integrations/whatsapp.md - the complete WhatsApp\n  architecture doc, including the Meta production checklist.\n- Walkthrough 3 - Go live - if any prerequisite above was missing.\n- Walkthrough 5 - Understand the score - what the number in\n  the alert actually measures.\n\nLyra is research software. An alert says \"look at this\", never \"buy this\". Not financial advice."
+    },
+    {
+      "id": "docs-runbooks-coolify-deploy-md--runbook-deploy-lyra-on-coolify",
+      "source": "docs/runbooks/coolify-deploy.md",
+      "docTitle": "Runbook - deploy Lyra on Coolify",
+      "heading": "Runbook - deploy Lyra on Coolify",
+      "text": "Deploy the Lyra web app as a Docker container on a Coolify server.\nCoolify is an open-source, self-hostable PaaS (a self-owned Heroku/Vercel): you point it at a\nGitHub repo, it builds the Dockerfile and runs the container behind its Traefik proxy with\nautomatic HTTPS.\n\nWhat runs where after this runbook:\n\n```\nGitHub Actions (hourly scanner, free)  --->  Supabase (data + auth)  <---  Coolify (this web app)\n```\n\nThe Python scanner is NOT part of the container - it stays on the GitHub Actions schedule\n(`.github/workflows/hourly-stock-scanner.yml`). The container is the Next.js app only\n(dashboard + API routes + middleware), built from the `Dockerfile` at the repo root.\n\nCosts for every piece of this stack are itemised in `COSTS.md`."
+    },
+    {
+      "id": "docs-runbooks-coolify-deploy-md--prerequisites",
+      "source": "docs/runbooks/coolify-deploy.md",
+      "docTitle": "Runbook - deploy Lyra on Coolify",
+      "heading": "Prerequisites",
+      "text": "- A Coolify v4 instance you can log in to. Either:\n  - self-hosted (free) on any VPS - a US$6-12/mo DigitalOcean/Hetzner box is enough, or\n  - Coolify Cloud (they host the control plane, you bring the server).\n- This repo pushed to GitHub (public works out of the box; private needs a GitHub App in Coolify).\n- Your Supabase project URL + anon/publishable key (see\n  `docs/walkthroughs/03-go-live-supabase.md`).\n- A domain or subdomain you can point at the server (optional but recommended)."
+    },
+    {
+      "id": "docs-runbooks-coolify-deploy-md--1-create-the-application",
+      "source": "docs/runbooks/coolify-deploy.md",
+      "docTitle": "Runbook - deploy Lyra on Coolify",
+      "heading": "1. Create the application",
+      "text": "1. Coolify -> your project -> environment (e.g. `production`) -> **+ New** -> **Public Repository**\n   (or Private via GitHub App).\n2. Repository URL: `https://github.com/BrysonW24/vai-lyra-stock-tracker` (or your fork). Branch: `main`.\n3. **Build Pack: Dockerfile.** Coolify auto-detects the root `Dockerfile`; keep the default\n   Dockerfile location `/Dockerfile` and base directory `/`.\n4. **Ports Exposes: `3000`** (the container listens on 3000; the proxy handles 80/443).\n\nYou know it worked when: the app appears in Coolify with a Dockerfile build pack badge and an\nauto-generated `*.sslip.io` preview URL."
+    },
+    {
+      "id": "docs-runbooks-coolify-deploy-md--2-environment-variables-the-build-time-vs-runtime-split-this-is-the-step-people-",
+      "source": "docs/runbooks/coolify-deploy.md",
+      "docTitle": "Runbook - deploy Lyra on Coolify",
+      "heading": "2. Environment variables - the build-time vs runtime split (this is the step people get wrong)",
+      "text": "Next.js **inlines `NEXT_PUBLIC_*` values into the client JavaScript at build time**. If they are\nmissing during the Docker build, the app compiles fine but ships in demo mode forever, no matter\nwhat you set at runtime. The Dockerfile therefore accepts them as build args - in Coolify you must\nmark each one as a **Build Variable**.\n\nIn the app's **Environment Variables** tab add:\n\n| Variable | Build Variable? | Value | Notes |\n|---|---|---|---|\n| `NEXT_PUBLIC_SUPABASE_URL` | **yes** | `https://<ref>.supabase.co` | safe to expose |\n| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **yes** | your anon / publishable key | safe to expose by design |\n| `NEXT_PUBLIC_APP_URL` | **yes** | `https://your-domain` | used in links/callbacks |\n| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | **yes** | from `npx web-push generate-vapid-keys` | only if you want web push |\n| `OPENAI_API_KEY` | no (runtime) | `sk-...` | optional - powers the hosted AI beta; users can still BYOK |\n| `VAPID_PRIVATE_KEY` | no (runtime) | pair of the public key | web push |\n| `VAPID_SUBJECT` | no (runtime) | `mailto:you@example.com` | web push |\n| `NOTIFICATION_DISPATCH_SECRET` | no (runtime) | long random string | protects `/api/notifications/dispatch` |\n| `APP_BASE_URL` | no (runtime) | `https://your-domain` | worker -> app dispatch target |\n\nNever set `SUPABASE_SERVICE_ROLE_KEY` on the web app. It is a worker-only secret (GitHub Actions),\nand nothing in the container needs it.\n\nYou know it worked when: the deploy log's `docker build` section shows your\n`--build-arg NEXT_PUBLIC_SUPABASE_URL=...` values, and after deploy\n`curl https://<your-app>/api/health` returns `\"mode\":\"live\"`."
+    },
+    {
+      "id": "docs-runbooks-coolify-deploy-md--3-health-check",
+      "source": "docs/runbooks/coolify-deploy.md",
+      "docTitle": "Runbook - deploy Lyra on Coolify",
+      "heading": "3. Health check",
+      "text": "App -> **Health Checks**: enable, path `/api/health`, port `3000`, scheme `http`.\nThe endpoint is public and returns:\n\n```json\n{ \"ok\": true, \"version\": \"0.7.0\", \"versionDate\": \"2026-07-16\", \"mode\": \"live\" }\n```\n\n`version` is your deployment receipt: if it does not match `RELEASES[0]` in\n`src/lib/version.ts`, you are looking at a stale build."
+    },
+    {
+      "id": "docs-runbooks-coolify-deploy-md--4-domain-https",
+      "source": "docs/runbooks/coolify-deploy.md",
+      "docTitle": "Runbook - deploy Lyra on Coolify",
+      "heading": "4. Domain + HTTPS",
+      "text": "App -> **Domains**: add `https://lyra.your-domain.com`. Point a DNS `A` record at the server IP\nfirst; Coolify's Traefik proxy provisions the Let's Encrypt certificate automatically.\nThen update `NEXT_PUBLIC_APP_URL` + `APP_BASE_URL` to the real domain and redeploy (the\n`NEXT_PUBLIC_*` change requires a rebuild - it is a build-time value)."
+    },
+    {
+      "id": "docs-runbooks-coolify-deploy-md--5-deploy-verify",
+      "source": "docs/runbooks/coolify-deploy.md",
+      "docTitle": "Runbook - deploy Lyra on Coolify",
+      "heading": "5. Deploy + verify",
+      "text": "Click **Deploy** and watch the build log. First build takes a few minutes (npm ci + Next build);\nlater builds reuse Docker layer cache.\n\nVerification gates, in order:\n\n1. Build log ends with the image being pushed/started, not an `npm run build` error.\n2. Container status healthy (the Dockerfile HEALTHCHECK probes `/api/health` every 30s).\n3. `curl -s https://<your-app>/api/health` -> `{\"ok\":true,...,\"mode\":\"live\"}` with the version you shipped.\n4. Open the app: you land on `/welcome`, can sign up / sign in via your Supabase auth.\n5. After the next scanner run (hourly), live scores appear instead of demo data."
+    },
+    {
+      "id": "docs-runbooks-coolify-deploy-md--6-updates",
+      "source": "docs/runbooks/coolify-deploy.md",
+      "docTitle": "Runbook - deploy Lyra on Coolify",
+      "heading": "6. Updates",
+      "text": "Coolify can auto-deploy `main` on push (Webhooks tab -> GitHub webhook), or you can keep deploys\nmanual with the Deploy button. Every shipped change bumps the app version (enforced by the repo's\npre-push guard), so `/api/health` always tells you exactly what is running."
+    },
+    {
+      "id": "docs-runbooks-coolify-deploy-md--troubleshooting",
+      "source": "docs/runbooks/coolify-deploy.md",
+      "docTitle": "Runbook - deploy Lyra on Coolify",
+      "heading": "Troubleshooting",
+      "text": "| Symptom | Cause | Fix |\n|---|---|---|\n| App runs but shows demo data | `NEXT_PUBLIC_*` not marked as Build Variable, so the build inlined nothing | Mark them Build Variables, redeploy (rebuild, not restart) |\n| Build dies partway with no clear error | Server ran out of memory during `next build` | Build needs ~2GB free; stop other builds, add swap, or use a bigger box. Never run two builds at once on a small server |\n| `/api/health` 404 | Old image (pre-0.7.0) | Redeploy from `main` |\n| Certificate not issued | DNS record not propagated before adding the domain | Verify `dig +short lyra.your-domain.com`, then re-save the domain |\n| Sign-up email never arrives | Supabase email confirmation is on and using default SMTP rate limits | Check Supabase Auth logs; add custom SMTP or disable confirmation for testing |"
+    },
+    {
+      "id": "docs-runbooks-coolify-deploy-md--operator-notes-vivacity-droplet-founder-specific",
+      "source": "docs/runbooks/coolify-deploy.md",
+      "docTitle": "Runbook - deploy Lyra on Coolify",
+      "heading": "Operator notes - Vivacity droplet (founder-specific)",
+      "text": "For the Vivacity Coolify instance specifically (skip this section if you are not Bryson):\n\n- The droplet **OOMs on concurrent builds**. Deploy Lyra manually, one build at a time, never\n  while a Vivacity platform build is running. A build log that stops at \"Creating an optimized\n  production build\" is the OOM signature.\n- Coolify identifiers (project/app/environment UUIDs) **drift - resolve them via the API every\n  time, never hardcode**. Token lives as `COOLIFY_API_KEY` in the canonical env store; the\n  environment name is `prod`.\n- Vercel remains a parallel host for Lyra until deliberately consolidated; both build from the\n  same `main` + Dockerfile-free path (Vercel ignores the Dockerfile)."
+    },
+    {
+      "id": "docs-tradingview-copilot-md--lyra-x-tradingview-copilot",
+      "source": "docs/tradingview-copilot.md",
+      "docTitle": "Lyra x TradingView Copilot",
+      "heading": "Lyra x TradingView Copilot",
+      "text": "Drive your **TradingView Desktop** app from Claude, with Lyra's deterministic oversold-recovery\nengine as the brain. Claude can read your live chart, switch symbol and timeframe, inject and\nbacktest a **Lyra strategy as Pine Script**, run replay, and screenshot the result back into a\nFinding.\n\nThis does **not** rebuild TradingView and does **not** touch TradingView's servers. It talks to\n*your own locally running* TradingView Desktop over the **Chrome DevTools Protocol (CDP)** - the\nstandard debug interface built into every Electron app (VS Code, Slack, Discord all expose it).\nEverything stays on your machine. Research only - not financial advice."
+    },
+    {
+      "id": "docs-tradingview-copilot-md--architecture",
+      "source": "docs/tradingview-copilot.md",
+      "docTitle": "Lyra x TradingView Copilot",
+      "heading": "Architecture",
+      "text": "```\nLyra finding  ->  Claude Code  ->  tradingview-mcp (CDP client)  ->  TradingView Desktop (port 9222)\n   ^                  |                                                       |\n   |          generated Pine strategy  (src/lib/pine/lyra-strategy.ts)        |\n   +-------------------------- screenshot back into a Finding ----------------+\n```\n\n- **The muscle** is the open-source `tradesdontlie/tradingview-mcp`\n  MCP server (Node, ~78 tools over `chrome-remote-interface`). We do not reimplement it.\n- **The brain** is Lyra: the Pine strategy generated at `src/lib/pine/lyra-strategy.ts` is a faithful\n  mirror of `workers/stock_scanner/signal_engine.py`, so the strategy you backtest is the same logic\n  that surfaced the setup."
+    },
+    {
+      "id": "docs-tradingview-copilot-md--prerequisites",
+      "source": "docs/tradingview-copilot.md",
+      "docTitle": "Lyra x TradingView Copilot",
+      "heading": "Prerequisites",
+      "text": "- macOS, Node.js 18+, Claude Code.\n- TradingView Desktop (free). Download: https://www.tradingview.com/desktop/"
+    },
+    {
+      "id": "docs-tradingview-copilot-md--setup-one-time",
+      "source": "docs/tradingview-copilot.md",
+      "docTitle": "Lyra x TradingView Copilot",
+      "heading": "Setup (one time)",
+      "text": "### 1. Launch TradingView Desktop with remote debugging\n\nQuit TradingView completely first (Cmd-Q), then:\n\n```sh\n# Preferred on recent builds (Electron 38 / app v2.14+ refuse the flag from a direct spawn):\nopen -a TradingView --args --remote-debugging-port=9222\n\n# If the app ignores the flag, launch the binary directly instead:\n/Applications/TradingView.app/Contents/MacOS/TradingView --remote-debugging-port=9222\n```\n\nVerify the port is live:\n\n```sh\ncurl -s http://localhost:9222/json/version | head\n```\n\nYou should get a JSON blob with a `webSocketDebuggerUrl`. If you get connection refused, TradingView\nis not running with the flag - quit it fully and relaunch with the command above.\n\n### 2. Install the MCP server\n\n```sh\ngit clone https://github.com/tradesdontlie/tradingview-mcp.git ~/tradingview-mcp\ncd ~/tradingview-mcp && npm install\n```\n\n> If the launcher fails to attach on a current TradingView build, use the fork\n> `LewisWJackson/tradingview-mcp-jackson`,\n> which exists specifically to fix the v2.14+ launch bug and adds a morning-brief workflow.\n\n### 3. Register it with Claude Code\n\nAdd to `~/.claude/.mcp.json` (create the file if it does not exist):\n\n```json\n{\n  \"mcpServers\": {\n    \"tradingview\": {\n      \"command\": \"node\",\n      \"args\": [\"/Users/brysonwalter/tradingview-mcp/src/server.js\"]\n    }\n  }\n}\n```\n\nRestart Claude Code so it picks up the server.\n\n### 4. Health check\n\nAsk Claude to run `tv_health_check`. A good connection returns:\n\n```json\n{ \"success\": true, \"cdp_connected\": true, \"chart_symbol\": \"AAPL\", \"api_available\": true }\n```\n\n`cdp_connected: false` or `ECONNREFUSED` means TradingView is not running with\n`--remote-debugging-port=9222` - go back to step 1."
+    },
+    {
+      "id": "docs-tradingview-copilot-md--workflow-recipes-drive-from-a-lyra-finding",
+      "source": "docs/tradingview-copilot.md",
+      "docTitle": "Lyra x TradingView Copilot",
+      "heading": "Workflow recipes (drive from a Lyra finding)",
+      "text": "Once connected, these are the loops worth keeping. The tool names below are from `tradingview-mcp`.\n\n### Open a finding on the chart\n\n1. `chart_set_symbol` to the finding's ticker (e.g. `AAPL`).\n2. `chart_set_timeframe` to `60` (Lyra's native cadence is hourly) or `D` for context.\n3. `chart_manage_indicator` to add `RSI`, `MACD`, `Bollinger Bands` - the same studies Lyra reads.\n4. `chart_get_state` + `data_get_study_values` to confirm the live RSI / MACD match the finding.\n\n### Backtest the Lyra strategy on this name\n\n1. Copy the Pine from the app: open the ticker, click **Pine** in the chart toolbar (it copies the\n   generated strategy to your clipboard). Or have Claude call `generateLyraPineStrategy({ symbol })`.\n2. `pine_new` then `pine_set_source` with the strategy text.\n3. `pine_smart_compile`, then `pine_get_errors` (should be clean - the generator targets v5).\n4. Read the Strategy Tester results; `capture_screenshot` the equity curve and trade list.\n5. Optionally `pine_save` to keep it in your TradingView account.\n\n### Replay a setup bar by bar\n\n`replay_start` at the finding's candle time, then `replay_step` / `replay_autoplay` to watch how the\nscore would have evolved into the entry. `replay_stop` when done.\n\n### Close the loop\n\n`capture_screenshot` and attach it to the Finding as evidence, so the chart read lives next to the\ndeterministic score."
+    },
+    {
+      "id": "docs-tradingview-copilot-md--safety-and-scope",
+      "source": "docs/tradingview-copilot.md",
+      "docTitle": "Lyra x TradingView Copilot",
+      "heading": "Safety and scope",
+      "text": "- Local only. CDP runs on `localhost:9222`; nothing is exposed to the network and no Lyra/TradingView\n  credentials leave your machine.\n- It drives **your** desktop app with **your** logged-in session and data, the same as you clicking.\n- The deterministic engine stays the source of truth. The Pine strategy reproduces the score; it does\n  not invent numbers and it gives no advice. Backtest results are hypothetical. Research only."
+    }
+  ]
+}

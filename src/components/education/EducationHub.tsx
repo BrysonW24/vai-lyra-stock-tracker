@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpRight, Search, X } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
-import { EDUCATION_MODULES, getCategories, getModule, getModulesByCategory } from '@/lib/education';
+import { EDUCATION_MODULES, getCategories, getModule } from '@/lib/education';
 
 interface EducationHubProps {
   signals: SignalRow[];
@@ -153,7 +153,7 @@ export function EducationHub({ signals }: EducationHubProps) {
         <div className="divide-y divide-[#1b2530] overflow-y-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
           {filteredModules.length === 0 ? (
             <div className="px-3 py-4 text-center font-mono text-xs text-[#8190a0]">
-              No topics found matching "{searchQuery}"
+              No topics found matching &ldquo;{searchQuery}&rdquo;
             </div>
           ) : (
             filteredModules.map((module) => (

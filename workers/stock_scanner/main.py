@@ -75,6 +75,22 @@ def _message_for_signal(signal: SignalResult, ticker: Ticker, previous_score: fl
     return build_telegram_message(signal, ticker, previous_score)
 
 
+def _overlay_relevance(decision) -> float:
+    """Deterministic relevance for portfolio/watchlist alerts so the user's relevance
+    floor in the JS router actually applies (previously these defaulted to 100, which
+    bypassed the floor entirely). Risk alerts stay 100 - they are safety-critical.
+    Price-move alerts scale with the move: 60 base + 4 per percent, capped at 95."""
+    if decision.alert_type == "portfolio_risk":
+        return 100.0
+    score = decision.payload.get("signal_score")
+    if score is not None:
+        return float(score)
+    move_pct = decision.payload.get("current_move_pct")
+    if move_pct is not None:
+        return min(95.0, 60.0 + abs(float(move_pct)) * 4.0)
+    return 70.0
+
+
 def _signal_dispatch_body(signal: SignalResult) -> str:
     """Concise stat line for the multi-channel dispatch body. The JS notification layer adds the
     'Why' line and the 'Research, not advice.' suffix, so this stays a clean data line - unlike the
@@ -108,9 +124,13 @@ def _route_signal_alert(repository, settings, signal_id, ticker, signal, decisio
     rich_payload = {"reason": decision.reason, **decision.payload, "signal_score": getattr(signal, "signal_score", None)}
 
     if user_id and settings.notification_dispatch_enabled:
-        # Respect the user's prefs (tz-aware quiet hours + per-type toggles) before dispatching.
+        # Respect per-type toggles before dispatching, but NOT quiet hours: the JS router
+        # applies quiet hours with minute precision and HOLDS the event for release when the
+        # window ends. Gating quiet hours here would drop the alert forever (transition-fired).
         user_prefs = repository.load_user_alert_preferences(user_id)
-        can_send, gate_reason = should_send_alert_to_user(user_prefs, {}, decision.alert_type)
+        can_send, gate_reason = should_send_alert_to_user(
+            user_prefs, {}, decision.alert_type, ignore_quiet_hours=True
+        )
         if not can_send:
             LOGGER.info("Signal alert gated for %s on %s: %s", user_id, decision.symbol, gate_reason)
             repository.save_alert(
@@ -288,12 +308,18 @@ def main() -> None:
             if not decision.should_send:
                 continue
 
-            # For multi-user, check per-user alert preferences before sending
+            # For multi-user, check per-user alert preferences before sending. When the JS
+            # router will handle delivery, skip the quiet-hours gate here - the router holds
+            # and releases; gating here would silently drop the alert (see alert_engine).
             chat_id = None
             if decision.user_id:
+                dispatch_handles_delivery = bool(settings.notification_dispatch_enabled)
                 user_prefs = repository.load_user_alert_preferences(decision.user_id)
                 ticker_prefs = repository.load_ticker_alert_preferences(decision.user_id, decision.symbol)
-                can_send, gate_reason = should_send_alert_to_user(user_prefs, ticker_prefs, decision.alert_type)
+                can_send, gate_reason = should_send_alert_to_user(
+                    user_prefs, ticker_prefs, decision.alert_type,
+                    ignore_quiet_hours=dispatch_handles_delivery,
+                )
                 if not can_send:
                     LOGGER.info("Alert gated for user %s on %s: %s", decision.user_id, decision.symbol, gate_reason)
                     repository.save_alert(
@@ -331,7 +357,7 @@ def main() -> None:
                     body=decision.reason,
                     reason=decision.reason,
                     payload={"reason": decision.reason, **decision.payload},
-                    relevance_score=float(decision.payload.get("signal_score") or 100),
+                    relevance_score=_overlay_relevance(decision),
                 )
                 repository.save_alert(
                     signal_id=signal_id,

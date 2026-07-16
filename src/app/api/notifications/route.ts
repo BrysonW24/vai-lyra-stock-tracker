@@ -1,18 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { DEFAULT_NOTIFICATION_PREFERENCES, type NotificationPreferences } from '@/lib/notifications/types';
+import { DEFAULT_NOTIFICATION_PREFERENCES, isVoiceId, type NotificationPreferences } from '@/lib/notifications/types';
 import { sendTelegramMessage } from '@/lib/notifications/telegram';
 import { sendWhatsAppMessage } from '@/lib/notifications/whatsapp';
+import { isValidSlackWebhook, sendSlackMessage } from '@/lib/notifications/slack';
 
 /**
  * Notification-channel write API. Saves where a user wants alerts delivered (Telegram
- * chat id or WhatsApp number) into notification_channels, scoped to the signed-in user
- * via RLS so the destination is only ever visible to that user. The Telegram bot token /
- * WhatsApp Business credentials live server-side in the worker, never here.
+ * chat id, WhatsApp number, or the user's own Slack incoming-webhook URL) into
+ * notification_channels, scoped to the signed-in user via RLS so the destination is
+ * only ever visible to that user. The Telegram bot token / WhatsApp Business
+ * credentials live server-side in the worker, never here; the Slack webhook is the
+ * user's own secret and is only ever POSTed to hooks.slack.com.
  */
 
-type ChannelType = 'telegram' | 'whatsapp';
+type ChannelType = 'telegram' | 'whatsapp' | 'slack';
+const CHANNEL_TYPES: readonly ChannelType[] = ['telegram', 'whatsapp', 'slack'];
+const isChannelType = (value: unknown): value is ChannelType => CHANNEL_TYPES.includes(value as ChannelType);
 
 interface SaveChannelRequest {
   channelType: ChannelType;
@@ -27,6 +32,8 @@ interface PreferenceRow {
   push_enabled?: boolean | null;
   telegram_enabled?: boolean | null;
   whatsapp_enabled?: boolean | null;
+  slack_enabled?: boolean | null;
+  voice_preset?: string | null;
   quiet_hours_enabled?: boolean | null;
   quiet_start?: string | null;
   quiet_end?: string | null;
@@ -78,7 +85,9 @@ async function verifyChatChannel(channelType: ChannelType, destination: string):
   const result =
     channelType === 'telegram'
       ? await sendTelegramMessage(destination, probeText, probeKey)
-      : await sendWhatsAppMessage(destination, probeText, probeKey);
+      : channelType === 'slack'
+        ? await sendSlackMessage(destination, probeText, probeKey)
+        : await sendWhatsAppMessage(destination, probeText, probeKey);
 
   if (result.status === 'sent') {
     return { status: 'sent', verified: true, message: 'Channel verified - we reached this chat. Alerts are on.' };
@@ -99,7 +108,9 @@ async function verifyChatChannel(channelType: ChannelType, destination: string):
     message:
       channelType === 'telegram'
         ? 'We could not reach this chat yet - open the bot and send /start, then save again.'
-        : 'We could not reach this number yet - check it and try again, and make sure you have messaged the business number first.',
+        : channelType === 'slack'
+          ? 'We could not reach this Slack webhook - check the URL (it must start with https://hooks.slack.com/services/) and that the webhook still exists.'
+          : 'We could not reach this number yet - check it and try again, and make sure you have messaged the business number first.',
     error: result.errorMessage,
   };
 }
@@ -120,6 +131,7 @@ function coercePrefs(
   // (legacy rows) is treated as verified so pre-existing working channels are not regressed.
   const hasTelegram = channels.some((channel) => channel.channel_type === 'telegram' && channel.is_verified !== false);
   const hasWhatsApp = channels.some((channel) => channel.channel_type === 'whatsapp' && channel.is_verified !== false);
+  const hasSlack = channels.some((channel) => channel.channel_type === 'slack' && channel.is_verified !== false);
   const prefs = row || {};
 
   return {
@@ -130,6 +142,8 @@ function coercePrefs(
     pushEnabled: Boolean((prefs.push_enabled ?? DEFAULT_NOTIFICATION_PREFERENCES.pushEnabled) && activePushCount > 0),
     telegramEnabled: Boolean((prefs.telegram_enabled ?? false) || hasTelegram),
     whatsappEnabled: Boolean((prefs.whatsapp_enabled ?? false) || hasWhatsApp),
+    slackEnabled: Boolean((prefs.slack_enabled ?? false) || hasSlack),
+    voice: isVoiceId(prefs.voice_preset) ? prefs.voice_preset : DEFAULT_NOTIFICATION_PREFERENCES.voice,
     quietHoursEnabled: prefs.quiet_hours_enabled ?? DEFAULT_NOTIFICATION_PREFERENCES.quietHoursEnabled,
     quietStart: hhmm(prefs.quiet_start, DEFAULT_NOTIFICATION_PREFERENCES.quietStart),
     quietEnd: hhmm(prefs.quiet_end, DEFAULT_NOTIFICATION_PREFERENCES.quietEnd),
@@ -204,6 +218,8 @@ export async function PATCH(request: NextRequest) {
     if (hasOwn(preferences, 'pushEnabled')) patch.push_enabled = Boolean(preferences.pushEnabled);
     if (hasOwn(preferences, 'telegramEnabled')) patch.telegram_enabled = Boolean(preferences.telegramEnabled);
     if (hasOwn(preferences, 'whatsappEnabled')) patch.whatsapp_enabled = Boolean(preferences.whatsappEnabled);
+    if (hasOwn(preferences, 'slackEnabled')) patch.slack_enabled = Boolean(preferences.slackEnabled);
+    if (hasOwn(preferences, 'voice')) patch.voice_preset = isVoiceId(preferences.voice) ? preferences.voice : DEFAULT_NOTIFICATION_PREFERENCES.voice;
     if (hasOwn(preferences, 'quietHoursEnabled')) patch.quiet_hours_enabled = Boolean(preferences.quietHoursEnabled);
     if (hasOwn(preferences, 'quietStart')) patch.quiet_start = preferences.quietStart || DEFAULT_NOTIFICATION_PREFERENCES.quietStart;
     if (hasOwn(preferences, 'quietEnd')) patch.quiet_end = preferences.quietEnd || DEFAULT_NOTIFICATION_PREFERENCES.quietEnd;
@@ -237,8 +253,8 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as SaveChannelRequest;
     const channelType = body.channelType;
-    if (channelType !== 'telegram' && channelType !== 'whatsapp') {
-      return NextResponse.json({ ok: false, error: 'channelType must be telegram or whatsapp' }, { status: 400 });
+    if (!isChannelType(channelType)) {
+      return NextResponse.json({ ok: false, error: 'channelType must be telegram, whatsapp, or slack' }, { status: 400 });
     }
 
     const destination = (body.destination || '').trim();
@@ -250,6 +266,14 @@ export async function POST(request: NextRequest) {
       if (!/^\+?\d{7,15}$/.test(cleaned)) {
         return NextResponse.json({ ok: false, error: 'Enter a valid phone number in international format, e.g. +61400000000' }, { status: 400 });
       }
+    }
+    // SSRF fence: a Slack destination is a URL this server will POST to, so it must be a
+    // real hooks.slack.com incoming webhook - nothing else is ever accepted or stored.
+    if (channelType === 'slack' && !isValidSlackWebhook(destination)) {
+      return NextResponse.json(
+        { ok: false, error: 'Enter a Slack incoming-webhook URL (it starts with https://hooks.slack.com/services/).' },
+        { status: 400 },
+      );
     }
 
     // One active channel per type: deactivate existing, then upsert the chosen one. The row is saved
@@ -322,8 +346,8 @@ export async function DELETE(request: NextRequest) {
     if (!user) return unauthenticated();
 
     const body = (await request.json()) as { channelType: ChannelType };
-    if (body.channelType !== 'telegram' && body.channelType !== 'whatsapp') {
-      return NextResponse.json({ ok: false, error: 'channelType must be telegram or whatsapp' }, { status: 400 });
+    if (!isChannelType(body.channelType)) {
+      return NextResponse.json({ ok: false, error: 'channelType must be telegram, whatsapp, or slack' }, { status: 400 });
     }
 
     const { error } = await supabase

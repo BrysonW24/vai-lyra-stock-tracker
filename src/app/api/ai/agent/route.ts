@@ -3,6 +3,7 @@ import type { AiProvider } from '@/lib/ai/gateway';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { runResearchAnalyst } from '@/lib/ai/run-agent';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { guardAiRoute } from '@/lib/api/ai-guard';
 
 interface AgentRequest {
   agent: 'research_analyst';
@@ -18,11 +19,12 @@ interface AgentRequest {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as AgentRequest;
-    const { agent, symbol, question, ai } = body;
+    const guard = await guardAiRoute<AgentRequest>(request);
+    if (!guard.ok) return guard.response;
+    const { agent, symbol, question, ai } = guard.body;
     if (!ai || !symbol) return NextResponse.json({ ok: false, reason: 'bad_request' });
 
-    const creds = resolveAiCredentials(ai);
+    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated });
     if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
     if (question && detectInjectionAttempt(question)) {

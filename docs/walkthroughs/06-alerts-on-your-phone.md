@@ -9,12 +9,13 @@ This builds on [walkthrough 3 - Go live with Supabase](./03-go-live-supabase.md)
 mode working (your own Supabase, the scanner runs, you can sign in) before alerts have anything
 to say.
 
-Three channels, three very different maturity levels - this doc is honest about each:
+Four channels, four very different maturity levels - this doc is honest about each:
 
 | Channel | Status today | What you need |
 |---|---|---|
 | Web push (browser / iPhone Home Screen) | Works today | Two generated keys, no phone number, no third-party account |
 | Telegram | Works today - the recommended phone channel | A free bot from BotFather (2 minutes) |
+| Slack | Works today - the recommended desk channel | Your own incoming webhook (2 minutes, no server env) |
 | WhatsApp | Architecture only - do not rely on it | A verified Meta Business account + template approval (days of Meta process) |
 
 Lyra is research tooling, not financial advice. An alert is a structured observation ("this
@@ -292,7 +293,44 @@ ends (`releaseHeldEvents` drains held rows on the next dispatch). Note that **Se
 rehearse quiet hours: it runs with `forceInstant: true` (section 2c), which deliberately bypasses
 the quiet-hours rule and always delivers instantly.
 
-## Step 4 - WhatsApp (architecture only - read before spending time here)
+## Step 4 - Slack (your own webhook, ~2 minutes)
+
+Alerts land in any Slack channel you choose, delivered through **your own incoming webhook** -
+no server credentials, no bot token, nothing in `.env`. The webhook is saved per user, so every
+user of your deployment can point alerts at their own workspace.
+
+1. Create the webhook: [api.slack.com/apps](https://api.slack.com/apps) -> your app (or
+   **Create New App -> From scratch**) -> **Incoming Webhooks** -> toggle **On** ->
+   **Add New Webhook to Workspace** -> pick the channel -> **Allow** -> copy the URL
+   (it starts with `https://hooks.slack.com/services/`).
+2. In Lyra: **Settings -> Notifications -> Slack webhook** - paste the URL and hit the
+   Slack button to save.
+3. Saving fires a **real verification message** at the webhook. The channel only turns on
+   when that message actually lands - if the URL is wrong or revoked, the UI tells you and
+   nothing silently black-holes.
+
+**Verify:** the confirmation message appears in your Slack channel and the status pill reads
+"Slack on".
+
+What the messages look like: each event type has its own emoji and framing (a :dart: signal, a
+:coffee: daily digest, a :bell: approval request...), followed by the full grain of data the
+engine computed - the trigger reason, symbol, relevance score, evidence count, and a deep link
+back into Lyra. Research-type alerts always end with "Research, not advice." The formatting is
+deterministic (`src/lib/notifications/slack-templates.ts`) - the AI never writes these.
+
+You can also pick the **agent personality** - how alerts are worded. The same notifications
+panel has a personality picker with a live preview: Analyst (the house voice), Coach (greets you
+by first name - "Bryson, worth a look..."), Minimal (no prose, data only), or Narrator (story
+flavour). Personalities are pre-written templates with variables
+(`src/lib/notifications/voice.ts`); they reword the framing line only - the title, trigger
+reason, and every number are identical in all of them.
+
+A security note worth knowing: the webhook URL is a secret (anyone holding it can post to your
+channel). Lyra stores it in your own RLS-scoped `notification_channels` row (or this browser's
+localStorage in demo mode), only ever POSTs to `hooks.slack.com`, and delivery logs keep a
+redacted form of the URL - never the full secret.
+
+## Step 5 - WhatsApp (architecture only - read before spending time here)
 
 Straight from `.env.example`: "WhatsApp Cloud API (Part 9 - architecture only)". Here is exactly
 what that means, so you can decide whether to bother. Full reference:

@@ -127,7 +127,6 @@ export function calculateDividends(
   }
 
   const year1Income = projections[0]?.income || 0;
-  const year1PortfolioValue = projections[0]?.portfolioValue || initialInvestment;
   const yieldOnCost = year1Income / initialInvestment;
 
   return {
@@ -320,7 +319,6 @@ export function calculateProfitTarget(
 ): ProfitTargetResult {
   const targetPrice = entryPrice * (1 + profitTargetPercent / 100);
   const breakEvenPrice = entryPrice;
-  const stopPrice = entryPrice * (1 - stopLossPercent / 100);
 
   const profitAtTarget = (targetPrice - entryPrice) * positionSizeShares;
   const profitPercentAtTarget = profitTargetPercent;

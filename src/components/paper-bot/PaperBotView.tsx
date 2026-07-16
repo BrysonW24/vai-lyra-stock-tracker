@@ -694,7 +694,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
         {flags.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-[#1d2733] py-5 text-center">
             <Bell size={16} className="text-[#3a4a5a]" />
-            <p className="text-[10px] text-[#4a5a6a]">No alerts yet — they'll appear here as your portfolio moves</p>
+            <p className="text-[10px] text-[#4a5a6a]">No alerts yet - they&apos;ll appear here as your portfolio moves</p>
           </div>
         ) : (
           <ul className="space-y-1">

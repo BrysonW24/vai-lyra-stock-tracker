@@ -227,7 +227,11 @@ function actionFor(status: SignalStatus): ActionState {
   return 'hold';
 }
 
-function lifecycleFor(status: SignalStatus, prevStatus: SignalStatus, scoreDelta: number): LifecycleState {
+function lifecycleFor(status: SignalStatus, prevStatus: SignalStatus | null, scoreDelta: number): LifecycleState {
+  // Mirrors signal_engine.py lifecycle_state_for, including the previous_status is None branch.
+  if (prevStatus === null) {
+    return status === 'strong_setup' || status === 'watchlist_setup' ? 'new_signal' : 'unchanged';
+  }
   if (status === 'invalidated') return 'invalidated';
   if (prevStatus !== 'strong_setup' && status === 'strong_setup') return 'upgraded';
   if (prevStatus === 'strong_setup' && status === 'watchlist_setup') return 'downgraded';
@@ -292,13 +296,20 @@ async function buildLiveSignal(symbol: string): Promise<Partial<SignalRow> | nul
   const i = close.length - 1;
   const snap = buildSnap(ohlcv, rsi, macdLine, signal, hist, i);
   const prevSnap = buildSnap(ohlcv, rsi, macdLine, signal, hist, i - 1);
+  // Third snapshot (i-2) so the previous candle's score and STATUS are computed like-for-like
+  // with the current one: scoreSnap's volume-vs-previous term needs a prior snap, and statusFor
+  // needs a prior score to ever return 'weakening'/'invalidated'. Without it, scoreDelta was
+  // inflated by up to 5 and the 'recovered' lifecycle branch was unreachable (parity with
+  // signal_engine.py's previous-status logic).
+  const prevPrevSnap = buildSnap(ohlcv, rsi, macdLine, signal, hist, i - 2);
   if (!snap) return null;
 
   const score = scoreSnap(snap, prevSnap);
-  const prevScore = prevSnap ? scoreSnap(prevSnap, null) : null;
+  const prevScore = prevSnap ? scoreSnap(prevSnap, prevPrevSnap) : null;
+  const prevPrevScore = prevPrevSnap ? scoreSnap(prevPrevSnap, null) : null;
   const scoreDelta = prevScore ? score.final - prevScore.final : 0;
   const status = statusFor(score.final, prevScore ? prevScore.final : null);
-  const prevStatus = prevScore ? statusFor(prevScore.final, null) : status;
+  const prevStatus = prevScore ? statusFor(prevScore.final, prevPrevScore ? prevPrevScore.final : null) : null;
   const action = actionFor(status);
 
   const prevClose = close[i - 1];
@@ -343,13 +354,25 @@ async function buildLiveSignal(symbol: string): Promise<Partial<SignalRow> | nul
  * matched by symbol. Returns the array unchanged for any symbol that can't be
  * computed (network/parse failure), so the dashboard never regresses below demo.
  */
+/** Max simultaneous upstream OHLCV fetches, so a cold cache can't fan out N calls at once. */
+const LIVE_FETCH_CONCURRENCY = 8;
+
 export async function applyLiveSignals(signals: SignalRow[]): Promise<SignalRow[]> {
   if (signals.length === 0) return signals;
-  const live = await Promise.all(
-    signals.map(async (signal) => {
+
+  // Bounded worker pool: at most LIVE_FETCH_CONCURRENCY Yahoo requests in flight regardless of how
+  // many signals render. Each fetch is still cached 10 min (see fetchOhlcv), so a warm page pays
+  // nothing; this only caps the cold-cache burst that used to block the render with ~80 parallel calls.
+  const out = new Array<SignalRow>(signals.length);
+  let cursor = 0;
+  async function worker(): Promise<void> {
+    while (cursor < signals.length) {
+      const index = cursor++;
+      const signal = signals[index];
       const computed = await buildLiveSignal(signal.symbol);
-      return computed ? { ...signal, ...computed } : signal;
-    }),
-  );
-  return live;
+      out[index] = computed ? { ...signal, ...computed } : signal;
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(LIVE_FETCH_CONCURRENCY, signals.length) }, worker));
+  return out;
 }

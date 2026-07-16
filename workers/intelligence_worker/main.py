@@ -260,3 +260,23 @@ def _compute_and_persist_hype(
     except Exception as e:
         logger.error(f"Failed to compute/persist hype scores: {e}")
         return 0
+
+
+def main() -> None:
+    """CLI entrypoint so the scheduler can actually run this worker.
+
+    (The run_* orchestrator existed with no caller - `python -m
+    workers.intelligence_worker.main`, scheduled by nightly-maintenance.yml, is the fix.)
+    """
+    from workers.stock_scanner.config import load_settings
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+    settings = load_settings()
+    repo = SupabaseRepository(settings)
+    summary = run_intelligence_worker(settings, repo)
+    if summary.get("status") == "failed":
+        raise SystemExit("intelligence worker failed: " + str(summary.get("error")))
+
+
+if __name__ == "__main__":
+    main()

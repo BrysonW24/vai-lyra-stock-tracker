@@ -102,6 +102,14 @@ else warn('No shared Google fallback (optional)');
 if (has('ANTHROPIC_API_KEY') && /^true$/i.test(env.ENABLE_AI_EXPLANATIONS || '')) ok('Legacy worker AI explanations enabled (Anthropic key + ENABLE_AI_EXPLANATIONS=true)');
 else warn('Legacy worker AI explanations off (optional)');
 
+// 6a. Feedback channel - where the in-app feedback box actually lands
+const feedbackGitHub = has('GITHUB_FEEDBACK_TOKEN') && has('GITHUB_FEEDBACK_REPO');
+const feedbackSlack = has('SLACK_FEEDBACK_WEBHOOK_URL') || (has('SLACK_FEEDBACK_BOT_TOKEN') && has('SLACK_FEEDBACK_CHANNEL'));
+if (feedbackGitHub && feedbackSlack) ok('Feedback channel: GitHub issues + Slack');
+else if (feedbackGitHub) ok(`Feedback channel: GitHub issues (${env.GITHUB_FEEDBACK_REPO})`);
+else if (feedbackSlack) ok('Feedback channel: Slack');
+else warn('Feedback channel not wired - in-app feedback only reaches server logs (set GITHUB_FEEDBACK_* or SLACK_FEEDBACK_*)');
+
 // 7. Optional live Supabase reachability
 async function pingSupabase() {
   const url = env.NEXT_PUBLIC_SUPABASE_URL || env.SUPABASE_URL;

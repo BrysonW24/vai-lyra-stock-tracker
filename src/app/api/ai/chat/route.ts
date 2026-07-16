@@ -3,11 +3,13 @@ import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { getDashboardData } from '@/lib/data';
 import { buildGrounding, type ChatProfile } from '@/lib/ai/chat-context';
+import { buildKnowledgeBlock } from '@/lib/knowledge/retrieve';
 import { getUserConstraints, buildConstraintsBlock } from '@/lib/ai/user-context';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_CHAT_FORMAT, composeSystem, toneFor } from '@/lib/ai/system-prompt';
 import { recordAiRun, hashInput } from '@/lib/ai/audit';
 import { recordQuestionSignal } from '@/lib/ai/question-signals';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { guardAiRoute } from '@/lib/api/ai-guard';
 import { parseTradeLogIntent, detectSellLogIntent } from '@/lib/trading/trade-intent';
 import { lookupMarketQuote } from '@/lib/market/quote';
 
@@ -52,20 +54,30 @@ const money = (n: number, currency = 'USD') =>
  * prepended. The model phrases; it cannot invent numbers or give advice. Any failure returns
  * ok:false so the UI degrades gracefully.
  */
+/** Number of prior turns fed into the prompt - also the number screened for injection. */
+const HISTORY_TURNS = 8;
+
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as ChatRequest;
+    const guard = await guardAiRoute<ChatRequest>(request);
+    if (!guard.ok) return guard.response;
+    const { body, authenticated } = guard;
     const { messages, ai, profile, agentActions } = body;
 
     if (!ai) return NextResponse.json({ ok: false, reason: 'disabled' });
     if (!Array.isArray(messages) || messages.length === 0) return NextResponse.json({ ok: false, reason: 'empty' });
 
-    const creds = resolveAiCredentials(ai);
+    const creds = resolveAiCredentials(ai, { authenticated });
     if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
     const last = messages[messages.length - 1];
     const inputHash = hashInput({ messages, profile });
-    if (last?.role === 'user' && detectInjectionAttempt(last.content)) {
+    // Screen EVERY turn that will enter the prompt, not just the final message - an attacker
+    // can otherwise bury injected instructions in an earlier or forged 'assistant' turn (only
+    // the user's own text is trusted; assistant turns are model output being replayed).
+    const screenedTurns = messages.slice(-HISTORY_TURNS);
+    const injectionInHistory = screenedTurns.some((m) => detectInjectionAttempt(m.content));
+    if (injectionInHistory || (last?.role === 'user' && detectInjectionAttempt(last.content))) {
       void recordAiRun({
         userId: 'local',
         agentName: 'portfolio_assistant',
@@ -151,6 +163,10 @@ export async function POST(request: NextRequest) {
     const data = await getDashboardData();
     const constraints = await getUserConstraints();
     const constraintsBlock = constraints ? buildConstraintsBlock(constraints) : '';
+    // Knowledge layer: when the question is about Lyra itself (setup, deployment, costs, how
+    // the score works), retrieve the relevant doc sections so the answer is grounded and
+    // citable. Deterministic lexical retrieval; '' for ordinary market/portfolio questions.
+    const knowledgeBlock = last?.role === 'user' ? buildKnowledgeBlock(last.content) : '';
     const system = composeSystem([
       LYRA_IDENTITY,
       'The user is chatting with you. Answer their question directly.',
@@ -168,8 +184,9 @@ export async function POST(request: NextRequest) {
         : false,
       constraintsBlock || false,
       `CONTEXT (deterministic, from the latest scan):\n${buildGrounding(data, new Date())}`,
+      knowledgeBlock || false,
     ]);
-    const history = messages.slice(-8).map((m) => `${m.role === 'user' ? 'User' : 'Lyra'}: ${m.content}`).join('\n');
+    const history = screenedTurns.map((m) => `${m.role === 'user' ? 'User' : 'Lyra'}: ${m.content}`).join('\n');
     const prompt = `${history}\nLyra:`;
 
     const startedAt = Date.now();

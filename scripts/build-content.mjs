@@ -52,3 +52,7 @@ writeFileSync(
   `${JSON.stringify(files.map((f) => f.replace(/\.jsonl$/, '')), null, 2)}\n`,
 );
 console.log(`content: ${files.length} domain(s), ${total} record(s) compiled`);
+
+// The knowledge pipeline rides the same hook (predev / prebuild / pretype-check), so the
+// retrievable-docs layer can never go stale relative to the docs on disk.
+await import('./build-knowledge.mjs');

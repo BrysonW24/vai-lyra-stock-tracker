@@ -126,7 +126,6 @@ export function CalculatorsView() {
   const [cagrResult, setCAGRResult] = useState<CAGRResult | null>(null);
 
   // Rule of 72 state
-  const [r72Rate, setR72Rate] = useState(7);
   const [r72Result, setR72Result] = useState<Rule72Result | null>(null);
 
   // DCA state
@@ -186,12 +185,6 @@ export function CalculatorsView() {
   // Recompute on input changes
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
-  };
-
-  const handleCiPrincipalChange = (val: number) => {
-    setCiPrincipal(val);
-    calculateCompoundInterest(val, ciMonthly, ciRate, ciYears, ciCompounding);
-    handleCompoundInterest();
   };
 
   return (

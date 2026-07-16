@@ -25,7 +25,6 @@ import {
 
 const confidenceSchema = z.number().min(0).max(1);
 const citationsRequiredSchema = z.array(z.string().min(1)).min(1);
-const citationsSchema = z.array(z.string().min(1));
 const evidenceItemSchema = z.object({ id: z.string().min(1), text: z.string().min(1) }).strict();
 
 export const TRADE_READINESS_VERDICTS = [

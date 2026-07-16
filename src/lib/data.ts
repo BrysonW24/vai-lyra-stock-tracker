@@ -406,7 +406,9 @@ export async function getDashboardData(): Promise<DashboardData> {
     const userId = userData.user?.id ?? null;
 
     const [tickersResult, signalsResult, runsResult, alertsResult] = await Promise.all([
-      supabase.from('stock_tickers').select('*').order('symbol', { ascending: true }),
+      // Bounded like the sibling queries - the universe is a few hundred names at most, and an
+      // unbounded select grows with every ticker added and runs on each dashboard render.
+      supabase.from('stock_tickers').select('*').order('symbol', { ascending: true }).limit(500),
       supabase.from('stock_signals').select('*').order('candle_time', { ascending: false }).limit(80),
       supabase.from('stock_scanner_runs').select('*').order('started_at', { ascending: false }).limit(1),
       supabase.from('stock_alerts').select('*').order('created_at', { ascending: false }).limit(20),
@@ -420,7 +422,13 @@ export async function getDashboardData(): Promise<DashboardData> {
     const signals = latestSignals((signalsResult.data ?? []) as SignalRecord[], tickers);
     const latestRun = mapRun(((runsResult.data ?? []) as RunRecord[])[0] ?? null);
     const alerts = mapAlerts((alertsResult.data ?? []) as AlertRecord[]);
-    const signalsBySymbol = new Map(signals.map((signal) => [signal.symbol, signal]));
+
+    // Recompute the signal brain from live prices ONCE, up front, and thread the SAME array into
+    // everything downstream (the signal table, the changes board, and the portfolio/watchlist
+    // overlays). Deriving any of them from the raw DB signals instead would let boards disagree
+    // with the table on the same symbol's score/delta.
+    const liveSignals = await applyLiveSignals(signals.length > 0 ? signals : demoDashboardData.signals);
+    const signalsBySymbol = new Map(liveSignals.map((signal) => [signal.symbol, signal]));
 
     // Portfolio + watchlist live in separate tables. Fetch them in their own guarded
     // block so a missing/empty overlay table never breaks the core dashboard - each
@@ -428,7 +436,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     // arrays if the user is signed in.
     let portfolio = userId ? ([] as PortfolioHolding[]) : demoDashboardData.portfolio;
     let watchlist = userId ? ([] as WatchlistRow[]) : demoDashboardData.watchlist;
-    let signalChanges = signals.length > 0 ? deriveSignalChanges(signals) : demoDashboardData.signalChanges;
+    let signalChanges = liveSignals.length > 0 ? deriveSignalChanges(liveSignals) : demoDashboardData.signalChanges;
 
     try {
       // RLS already scopes private rows to the signed-in user; the explicit user_id
@@ -471,7 +479,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     return {
       generatedFrom: 'supabase',
       latestRun,
-      signals: await applyLiveSignals(signals.length > 0 ? signals : demoDashboardData.signals),
+      signals: liveSignals,
       alerts,
       tickers: tickers.length > 0 ? tickers : demoDashboardData.tickers,
       portfolio,

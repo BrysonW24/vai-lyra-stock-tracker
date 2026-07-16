@@ -1,17 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { FundamentalsReport } from '@/lib/fundamentals';
 import { TickerLogo } from '@/components/TickerLogo';
 import {
-  formatCurrency,
   formatNumber,
   formatPercent,
-  formatSignedNumber,
   formatSignedPercent,
   toneClass,
-  trendArrow,
 } from '@/lib/format';
 import { pageTitleClass } from '@/lib/ui';
 

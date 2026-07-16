@@ -5,9 +5,15 @@ import { renderNotificationText, renderNotificationPushBody } from './templates'
 import { DEFAULT_NOTIFICATION_PREFERENCES, type ChannelType, type NotificationEvent, type NotificationPreferences, type NotificationType } from './types';
 import { sendTelegramMessage } from './telegram';
 import { sendWhatsAppMessage } from './whatsapp';
+import { sendSlackMessage } from './slack';
+import { buildSlackTextForEvent } from './slack-templates';
+import { isVoiceId } from './types';
 import { buildWhatsAppMessageForEvent } from './whatsapp-templates';
 
 type SupabaseLike = {
+  // Only `.from()` is required of the injected client; the builder chain stays `any` on
+  // purpose so unit tests can hand in a tiny fake without recreating supabase-js generics.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (table: string) => any;
 };
 
@@ -18,6 +24,8 @@ interface PreferenceRow {
   push_enabled?: boolean | null;
   telegram_enabled?: boolean | null;
   whatsapp_enabled?: boolean | null;
+  slack_enabled?: boolean | null;
+  voice_preset?: string | null;
   quiet_hours_enabled?: boolean | null;
   quiet_start?: string | null;
   quiet_end?: string | null;
@@ -97,18 +105,26 @@ async function loadActiveChannels(supabase: SupabaseLike, userId: string): Promi
   ) as ChannelRow[];
 }
 
-async function loadPreferences(supabase: SupabaseLike, userId: string): Promise<{ prefs: NotificationPreferences; channels: ChannelRow[] }> {
-  const [{ data: row }, channels] = await Promise.all([
+async function loadPreferences(
+  supabase: SupabaseLike,
+  userId: string,
+): Promise<{ prefs: NotificationPreferences; channels: ChannelRow[]; displayName?: string }> {
+  const [{ data: row }, channels, { data: profileRow }] = await Promise.all([
     supabase.from('user_alert_preferences').select('*').eq('user_id', userId).maybeSingle(),
     loadActiveChannels(supabase, userId),
+    // First name feeds voice templates ({name}); absence degrades gracefully in fillVoiceTemplate.
+    supabase.from('profiles').select('display_name').eq('id', userId).maybeSingle(),
   ]);
 
   const prefsRow = (row || {}) as PreferenceRow;
+  const displayName = ((profileRow as { display_name?: string | null } | null)?.display_name || '').split(/\s+/)[0] || undefined;
   const hasTelegram = channels.some((channel) => channel.channel_type === 'telegram');
   const hasWhatsApp = channels.some((channel) => channel.channel_type === 'whatsapp');
+  const hasSlack = channels.some((channel) => channel.channel_type === 'slack');
 
   return {
     channels,
+    displayName,
     prefs: {
       ...DEFAULT_NOTIFICATION_PREFERENCES,
       instantAlerts: prefsRow.alerts_enabled ?? DEFAULT_NOTIFICATION_PREFERENCES.instantAlerts,
@@ -117,6 +133,8 @@ async function loadPreferences(supabase: SupabaseLike, userId: string): Promise<
       pushEnabled: prefsRow.push_enabled ?? DEFAULT_NOTIFICATION_PREFERENCES.pushEnabled,
       telegramEnabled: (prefsRow.telegram_enabled ?? false) || hasTelegram,
       whatsappEnabled: (prefsRow.whatsapp_enabled ?? false) || hasWhatsApp,
+      slackEnabled: (prefsRow.slack_enabled ?? false) || hasSlack,
+      voice: isVoiceId(prefsRow.voice_preset) ? prefsRow.voice_preset : DEFAULT_NOTIFICATION_PREFERENCES.voice,
       quietHoursEnabled: prefsRow.quiet_hours_enabled ?? DEFAULT_NOTIFICATION_PREFERENCES.quietHoursEnabled,
       quietStart: hhmm(prefsRow.quiet_start, DEFAULT_NOTIFICATION_PREFERENCES.quietStart),
       quietEnd: hhmm(prefsRow.quiet_end, DEFAULT_NOTIFICATION_PREFERENCES.quietEnd),
@@ -257,7 +275,8 @@ async function deliverChat(
   supabase: SupabaseLike,
   event: NotificationEvent,
   channels: ChannelRow[],
-  channelType: Extract<ChannelType, 'telegram' | 'whatsapp'>,
+  channelType: Extract<ChannelType, 'telegram' | 'whatsapp' | 'slack'>,
+  voiceOpts: { voice: NotificationPreferences['voice']; name?: string } = { voice: 'analyst' },
 ): Promise<{ delivered: string[]; suppressed: string[]; errors: string[] }> {
   const destinations = channels.filter((channel) => channel.channel_type === channelType && channel.destination);
   if (destinations.length === 0) {
@@ -291,13 +310,22 @@ async function deliverChat(
             eventId: event.id,
             userId: event.userId,
           })
-        : await sendWhatsAppMessage(destination.destination!, whatsAppMessage ?? text, idempotencyKey);
+        : channelType === 'slack'
+          ? await sendSlackMessage(
+              destination.destination!,
+              buildSlackTextForEvent(event, { voice: voiceOpts.voice, name: voiceOpts.name }),
+              idempotencyKey,
+              { eventId: event.id, userId: event.userId },
+            )
+          : await sendWhatsAppMessage(destination.destination!, whatsAppMessage ?? text, idempotencyKey);
 
     await insertDelivery(supabase, {
       eventId: event.id,
       userId: event.userId,
       channel: channelType,
-      destination: destination.destination,
+      // A Slack destination is the user's webhook URL - the secret itself - so the delivery
+      // log only ever stores the adapter's redacted form. Other channels store the raw id.
+      destination: channelType === 'slack' ? result.destination : destination.destination,
       status: result.status,
       providerMessageId: result.providerMessageId,
       errorMessage: result.errorMessage,
@@ -373,7 +401,7 @@ export async function releaseHeldEvents(supabase: SupabaseLike, userId: string, 
   ).filter(Boolean);
   if (eventIds.length === 0) return 0;
 
-  const { prefs, channels } = await loadPreferences(supabase, userId);
+  const { prefs, channels, displayName } = await loadPreferences(supabase, userId);
   let released = 0;
   for (const eventId of eventIds) {
     const { data: row } = await supabase.from('notification_events').select('*').eq('id', eventId).maybeSingle();
@@ -395,7 +423,7 @@ export async function releaseHeldEvents(supabase: SupabaseLike, userId: string, 
     };
     for (const channel of decision.channels) {
       if (channel === 'push') await deliverPush(supabase, event, releaseInput);
-      else await deliverChat(supabase, event, channels, channel);
+      else await deliverChat(supabase, event, channels, channel, { voice: prefs.voice, name: displayName });
     }
     await supabase.from('notification_deliveries').update({ status: 'released' }).eq('event_id', eventId).eq('channel', 'held');
     released += 1;
@@ -500,7 +528,7 @@ export async function dispatchNotificationEvent(
     createdAt: inserted.created_at ?? now.toISOString(),
   };
 
-  const { prefs, channels } = await loadPreferences(supabase, input.userId);
+  const { prefs, channels, displayName } = await loadPreferences(supabase, input.userId);
   const decision = routeNotification(event, prefs, { now, forceInstant: input.forceInstant });
   if (!decision.deliver) {
     await insertDelivery(supabase, {
@@ -546,7 +574,7 @@ export async function dispatchNotificationEvent(
     const result =
       channel === 'push'
         ? await deliverPush(supabase, event, input)
-        : await deliverChat(supabase, event, channels, channel);
+        : await deliverChat(supabase, event, channels, channel, { voice: prefs.voice, name: displayName });
     deliveredChannels.push(...result.delivered);
     suppressedChannels.push(...result.suppressed);
     errors.push(...result.errors);

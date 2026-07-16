@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { guardAiRoute } from '@/lib/api/ai-guard';
 import { getDemoFinding } from '@/lib/findings/demo-findings';
 import { getLiveFindings } from '@/lib/findings/server';
 import { buildDefaultGenUIView, buildGenUIPrompt, validateGenUIView } from '@/lib/findings/genui';
@@ -42,7 +43,9 @@ function parseJsonLoose(text: string): unknown {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as GenUIRequest;
+    const guard = await guardAiRoute<GenUIRequest>(request);
+    if (!guard.ok) return guard.response;
+    const body = guard.body;
     if (!body.findingId) return NextResponse.json({ ok: false, error: 'Missing finding id.' }, { status: 400 });
 
     const finding = await resolveFinding(body.findingId);
@@ -50,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     const fallback = buildDefaultGenUIView(finding);
 
-    const creds = resolveAiCredentials(body.ai);
+    const creds = resolveAiCredentials(body.ai, { authenticated: guard.authenticated });
     if (!creds.apiKey) {
       return NextResponse.json({ ok: true, view: fallback, reason: 'no_key' });
     }

@@ -9,11 +9,13 @@ import { ArtisticTradingView } from '@/components/ArtisticTradingView';
 import { PortfolioTile, BriefTile, AlertTile } from '@/components/FeatureTiles';
 import { FutureStateAI } from '@/components/FutureStateAI';
 import { ExchangeStrip } from '@/components/ExchangeStrip';
+import { UltimateGoals } from '@/components/landing/UltimateGoals';
+import { StackSection } from '@/components/landing/StackSection';
 import { BRAND_NAME } from '@/lib/brand';
 
 export const metadata: Metadata = {
-  title: `${BRAND_NAME} - see the setup before everyone else`,
-  description: 'A deterministic momentum console for US tech stocks. Ranked, explainable signals, your portfolio overlaid, a plain-English daily brief, and alerts on Telegram or WhatsApp.',
+  title: `${BRAND_NAME} - see the setup first`,
+  description: 'US tech signals - scored, explained, overlaid on your book. Alerts hit your phone before the crowd catches on.',
 };
 
 // Light premium "Vivacity.ai" brand surface — the calm front door before the dark command
@@ -134,6 +136,16 @@ export default function WelcomePage() {
         {/* Future state - AI / LLM intelligence layer */}
         <section id="future" className="scroll-mt-6 pb-12">
           <FutureStateAI />
+        </section>
+
+        {/* The ultimate goal - six flip cards, honest statuses (ported from the Setup Companion) */}
+        <section id="goal" className="scroll-mt-6 pb-12">
+          <UltimateGoals />
+        </section>
+
+        {/* The stack - every technology with an honest cost badge */}
+        <section id="stack" className="scroll-mt-6 pb-12">
+          <StackSection />
         </section>
 
         {/* Footer */}

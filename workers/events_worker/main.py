@@ -256,3 +256,23 @@ def _load_latest_signals(repo: SupabaseRepository) -> list[dict]:
     except Exception as e:
         logger.warning(f"Failed to load latest signals: {e}")
         return []
+
+
+def main() -> None:
+    """CLI entrypoint so the scheduler can actually run this worker.
+
+    (The run_* orchestrator existed with no caller - `python -m
+    workers.events_worker.main`, scheduled by nightly-maintenance.yml, is the fix.)
+    """
+    from workers.stock_scanner.config import load_settings
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+    settings = load_settings()
+    repo = SupabaseRepository(settings)
+    summary = run_events_worker(settings, repo)
+    if summary.get("status") == "failed":
+        raise SystemExit("events worker failed: " + str(summary.get("error")))
+
+
+if __name__ == "__main__":
+    main()

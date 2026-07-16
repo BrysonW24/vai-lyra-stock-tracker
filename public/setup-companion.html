@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Self-refresh: the setup agent edits SETUP_STATE below between stages; the reload picks it up. -->
+<meta http-equiv="refresh" content="5">
+<title>Lyra - Setup Companion · Built by Vivacity.ai</title>
+<script>
+/* ============================================================================
+   SETUP_STATE - the ONLY thing the setup agent edits (between the markers).
+   status: "pending" | "active" | "done" | "blocked" | "skipped"
+   note:   one short line about what is happening right now (shown on the card)
+   ============================================================================ */
+/* SETUP_STATE_START */
+window.SETUP_STATE = {
+  updated: "not started yet",
+  path: "Not chosen yet",
+  appUrl: "http://localhost:3042",
+  deployedUrl: "",
+  stages: {
+    s0: { status: "pending", note: "" },
+    s1: { status: "pending", note: "" },
+    s2: { status: "pending", note: "" },
+    s3: { status: "pending", note: "" },
+    s3b: { status: "pending", note: "" },
+    s4: { status: "pending", note: "" },
+    s5: { status: "pending", note: "" }
+  }
+};
+/* SETUP_STATE_END */
+</script>
+<style>
+  /* Lyra landing-page system (src/app/welcome/page.tsx): warm off-white #F7F6F2, deep navy
+     #0E1E3A, Vivacity blue #1E63FF -> #5BC8FF, the Lyra tri-gradient mark (#3b5bdb ->
+     #43d18b -> #f3a33a), soft blue glow blobs, glass cards. Built by Vivacity.ai. */
+  :root {
+    --bg: #F7F6F2; --ink: #0E1E3A; --body: #5A6B82; --faint: #8290a0; --faint2: #5A6772;
+    --blue: #1E63FF; --blue2: #5BC8FF; --blue-soft: #eaf1ff;
+    --l1: #3b5bdb; --l2: #43d18b; --l3: #f3a33a;
+    --border: rgba(14,30,58,.10); --card: rgba(255,255,255,.72);
+    --green: #189a66; --green-soft: #e7f6ef; --red: #d64545;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 32px 20px 64px; min-height: 100vh; position: relative; overflow-x: hidden;
+  }
+  /* The landing page's soft blue glow blobs */
+  body::before, body::after {
+    content: ""; position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+  }
+  body::before { left: -8rem; top: -8rem; width: 24rem; height: 24rem; background: rgba(30,99,255,.10); filter: blur(64px); }
+  body::after { right: -10rem; top: 10rem; width: 28rem; height: 28rem; background: rgba(91,200,255,.15); filter: blur(64px); }
+  .wrap { max-width: 960px; margin: 0 auto; position: relative; z-index: 1; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* Top: stacked brand lockup - Lyra product line, then "by", then Vivacity.ai */
+  header { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+  .brandline { display: flex; align-items: center; gap: 10px; }
+  .lyra-mark { flex: none; filter: drop-shadow(0 1px 2px rgba(59,91,219,.28)); }
+  .prod { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+  .prod .thin { color: var(--faint); font-weight: 450; font-size: 15px; }
+  .bysep { font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--faint2); }
+  .vline { display: flex; align-items: center; gap: 9px; }
+  .vline img { width: 28px; height: 28px; object-fit: contain; }
+  /* The Vivacity.ai wordmark: heavy caps, deep navy, ".AI" in brand blue */
+  .vword { font-size: 16px; font-weight: 900; letter-spacing: .06em; color: var(--ink); }
+  .vword .ai { color: var(--blue); }
+
+
+  @media (max-width: 560px) {
+    body { padding: 24px 14px 48px; }
+    header { align-items: center; text-align: center; }
+    .brandline { justify-content: center; }
+    h1 { text-align: center; font-size: 24px; }
+    .hero-sub { text-align: center; font-size: 13.5px; }
+    .meta { justify-content: center; margin: 16px 0 28px; }
+    section { margin-bottom: 34px; }
+    .sec-title { font-size: 19px; }
+    .arch { padding: 12px; }
+    .arch pre { font-size: 10.5px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 9px; }
+    .tech { padding: 11px 12px; min-height: 0; gap: 5px; }
+    .tech .role { font-size: 11px; }
+    .stage { padding: 14px 14px 13px 44px; }
+    .dot { left: 12px; }
+    .stage::before { left: 20px; }
+    .links { font-size: 12px; }
+    .links a { display: inline-block; margin: 2px 14px 2px 0; }
+  }
+  h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; margin-top: 26px; }
+  h1 .grad {
+    background: linear-gradient(90deg, var(--blue), var(--blue2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero-sub { color: var(--body); font-size: 14px; margin: 12px 0 0; max-width: 680px; }
+  .hero-sub b { color: var(--blue); font-weight: 550; }
+
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 40px; font-size: 11px; }
+  .meta span {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--border); background: rgba(255,255,255,.7);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-radius: 999px; padding: 5px 12px; color: var(--body);
+  }
+  .meta span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--l2); }
+  .meta b { color: var(--blue); font-weight: 600; }
+
+  section { margin-bottom: 44px; }
+  .sec-label {
+    font-family: ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 600;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--blue); margin-bottom: 5px;
+  }
+  .sec-title { font-size: 22px; font-weight: 650; letter-spacing: -0.015em; margin-bottom: 14px; }
+  .sec-title .blue { color: var(--blue); }
+
+  /* Architecture strip */
+  .arch {
+    border: 1px solid var(--border); border-radius: 14px;
+    background: var(--card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 12px 34px rgba(14,30,58,.06);
+    padding: 16px 18px; overflow-x: auto;
+  }
+  .arch pre { font-size: 12px; line-height: 1.7; color: var(--body); }
+  .arch .hl { color: #b45a1d; font-weight: 600; }
+  .arch .g { color: var(--green); font-weight: 600; }
+  .arch .b { color: var(--blue); font-weight: 600; }
+
+  /* Stack grid - floating glass tiles like the landing cards */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(214px, 1fr)); gap: 11px; }
+  .tech {
+    border: 1px solid var(--border); border-radius: 14px; padding: 14px 15px;
+    background: var(--card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 24px rgba(14,30,58,.05);
+    display: flex; flex-direction: column; gap: 7px; min-height: 120px;
+    transition: box-shadow .18s, transform .18s;
+  }
+  .tech:hover { transform: translateY(-2px); box-shadow: 0 16px 38px rgba(14,30,58,.10); }
+  .tech-head { display: flex; align-items: center; gap: 9px; }
+  .tech img, .tech .glyph {
+    width: 22px; height: 22px; flex: none; object-fit: contain;
+    display: flex; align-items: center; justify-content: center; font-size: 17px;
+  }
+  .tech h3 { font-size: 13.5px; font-weight: 650; color: var(--ink); }
+  .tech .role { color: var(--body); font-size: 11.8px; flex: 1; }
+  .badge {
+    align-self: flex-start; font-size: 10px; font-weight: 700; letter-spacing: .06em;
+    border-radius: 999px; padding: 2.5px 9px; text-transform: uppercase;
+  }
+  .badge.free { color: var(--green); background: var(--green-soft); border: 1px solid #c3e8d5; }
+  .badge.paid { color: #b45a1d; background: #fdf3e4; border: 1px solid #f2d4ae; }
+  .badge.opt { color: var(--blue); background: var(--blue-soft); border: 1px solid #cdddff; }
+
+  /* Stage timeline - white glass cards; live stage glows with the Lyra tri-gradient */
+  .stage {
+    position: relative; border: 1px solid var(--border);
+    background: var(--card); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-radius: 14px; padding: 16px 18px 15px 56px; margin-bottom: 11px;
+    box-shadow: 0 8px 24px rgba(14,30,58,.05);
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .stage::before {
+    content: ""; position: absolute; left: 26px; top: 48px; bottom: -12px; width: 2px;
+    background: var(--border);
+  }
+  .stage:last-of-type::before { display: none; }
+  .dot {
+    position: absolute; left: 18px; top: 19px; width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid #c6cdd9; background: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 10px; color: transparent;
+  }
+  .stage.done .dot { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+  .stage.active {
+    border-color: rgba(59,91,219,.45);
+    box-shadow: 0 0 0 1px rgba(67,209,139,.25), 0 16px 44px rgba(59,91,219,.14);
+  }
+  .stage.active .dot { border-color: var(--l1); }
+  .stage.active .dot::after {
+    content: ""; width: 8px; height: 8px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--l1), var(--l2), var(--l3));
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: .45; transform: scale(.85);} 50% { opacity: 1; transform: scale(1.12);} }
+  .stage-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .chip {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    border-radius: 999px; padding: 3px 10px; flex: none; border: 1px solid var(--border);
+    color: var(--faint); background: #fff;
+  }
+  .chip.active { border-color: #cdddff; color: var(--blue); background: var(--blue-soft); }
+  .chip.done { border-color: #c3e8d5; color: var(--green); background: var(--green-soft); }
+  .chip.blocked { border-color: #f0c4c4; color: var(--red); background: #fdeeee; }
+  .stage h2 { font-size: 15px; font-weight: 650; color: var(--ink); }
+  .cost { margin-left: auto; font-size: 11px; color: var(--green); font-weight: 600; flex: none; }
+  .stage p { color: var(--body); font-size: 13px; margin-top: 7px; }
+  .why { color: var(--faint); font-size: 12px; margin-top: 5px; font-style: italic; }
+  .note {
+    margin-top: 9px; padding: 8px 11px; border-left: 3px solid var(--l2);
+    background: var(--green-soft); color: var(--ink); font-size: 12.5px; border-radius: 0 8px 8px 0;
+    display: none;
+  }
+  .row { display: flex; gap: 10px; margin-top: 9px; font-size: 13px; color: var(--body); align-items: baseline; }
+  .row .rlab {
+    flex: none; width: 138px; font-size: 11px; font-weight: 700; letter-spacing: .02em;
+    color: var(--ink); opacity: .85;
+  }
+  @media (max-width: 560px) { .row { flex-direction: column; gap: 2px; } .row .rlab { width: auto; } }
+  code {
+    font-family: ui-monospace, Menlo, monospace; font-size: .9em; color: var(--blue);
+    background: var(--blue-soft); border-radius: 5px; padding: 1px 5px;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .links {
+    border: 1px solid var(--border); border-radius: 14px; background: var(--card);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 8px 24px rgba(14,30,58,.05);
+    padding: 14px 18px; font-size: 12.5px; color: var(--faint);
+  }
+  .links a { margin-right: 18px; font-weight: 550; }
+
+
+  /* Ultimate-goal cards: animated glass, click to flip for the detail, honest statuses */
+  .sec-sub { color: var(--faint); font-size: 12px; margin: -8px 0 14px; }
+  .goals { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 13px; }
+  .goal {
+    position: relative; perspective: 1400px; cursor: pointer; outline: none;
+    -webkit-tap-highlight-color: transparent; transition: transform .2s;
+  }
+  .goal:hover { transform: translateY(-3px); }
+  .gin { display: grid; transform-style: preserve-3d; transition: transform .65s cubic-bezier(.2,.7,.25,1); }
+  .goal.flip .gin { transform: rotateY(180deg); }
+  .goal.noanim .gin { transition: none; }
+  .gface {
+    grid-area: 1 / 1; position: relative; display: flex; flex-direction: column;
+    overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    border: 1px solid var(--border); border-radius: 16px; padding: 0 0 15px;
+    background: var(--card); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 10px 30px rgba(14,30,58,.06); transition: box-shadow .2s;
+  }
+  .goal:hover .gface { box-shadow: 0 20px 48px rgba(14,30,58,.12); }
+  .goal:focus-visible .gface { border-color: rgba(30,99,255,.5); }
+  .gback { transform: rotateY(180deg); padding: 18px 18px 16px; gap: 8px; justify-content: center; }
+  .gback p { font-size: 12.5px; color: var(--body); line-height: 1.65; }
+  .gback .bl {
+    font-family: ui-monospace, Menlo, monospace; font-size: 9px; font-weight: 700;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--blue);
+  }
+  .ghint {
+    position: absolute; top: 10px; right: 12px; z-index: 2; pointer-events: none;
+    font-family: ui-monospace, Menlo, monospace; font-size: 8px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--faint);
+    border: 1px solid var(--border); background: rgba(255,255,255,.85);
+    border-radius: 999px; padding: 3px 8px;
+  }
+  .goal h3 { font-size: 14.5px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .goal .lede { font-size: 12.8px; color: var(--body); margin-top: 6px; }
+  .goal .gnum {
+    display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px;
+    font-size: 11px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg, var(--l1), var(--l2));
+  }
+  .goal.future .gnum { background: linear-gradient(135deg, var(--l2), var(--l3)); }
+  .gbody { padding: 12px 16px 0; }
+  .gstat { margin: 12px 16px 0; align-self: flex-start; }
+  .goal.future .gface::before {
+    content: ""; position: absolute; inset: 0; border-radius: 16px; padding: 1px; pointer-events: none;
+    background: linear-gradient(120deg, rgba(59,91,219,.5), rgba(67,209,139,.5), rgba(243,163,58,.6), rgba(59,91,219,.5));
+    background-size: 300% 300%; animation: bordershift 6s ease infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  @keyframes bordershift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  /* viz - a contained art zone; the "flow" variant stacks content so nothing can collide */
+  .viz {
+    height: 120px; position: relative; overflow: hidden; flex: none;
+    background: linear-gradient(180deg, rgba(30,99,255,.05), rgba(255,255,255,0));
+  }
+  .viz svg.fill { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .viz.flow {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    gap: 6px; padding: 12px 14px 8px; height: 126px;
+  }
+  .viz .ring { fill: none; stroke: rgba(30,99,255,.18); }
+  .viz .arm { transform-origin: 180px 124px; animation: spin 4.5s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .blip { animation: blip 4.5s ease-out infinite; }
+  .blip.b2 { animation-delay: 1.6s; } .blip.b3 { animation-delay: 3.1s; }
+  @keyframes blip { 0%, 12% { opacity: 0; r: 2; } 16% { opacity: 1; } 45% { opacity: .9; } 100% { opacity: 0; r: 5; } }
+  .drawline { stroke-dasharray: 340; stroke-dashoffset: 340; animation: draw 3.2s ease forwards; animation-delay: .3s; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .wbar { transform: scaleY(0); transform-origin: bottom; animation: rise .9s cubic-bezier(.2,.8,.2,1) forwards; }
+  .wbar.w2 { animation-delay: .25s; } .wbar.w3 { animation-delay: .5s; } .wbar.w4 { animation-delay: .75s; } .wbar.w5 { animation-delay: 1s; }
+  @keyframes rise { to { transform: scaleY(1); } }
+  .equity { stroke-dasharray: 300; stroke-dashoffset: 300; animation: draw 2.8s ease forwards .4s; }
+  .tick { opacity: 0; animation: pop .5s ease forwards; }
+  .tick.t1 { animation-delay: 1.1s; } .tick.t2 { animation-delay: 1.7s; } .tick.t3 { animation-delay: 2.3s; }
+  @keyframes pop { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .gate { opacity: .25; animation: gateon 1s ease forwards; }
+  .gate.g2 { animation-delay: .8s; } .gate.g3 { animation-delay: 1.6s; }
+  @keyframes gateon { to { opacity: 1; } }
+  .core { animation: corepulse 2.2s ease-in-out infinite 2.4s; }
+  @keyframes corepulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+
+  .provrow { display: flex; justify-content: center; gap: 16px; align-items: center; }
+  .prov { width: 24px; height: 24px; object-fit: contain; opacity: 0; animation: pop .6s ease forwards; }
+  .prov.p2 { animation-delay: .3s; }
+  .provchips {
+    font-size: 8.5px; letter-spacing: .1em; color: var(--faint); text-align: center;
+    font-family: ui-monospace, Menlo, monospace; opacity: 0; animation: pop .6s ease forwards .7s;
+  }
+  .typing {
+    max-width: 100%; border: 1px solid var(--border); background: #fff; border-radius: 9px;
+    padding: 5px 10px; font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+    color: var(--ink); white-space: nowrap; overflow: hidden;
+  }
+  .typing i { font-style: normal; display: inline-block; overflow: hidden; white-space: nowrap; vertical-align: bottom; max-width: 0; animation: type 2.6s steps(33) forwards 1.1s; }
+  @keyframes type { to { max-width: 100%; } }
+  .vizcap {
+    font-size: 8.5px; letter-spacing: .08em; line-height: 1.4; color: var(--faint);
+    font-family: ui-monospace, Menlo, monospace; text-align: center;
+  }
+  .viz.flow .vizcap { margin-top: auto; }
+  .notifs { display: flex; flex-direction: column; gap: 6px; align-self: stretch; }
+  .notif {
+    display: flex; align-items: center; gap: 7px; align-self: flex-start;
+    border: 1px solid var(--border); background: #fff; border-radius: 9px; padding: 4px 10px;
+    font-size: 10px; font-family: ui-monospace, Menlo, monospace; color: var(--ink);
+    box-shadow: 0 4px 12px rgba(14,30,58,.08); opacity: 0; transform: translateX(-14px);
+    animation: slidein .55s cubic-bezier(.2,.8,.2,1) forwards;
+  }
+  .notif img, .notif svg { width: 14px; height: 14px; flex: none; }
+  .notif.n2 { margin-left: 26px; animation-delay: .45s; } .notif.n3 { margin-left: 12px; animation-delay: .9s; }
+  @keyframes slidein { to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .gin { transition: none; }
+    .viz .arm, .blip, .core { animation: none; }
+    .drawline, .equity { stroke-dashoffset: 0; animation: none; }
+    .wbar { transform: none; animation: none; }
+    .tick, .gate, .prov, .provchips, .notif { opacity: 1; animation: none; transform: none; }
+    .typing i { max-width: 100%; animation: none; }
+  }
+
+  /* Footer - mirrors the Lyra landing footer exactly */
+  footer {
+    margin-top: 26px; border-top: 1px solid var(--border); padding-top: 18px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    text-align: center; font-size: 11px; color: var(--faint);
+  }
+  .flock { display: flex; align-items: center; gap: 8px; }
+  .flock small { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint2); }
+  .flock .vbox {
+    display: grid; place-items: center; width: 20px; height: 20px; overflow: hidden;
+    border-radius: 6px; border: 1px solid rgba(0,0,0,.05); background: #fff; box-shadow: 0 1px 2px rgba(14,30,58,.08);
+  }
+  .flock img { width: 16px; height: 16px; object-fit: contain; }
+  .flock b { font-size: 11.5px; font-weight: 650; color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brandline">
+      <svg class="lyra-mark" width="34" height="34" viewBox="0 0 32 32" fill="none" role="img" aria-label="Lyra">
+        <defs>
+          <linearGradient id="lyra-grad" x1="0" y1="32" x2="32" y2="0" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#3b5bdb"/><stop offset="0.55" stop-color="#43d18b"/><stop offset="1" stop-color="#f3a33a"/>
+          </linearGradient>
+        </defs>
+        <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" fill="url(#lyra-grad)"/>
+        <path d="M12 20 L20 12 M20 12 H13.5 M20 12 V18.5" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <span class="prod">Lyra <span class="thin">/ Setup Companion</span></span>
+    </div>
+    <span class="bysep">by</span>
+    <div class="vline">
+      <img src="data:image/png;base64,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" alt="Vivacity.ai">
+      <span class="vword">VIVACITY<span class="ai">.AI</span></span>
+    </div>
+  </header>
+
+  <h1>Your agent is building this for you.<br><span class="grad">Here's exactly what you're getting.</span></h1>
+  <p class="hero-sub">Lyra is a research-grade stock oversold-recovery radar - a <b>deterministic engine</b> scores
+  every setup, an optional AI layer explains it in plain English, and it all runs on <b>your own infrastructure</b>.
+  This page is the spec and a live progress board; it refreshes itself every few seconds. Your agent will ask in
+  the terminal when it needs you.</p>
+
+  <div class="meta mono">
+    <span>Last update: <b id="m-updated"></b></span>
+    <span>Chosen path: <b id="m-path"></b></span>
+    <span>Local app: <b><a id="m-app" href="#" target="_blank"></a></b></span>
+    <span id="m-deploy-wrap" style="display:none">Deployed: <b><a id="m-deploy" href="#" target="_blank"></a></b></span>
+  </div>
+
+  <section>
+    <p class="sec-label">Architecture</p>
+    <p class="sec-title">Three moving parts, <span class="blue">loosely coupled</span>.</p>
+    <div class="arch mono">
+<pre><span class="b">GitHub Actions</span> (hourly, free)  ──►  <span class="g">Supabase</span> (Postgres + auth, yours)  ◄──  <span class="hl">Next.js web app</span> (local / Vercel / Coolify)
+      │  Python scanner: RSI · MACD · trend · volume → deterministic 0-100 score        │
+      └────────────────────────►  alerts: web push · Telegram  ──────────────────────────┘</pre>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label">The stack</p>
+    <p class="sec-title">Every technology in the build - <span class="blue">and what it costs you</span>.</p>
+    <div class="grid">
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMEUxRTNBIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+TmV4dC5qczwvdGl0bGU+PHBhdGggZD0iTTE4LjY2NSAyMS45NzhDMTYuNzU4IDIzLjI1NSAxNC40NjUgMjQgMTIgMjQgNS4zNzcgMjQgMCAxOC42MjMgMCAxMlM1LjM3NyAwIDEyIDBzMTIgNS4zNzcgMTIgMTJjMCAzLjU4My0xLjU3NCA2LjgwMS00LjA2NyA5LjAwMUw5LjIxOSA3LjJINy4ydjkuNTk2aDEuNjE1VjkuMjUxbDkuODUgMTIuNzI3Wm0tMy4zMzItOC41MzMgMS42IDIuMDYxVjcuMmgtMS42djYuMjQ1WiIvPjwvc3ZnPg==" alt="nextdotjs"><h3>Next.js 15</h3></div><p class="role">The web app - dashboard, API, middleware. TypeScript strict.</p><span class="badge free">free · OSS</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjNjFEQUZCIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+UmVhY3Q8L3RpdGxlPjxwYXRoIGQ9Ik0xNC4yMyAxMi4wMDRhMi4yMzYgMi4yMzYgMCAwIDEtMi4yMzUgMi4yMzYgMi4yMzYgMi4yMzYgMCAwIDEtMi4yMzYtMi4yMzYgMi4yMzYgMi4yMzYgMCAwIDEgMi4yMzUtMi4yMzYgMi4yMzYgMi4yMzYgMCAwIDEgMi4yMzYgMi4yMzZ6bTIuNjQ4LTEwLjY5Yy0xLjM0NiAwLTMuMTA3Ljk2LTQuODg4IDIuNjIyLTEuNzgtMS42NTMtMy41NDItMi42MDItNC44ODctMi42MDItLjQxIDAtLjc4My4wOTMtMS4xMDYuMjc4LTEuMzc1Ljc5My0xLjY4MyAzLjI2NC0uOTczIDYuMzY1QzEuOTggOC45MTcgMCAxMC40MiAwIDEyLjAwNGMwIDEuNTkgMS45OSAzLjA5NyA1LjA0MyA0LjAzLS43MDQgMy4xMTMtLjM5IDUuNTg4Ljk4OCA2LjM4LjMyLjE4Ny42OS4yNzUgMS4xMDIuMjc1IDEuMzQ1IDAgMy4xMDctLjk2IDQuODg4LTIuNjI0IDEuNzggMS42NTQgMy41NDIgMi42MDMgNC44ODcgMi42MDMuNDEgMCAuNzgzLS4wOSAxLjEwNi0uMjc1IDEuMzc0LS43OTIgMS42ODMtMy4yNjMuOTczLTYuMzY1QzIyLjAyIDE1LjA5NiAyNCAxMy41OSAyNCAxMi4wMDRjMC0xLjU5LTEuOTktMy4wOTctNS4wNDMtNC4wMzIuNzA0LTMuMTEuMzktNS41ODctLjk4OC02LjM4LS4zMTgtLjE4NC0uNjg4LS4yNzctMS4wOTItLjI3OHptLS4wMDUgMS4wOXYuMDA2Yy4yMjUgMCAuNDA2LjA0NC41NTguMTI3LjY2Ni4zODIuOTU1IDEuODM1LjczIDMuNzA0LS4wNTQuNDYtLjE0Mi45NDUtLjI1IDEuNDQtLjk2LS4yMzYtMi4wMDYtLjQxNy0zLjEwNy0uNTM0LS42Ni0uOTA1LTEuMzQ1LTEuNzI3LTIuMDM1LTIuNDQ3IDEuNTkyLTEuNDggMy4wODctMi4yOTIgNC4xMDUtMi4yOTV6bS05Ljc3LjAyYzEuMDEyIDAgMi41MTQuODA4IDQuMTEgMi4yOC0uNjg2LjcyLTEuMzcgMS41MzctMi4wMiAyLjQ0Mi0xLjEwNy4xMTctMi4xNTQuMjk4LTMuMTEzLjUzOC0uMTEyLS40OS0uMTk1LS45NjQtLjI1NC0xLjQyLS4yMy0xLjg2OC4wNTQtMy4zMi43MTQtMy43MDcuMTktLjA5LjQtLjEyNy41NjMtLjEzMnptNC44ODIgMy4wNWMuNDU1LjQ2OC45MS45OTIgMS4zNiAxLjU2NC0uNDQtLjAyLS44OS0uMDM0LTEuMzQ1LS4wMzQtLjQ2IDAtLjkxNS4wMS0xLjM2LjAzNC40NC0uNTcyLjg5NS0xLjA5NiAxLjM0NS0xLjU2NXpNMTIgOC4xYy43NCAwIDEuNDc3LjAzNCAyLjIwMi4wOTMuNDA2LjU4Mi44MDIgMS4yMDMgMS4xODMgMS44Ni4zNzIuNjQuNzEgMS4yOSAxLjAxOCAxLjk0Ni0uMzA4LjY1NS0uNjQ2IDEuMzEtMS4wMTMgMS45NS0uMzguNjYtLjc3MyAxLjI4OC0xLjE4IDEuODctLjcyOC4wNjMtMS40NjYuMDk4LTIuMjEuMDk4LS43NCAwLTEuNDc3LS4wMzUtMi4yMDItLjA5My0uNDA2LS41ODItLjgwMi0xLjIwNC0xLjE4My0xLjg2LS4zNzItLjY0LS43MS0xLjI5LTEuMDE4LTEuOTQ2LjMwMy0uNjU3LjY0Ni0xLjMxMyAxLjAxMy0xLjk1NC4zOC0uNjYuNzczLTEuMjg2IDEuMTgtMS44NjguNzI4LS4wNjQgMS40NjYtLjA5OCAyLjIxLS4wOTh6bS0zLjYzNS4yNTRjLS4yNC4zNzctLjQ4Ljc2My0uNzA0IDEuMTYtLjIyNS4zOS0uNDM1Ljc4Mi0uNjM1IDEuMTc0LS4yNjUtLjY1Ni0uNDktMS4zMS0uNjc2LTEuOTQ3LjY0LS4xNSAxLjMxNS0uMjgzIDIuMDE1LS4zODZ6bTcuMjYgMGMuNjk1LjEwMyAxLjM2NS4yMyAyLjAwNi4zODctLjE4LjYzMi0uNDA1IDEuMjgyLS42NiAxLjkzMy0uMi0uMzktLjQxLS43ODMtLjY0LTEuMTc0LS4yMjUtLjM5Mi0uNDY1LS43NzQtLjcwNS0xLjE0NnptMy4wNjMuNjc1Yy40ODQuMTUuOTQ0LjMxNyAxLjM3NS40OTggMS43MzIuNzQgMi44NTIgMS43MDggMi44NTIgMi40NzYtLjAwNS43NjgtMS4xMjUgMS43NC0yLjg1NyAyLjQ3NS0uNDIuMTgtLjg4LjM0Mi0xLjM1NS40OTMtLjI4LS45NTgtLjY0Ni0xLjk1Ni0xLjEtMi45OC40NS0xLjAxNy44MS0yLjAxIDEuMDg1LTIuOTY0em0tMTMuMzk1LjAwNGMuMjc4Ljk2LjY0NSAxLjk1NyAxLjEgMi45OC0uNDUgMS4wMTctLjgxMiAyLjAxLTEuMDg2IDIuOTY0LS40ODQtLjE1LS45NDQtLjMxOC0xLjM3LS41LTEuNzMyLS43MzctMi44NTItMS43MDYtMi44NTItMi40NzQgMC0uNzY4IDEuMTItMS43NDIgMi44NTItMi40NzYuNDItLjE4Ljg4LS4zNDIgMS4zNTYtLjQ5NHptMTEuNjc4IDQuMjhjLjI2NS42NTcuNDkgMS4zMTIuNjc2IDEuOTQ4LS42NC4xNTctMS4zMTYuMjktMi4wMTYuMzkuMjQtLjM3NS40OC0uNzYyLjcwNS0xLjE1OC4yMjUtLjM5LjQzNS0uNzg4LjYzNi0xLjE4em0tOS45NDUuMDJjLjIuMzkyLjQxLjc4My42NCAxLjE3NS4yMy4zOS40NjUuNzcyLjcwNSAxLjE0My0uNjk1LS4xMDItMS4zNjUtLjIzLTIuMDA2LS4zODYuMTgtLjYzLjQwNi0xLjI4Mi42Ni0xLjkzM3pNMTcuOTIgMTYuMzJjLjExMi40OTMuMi45NjguMjU0IDEuNDIzLjIzIDEuODY4LS4wNTQgMy4zMi0uNzE0IDMuNzA4LS4xNDcuMDktLjMzOC4xMjgtLjU2My4xMjgtMS4wMTIgMC0yLjUxNC0uODA3LTQuMTEtMi4yOC42ODYtLjcyIDEuMzctMS41MzYgMi4wMi0yLjQ0IDEuMTA3LS4xMTggMi4xNTQtLjMgMy4xMTMtLjU0em0tMTEuODMuMDFjLjk2LjIzNCAyLjAwNi40MTUgMy4xMDcuNTMyLjY2LjkwNSAxLjM0NSAxLjcyNyAyLjAzNSAyLjQ0Ni0xLjU5NSAxLjQ4My0zLjA5MiAyLjI5NS00LjExIDIuMjk1LS4yMi0uMDA1LS40MDYtLjA1LS41NTMtLjEzMi0uNjY2LS4zOC0uOTU1LTEuODM0LS43My0zLjcwMy4wNTQtLjQ2LjE0Mi0uOTQ0LjI1LTEuNDM4em00LjU2LjY0Yy40NC4wMi44OS4wMzQgMS4zNDUuMDM0LjQ2IDAgLjkxNS0uMDEgMS4zNi0uMDM0LS40NC41NzItLjg5NSAxLjA5NS0xLjM0NSAxLjU2NS0uNDU1LS40Ny0uOTEtLjk5My0xLjM2LTEuNTY1eiIvPjwvc3ZnPg==" alt="react"><h3>React 19</h3></div><p class="role">The dense, real-time console UI.</p><span class="badge free">free · OSS</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMDZCNkQ0IiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+VGFpbHdpbmQgQ1NTPC90aXRsZT48cGF0aCBkPSJNMTIuMDAxLDQuOGMtMy4yLDAtNS4yLDEuNi02LDQuOGMxLjItMS42LDIuNi0yLjIsNC4yLTEuOGMwLjkxMywwLjIyOCwxLjU2NSwwLjg5LDIuMjg4LDEuNjI0IEMxMy42NjYsMTAuNjE4LDE1LjAyNywxMiwxOC4wMDEsMTJjMy4yLDAsNS4yLTEuNiw2LTQuOGMtMS4yLDEuNi0yLjYsMi4yLTQuMiwxLjhjLTAuOTEzLTAuMjI4LTEuNTY1LTAuODktMi4yODgtMS42MjQgQzE2LjMzNyw2LjE4MiwxNC45NzYsNC44LDEyLjAwMSw0Ljh6IE02LjAwMSwxMmMtMy4yLDAtNS4yLDEuNi02LDQuOGMxLjItMS42LDIuNi0yLjIsNC4yLTEuOGMwLjkxMywwLjIyOCwxLjU2NSwwLjg5LDIuMjg4LDEuNjI0IGMxLjE3NywxLjE5NCwyLjUzOCwyLjU3Niw1LjUxMiwyLjU3NmMzLjIsMCw1LjItMS42LDYtNC44Yy0xLjIsMS42LTIuNiwyLjItNC4yLDEuOGMtMC45MTMtMC4yMjgtMS41NjUtMC44OS0yLjI4OC0xLjYyNCBDMTAuMzM3LDEzLjM4Miw4Ljk3NiwxMiw2LjAwMSwxMnoiLz48L3N2Zz4=" alt="tailwindcss"><h3>Tailwind CSS</h3></div><p class="role">The trading-desk design system.</p><span class="badge free">free · OSS</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjM0ZDRjhFIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+U3VwYWJhc2U8L3RpdGxlPjxwYXRoIGQ9Ik0xMS45IDEuMDM2Yy0uMDE1LS45ODYtMS4yNi0xLjQxLTEuODc0LS42MzdMLjc2NCAxMi4wNUMtLjMzIDEzLjQyNy42NSAxNS40NTUgMi40MDkgMTUuNDU1aDkuNTc5bC4xMTMgNy41MWMuMDE0Ljk4NSAxLjI1OSAxLjQwOCAxLjg3My42MzZsOS4yNjItMTEuNjUzYzEuMDkzLTEuMzc1LjExMy0zLjQwMy0xLjY0NS0zLjQwM2gtOS42NDJ6Ii8+PC9zdmc+" alt="supabase"><h3>Supabase</h3></div><p class="role">Your Postgres + auth. You own the project.</p><span class="badge free">free tier</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPjxzdmcgdmVyc2lvbj0iMS4xIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOmNjPSJodHRwOi8vd2ViLnJlc291cmNlLm9yZy9jYy8iIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyIgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiIHdpZHRoPSIxMTBweCIgaGVpZ2h0PSIxMTBweCIgdmlld0JveD0iMC4yMSAtMC4wNzcgMTEwIDExMCIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwLjIxIC0wLjA3NyAxMTAgMTEwIiB4bWw6c3BhY2U9InByZXNlcnZlIj48bGluZWFyR3JhZGllbnQgaWQ9IlNWR0lEXzFfIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjYzLjgxNTkiIHkxPSI1Ni42ODI5IiB4Mj0iMTE4LjQ5MzQiIHkyPSIxLjgyMjUiIGdyYWRpZW50VHJhbnNmb3JtPSJtYXRyaXgoMSAwIDAgLTEgLTUzLjI5NzQgNjYuNDMyMSkiPiA8c3RvcCBvZmZzZXQ9IjAiIHN0eWxlPSJzdG9wLWNvbG9yOiMzODdFQjgiLz4gPHN0b3Agb2Zmc2V0PSIxIiBzdHlsZT0ic3RvcC1jb2xvcjojMzY2OTk0Ii8+PC9saW5lYXJHcmFkaWVudD48cGF0aCBmaWxsPSJ1cmwoI1NWR0lEXzFfKSIgZD0iTTU1LjAyMy0wLjA3N2MtMjUuOTcxLDAtMjYuMjUsMTAuMDgxLTI2LjI1LDEyLjE1NmMwLDMuMTQ4LDAsMTIuNTk0LDAsMTIuNTk0aDI2Ljc1djMuNzgxIGMwLDAtMjcuODUyLDAtMzcuMzc1LDBjLTcuOTQ5LDAtMTcuOTM4LDQuODMzLTE3LjkzOCwyNi4yNWMwLDE5LjY3Myw3Ljc5MiwyNy4yODEsMTUuNjU2LDI3LjI4MWMyLjMzNSwwLDkuMzQ0LDAsOS4zNDQsMCBzMC05Ljc2NSwwLTEzLjEyNWMwLTUuNDkxLDIuNzIxLTE1LjY1NiwxNS40MDYtMTUuNjU2YzE1LjkxLDAsMTkuOTcxLDAsMjYuNTMxLDBjMy45MDIsMCwxNC45MDYtMS42OTYsMTQuOTA2LTE0LjQwNiBjMC0xMy40NTIsMC0xNy44OSwwLTI0LjIxOUM4Mi4wNTQsMTEuNDI2LDgxLjUxNS0wLjA3Nyw1NS4wMjMtMC4wNzd6IE00MC4yNzMsOC4zOTJjMi42NjIsMCw0LjgxMywyLjE1LDQuODEzLDQuODEzIGMwLDIuNjYxLTIuMTUxLDQuODEzLTQuODEzLDQuODEzcy00LjgxMy0yLjE1MS00LjgxMy00LjgxM0MzNS40NiwxMC41NDIsMzcuNjExLDguMzkyLDQwLjI3Myw4LjM5MnoiLz48bGluZWFyR3JhZGllbnQgaWQ9IlNWR0lEXzJfIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9Ijk3LjA0NDQiIHkxPSIyMS42MzIxIiB4Mj0iMTU1LjY2NjUiIHkyPSItMzQuNTMwOCIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCgxIDAgMCAtMSAtNTMuMjk3NCA2Ni40MzIxKSI+IDxzdG9wIG9mZnNldD0iMCIgc3R5bGU9InN0b3AtY29sb3I6I0ZGRTA1MiIvPiA8c3RvcCBvZmZzZXQ9IjEiIHN0eWxlPSJzdG9wLWNvbG9yOiNGRkMzMzEiLz48L2xpbmVhckdyYWRpZW50PjxwYXRoIGZpbGw9InVybCgjU1ZHSURfMl8pIiBkPSJNNTUuMzk3LDEwOS45MjNjMjUuOTU5LDAsMjYuMjgyLTEwLjI3MSwyNi4yODItMTIuMTU2YzAtMy4xNDgsMC0xMi41OTQsMC0xMi41OTRINTQuODk3di0zLjc4MSBjMCwwLDI4LjAzMiwwLDM3LjM3NSwwYzguMDA5LDAsMTcuOTM4LTQuOTU0LDE3LjkzOC0yNi4yNWMwLTIzLjMyMi0xMC41MzgtMjcuMjgxLTE1LjY1Ni0yNy4yODFjLTIuMzM2LDAtOS4zNDQsMC05LjM0NCwwIHMwLDEwLjIxNiwwLDEzLjEyNWMwLDUuNDkxLTIuNjMxLDE1LjY1Ni0xNS40MDYsMTUuNjU2Yy0xNS45MSwwLTE5LjQ3NiwwLTI2LjUzMiwwYy0zLjg5MiwwLTE0LjkwNiwxLjg5Ni0xNC45MDYsMTQuNDA2IGMwLDE0LjQ3NSwwLDE4LjI2NSwwLDI0LjIxOUMyOC4zNjYsMTAwLjQ5NywzMS41NjIsMTA5LjkyMyw1NS4zOTcsMTA5LjkyM3ogTTcwLjE0OCwxMDEuNDU0Yy0yLjY2MiwwLTQuODEzLTIuMTUxLTQuODEzLTQuODEzIHMyLjE1LTQuODEzLDQuODEzLTQuODEzYzIuNjYxLDAsNC44MTMsMi4xNTEsNC44MTMsNC44MTNTNzIuODA5LDEwMS40NTQsNzAuMTQ4LDEwMS40NTR6Ii8+PC9zdmc+" alt="python"><h3>Python scanner</h3></div><p class="role">pandas + ta - every indicator. No AI in the numbers.</p><span class="badge free">free · OSS</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMjA4OEZGIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+R2l0SHViIEFjdGlvbnM8L3RpdGxlPjxwYXRoIGQ9Ik0xMC45ODQgMTMuODM2YS41LjUgMCAwIDEtLjM1My0uMTQ2bC0uNzQ1LS43NDNhLjUuNSAwIDEgMSAuNzA2LS43MDhsLjM5Mi4zOTEgMS4xODEtMS4xOGEuNS41IDAgMCAxIC43MDguNzA3bC0xLjUzNSAxLjUzM2EuNTA0LjUwNCAwIDAgMS0uMzU0LjE0NnptOS4zNTMtLjE0N2wxLjUzNC0xLjUzMmEuNS41IDAgMCAwLS43MDctLjcwN2wtMS4xODEgMS4xOC0uMzkyLS4zOTFhLjUuNSAwIDEgMC0uNzA2LjcwOGwuNzQ2Ljc0M2EuNDk3LjQ5NyAwIDAgMCAuNzA2LS4wMDF6TTQuNTI3IDcuNDUybDIuNTU3LTEuNTg1QTEgMSAwIDAgMCA3LjA5IDQuMTdMNC41MzMgMi41NkExIDEgMCAwIDAgMyAzLjQwNnYzLjE5NmExLjAwMSAxLjAwMSAwIDAgMCAxLjUyNy44NXptMi4wMy0yLjQzNkw0IDYuNjAyVjMuNDA2bDIuNTU3IDEuNjF6TTI0IDEyLjVjMCAxLjkzLTEuNTcgMy41LTMuNSAzLjVhMy41MDMgMy41MDMgMCAwIDEtMy40Ni0zaC0yLjA4YTMuNTAzIDMuNTAzIDAgMCAxLTMuNDYgMyAzLjUwMiAzLjUwMiAwIDAgMS0zLjQ2LTNoLS41NThjLS45NzIgMC0xLjg1LS4zOTktMi40ODItMS4wNDJWMTdjMCAxLjY1NCAxLjM0NiAzIDMgM2guMDRjLjI0NC0xLjY5MyAxLjctMyAzLjQ2LTMgMS45MyAwIDMuNSAxLjU3IDMuNSAzLjVTMTMuNDMgMjQgMTEuNSAyNGEzLjUwMiAzLjUwMiAwIDAgMS0zLjQ2LTNIOGMtMi4yMDYgMC00LTEuNzk0LTQtNFY5Ljg5OUE1LjAwOCA1LjAwOCAwIDAgMSAwIDVjMC0yLjc1NyAyLjI0My01IDUtNXM1IDIuMjQzIDUgNWE1LjAwNSA1LjAwNSAwIDAgMS00Ljk1MiA0Ljk5OEEyLjQ4MiAyLjQ4MiAwIDAgMCA3LjQ4MiAxMmguNTU4Yy4yNDQtMS42OTMgMS43LTMgMy40Ni0zYTMuNTAyIDMuNTAyIDAgMCAxIDMuNDYgM2gyLjA4YTMuNTAzIDMuNTAzIDAgMCAxIDMuNDYtM2MxLjkzIDAgMy41IDEuNTcgMy41IDMuNXptLTE1IDhjMCAxLjM3OCAxLjEyMiAyLjUgMi41IDIuNXMyLjUtMS4xMjIgMi41LTIuNS0xLjEyMi0yLjUtMi41LTIuNVM5IDE5LjEyMiA5IDIwLjV6TTUgOWMyLjIwNiAwIDQtMS43OTQgNC00UzcuMjA2IDEgNSAxIDEgMi43OTQgMSA1czEuNzk0IDQgNCA0em05IDMuNWMwLTEuMzc4LTEuMTIyLTIuNS0yLjUtMi41UzkgMTEuMTIyIDkgMTIuNXMxLjEyMiAyLjUgMi41IDIuNSAyLjUtMS4xMjIgMi41LTIuNXptOSAwYzAtMS4zNzgtMS4xMjItMi41LTIuNS0yLjVTMTggMTEuMTIyIDE4IDEyLjVzMS4xMjIgMi41IDIuNSAyLjUgMi41LTEuMTIyIDIuNS0yLjV6bS0xMyA4YS41LjUgMCAxIDAgMSAwIC41LjUgMCAwIDAtMSAwem0yIDBhLjUuNSAwIDEgMCAxIDAgLjUuNSAwIDAgMC0xIDB6bTEyIDBjMCAxLjkzLTEuNTcgMy41LTMuNSAzLjVhMy41MDMgMy41MDMgMCAwIDEtMy40Ni0zLjAwMmMtLjAwNy4wMDEtLjAxMy4wMDUtLjAyMS4wMDVsLS41MDYuMDE3aC0uMDE3YS41LjUgMCAwIDEtLjAxNi0uOTk5bC41MDYtLjAxN2MuMDE4LS4wMDIuMDM1LjAwNi4wNTIuMDA3QTMuNTAzIDMuNTAzIDAgMCAxIDIwLjUgMTdjMS45MyAwIDMuNSAxLjU3IDMuNSAzLjV6bS0xIDBjMC0xLjM3OC0xLjEyMi0yLjUtMi41LTIuNVMxOCAxOS4xMjIgMTggMjAuNXMxLjEyMiAyLjUgMi41IDIuNSAyLjUtMS4xMjIgMi41LTIuNXoiLz48L3N2Zz4=" alt="githubactions"><h3>GitHub Actions</h3></div><p class="role">Runs the scanner hourly. Free in public repos.</p><span class="badge free">$0 public repo</span></div>
+      <div class="tech"><div class="tech-head"><span class="glyph">📈</span><h3>Market data</h3></div><p class="role">yfinance free, Finnhub as backup.</p><span class="badge free">$0 hobby use</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMDAwMDAwIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+VmVyY2VsPC90aXRsZT48cGF0aCBkPSJtMTIgMS42MDggMTIgMjAuNzg0SDBaIi8+PC9zdmc+" alt="vercel"><h3>Vercel</h3></div><p class="role">One-command hosting. Free Hobby tier.</p><span class="badge opt">optional · $0</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMjQ5NkVEIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+RG9ja2VyPC90aXRsZT48cGF0aCBkPSJNMTMuOTgzIDExLjA3OGgyLjExOWEuMTg2LjE4NiAwIDAwLjE4Ni0uMTg1VjkuMDA2YS4xODYuMTg2IDAgMDAtLjE4Ni0uMTg2aC0yLjExOWEuMTg1LjE4NSAwIDAwLS4xODUuMTg1djEuODg4YzAgLjEwMi4wODMuMTg1LjE4NS4xODVtLTIuOTU0LTUuNDNoMi4xMThhLjE4Ni4xODYgMCAwMC4xODYtLjE4NlYzLjU3NGEuMTg2LjE4NiAwIDAwLS4xODYtLjE4NWgtMi4xMThhLjE4NS4xODUgMCAwMC0uMTg1LjE4NXYxLjg4OGMwIC4xMDIuMDgyLjE4NS4xODUuMTg1bTAgMi43MTZoMi4xMThhLjE4Ny4xODcgMCAwMC4xODYtLjE4NlY2LjI5YS4xODYuMTg2IDAgMDAtLjE4Ni0uMTg1aC0yLjExOGEuMTg1LjE4NSAwIDAwLS4xODUuMTg1djEuODg3YzAgLjEwMi4wODIuMTg1LjE4NS4xODZtLTIuOTMgMGgyLjEyYS4xODYuMTg2IDAgMDAuMTg0LS4xODZWNi4yOWEuMTg1LjE4NSAwIDAwLS4xODUtLjE4NUg4LjFhLjE4NS4xODUgMCAwMC0uMTg1LjE4NXYxLjg4N2MwIC4xMDIuMDgzLjE4NS4xODUuMTg2bS0yLjk2NCAwaDIuMTE5YS4xODYuMTg2IDAgMDAuMTg1LS4xODZWNi4yOWEuMTg1LjE4NSAwIDAwLS4xODUtLjE4NUg1LjEzNmEuMTg2LjE4NiAwIDAwLS4xODYuMTg1djEuODg3YzAgLjEwMi4wODQuMTg1LjE4Ni4xODZtNS44OTMgMi43MTVoMi4xMThhLjE4Ni4xODYgMCAwMC4xODYtLjE4NVY5LjAwNmEuMTg2LjE4NiAwIDAwLS4xODYtLjE4NmgtMi4xMThhLjE4NS4xODUgMCAwMC0uMTg1LjE4NXYxLjg4OGMwIC4xMDIuMDgyLjE4NS4xODUuMTg1bS0yLjkzIDBoMi4xMmEuMTg1LjE4NSAwIDAwLjE4NC0uMTg1VjkuMDA2YS4xODUuMTg1IDAgMDAtLjE4NC0uMTg2aC0yLjEyYS4xODUuMTg1IDAgMDAtLjE4NC4xODV2MS44ODhjMCAuMTAyLjA4My4xODUuMTg1LjE4NW0tMi45NjQgMGgyLjExOWEuMTg1LjE4NSAwIDAwLjE4NS0uMTg1VjkuMDA2YS4xODUuMTg1IDAgMDAtLjE4NC0uMTg2aC0yLjEyYS4xODYuMTg2IDAgMDAtLjE4Ni4xODZ2MS44ODdjMCAuMTAyLjA4NC4xODUuMTg2LjE4NW0tMi45MiAwaDIuMTJhLjE4NS4xODUgMCAwMC4xODQtLjE4NVY5LjAwNmEuMTg1LjE4NSAwIDAwLS4xODQtLjE4NmgtMi4xMmEuMTg1LjE4NSAwIDAwLS4xODQuMTg1djEuODg4YzAgLjEwMi4wODIuMTg1LjE4NS4xODVNMjMuNzYzIDkuODljLS4wNjUtLjA1MS0uNjcyLS41MS0xLjk1NC0uNTEtLjMzOC4wMDEtLjY3Ni4wMy0xLjAxLjA4Ny0uMjQ4LTEuNy0xLjY1My0yLjUzLTEuNzE2LTIuNTY2bC0uMzQ0LS4xOTktLjIyNi4zMjdjLS4yODQuNDM4LS40OS45MjItLjYxMiAxLjQzLS4yMy45Ny0uMDkgMS44ODIuNDAzIDIuNjYxLS41OTUuMzMyLTEuNTUuNDEzLTEuNzQ0LjQySC43NTFhLjc1MS43NTEgMCAwMC0uNzUuNzQ4IDExLjM3NiAxMS4zNzYgMCAwMC42OTIgNC4wNjJjLjU0NSAxLjQyOCAxLjM1NSAyLjQ4IDIuNDEgMy4xMjQgMS4xOC43MjMgMy4xIDEuMTM3IDUuMjc1IDEuMTM3Ljk4My4wMDMgMS45NjMtLjA4NiAyLjkzLS4yNjZhMTIuMjQ4IDEyLjI0OCAwIDAwMy44MjMtMS4zODljLjk4LS41NjcgMS44Ni0xLjI4OCAyLjYxLTIuMTM2IDEuMjUyLTEuNDE4IDEuOTk4LTIuOTk3IDIuNTUzLTQuNGguMjIxYzEuMzcyIDAgMi4yMTUtLjU0OSAyLjY4LTEuMDA5LjMwOS0uMjkzLjU1LS42NS43MDctMS4wNDZsLjA5OC0uMjg4WiIvPjwvc3ZnPg==" alt="docker"><h3>Docker + Coolify</h3></div><p class="role">Or self-host on your own server - Dockerfile included.</p><span class="badge opt">optional · ~US$12/mo</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMDBFOUEzIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+VXBzdGFzaDwvdGl0bGU+PHBhdGggZD0iTTEzLjgwMjcgMEMxMS4xOTMgMCA4LjU4My45OTUyIDYuNTkxOCAyLjk4NjNjLTMuOTgyMyAzLjk4MjMtMy45ODIzIDEwLjQzOTYgMCAxNC40MjE5IDEuOTkxMSAxLjk5MTEgNS4yMTk4IDEuOTkxMSA3LjIxMSAwIDEuOTkxLTEuOTkxMSAxLjk5MS01LjIxOTggMC03LjIxMUwxMiAxMmMuOTk1Ni45OTU2Ljk5NTYgMi42MDk4IDAgMy42MDU1LS45OTU2Ljk5NTUtMi42MDk5Ljk5NTUtMy42MDU1IDAtMi45ODY2LTIuOTg2OC0yLjk4NjYtNy44Mjk3IDAtMTAuODE2NCAyLjk4NjgtMi45ODY4IDcuODI5Ny0yLjk4NjggMTAuODE2NCAwbDEuODAyOC0xLjgwMjhDMTkuMDIyNS45OTUyIDE2LjQxMjUgMCAxMy44MDI3IDB6TTEyIDEyYy0uOTk1Ni0uOTk1Ni0uOTk1Ni0yLjYwOTggMC0zLjYwNTUuOTk1Ni0uOTk1NSAyLjYwOTgtLjk5NTUgMy42MDU1IDAgMi45ODY3IDIuOTg2OCAyLjk4NjcgNy44Mjk3IDAgMTAuODE2NC0yLjk4NjcgMi45ODY4LTcuODI5NyAyLjk4NjgtMTAuODE2NCAwbC0xLjgwMjggMS44MDI4YzMuOTgyMyAzLjk4MjIgMTAuNDM5NiAzLjk4MjIgMTQuNDIxOSAwIDMuOTgyMy0zLjk4MjQgMy45ODIzLTEwLjQzOTYgMC0xNC40MjE5LS45OTU2LS45OTU2LTIuMzAwNi0xLjQ5MjItMy42MDU1LTEuNDkyMi0xLjMwNDggMC0yLjYwOTkuNDk2Ni0zLjYwNTQgMS40OTIyLTEuOTkxMiAxLjk5MTItMS45OTEyIDUuMjE5OCAwIDcuMjExeiIvPjwvc3ZnPg==" alt="upstash"><h3>Redis (Upstash)</h3></div><p class="role">Serverless cache. Falls back to in-memory.</p><span class="badge opt">optional · $0 tier</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMjZBNUU0IiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+VGVsZWdyYW08L3RpdGxlPjxwYXRoIGQ9Ik0xMS45NDQgMEExMiAxMiAwIDAgMCAwIDEyYTEyIDEyIDAgMCAwIDEyIDEyIDEyIDEyIDAgMCAwIDEyLTEyQTEyIDEyIDAgMCAwIDEyIDBhMTIgMTIgMCAwIDAtLjA1NiAwem00Ljk2MiA3LjIyNGMuMS0uMDAyLjMyMS4wMjMuNDY1LjE0YS41MDYuNTA2IDAgMCAxIC4xNzEuMzI1Yy4wMTYuMDkzLjAzNi4zMDYuMDIuNDcyLS4xOCAxLjg5OC0uOTYyIDYuNTAyLTEuMzYgOC42MjctLjE2OC45LS40OTkgMS4yMDEtLjgyIDEuMjMtLjY5Ni4wNjUtMS4yMjUtLjQ2LTEuOS0uOTAyLTEuMDU2LS42OTMtMS42NTMtMS4xMjQtMi42NzgtMS44LTEuMTg1LS43OC0uNDE3LTEuMjEuMjU4LTEuOTEuMTc3LS4xODQgMy4yNDctMi45NzcgMy4zMDctMy4yMy4wMDctLjAzMi4wMTQtLjE1LS4wNTYtLjIxMnMtLjE3NC0uMDQxLS4yNDktLjAyNGMtLjEwNi4wMjQtMS43OTMgMS4xNC01LjA2MSAzLjM0NS0uNDguMzMtLjkxMy40OS0xLjMwMi40OC0uNDI4LS4wMDgtMS4yNTItLjI0MS0xLjg2NS0uNDQtLjc1Mi0uMjQ1LTEuMzQ5LS4zNzQtMS4yOTctLjc4OS4wMjctLjIxNi4zMjUtLjQzNy44OTMtLjY2MyAzLjQ5OC0xLjUyNCA1LjgzLTIuNTI5IDYuOTk4LTMuMDE0IDMuMzMyLTEuMzg2IDQuMDI1LTEuNjI3IDQuNDc2LTEuNjM1eiIvPjwvc3ZnPg==" alt="telegram"><h3>Telegram Bot</h3></div><p class="role">Urgent setups straight to your phone.</p><span class="badge opt">optional · $0</span></div>
+      <div class="tech"><div class="tech-head"><svg viewBox="0 0 122.8 122.8" style="width:22px;height:22px;flex:none"><path d="M25.8 77.6c0 7.1-5.8 12.9-12.9 12.9S0 84.7 0 77.6s5.8-12.9 12.9-12.9h12.9v12.9zM32.3 77.6c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9v32.3c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V77.6z" fill="#E01E5A"/><path d="M45.2 25.8c-7.1 0-12.9-5.8-12.9-12.9S38.1 0 45.2 0s12.9 5.8 12.9 12.9v12.9H45.2zM45.2 32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H12.9C5.8 58.1 0 52.3 0 45.2s5.8-12.9 12.9-12.9h32.3z" fill="#36C5F0"/><path d="M97 45.2c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9-5.8 12.9-12.9 12.9H97V45.2zM90.5 45.2c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V12.9C64.7 5.8 70.5 0 77.6 0s12.9 5.8 12.9 12.9v32.3z" fill="#2EB67D"/><path d="M77.6 97c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9-12.9-5.8-12.9-12.9V97h12.9zM77.6 90.5c-7.1 0-12.9-5.8-12.9-12.9s5.8-12.9 12.9-12.9h32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H77.6z" fill="#ECB22E"/></svg><h3>Slack</h3></div><p class="role">Feedback + alerts piped into your channel.</p><span class="badge opt">optional · $0</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMjQwNiAyNDA2Ij4KCTxwYXRoIGQ9Ik0xIDU3OC40QzEgMjU5LjUgMjU5LjUgMSA1NzguNCAxaDEyNDkuMWMzMTkgMCA1NzcuNSAyNTguNSA1NzcuNSA1NzcuNFYyNDA2SDU3OC40QzI1OS41IDI0MDYgMSAyMTQ3LjUgMSAxODI4LjZWNTc4LjR6IiBmaWxsPSIjNzRhYTljIi8+Cgk8cGF0aCBpZD0iYSIgZD0iTTExMDcuMyAyOTkuMWMtMTk3Ljk5OSAwLTM3My45IDEyNy4zLTQzNS4yIDMxNS4zTDY1MCA3NDMuNXY0MjcuOWMwIDIxLjQgMTEgNDAuNCAyOS40IDUxLjRsMzQ0LjUgMTk4LjUxNVY4MzMuM2guMXYtMjcuOUwxMzcyLjcgNjA0YzMzLjcxNS0xOS41MiA3MC40NC0zMi44NTcgMTA4LjQ3LTM5LjgyOEwxNDQ3LjYgNDUwLjNDMTM2MSAzNTMuNSAxMjM3LjEgMjk4LjUgMTEwNy4zIDI5OS4xem0wIDExNy41LS42LjZjNzkuNjk5IDAgMTU2LjMgMjcuNSAyMTcuNiA3OC40LTIuNSAxLjItNy40IDQuMy0xMSA2LjFMOTUyLjggNzA5LjNjLTE4LjQgMTAuNC0yOS40IDMwLTI5LjQgNTEuNFYxMjQ4bC0xNTUuMS04OS40Vjc1NS44Yy0uMS0xODcuMDk5IDE1MS42MDEtMzM4LjkgMzM5LTMzOS4yeiIgZmlsbD0iI2ZmZiIvPgoJPHVzZSB4bGluazpocmVmPSIjYSIgdHJhbnNmb3JtPSJyb3RhdGUoNjAgMTIwMyAxMjAzKSIvPgogIAk8dXNlIHhsaW5rOmhyZWY9IiNhIiB0cmFuc2Zvcm09InJvdGF0ZSgxMjAgMTIwMyAxMjAzKSIvPgoJPHVzZSB4bGluazpocmVmPSIjYSIgdHJhbnNmb3JtPSJyb3RhdGUoMTgwIDEyMDMgMTIwMykiLz4KCTx1c2UgeGxpbms6aHJlZj0iI2EiIHRyYW5zZm9ybT0icm90YXRlKDI0MCAxMjAzIDEyMDMpIi8+Cgk8dXNlIHhsaW5rOmhyZWY9IiNhIiB0cmFuc2Zvcm09InJvdGF0ZSgzMDAgMTIwMyAxMjAzKSIvPgoKPC9zdmc+" alt="openai"><h3>OpenAI (or BYOK)</h3></div><p class="role">Plain-English explanations. Any provider works.</p><span class="badge paid">~US$0.50/mo</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjRDk3NzU3IiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+Q2xhdWRlPC90aXRsZT48cGF0aCBkPSJtNC43MTQ0IDE1Ljk1NTUgNC43MTc0LTIuNjQ3MS4wNzktLjIzMDctLjA3OS0uMTI3NWgtLjIzMDdsLS43ODkzLS4wNDg2LTIuNjk1Ni0uMDcyOS0yLjMzNzUtLjA5NzEtMi4yNjQ2LS4xMjE0LS41NzA3LS4xMjE1LS41MzQzLS43MDQyLjA1NDYtLjM1MjIuNDc5Ny0uMzIxOC42ODYuMDYwOCAxLjUxNzkuMTAzMiAyLjI3NjcuMTU3OCAxLjY1MTQuMDk3MiAyLjQ0NjguMjU1aC4zODg2bC4wNTQ2LS4xNTc5LS4xMzM2LS4wOTcxLS4xMDMyLS4wOTcyTDYuOTczIDkuODM1NmwtMi41NS0xLjY4NzktMS4zMzU2LS45NzE0LS43MjI1LS40OTE4LS4zNjQzLS40NjE0LS4xNTc4LTEuMDA3OC42NTU3LS43MjI1Ljg4MDMuMDYwNy4yMjQ2LjA2MDcuODkyNS42ODYgMS45MDY0IDEuNDc1NCAyLjQ4OTMgMS44MzM2LjM2NDMuMzAzNS4xNDU3LS4xMDMyLjAxODItLjA3MjgtLjE2NC0uMjczMy0xLjM1MzktMi40NDY3LTEuNDQ1LTIuNDg5My0uNjQzNS0xLjAzMi0uMTctLjYxOTRjLS4wNjA3LS4yNTUtLjEwMzItLjQ2NzQtLjEwMzItLjcyODVMNi4yODcuMTMzNSA2LjY5OTcgMGwuOTk1Ny4xMzM2LjQxOS4zNjQyLjYxOTIgMS40MTQ3IDEuMDAxOCAyLjIyODIgMS41NTQzIDMuMDI5Ni40NTUzLjg5ODUuMjQyOS44MzE4LjA5MS4yNTVoLjE1Nzl2LS4xNDU3bC4xMjc1LTEuNzA2LjIzNjgtMi4wOTQ3LjIzMDctMi42OTU3LjA3ODktLjc1ODkuMzc2NC0uOTEwNy43NDY4LS40OTE4LjU4MjguMjc5My40Nzk3LjY4Ni0uMDY2OC40NDMzLS4yODUzIDEuODUxNy0uNTU4NiAyLjkwMjEtLjM2NDMgMS45NDI5aC4yMTI1bC4yNDI5LS4yNDI5Ljk4MzUtMS4zMDUzIDEuNjUxNC0yLjA2NDMuNzI4Ni0uODE5Ni44NS0uOTA0Ni41NDY0LS40MzExaDEuMDMyMWwuNzU5IDEuMTI5My0uMzQgMS4xNjU3LTEuMDYyNSAxLjM0NzgtLjg4MDQgMS4xNDE0LTEuMjYyOCAxLjctLjc4OTMgMS4zNi4wNzI5LjEwOTMuMTg4Mi0uMDE4MyAyLjg1MzUtLjYwNyAxLjU0MjEtLjI3OTQgMS44Mzk2LS4zMTU3LjgzMTguMzg4Ni4wOTEuMzk0Ni0uMzI3OC44MDc1LTEuOTY3LjQ4NTctMi4zMDcyLjQ2MTQtMy40MzY0LjgxMzYtLjA0MjUuMDMwNC4wNDg2LjA2MDcgMS41NDgyLjE0NTcuNjYxOC4wMzY0aDEuNjIxbDMuMDE3NS4yMjQ3Ljc4OTIuNTIyLjQ3MzYuNjM3Ni0uMDc5LjQ4NTctMS4yMTQyLjYxOTMtMS42MzkzLS4zODg2LTMuODI1LS45MTA3LTEuMzExMy0uMzI3OWgtLjE4MjJ2LjEwOTNsMS4wOTI5IDEuMDY4NiAyLjAwMzUgMS44MDkyIDIuNTA3NSAyLjMzMTQuMTI3NS41NzY4LS4zMjE4LjQ1NTQtLjM0LS4wNDg2LTIuMjAzOS0xLjY1NzUtLjg1LS43NDY4LTEuOTI0Ni0xLjYyMWgtLjEyNzV2LjE3bC40NDMyLjY0OTYgMi4zNDM2IDMuNTIxNC4xMjE0IDEuMDgwNy0uMTcuMzUyMS0uNjA3MS4yMTI1LS42Njc5LS4xMjE0LTEuMzcyMS0xLjkyNDZMMTQuMzggMTcuOTU5bC0xLjE0MTQtMS45NDI4LS4xMzk3LjA3OS0uNjc0IDcuMjU1Mi0uMzE1Ni4zNzAzLS43Mjg2LjI3OTMtLjYwNzEtLjQ2MTQtLjMyMTgtLjc0NjguMzIxOC0xLjQ3NTMuMzg4Ni0xLjkyNDYuMzE1Ny0xLjUzLjI4NTMtMS45MDA0LjE3LS42MzE0LS4wMTIxLS4wNDI1LS4xMzk3LjAxODItMS40MzI4IDEuOTY3Mi0yLjE3OTYgMi45NDQ2LTEuNzI0MyAxLjg0NTYtLjQxMjguMTY0LS43MTY0LS4zNzA0LjA2NjctLjY2MTguNDAwOC0uNTg4OSAyLjM4Ni0zLjAzNTcgMS40Mzg5LTEuODgyLjkyOS0xLjA4NjgtLjAwNjItLjE1NzloLS4wNTQ2bC02LjMzODUgNC4xMTY0LTEuMTI5My4xNDU3LS40ODU3LS40NTU0LjA2MDgtLjc0NjcuMjMwNy0uMjQyOSAxLjkwNjQtMS4zMTE0WiIvPjwvc3ZnPg==" alt="anthropic claude"><h3>Anthropic Claude</h3></div><p class="role">First-class in Lyra's gateway - paste a key, done.</p><span class="badge opt">optional · BYOK</span></div>
+      <div class="tech"><div class="tech-head"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMTMxNzIyIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+VHJhZGluZ1ZpZXc8L3RpdGxlPjxwYXRoIGQ9Ik0xNS44NjU0IDguMjc4OWMwIDEuMzU0MS0xLjA5NzggMi40NTE5LTIuNDUyIDIuNDUxOS0xLjM1NCAwLTIuNDUxOS0xLjA5NzgtMi40NTE5LTIuNDUyIDAtMS4zNTQgMS4wOTc4LTIuNDUxOCAyLjQ1Mi0yLjQ1MTggMS4zNTQxIDAgMi40NTE5IDEuMDk3NyAyLjQ1MTkgMi40NTE5ek05Ljc1IDZIMHY0LjkwMzhoNC44NDYydjcuMjY5Mkg5Ljc1Wm04LjU5NjIgMEgyNGwtNS4xMDU4IDEyLjE3M2gtNS42NTM4eiIvPjwvc3ZnPg==" alt="tradingview"><h3>TradingView</h3></div><p class="role">Live charts + one-click Pine backtests.</p><span class="badge free">free widget</span></div>
+      <div class="tech"><div class="tech-head"><span class="glyph">🔔</span><h3>Web Push (VAPID)</h3></div><p class="role">Browser-native alerts. No vendor account.</p><span class="badge free">$0 standard</span></div>
+    </div>
+    <p style="margin-top:11px;font-size:12px;color:var(--faint)">Full pricing with free-tier limits and gotchas:
+    <a href="https://github.com/BrysonW24/vai-lyra-stock-tracker/blob/main/COSTS.md" target="_blank">COSTS.md</a>.
+    Demo mode is $0 forever; a fully live, always-on setup runs on free tiers.</p>
+  </section>
+
+  <section>
+    <p class="sec-label">Live progress</p>
+    <p class="sec-title">What your agent is doing, <span class="blue">stage by stage</span>.</p>
+
+    <div class="stage" data-stage="s0">
+      <div class="dot">✓</div>
+      <div class="stage-head"><span class="chip"></span><h2>🧰 Stage 0 - Check the basics &amp; choose a path</h2><span class="cost mono">$0</span></div>
+      <p class="row"><span class="rlab">⚙️ What happens</span><span>Verifies Node.js 20+, npm 10+ and git, then asks how far you want to go: demo on your
+      machine, live with your own database, AI explanations, or fully online.</span></p>
+      <p class="row"><span class="rlab">💡 Why it matters</span><span>every later step builds on these tools, and nothing gets installed that you didn't ask for.</span></p>
+      <div class="note"></div>
+      <p class="row"><span class="rlab">✅ Done looks like</span><span>version checks pass and you've picked a path.</span></p>
+    </div>
+
+    <div class="stage" data-stage="s1">
+      <div class="dot">✓</div>
+      <div class="stage-head"><span class="chip"></span><h2>🎮 Stage 1 - Run Lyra in demo mode</h2><span class="cost mono">$0</span></div>
+      <p class="row"><span class="rlab">⚙️ What happens</span><span>Installs dependencies and starts the app at <a href="http://localhost:3042" target="_blank">localhost:3042</a>
+      on built-in sample data. No accounts, no API keys - the full console, safe to click anything.</span></p>
+      <p class="row"><span class="rlab">💡 Why it matters</span><span>you see what Lyra IS before connecting anything real - the deterministic
+      0-100 oversold-recovery score, the radar, portfolio, watchlist.</span></p>
+      <div class="note"></div>
+      <p class="row"><span class="rlab">✅ Done looks like</span><span>the app opens at localhost:3042 and <code>npm run doctor</code> reports demo mode.</span></p>
+    </div>
+
+    <div class="stage" data-stage="s2">
+      <div class="dot">✓</div>
+      <div class="stage-head"><span class="chip"></span><h2>🗄️ Stage 2 - Your own database (Supabase)</h2><span class="cost mono">$0 free tier</span></div>
+      <p class="row"><span class="rlab">⚙️ What happens</span><span>You create a free Supabase project (your agent gives you a checklist); the agent applies the
+      schema and wires keys into <code>.env.local</code>. Sign-up and per-user data now work, owned by you.</span></p>
+      <p class="row"><span class="rlab">💡 Why it matters</span><span>live mode needs somewhere to store scans, watchlists and trades - with
+      row-level security isolating every user's rows.</span></p>
+      <div class="note"></div>
+      <p class="row"><span class="rlab">✅ Done looks like</span><span>the doctor reports live mode and you can sign up and sign in.</span></p>
+    </div>
+
+    <div class="stage" data-stage="s3">
+      <div class="dot">✓</div>
+      <div class="stage-head"><span class="chip"></span><h2>📡 Stage 3 - The hourly scanner</h2><span class="cost mono">$0 on GitHub</span></div>
+      <p class="row"><span class="rlab">⚙️ What happens</span><span>Runs the Python scanner once so real data lands in your database, then wires GitHub Actions
+      to repeat it every hour from your fork.</span></p>
+      <p class="row"><span class="rlab">💡 Why it matters</span><span>the scanner is the engine - hourly automation keeps the dashboard alive
+      without your laptop.</span></p>
+      <div class="note"></div>
+      <p class="row"><span class="rlab">✅ Done looks like</span><span>one green scanner run and live scores in the app.</span></p>
+    </div>
+
+    <div class="stage" data-stage="s3b">
+      <div class="dot">✓</div>
+      <div class="stage-head"><span class="chip"></span><h2>🔔 Stage 3b - Alerts on your phone</h2><span class="cost mono">$0</span></div>
+      <p class="row"><span class="rlab">⚙️ What happens</span><span>Optional: urgent setups and summaries pushed to you. Web push needs zero accounts; Telegram
+      takes ~10 minutes with a free bot. (WhatsApp isn't wired yet - your agent will be honest about that.)</span></p>
+      <p class="row"><span class="rlab">💡 Why it matters</span><span>an oversold-recovery setup is time-sensitive - a scanner that can't reach
+      you is a diary, not a radar.</span></p>
+      <div class="note"></div>
+      <p class="row"><span class="rlab">✅ Done looks like</span><span>a test notification lands on your device.</span></p>
+    </div>
+
+    <div class="stage" data-stage="s4">
+      <div class="dot">✓</div>
+      <div class="stage-head"><span class="chip"></span><h2>🤖 Stage 4 - AI explanations</h2><span class="cost mono">~US$0.50/mo typical</span></div>
+      <p class="row"><span class="rlab">⚙️ What happens</span><span>Optional: add an AI key (yours, or one the app hosts) and Lyra explains setups in plain
+      English. Your agent shows costs BEFORE anything is set - the first step that can cost money at all.</span></p>
+      <p class="row"><span class="rlab">💡 Why it matters</span><span>the deterministic engine decides every number; the AI only phrases. Every
+      AI surface has a deterministic fallback.</span></p>
+      <div class="note"></div>
+      <p class="row"><span class="rlab">✅ Done looks like</span><span>a chat brief answers using your real dashboard numbers.</span></p>
+    </div>
+
+    <div class="stage" data-stage="s5">
+      <div class="dot">✓</div>
+      <div class="stage-head"><span class="chip"></span><h2>🌐 Stage 5 - Put it online</h2><span class="cost mono">$0 Vercel / ~US$12+ own server</span></div>
+      <p class="row"><span class="rlab">⚙️ What happens</span><span>Optional: deploy to Vercel (your agent drives the CLI: login, project, env vars, deploy) or
+      your own server with Docker/Coolify. The deploy is verified against Lyra's health endpoint
+      before it's called done.</span></p>
+      <p class="row"><span class="rlab">💡 Why it matters</span><span>online means Lyra works from your phone and stays up when your machine
+      sleeps - with costs itemised up front.</span></p>
+      <div class="note"></div>
+      <p class="row"><span class="rlab">✅ Done looks like</span><span><code>/api/health</code> on your URL returns ok with the right version.</span></p>
+    </div>
+  </section>
+
+
+  <section>
+    <p class="sec-label">The ultimate goal</p>
+    <p class="sec-title">From signal to <span class="blue">self-driving research</span>.</p>
+    <p class="sec-sub">Tap any card for the detail.</p>
+    <div class="goals">
+
+      <div class="goal">
+       <div class="gin">
+        <div class="gface gfront">
+          <span class="ghint">more</span>
+          <div class="viz">
+            <svg class="fill" viewBox="0 0 360 130" preserveAspectRatio="xMidYMid meet">
+            <defs><linearGradient id="swgrad" x1="0" y1="1" x2="0" y2="0"><stop stop-color="#1E63FF" stop-opacity=".9"/><stop offset="1" stop-color="#5BC8FF" stop-opacity="0"/></linearGradient></defs>
+            <circle class="ring" cx="180" cy="124" r="34"/><circle class="ring" cx="180" cy="124" r="68"/><circle class="ring" cx="180" cy="124" r="102"/>
+            <g class="arm"><line x1="180" y1="124" x2="180" y2="26" stroke="url(#swgrad)" stroke-width="2"/></g>
+            <circle class="blip" cx="224" cy="86" r="3.5" fill="#1E63FF"/>
+            <circle class="blip b2" cx="138" cy="96" r="3.5" fill="#43d18b"/>
+            <circle class="blip b3" cx="204" cy="112" r="3.5" fill="#f3a33a"/>
+          </svg>
+          </div>
+          <div class="gbody"><h3><span class="gnum">1</span> Small-cap signal radar</h3>
+          <p class="lede">Finds the small-cap names nobody is watching yet.</p></div>
+          <span class="badge free gstat">live in the app</span>
+        </div>
+        <div class="gface gback">
+          <span class="ghint">back</span>
+          <p class="bl">1 · Small-cap signal radar</p>
+          <p>The discovery engine sweeps beyond the megacaps: small-cap universe scans, tracked 13F investor moves, and deterministic signal events surface names early.</p>
+        </div>
+       </div>
+      </div>
+
+      <div class="goal">
+       <div class="gin">
+        <div class="gface gfront">
+          <span class="ghint">more</span>
+          <div class="viz">
+            <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
+            <path class="drawline" d="M10 38 C 40 58, 55 92, 85 96 S 140 66, 190 22" fill="none" stroke="#1E63FF" stroke-width="2.5" stroke-linecap="round"/>
+            <g>
+              <rect class="wbar"    x="18"  y="78" width="14" height="25" rx="2" fill="#3b5bdb" opacity=".85"/>
+              <rect class="wbar w2" x="40"  y="73" width="14" height="30" rx="2" fill="#1E63FF" opacity=".85"/>
+              <rect class="wbar w3" x="62"  y="88" width="14" height="15" rx="2" fill="#5BC8FF" opacity=".9"/>
+              <rect class="wbar w4" x="84"  y="88" width="14" height="15" rx="2" fill="#43d18b" opacity=".9"/>
+              <rect class="wbar w5" x="106" y="88" width="14" height="15" rx="2" fill="#f3a33a" opacity=".9"/>
+            </g>
+            <text x="18" y="114" font-size="7.5" fill="#8290a0" font-family="ui-monospace,Menlo,monospace">RSI 25 · MACD 30 · PRICE 15 · TREND 15 · VOL 15</text>
+          </svg>
+          </div>
+          <div class="gbody"><h3><span class="gnum">2</span> Analysis you can audit</h3>
+          <p class="lede">Open maths - every score auditable and backtestable.</p></div>
+          <span class="badge free gstat">live in the app</span>
+        </div>
+        <div class="gface gback">
+          <span class="ghint">back</span>
+          <p class="bl">2 · Analysis you can audit</p>
+          <p>The deterministic 0-100 score - five weighted blocks computed in code, mirrored in Pine for TradingView backtests, peeled open by the Investigation System.</p>
+        </div>
+       </div>
+      </div>
+
+      <div class="goal">
+       <div class="gin">
+        <div class="gface gfront">
+          <span class="ghint">more</span>
+          <div class="viz flow">
+            <div class="provrow">
+              <img class="prov" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMjQwNiAyNDA2Ij4KCTxwYXRoIGQ9Ik0xIDU3OC40QzEgMjU5LjUgMjU5LjUgMSA1NzguNCAxaDEyNDkuMWMzMTkgMCA1NzcuNSAyNTguNSA1NzcuNSA1NzcuNFYyNDA2SDU3OC40QzI1OS41IDI0MDYgMSAyMTQ3LjUgMSAxODI4LjZWNTc4LjR6IiBmaWxsPSIjNzRhYTljIi8+Cgk8cGF0aCBpZD0iYSIgZD0iTTExMDcuMyAyOTkuMWMtMTk3Ljk5OSAwLTM3My45IDEyNy4zLTQzNS4yIDMxNS4zTDY1MCA3NDMuNXY0MjcuOWMwIDIxLjQgMTEgNDAuNCAyOS40IDUxLjRsMzQ0LjUgMTk4LjUxNVY4MzMuM2guMXYtMjcuOUwxMzcyLjcgNjA0YzMzLjcxNS0xOS41MiA3MC40NC0zMi44NTcgMTA4LjQ3LTM5LjgyOEwxNDQ3LjYgNDUwLjNDMTM2MSAzNTMuNSAxMjM3LjEgMjk4LjUgMTEwNy4zIDI5OS4xem0wIDExNy41LS42LjZjNzkuNjk5IDAgMTU2LjMgMjcuNSAyMTcuNiA3OC40LTIuNSAxLjItNy40IDQuMy0xMSA2LjFMOTUyLjggNzA5LjNjLTE4LjQgMTAuNC0yOS40IDMwLTI5LjQgNTEuNFYxMjQ4bC0xNTUuMS04OS40Vjc1NS44Yy0uMS0xODcuMDk5IDE1MS42MDEtMzM4LjkgMzM5LTMzOS4yeiIgZmlsbD0iI2ZmZiIvPgoJPHVzZSB4bGluazpocmVmPSIjYSIgdHJhbnNmb3JtPSJyb3RhdGUoNjAgMTIwMyAxMjAzKSIvPgogIAk8dXNlIHhsaW5rOmhyZWY9IiNhIiB0cmFuc2Zvcm09InJvdGF0ZSgxMjAgMTIwMyAxMjAzKSIvPgoJPHVzZSB4bGluazpocmVmPSIjYSIgdHJhbnNmb3JtPSJyb3RhdGUoMTgwIDEyMDMgMTIwMykiLz4KCTx1c2UgeGxpbms6aHJlZj0iI2EiIHRyYW5zZm9ybT0icm90YXRlKDI0MCAxMjAzIDEyMDMpIi8+Cgk8dXNlIHhsaW5rOmhyZWY9IiNhIiB0cmFuc2Zvcm09InJvdGF0ZSgzMDAgMTIwMyAxMjAzKSIvPgoKPC9zdmc+" alt="OpenAI">
+              <img class="prov p2" src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjRDk3NzU3IiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+Q2xhdWRlPC90aXRsZT48cGF0aCBkPSJtNC43MTQ0IDE1Ljk1NTUgNC43MTc0LTIuNjQ3MS4wNzktLjIzMDctLjA3OS0uMTI3NWgtLjIzMDdsLS43ODkzLS4wNDg2LTIuNjk1Ni0uMDcyOS0yLjMzNzUtLjA5NzEtMi4yNjQ2LS4xMjE0LS41NzA3LS4xMjE1LS41MzQzLS43MDQyLjA1NDYtLjM1MjIuNDc5Ny0uMzIxOC42ODYuMDYwOCAxLjUxNzkuMTAzMiAyLjI3NjcuMTU3OCAxLjY1MTQuMDk3MiAyLjQ0NjguMjU1aC4zODg2bC4wNTQ2LS4xNTc5LS4xMzM2LS4wOTcxLS4xMDMyLS4wOTcyTDYuOTczIDkuODM1NmwtMi41NS0xLjY4NzktMS4zMzU2LS45NzE0LS43MjI1LS40OTE4LS4zNjQzLS40NjE0LS4xNTc4LTEuMDA3OC42NTU3LS43MjI1Ljg4MDMuMDYwNy4yMjQ2LjA2MDcuODkyNS42ODYgMS45MDY0IDEuNDc1NCAyLjQ4OTMgMS44MzM2LjM2NDMuMzAzNS4xNDU3LS4xMDMyLjAxODItLjA3MjgtLjE2NC0uMjczMy0xLjM1MzktMi40NDY3LTEuNDQ1LTIuNDg5My0uNjQzNS0xLjAzMi0uMTctLjYxOTRjLS4wNjA3LS4yNTUtLjEwMzItLjQ2NzQtLjEwMzItLjcyODVMNi4yODcuMTMzNSA2LjY5OTcgMGwuOTk1Ny4xMzM2LjQxOS4zNjQyLjYxOTIgMS40MTQ3IDEuMDAxOCAyLjIyODIgMS41NTQzIDMuMDI5Ni40NTUzLjg5ODUuMjQyOS44MzE4LjA5MS4yNTVoLjE1Nzl2LS4xNDU3bC4xMjc1LTEuNzA2LjIzNjgtMi4wOTQ3LjIzMDctMi42OTU3LjA3ODktLjc1ODkuMzc2NC0uOTEwNy43NDY4LS40OTE4LjU4MjguMjc5My40Nzk3LjY4Ni0uMDY2OC40NDMzLS4yODUzIDEuODUxNy0uNTU4NiAyLjkwMjEtLjM2NDMgMS45NDI5aC4yMTI1bC4yNDI5LS4yNDI5Ljk4MzUtMS4zMDUzIDEuNjUxNC0yLjA2NDMuNzI4Ni0uODE5Ni44NS0uOTA0Ni41NDY0LS40MzExaDEuMDMyMWwuNzU5IDEuMTI5My0uMzQgMS4xNjU3LTEuMDYyNSAxLjM0NzgtLjg4MDQgMS4xNDE0LTEuMjYyOCAxLjctLjc4OTMgMS4zNi4wNzI5LjEwOTMuMTg4Mi0uMDE4MyAyLjg1MzUtLjYwNyAxLjU0MjEtLjI3OTQgMS44Mzk2LS4zMTU3LjgzMTguMzg4Ni4wOTEuMzk0Ni0uMzI3OC44MDc1LTEuOTY3LjQ4NTctMi4zMDcyLjQ2MTQtMy40MzY0LjgxMzYtLjA0MjUuMDMwNC4wNDg2LjA2MDcgMS41NDgyLjE0NTcuNjYxOC4wMzY0aDEuNjIxbDMuMDE3NS4yMjQ3Ljc4OTIuNTIyLjQ3MzYuNjM3Ni0uMDc5LjQ4NTctMS4yMTQyLjYxOTMtMS42MzkzLS4zODg2LTMuODI1LS45MTA3LTEuMzExMy0uMzI3OWgtLjE4MjJ2LjEwOTNsMS4wOTI5IDEuMDY4NiAyLjAwMzUgMS44MDkyIDIuNTA3NSAyLjMzMTQuMTI3NS41NzY4LS4zMjE4LjQ1NTQtLjM0LS4wNDg2LTIuMjAzOS0xLjY1NzUtLjg1LS43NDY4LTEuOTI0Ni0xLjYyMWgtLjEyNzV2LjE3bC40NDMyLjY0OTYgMi4zNDM2IDMuNTIxNC4xMjE0IDEuMDgwNy0uMTcuMzUyMS0uNjA3MS4yMTI1LS42Njc5LS4xMjE0LTEuMzcyMS0xLjkyNDZMMTQuMzggMTcuOTU5bC0xLjE0MTQtMS45NDI4LS4xMzk3LjA3OS0uNjc0IDcuMjU1Mi0uMzE1Ni4zNzAzLS43Mjg2LjI3OTMtLjYwNzEtLjQ2MTQtLjMyMTgtLjc0NjguMzIxOC0xLjQ3NTMuMzg4Ni0xLjkyNDYuMzE1Ny0xLjUzLjI4NTMtMS45MDA0LjE3LS42MzE0LS4wMTIxLS4wNDI1LS4xMzk3LjAxODItMS40MzI4IDEuOTY3Mi0yLjE3OTYgMi45NDQ2LTEuNzI0MyAxLjg0NTYtLjQxMjguMTY0LS43MTY0LS4zNzA0LjA2NjctLjY2MTguNDAwOC0uNTg4OSAyLjM4Ni0zLjAzNTcgMS40Mzg5LTEuODgyLjkyOS0xLjA4NjgtLjAwNjItLjE1NzloLS4wNTQ2bC02LjMzODUgNC4xMTY0LTEuMTI5My4xNDU3LS40ODU3LS40NTU0LjA2MDgtLjc0NjcuMjMwNy0uMjQyOSAxLjkwNjQtMS4zMTE0WiIvPjwvc3ZnPg==" alt="Anthropic Claude">
+            </div>
+            <p class="provchips">OPENAI · ANTHROPIC · GEMINI · +MORE</p>
+            <div class="typing"><i>"NVDA scores 84: RSI turning up."</i></div>
+            <p class="vizcap">THE ENGINE OWNS EVERY NUMBER</p>
+          </div>
+          <div class="gbody"><h3><span class="gnum">3</span> AI that explains - keys you own</h3>
+          <p class="lede">Bring your own AI key - it never leaves your browser.</p></div>
+          <span class="badge opt gstat">live in the app · BYOK</span>
+        </div>
+        <div class="gface gback">
+          <span class="ghint">back</span>
+          <p class="bl">3 · AI that explains - keys you own</p>
+          <p>Paste any provider's key in Settings - it stays in your browser. The engine decides every number; the AI only phrases it, and every surface has a no-AI fallback.</p>
+        </div>
+       </div>
+      </div>
+
+      <div class="goal">
+       <div class="gin">
+        <div class="gface gfront">
+          <span class="ghint">more</span>
+          <div class="viz flow">
+            <div class="notifs">
+              <div class="notif n1"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMjZBNUU0IiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+VGVsZWdyYW08L3RpdGxlPjxwYXRoIGQ9Ik0xMS45NDQgMEExMiAxMiAwIDAgMCAwIDEyYTEyIDEyIDAgMCAwIDEyIDEyIDEyIDEyIDAgMCAwIDEyLTEyQTEyIDEyIDAgMCAwIDEyIDBhMTIgMTIgMCAwIDAtLjA1NiAwem00Ljk2MiA3LjIyNGMuMS0uMDAyLjMyMS4wMjMuNDY1LjE0YS41MDYuNTA2IDAgMCAxIC4xNzEuMzI1Yy4wMTYuMDkzLjAzNi4zMDYuMDIuNDcyLS4xOCAxLjg5OC0uOTYyIDYuNTAyLTEuMzYgOC42MjctLjE2OC45LS40OTkgMS4yMDEtLjgyIDEuMjMtLjY5Ni4wNjUtMS4yMjUtLjQ2LTEuOS0uOTAyLTEuMDU2LS42OTMtMS42NTMtMS4xMjQtMi42NzgtMS44LTEuMTg1LS43OC0uNDE3LTEuMjEuMjU4LTEuOTEuMTc3LS4xODQgMy4yNDctMi45NzcgMy4zMDctMy4yMy4wMDctLjAzMi4wMTQtLjE1LS4wNTYtLjIxMnMtLjE3NC0uMDQxLS4yNDktLjAyNGMtLjEwNi4wMjQtMS43OTMgMS4xNC01LjA2MSAzLjM0NS0uNDguMzMtLjkxMy40OS0xLjMwMi40OC0uNDI4LS4wMDgtMS4yNTItLjI0MS0xLjg2NS0uNDQtLjc1Mi0uMjQ1LTEuMzQ5LS4zNzQtMS4yOTctLjc4OS4wMjctLjIxNi4zMjUtLjQzNy44OTMtLjY2MyAzLjQ5OC0xLjUyNCA1LjgzLTIuNTI5IDYuOTk4LTMuMDE0IDMuMzMyLTEuMzg2IDQuMDI1LTEuNjI3IDQuNDc2LTEuNjM1eiIvPjwvc3ZnPg==" alt="Telegram"><span>Strong setup · NVDA 84</span></div>
+              <div class="notif n2"><svg viewBox="0 0 122.8 122.8"><path d="M25.8 77.6c0 7.1-5.8 12.9-12.9 12.9S0 84.7 0 77.6s5.8-12.9 12.9-12.9h12.9v12.9zM32.3 77.6c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9v32.3c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V77.6z" fill="#E01E5A"/><path d="M45.2 25.8c-7.1 0-12.9-5.8-12.9-12.9S38.1 0 45.2 0s12.9 5.8 12.9 12.9v12.9H45.2zM45.2 32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H12.9C5.8 58.1 0 52.3 0 45.2s5.8-12.9 12.9-12.9h32.3z" fill="#36C5F0"/><path d="M97 45.2c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9-5.8 12.9-12.9 12.9H97V45.2zM90.5 45.2c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V12.9C64.7 5.8 70.5 0 77.6 0s12.9 5.8 12.9 12.9v32.3z" fill="#2EB67D"/><path d="M77.6 97c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9-12.9-5.8-12.9-12.9V97h12.9zM77.6 90.5c-7.1 0-12.9-5.8-12.9-12.9s5.8-12.9 12.9-12.9h32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H77.6z" fill="#ECB22E"/></svg><span>Feedback -&gt; #lyra</span></div>
+              <div class="notif n3"><img src="data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjMjVEMzY2IiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+V2hhdHNBcHA8L3RpdGxlPjxwYXRoIGQ9Ik0xNy40NzIgMTQuMzgyYy0uMjk3LS4xNDktMS43NTgtLjg2Ny0yLjAzLS45NjctLjI3My0uMDk5LS40NzEtLjE0OC0uNjcuMTUtLjE5Ny4yOTctLjc2Ny45NjYtLjk0IDEuMTY0LS4xNzMuMTk5LS4zNDcuMjIzLS42NDQuMDc1LS4yOTctLjE1LTEuMjU1LS40NjMtMi4zOS0xLjQ3NS0uODgzLS43ODgtMS40OC0xLjc2MS0xLjY1My0yLjA1OS0uMTczLS4yOTctLjAxOC0uNDU4LjEzLS42MDYuMTM0LS4xMzMuMjk4LS4zNDcuNDQ2LS41Mi4xNDktLjE3NC4xOTgtLjI5OC4yOTgtLjQ5Ny4wOTktLjE5OC4wNS0uMzcxLS4wMjUtLjUyLS4wNzUtLjE0OS0uNjY5LTEuNjEyLS45MTYtMi4yMDctLjI0Mi0uNTc5LS40ODctLjUtLjY2OS0uNTEtLjE3My0uMDA4LS4zNzEtLjAxLS41Ny0uMDEtLjE5OCAwLS41Mi4wNzQtLjc5Mi4zNzItLjI3Mi4yOTctMS4wNCAxLjAxNi0xLjA0IDIuNDc5IDAgMS40NjIgMS4wNjUgMi44NzUgMS4yMTMgMy4wNzQuMTQ5LjE5OCAyLjA5NiAzLjIgNS4wNzcgNC40ODcuNzA5LjMwNiAxLjI2Mi40ODkgMS42OTQuNjI1LjcxMi4yMjcgMS4zNi4xOTUgMS44NzEuMTE4LjU3MS0uMDg1IDEuNzU4LS43MTkgMi4wMDYtMS40MTMuMjQ4LS42OTQuMjQ4LTEuMjg5LjE3My0xLjQxMy0uMDc0LS4xMjQtLjI3Mi0uMTk4LS41Ny0uMzQ3bS01LjQyMSA3LjQwM2gtLjAwNGE5Ljg3IDkuODcgMCAwMS01LjAzMS0xLjM3OGwtLjM2MS0uMjE0LTMuNzQxLjk4Mi45OTgtMy42NDgtLjIzNS0uMzc0YTkuODYgOS44NiAwIDAxLTEuNTEtNS4yNmMuMDAxLTUuNDUgNC40MzYtOS44ODQgOS44ODgtOS44ODQgMi42NCAwIDUuMTIyIDEuMDMgNi45ODggMi44OThhOS44MjUgOS44MjUgMCAwMTIuODkzIDYuOTk0Yy0uMDAzIDUuNDUtNC40MzcgOS44ODQtOS44ODUgOS44ODRtOC40MTMtMTguMjk3QTExLjgxNSAxMS44MTUgMCAwMDEyLjA1IDBDNS40OTUgMCAuMTYgNS4zMzUuMTU3IDExLjg5MmMwIDIuMDk2LjU0NyA0LjE0MiAxLjU4OCA1Ljk0NUwuMDU3IDI0bDYuMzA1LTEuNjU0YTExLjg4MiAxMS44ODIgMCAwMDUuNjgzIDEuNDQ4aC4wMDVjNi41NTQgMCAxMS44OS01LjMzNSAxMS44OTMtMTEuODkzYTExLjgyMSAxMS44MjEgMCAwMC0zLjQ4LTguNDEzWiIvPjwvc3ZnPg==" alt="WhatsApp"><span>Hourly summary (soon)</span></div>
+            </div>
+            <p class="vizcap">OPT-IN · QUIET HOURS · PER-CHANNEL</p>
+          </div>
+          <div class="gbody"><h3><span class="gnum">4</span> Alerts where you live</h3>
+          <p class="lede">Telegram, Slack and web push - urgency comes to you.</p></div>
+          <span class="badge opt gstat">telegram + slack + push live</span>
+        </div>
+        <div class="gface gback">
+          <span class="ghint">back</span>
+          <p class="bl">4 · Alerts where you live</p>
+          <p>One dispatch layer, your channels: Telegram live today, Slack into your own webhook, web push with zero accounts - and WhatsApp scaffolded honestly, not oversold.</p>
+        </div>
+       </div>
+      </div>
+
+      <div class="goal">
+       <div class="gin">
+        <div class="gface gfront">
+          <span class="ghint">more</span>
+          <div class="viz">
+            <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
+            <path class="equity" d="M10 100 L40 100 L40 88 L70 88 L70 92 L100 92 L100 70 L130 70 L130 58 L160 58 L160 40 L190 40" fill="none" stroke="#189a66" stroke-width="2.5" stroke-linejoin="round"/>
+            <g font-size="8" font-family="ui-monospace,Menlo,monospace">
+              <text class="tick t1" x="42" y="82" fill="#189a66">BUY</text>
+              <text class="tick t2" x="102" y="64" fill="#189a66">BUY</text>
+              <text class="tick t3" x="132" y="52" fill="#d64545">STOP</text>
+            </g>
+            <text x="10" y="114" font-size="7.5" fill="#8290a0" font-family="ui-monospace,Menlo,monospace">REAL FEES · SLIPPAGE · RISK REFUSALS MODELLED</text>
+          </svg>
+          </div>
+          <div class="gbody"><h3><span class="gnum">5</span> Paper bot proves it</h3>
+          <p class="lede">Proves the strategy with real fees and slippage.</p></div>
+          <span class="badge free gstat">live in the app</span>
+        </div>
+        <div class="gface gback">
+          <span class="ghint">back</span>
+          <p class="bl">5 · Paper bot proves it</p>
+          <p>The paper-trading bot runs the strategy with realistic fees and slippage, and Bot Readiness - the pre-trade risk engine - refuses unsafe orders before they exist.</p>
+        </div>
+       </div>
+      </div>
+
+      <div class="goal future">
+       <div class="gin">
+        <div class="gface gfront">
+          <span class="ghint">more</span>
+          <div class="viz">
+            <svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
+            <g font-size="8" font-family="ui-monospace,Menlo,monospace" text-anchor="middle">
+              <g class="gate"><rect x="20" y="46" width="42" height="26" rx="6" fill="none" stroke="#43d18b" stroke-width="1.5"/><text x="41" y="62" fill="#189a66">RISK ✓</text></g>
+              <g class="gate g2"><rect x="79" y="46" width="42" height="26" rx="6" fill="none" stroke="#43d18b" stroke-width="1.5"/><text x="100" y="62" fill="#189a66">SIZE ✓</text></g>
+              <g class="gate g3"><rect x="138" y="46" width="42" height="26" rx="6" fill="none" stroke="#f3a33a" stroke-width="1.5"/><text x="159" y="62" fill="#b45a1d">HUMAN</text></g>
+              <line x1="62" y1="59" x2="79" y2="59" stroke="#c6cdd9" stroke-width="1.5"/>
+              <line x1="121" y1="59" x2="138" y2="59" stroke="#c6cdd9" stroke-width="1.5"/>
+              <circle class="core" cx="159" cy="30" r="5" fill="#f3a33a"/>
+              <text x="100" y="98" fill="#8290a0">EVERY ORDER PASSES EVERY GATE - OR IT NEVER EXISTS</text>
+            </g>
+          </svg>
+          </div>
+          <div class="gbody"><h3><span class="gnum">6</span> The live bot - the goal</h3>
+          <p class="lede">The same engine on a real account - once it's earned.</p></div>
+          <span class="badge paid gstat">the destination · human-gated</span>
+        </div>
+        <div class="gface gback">
+          <span class="ghint">back</span>
+          <p class="bl">6 · The live bot - the goal</p>
+          <p>The destination: live execution only after the paper bot proves it, and always behind the human arming gate. Not live yet - and honest about it.</p>
+        </div>
+       </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="links">
+    <a href="https://github.com/BrysonW24/vai-lyra-stock-tracker#readme" target="_blank">README</a>
+    <a href="https://github.com/BrysonW24/vai-lyra-stock-tracker/blob/main/docs/walkthroughs/README.md" target="_blank">Walkthroughs (human-paced)</a>
+    <a href="https://github.com/BrysonW24/vai-lyra-stock-tracker/blob/main/COSTS.md" target="_blank">COSTS.md</a>
+    <a href="https://github.com/BrysonW24/vai-lyra-stock-tracker/blob/main/SECURITY.md" target="_blank">Security rules</a>
+    <a href="https://github.com/BrysonW24/vai-lyra-stock-tracker/blob/main/ONBOARDING.md" target="_blank">Onboarding ledger</a>
+    <a href="https://github.com/BrysonW24/vai-lyra-stock-tracker/blob/main/AGENT-ONBOARDING.md" target="_blank">For agents</a>
+  </div>
+
+  <footer>
+    <p>Lyra is research software, not a broker and not financial advice. Your agent never pastes
+    secrets into chat; keys live in <code>.env.local</code> on this machine.</p>
+    <div class="flock">
+      <small>Built by</small>
+      <span class="vbox"><img src="data:image/png;base64,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" alt="Vivacity.ai"></span>
+      <span class="vword" style="font-size:13px">VIVACITY<span class="ai">.AI</span></span>
+    </div>
+    <p style="font-size:10px">Brand logos load from simpleicons.org and belong to their owners.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var s = window.SETUP_STATE || {};
+  document.getElementById('m-updated').textContent = s.updated || 'n/a';
+  document.getElementById('m-path').textContent = s.path || 'n/a';
+  var app = document.getElementById('m-app');
+  app.textContent = (s.appUrl || 'http://localhost:3042').replace(/^https?:\/\//, '');
+  app.href = s.appUrl || 'http://localhost:3042';
+  if (s.deployedUrl) {
+    document.getElementById('m-deploy-wrap').style.display = '';
+    var d = document.getElementById('m-deploy');
+    d.textContent = s.deployedUrl.replace(/^https?:\/\//, ''); d.href = s.deployedUrl;
+  }
+  var labels = { pending: 'pending', active: 'in progress', done: 'done', blocked: 'blocked', skipped: 'skipped' };
+  document.querySelectorAll('.stage').forEach(function (el) {
+    var st = (s.stages || {})[el.getAttribute('data-stage')] || { status: 'pending', note: '' };
+    var chip = el.querySelector('.chip');
+    chip.textContent = labels[st.status] || st.status;
+    chip.className = 'chip ' + st.status;
+    el.classList.toggle('active', st.status === 'active');
+    el.classList.toggle('done', st.status === 'done');
+    var note = el.querySelector('.note');
+    if (st.note) { note.textContent = st.note; note.style.display = 'block'; }
+  });
+
+  /* Goal cards: click (or Enter/Space) flips front <-> back. The flip set survives
+     the 5s meta-refresh via sessionStorage, restored without animation. */
+  var flips = [];
+  try { flips = JSON.parse(sessionStorage.getItem('lyraGoalFlips') || '[]'); } catch (e) {}
+  document.querySelectorAll('.goal').forEach(function (g, i) {
+    if (flips.indexOf(i) !== -1) { g.classList.add('noanim'); g.classList.add('flip'); }
+    g.setAttribute('tabindex', '0');
+    g.setAttribute('role', 'button');
+    g.setAttribute('aria-pressed', g.classList.contains('flip') ? 'true' : 'false');
+    function toggle() {
+      g.classList.remove('noanim');
+      g.classList.toggle('flip');
+      var on = g.classList.contains('flip');
+      g.setAttribute('aria-pressed', on ? 'true' : 'false');
+      var at = flips.indexOf(i);
+      if (on && at === -1) flips.push(i);
+      if (!on && at !== -1) flips.splice(at, 1);
+      try { sessionStorage.setItem('lyraGoalFlips', JSON.stringify(flips)); } catch (e) {}
+    }
+    g.addEventListener('click', toggle);
+    g.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

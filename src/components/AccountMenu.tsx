@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BellRing, BrainCircuit, LogOut, Settings, UserRound } from 'lucide-react';
+import { BellRing, BrainCircuit, LogOut, Settings } from 'lucide-react';
 import { loadProfile } from '@/lib/account';
 import {
   ALERT_FREQ,

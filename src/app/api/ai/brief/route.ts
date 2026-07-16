@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { DailyBrief } from '@/lib/daily-brief';
 import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_BRIEF_FORMAT, composeSystem } from '@/lib/ai/system-prompt';
+import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { guardAiRoute } from '@/lib/api/ai-guard';
 
 /**
  * AI-phrased Daily Brief. GROUNDED: the model is given ONLY the deterministic facts
@@ -33,6 +35,16 @@ function factsBlock(brief: DailyBrief): string {
   return `Headline: ${brief.headline}\nMarket regime: ${brief.regimeLabel}\nFacts:\n${lines}`;
 }
 
+/**
+ * The brief object is client-supplied (the deterministic brief is computed browser-side and
+ * posted back for AI phrasing), so its text is untrusted - scan every field for prompt-injection
+ * before it reaches the model. Returns true if anything looks like an injection attempt.
+ */
+function briefLooksInjected(brief: DailyBrief): boolean {
+  const parts = [brief.headline, brief.regimeLabel, ...brief.lines.flatMap((l) => [l.label, l.text])];
+  return parts.some((p) => typeof p === 'string' && detectInjectionAttempt(p));
+}
+
 function audience(profile?: BriefRequest['profile']): string {
   if (!profile) return '';
   if (profile.tradedBefore === 'no' || profile.experienceLevel === 'beginner') {
@@ -46,13 +58,18 @@ function audience(profile?: BriefRequest['profile']): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as BriefRequest;
-    const { brief, ai, profile } = body;
+    const guard = await guardAiRoute<BriefRequest>(request);
+    if (!guard.ok) return guard.response;
+    const { brief, ai, profile } = guard.body;
 
     if (!brief || !ai) {
       return NextResponse.json({ ok: false, reason: 'disabled' });
     }
-    const creds = resolveAiCredentials(ai);
+    if (!Array.isArray(brief.lines) || briefLooksInjected(brief)) {
+      // Untrusted client content tripped the injection screen - fall back to the deterministic brief.
+      return NextResponse.json({ ok: false, reason: 'refused' });
+    }
+    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated });
     if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
     const prompt = `${factsBlock(brief)}\n\nWrite the brief.${audience(profile)}`;

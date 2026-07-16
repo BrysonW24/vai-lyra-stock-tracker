@@ -169,6 +169,7 @@ function enabledChannels(prefs: NotificationPreferences): ChannelType[] {
   if (prefs.pushEnabled) channels.push('push');
   if (prefs.telegramEnabled) channels.push('telegram');
   if (prefs.whatsappEnabled) channels.push('whatsapp');
+  if (prefs.slackEnabled) channels.push('slack');
   return channels;
 }
 

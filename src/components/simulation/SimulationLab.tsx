@@ -3,17 +3,13 @@
 import { useState, useMemo } from 'react';
 import type { PortfolioHolding } from '@/types/scanner';
 import {
-  calculatePositionSizing,
-  calculateRiskReward,
   calculateScenarioOutcomes,
-  calculateExposureImpact,
   calculateCompoundingProjection,
   calculateWinRate,
   fullSimulationAnalysis,
   type TradeInputs,
 } from '@/lib/simulation';
 import { formatCurrency, formatNumber, formatPercent, formatSignedPercent, toneClass } from '@/lib/format';
-import { MiniSparkline } from '@/components/ChartPrimitives';
 
 interface SimulationLabProps {
   portfolio: PortfolioHolding[];

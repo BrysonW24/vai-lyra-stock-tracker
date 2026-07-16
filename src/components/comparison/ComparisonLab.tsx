@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, CSSProperties } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { loadLocalHoldings } from '@/lib/local-portfolio';
 import {
   DEMO_COMPARISON_DATA,
@@ -9,9 +9,8 @@ import {
   formatPointDateTime,
   normaliseSeriesToBaseline,
   normaliseSeriesToScale,
-  type ComparisonSeries,
 } from '@/lib/comparison';
-import { formatNumber, formatPercent, formatSignedPercent } from '@/lib/format';
+import { formatNumber, formatSignedPercent } from '@/lib/format';
 
 type MetricMode = 'return' | 'score' | 'rsi' | 'macd' | 'volume';
 
@@ -234,7 +233,7 @@ export function ComparisonLab() {
           <ComparisonChart series={chartSeries} timeLabels={timeLabels} timestamps={timestamps} metricLabel={metricLabel} />
 
           {/* Comparison Table */}
-          <ComparisonTable rows={comparisonTable} metricMode={metricMode} />
+          <ComparisonTable rows={comparisonTable} />
         </>
       )}
     </div>
@@ -443,10 +442,8 @@ interface TableRow {
 
 function ComparisonTable({
   rows,
-  metricMode,
 }: {
   rows: TableRow[];
-  metricMode: MetricMode;
 }) {
   // Desktop version
   return (

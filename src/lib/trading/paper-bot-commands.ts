@@ -7,8 +7,10 @@
  *   - `execute` only fills an intent that has been `approve`d (the engine re-checks risk at fill).
  *   - Unknown / live-sounding input is refused, never guessed into an action.
  *
- * State is a single module-level pending intent (the demo is single-local-user; per-user sessions
- * arrive with the Supabase persistence pass).
+ * State is a pending intent keyed by CALLER IDENTITY (user id when signed in, else IP), so one
+ * caller's pending order can never be approved/executed by another - closing the cross-user state
+ * bleed the security audit flagged. Still in-memory (best-effort on serverless); durable per-user
+ * sessions arrive with the Supabase persistence pass.
  */
 import type { AiCreds } from '@/lib/ai/run-agent';
 import { proposeBotRun, executeBotRun, runClose } from './paper-bot';
@@ -23,7 +25,20 @@ export interface CommandResult {
   lines: string[];
 }
 
-let pendingIntent: OrderIntent | null = null;
+const MAX_PENDING = 10_000;
+const pendingByIdentity = new Map<string, OrderIntent>();
+
+function getPending(identity: string): OrderIntent | null {
+  return pendingByIdentity.get(identity) ?? null;
+}
+function setPending(identity: string, intent: OrderIntent | null): void {
+  if (intent === null) {
+    pendingByIdentity.delete(identity);
+    return;
+  }
+  if (pendingByIdentity.size > MAX_PENDING) pendingByIdentity.clear(); // crude memory guard
+  pendingByIdentity.set(identity, intent);
+}
 
 const HELP: string[] = [
   'Commands:',
@@ -49,8 +64,12 @@ function statusLines(s: Awaited<ReturnType<typeof getPaperAccountSummary>>): str
   ];
 }
 
-/** Execute one command line. Pure-ish: reads/writes the in-memory stores and the engine. */
-export async function runPaperBotCommand(rawLine: string, creds: AiCreds): Promise<CommandResult> {
+/**
+ * Execute one command line for a specific caller. `identity` scopes the pending-intent state so
+ * one user's proposal cannot be approved/executed by another. Reads/writes the in-memory stores
+ * and the engine.
+ */
+export async function runPaperBotCommand(rawLine: string, creds: AiCreds, identity: string): Promise<CommandResult> {
   const line = rawLine.trim();
   if (!line) return { ok: false, kind: 'noop', lines: ['Type `help` for commands.'] };
   const [verb, ...args] = line.split(/\s+/);
@@ -94,7 +113,7 @@ export async function runPaperBotCommand(rawLine: string, creds: AiCreds): Promi
         const v = run.verdict as { readiness?: string; reasons?: string[] } | undefined;
         return { ok: true, kind: run.status, lines: [`${symbol}: ${run.status.replace(/_/g, ' ')}`, ...(v?.reasons ?? []).slice(0, 2).map((r) => `  - ${r}`)] };
       }
-      pendingIntent = run.intent ?? null;
+      setPending(identity, run.intent ?? null);
       const v = run.verdict as { readiness?: string; confidence?: number; reasons?: string[] } | undefined;
       return {
         ok: true,
@@ -109,23 +128,26 @@ export async function runPaperBotCommand(rawLine: string, creds: AiCreds): Promi
     }
 
     case 'approve': {
-      if (!pendingIntent) return { ok: false, kind: 'nothing', lines: ['Nothing to approve. `propose <SYM> <QTY>` first.'] };
-      if (pendingIntent.status !== 'pending_approval' && pendingIntent.status !== 'approved') {
-        return { ok: false, kind: 'nothing', lines: [`Pending order is ${pendingIntent.status}, not approvable.`] };
+      const pending = getPending(identity);
+      if (!pending) return { ok: false, kind: 'nothing', lines: ['Nothing to approve. `propose <SYM> <QTY>` first.'] };
+      if (pending.status !== 'pending_approval' && pending.status !== 'approved') {
+        return { ok: false, kind: 'nothing', lines: [`Pending order is ${pending.status}, not approvable.`] };
       }
-      pendingIntent = { ...pendingIntent, status: 'approved' };
-      return { ok: true, kind: 'approved', lines: [`Approved ${pendingIntent.side.toUpperCase()} ${pendingIntent.quantity} ${pendingIntent.symbol}. Type \`execute\` to fill on paper.`] };
+      const approved = { ...pending, status: 'approved' as const };
+      setPending(identity, approved);
+      return { ok: true, kind: 'approved', lines: [`Approved ${approved.side.toUpperCase()} ${approved.quantity} ${approved.symbol}. Type \`execute\` to fill on paper.`] };
     }
 
     case 'fill':
     case 'execute': {
-      if (!pendingIntent) return { ok: false, kind: 'nothing', lines: ['Nothing to execute. `propose` then `approve` first.'] };
-      if (pendingIntent.status !== 'approved') return { ok: false, kind: 'guard', lines: ['Order is not approved. Type `approve` first.'] };
-      const run = await executeBotRun(pendingIntent);
+      const toFill = getPending(identity);
+      if (!toFill) return { ok: false, kind: 'nothing', lines: ['Nothing to execute. `propose` then `approve` first.'] };
+      if (toFill.status !== 'approved') return { ok: false, kind: 'guard', lines: ['Order is not approved. Type `approve` first.'] };
+      const run = await executeBotRun(toFill);
       if (run.status !== 'paper_executed' || !run.fill) {
         return { ok: false, kind: run.status, lines: [`Execution ${run.status.replace(/_/g, ' ')}${run.error ? `: ${run.error}` : ''}.`] };
       }
-      pendingIntent = null;
+      setPending(identity, null);
       const f = run.fill;
       return { ok: true, kind: 'filled', lines: [`Paper filled ${f.side.toUpperCase()} ${f.quantity} ${f.symbol} @ ${f.fillPrice} · notional ${money(f.notional)} (fee ${f.simulatedFee}, slippage ${f.simulatedSlippage}).`] };
     }

@@ -37,6 +37,7 @@ entirely optional - the deterministic engine works without any AI key.
 | Supabase | Free | **$0** | 500MB DB, 50k MAUs, 5GB egress + 5GB cached/mo, 2 active projects. **Pauses after 1 week of inactivity**; no paid overage - exceeding limits restricts the project |
 | Supabase | Pro | from US$25/mo | 8GB disk (then $0.125/GB), 100k MAUs, 250GB egress (then $0.09/GB), no pausing |
 | GitHub Actions | Public repo | **$0** | Standard GitHub-hosted runners are unconditionally free in public repos (the hourly scanner is genuinely $0). See gotchas below |
+| Upstash Redis | Free | **$0** | Optional cache (quotes + hot reads) over serverless REST; the Vercel marketplace integration injects the env vars. Free tier is command-metered; without it Lyra falls back to a built-in in-process cache at no cost. Pricing page not re-verified line-by-line on 2026-07-16 - treat limits as indicative |
 | yfinance | Open-source library | **$0** | Unofficial Yahoo Finance access, personal use only, no SLA - Yahoo intermittently rate-limits or breaks it. Fine for a hobby scanner, never a commercial data source |
 | Finnhub | Free | **$0** | Free API key; hard 30 calls/sec global cap (verified on provider docs). The commonly cited 60 calls/min free limit + US$12-100/mo paid bundles could not be re-confirmed on their JS-rendered pricing page on 2026-07-16 - treat as indicative. Personal use, no redistribution |
 
@@ -60,6 +61,12 @@ Worked example at hobby volume: 50 chats/day at ~3k input + 500 output tokens ea
 gpt-5.4-mini is roughly **US$0.45/mo**. Prompt caching (10% of input price) makes the static
 system prompt nearly free. BYOK users pay on their own key; with no key at all, every surface
 falls back to deterministic text.
+
+If you set a hosted `OPENAI_API_KEY` so signed-in users get AI without their own key, your spend
+is bounded by design: the hosted key is only reachable by an **authenticated** session, is
+**rate-limited per user**, and the **model is server-pinned** (a caller cannot select a pricier
+model on your key). An anonymous visitor can never spend it. Leave the env var unset to stay
+strictly bring-your-own-key.
 
 > Note: Lyra's hosted default `gpt-5.5` still resolves on the OpenAI API (verified against
 > the live models endpoint 2026-07-16) but no longer appears on the current pricing page,

@@ -75,7 +75,10 @@ function TvWidget({ config, height }: { config: Record<string, unknown>; height:
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
     script.type = 'text/javascript';
     script.async = true;
-    script.innerHTML = configKey;
+    // Use a text node rather than innerHTML: innerHTML would not neutralise a "</script>"
+    // sequence if a symbol string ever contained one. createTextNode inserts the JSON as
+    // inert text, so the config can never break out of the script element.
+    script.appendChild(document.createTextNode(configKey));
     script.onload = () => setLoading(false);
     container.appendChild(script);
 

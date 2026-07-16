@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bot, Check, Compass, GraduationCap, X } from 'lucide-react';
+import { Check, Compass, GraduationCap, X } from 'lucide-react';
 import { loadOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadLocalHoldings } from '@/lib/local-portfolio';
 import { loadProfile, loadAi, loadNotifications } from '@/lib/account';

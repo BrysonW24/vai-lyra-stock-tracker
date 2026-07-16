@@ -3,6 +3,7 @@ import type { AiProvider } from '@/lib/ai/gateway';
 import { proposeBotRun, executeBotRun } from '@/lib/trading/paper-bot';
 import type { OrderIntent } from '@/lib/trading/types';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { guardAiRoute } from '@/lib/api/ai-guard';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { dispatchNotificationEvent } from '@/lib/notifications/dispatch';
 import { buildPaperOrderIntent } from '@/lib/trading/order-intent-builder';
@@ -91,8 +92,9 @@ async function dispatchPaperBotNotification(params: {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as PaperBotRequest;
-    const { action, symbol, quantity, intent, ai, tour } = body;
+    const guard = await guardAiRoute<PaperBotRequest>(request, { scope: 'paper-bot' });
+    if (!guard.ok) return guard.response;
+    const { action, symbol, quantity, intent, ai, tour } = guard.body;
 
     if (action === 'propose') {
       if (tour) {
@@ -120,7 +122,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (!ai || !symbol) return NextResponse.json({ ok: false, reason: 'bad_request' });
-      const creds = resolveAiCredentials(ai);
+      const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated });
       if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
       const run = await proposeBotRun({ symbol, quantity: quantity && quantity > 0 ? quantity : 10, creds: { provider: creds.provider, apiKey: creds.apiKey, model: creds.model } });
       await dispatchPaperBotNotification({ action: 'propose', symbol, run });

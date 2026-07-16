@@ -10,7 +10,6 @@ import {
   getStrategyList,
   matchStrategy,
   describeRule,
-  type Strategy,
 } from '@/lib/strategy';
 import { formatNumber, formatSignedNumber, toneClass } from '@/lib/format';
 import { StatusBadge } from '@/components/StatusBadge';

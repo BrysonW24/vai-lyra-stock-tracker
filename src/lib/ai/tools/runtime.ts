@@ -7,7 +7,7 @@
  */
 import { canAgentUseTool } from '@/lib/ai/policy';
 import type { AiAgentName, AiToolName } from '@/lib/ai/policy';
-import { searchEvidence, readSignals, readPortfolioOwn, readThemes } from './index';
+import { searchEvidence, readSignals, readConvergence, readPortfolioOwn, readThemes } from './index';
 
 export class ToolDeniedError extends Error {
   constructor(message: string) {
@@ -33,6 +33,11 @@ export async function executeTool(
       return searchEvidence(String(args.query ?? ''), typeof args.limit === 'number' ? args.limit : 6);
     case 'read_signals':
       return readSignals(args.symbol ? String(args.symbol) : undefined);
+    case 'read_convergence':
+      return readConvergence(
+        typeof args.limit === 'number' ? args.limit : 6,
+        typeof args.minKinds === 'number' ? args.minKinds : 2,
+      );
     case 'read_portfolio_own':
       return readPortfolioOwn();
     case 'read_themes':

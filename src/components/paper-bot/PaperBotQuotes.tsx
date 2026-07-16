@@ -221,11 +221,11 @@ export function PaperBotQuotes() {
           className="font-serif text-[72px] leading-none font-black select-none mb-1 transition-colors"
           style={{ color: `${quote.color}22`, lineHeight: '0.7' }}
         >
-          "
+          &ldquo;
         </div>
 
         <p className="text-[13px] leading-relaxed text-[#c8d3de] font-medium italic mb-4">
-          "{quote.text}"
+          &ldquo;{quote.text}&rdquo;
         </p>
 
         {/* Author row */}

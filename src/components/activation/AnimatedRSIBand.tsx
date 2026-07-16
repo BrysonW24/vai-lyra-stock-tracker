@@ -30,7 +30,7 @@ export function AnimatedRSIBand({
   reduced = false,
 }: AnimatedRSIBandProps) {
   const [displayValue, setDisplayValue] = useState(reduced ? endValue : startValue);
-  const [isAnimating, setIsAnimating] = useState(reduced);
+  const [, setIsAnimating] = useState(reduced);
 
   useEffect(() => {
     if (reduced) return;

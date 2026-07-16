@@ -65,7 +65,6 @@ export function AnimatedMacdHistogram({
     };
   });
 
-  const maxHeight = 100;
   const minValue = -0.2;
   const maxValue = 0.15;
   const zeroLinePercent = ((0 - minValue) / (maxValue - minValue)) * 100;

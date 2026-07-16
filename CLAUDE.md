@@ -19,7 +19,7 @@ It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supa
 - Worker: Python with pandas, yfinance, ta, Supabase Python client, requests, pytest.
 - AI: provider/model-agnostic gateway (`src/lib/ai/gateway.ts`) - Anthropic, OpenAI, OpenRouter, Gemini. Bring your own key + model.
 - Scheduler: GitHub Actions workflow at `.github/workflows/hourly-stock-scanner.yml`.
-- Notifications: Telegram Bot API from the backend worker only.
+- Notifications: multi-channel dispatch (`src/lib/notifications/`) - Web Push, Telegram Bot API, Slack incoming webhooks (per-user, SSRF-fenced to hooks.slack.com), WhatsApp Cloud API (template-gated). Worker credentials stay server-side; the Slack webhook is the user's own secret.
 
 ## Project Structure
 
@@ -30,10 +30,11 @@ It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supa
 - `contracts/notifications/` - JSON contracts for the AI notification layer (schema, templates, test register).
 - `sql/` - Supabase schema and seed SQL.
 - `tests/` - focused Python worker tests.
-- `docs/walkthroughs/` - the clone-to-live replication path (5 walkthroughs + index). These are share-the-repo-link collateral: keep them true when commands, env vars, or schema change.
+- `docs/walkthroughs/` - the clone-to-live replication path (6 walkthroughs + index). These are share-the-repo-link collateral: keep them true when commands, env vars, or schema change.
 - `docs/runbooks/coolify-deploy.md` - self-hosting runbook for the root `Dockerfile` (Coolify/Docker; Vercel ignores it). `NEXT_PUBLIC_*` are BUILD-time args - see the runbook before touching the Dockerfile.
 - `.claude/commands/` - agent playbooks (skill chains): `/setup` (fresh-clone E2E setup with verification gates), `/feedback-loop` (pull feedback channels -> triage -> engineer -> ship -> close the loop), `/production-keeper` (static/test/build/runtime/drift gates -> fix -> ship), `/logs-to-genui` (logs + event data -> deterministic metrics -> GenUI views). Update them when the steps they encode change.
 - `COSTS.md` - fully-itemised stack costs. Update when a new paid service enters the stack.
+- `ONBOARDING.md` - the ledger of every onboarding asset/spec/experience (Setup Companion, `/setup`, walkthroughs, landing goal/stack sections). Update it whenever an onboarding surface changes. `AGENT-ONBOARDING.md` is the agent-facing front door for fresh clones.
 
 ## Key Commands
 
@@ -55,6 +56,8 @@ It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supa
 - AI explains; the deterministic engine decides. The AI never invents a number and never gives advice - research only.
 - Use a plain hyphen `-` in copy, never an em dash.
 - **Bump the version and keep `CHANGELOG.md` current on every shippable change** - see [Releasing](#releasing-every-shipped-change-bumps-the-version---enforced). Do not end a session with unshipped code and a stale changelog.
+- Caching (`src/lib/cache.ts`) is an optimisation, never a requirement: Upstash REST when the env pair is set, in-process TTL map otherwise, and every backend error degrades to a miss. Never cache secrets or unscoped per-user data; only cache valid results (a transient failure must not get pinned).
+- The knowledge layer is deterministic: `scripts/build-knowledge.mjs` compiles the reference docs into `src/lib/generated/knowledge.json` (runs with the content pipeline on every dev/build/type-check), and `src/lib/knowledge/retrieve.ts` does lexical retrieval - no embeddings, no network. When docs move or get renamed, update `SOURCES` in the builder or the build fails loudly.
 
 ## Releasing (every shipped change bumps the version - enforced)
 
@@ -66,6 +69,10 @@ To ship a user-visible change:
 1. Prepend a new entry to `RELEASES` at the top of `src/lib/version.ts` (version, date, title, highlights).
 2. Run `npm run release` - syncs `package.json` and inserts the `CHANGELOG.md` section from that entry.
 3. Commit + push.
+4. `npm run announce` - posts the release (version, title, highlights) to every configured chat
+   channel: Slack (`SLACK_UPDATES_WEBHOOK_URL`, falls back to the feedback webhook), Telegram
+   (`TELEGRAM_UPDATES_CHAT_ID`, falls back to `TELEGRAM_CHAT_ID`), WhatsApp (`WHATSAPP_UPDATES_TO`,
+   template-gated by Meta). Always announce AFTER the push, never before; `--dry-run` to preview.
 
 This is **enforced**: a `pre-push` git hook (`.githooks/pre-push` -> `scripts/check-version-bump.mjs`)
 BLOCKS a push that changes shippable code (`src` / `supabase` / `workers` / `public`) without a version

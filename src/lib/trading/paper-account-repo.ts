@@ -235,7 +235,7 @@ export async function persistFillIfAuthed(fill: PaperFill, intent: OrderIntent):
  * Persist a full close for a symbol if authed: mark the open trade rows closed (with realised P/L),
  * record the sell order, delete the position, snapshot equity. No-op in demo mode; best-effort.
  */
-export async function persistCloseIfAuthed(symbol: string, exitPrice: number, exitFee: number): Promise<boolean> {
+export async function persistCloseIfAuthed(symbol: string, exitPrice: number, _exitFee: number): Promise<boolean> {
   try {
     const auth = await resolveAuthed();
     if (!auth) return false;

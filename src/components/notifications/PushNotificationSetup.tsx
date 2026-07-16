@@ -10,11 +10,22 @@ import {
   unsubscribeFromPush,
   type PushSupportStatus,
 } from '@/lib/push/client';
-import { loadNotifications, saveNotifications } from '@/lib/account';
+import { loadNotifications, saveNotifications, loadProfile } from '@/lib/account';
 import { saveNotificationPreferences } from '@/lib/notifications/preferences';
+import { buildSlackTextForEvent } from '@/lib/notifications/slack-templates';
+import { VOICE_PRESETS } from '@/lib/notifications/voice';
+import type { NotificationEvent, VoiceId } from '@/lib/notifications/types';
 import { Toggle } from '@/components/Toggle';
+import { SlackLogo } from '@/components/SlackLogo';
 
-type Channel = 'telegram' | 'whatsapp';
+type Channel = 'telegram' | 'whatsapp' | 'slack';
+
+const CHANNEL_NAME: Record<Channel, string> = { telegram: 'Telegram', whatsapp: 'WhatsApp', slack: 'Slack' };
+const CHANNEL_EMPTY_ERROR: Record<Channel, string> = {
+  telegram: 'Enter your Telegram chat ID.',
+  whatsapp: 'Enter your WhatsApp number.',
+  slack: 'Paste your Slack incoming-webhook URL.',
+};
 
 interface NotificationApiState {
   ok?: boolean;
@@ -83,6 +94,47 @@ function ToggleRow({
   );
 }
 
+/** Shape of the /api/push/test response this panel renders. */
+interface NotificationTestResult {
+  ok?: boolean;
+  eventId?: string;
+  deliveredChannels?: string[];
+  suppressedChannels?: string[];
+  errors?: string[];
+  routeReason?: string;
+}
+
+/** Deterministic sample event the voice wizard previews - engine-shaped, never sent. */
+const VOICE_PREVIEW_EVENT: NotificationEvent = {
+  id: 'preview',
+  type: 'signal_alert',
+  userId: 'preview',
+  triggerReason: 'score crossed 80 with volume 2.4x average',
+  title: 'NVDA oversold-recovery signal',
+  body: 'NVDA entered the reset band on rising volume.',
+  evidenceRefs: ['signal:NVDA', 'ohlcv:NVDA:1h'],
+  relatedEntityType: 'symbol',
+  relatedEntityId: 'NVDA',
+  relevanceScore: 85,
+  dedupeKey: 'preview',
+  idempotencyKey: 'preview',
+  createdAt: '2026-01-01T00:00:00.000Z',
+};
+
+/** Shortcode -> emoji, preview only - the wire format keeps shortcodes for Slack. */
+const PREVIEW_EMOJI: Record<string, string> = {
+  ':dart:': '🎯',
+  ':point_right:': '👉',
+  ':red_circle:': '🔴',
+  ':rotating_light:': '🚨',
+};
+
+function previewVoiceText(voice: VoiceId, name?: string): string {
+  let text = buildSlackTextForEvent(VOICE_PREVIEW_EVENT, { voice, name });
+  for (const [code, emoji] of Object.entries(PREVIEW_EMOJI)) text = text.split(code).join(emoji);
+  return text.replace(/[*_>`]/g, '').replace(/<([^|>]+)\|([^>]+)>/g, '$2');
+}
+
 function channelDestination(channels: NotificationApiState['channels'], channel: Channel): string {
   return channels?.find((item) => item.channel_type === channel && item.destination)?.destination || '';
 }
@@ -102,12 +154,15 @@ export function PushNotificationSetup() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [telegramChatId, setTelegramChatId] = useState('');
   const [whatsappPhone, setWhatsappPhone] = useState('');
+  const [slackWebhook, setSlackWebhook] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [testResult, setTestResult] = useState<any>(null);
+  const [testResult, setTestResult] = useState<NotificationTestResult | null>(null);
   const [telegramVerified, setTelegramVerified] = useState(false);
   const [whatsappVerified, setWhatsappVerified] = useState(false);
+  const [slackVerified, setSlackVerified] = useState(false);
+  const [firstName, setFirstName] = useState<string | undefined>(undefined);
   const [channelNotice, setChannelNotice] = useState<{ channel: Channel; verified: boolean; message: string } | null>(null);
 
   const pushEnabled = prefs.pushEnabled && activePushCount > 0;
@@ -123,6 +178,8 @@ export function PushNotificationSetup() {
     const localChannels = loadNotifications();
     setTelegramChatId(localChannels.telegramChatId || '');
     setWhatsappPhone(localChannels.whatsappPhone || '');
+    setSlackWebhook(localChannels.slackWebhook || '');
+    setFirstName(loadProfile().displayName.trim().split(/\s+/)[0] || undefined);
 
     try {
       const response = await fetch('/api/notifications', { cache: 'no-store' });
@@ -141,8 +198,10 @@ export function PushNotificationSetup() {
       setPushConfigured(Boolean(data.push?.configured));
       setTelegramChatId(channelDestination(data.channels, 'telegram') || localChannels.telegramChatId || '');
       setWhatsappPhone(channelDestination(data.channels, 'whatsapp') || localChannels.whatsappPhone || '');
+      setSlackWebhook(channelDestination(data.channels, 'slack') || localChannels.slackWebhook || '');
       setTelegramVerified(channelVerified(data.channels, 'telegram'));
       setWhatsappVerified(channelVerified(data.channels, 'whatsapp'));
+      setSlackVerified(channelVerified(data.channels, 'slack'));
     } catch {
       setError('Could not reach notification settings.');
     }
@@ -254,9 +313,14 @@ export function PushNotificationSetup() {
   }
 
   async function saveChannel(channel: Channel) {
-    const destination = channel === 'telegram' ? telegramChatId.trim() : whatsappPhone.trim();
+    const destinations: Record<Channel, string> = {
+      telegram: telegramChatId.trim(),
+      whatsapp: whatsappPhone.trim(),
+      slack: slackWebhook.trim(),
+    };
+    const destination = destinations[channel];
     if (!destination) {
-      setError(channel === 'telegram' ? 'Enter your Telegram chat ID.' : 'Enter your WhatsApp number.');
+      setError(CHANNEL_EMPTY_ERROR[channel]);
       return;
     }
     setBusy(channel);
@@ -268,6 +332,7 @@ export function PushNotificationSetup() {
       ...current,
       telegramChatId: channel === 'telegram' ? destination : current.telegramChatId,
       whatsappPhone: channel === 'whatsapp' ? destination : current.whatsappPhone,
+      slackWebhook: channel === 'slack' ? destination : current.slackWebhook,
     });
 
     try {
@@ -285,7 +350,9 @@ export function PushNotificationSetup() {
       const verification = data.verification;
       const verified = verification?.verified ?? false;
       if (verified) {
-        updatePrefs(channel === 'telegram' ? { telegramEnabled: true } : { whatsappEnabled: true });
+        updatePrefs(
+          channel === 'telegram' ? { telegramEnabled: true } : channel === 'slack' ? { slackEnabled: true } : { whatsappEnabled: true },
+        );
       }
       await loadState();
       setChannelNotice({
@@ -293,7 +360,7 @@ export function PushNotificationSetup() {
         verified,
         message:
           verification?.message ??
-          (verified ? `${channel === 'telegram' ? 'Telegram' : 'WhatsApp'} verified.` : `${channel === 'telegram' ? 'Telegram' : 'WhatsApp'} saved but not verified yet.`),
+          (verified ? `${CHANNEL_NAME[channel]} verified.` : `${CHANNEL_NAME[channel]} saved but not verified yet.`),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : `Could not save ${channel}.`);
@@ -313,6 +380,10 @@ export function PushNotificationSetup() {
         <StatusPill
           on={prefs.whatsappEnabled && whatsappVerified}
           label={whatsappPhone && !whatsappVerified ? 'WhatsApp unverified' : `WhatsApp ${prefs.whatsappEnabled && whatsappVerified ? 'on' : 'off'}`}
+        />
+        <StatusPill
+          on={prefs.slackEnabled && slackVerified}
+          label={slackWebhook && !slackVerified ? 'Slack unverified' : `Slack ${prefs.slackEnabled && slackVerified ? 'on' : 'off'}`}
         />
       </div>
 
@@ -413,6 +484,29 @@ export function PushNotificationSetup() {
           </div>
         </div>
 
+        <div>
+          <label className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-[#8190a0]" htmlFor="slack-webhook">
+            <SlackLogo size={12} /> Slack webhook
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="slack-webhook"
+              type="password"
+              autoComplete="off"
+              className={inputClass}
+              value={slackWebhook}
+              placeholder="https://hooks.slack.com/services/..."
+              onChange={(event) => setSlackWebhook(event.target.value.trim())}
+            />
+            <button type="button" onClick={() => saveChannel('slack')} disabled={busy !== null} className={secondaryButton} aria-label="Save Slack webhook">
+              <SlackLogo size={13} />
+            </button>
+          </div>
+          <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] text-[#60a5fa] hover:underline">
+            Create a webhook <ExternalLink size={11} />
+          </a>
+        </div>
+
         {channelNotice && (
           <div
             className={`md:col-span-2 rounded border px-3 py-2 font-mono text-[11px] leading-snug ${
@@ -435,6 +529,49 @@ export function PushNotificationSetup() {
             WhatsApp needs verification - we have not confirmed a message can reach this number yet.
           </p>
         )}
+        {!channelNotice && slackWebhook && !slackVerified && (
+          <p className="md:col-span-2 font-mono text-[11px] text-[#f3a33a]">
+            Slack needs verification - save the webhook so we can confirm a message reaches your channel.
+          </p>
+        )}
+      </section>
+
+      <section className="space-y-2 border-t border-[#1b2530] pt-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Agent personality</p>
+          <p className="mt-1 text-[11px] leading-snug text-[#6f7d8a]">
+            How Lyra words its alerts to you. The numbers never change - only the framing. Pick one and check the preview.
+          </p>
+        </div>
+        <div className="grid gap-2 md:grid-cols-2">
+          {VOICE_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => updatePrefs({ voice: preset.id })}
+              className={`rounded-md border p-2.5 text-left transition ${
+                prefs.voice === preset.id
+                  ? 'border-[#1d7f55] bg-[#0d251b]'
+                  : 'border-[#263241] bg-[#0d141c] hover:border-[#3a4754]'
+              }`}
+            >
+              <span className={`block text-[12px] font-semibold ${prefs.voice === preset.id ? 'text-[#43d18b]' : 'text-[#dbe5ee]'}`}>
+                {preset.name}
+              </span>
+              <span className="mt-0.5 block text-[10px] leading-snug text-[#6f7d8a]">{preset.tagline}</span>
+            </button>
+          ))}
+        </div>
+        <div className="rounded-md border border-[#263241] bg-[#0d141c] p-3">
+          <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-wider text-[#5A6B82]">Preview - a sample alert in this personality</p>
+          <pre className="whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-[#c8d3de]">
+            {previewVoiceText(prefs.voice, firstName)}
+          </pre>
+        </div>
+        <p className="text-[10px] leading-snug text-[#5A6B82]">
+          Personalities are pre-written templates - deterministic, instant, and they can never invent a number. An AI-written
+          personality (BYOK, fabrication-guarded) is on the roadmap.
+        </p>
       </section>
 
       <section className="space-y-3 border-t border-[#1b2530] pt-3">

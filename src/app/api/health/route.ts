@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { APP_VERSION, APP_VERSION_DATE } from '@/lib/version';
 import { env } from '@/lib/env';
+import { cacheBackendName } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,5 +17,6 @@ export async function GET() {
     version: APP_VERSION,
     versionDate: APP_VERSION_DATE,
     mode: env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'live' : 'demo',
+    cache: cacheBackendName(),
   });
 }

@@ -14,7 +14,6 @@ interface SignalBadgePulseProps {
  */
 export function SignalBadgePulse({
   delay,
-  duration,
   reduced = false,
 }: SignalBadgePulseProps) {
   const [isVisible, setIsVisible] = useState(reduced);

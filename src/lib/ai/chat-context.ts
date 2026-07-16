@@ -9,6 +9,9 @@ import { derivePrimeSetups } from '@/lib/prime-setups';
 import { deriveCatalystRadar } from '@/lib/catalysts';
 import { formatCurrency, formatSignedNumber, formatSignedPercent } from '@/lib/format';
 import { THEME_COMPANIES, getTheme, getNodesForTheme } from '@/lib/world-radar';
+import { buildEmergenceShortlist, LIFECYCLE_LABEL } from '@/lib/small-cap-lifecycle';
+import { companyChainPosition } from '@/lib/value-chain';
+import { buildSignalIntelligence, topConvergence } from '@/lib/signal-intelligence';
 import iposData from '@/lib/generated/ipos.json';
 
 /** Minimal IPO reference shape read off the compiled content layer. */
@@ -61,6 +64,51 @@ function buildThematicContext(symbols: string[]): string {
     if (parts.length) lines.push(`- ${symbol}: ${parts.join(' ')}`);
   }
   return lines.length ? `THEMATIC CONTEXT (editorial, for your symbols):\n${lines.join('\n')}` : '';
+}
+
+/**
+ * Small-cap EMERGENCE grounding - makes the flagship's lifecycle + backing + value-chain signals
+ * first-class to the AI, so it can answer "which small caps are early and backed?", "who funds X?",
+ * or "trace X back to raw materials" from the same deterministic engine the /small-caps page renders.
+ * Compact by design: the shortlist plus each name's stage, backing kinds, and upstream raw materials.
+ */
+export function buildEmergenceGrounding(momentumBySymbol: Record<string, number> = {}): string {
+  const shortlist = buildEmergenceShortlist(momentumBySymbol, 8);
+  if (shortlist.length === 0) return '';
+  const lines: string[] = ['SMALL-CAP EMERGENCE SHORTLIST (early + backed, deterministic - research only, never advice):'];
+  for (const c of shortlist) {
+    const backers: string[] = [];
+    if (c.backing.government) backers.push('government');
+    if (c.backing.bigTech) backers.push('big-tech');
+    if (c.backing.smartMoney) backers.push('smart-money');
+    const pos = companyChainPosition(c.symbol);
+    const materials = pos?.rawMaterials.slice(0, 4).map((r) => r.name).join(', ');
+    lines.push(
+      `- ${c.symbol} (${c.name}): ${LIFECYCLE_LABEL[c.stage]} stage in ${c.themeName}, emergence ${c.emergence.total}/100, ` +
+        `backed by ${backers.length ? backers.join(' + ') : 'none disclosed'}${materials ? `; upstream raw materials: ${materials}` : ''}.`,
+    );
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Cross-signal CONVERGENCE grounding - the intelligence layer's "where attention belongs now" read.
+ * Surfaces the names where multiple INDEPENDENT signals (government backing, capital, institutional
+ * buying, bottleneck exposure, momentum) line up. This is the deterministic "most effective data
+ * points" selection made first-class to the AI so chat/brief can answer "what's converging and why".
+ */
+export function buildConvergenceGrounding(momentumBySymbol: Record<string, number> = {}, nowMs: number = Date.now()): string {
+  const intel = buildSignalIntelligence(momentumBySymbol, nowMs);
+  const top = topConvergence(intel, 6, 2);
+  if (top.length === 0) return '';
+  const lines: string[] = [
+    `SIGNAL CONVERGENCE (deterministic cross-signal intelligence - ${intel.stats.dataPoints} data points across ${intel.stats.entities} names, ${intel.stats.liveDataPoints} live; research only):`,
+  ];
+  for (const c of top) {
+    const kinds = c.kinds.join(', ');
+    lines.push(`- ${c.entity} (${c.name}, ${c.themeName}): conviction ${c.convergenceScore}/100 from ${c.kinds.length} independent signals [${kinds}]${c.latestDate ? `, latest ${c.latestDate}` : ''}.`);
+  }
+  return lines.join('\n');
 }
 
 export interface ChatProfile {
@@ -131,6 +179,15 @@ export function buildGrounding(data: DashboardData, now: Date): string {
   ];
   const thematic = buildThematicContext(symbols);
   if (thematic) lines.push(thematic);
+
+  // Flagship signals are first-class to the AI: the same lifecycle + backing + value-chain the
+  // /small-caps surface shows, grounded off the live scanner scores, plus the cross-signal
+  // convergence intelligence (where multiple independent signals line up right now).
+  const momentumBySymbol = Object.fromEntries(data.signals.map((s) => [s.symbol, s.score]));
+  const emergence = buildEmergenceGrounding(momentumBySymbol);
+  if (emergence) lines.push(emergence);
+  const convergence = buildConvergenceGrounding(momentumBySymbol, now.getTime());
+  if (convergence) lines.push(convergence);
 
   return lines.join('\n');
 }

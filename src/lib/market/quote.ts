@@ -1,3 +1,5 @@
+import { cacheGet, cacheSet } from '@/lib/cache';
+
 export interface MarketQuote {
   valid: boolean;
   symbol: string;
@@ -36,12 +38,25 @@ async function lookupYahoo(symbol: string): Promise<YahooMeta | null> {
   }
 }
 
+/** Quotes stay fresh enough for previews at 60s; the server re-prices on trade confirm anyway. */
+const QUOTE_TTL_SECONDS = 60;
+
 export async function lookupMarketQuote(rawSymbol: string): Promise<MarketQuote> {
   const raw = rawSymbol.toUpperCase().trim();
   if (!raw || !/^[A-Z0-9.\-]{1,12}$/.test(raw)) {
     return { valid: false, symbol: raw, name: null, price: null, currency: null, exchange: null, changePercent: null, error: 'Enter a ticker symbol.' };
   }
 
+  // Cache (Redis when configured, in-process otherwise). Only VALID quotes are stored -
+  // a transient Yahoo failure must not pin "no data" for a real ticker.
+  const hit = await cacheGet<MarketQuote>(`quote:${raw}`);
+  if (hit) return hit;
+  const quote = await lookupMarketQuoteUncached(raw);
+  if (quote.valid) void cacheSet(`quote:${raw}`, quote, QUOTE_TTL_SECONDS);
+  return quote;
+}
+
+async function lookupMarketQuoteUncached(raw: string): Promise<MarketQuote> {
   let resolved = raw;
   let meta = await lookupYahoo(raw);
   if (!meta && !raw.includes('.')) {

@@ -59,6 +59,8 @@ export function TickerLogo({ symbol, companyName, size = 18 }: TickerLogoProps) 
       title={companyName ?? symbol}
       aria-label={companyName ?? symbol}
     >
+      {/* eslint-disable-next-line @next/next/no-img-element -- logos load from arbitrary brand hosts
+          with a runtime fallback chain; next/image can't allow-list every ticker's domain. */}
       <img
         src={sources[idx]}
         alt={companyName ?? symbol}

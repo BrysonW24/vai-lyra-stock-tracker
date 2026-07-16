@@ -9,7 +9,6 @@ import {
   ACTIVATION_SCENES,
   PORTFOLIO_EXAMPLE,
   WATCHLIST_EXAMPLE,
-  TICKER_CHIPS,
 } from '@/lib/activation/activationSteps';
 import { AnimatedTickerChip } from './AnimatedTickerChip';
 

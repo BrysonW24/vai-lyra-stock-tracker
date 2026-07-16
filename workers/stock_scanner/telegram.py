@@ -86,7 +86,21 @@ def send_telegram_message(message: str, settings: Settings, chat_id: str | None 
             timeout=10,
         )
         response.raise_for_status()
+    except requests.HTTPError as exc:
+        # NEVER store str(exc): the requests error string embeds the full endpoint URL, which
+        # contains the bot token (.../bot<TOKEN>/sendMessage). Store the status code only - that
+        # error_message is persisted to the DB, so a raw string would leak the token into a row.
+        status = exc.response.status_code if exc.response is not None else "unknown"
+        return TelegramResult(sent_status="failed", error_message=f"Telegram API HTTP {status}")
     except Exception as exc:
-        return TelegramResult(sent_status="failed", error_message=str(exc))
+        # Non-HTTP failures (timeout, DNS, connection) do not embed the URL, but redact defensively.
+        return TelegramResult(sent_status="failed", error_message=_redact_token(str(exc), settings.telegram_bot_token))
 
     return TelegramResult(sent_status="sent")
+
+
+def _redact_token(text: str, token: str | None) -> str:
+    """Strip a bot token from any error text before it is stored or logged."""
+    if token and token in text:
+        return text.replace(token, "***")
+    return text

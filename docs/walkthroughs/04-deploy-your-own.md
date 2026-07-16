@@ -28,6 +28,9 @@ Running costs for both paths are near zero: Vercel's Hobby plan is free, and the
 
 ## Path A - Vercel (simplest)
 
+Two ways to drive it: the **dashboard** (clicks, below) or the **CLI** (terminal, further below -
+this is also the way an agent like Claude Code does it for you in `/setup`).
+
 ### A1. Import the repo
 
 1. Sign in at https://vercel.com (the free Hobby plan is enough).
@@ -35,6 +38,24 @@ Running costs for both paths are near zero: Vercel's Hobby plan is free, and the
 3. Vercel auto-detects Next.js. The repo also ships a `vercel.json` that pins the framework, `npm install` / `npm run build`, and the `iad1` region - accept the defaults.
 
 You know it worked when the import screen shows **Framework Preset: Next.js** and the Build Command reads `npm run build`.
+
+### A1-alt. The CLI way (agent-friendly, no dashboard)
+
+From the repo root:
+
+```bash
+npm install -g vercel        # or prefix every command below with npx
+vercel login                 # opens a browser auth flow; finish it there
+vercel whoami                # prints your username when login worked
+vercel link                  # choose your scope -> "create a new project" -> accept the name
+printf '%s' "https://YOUR-REF.supabase.co" | vercel env add NEXT_PUBLIC_SUPABASE_URL production
+printf '%s' "YOUR-ANON-KEY"                | vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production
+vercel --prod                # builds and deploys; prints your production URL
+vercel git connect           # optional: auto-deploy every push to your fork
+```
+
+You know it worked when `vercel --prod` prints a production URL and step A3's health check passes
+against it. Skip the two `env add` lines to deploy in demo mode.
 
 ### A2. Set environment variables
 

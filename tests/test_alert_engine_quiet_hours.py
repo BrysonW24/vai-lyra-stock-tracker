@@ -33,3 +33,27 @@ def test_signal_type_toggle_gates_strong_setup():
     can_send, reason = should_send_alert_to_user(prefs, {}, "strong_setup")
     assert can_send is False
     assert "strong-setup" in reason.lower()
+
+
+def test_ignore_quiet_hours_defers_to_the_js_router():
+    # Delivery through the JS notification router must NOT be gated on quiet hours here:
+    # the router holds the event and releases it when the window ends. Gating in the
+    # worker would drop the alert forever (signal alerts fire on state transitions).
+    inside_quiet = datetime(2026, 6, 18, 2, 0, tzinfo=timezone.utc)
+    prefs = {"alerts_enabled": True, "quiet_start": "22:00", "quiet_end": "07:00", "timezone": "UTC"}
+
+    gated, reason = should_send_alert_to_user(prefs, {}, "strong_setup", current_time=inside_quiet)
+    assert gated is False
+    assert "quiet" in reason.lower()
+
+    can_send, _ = should_send_alert_to_user(
+        prefs, {}, "strong_setup", current_time=inside_quiet, ignore_quiet_hours=True
+    )
+    assert can_send is True
+
+
+def test_ignore_quiet_hours_still_respects_type_toggles():
+    prefs = {"alerts_enabled": True, "strong_setup_enabled": False, "quiet_start": "22:00", "quiet_end": "07:00"}
+    can_send, reason = should_send_alert_to_user(prefs, {}, "strong_setup", ignore_quiet_hours=True)
+    assert can_send is False
+    assert "strong-setup" in reason.lower()

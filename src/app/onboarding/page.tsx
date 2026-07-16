@@ -5,10 +5,8 @@ import { useRouter } from 'next/navigation';
 import {
   createInitialOnboardingState,
   SETUP_PATHS,
-  ONBOARDING_STEPS,
   OnboardingState,
   SetupPath,
-  PortfolioHolding,
   WatchlistItem,
   calculateSetupCompleteness,
 } from '@/lib/onboarding';
@@ -92,7 +90,6 @@ export default function OnboardingPage() {
 
   const stepIndex = effectiveSteps.indexOf(currentStep);
   const totalStepsInPath = effectiveSteps.length;
-  const isLastStep = stepIndex === totalStepsInPath - 1;
 
   const handleChoosePath = (path: SetupPath) => {
     const steps = SETUP_PATHS[path].steps;

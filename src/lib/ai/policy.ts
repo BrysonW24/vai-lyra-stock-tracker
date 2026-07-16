@@ -55,6 +55,7 @@ export const AI_MAY: readonly string[] = [
 export const ALL_AI_TOOLS = [
   'search_evidence',
   'read_signals',
+  'read_convergence',
   'read_portfolio_own',
   'read_themes',
   'compose_alert_text', // NOT WIRED (AI-03/04) - see note above
@@ -105,14 +106,14 @@ export type AiAgentName = (typeof AI_AGENT_NAMES)[number];
  * from this matrix so policy and registry can never drift apart.
  */
 export const AGENT_TOOL_MATRIX: Record<AiAgentName, readonly AiToolName[]> = {
-  research_analyst: ['search_evidence', 'read_signals', 'read_themes', 'draft_research_note'],
-  risk_analyst: ['search_evidence', 'read_signals', 'read_portfolio_own', 'read_themes'],
-  contrarian_analyst: ['search_evidence', 'read_signals', 'read_themes'],
+  research_analyst: ['search_evidence', 'read_signals', 'read_convergence', 'read_themes', 'draft_research_note'],
+  risk_analyst: ['search_evidence', 'read_signals', 'read_convergence', 'read_portfolio_own', 'read_themes'],
+  contrarian_analyst: ['search_evidence', 'read_signals', 'read_convergence', 'read_themes'],
   news_classifier: ['classify_news'],
   filing_analyst: ['search_evidence', 'draft_research_note'],
   portfolio_assistant: ['search_evidence', 'read_signals', 'read_portfolio_own', 'read_themes', 'explain_order_intent'],
   alert_composer: ['compose_alert_text'],
-  trade_readiness: ['search_evidence', 'read_signals', 'read_portfolio_own', 'explain_order_intent'],
+  trade_readiness: ['search_evidence', 'read_signals', 'read_convergence', 'read_portfolio_own', 'explain_order_intent'],
 };
 
 // --- gates --------------------------------------------------------------------

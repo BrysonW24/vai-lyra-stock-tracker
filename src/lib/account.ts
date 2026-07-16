@@ -52,6 +52,10 @@ export interface NotificationSettings {
   telegramChatId: string;
   /** WhatsApp number in international format (e.g. +61400000000). Also not a secret. */
   whatsappPhone: string;
+  /** The user's OWN Slack incoming-webhook URL. Unlike the ids above this IS a secret;
+   * like a BYOK AI key it lives only in this browser's localStorage (demo fallback) or
+   * the user's RLS-scoped notification_channels row - never in shared/server env. */
+  slackWebhook: string;
 }
 
 export const CURRENCIES = ['USD', 'AUD', 'EUR', 'GBP', 'CAD', 'NZD', 'JPY', 'SGD'] as const;
@@ -81,6 +85,7 @@ export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   telegramEnabled: false,
   telegramChatId: '',
   whatsappPhone: '',
+  slackWebhook: '',
 };
 
 const KEYS = {

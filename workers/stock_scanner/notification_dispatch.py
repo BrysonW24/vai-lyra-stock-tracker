@@ -43,14 +43,21 @@ def dispatch_notification(
     reason: str,
     payload: dict,
     relevance_score: float = 100,
+    notification_type: str | None = None,
+    url: str | None = None,
 ) -> DispatchResult:
+    """POST one event to the JS notification router. `notification_type` overrides the
+    alert_type mapping for event families that have no scanner alert_type (daily_digest,
+    weekly_report, signal_followup); `url` overrides the deep link the same way."""
     if not user_id or not settings.notification_dispatch_url or not settings.notification_dispatch_secret:
         return DispatchResult(attempted=False, ok=False, error_message="notification dispatch not configured")
 
-    notification_type = alert_type_to_notification_type(alert_type)
+    if notification_type is None:
+        notification_type = alert_type_to_notification_type(alert_type)
     day = datetime.now(timezone.utc).date().isoformat()
     dedupe_key = payload.get("dedupe_key") or f"{notification_type}:{symbol}:{alert_type}:{day}"
-    url = "/portfolio" if notification_type.startswith("portfolio") else "/watchlist" if notification_type.startswith("watchlist") else f"/tickers/{symbol}"
+    if url is None:
+        url = "/portfolio" if notification_type.startswith("portfolio") else "/watchlist" if notification_type.startswith("watchlist") else f"/tickers/{symbol}"
 
     request_body = {
         "userId": user_id,

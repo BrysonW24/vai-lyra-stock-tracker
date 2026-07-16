@@ -16,6 +16,8 @@
  * or persisted. See docs/ai-engine-plan.md.
  */
 
+import { withRetry, BackpressureLimiter } from '@/lib/ai/resilience';
+
 export type AiProvider = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'xai';
 
 export interface AiCompleteParams {
@@ -207,37 +209,47 @@ async function callGoogle(
   );
 }
 
-// --- public entry point -----------------------------------------------------
+// --- resilience helpers -----------------------------------------------------
+
+/** Per-attempt wall-clock ceiling for a completion. */
+const ATTEMPT_TIMEOUT_MS = 30_000;
 
 /**
- * Run one grounded completion against the chosen provider/model with the user's key.
- * Throws on missing key or any provider/network error - callers decide the fallback
- * (the brief + composer always fall back to the deterministic render).
+ * Bound a completion's latency. Note: this races a timer against the provider call, so it bounds how
+ * long the CALLER waits (and stops a hung request wedging a route) - it does not abort the socket.
+ * That is the right tradeoff here: every caller falls back to the deterministic render on rejection.
  */
-export async function complete(params: AiCompleteParams): Promise<AiCompleteResult> {
+async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label}: timeout after ${ms}ms`)), ms);
+  });
+  try {
+    return await Promise.race([p, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+/**
+ * Shared backpressure limiter across the whole process: at most 6 provider calls in flight at once,
+ * so a burst of agent/chat requests cannot fan out unbounded into the providers. Excess calls queue
+ * (bounded); a runaway queue rejects with BackpressureError rather than growing memory.
+ */
+const providerLimiter = new BackpressureLimiter(6, 500);
+
+// --- public entry point -----------------------------------------------------
+
+/** Dispatch to the chosen provider adapter (one attempt, no retry/timeout). */
+async function dispatchCompletion(params: AiCompleteParams, model: string, maxTokens: number): Promise<string> {
   const { provider, apiKey, system, prompt, temperature } = params;
-  if (!apiKey) throw new Error('ai_gateway: missing apiKey');
-
-  const model = resolveModel(provider, params.model);
-  const maxTokens = params.maxTokens ?? DEFAULT_MAX_TOKENS;
-
-  let text: string;
   switch (provider) {
     case 'anthropic':
-      text = await callAnthropic(apiKey, model, system, prompt, maxTokens, temperature);
-      break;
+      return callAnthropic(apiKey, model, system, prompt, maxTokens, temperature);
     case 'openai':
-      text = await callOpenAiResponses(
-        apiKey,
-        model,
-        system,
-        prompt,
-        maxTokens,
-        temperature,
-      );
-      break;
+      return callOpenAiResponses(apiKey, model, system, prompt, maxTokens, temperature);
     case 'openrouter':
-      text = await callOpenAiCompatible(
+      return callOpenAiCompatible(
         provider,
         'https://openrouter.ai/api/v1/chat/completions',
         apiKey,
@@ -248,27 +260,34 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
         temperature,
         { 'HTTP-Referer': 'https://lyra.vivacity.ai', 'X-Title': 'Lyra' },
       );
-      break;
     case 'google':
-      text = await callGoogle(apiKey, model, system, prompt, maxTokens, temperature);
-      break;
+      return callGoogle(apiKey, model, system, prompt, maxTokens, temperature);
     case 'xai':
-      text = await callOpenAiCompatible(
-        provider,
-        'https://api.x.ai/v1/chat/completions',
-        apiKey,
-        model,
-        system,
-        prompt,
-        maxTokens,
-        temperature,
-      );
-      break;
+      return callOpenAiCompatible(provider, 'https://api.x.ai/v1/chat/completions', apiKey, model, system, prompt, maxTokens, temperature);
     default: {
       const never: never = provider;
       throw new Error(`ai_gateway: unsupported provider ${String(never)}`);
     }
   }
+}
 
+/**
+ * Run one grounded completion against the chosen provider/model with the user's key. Each attempt is
+ * time-bounded and runs under a shared backpressure limiter; a TRANSIENT failure (429 / 5xx /
+ * network) is retried with bounded exponential backoff + jitter (withRetry). Throws on missing key
+ * or a permanent/exhausted error - callers decide the fallback (the brief + composer always fall
+ * back to the deterministic render).
+ */
+export async function complete(params: AiCompleteParams): Promise<AiCompleteResult> {
+  const { provider, apiKey } = params;
+  if (!apiKey) throw new Error('ai_gateway: missing apiKey');
+
+  const model = resolveModel(provider, params.model);
+  const maxTokens = params.maxTokens ?? DEFAULT_MAX_TOKENS;
+
+  const text = await withRetry(
+    () => providerLimiter.run(() => withTimeout(dispatchCompletion(params, model, maxTokens), ATTEMPT_TIMEOUT_MS, `${provider} completion`)),
+    { policy: { maxAttempts: 3, baseDelayMs: 400, maxDelayMs: 4000 } },
+  );
   return { text, provider, model };
 }

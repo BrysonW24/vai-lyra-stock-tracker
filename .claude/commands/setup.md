@@ -5,7 +5,8 @@ end to end, with a verification gate after every stage. Do the work yourself whe
 can do it; hand the user a numbered, copy-pasteable checklist for the few steps that require a
 browser (creating accounts, pasting keys). Human-paced explanations live in
 `docs/walkthroughs/` - read the matching walkthrough before each stage and follow the repo's
-conventions in `CLAUDE.md`.
+conventions in `CLAUDE.md`. Agent-facing orientation + the setup contract live in
+`AGENT-ONBOARDING.md`; the full register of onboarding assets is `ONBOARDING.md`.
 
 ## Ground rules
 
@@ -21,8 +22,19 @@ conventions in `CLAUDE.md`.
 
 ## Stage 0 - Orient and choose a path
 
-1. Verify prerequisites: `node --version` (need >= 20), `npm --version` (>= 10), `git --version`.
-2. Ask the user which endpoint they want (they can upgrade later; each stage builds on the last):
+1. **Open the visual Setup Companion in the user's browser FIRST** - it is their window into
+   what you are doing (a premium spec of the stack + a live stage board):
+   - Copy `docs/onboarding/setup-companion.html` to a scratch location outside the repo
+     (e.g. `$TMPDIR/lyra-setup-companion.html`) so your progress edits never dirty the clone.
+   - Open the copy in their default browser: `open <file>` (macOS), `xdg-open <file>` (Linux),
+     `start <file>` (Windows).
+   - The page self-refreshes every 5 seconds. As you work, edit ONLY the `SETUP_STATE` object
+     between the `SETUP_STATE_START` / `SETUP_STATE_END` markers in the copy: set the current
+     stage's `status` (`pending` / `active` / `done` / `blocked` / `skipped`), a one-line
+     `note` saying what is happening, `updated` (a human time like "7:42 pm"), `path` once
+     chosen, and `deployedUrl` after Stage 5. Update it at every stage transition and gate.
+2. Verify prerequisites: `node --version` (need >= 20), `npm --version` (>= 10), `git --version`.
+3. Ask the user which endpoint they want (they can upgrade later; each stage builds on the last):
    - **A. Demo** - run locally on built-in data, no accounts, $0. (Stages 1)
    - **B. Live** - their own Supabase + the hourly scanner, still $0. (Stages 1-3)
    - **C. Live + AI** - add an AI key for plain-English explanations. (Stages 1-4)
@@ -95,13 +107,25 @@ brief answers using real numbers from the dashboard.
 
 Walkthrough: `docs/walkthroughs/04-deploy-your-own.md`. Offer both paths with costs:
 
-- **Vercel (simplest, $0 Hobby):** import the repo, set the `NEXT_PUBLIC_*` env vars, deploy.
+- **Vercel (simplest, $0 Hobby)** - drive it yourself via the Vercel CLI, end to end:
+  1. Install the CLI: `npm install -g vercel` (or use `npx vercel` throughout, no global).
+  2. `vercel login` - this opens a browser auth flow; hand it to the user and wait for them
+     to confirm they are logged in. `vercel whoami` verifies.
+  3. From the repo root, `vercel link` - choose the user's scope and **create a new project**
+     (accept the repo name). This registers the project on their Vercel account.
+  4. Set the env vars (piped, so nothing interactive):
+     `printf '%s' "$SUPABASE_URL_VALUE" | vercel env add NEXT_PUBLIC_SUPABASE_URL production`
+     and the same for `NEXT_PUBLIC_SUPABASE_ANON_KEY` (plus any optional server secrets the
+     user wants hosted, e.g. `OPENAI_API_KEY`). Skip both Supabase vars if they stopped at
+     demo mode.
+  5. Deploy to production: `vercel --prod`. Capture the URL it prints.
+  6. Optional but recommended: `vercel git connect` so every push to their fork auto-deploys.
 - **Coolify (own server):** follow `docs/runbooks/coolify-deploy.md`. The critical detail: mark
   every `NEXT_PUBLIC_*` variable as a **Build Variable** - they are inlined at build time, and a
   runtime-only value silently ships a demo-mode build.
 
 **Gate:** `curl https://<their-app>/api/health` returns `"ok":true`, the version matching
-`src/lib/version.ts` `RELEASES[0]`, and `"mode":"live"`.
+`src/lib/version.ts` `RELEASES[0]`, and `"mode":"live"` (or `"demo"` if they chose demo).
 
 ## Wrap up
 

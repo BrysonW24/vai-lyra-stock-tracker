@@ -10,6 +10,7 @@ import iposData from '@/lib/generated/ipos.json';
 import { FINANCE_FACTS } from '@/lib/finance-facts';
 import { EDUCATION_MODULES, getModuleCorpusText, getModuleHref } from '@/lib/education';
 import { getDashboardData } from '@/lib/data';
+import { buildSignalIntelligence, topConvergence, SIGNAL_KIND_LABEL } from '@/lib/signal-intelligence';
 
 /** Matches the agent registry's evidenceItemSchema: { id, text }. */
 export interface EvidenceItem {
@@ -89,6 +90,50 @@ export async function readSignals(symbol?: string) {
     volumeRatio: Number(s.volumeRatio.toFixed(2)),
     status: s.status,
   }));
+}
+
+/**
+ * Cross-signal convergence - the "reasoning over the multitude of signals" layer surfaced as a
+ * read-only tool. Returns the names where the MOST independent signal kinds converge (government
+ * awards, big-tech backing, smart money, supply-chain bottleneck, momentum, IPO), ranked by
+ * deterministic conviction. This is how an agent finds "the most effective data points" instead of
+ * narrating one fixed snapshot. Every field is engine-computed; the AI never invents a number.
+ *
+ * `minKinds` (default 2) enforces the convergence discipline: a single signal is never a thesis.
+ * Each returned name carries its freshness (`live` when any converging signal is from a live feed,
+ * else `sample`) so the agent can disclose staleness rather than present sample data as current.
+ */
+export async function readConvergence(limit = 6, minKinds = 2) {
+  const data = await getDashboardData();
+  const momentumBySymbol = Object.fromEntries(data.signals.map((s) => [s.symbol, s.score]));
+  const intel = buildSignalIntelligence(momentumBySymbol);
+  const top = topConvergence(intel, limit, minKinds);
+  return {
+    generatedAt: intel.generatedAt,
+    stats: intel.stats,
+    convergence: top.map((c) => ({
+      symbol: c.entity,
+      name: c.name,
+      theme: c.themeName,
+      stage: c.stage,
+      convergenceScore: c.convergenceScore,
+      freshness: c.freshness,
+      latestDate: c.latestDate,
+      kinds: c.kinds.map((k) => SIGNAL_KIND_LABEL[k]),
+      narrative: c.narrative,
+      // The scored data points behind the convergence, best first - the evidence the agent cites.
+      points: c.points.slice(0, 5).map((p) => ({
+        kind: SIGNAL_KIND_LABEL[p.kind],
+        headline: p.headline,
+        detail: p.detail,
+        date: p.date,
+        impact: p.impact,
+        score: p.score,
+        source: p.source,
+        freshness: p.freshness,
+      })),
+    })),
+  };
 }
 
 /** The user's own holdings (read-only). */

@@ -1,6 +1,26 @@
 /** @type {import('next').NextConfig} */
 const path = require('path');
 
+// Content-Security-Policy. Shipped REPORT-ONLY first (defense-in-depth without breakage): the
+// browser logs violations but blocks nothing, so we can watch the console on the live surfaces
+// (TradingView widget, Google favicons, Supabase, Vercel analytics) and tighten before flipping
+// to enforcing. Sources reflect what the app actually loads:
+//   - script/frame: TradingView embed widget    - img: data + https favicons/logos
+//   - connect: Supabase (REST + realtime WS) + Vercel insights   - style: Next.js inline styles
+// AI provider calls are server-side (never browser), so no provider host is needed in connect-src.
+const cspReportOnly = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://s3.tradingview.com https://www.tradingview-widget.com https://*.vercel-insights.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.tradingview.com https://*.vercel-insights.com",
+  "frame-src https://*.tradingview.com https://www.tradingview-widget.com",
+].join('; ');
+
 // Baseline security headers (Phase 9 hardening). Applied to every route.
 const securityHeaders = [
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
@@ -9,6 +29,7 @@ const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  { key: 'Content-Security-Policy-Report-Only', value: cspReportOnly },
 ];
 
 const nextConfig = {

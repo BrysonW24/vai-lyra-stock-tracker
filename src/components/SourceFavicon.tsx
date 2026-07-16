@@ -47,6 +47,9 @@ export function SourceFavicon({ domain, sourceName }: SourceFaviconProps) {
   }
 
   return (
+    // Favicons load from arbitrary third-party hosts (Google s2 + any entity domain); next/image
+    // would need every host allow-listed. Plain img is intended.
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={faviconUrl(domain, 32)}
       alt={sourceName}

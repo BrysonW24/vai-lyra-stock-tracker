@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bot, Sparkles, ArrowRight, Wallet, TrendingUp } from 'lucide-react';
+import { Bot, Sparkles, ArrowRight } from 'lucide-react';
 import type { PaperAccountSummary } from '@/lib/trading/paper-account-store';
 
 export function PaperBotStrip({ account }: { account: PaperAccountSummary }) {

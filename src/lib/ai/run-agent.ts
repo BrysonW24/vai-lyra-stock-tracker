@@ -11,6 +11,7 @@ import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { getAgentDefinition } from '@/lib/ai/agents/registry';
 import type { AiAgentName, AiToolName } from '@/lib/ai/policy';
 import { validateAgentOutput, assertNoFabricatedNumbers } from '@/lib/ai/guardrails/schema';
+import { evaluateGuardrails } from '@/lib/ai/guardrails/engine';
 import { recordAiRun, hashInput } from '@/lib/ai/audit';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, composeSystem } from '@/lib/ai/system-prompt';
 import { executeTool } from './tools/runtime';
@@ -91,6 +92,16 @@ function payloadHasFabricatedNumber(payload: unknown, allowedNumbers: string[]):
   return found;
 }
 
+/** Every string field in a parsed payload, flattened - the model's actual free-text output. */
+function collectStrings(payload: unknown): string[] {
+  const out: string[] = [];
+  mapStrings(payload, (s) => {
+    out.push(s);
+    return s;
+  });
+  return out;
+}
+
 /** Call the model for structured output, validate against the agent schema, and audit the run. */
 async function runStructured(opts: {
   agent: AiAgentName;
@@ -135,11 +146,28 @@ async function runStructured(opts: {
     parsed = sanitised;
   }
 
+  // Unified guardrails verdict over the model's final free-text (advice / injection echo / predictive
+  // overclaim / any residual ungrounded numeral). A `block` is a HARD refusal regardless of schema
+  // validity: research-only doctrine means directive advice or an injection echo never ships. A
+  // `review` (predictive/insider overclaim) is recorded as a warning but allowed through.
+  let guardrailBlock: string[] = [];
+  let guardrailWarnings: string[] = [];
+  if (parsed && typeof parsed === 'object') {
+    const verdict = evaluateGuardrails({ text: collectStrings(parsed).join('\n'), allowedNumbers });
+    guardrailWarnings = verdict.warnings;
+    if (verdict.decision === 'block') {
+      guardrailBlock = verdict.blockedReasons;
+      refusalReason = refusalReason ?? `guardrail_block: ${verdict.blockedReasons.join('; ')}`;
+    }
+  }
+
   const validation = validateAgentOutput(agent, parsed);
   const citations = parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>).citations : undefined;
   const citationCount = Array.isArray(citations) ? citations.length : 0;
-  const status = !validation.ok ? (refusalReason ? 'refused' : 'validation_failed') : 'ok';
-  void recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: hashInput(text), toolsUsed, injectionFlags: [], validationErrors: validation.errors, citationCount, status, refusalReason: validation.ok ? null : refusalReason, latencyMs }).catch(() => {});
+  const blocked = guardrailBlock.length > 0;
+  const status = blocked || !validation.ok ? (refusalReason ? 'refused' : 'validation_failed') : 'ok';
+  void recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: hashInput(text), toolsUsed, injectionFlags: [...guardrailBlock, ...guardrailWarnings], validationErrors: validation.errors, citationCount, status, refusalReason: blocked || !validation.ok ? refusalReason : null, latencyMs }).catch(() => {});
+  if (blocked) return { ok: false, agent, error: refusalReason ?? 'guardrail_block', evidenceIds, toolsUsed };
   if (!validation.ok) return { ok: false, agent, error: refusalReason ?? validation.errors.join('; '), evidenceIds, toolsUsed };
   return { ok: true, agent, result: parsed, evidenceIds, toolsUsed };
 }

@@ -165,6 +165,7 @@ def should_send_alert_to_user(
     ticker_prefs: dict[str, Any],
     alert_type: str,
     current_time: datetime | None = None,
+    ignore_quiet_hours: bool = False,
 ) -> tuple[bool, str]:
     """Determine whether to send an alert to a user based on their preferences.
 
@@ -173,6 +174,10 @@ def should_send_alert_to_user(
         ticker_prefs: Ticker-level alert preferences for this symbol
         alert_type: The type of alert being sent
         current_time: For testing; defaults to datetime.now(timezone.utc)
+        ignore_quiet_hours: pass True when delivering through the JS notification router,
+            which applies quiet hours itself with minute precision AND holds the event for
+            release when the window ends. Gating here instead would DROP the alert forever
+            (signal alerts fire on state transitions, so the next scan will not re-fire).
 
     Returns (should_send: bool, reason: str).
     """
@@ -194,7 +199,7 @@ def should_send_alert_to_user(
     # Check quiet hours
     quiet_start = user_prefs.get("quiet_hours_start") or user_prefs.get("quiet_start")
     quiet_end = user_prefs.get("quiet_hours_end") or user_prefs.get("quiet_end")
-    if quiet_start is not None and quiet_end is not None:
+    if not ignore_quiet_hours and quiet_start is not None and quiet_end is not None:
         current_hour = local_now.hour
         if isinstance(quiet_start, str):
             quiet_start = int(quiet_start.split(":")[0])

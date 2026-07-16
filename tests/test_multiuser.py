@@ -86,6 +86,7 @@ def test_should_not_send_alert_during_quiet_hours() -> None:
         "alerts_enabled": True,
         "quiet_hours_start": 22,  # 10 PM
         "quiet_hours_end": 8,     # 8 AM
+        "timezone": "UTC",  # pin the zone so the wall-clock window is deterministic
     }
     ticker_prefs = {}
     # Test with 11 PM (23 hour, within quiet hours)
@@ -93,6 +94,26 @@ def test_should_not_send_alert_during_quiet_hours() -> None:
     can_send, reason = should_send_alert_to_user(user_prefs, ticker_prefs, "strong_setup", current_time=current_time)
     assert can_send is False
     assert "quiet hours" in reason.lower()
+
+
+def test_quiet_hours_are_evaluated_in_the_users_timezone() -> None:
+    """Quiet hours are wall-clock in the user's zone (default Australia/Sydney), not server UTC."""
+    user_prefs = {
+        "alerts_enabled": True,
+        "quiet_hours_start": 22,
+        "quiet_hours_end": 8,
+        "timezone": "Australia/Sydney",
+    }
+    # 13:00 UTC = 23:00 AEST (June, UTC+10) -> inside the 22-08 Sydney window.
+    quiet_utc = datetime(2026, 6, 4, 13, 0, tzinfo=timezone.utc)
+    can_send, reason = should_send_alert_to_user(user_prefs, {}, "strong_setup", current_time=quiet_utc)
+    assert can_send is False
+    assert "quiet hours" in reason.lower()
+
+    # 23:30 UTC = 09:30 AEST next day -> outside the window even though the UTC hour is 23.
+    awake_utc = datetime(2026, 6, 4, 23, 30, tzinfo=timezone.utc)
+    can_send, _ = should_send_alert_to_user(user_prefs, {}, "strong_setup", current_time=awake_utc)
+    assert can_send is True
 
 
 def test_should_not_send_alert_when_ticker_muted() -> None:

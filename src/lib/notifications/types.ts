@@ -6,7 +6,16 @@
  * phrase a payload the deterministic router has already approved.
  */
 
-export type ChannelType = 'push' | 'telegram' | 'whatsapp';
+export type ChannelType = 'push' | 'telegram' | 'whatsapp' | 'slack';
+
+/**
+ * Agent voice - HOW alert prose is worded, never WHAT it says. Each id maps to a
+ * pre-created template set with variables (see voice.ts); the deterministic engine
+ * owns every number regardless of voice. 'analyst' is the default house voice.
+ */
+export type VoiceId = 'analyst' | 'coach' | 'minimal' | 'narrator';
+export const VOICE_IDS: readonly VoiceId[] = ['analyst', 'coach', 'minimal', 'narrator'];
+export const isVoiceId = (value: unknown): value is VoiceId => VOICE_IDS.includes(value as VoiceId);
 
 export type NotificationType =
   | 'signal_alert'
@@ -66,6 +75,9 @@ export interface NotificationPreferences {
   pushEnabled: boolean;
   telegramEnabled: boolean;
   whatsappEnabled: boolean;
+  slackEnabled: boolean;
+  /** How the agent speaks in alert prose - see voice.ts presets. */
+  voice: VoiceId;
   quietHoursEnabled: boolean;
   /** "22:00" 24h, wall-clock in `timezone`. */
   quietStart: string;
@@ -92,6 +104,8 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   pushEnabled: false,
   telegramEnabled: false,
   whatsappEnabled: false,
+  slackEnabled: false,
+  voice: 'analyst',
   quietHoursEnabled: true,
   quietStart: '22:00',
   quietEnd: '07:00',

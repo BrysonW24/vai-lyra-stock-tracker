@@ -275,7 +275,7 @@ export function calculateCompoundingProjection(
 export function calculateWinRate(
   avgWinDollar: number,
   avgLossDollar: number,
-  targetExpectancy?: number
+  _targetExpectancy?: number
 ): WinRateCalculation {
   const totalDollarSwing = avgWinDollar + avgLossDollar;
   const requiredWinRate = totalDollarSwing > 0 ? avgLossDollar / totalDollarSwing : 0.5;

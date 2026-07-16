@@ -13,7 +13,7 @@ Given a holding + buy date, build a snapshot capturing:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from workers.stock_scanner.models import IndicatorSnapshot, SignalResult
@@ -304,6 +304,6 @@ def build_trade_day_snapshot(
         max_drawdown_after_entry=max_drawdown,
         max_upside_after_entry=max_upside,
         learning_summary=learning_notes,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )

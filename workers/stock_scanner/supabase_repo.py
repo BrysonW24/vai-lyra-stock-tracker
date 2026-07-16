@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -18,6 +19,8 @@ from workers.stock_scanner.models import (
     WatchlistOverlay,
 )
 from workers.stock_scanner.universe import NASDAQ_TECH_UNIVERSE, universe_by_symbol
+
+logger = logging.getLogger("stock_scanner.supabase_repo")
 
 
 class SupabaseRepository:
@@ -368,8 +371,10 @@ class SupabaseRepository:
             )
             if result.data:
                 return dict(result.data[0])
-        except Exception:
-            pass
+        except Exception as exc:
+            # Log, don't swallow silently: a transient DB/auth error here would otherwise make a
+            # real user look like they have no preferences, dropping their alerts.
+            logger.warning("load_user_alert_preferences(%s) failed: %s", user_id, exc)
         return {}
 
     def load_ticker_alert_preferences(self, user_id: str, symbol: str) -> dict[str, Any]:
@@ -389,8 +394,8 @@ class SupabaseRepository:
             )
             if result.data:
                 return dict(result.data[0])
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("load_ticker_alert_preferences(%s, %s) failed: %s", user_id, symbol, exc)
         return {}
 
     def load_notification_channel(self, user_id: str, channel_type: str = "telegram") -> dict[str, Any] | None:
@@ -411,8 +416,9 @@ class SupabaseRepository:
             )
             if result.data:
                 return dict(result.data[0])
-        except Exception:
-            pass
+        except Exception as exc:
+            # A swallowed error here silently drops the user's Telegram/WhatsApp channel -> no alert.
+            logger.warning("load_notification_channel(%s, %s) failed: %s", user_id, channel_type, exc)
         return None
 
     def save_market_context_snapshot(
@@ -436,3 +442,137 @@ class SupabaseRepository:
             }
         ).execute()
         return 1
+
+    # ------------------------------------------------------------------
+    # Outcome labeling + digest support (nightly maintenance job)
+
+    def load_signals_for_outcomes(
+        self,
+        since: datetime,
+        statuses: tuple[str, ...],
+        timeframe: str,
+    ) -> list[dict[str, Any]]:
+        """Signals worth labeling with forward returns: setups within the lookback window."""
+        if not self.client:
+            return []
+        result = (
+            self.client.table("stock_signals")
+            .select("symbol, candle_time, signal_type, signal_status, signal_score")
+            .in_("signal_status", list(statuses))
+            .eq("timeframe", timeframe)
+            .gte("candle_time", since.isoformat())
+            .order("candle_time", desc=False)
+            .execute()
+        )
+        return [dict(row) for row in (result.data or [])]
+
+    def load_existing_outcome_keys(self, since: datetime) -> set[tuple[str, str, str, str]]:
+        """Keys already labeled, so the nightly job stays idempotent and cheap."""
+        if not self.client:
+            return set()
+        result = (
+            self.client.table("signal_outcomes")
+            .select("symbol, signal_candle_time, signal_type, signal_status")
+            .gte("signal_candle_time", since.isoformat())
+            .execute()
+        )
+        return {
+            (
+                str(row["symbol"]),
+                str(row["signal_candle_time"]),
+                str(row["signal_type"]),
+                str(row["signal_status"]),
+            )
+            for row in (result.data or [])
+        }
+
+    def load_candles_from(self, symbol: str, timeframe: str, start: datetime) -> list[Candle]:
+        """Stored candles from `start` onward (ascending). Outcomes are computed from the
+        SAME stored candles the score used, so every published number is reproducible."""
+        if not self.client:
+            return []
+        result = (
+            self.client.table("stock_candles")
+            .select("symbol, timeframe, candle_time, open, high, low, close, adjusted_close, volume, source")
+            .eq("symbol", symbol)
+            .eq("timeframe", timeframe)
+            .gte("candle_time", start.isoformat())
+            .order("candle_time", desc=False)
+            .execute()
+        )
+        candles: list[Candle] = []
+        for row in result.data or []:
+            candles.append(
+                Candle(
+                    symbol=str(row["symbol"]),
+                    timeframe=str(row["timeframe"]),
+                    candle_time=datetime.fromisoformat(str(row["candle_time"])),
+                    open=float(row["open"]) if row.get("open") is not None else None,
+                    high=float(row["high"]) if row.get("high") is not None else None,
+                    low=float(row["low"]) if row.get("low") is not None else None,
+                    close=float(row["close"]) if row.get("close") is not None else None,
+                    adjusted_close=float(row["adjusted_close"]) if row.get("adjusted_close") is not None else None,
+                    volume=float(row["volume"]) if row.get("volume") is not None else None,
+                    source=str(row.get("source") or "supabase"),
+                )
+            )
+        return candles
+
+    def save_signal_outcomes(self, records: list[dict[str, Any]]) -> int:
+        if not self.client or not records:
+            return 0
+        self.client.table("signal_outcomes").upsert(
+            records,
+            on_conflict="symbol,signal_candle_time,signal_type,signal_status",
+        ).execute()
+        return len(records)
+
+    def followup_already_sent(self, symbol: str, signal_candle_time_iso: str) -> bool:
+        """One follow-up per signal, forever - deduped against the alert log by the
+        exact signal candle time carried in the alert payload."""
+        if not self.client:
+            return False
+        result = (
+            self.client.table("stock_alerts")
+            .select("id")
+            .eq("symbol", symbol)
+            .eq("alert_type", "signal_followup")
+            .eq("payload->>signal_candle_time", signal_candle_time_iso)
+            .limit(1)
+            .execute()
+        )
+        return bool(result.data)
+
+    def load_alerts_since(self, since: datetime, user_id: str | None = None) -> list[dict[str, Any]]:
+        """Alerts recorded since `since` - the digest's raw material."""
+        if not self.client:
+            return []
+        query = (
+            self.client.table("stock_alerts")
+            .select("symbol, alert_type, sent_status, created_at, user_id")
+            .gte("created_at", since.isoformat())
+        )
+        if user_id is not None:
+            query = query.eq("user_id", user_id)
+        result = query.order("created_at", desc=False).limit(500).execute()
+        return [dict(row) for row in (result.data or [])]
+
+    def load_latest_signals_snapshot(self, timeframe: str, since: datetime) -> list[dict[str, Any]]:
+        """Most recent signal row per symbol within the window (client-side dedupe)."""
+        if not self.client:
+            return []
+        result = (
+            self.client.table("stock_signals")
+            .select("symbol, candle_time, signal_status, signal_score, signal_score_delta")
+            .eq("timeframe", timeframe)
+            .gte("candle_time", since.isoformat())
+            .order("candle_time", desc=True)
+            .limit(2000)
+            .execute()
+        )
+        latest_by_symbol: dict[str, dict[str, Any]] = {}
+        for row in result.data or []:
+            symbol = str(row["symbol"])
+            if symbol not in latest_by_symbol:
+                latest_by_symbol[symbol] = dict(row)
+        return list(latest_by_symbol.values())
