@@ -304,16 +304,6 @@ COSTS.md                  Every service in the stack, priced
 
 ---
 
-## More from Lyra
-
-<p align="center">
-  <img src="assets/image-10.png" width="30%" alt="AI support" />
-</p>
-
-<p align="center"><sub><b>Notification management</b> &nbsp;·&nbsp; <b>AI support</b></sub></p>
-
----
-
 ## 🧬 On the roadmap - your Digital Trading Twin
 
 A **digital trading twin** is a private, per-user model of *what you pay attention to, how you weigh risk, and which setups you actually act on* - learned quietly from how you use Lyra. It does two things: it **reflects your own habits back to you** (are you catching names early or chasing them late? do you size up right after a loss?), and it lets Lyra **compose the screen for you** instead of for everyone. Down the line, a twin becomes portable - a new user could be *onboarded into* an existing twin (your own across devices, or a mentor's) as a starting posture rather than a blank slate.
