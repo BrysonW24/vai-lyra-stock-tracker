@@ -130,6 +130,40 @@ Copy [`.env.example`](./.env.example) to `.env.local` and fill in only what you 
 
 ---
 
+## 🧰 Commands - the full set
+
+Everything is an npm script; you never need to remember a raw command.
+
+### Day to day
+
+| Command | What it does |
+|---|---|
+| `npm install` | Install dependencies (also wires the git hooks) |
+| `npm run dev -- -p 3042` | Run the dashboard locally at http://localhost:3042 (demo data if no keys) |
+| `npm run doctor` | Diagnose your setup: which mode you're in, what's configured, what's missing |
+| `npm run build` | Production build of the frontend |
+| `npm run type-check` | TypeScript strict check (run before committing) |
+| `npm run test` | Frontend unit tests (Vitest) |
+
+### Scanner (live mode)
+
+| Command | What it does |
+|---|---|
+| `npm run worker:scan` | Run the Python scanner once, right now (needs worker deps: `pip install -r requirements.txt`) |
+| `npm run worker:test` | Run the Python worker test suite (pytest) |
+
+### Content + releases (contributors)
+
+| Command | What it does |
+|---|---|
+| `npm run content:build` | Compile `content/*.jsonl` into importable JSON (runs automatically before dev/build) |
+| `npm run release` | Cut a release: syncs `package.json` + `CHANGELOG.md` from `src/lib/version.ts` |
+| `npm run check:version` | The pre-push version guard, runnable by hand |
+
+Step-by-step instructions for every stage - from first clone to your own deployed, alerting Lyra - live in the [walkthroughs](./docs/walkthroughs/README.md), and Claude Code users can just run **`/setup`**.
+
+---
+
 ## 📡 Going live (optional)
 
 1. **Supabase** - apply the migrations in [`supabase/migrations/`](./supabase/migrations/) in numeric order (the canonical schema - auth, RLS, scanner, trades), then run [`sql/_apply_all_scanner_schema.sql`](./sql/_apply_all_scanner_schema.sql) once (idempotent worker-schema reconciliation). Set `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (read-only, frontend) and `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (worker only). Full guide: [go live with your own Supabase](./docs/walkthroughs/03-go-live-supabase.md).
