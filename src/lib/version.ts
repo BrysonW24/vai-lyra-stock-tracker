@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.17.0',
+    date: '2026-07-17',
+    title: 'Honest edge and a real trade plan: sizing to your own capital, netting costs against the signal, and never dressing up a guess as history',
+    highlights: [
+      'A new Trade Plan surface (/plan) sizes one name against YOUR real capital, not a fantasy account: it floors to whole shares, tells a small account when an entry price is simply out of reach, and shows the worst-case dollar loss if the stop is hit - the position-size math finally lives at the moment of decision instead of a separate calculator page.',
+      'The plan models the costs that actually hurt a small account: a fixed commission floor (which is a big slice of a $300 trade), the AUD-to-USD FX spread you pay twice on a US ticker, and wider slippage on thin small-caps - then shows the break-even move you need just to cover the round trip.',
+      'Every win rate now travels with its expectancy, so a high hit rate on tiny wins and large losses (the classic mean-reversion trap) can no longer read as edge - and the plan flags when friction wipes out an otherwise-positive edge for your account size.',
+      'Honesty fix: illustrative outcome numbers are now labelled "illustrative, no measured history yet" wherever they appear, the live signal drawer needs a real 20-sample floor (not 5) before it shows a measured win rate and caveats small samples, and a break-even move no longer counts as a win.',
+      'The AI research assistant can now build the same cost-aware, expectancy-aware plan on request (read_trade_plan) - it presents the risk flags honestly and, as always, never turns them into a recommendation to trade.',
+    ],
+  },
+  {
     version: '0.16.0',
     date: '2026-07-16',
     title: 'The calendar tells the truth and every dialog behaves: live events, a real clock, and one shared focus system',

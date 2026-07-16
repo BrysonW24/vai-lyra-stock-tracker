@@ -80,6 +80,26 @@ export const GOLDEN_CASES: readonly GoldenCase[] = [
     protects: 'A twin-framed directive to trade is still advice and never ships.',
   },
 
+  // --- trade plan: sizing/cost math is clean; a plan-framed directive is still advice --------
+  {
+    id: 'clean-trade-plan-readout',
+    category: 'clean',
+    input: {
+      text: 'Trade plan sketch (research only): at a 1% risk budget your whole-share size is 50 shares, worst case if the stop is hit is about 52, and round-trip friction is 1.2% of the position.',
+      allowedNumbers: ['1', '50', '52', '1.2'],
+    },
+    expect: 'allow',
+    protects: 'A neutral, grounded sizing and cost readout is research math, not advice.',
+  },
+  {
+    id: 'advice-plan-directive',
+    category: 'advice',
+    input: { text: 'Because the trade plan checks out, you should buy 50 shares of RKLB now.' },
+    expect: 'block',
+    drivenBy: 'regulated-advice',
+    protects: 'A plan-framed directive to trade is still advice and never ships.',
+  },
+
   // --- advice: directive / guaranteed language must block ---------------------
   {
     id: 'advice-directive-buy',

@@ -5,13 +5,17 @@
  * tools have no implementation at all, by design). Executed only through the fail-closed gate in
  * ./runtime so an agent can never call a tool it was not granted.
  */
-import { THEMES, THEME_COMPANIES, SUPPLY_CHAIN_NODES } from '@/lib/world-radar';
+import { THEMES, THEME_COMPANIES, SUPPLY_CHAIN_NODES, getThemeCompanies } from '@/lib/world-radar';
 import iposData from '@/lib/generated/ipos.json';
 import { FINANCE_FACTS } from '@/lib/finance-facts';
 import { EDUCATION_MODULES, getModuleCorpusText, getModuleHref } from '@/lib/education';
 import { getDashboardData } from '@/lib/data';
 import { buildSignalIntelligence, topConvergence, SIGNAL_KIND_LABEL } from '@/lib/signal-intelligence';
 import { loadTwinReflection } from '@/lib/twin/repo';
+import { getUserConstraints } from '@/lib/ai/user-context';
+import { getOutcomeDistribution, expectancyFromOutcome } from '@/lib/outcomes';
+import { backingFor, stageFor } from '@/lib/small-cap-lifecycle';
+import { buildTradePlan, renderTradePlanText } from '@/lib/edge/trade-plan';
 
 /** Matches the agent registry's evidenceItemSchema: { id, text }. */
 export interface EvidenceItem {
@@ -170,6 +174,72 @@ export async function readTradingTwin() {
     trustedSignalKinds: reflection.topSignalKinds.map((k) => k.label),
     stageLean: reflection.stageLean,
     disclaimer: 'Research about the user, from their own behaviour. Cite to personalise framing; never turn into advice.',
+  };
+}
+
+/**
+ * A deterministic, cost-aware trade PLAN for a symbol, sized against the signed-in user's OWN
+ * capital and stop. This is the decision-moment version of the standalone calculator: it floors to
+ * whole shares, tells a small account when an entry price is out of reach, nets expectancy against
+ * realistic round-trip friction (fixed commission + FX + liquidity-scaled slippage), and raises
+ * neutral risk flags. RLS-scoped to the caller for the capital read; returns a no-context marker
+ * when the user has not set their available cash. Research only - it computes sizing and cost math,
+ * it is never a recommendation to place the trade. The agent must present the flags, not launder
+ * them into a "go" signal.
+ */
+export async function readTradePlan(args: {
+  symbol: string;
+  entryPrice?: number;
+  stopPrice?: number;
+  targetPrice?: number;
+  riskPercentPerTrade?: number;
+}) {
+  const symbol = String(args.symbol ?? '').toUpperCase().trim();
+  if (!symbol) return { hasPlan: false, note: 'A symbol is required to build a trade plan.' };
+
+  const constraints = await getUserConstraints();
+  const accountSize = typeof constraints?.cashAvailable === 'number' && constraints.cashAvailable > 0 ? constraints.cashAvailable : null;
+  if (accountSize === null) {
+    return { hasPlan: false, note: 'The user has not set their available cash, so a sized plan cannot be built. Ask them to set it in settings.' };
+  }
+
+  const data = await getDashboardData();
+  const sig = data.signals.find((s) => s.symbol === symbol);
+  const entryPrice = typeof args.entryPrice === 'number' && args.entryPrice > 0 ? args.entryPrice : sig?.close;
+  if (!entryPrice || entryPrice <= 0) {
+    return { hasPlan: false, note: `No price is available for ${symbol}. Supply an entryPrice to build a plan.` };
+  }
+
+  // Enrich from the covered small-cap universe when the name is present.
+  const company = getThemeCompanies().find((c) => c.symbol.toUpperCase() === symbol);
+  const liquidity = company?.liquidity;
+  const lifecycleStage = company ? stageFor(company, backingFor(company.symbol), sig?.score ?? 50) : undefined;
+
+  const dist = sig ? getOutcomeDistribution('momentum_recovery_v1', String(sig.status)) : null;
+  const outcome = expectancyFromOutcome(dist);
+  const baseCurrency = constraints?.baseCurrency ?? 'USD';
+
+  const plan = buildTradePlan({
+    symbol,
+    entryPrice,
+    stopPrice: args.stopPrice,
+    targetPrice: args.targetPrice,
+    accountSize,
+    riskPercentPerTrade: typeof args.riskPercentPerTrade === 'number' ? args.riskPercentPerTrade : 1,
+    maxPositionPct: typeof constraints?.maxPositionSizePct === 'number' ? constraints.maxPositionSizePct : 20,
+    crossCurrency: baseCurrency.toUpperCase() !== 'USD',
+    liquidity,
+    lifecycleStage,
+    outcome,
+    provenance: dist?.provenance,
+  });
+
+  return {
+    hasPlan: true,
+    plan,
+    text: renderTradePlanText(plan),
+    disclaimer:
+      "Deterministic sizing and cost math from the user's own capital and stop. Research only - present the flags honestly; never turn this into a recommendation to place the trade.",
   };
 }
 

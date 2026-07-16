@@ -8,6 +8,7 @@
  * DEMO ONLY: These are research-quality synthetic distributions based on
  * backtesting patterns. Not investment advice.
  */
+import { computeExpectancy, type ExpectancyInput } from './edge/expectancy';
 
 export interface OutcomeDistribution {
   signalType: string;
@@ -23,6 +24,13 @@ export interface OutcomeDistribution {
   return60dWinRate: number;
   maxUpsideMedian: number | null;
   worstDrawdownMin: number | null;
+  /**
+   * Where these numbers came from. 'illustrative' = hand-authored demo base rates that have
+   * NOT been measured (the honest default until the outcome-labeling loop populates real
+   * history); 'measured' = aggregated from real signal_outcomes rows. The UI must surface this
+   * so a user never mistakes a placeholder win rate for proven history.
+   */
+  provenance: 'illustrative' | 'measured';
 }
 
 /**
@@ -38,7 +46,7 @@ export interface OutcomeDistribution {
  * Data is synthetic for demo; live backfill from signal_outcomes table
  * will replace these values.
  */
-const DEMO_OUTCOMES: Record<string, OutcomeDistribution> = {
+const DEMO_OUTCOMES: Record<string, Omit<OutcomeDistribution, 'provenance'>> = {
   "momentum_recovery_v1|strong_setup": {
     signalType: "momentum_recovery_v1",
     signalStatus: "strong_setup",
@@ -128,12 +136,18 @@ export function getOutcomeDistribution(
   signalStatus: string,
 ): OutcomeDistribution | null {
   const key = `${signalType}|${signalStatus}`;
-  return DEMO_OUTCOMES[key] ?? null;
+  const row = DEMO_OUTCOMES[key];
+  // Demo rows are illustrative by definition - they are not measured history.
+  return row ? { ...row, provenance: 'illustrative' } : null;
 }
 
 /**
  * Format outcome as plain-English summary.
  * E.g.: "Past 23 similar strong setup signals returned 6.4% median over 20 days (74% win rate)."
+ *
+ * Illustrative distributions are explicitly labelled so a placeholder win rate is never mistaken
+ * for measured history, and expectancy is co-displayed so a high win rate on small wins and large
+ * losses (the mean-reversion trap) is not read as edge.
  */
 export function formatOutcomeSummary(dist: OutcomeDistribution | null): string {
   if (!dist) {
@@ -146,5 +160,27 @@ export function formatOutcomeSummary(dist: OutcomeDistribution | null): string {
     : "N/A";
   const winRateText = `${Math.round(dist.return20dWinRate)}% win rate`;
 
-  return `${sampleText} returned ${returnText} over 20 days (${winRateText}).`;
+  const core = `${sampleText} returned ${returnText} over 20 days (${winRateText}).`;
+  const prefix = dist.provenance === 'measured' ? '' : 'Illustrative (no measured history yet): ';
+
+  const exp = expectancyFromOutcome(dist);
+  const expText = exp
+    ? ` Expectancy about ${computeExpectancy(exp).expectedValuePct}% per trade.`
+    : '';
+
+  return `${prefix}${core}${expText}`;
+}
+
+/**
+ * Derive expectancy inputs from an outcome distribution. This is a documented PROXY: the median
+ * max-upside stands in for the average win and the worst drawdown for the average loss, so the
+ * expected value is directional, not a precise backtest. Returns null when the fields are missing.
+ */
+export function expectancyFromOutcome(dist: OutcomeDistribution | null): ExpectancyInput | null {
+  if (!dist || dist.maxUpsideMedian === null || dist.worstDrawdownMin === null) return null;
+  return {
+    winRatePct: dist.return20dWinRate,
+    avgWinPct: Math.max(0, dist.maxUpsideMedian),
+    avgLossPct: Math.abs(dist.worstDrawdownMin),
+  };
 }

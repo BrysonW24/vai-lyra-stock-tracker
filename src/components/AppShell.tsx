@@ -42,6 +42,7 @@ import {
   ReceiptText,
   Telescope,
   Fingerprint,
+  Target,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { DashboardData } from '@/types/scanner';
@@ -64,6 +65,7 @@ const navItems = [
   { href: '/trades', label: 'Trade Log', short: 'Trades', icon: ReceiptText, group: 'yours' },
   { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star, group: 'yours' },
   { href: '/twin', label: 'Your Twin', short: 'Twin', icon: Fingerprint, group: 'yours' },
+  { href: '/plan', label: 'Trade Plan', short: 'Plan', icon: Target, group: 'yours' },
   // Investigation surfaces - research, not daily-driver, so they sit after the personal surfaces
   // (were #2/#3, which over-promoted them on the mobile bottom bar before they earned it).
   { href: '/findings', label: 'Findings', short: 'Find', icon: Telescope, group: 'investigate' },

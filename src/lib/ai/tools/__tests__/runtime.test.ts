@@ -75,3 +75,20 @@ describe('ai tool runtime · read_trading_twin', () => {
     await expect(executeTool('news_classifier', 'read_trading_twin')).rejects.toBeInstanceOf(ToolDeniedError);
   });
 });
+
+describe('ai tool runtime · read_trade_plan', () => {
+  it('is granted to the risk analyst and returns a no-context marker without capital on file', async () => {
+    // With no Supabase env in tests there is no signed-in user / capital -> no sized plan.
+    const result = (await executeTool('risk_analyst', 'read_trade_plan', { symbol: 'RKLB' })) as {
+      hasPlan: boolean;
+      note?: string;
+    };
+    expect(result).toHaveProperty('hasPlan');
+    expect(result.hasPlan).toBe(false);
+    expect(typeof result.note).toBe('string');
+  });
+
+  it('is denied to an agent without the grant (news_classifier)', async () => {
+    await expect(executeTool('news_classifier', 'read_trade_plan')).rejects.toBeInstanceOf(ToolDeniedError);
+  });
+});

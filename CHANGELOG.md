@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-07-17
+
+Honest edge and a real trade plan: sizing to your own capital, netting costs against the signal, and never dressing up a guess as history.
+
+### Changed
+
+- A new Trade Plan surface (/plan) sizes one name against YOUR real capital, not a fantasy account: it floors to whole shares, tells a small account when an entry price is simply out of reach, and shows the worst-case dollar loss if the stop is hit - the position-size math finally lives at the moment of decision instead of a separate calculator page.
+- The plan models the costs that actually hurt a small account: a fixed commission floor (which is a big slice of a $300 trade), the AUD-to-USD FX spread you pay twice on a US ticker, and wider slippage on thin small-caps - then shows the break-even move you need just to cover the round trip.
+- Every win rate now travels with its expectancy, so a high hit rate on tiny wins and large losses (the classic mean-reversion trap) can no longer read as edge - and the plan flags when friction wipes out an otherwise-positive edge for your account size.
+- Honesty fix: illustrative outcome numbers are now labelled "illustrative, no measured history yet" wherever they appear, the live signal drawer needs a real 20-sample floor (not 5) before it shows a measured win rate and caveats small samples, and a break-even move no longer counts as a win.
+- The AI research assistant can now build the same cost-aware, expectancy-aware plan on request (read_trade_plan) - it presents the risk flags honestly and, as always, never turns them into a recommendation to trade.
+
 ## [0.16.0] - 2026-07-16
 
 The calendar tells the truth and every dialog behaves: live events, a real clock, and one shared focus system.
@@ -425,7 +437,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.13.0...v0.14.0

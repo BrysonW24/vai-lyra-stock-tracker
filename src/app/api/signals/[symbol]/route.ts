@@ -15,7 +15,12 @@ import { clientIp } from '@/lib/api/ai-guard';
  */
 
 const SYMBOL_RE = /^[A-Z0-9.\-]{1,10}$/;
-const MIN_LIVE_SAMPLE = 5;
+// A win rate on a handful of samples is noise. Require a real sample before showing a measured
+// aggregate, and caveat it as low-confidence until the sample is comfortably large.
+const MIN_LIVE_SAMPLE = 20;
+const LOW_CONFIDENCE_BELOW = 40;
+// A move under round-trip friction is not a win - counting break-evens as wins inflates the rate.
+const WIN_THRESHOLD_PCT = 0.3;
 
 interface OutcomeRow {
   return_20d: number | null;
@@ -47,8 +52,9 @@ async function liveOutcomeSummary(status: string): Promise<{ summary: string; sa
     const returns = rows.map((r) => r.return_20d as number);
     const med = median(returns);
     if (med === null) return null;
-    const winRate = Math.round((returns.filter((r) => r > 0).length / returns.length) * 100);
-    const summary = `${rows.length} past signal${rows.length !== 1 ? 's' : ''} returned ${med > 0 ? '+' : ''}${med.toFixed(1)}% over 20 days (${winRate}% win rate).`;
+    const winRate = Math.round((returns.filter((r) => r > WIN_THRESHOLD_PCT).length / returns.length) * 100);
+    const caveat = rows.length < LOW_CONFIDENCE_BELOW ? ' Small sample - low confidence.' : '';
+    const summary = `${rows.length} past signal${rows.length !== 1 ? 's' : ''} returned ${med > 0 ? '+' : ''}${med.toFixed(1)}% over 20 days (${winRate}% win rate).${caveat}`;
     return { summary, sampleSize: rows.length };
   } catch {
     return null;
@@ -76,11 +82,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const status = typeof signal.status === 'string' ? signal.status : 'inactive';
   const live = await liveOutcomeSummary(status);
   const outcome = live
-    ? { summary: live.summary, sampleSize: live.sampleSize, source: 'live' as const }
+    ? { summary: live.summary, sampleSize: live.sampleSize, source: 'live' as const, provenance: 'measured' as const }
     : (() => {
         const dist = getOutcomeDistribution('momentum_recovery_v1', status);
         return dist
-          ? { summary: formatOutcomeSummary(dist), sampleSize: dist.sampleSize, source: 'sample' as const }
+          ? { summary: formatOutcomeSummary(dist), sampleSize: dist.sampleSize, source: 'sample' as const, provenance: 'illustrative' as const }
           : null;
       })();
 
