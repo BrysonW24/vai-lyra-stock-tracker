@@ -7,10 +7,22 @@ Lyra watches the market on an hourly cadence and scores each stock on momentum r
 ```bash
 git clone https://github.com/BrysonW24/vai-lyra-stock-tracker.git
 cd vai-lyra-stock-tracker
-npm install && npm run dev      # ✨ runs on demo data, no keys needed
+npm install && npm run dev -- -p 3042      # ✨ runs on demo data, no keys needed
 ```
 
 Open http://localhost:3042 and you're in. 🎉
+
+## 🧭 Make it yours - clone, set up, deploy, all guided
+
+This repo is built to be **shared as a link and replicated end to end**. Four things get you from clone to your own live console:
+
+1. **Setup instructions** - agent-paced or human-paced, your pick:
+   - **Have [Claude Code](https://claude.com/claude-code)?** Open it in the clone and run **`/setup`** - the repo ships an agent playbook ([`.claude/commands/setup.md`](./.claude/commands/setup.md)) that sets everything up for you, stage by stage, with a verification gate at every step.
+   - **Prefer to drive?** Follow the [walkthroughs](./docs/walkthroughs/README.md): [what Lyra is](./docs/walkthroughs/01-what-is-lyra.md) -> [run it in 5 minutes](./docs/walkthroughs/02-run-it-yourself.md) -> [go live with your own Supabase](./docs/walkthroughs/03-go-live-supabase.md) -> [put it online](./docs/walkthroughs/04-deploy-your-own.md) -> [understand the score](./docs/walkthroughs/05-understand-the-score.md).
+2. **An AI key (optional)** - set `OPENAI_API_KEY` server-side for hosted explanations, or paste any provider's key in **Settings -> AI** (BYOK, stays in your browser). The console is fully usable with no AI key at all.
+3. **Hosting (optional)** - free on Vercel, or your own server with **Coolify** using the included [`Dockerfile`](./Dockerfile): [deploy walkthrough](./docs/walkthroughs/04-deploy-your-own.md) + [Coolify runbook](./docs/runbooks/coolify-deploy.md).
+4. **Alerts on your phone** - urgent setups and hourly summaries pushed to you: web push with zero accounts, Telegram in ~10 minutes, WhatsApp honestly scoped: [alerts walkthrough](./docs/walkthroughs/06-alerts-on-your-phone.md).
+5. **Costs, fully itemised** - every service in the stack priced in [`COSTS.md`](./COSTS.md). Demo mode is $0; a fully live, always-on setup can run on free tiers.
 
 ## 0 - How to Access Lyra
 
@@ -120,9 +132,10 @@ Copy [`.env.example`](./.env.example) to `.env.local` and fill in only what you 
 
 ## 📡 Going live (optional)
 
-1. **Supabase** - run the SQL in [`sql/`](./sql/) to create the tables, then set `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (read-only, frontend) and `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (worker only).
+1. **Supabase** - apply the migrations in [`supabase/migrations/`](./supabase/migrations/) in numeric order (the canonical schema - auth, RLS, scanner, trades), then run [`sql/_apply_all_scanner_schema.sql`](./sql/_apply_all_scanner_schema.sql) once (idempotent worker-schema reconciliation). Set `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (read-only, frontend) and `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (worker only). Full guide: [go live with your own Supabase](./docs/walkthroughs/03-go-live-supabase.md).
 2. **Scan** - `npm run worker:scan` runs the Python scanner once. The included GitHub Actions workflow at [`.github/workflows/hourly-stock-scanner.yml`](./.github/workflows/hourly-stock-scanner.yml) runs it hourly (add your secrets in the repo settings).
 3. **Alerts** - add `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` to receive pushes.
+4. **Host it** - free on Vercel, or self-host with Docker/Coolify: [deploy walkthrough](./docs/walkthroughs/04-deploy-your-own.md) + [Coolify runbook](./docs/runbooks/coolify-deploy.md). Verify any deploy with `/api/health` (returns the running version + mode). Costs: [`COSTS.md`](./COSTS.md).
 
 ---
 
@@ -140,12 +153,17 @@ Copy [`.env.example`](./.env.example) to `.env.local` and fill in only what you 
 ```
 src/app/                  Next.js pages (overview, radar, ticker, alerts, settings)
 src/components/           Dashboard + analytics components
-src/lib/                  Fetch helpers, demo data, env validation, AI gateway
+src/lib/                  Fetch helpers, demo data, env validation, AI gateway, Pine export
 contracts/notifications/  JSON contracts for the AI notification layer
 workers/stock_scanner/    Python scanner (indicators, scoring, overlays, alerts)
 sql/                      Supabase schema + seed
 tests/                    Worker tests
+docs/walkthroughs/        Clone-to-live walkthroughs (start here to replicate)
+docs/runbooks/            Deploy + operations runbooks (Coolify, kill switch, ...)
 docs/                     Architecture, AI engine plan, production hardening
+.claude/commands/         /setup - agent playbook for Claude Code users
+Dockerfile                Self-hosting image (Coolify/Docker); Vercel ignores it
+COSTS.md                  Every service in the stack, priced
 ```
 
 ---

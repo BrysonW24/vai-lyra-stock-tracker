@@ -13,6 +13,9 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
+  // Standalone server output for Docker/Coolify self-hosting (.next/standalone/server.js).
+  // Vercel ignores this and keeps using its own build output, so both hosts work from one config.
+  output: 'standalone',
   outputFileTracingRoot: __dirname,
   // Allow an isolated build output dir (e.g. CI / verification builds) so a
   // running `next dev` server's .next folder is never touched. Unset in normal use.

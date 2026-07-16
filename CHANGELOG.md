@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-16
+
+Replicate it: walkthroughs, /setup agent, Docker/Coolify, full costs.
+
+### Changed
+
+- Share the repo link and anyone can run their own Lyra: six adversarially fact-checked walkthroughs (docs/walkthroughs/) cover what it is, running it in 5 minutes, going live on your own Supabase, deploying, reading the score, and getting alerts on your phone.
+- Claude Code users can skip the manual path entirely: run /setup in a fresh clone and the bundled agent playbook (.claude/commands/setup.md) sets everything up end to end, with a verification gate at every stage and costs shown before anything paid.
+- Self-hosting is now first-class: a production Dockerfile (Coolify/Docker), a public /api/health probe that reports the running version and mode, and a Coolify deploy runbook (docs/runbooks/coolify-deploy.md).
+- COSTS.md itemises every service in the stack with prices verified on provider pages - demo is $0, a fully live always-on setup runs on free tiers, self-hosting is about US$13/mo.
+- Setup truth fixes: supabase/migrations/ is documented as the canonical schema (with the one sql/ reconciliation script that follows it), and the README quick start now matches the real dev port.
+
 ## [0.6.0] - 2026-06-27
 
 TradingView Copilot + Pine strategy export.
@@ -270,7 +282,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.4.0...v0.5.0

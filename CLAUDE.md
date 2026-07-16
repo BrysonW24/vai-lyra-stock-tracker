@@ -6,6 +6,12 @@ Lyra is a research-first tech stock oversold-recovery scanner. It looks for beat
 
 It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supabase + a market-data source), and **AI** (bring your own key + model for plain-English explanations). Run `npm run doctor` to see which mode you're in.
 
+> ## ⚠️ Versioning is crucial - never skip it
+>
+> **Every session that changes shippable code (`src` / `supabase` / `workers` / `public`) MUST bump the version and keep the changelog current before it ends.** This is not optional and not a "nice to have" - the version badge and the in-app `/whats-new` changelog are how the founder (and users) know what actually shipped. A code change without a matching `RELEASES` entry is treated as a bug.
+>
+> The one move: prepend an entry to `RELEASES` in [`src/lib/version.ts`](src/lib/version.ts), run `npm run release`, then commit + push. A pre-push hook blocks any push that breaks this rule. Full details in [Releasing](#releasing-every-shipped-change-bumps-the-version---enforced) below.
+
 ## Tech Stack
 
 - Frontend: Next.js 15, React 19, TypeScript, Tailwind CSS.
@@ -17,13 +23,17 @@ It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supa
 
 ## Project Structure
 
-- `src/app/` - Next.js App Router pages for overview, radar, ticker detail, alerts, and settings.
+- `src/app/` - Next.js App Router pages for overview, radar, ticker detail, alerts, and settings. `/api/health` is the public liveness + version probe used by hosting healthchecks.
 - `src/components/` - dashboard layout and analytics display components.
-- `src/lib/` - Supabase fetch helpers, demo fallback data, env validation, formatting helpers, and the AI gateway (`src/lib/ai/`).
+- `src/lib/` - Supabase fetch helpers, demo fallback data, env validation, formatting helpers, the AI gateway (`src/lib/ai/`), and the Pine strategy export (`src/lib/pine/` - drift-guarded mirror of the Python score).
 - `workers/stock_scanner/` - Python scanner package for universe loading, market data, indicators, derived features, scoring, overlays, alerts, Supabase persistence, Telegram, and scheduler guard.
 - `contracts/notifications/` - JSON contracts for the AI notification layer (schema, templates, test register).
 - `sql/` - Supabase schema and seed SQL.
 - `tests/` - focused Python worker tests.
+- `docs/walkthroughs/` - the clone-to-live replication path (5 walkthroughs + index). These are share-the-repo-link collateral: keep them true when commands, env vars, or schema change.
+- `docs/runbooks/coolify-deploy.md` - self-hosting runbook for the root `Dockerfile` (Coolify/Docker; Vercel ignores it). `NEXT_PUBLIC_*` are BUILD-time args - see the runbook before touching the Dockerfile.
+- `.claude/commands/` - agent playbooks (skill chains): `/setup` (fresh-clone E2E setup with verification gates), `/feedback-loop` (pull feedback channels -> triage -> engineer -> ship -> close the loop), `/production-keeper` (static/test/build/runtime/drift gates -> fix -> ship), `/logs-to-genui` (logs + event data -> deterministic metrics -> GenUI views). Update them when the steps they encode change.
+- `COSTS.md` - fully-itemised stack costs. Update when a new paid service enters the stack.
 
 ## Key Commands
 
@@ -44,6 +54,7 @@ It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supa
 - The worker should be provider-abstracted so yfinance can be replaced later.
 - AI explains; the deterministic engine decides. The AI never invents a number and never gives advice - research only.
 - Use a plain hyphen `-` in copy, never an em dash.
+- **Bump the version and keep `CHANGELOG.md` current on every shippable change** - see [Releasing](#releasing-every-shipped-change-bumps-the-version---enforced). Do not end a session with unshipped code and a stale changelog.
 
 ## Releasing (every shipped change bumps the version - enforced)
 

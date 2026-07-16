@@ -1,0 +1,37 @@
+# Keep the Docker build context lean. The image needs: package.json + lockfile,
+# src/, public/, content/, scripts/, next.config.js, tsconfig.json, tailwind/postcss
+# configs, middleware source. Everything below is not part of the web build.
+
+node_modules
+.next
+.git
+.githooks
+.github
+.vscode
+
+# Local env + logs - secrets never enter the image; config arrives via build args / runtime env.
+.env*
+!.env.example
+*.log
+
+# Python scanner worker (runs on GitHub Actions, not in this image) + its tests.
+workers
+tests
+.pytest_cache
+__pycache__
+.venv
+
+# Database schema/migrations are applied to Supabase directly, not baked into the image.
+sql
+supabase
+
+# Docs, contracts and repo media (README screenshots etc.).
+docs
+contracts
+*.md
+image*.png
+
+# Build/verification scratch.
+coverage
+.turbo
+.next-*
