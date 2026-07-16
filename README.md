@@ -198,6 +198,92 @@ Step-by-step instructions for every stage - from first clone to your own deploye
 - **Scheduler:** GitHub Actions (hourly)
 - **Alerts:** Telegram Bot API, Slack incoming webhooks, WhatsApp Cloud API, Web Push
 
+## 🏗️ Architecture - what runs where
+
+Lyra runs across three hosts, each doing what it is best at. **Vercel is not just the frontend** - it also runs the entire per-request API layer as serverless functions. The heavy, scheduled compute lives on GitHub Actions, and all shared state lives in Supabase.
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ You   ·   browser / installable PWA                              │
+└────────────────────────────────┬─────────────────────────────────┘
+                                 │ HTTPS
+                                 ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ VERCEL   ·   region iad1                 the per-request backend │
+│                                                                  │
+│   Next.js 15 frontend  ─►  37 serverless API routes              │
+│       src/app/api/**/route.ts : auth, Supabase reads,            │
+│       AI gateway, notifications, twin capture,                   │
+│       per-symbol signal refresh                                  │
+│                                                                  │
+│   calls out  ─►  AI: OpenAI / Anthropic / OpenRouter / Gemini    │
+│       notify: Telegram / Slack / WhatsApp / Web Push             │
+│                                                                  │
+│   Vercel cron  ─►  /api/ingestion/gov-awards  (daily 13:00)      │
+└────────────────────────────────┬─────────────────────────────────┘
+                                 │ reads state (anon)  ·  writes via API (service)
+                                 ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ SUPABASE   ·   Postgres + row-level security    the shared state │
+│                                                                  │
+│   Every table RLS-owned. The frontend reads with the anon        │
+│   key; the scanner writes with the service key. Demo: none.      │
+└────────────────────────────────┴─────────────────────────────────┘
+                                 │ writes scan results
+                                 │
+┌────────────────────────────────┴─────────────────────────────────┐
+│ GITHUB ACTIONS   ·   scheduled Python workers      the always-on │
+│                                                                  │
+│   hourly-stock-scanner.yml  ─►  Python scanner                   │
+│       workers/stock_scanner/ : indicators, scoring,              │
+│       overlays, alerts                                           │
+│                                                                  │
+│   nightly-maintenance.yml  ─►  horizon-2 workers,                │
+│       outcomes, digests, notification sweep                      │
+└────────────────────────────────┬─────────────────────────────────┘
+                                 │ pulls OHLCV
+                                 ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ Market data   ·   yfinance / Finnhub                             │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**In short:** Vercel serves the console and runs the 37 serverless API routes plus one light daily cron; GitHub Actions runs the always-on Python scanner and the nightly jobs; Supabase (Postgres + row-level security) is the shared state both tiers read and write. Demo mode needs none of it - it runs entirely on built-in sample data.
+
+---
+
+## 🧮 Deterministic engine vs AI - a hard boundary
+
+Lyra is deterministic-first by design. **Every number, score, and decision is computed in code** - the same inputs always produce the same output, with no model in the loop. The AI layer is **optional and additive**: it phrases what the engine already decided in plain English. It is never allowed to compute, override, or invent.
+
+| The deterministic engine (always on) | The AI layer (optional) |
+|---|---|
+| RSI, MACD, moving averages, volume ratios | Plain-English explanation of a signal |
+| The 0-100 score and every component | Daily briefs and chat answers |
+| Signal lifecycle and action state | Layout choice for GenUI views |
+| Portfolio, watchlist, and alert thresholds | Framing tuned to your risk posture |
+| Runs with zero keys (demo and live) | Needs a hosted key or your BYOK |
+| The source of every fact | Given those facts, never the market |
+
+**How they work together:** the engine runs first and owns the truth. When you ask for an explanation, the AI is handed *only the facts the engine already computed* - never raw market data, never a blank prompt - and its output passes a fabrication-and-advice guard (`guardProse`) before you see it. If the model is unconfigured, fails, or returns something the guard rejects, the console falls back to a deterministic view built from the same numbers. **The app is fully usable with no AI at all.**
+
+```mermaid
+flowchart TD
+    U(["You ask in plain English"]) --> R["AI routes on Vercel<br/>src/app/api/ai/*"]
+    ENG["Deterministic engine<br/>RSI · MACD · score · lifecycle"] -->|"computed facts, never guesses"| R
+    R --> GW{"Provider-agnostic<br/>AI gateway"}
+    KEY["Hosted OPENAI_API_KEY<br/>or your BYOK"] -. credentials .-> GW
+    GW -->|"prompt = engine facts only"| M["Model<br/>OpenAI / Anthropic / OpenRouter / Gemini / xAI"]
+    M --> GRD{"guardProse<br/>fabrication + advice guard"}
+    GRD -->|"passes"| OUT(["Grounded explanation in the console"])
+    GRD -->|"blocked, or model error"| FB["Deterministic fallback<br/>engine numbers, no AI"]
+    FB --> OUT
+```
+
+> **AI explains; the engine decides.** The model never invents a number and never tells you what to buy or sell - that is what keeps Lyra research, not advice.
+
+---
+
 ## 📁 Project structure
 
 ```
