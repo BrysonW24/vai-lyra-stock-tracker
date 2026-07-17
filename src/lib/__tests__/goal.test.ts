@@ -13,12 +13,13 @@ describe('nextMilestone', () => {
 });
 
 describe('computeGoalProgress', () => {
-  it('measures progress from the previous milestone to the next by default', () => {
-    // $6,200 equity -> climbing 5k -> 10k, i.e. 1200/5000 = 24%.
+  it('measures progress from zero to the next milestone so the bar matches "X of Y"', () => {
+    // $6,200 toward the $10k milestone -> 6200/10000 = 62%. fromAnchor still records the previous
+    // rung ($5k) for context, but the bar runs from zero so it agrees with "$6.2k of $10k" on screen.
     const g = computeGoalProgress({ equity: 6200, investedBasis: 5000, cashAvailable: 1200 });
     expect(g.target).toBe(10000);
     expect(g.fromAnchor).toBe(5000);
-    expect(g.progressPct).toBe(24);
+    expect(g.progressPct).toBe(62);
     expect(g.targetIsMilestone).toBe(true);
     expect(g.remaining).toBe(3800);
   });

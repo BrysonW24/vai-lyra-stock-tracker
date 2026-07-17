@@ -20,8 +20,22 @@ const config: Config = {
         insetGlass: 'inset 0 1px 0 rgba(255,255,255,0.72)',
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['SFMono-Regular', 'Consolas', 'Liberation Mono', 'monospace'],
+        // Apple-native UI face first (San Francisco on Safari/iOS/macOS) for a consistent, premium
+        // system look; the rest are graceful fallbacks on other platforms.
+        sans: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'SF Pro Text',
+          'ui-sans-serif',
+          'system-ui',
+          'Segoe UI',
+          'Roboto',
+          'Helvetica Neue',
+          'Arial',
+          'sans-serif',
+        ],
+        // Apple's SF Mono first so tabular/terminal text stays crisp and on-brand, not Consolas.
+        mono: ['ui-monospace', 'SF Mono', 'SFMono-Regular', 'Menlo', 'Consolas', 'Liberation Mono', 'monospace'],
       },
     },
   },

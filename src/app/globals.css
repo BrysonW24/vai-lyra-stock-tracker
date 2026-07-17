@@ -18,6 +18,11 @@ html {
      (text + spacing) is a couple pixels tighter across the whole app. Inputs are
      pinned to 16px in the coarse-pointer rule below so iOS never auto-zooms. */
   font-size: 15px;
+  /* Premium, Apple-consistent rendering: smooth the San Francisco UI face the same way
+     native apps do, so weights read clean instead of chunky. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Compact placeholders everywhere (match the small search field). Placeholder size does

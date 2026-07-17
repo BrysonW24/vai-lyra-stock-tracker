@@ -45,11 +45,13 @@ function Panel({ icon: Icon, title, subtitle, children }: { icon: typeof UserRou
   );
 }
 
+// One consistent sans face across every field so the form reads calm, not typewriter-bouncy. Genuinely
+// tabular data (tables, code, tickers) keeps font-mono elsewhere; prose inputs like name/email do not.
 const inputClass =
-  'w-full rounded border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 font-mono text-[13px] text-[#dbe5ee] outline-none transition focus:border-[#3a4754] focus:ring-1 focus:ring-[#f3a33a]/30';
+  'w-full rounded border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 text-[13px] text-[#dbe5ee] outline-none transition focus:border-[#3a4754] focus:ring-1 focus:ring-[#f3a33a]/30';
 const labelClass = 'mb-0.5 block text-[10px] font-medium uppercase tracking-wide text-[#8190a0]';
 const buttonPrimary =
-  'inline-flex items-center justify-center gap-1.5 rounded border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 font-mono text-[11px] text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-40';
+  'inline-flex items-center justify-center gap-1.5 rounded border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 text-[11px] font-medium text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-40';
 
 /**
  * Per-provider display + key sourcing. `hosted` uses the server-side OpenAI beta key when present;
@@ -339,7 +341,7 @@ export function AccountSettings() {
             </div>
 
             {lock.enabled ? (
-              <button type="button" onClick={disablePin} className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 font-mono text-xs text-[#ff6b6b] transition hover:bg-[#3a1518]">
+              <button type="button" onClick={disablePin} className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 text-xs font-medium text-[#ff6b6b] transition hover:bg-[#3a1518]">
                 Turn off PIN lock
               </button>
             ) : (
@@ -538,7 +540,7 @@ export function AccountSettings() {
               <button
                 type="button"
                 onClick={wipeEverything}
-                className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 font-mono text-xs text-[#ff6b6b] transition hover:bg-[#3a1518]"
+                className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 text-xs font-medium text-[#ff6b6b] transition hover:bg-[#3a1518]"
               >
                 <Trash2 size={13} /> Clear local data (this device)
               </button>
@@ -546,7 +548,7 @@ export function AccountSettings() {
                 <>
                   <a
                     href="/api/account/export"
-                    className="inline-flex items-center gap-1.5 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 font-mono text-xs text-[#7fb0ff] transition hover:bg-[#101a2e]"
+                    className="inline-flex items-center gap-1.5 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-medium text-[#7fb0ff] transition hover:bg-[#101a2e]"
                   >
                     <ClipboardPaste size={13} /> Export my data
                   </a>
@@ -554,7 +556,7 @@ export function AccountSettings() {
                     type="button"
                     onClick={deleteServerAccount}
                     disabled={serverDeleteBusy}
-                    className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 font-mono text-xs text-[#ff6b6b] transition hover:bg-[#3a1518] disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 text-xs font-medium text-[#ff6b6b] transition hover:bg-[#3a1518] disabled:opacity-40"
                   >
                     <Trash2 size={13} /> {serverDeleteBusy ? 'Deleting…' : 'Delete my account data'}
                   </button>

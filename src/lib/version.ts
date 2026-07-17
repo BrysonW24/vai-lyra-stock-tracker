@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.27.0',
+    date: '2026-07-17',
+    title: 'Make it yours: a customisable bottom bar, a colourful Explore, cleaner type - and an honest goal bar',
+    highlights: [
+      'Your bottom bar is now yours to arrange. Open Explore, tap Customise, and drag your daily surfaces into any order, remove the ones you never touch, and add any surface from the app - placed wherever you want. Your layout is saved on your device.',
+      'The Explore drawer now reads in Lyra colour, grouped by the job it does: amber for Your desk, cyan for Discover, purple for Research, green for Practice, pink for Learn - so the eye finds things by colour instead of scanning a grey wall.',
+      'Cleaner bar by default: Portfolio and Watchlist are spelled out in full, and Paper Bot now rides the bar (Trade Plan moves one tap into Explore). The bar also sits a little higher so it clears the phone home indicator.',
+      'Fixed a confusing goal reading: the progress bar now runs straight from zero to your target, so "X of Y", the percentage, and the amount to go all agree - no more 6% sitting next to "$26.6k of $50k".',
+      'A more premium, consistent typeface across the app (the native Apple system font) with crisper rendering - and the Settings form no longer bounces between monospace and sans: placeholders and fields now read in one clean face.',
+    ],
+  },
+  {
     version: '0.26.0',
     date: '2026-07-17',
     title: 'Error monitoring verified live in production - and the setup scaffolding is removed',

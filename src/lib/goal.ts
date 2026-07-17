@@ -37,7 +37,7 @@ export interface GoalProgress {
   /** The number climbed FROM - the previous milestone (or 0 for an explicit target). */
   fromAnchor: number;
   targetIsMilestone: boolean;
-  /** 0-100 progress from the anchor to the target. */
+  /** 0-100 progress from zero to the target (matches the "X of Y" headline and the "Z to go" remainder). */
   progressPct: number;
   /** Target minus equity (never negative). */
   remaining: number;
@@ -74,9 +74,9 @@ const fmt = (n: number) => {
 };
 
 /**
- * Compute the full goal read. When an explicit target is set, progress runs from 0 to it; otherwise
- * from the previous milestone to the next, so the bar reflects the current climb rather than always
- * looking near-empty.
+ * Compute the full goal read. Progress runs from zero to the target (an explicit target or the next
+ * milestone) so the bar agrees with the "X of Y" headline and the "Z to go" remainder shown beside it.
+ * `fromAnchor` still records the previous milestone for context, but no longer scales the bar.
  */
 export function computeGoalProgress(input: GoalInput): GoalProgress {
   const equity = Math.max(0, Number.isFinite(input.equity) ? input.equity : 0);
@@ -98,8 +98,8 @@ export function computeGoalProgress(input: GoalInput): GoalProgress {
     targetIsMilestone = true;
   }
 
-  const span = Math.max(1, target - fromAnchor);
-  const progressPct = clampPct(((equity - fromAnchor) / span) * 100);
+  // Progress runs from zero to the target so the bar matches "X of Y" and "Z to go" on screen.
+  const progressPct = clampPct((equity / Math.max(1, target)) * 100);
   const remaining = Math.max(0, round2(target - equity));
 
   // Return is measured on invested capital only (cash at rest earns nothing here).

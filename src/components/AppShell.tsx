@@ -28,6 +28,7 @@ import {
   Network,
   Newspaper,
   PieChart,
+  Pin,
   Radar,
   Rocket,
   Rss,
@@ -56,6 +57,8 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { AlertStatusBadge } from '@/components/AlertStatusBadge';
 import { AccountMenu } from '@/components/AccountMenu';
 import { captureInteraction } from '@/lib/twin/capture';
+import { NavCustomizer } from '@/components/NavCustomizer';
+import { getPrimaryHrefs, setPrimaryHrefs, clearPrimaryHrefs } from '@/lib/nav-prefs';
 
 // The full section map, grouped BY JOB (what you're trying to do), not by data type. A slim set of
 // daily-drivers (`primary`) stays permanently on the rail / bottom bar; everything else lives one
@@ -67,9 +70,9 @@ type NavBucketId = 'desk' | 'discover' | 'research' | 'practice' | 'learn';
 const navItems: NavItem[] = [
   // YOUR DESK - what you own and act on
   { href: '/', label: 'Command', short: 'Home', icon: Gauge, bucket: 'desk', primary: true },
-  { href: '/portfolio', label: 'Portfolio', short: 'Book', icon: BriefcaseBusiness, bucket: 'desk', primary: true },
-  { href: '/watchlist', label: 'Watchlist', short: 'Watch', icon: Star, bucket: 'desk', primary: true },
-  { href: '/plan', label: 'Trade Plan', short: 'Plan', icon: Target, bucket: 'desk', primary: true },
+  { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness, bucket: 'desk', primary: true },
+  { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star, bucket: 'desk', primary: true },
+  { href: '/plan', label: 'Trade Plan', short: 'Plan', icon: Target, bucket: 'desk' },
   { href: '/trades', label: 'Trade Log', short: 'Trades', icon: ReceiptText, bucket: 'desk' },
   { href: '/twin', label: 'Your Twin', short: 'Twin', icon: Fingerprint, bucket: 'desk' },
   // DISCOVER - find the next opportunity
@@ -94,7 +97,7 @@ const navItems: NavItem[] = [
   { href: '/flows', label: 'Capital Flows', short: 'Flows', icon: ArrowLeftRight, bucket: 'research' },
   { href: '/commodities', label: 'Commodities', short: 'Commod', icon: Gem, bucket: 'research' },
   // PRACTICE - test ideas with no real money
-  { href: '/paper-bot', label: 'Paper Bot', short: 'Paper Bot', icon: Bot, bucket: 'practice' },
+  { href: '/paper-bot', label: 'Paper Bot', short: 'Paper Bot', icon: Bot, bucket: 'practice', primary: true },
   { href: '/trading', label: 'Live Bot', short: 'Live Bot', icon: ShieldCheck, bucket: 'practice' },
   { href: '/simulation', label: 'Simulation Lab', short: 'Simulate', icon: Calculator, bucket: 'practice' },
   { href: '/strategy-lab', label: 'Strategy Lab', short: 'Strategy', icon: FlaskConical, bucket: 'practice' },
@@ -107,15 +110,37 @@ const navItems: NavItem[] = [
   { href: '/whats-new', label: "What's New", short: 'New', icon: Sparkles, bucket: 'learn' },
 ];
 
-const NAV_BUCKETS: { id: NavBucketId; label: string; blurb: string }[] = [
-  { id: 'desk', label: 'Your desk', blurb: 'What you own and act on' },
-  { id: 'discover', label: 'Discover', blurb: 'Find the next opportunity' },
-  { id: 'research', label: 'Research', blurb: 'Dig into the evidence' },
-  { id: 'practice', label: 'Practice', blurb: 'Test ideas with no real money' },
-  { id: 'learn', label: 'Learn & set up', blurb: 'Get better, tune the rules' },
+// Each job gets a Lyra accent - the drawer reads in colour, not a grey wall, and the colour codes the
+// job so the eye learns "amber = my desk, cyan = discover, purple = research, green = practice".
+const NAV_BUCKETS: { id: NavBucketId; label: string; blurb: string; color: string }[] = [
+  { id: 'desk', label: 'Your desk', blurb: 'What you own and act on', color: '#f3a33a' },
+  { id: 'discover', label: 'Discover', blurb: 'Find the next opportunity', color: '#5bc8ff' },
+  { id: 'research', label: 'Research', blurb: 'Dig into the evidence', color: '#a78bfa' },
+  { id: 'practice', label: 'Practice', blurb: 'Test ideas with no real money', color: '#43d18b' },
+  { id: 'learn', label: 'Learn & set up', blurb: 'Get better, tune the rules', color: '#f0758a' },
 ];
 
-const PRIMARY_ITEMS = navItems.filter((item) => item.primary);
+const NAV_BY_HREF = new Map(navItems.map((item) => [item.href, item]));
+
+// The bottom bar / rail defaults, and how far the user may customise it. Home stays optional now -
+// the user owns the bar - but we keep at least one primary so the bar is never empty, and cap the
+// count so it stays scannable next to the permanent Explore control.
+const DEFAULT_PRIMARY_HREFS = navItems.filter((item) => item.primary).map((item) => item.href);
+const MIN_PRIMARIES = 1;
+const MAX_PRIMARIES = 5;
+
+/** Validate a stored/edited primary list against the live section map, dedupe, and clamp to the cap. */
+function sanitizePrimaries(hrefs: string[]): string[] {
+  const seen = new Set<string>();
+  const valid: string[] = [];
+  for (const href of hrefs) {
+    if (NAV_BY_HREF.has(href) && !seen.has(href)) {
+      seen.add(href);
+      valid.push(href);
+    }
+  }
+  return valid.slice(0, MAX_PRIMARIES);
+}
 
 // Lyra colour ramp - nav icons ascend through the brand palette and descend back
 // (ping-pong), so the rail reads as one continuous Lyra gradient wave.
@@ -154,14 +179,55 @@ export function AppShell({ data, children }: AppShellProps) {
   // Escape so it never traps the user. exploreActive lights the Explore control when the current route
   // is one of the drawer's surfaces (not a primary), so you always know you are "inside" Explore.
   const [exploreOpen, setExploreOpen] = useState(false);
-  const exploreActive = !PRIMARY_ITEMS.some((item) => isActive(item.href));
-  useEffect(() => {
+  const [customizing, setCustomizing] = useState(false);
+  const closeExplore = () => {
     setExploreOpen(false);
+    setCustomizing(false);
+  };
+
+  // The user's own bottom-bar layout. Null until loaded from storage, so SSR and the first client paint
+  // both render the built-in defaults (no hydration mismatch); their saved layout swaps in after mount.
+  const [customPrimaries, setCustomPrimaries] = useState<string[] | null>(null);
+  useEffect(() => {
+    const saved = getPrimaryHrefs();
+    if (saved) {
+      const clean = sanitizePrimaries(saved);
+      if (clean.length >= MIN_PRIMARIES) setCustomPrimaries(clean);
+    }
+  }, []);
+
+  const primaryHrefs = customPrimaries ?? DEFAULT_PRIMARY_HREFS;
+  const primaryItems = primaryHrefs.map((href) => NAV_BY_HREF.get(href)).filter((i): i is NavItem => Boolean(i));
+
+  // Persist an edited bar. Landing exactly on the defaults clears the override, so a future change to the
+  // defaults still reaches the user; any other layout is saved as their explicit choice.
+  const applyPrimaries = (hrefs: string[]) => {
+    const clean = sanitizePrimaries(hrefs);
+    if (clean.length < MIN_PRIMARIES) return;
+    const isDefault =
+      clean.length === DEFAULT_PRIMARY_HREFS.length && clean.every((h, i) => h === DEFAULT_PRIMARY_HREFS[i]);
+    if (isDefault) {
+      clearPrimaryHrefs();
+      setCustomPrimaries(null);
+    } else {
+      setPrimaryHrefs(clean);
+      setCustomPrimaries(clean);
+    }
+  };
+  const resetPrimaries = () => {
+    clearPrimaryHrefs();
+    setCustomPrimaries(null);
+  };
+
+  const exploreActive = !primaryItems.some((item) => isActive(item.href));
+  useEffect(() => {
+    closeExplore();
   }, [pathname]);
   useEffect(() => {
     if (!exploreOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setExploreOpen(false);
+      // Escape steps back one level: leave customise mode first, then close the drawer.
+      if (e.key === 'Escape') setCustomizing((c) => (c ? false : (setExploreOpen(false), false)));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -208,7 +274,7 @@ export function AppShell({ data, children }: AppShellProps) {
             surfaces used to live here as an icon wall that outran the viewport - they now sit grouped
             in the Explore drawer, so the rail is scannable and the cockpit owns the screen. */}
         <nav className="mt-2 flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {PRIMARY_ITEMS.map((item, i) => (
+          {primaryItems.map((item, i) => (
             <Link
               key={item.href}
               href={item.href}
@@ -367,21 +433,21 @@ export function AppShell({ data, children }: AppShellProps) {
 
       <nav
         className="glass-chrome fixed bottom-0 left-0 right-0 z-30 border-t border-[#1b2530] xl:hidden"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)' }}
         aria-label="Primary"
       >
-        <div ref={navScrollRef} className="flex items-stretch gap-1 px-2 py-2">
-          {PRIMARY_ITEMS.map((item, i) => (
+        <div ref={navScrollRef} className="flex items-stretch gap-0.5 px-1.5 pt-2 pb-1">
+          {primaryItems.map((item, i) => (
             <Link
               href={item.href}
               key={item.href}
               aria-current={isActive(item.href) ? 'page' : undefined}
-              className={`flex flex-1 flex-col items-center gap-1.5 rounded-md px-1 py-2 text-[11px] font-medium transition ${
+              className={`flex flex-1 flex-col items-center gap-1 rounded-md px-0.5 py-1.5 text-[10px] font-medium transition ${
                 isActive(item.href) ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40' : 'text-[#8190a0] active:bg-[#151c25]'
               }`}
             >
               <item.icon size={20} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-80'} />
-              <span className="whitespace-nowrap">{item.short}</span>
+              <span className="whitespace-nowrap leading-none tracking-tight">{item.short}</span>
             </Link>
           ))}
           <button
@@ -389,12 +455,12 @@ export function AppShell({ data, children }: AppShellProps) {
             onClick={() => setExploreOpen(true)}
             aria-haspopup="dialog"
             aria-expanded={exploreOpen}
-            className={`flex flex-1 flex-col items-center gap-1.5 rounded-md px-1 py-2 text-[11px] font-medium transition ${
+            className={`flex flex-1 flex-col items-center gap-1 rounded-md px-0.5 py-1.5 text-[10px] font-medium transition ${
               exploreActive ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40' : 'text-[#8190a0] active:bg-[#151c25]'
             }`}
           >
             <LayoutGrid size={20} className={exploreActive ? undefined : 'opacity-80'} />
-            <span className="whitespace-nowrap">Explore</span>
+            <span className="whitespace-nowrap leading-none tracking-tight">Explore</span>
           </button>
         </div>
       </nav>
@@ -403,51 +469,94 @@ export function AppShell({ data, children }: AppShellProps) {
           from the rail/bottom-bar Explore control; closes on backdrop, X, Escape, or navigation. */}
       {exploreOpen && (
         <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Explore all surfaces">
-          <button type="button" aria-label="Close Explore" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setExploreOpen(false)} />
+          <button type="button" aria-label="Close Explore" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeExplore} />
           <div className="glass-chrome relative ml-auto flex h-full w-full max-w-md flex-col border-l border-[#1b2530] shadow-2xl">
             <div className="flex items-center gap-2 border-b border-[#1b2530] px-4 py-3">
-              <LayoutGrid size={16} className="text-[#f3a33a]" />
-              <h2 className="text-sm font-semibold text-[#eef3f8]">Explore</h2>
-              <span className="text-[11px] text-[#8190a0]">everything behind your desk</span>
-              <button
-                type="button"
-                autoFocus
-                onClick={() => setExploreOpen(false)}
-                aria-label="Close"
-                className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8]"
-              >
-                <X size={16} />
-              </button>
+              {customizing ? <Pin size={16} className="text-[#f3a33a]" /> : <LayoutGrid size={16} className="text-[#f3a33a]" />}
+              <h2 className="text-sm font-semibold text-[#eef3f8]">{customizing ? 'Customise your bar' : 'Explore'}</h2>
+              <span className="hidden text-[11px] text-[#8190a0] sm:inline">
+                {customizing ? 'Drag to reorder, add or remove' : 'everything behind your desk'}
+              </span>
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCustomizing((c) => !c)}
+                  className={`flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition ${
+                    customizing
+                      ? 'border-[#f3a33a]/50 bg-[#23180b] text-[#f3a33a]'
+                      : 'border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:text-[#eef3f8]'
+                  }`}
+                >
+                  <Pin size={12} />
+                  {customizing ? 'Done' : 'Customise'}
+                </button>
+                <button
+                  type="button"
+                  autoFocus
+                  onClick={closeExplore}
+                  aria-label="Close"
+                  className="grid h-8 w-8 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
-              {NAV_BUCKETS.map((bucket) => (
-                <div key={bucket.id}>
-                  <div className="mb-1.5 flex items-baseline gap-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#dbe5ee]">{bucket.label}</p>
-                    <p className="text-[10px] text-[#5e6b78]">{bucket.blurb}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {navItems
-                      .filter((item) => item.bucket === bucket.id)
-                      .map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => setExploreOpen(false)}
-                          aria-current={isActive(item.href) ? 'page' : undefined}
-                          className={`flex items-center gap-2 rounded-md border px-2.5 py-2 text-[12px] transition ${
-                            isActive(item.href)
-                              ? 'border-[#f3a33a]/40 bg-[#23180b] text-[#f3a33a]'
-                              : 'border-[#1b2530] bg-[#0d1117] text-[#c3ccd6] hover:border-[#2a3646] hover:bg-[#101720]'
-                          }`}
-                        >
-                          <item.icon size={15} className="shrink-0 opacity-80" />
-                          <span className="truncate">{item.label}</span>
-                        </Link>
-                      ))}
-                  </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+              {customizing ? (
+                <NavCustomizer
+                  items={navItems}
+                  buckets={NAV_BUCKETS}
+                  value={primaryHrefs}
+                  min={MIN_PRIMARIES}
+                  max={MAX_PRIMARIES}
+                  onChange={applyPrimaries}
+                  onReset={resetPrimaries}
+                  isDefault={customPrimaries === null}
+                />
+              ) : (
+                <div className="space-y-4">
+                  {NAV_BUCKETS.map((bucket) => (
+                    <div key={bucket.id}>
+                      <div className="mb-1.5 flex items-center gap-2">
+                        <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: bucket.color }} />
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: bucket.color }}>
+                          {bucket.label}
+                        </p>
+                        <p className="truncate text-[10px] text-[#5e6b78]">{bucket.blurb}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {navItems
+                          .filter((item) => item.bucket === bucket.id)
+                          .map((item) => {
+                            const active = isActive(item.href);
+                            const onBar = primaryHrefs.includes(item.href);
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={closeExplore}
+                                aria-current={active ? 'page' : undefined}
+                                className={`flex items-center gap-2 rounded-md border px-2.5 py-2 text-[12px] transition ${
+                                  active
+                                    ? 'border-[#f3a33a]/40 bg-[#23180b] text-[#f3a33a]'
+                                    : 'border-[#1b2530] bg-[#0d1117] text-[#c3ccd6] hover:border-[#2a3646] hover:bg-[#101720]'
+                                }`}
+                              >
+                                <item.icon
+                                  size={15}
+                                  className="shrink-0"
+                                  style={active ? undefined : { color: bucket.color, opacity: 0.9 }}
+                                />
+                                <span className="truncate">{item.label}</span>
+                                {onBar && !active && <Pin size={11} className="ml-auto shrink-0 text-[#f3a33a]" />}
+                              </Link>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

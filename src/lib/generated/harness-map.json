@@ -453,6 +453,7 @@
         "src/lib/focus-trap.ts",
         "src/lib/format.ts",
         "src/lib/gradient.ts",
+        "src/lib/nav-prefs.ts",
         "src/lib/research-queue.ts",
         "src/lib/surfaces.ts",
         "src/lib/ticker-logos.ts",
