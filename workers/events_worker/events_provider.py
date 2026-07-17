@@ -58,6 +58,11 @@ class IpoCompany:
 class EventsProvider(Protocol):
     """Protocol for calendar event providers."""
 
+    # True only for a real data source. The worker persists to the LIVE company_events / ipos
+    # tables (which the user-facing calendar reads) ONLY when this is True - fabricated demo
+    # data must never masquerade as real events in the product.
+    is_live: bool
+
     def fetch_events(self, days: int = 30) -> list[CalendarEvent]:
         """Fetch upcoming calendar events. Returns empty list on failure."""
         ...
@@ -69,6 +74,8 @@ class EventsProvider(Protocol):
 
 class FinnhubEventsProvider:
     """Live Finnhub events provider. Requires FINNHUB_API_KEY."""
+
+    is_live = True
 
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
@@ -160,6 +167,8 @@ class FinnhubEventsProvider:
 
 class DemoEventsProvider:
     """Demo events provider. No API key required. Deterministic test data."""
+
+    is_live = False
 
     def __init__(self) -> None:
         self.demo_events = self._build_demo_events()

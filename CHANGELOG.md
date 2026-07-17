@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.56.0] - 2026-07-18
+
+Fabricated demo data can no longer masquerade as real.
+
+### Changed
+
+- Closed a data-honesty gap in the nightly workers: when a data source was unavailable (no market-events API key, or every scout feed down), the worker fell back to built-in SAMPLE data - and then wrote that sample data into the live tables the product reads. So demo earnings, demo IPOs and demo story cards could appear in the calendar and on the community board as if they were real. They no longer do: a source is either live or demo, and demo output runs the loop for shape and logging but is never persisted.
+- Pinned with tests that assert nothing is written on a demo/fallback night, and that a real source with a rejected write still fails loudly (the two are now correctly distinguished, where before they were conflated).
+
 ## [0.55.0] - 2026-07-17
 
 The middleware can no longer take down the whole site.
@@ -867,7 +876,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.55.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.56.0...HEAD
+[0.56.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.55.0...v0.56.0
 [0.55.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.54.0...v0.55.0
 [0.54.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.53.0...v0.54.0
 [0.53.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.52.0...v0.53.0

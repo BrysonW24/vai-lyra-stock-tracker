@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.56.0',
+    date: '2026-07-18',
+    title: 'Fabricated demo data can no longer masquerade as real',
+    highlights: [
+      'Closed a data-honesty gap in the nightly workers: when a data source was unavailable (no market-events API key, or every scout feed down), the worker fell back to built-in SAMPLE data - and then wrote that sample data into the live tables the product reads. So demo earnings, demo IPOs and demo story cards could appear in the calendar and on the community board as if they were real. They no longer do: a source is either live or demo, and demo output runs the loop for shape and logging but is never persisted.',
+      'Pinned with tests that assert nothing is written on a demo/fallback night, and that a real source with a rejected write still fails loudly (the two are now correctly distinguished, where before they were conflated).',
+    ],
+  },
+  {
     version: '0.55.0',
     date: '2026-07-17',
     title: 'The middleware can no longer take down the whole site',

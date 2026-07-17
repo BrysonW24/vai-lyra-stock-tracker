@@ -75,8 +75,24 @@ def _no_live_keys(monkeypatch):
     monkeypatch.delenv("FINNHUB_API_KEY", raising=False)
 
 
+class _LiveEventsProvider:
+    """A LIVE-flagged provider returning demo-shaped events, so persistence is attempted
+    (the real demo provider is is_live=False and is intentionally NOT persisted)."""
+
+    is_live = True
+
+    def fetch_events(self, days=30):
+        return [SimpleNamespace(id="e1", date="2026-07-20", type="earnings", ticker="NVDA", title="NVDA earnings", importance="high")]
+
+    def fetch_ipos(self):
+        return []
+
+
 class TestEventsWorkerHonesty:
-    def test_rejected_persist_fails_the_run(self):
+    def test_rejected_persist_fails_the_run(self, monkeypatch):
+        import workers.events_worker.main as mod
+
+        monkeypatch.setattr(mod, "create_events_provider", lambda: _LiveEventsProvider())
         summary = run_events_worker(None, FakeRepo(RejectingClient()))
         assert summary["status"] == "failed"
 
@@ -135,13 +151,74 @@ class TestFundamentalsWorkerHonesty:
             mod.main()
 
 
+class RecordingClient:
+    """Records every table the code tried to write, so a test can assert NOTHING was persisted."""
+
+    def __init__(self):
+        self.upserts = []
+
+    def table(self, name):
+        self._t = name
+        return self
+
+    def __getattr__(self, _name):
+        def _chain(*a, **k):
+            return self
+        return _chain
+
+    def upsert(self, *a, **k):
+        self.upserts.append(self._t)
+        return self
+
+    def execute(self):
+        return SimpleNamespace(data=[])
+
+
+class TestDemoDataNeverPersists:
+    """Fabricated demo data must never reach the live tables the product reads."""
+
+    def test_events_demo_provider_is_not_persisted(self, monkeypatch):
+        import workers.events_worker.main as mod
+
+        class _DemoProvider:
+            is_live = False
+            def fetch_events(self, days=30):
+                return [SimpleNamespace(id="e1", date="2026-07-20", type="earnings", ticker="NVDA", title="x", importance="high")]
+            def fetch_ipos(self):
+                return [SimpleNamespace(symbol="Z", company_name="Z", ipo_date="2026-08-01", exchange="NYSE", category="tech", status="expected", offer_price=None, shares_offered_m=None, proceeds_usd_m=None, valuation_usd_m=None, revenue_ttm_usd_m=None, revenue_growth_pct=None, gross_margin_pct=None, net_income_usd_m=None, profitable=None, employees=None, products=[], notable_projects=[], key_people=[], description="", domain="z.com")]
+
+        monkeypatch.setattr(mod, "create_events_provider", lambda: _DemoProvider())
+        client = RecordingClient()
+        summary = run_events_worker(None, FakeRepo(client))
+        assert summary["status"] == "success"  # demo run is a clean no-persist
+        assert client.upserts == []  # NOTHING written to company_events / ipos / event_risks
+
+    def test_scout_demo_fallback_is_not_persisted(self, monkeypatch):
+        import workers.scout.main as mod
+
+        # No live source -> demo fallback. It must run for shape but persist nothing.
+        monkeypatch.setattr(mod, "active_sources", lambda registry: [])
+        monkeypatch.setattr(mod, "gated_sources", lambda registry: [])
+        client = RecordingClient()
+        summary = run_scout_worker(None, FakeRepo(client))
+        assert summary["status"] == "ok"
+        assert client.upserts == []  # no scout_items, no community_ideas
+
+
 class TestScoutWorkerHonesty:
     def test_rejected_persist_fails_the_run(self, monkeypatch):
         import workers.scout.main as mod
+        from workers.scout.providers import ScoutItem
 
-        # No active sources -> deterministic demo items, zero network.
-        monkeypatch.setattr(mod, "active_sources", lambda registry: [])
+        # A GENUINE live source (not demo fallback) so persistence is actually attempted and the
+        # rejecting client makes it fail. On a demo-fallback night the worker correctly persists
+        # nothing (fabricated data must not reach live tables), so it would NOT fail here.
+        monkeypatch.setattr(mod, "active_sources", lambda registry: [SimpleNamespace(id="live-src")])
         monkeypatch.setattr(mod, "gated_sources", lambda registry: [])
+        monkeypatch.setattr(
+            mod, "fetch_source",
+            lambda source: [ScoutItem(id="x1", source_id="live-src", source_kind="rss", url="http://e/x", title="Live tonight", summary="s", published_at=None)],
+        )
         summary = run_scout_worker(None, FakeRepo(RejectingClient()))
         assert summary["status"] == "failed"
         assert "persisted 0" in (summary.get("error") or "")

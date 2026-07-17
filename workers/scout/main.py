@@ -65,9 +65,16 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
                 fetched = fetch_source(source)
                 logger.info("source %s -> %d items", source.id, len(fetched))
                 items.extend(fetched)
+        # When no live source produced anything, we run the demo items through the pipeline
+        # so the loop always has SHAPE (logs, counts) - but demo output is FABRICATED, so it
+        # must never touch the live tables. used_demo_fallback gates every write below: the
+        # scout would otherwise persist sample stories into live scout_items and file sample
+        # cards onto the real community board whenever every feed was down.
+        used_demo_fallback = False
         if not items:
-            logger.info("no live sources produced items - running demo loop for shape")
+            logger.info("no live sources produced items - running demo loop for shape (NOT persisted)")
             items = demo_items()
+            used_demo_fallback = True
 
         # Dedupe by deterministic id (same story from two feeds keeps first-seen).
         seen: dict[str, ScoutItem] = {}
@@ -87,12 +94,15 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
         # every keyless run). Demo mode doubles every code path it forks; so don't fork.
         window: list[ScoutItem] = []
         stoplist: set[str] = set()
+        persist_live = bool(repo.client) and not used_demo_fallback
         if repo.client:
             # Learning first (v3): stamp yesterday's verdicts, THEN load the stoplist so
-            # tonight's clustering already respects a card declined this morning.
+            # tonight's clustering already respects a card declined this morning. (Safe on a
+            # demo-fallback night too - it reads/stamps real prior rows, writes no demo data.)
             summary["outcomes"] = stamp_outcomes(repo)
             stoplist = load_stoplist(repo)
             summary["stoplist_size"] = len(stoplist)
+        if persist_live:
             summary["items_persisted"] = _persist_items(repo, items, attachments)
             summary["items_pruned"] = _prune_old_items(repo)
             # Cluster over the trailing WINDOW, not just tonight's pull: an emerging
@@ -123,24 +133,27 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
             for theme in attachments[item.id].matched_themes:
                 theme_counts[theme] = theme_counts.get(theme, 0) + 1
 
-        if repo.client:
+        if persist_live:
             summary["ideas_filed"] = _file_ideas(repo, candidates)
             _record_run(repo, summary, theme_counts, beats)
         else:
-            logger.info("demo mode: %d items, %d idea candidates (not persisted)", len(items), len(candidates))
+            reason = "demo fallback (no live sources)" if used_demo_fallback else "demo mode (no Supabase)"
+            logger.info("%s: %d items, %d idea candidates (NOT persisted)", reason, len(items), len(candidates))
             for c in candidates:
                 logger.info("candidate: %s (confidence %d, %d evidence)", c.title, c.confidence, len(c.evidence))
 
         # A run that saw work and stored NONE of it has failed, however cleanly each
         # helper "handled" its own error. Without these guards the 42P10 partial-index
         # bug on community_ideas.dedupe_key (043, fixed in 046) rejected every filed
-        # idea while this function reported ok and the nightly stayed green.
-        if repo.client and summary["items_fetched"] > 0 and summary["items_persisted"] == 0:
+        # idea while this function reported ok and the nightly stayed green. Only applies
+        # when we actually attempted a live write (persist_live) - a demo-fallback night
+        # legitimately persists nothing.
+        if persist_live and summary["items_fetched"] > 0 and summary["items_persisted"] == 0:
             raise RuntimeError(
                 f"fetched {summary['items_fetched']} items but persisted 0 - "
                 "every scout_items write was rejected (see the errors above)"
             )
-        if repo.client and summary["idea_candidates"] > 0 and summary["ideas_filed"] == 0:
+        if persist_live and summary["idea_candidates"] > 0 and summary["ideas_filed"] == 0:
             raise RuntimeError(
                 f"clustered {summary['idea_candidates']} idea candidates but filed 0 - "
                 "every community_ideas upsert was rejected (see the errors above)"

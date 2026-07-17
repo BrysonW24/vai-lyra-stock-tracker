@@ -411,9 +411,15 @@ class TestOrchestratorLivePath:
     saturation flag, retention pruning, and the single shared cluster path."""
 
     def _run(self, monkeypatch, window):
+        from types import SimpleNamespace
         from workers.scout import main as scout_main
 
-        monkeypatch.setattr(scout_main, "active_sources", lambda registry=None: [])
+        # A GENUINE live source (not the demo fallback): with a real active source, the
+        # orchestrator takes the live path and its persist/file sinks run. If we left this as
+        # `active_sources -> []` the worker would fall back to demo_items and (correctly) NOT
+        # persist - which is exactly the demo-into-live guard, tested separately below.
+        monkeypatch.setattr(scout_main, "active_sources", lambda registry=None: [SimpleNamespace(id="live-src")])
+        monkeypatch.setattr(scout_main, "fetch_source", lambda source: [item("Live source item tonight", source_id="live-src")])
         monkeypatch.setattr(scout_main, "_persist_items", lambda repo, items, attachments: len(items))
         monkeypatch.setattr(scout_main, "_prune_old_items", lambda repo: 0)
         monkeypatch.setattr(scout_main, "_load_recent_unmapped", lambda repo, days=14: window)
@@ -460,7 +466,11 @@ class TestOrchestratorLivePath:
             pruned_with.append(repo)
             return 42
 
-        monkeypatch.setattr(scout_main, "active_sources", lambda registry=None: [])
+        from types import SimpleNamespace
+
+        # Genuine live path (not demo fallback) - prune only runs when we actually persist.
+        monkeypatch.setattr(scout_main, "active_sources", lambda registry=None: [SimpleNamespace(id="live-src")])
+        monkeypatch.setattr(scout_main, "fetch_source", lambda source: [item("Live item", source_id="live-src")])
         monkeypatch.setattr(scout_main, "_persist_items", lambda repo, items, attachments: len(items))
         monkeypatch.setattr(scout_main, "_prune_old_items", fake_prune)
         monkeypatch.setattr(scout_main, "_load_recent_unmapped", lambda repo, days=14: [])

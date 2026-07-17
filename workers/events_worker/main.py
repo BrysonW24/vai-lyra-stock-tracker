@@ -69,19 +69,22 @@ def run_events_worker(settings: Settings, repo: SupabaseRepository) -> dict[str,
             logger.error(f"Failed to fetch IPO calendar: {e}")
             ipos = []
 
-        # Persist events and IPOs to Supabase. NOT wrapped in try/except: this exact
-        # wrapper once caught the raise that the v0.42.0 honesty fix in
-        # _persist_events_to_supabase was built to propagate, set status="success"
-        # anyway, and the tables sat empty under a green step. A persist failure must
-        # reach the outer handler, mark the run failed, and exit non-zero.
-        if repo.enabled:
+        # Persist to Supabase ONLY when the source is live. The demo provider (used when
+        # FINNHUB_API_KEY is unset) returns FABRICATED sample events/IPOs; persisting those to
+        # the live company_events / ipos tables would show invented earnings + listings on the
+        # user-facing calendar as if real. The demo run still fetches + logs for shape.
+        #
+        # NOT wrapped in try/except: this exact wrapper once caught the raise that the v0.42.0
+        # honesty fix was built to propagate, set status="success" anyway, and the tables sat
+        # empty under a green step. A persist failure must reach the outer handler and exit non-zero.
+        if repo.enabled and provider.is_live:
             _persist_events_to_supabase(repo, events)
             _persist_ipos_to_supabase(repo, ipos)
-
-        # Compute event risk for active tickers (load latest signals). Same rule: a
-        # failure here previously logged and moved on, reporting computed=0 as success.
-        risk_count = _compute_and_persist_event_risks(repo, tickers, events)
-        summary["event_risks_computed"] = risk_count
+            # Event risk is derived from the events; only meaningful (and only persisted) for real ones.
+            risk_count = _compute_and_persist_event_risks(repo, tickers, events)
+            summary["event_risks_computed"] = risk_count
+        elif repo.enabled:
+            logger.info("demo events provider (no FINNHUB_API_KEY) - fetched for shape, NOT persisted to live tables")
 
         summary["status"] = "success"
         logger.info(f"Events worker completed: {summary}")
