@@ -5,8 +5,9 @@
 the live database and CI history, not estimated from vibes. Every number below is either
 **measured** (queried from prod / workflow logs) or **est** (derived, marked as such).
 
-**Measured 2026-07-17 UTC.** Numbers drift - the [Refresh](#7-refresh-these-numbers) section at
-the bottom regenerates every measurement in this file.
+**Measured 2026-07-17 UTC.** Numbers drift - the [Refresh](#8-refresh-these-numbers) section at
+the bottom regenerates every measurement in this file, and `npm run check:data-economics` runs
+the budget/horizon gate version of it every night.
 
 ---
 
@@ -17,7 +18,8 @@ the bottom regenerates every measurement in this file.
 | Cash cost today | **$0/mo** - every dependency is on a free tier; the repo is public so GitHub Actions is unconditionally free |
 | Database used | **87 MB of 500 MB** Supabase free tier (17%), 89 public tables |
 | Database growth | **~1.1 MB/day ≈ 33 MB/mo** measured - free tier lasts **~11-13 more months** with zero intervention |
-| Biggest grower | `stock_candles` - ~45% of all growth; a 180-day candle retention policy is the single biggest runway lever |
+| Biggest grower | `stock_candles` - ~45% of all growth; the audited 380-day retention horizon (section 6) caps it at ~66 MB steady-state |
+| Retention doctrine | Every table's **benefit horizon** audited 2026-07-18 (every reader traced to its lookback, adversarially verified) - section 6. Nightly gate: `npm run check:data-economics` |
 | Biggest compute consumer | Hourly scanner: ~4.6 executed scans/day (measured), 5-8 min each, all free (public repo) |
 | AI spend ceiling | Hosted budget hard-capped at 250k tokens/day = **~US$1.13/day worst case** at gpt-5.4-mini prices; real spend ≈ $0 (BYOK-first) |
 | Dormant paid switches | Firecrawl ~US$16/mo, X API ~US$200/mo, WhatsApp templates, Supabase Pro US$25/mo - all OFF today |
@@ -103,7 +105,7 @@ Notes:
 
 | Resource | Today | Burn rate | Runs out | Tripwire -> action |
 |---|---|---|---|---|
-| Supabase 500 MB DB | 87 MB | ~33 MB/mo | **~mid-2027** | At **300 MB**: add 180-day retention on `stock_candles` (caps it at ~88 MB and cuts total burn ~45%); consider archiving closed alerts/signals older than 1 year. At 450 MB: Supabase Pro US$25/mo |
+| Supabase 500 MB DB | 87 MB | ~33 MB/mo unmanaged; ~5 MB/mo once section-6 horizons are enforced | **~mid-2027 unmanaged; ~2029+ with retention; forever with the rollup lever** | At **300 MB**: ship the pruning jobs for the ratified section-6 horizons (candles 380d - NOT 180d, that corrupts the yearly review; alerts 31d; signals 120d; indicators 30d). At 450 MB: Supabase Pro US$25/mo |
 | Supabase 5 GB egress/mo | well under 1 GB (est - not SQL-measurable; read the Supabase dashboard Reports -> Egress) | scales with page views, not crons (workers mostly write) | not soon | At 3 GB/mo: cache candle/chart reads (Upstash free tier is pre-wired as an optional dependency) |
 | Supabase idle pause (7 days) | impossible - nightly + hourly crons write continuously | - | never while crons live | GHA keepalive steps already reset the 60-day workflow auto-disable clock |
 | Vercel Hobby | tiny fraction of 100 GB / 1M invocations | scales with audience | volume: not soon | The binding constraint is **licensing**: first paying user -> Vercel Pro (US$20/mo) or Coolify (~US$13/mo) |
@@ -129,7 +131,56 @@ Vercel Pro / droplet the day Lyra charges users.
 
 ---
 
-## 6. Method - where each number came from
+## 6. Retention economics - audited benefit horizons (the sunk-row ledger)
+
+Diminishing returns, applied to our own storage: past some age, a row's benefit is fully
+extracted but its storage cost continues - a **sunk row**. The horizon where that happens is not
+a matter of taste: it is the lookback window of the table's deepest reader. On 2026-07-18 every
+reader of every growing table was traced to its exact lookback (12-agent sweep, each finding
+adversarially verified by an independent agent hunting for longer readers). Results:
+
+| Table | Binding reader (the one that sets the horizon) | Audited horizon | Prunable today | Steady-state plateau |
+|---|---|---|---|---|
+| `stock_candles` | **Yearly portfolio review baseline** (`first_close_at_or_after`, `review_job.py` - Jan 1 close read up to 5 grace days into the next year ~371d). Indicators/charts NEVER read this table (scanner fetches yfinance live; frontend synthesizes candles) | **380 days** | 0 rows (oldest bar is ~295d; first prunable ~Oct 2026) | **~66 MB** (~181k bars at 467 bars/day) |
+| `stock_alerts` | 30-day price-move threshold dedupe (`recently_alerted` cooldown 24*30h) - prune younger and sent alerts re-fire | **31 days** | ~400 rows (~0.9 MB) | ~7 MB |
+| `stock_signals` | `outcome_job` LOOKBACK_DAYS=90. Caveat: any prune must keep each symbol's newest row (lifecycle continuity) | **120 days** (90 + margin) | 0 rows | ~20 MB |
+| `stock_indicators` | **Nothing. Zero readers anywhere - write-only archive** | 30 days (debug grace) | ~400 rows (~0.2 MB) | ~1 MB |
+| `stock_signal_scores` | Nightly `component_efficacy` rebuild reads FULL history by design (caps exist only to be raised) | **keep** | - | grows ~27 MB/yr |
+| `signal_outcomes` | Public track record = ALL-TIME aggregate from raw rows; no persisted stand-in exists | **keep** | - | grows ~30 MB/yr |
+| `notification_events` / `deliveries` / `engagements` | Verifier REFUTED a finite horizon: findings/graph project events age-unbounded; portfolio/watchlist dedupe keys are holding-lifetime; held deliveries must live until released; engagements are the behavioral ledger | **keep** (tiny - 0.4 MB) | - | ~2-4 MB/yr |
+| `scout_items` | `/draft-vertical` chain reads the full retained window | **90 days** (already worker-enforced) | 0 (worker prunes nightly) | ~14 MB |
+| `market_context_snapshots` | Yearly review benchmark baseline (earliest snapshot at/after Jan 1) | **372 days** | 0 rows | ~20 MB |
+| `chat_turns` | Copilot cross-session memory reads newest-8 per user with NO age bound (a returning user must not be a cold start) | **keep** | - | small |
+| `ai_runs` | No code reader, but it is the [AI-SEC-05] durable audit trail - pruning destroys evidence, not a feature | **keep** | - | small |
+| `ipos` | The /ipos explorer deliberately shows historical listings (full-table read) | keep | - | small |
+| `news_items`, `event_risks`, `valuation_metrics`, `hype_scores` | Zero code readers today (write-only; hype holds one row per ticker) | budget-guarded only | - | small |
+
+**The free-forever math.** With the audited horizons enforced, the bounded tables plateau at
+**~130 MB** and only the keep-forever learning tables still grow (~60 MB/yr, scores + outcomes
+dominated). Trajectory: ~190 MB after year 1, crosses the 300 MB act-tripwire around **2029**
+and the 500 MB free cap around **2032** - versus **mid-2027** doing nothing. The endgame lever
+when the learning tables get heavy: persist an all-time track-record/efficacy rollup, then cap
+raw `signal_outcomes` + `stock_signal_scores` at ~365d (requires changing both unbounded readers
+first - they are listed above). That flattens the whole database at **~210 MB, free forever**.
+
+**The standing gate.** `npm run check:data-economics` (nightly `schema-drift` job, `--require-db`)
+measures every monitored table against its budget and horizon each night: DB size vs the
+250/300 MB tripwires (FAIL at 300 - same line as the table above), per-table budget breaches
+(FAIL), sunk rows past each horizon with reclaimable MB (report + WARN past 50%), 7-day write
+rates, and the value each table feeds (engine correctness, personalization, portfolio, product
+surfaces) so weight is always read next to worth. Manifest drift (ghost table/column) also FAILS.
+The manifest lives in [`scripts/check-data-economics.mjs`](./scripts/check-data-economics.mjs)
+and mirrors this section - change horizons HERE first, then the manifest.
+
+**Pruning is not shipped yet - deliberately.** The gate only measures. Actual deletion jobs ship
+per-table once these horizons are founder-ratified, and must honour three audited hazards:
+never delete a symbol's newest `stock_signals` row; never delete `held` deliveries or their
+events; and never tighten candles below ~372d - the yearly-review baseline query silently
+returns a later bar instead of erroring (wrong number, no alarm). Sunk mass today is ~1 MB
+across ~800 rows: there is nothing worth deleting yet. The gate exists so we act on measurement,
+not memory, when there is.
+
+## 7. Method - where each number came from
 
 - **Table sizes/rows:** `pg_stat_user_tables` + `pg_total_relation_size` on prod via the pooler.
 - **Growth rates:** `count(*) filter (where created_at > now() - interval '7 days')` on the hot
@@ -140,10 +191,18 @@ Vercel Pro / droplet the day Lyra charges users.
 - **Scout source mix:** `src/lib/generated/scout-sources.json` method counts.
 - **Provider prices/limits:** [`COSTS.md`](./COSTS.md) - list prices live there, not here; where
   COSTS.md marks a limit "indicative", so is the headroom math built on it.
+- **Benefit horizons (section 6):** 2026-07-18 read-path audit - one tracing agent per table
+  domain enumerated every SELECT (frontend, workers, scripts, SQL views/functions, skill chains)
+  with its filter/order/limit as evidence, then an independent adversarial agent per domain tried
+  to refute the horizon by hunting for longer readers. One refutation succeeded (notifications:
+  90d claim killed by findings projections + lifetime dedupe keys) and is reflected above.
 
-## 7. Refresh these numbers
+## 8. Refresh these numbers
 
 ```bash
+# The nightly gate, on demand (budgets, horizons, sunk rows, tripwires)
+npm run check:data-economics
+
 # DB size + top tables (run against prod pooler)
 psql "$SUPABASE_POOLER_URL" -c "select relname, n_live_tup, pg_size_pretty(pg_total_relation_size(format('%I.%I', schemaname, relname))) from pg_stat_user_tables where schemaname='public' order by pg_total_relation_size(format('%I.%I', schemaname, relname)) desc limit 15;" \
   -c "select pg_size_pretty(pg_database_size(current_database()));"

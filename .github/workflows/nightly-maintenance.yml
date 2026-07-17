@@ -44,6 +44,13 @@ jobs:
         # skips is the same lie as a check that always passes.
         run: node scripts/check-schema-drift.mjs --require-db
 
+      # Same doctrine, different axis: is the database still on course to stay FREE forever?
+      # Measures DB size vs the DATA-ECONOMICS.md tripwires (warn 250 MB / fail 300 MB of the
+      # 500 MB free tier), each table vs its declared budget, and how many rows sit past their
+      # benefit horizon (sunk weight - reporting only, nothing is ever deleted by a check).
+      - name: Data economics vs budgets (free-tier runway)
+        run: node scripts/check-data-economics.mjs --require-db
+
   maintain:
     runs-on: ubuntu-latest
     timeout-minutes: 20

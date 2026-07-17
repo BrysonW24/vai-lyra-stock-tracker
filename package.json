@@ -16,6 +16,7 @@
     "worker:scout": "node scripts/py.mjs -m workers.scout.main",
     "scout:queue": "node scripts/scout-queue.mjs",
     "check:ledgers": "node scripts/check-ledgers.mjs",
+    "check:data-economics": "node scripts/check-data-economics.mjs",
     "worker:digest": "node scripts/py.mjs -m workers.stock_scanner.digest_job",
     "worker:test": "node scripts/py.mjs -m pytest tests",
     "train:recovery": "node scripts/py.mjs -m workers.stock_scanner.ml.recovery_model",

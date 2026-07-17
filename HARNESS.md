@@ -29,6 +29,7 @@ Two conventions carry the whole design:
 | Migrations from zero | `scripts/migrate-from-zero.sh` | **the whole schema BUILDS on an empty database** - every migration in order plus the sql/ reconcile, against throwaway Postgres. Kills the fresh-clone-cannot-build class (0.36.0). First run found one fossil seed + 8 fossil indexes | CI `migrations-from-zero` job |
 | Deploy smoke | `npm run check:deploy` | **the LIVE SITE serves the version just pushed** and its surfaces respond (health + content + middleware liveness). CI proves the build; this proves the deployment - six live-only bugs once shipped behind green CI | `deploy-smoke` workflow on every push to main |
 | Learning ledgers | `npm run check:ledgers` | `harness-incidents.jsonl` + `.claude/content-rules.jsonl` parse clean (valid JSONL, required fields, unique ids) - a ledger that stops parsing stops teaching, silently | CI |
+| Data economics | `npm run check:data-economics` | **the database stays on course to remain FREE** - DB size vs the DATA-ECONOMICS.md tripwires (warn 250 MB / fail 300 MB of the 500 MB free tier), each table vs its budget, sunk rows past each benefit horizon (reporting only - a check never deletes). Needs a DB URL; `--require-db` in the nightly | nightly `schema-drift` job |
 
 Adding a gate: name it `scripts/check-<thing>.mjs`, give it a `check:<thing>` npm
 script, wire it into CI, and register it in this table. A gate that only runs when
