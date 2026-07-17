@@ -1,12 +1,20 @@
 # Contributing to Lyra
 
-Thanks for taking a look. Lyra is a research-first momentum console, and contributions that
-keep it fast, honest, and dense are very welcome. This guide gets you productive in a few
-minutes.
+Thanks for taking a look. Lyra is a research-first momentum console, built and maintained by
+one person - so contributing works a little differently here than in most repos:
 
-## Quick start
+- **Want your own Lyra? Fork it.** Your fork is yours: customize it, rebrand it, deploy it,
+  point it at your own data. This is the intended path for builders, and the MIT license
+  makes it clean.
+- **Found a bug or have an idea? Open an issue.** Bug reports, feature ideas, and feedback
+  are very welcome on the
+  [issue tracker](https://github.com/BrysonW24/vai-lyra-stock-tracker/issues).
+- **Code pull requests are generally not accepted.** The codebase is maintainer-driven. An
+  unsolicited PR will usually be closed with thanks and a pointer to the issue tracker. If
+  you believe a fix genuinely belongs upstream, open an issue first so we can talk it
+  through before you write any code.
 
-**Just running it locally?** A plain clone is fine:
+## Run it locally (no fork needed)
 
 ```bash
 git clone https://github.com/BrysonW24/vai-lyra-stock-tracker.git
@@ -14,30 +22,31 @@ cd vai-lyra-stock-tracker
 npm install && npm run dev      # runs on built-in demo data, no keys needed
 ```
 
-**Contributing a change?** Work from a fork - you cannot push branches to this repo directly:
+Open `http://localhost:3042` and you are in. No accounts, no backend, no API keys required to
+run against the demo data.
+
+## Make it your own (fork it)
 
 ```bash
 gh repo fork BrysonW24/vai-lyra-stock-tracker --clone    # or the Fork button on GitHub, then clone YOUR fork
 cd vai-lyra-stock-tracker
-npm install
-git checkout -b feat/my-change
-# ...make your change...
-git push -u origin feat/my-change     # pushes to your fork
+npm install && npm run dev
 ```
 
-Then open a pull request against `BrysonW24/vai-lyra-stock-tracker` `main`. To keep a
-button-forked clone current, add the source as `upstream` and rebase on it:
+From here it is your project: commit to your fork, wire up your own keys, deploy your own
+instance. The guided path from demo to deployed is the
+[walkthroughs](docs/walkthroughs/README.md) (Claude Code users can run the `/setup` skill
+chain instead). To pull in upstream improvements later:
 `git remote add upstream https://github.com/BrysonW24/vai-lyra-stock-tracker.git` then
-`git pull --rebase upstream main` (the `gh repo fork --clone` path sets `upstream` up for you).
+`git pull --rebase upstream main` (the `gh repo fork --clone` path sets `upstream` for you).
 
-Open http://localhost:3042 and you are in. No accounts, no backend, no API keys required to
-develop against the demo data.
+## Design principles worth keeping
 
-## Ground rules (please read)
+Your fork is free to diverge, but know what you are changing - the product stands on three
+rules:
 
-- **Research, not advice.** Do not add features that present output as financial advice or a
-  direct recommendation. Lyra surfaces setups and risks; the user always decides. Keep the
-  "not advice" framing intact.
+- **Research, not advice.** Nothing presents output as financial advice or a direct
+  recommendation. Lyra surfaces setups and risks; the user always decides.
 - **Deterministic first.** The scoring engine owns every number. An optional AI layer may
   *phrase* a result, but must never invent or override a value.
 - **Dense and scannable.** The UI standard is compact: small type, tight tiles, one eye-line
@@ -71,7 +80,7 @@ JSONL, not the generated files.
 - **Plain hyphens only.** Never use em dashes or en dashes in user-facing copy.
 - **TanStack Query** for data fetching, **Zod** for runtime validation, **Tailwind** for styling.
 
-## Before you open a PR
+## Checks to run before you ship (in your fork)
 
 ```bash
 npm run type-check     # tsc, must be clean
@@ -79,8 +88,13 @@ npm run build          # production build, must pass
 npm run test           # if your change touches tested logic
 ```
 
-Keep PRs focused, fill in the pull-request template (it loads automatically when you open a
-PR), and describe what you verified.
+## Filing a good issue
+
+- Say what you expected, what actually happened, and the smallest reproduction you have.
+- Include your mode (`npm run doctor` tells you: demo / live / AI) and the app version from
+  the landing-page badge.
+- Feature ideas: describe the problem you are trying to solve, not just the feature - the
+  problem is often more useful than the proposed shape.
 
 ## Security issues
 
@@ -89,7 +103,7 @@ Never open a public issue or PR containing vulnerability details - use the priva
 
 ## License
 
-By contributing, you agree that your contributions are licensed under the repository's
-[MIT License](LICENSE).
+Lyra is [MIT licensed](LICENSE) - fork freely. In the rare case a code change is accepted
+upstream, it lands under the same license.
 
 Thank you.
