@@ -33,8 +33,7 @@ import { computeOrientation } from '@/lib/orientation';
 import { demoIntelligenceFeed } from '@/lib/intelligence';
 import { getUserConstraints } from '@/lib/ai/user-context';
 import { getDashboardData } from '@/lib/data';
-import { getMarketContext } from '@/lib/market-context';
-import { getMacroContext } from '@/lib/macro-context';
+import { getMarketContextLive, getMacroContextLive } from '@/lib/market-context-live';
 import { getSetupStatus } from '@/lib/setup-status';
 import { getPaperAccountSummaryAuthAware } from '@/lib/trading/paper-account-repo';
 import { loadTwinAffinity } from '@/lib/twin/repo';
@@ -49,8 +48,8 @@ export default async function OverviewPage() {
   // so the server render waits on the slowest, not the sum.
   const [data, marketContext, macroContext, setupStatus, paperAccount, twinAffinity, constraints, calendar] = await Promise.all([
     getDashboardData(),
-    getMarketContext(),
-    getMacroContext(),
+    getMarketContextLive(),
+    getMacroContextLive(),
     getSetupStatus(),
     getPaperAccountSummaryAuthAware(),
     loadTwinAffinity().catch(() => null),

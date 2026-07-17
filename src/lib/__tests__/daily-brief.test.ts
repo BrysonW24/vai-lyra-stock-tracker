@@ -5,6 +5,7 @@ import type { MarketContextSnapshot } from '../market-context';
 
 describe('buildDailyBrief', () => {
   const mockMarketContext: MarketContextSnapshot = {
+    source: 'sample',
     capturedAt: new Date().toISOString(),
     sp500Price: 5200,
     sp500ChangePct: 0.5,

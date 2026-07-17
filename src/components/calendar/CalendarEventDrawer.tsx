@@ -14,10 +14,12 @@ import {
 } from '@/lib/calendar';
 import { DetailDrawer } from '@/components/DetailDrawer';
 
-// Known exchanges for the demo tickers; everything else defaults to NASDAQ.
+// Known exchanges for the demo tickers. Unknown tickers get 'US listing', not a
+// guessed 'NASDAQ' - the old default asserted an exchange it had no basis for
+// (wrong for any NYSE or ASX name outside this map).
 const EXCHANGE: Record<string, string> = { CRM: 'NYSE', ORCL: 'NYSE', IBM: 'NYSE', NOW: 'NYSE' };
 function exchangeFor(ticker: string): string {
-  return EXCHANGE[ticker] ?? 'NASDAQ';
+  return EXCHANGE[ticker] ?? 'US listing';
 }
 
 /**

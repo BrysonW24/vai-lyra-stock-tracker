@@ -68,6 +68,16 @@ export function MarketContextStrip({ data }: MarketContextStripProps) {
       <div className="z-20 flex shrink-0 items-center gap-1.5 border-r border-[#1b2530] bg-[#0b1016] px-3 py-1.5">
         <span className={`h-1.5 w-1.5 animate-pulse rounded-full ${regime.dot}`} />
         <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8aa2ff]">Markets</span>
+        {/* Regime as a WORD, not just an unlabeled dot - and honest sourcing: frozen
+            demo numbers must never present as live (same convention as LiveWire). */}
+        <span className={`font-mono text-[9px] uppercase tracking-[0.12em] ${regime.text}`}>
+          {data.regime.replace('_', ' ')}
+        </span>
+        {data.source === 'sample' && (
+          <span className="rounded border border-[#9a6a1f] bg-[#2a1f0f] px-1 py-px font-mono text-[8px] uppercase tracking-[0.12em] text-[#f3a33a]">
+            Sample
+          </span>
+        )}
       </div>
 
       {/* Scrolling track (items duplicated for a seamless loop) */}

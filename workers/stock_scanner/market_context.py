@@ -55,6 +55,9 @@ class MarketSnapshot:
     # macro companions and the weekly report's AUD-terms line.
     audusd_price: Optional[float]
     audusd_change_pct: Optional[float]
+    # ASX 200: the user's local market backdrop (feeds the macro strip's live overlay).
+    axjo_price: Optional[float]
+    axjo_change_pct: Optional[float]
     fear_greed_index: Optional[int]
     fear_greed_label: Optional[str]
     regime: str  # 'risk_on', 'neutral', 'risk_off'
@@ -80,6 +83,8 @@ class MarketSnapshot:
             "btc_change_pct": self.btc_change_pct,
             "audusd_price": self.audusd_price,
             "audusd_change_pct": self.audusd_change_pct,
+            "axjo_price": self.axjo_price,
+            "axjo_change_pct": self.axjo_change_pct,
             "fear_greed_index": self.fear_greed_index,
             "fear_greed_label": self.fear_greed_label,
             "regime": self.regime,
@@ -200,6 +205,7 @@ def build_market_context() -> MarketSnapshot:
 
     # FX: the AUD lens on USD holdings (same free Yahoo endpoint as the indices)
     audusd = _fetch_yahoo("AUDUSD=X")
+    axjo = _fetch_yahoo("^AXJO")
 
     # Fetch crypto and sentiment
     btc = _fetch_crypto_btc()
@@ -234,6 +240,8 @@ def build_market_context() -> MarketSnapshot:
         btc_change_pct=btc.get("change_pct"),
         audusd_price=audusd.get("price"),
         audusd_change_pct=audusd.get("change_pct"),
+        axjo_price=axjo.get("price"),
+        axjo_change_pct=axjo.get("change_pct"),
         fear_greed_index=fear_greed,
         fear_greed_label=fear_label,
         regime=regime,

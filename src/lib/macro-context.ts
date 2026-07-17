@@ -43,6 +43,9 @@ export interface MacroSnapshot {
   chartPackUrl: string;
   chartPackLabel: string;
   isDemo: boolean;
+  /** Indicator labels whose values were overlaid from the LIVE hourly snapshot
+   * (getMacroContextLive). Empty/absent = every value is the seeded sample. */
+  liveOverlay?: string[];
 }
 
 const AUSTRALIA_DEMO: MacroSnapshot = {

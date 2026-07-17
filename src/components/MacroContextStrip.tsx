@@ -54,6 +54,21 @@ export function MacroContextStrip({ data }: { data: MacroSnapshot }) {
       <div className="z-20 flex shrink-0 items-center gap-1.5 border-r border-[#1b2530] bg-[#0b1016] px-3 py-1.5">
         <span className={`h-1.5 w-1.5 animate-pulse rounded-full ${STANCE_COLOR[data.stance].dot}`} />
         <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8aa2ff]">{data.countryCode} Macro</span>
+        {/* Honesty chip. This strip was the ONLY sample surface in the app with no badge -
+            a frozen cash rate read as live. 'Partly live' once the hourly snapshot overlays
+            AUD/USD + ASX 200 (getMacroContextLive); fully seeded rows stay 'Sample'. */}
+        {data.isDemo && (
+          <span
+            className="rounded border border-[#9a6a1f] bg-[#2a1f0f] px-1 py-px font-mono text-[8px] uppercase tracking-[0.12em] text-[#f3a33a]"
+            title={
+              data.liveOverlay?.length
+                ? `Live: ${data.liveOverlay.join(', ')} (hourly snapshot). Other rows are seeded reference values as of ${data.asOf}.`
+                : `Seeded reference values as of ${data.asOf} - live RBA/ABS wiring lands next.`
+            }
+          >
+            {data.liveOverlay?.length ? 'Partly live' : 'Sample'}
+          </span>
+        )}
       </div>
 
       {/* Scrolling track (items duplicated for a seamless loop) */}

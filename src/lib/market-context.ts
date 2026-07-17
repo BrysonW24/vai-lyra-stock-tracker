@@ -26,6 +26,9 @@ export interface MarketContextSnapshot {
   fearGreedIndex: number | null;
   fearGreedLabel: string | null;
   regime: MarketRegime;
+  /** 'live' = latest hourly worker snapshot; 'sample' = the bundled demo values.
+   * Surfaces MUST badge sample data - frozen numbers presenting as live is a lie. */
+  source: 'live' | 'sample';
 }
 
 /**
@@ -53,14 +56,14 @@ export const demoMarketContext: MarketContextSnapshot = {
   fearGreedIndex: 52,
   fearGreedLabel: 'neutral',
   regime: 'neutral',
+  source: 'sample',
 };
 
 /**
- * Get market context. For now returns demo; future wiring reads from Supabase.
+ * Demo market context. The LIVE read is getMarketContextLive() in
+ * market-context-live.ts (server-only - it touches Supabase); this module stays
+ * importable from client components and holds only types + the sample.
  */
 export async function getMarketContext(): Promise<MarketContextSnapshot> {
-  // TODO: wire to Supabase when backend integration is live
-  // const data = await fetch('/api/market-context').then(r => r.json());
-  // return data;
   return demoMarketContext;
 }
