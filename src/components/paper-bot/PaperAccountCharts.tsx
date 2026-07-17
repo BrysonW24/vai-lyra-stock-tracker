@@ -208,7 +208,7 @@ function BenchmarkChart({
   ];
 
   if (allSeries.length === 0) {
-    return <p className="text-[10px] text-[#3a4a5a] py-4 text-center">No benchmark data yet — execute a paper trade to start tracking</p>;
+    return <p className="text-[10px] text-[#3a4a5a] py-4 text-center">No benchmark data yet - execute a paper trade to start tracking</p>;
   }
 
   const allValues = allSeries.flatMap(s => s.points);
@@ -330,7 +330,7 @@ function BenchmarkChart({
       </div>
 
       <p className="mt-2 text-[9px] text-[#3a4a5a]">
-        All series indexed to 100 at start — shows relative % return. Portfolio = your paper account. NASDAQ + ASX 200 = live market data from Yahoo Finance.
+        All series indexed to 100 at start - shows relative % return. Portfolio = your paper account. NASDAQ + ASX 200 = live market data from Yahoo Finance.
       </p>
     </div>
   );
@@ -415,7 +415,7 @@ export function PaperAccountCharts({ positions, totalMarketValue, equityCurve, s
           <>
             <p className="mb-3 text-[9px] uppercase tracking-[0.1em] text-[#3a4a5a]">Capital by industry sector</p>
             {sectorBars.length === 1 && sectorBars[0].label === 'Other'
-              ? <p className="text-[10px] text-[#3a4a5a]">Sector data unavailable — try AAPL, NVDA, JPM…</p>
+              ? <p className="text-[10px] text-[#3a4a5a]">Sector data unavailable - try AAPL, NVDA, JPM…</p>
               : <HorizBars bars={sectorBars} />}
           </>
         )}
@@ -427,7 +427,7 @@ export function PaperAccountCharts({ positions, totalMarketValue, equityCurve, s
         )}
         {tab === 'benchmark' && (
           <>
-            <p className="mb-3 text-[9px] uppercase tracking-[0.1em] text-[#3a4a5a]">Your portfolio vs NASDAQ & ASX 200 — 30 days indexed</p>
+            <p className="mb-3 text-[9px] uppercase tracking-[0.1em] text-[#3a4a5a]">Your portfolio vs NASDAQ & ASX 200 - 30 days indexed</p>
             {benchmarkLoading
               ? <div className="flex items-center gap-2 py-6 justify-center text-[#4a5a6a]">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#8aa2ff] border-t-transparent" />

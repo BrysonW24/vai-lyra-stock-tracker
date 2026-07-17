@@ -39,7 +39,7 @@ export function AuthForm({ mode, initialError = null }: { mode: 'login' | 'signu
       return;
     }
 
-    // Demo mode: no backend yet — route into onboarding (which the demo middleware allows and which
+    // Demo mode: no backend yet - route into onboarding (which the demo middleware allows and which
     // sets the onboarded cookie). Pushing to '/' here would bounce back to /welcome (no cookie yet).
     if (!supabase) {
       router.push('/onboarding');

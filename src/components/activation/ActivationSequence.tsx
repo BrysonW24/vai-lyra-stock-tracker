@@ -53,7 +53,7 @@ export function ActivationSequence({ mode = 'outro', onDone }: { mode?: 'intro' 
       setCurrentSceneIdx(currentSceneIdx - 1);
       return;
     }
-    // First scene: back to where we came from — the landing page for the intro primer.
+    // First scene: back to where we came from - the landing page for the intro primer.
     router.push(mode === 'intro' ? '/welcome' : '/');
   };
 

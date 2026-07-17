@@ -5,6 +5,7 @@ import './globals.css';
 import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand';
 import { PinGate } from '@/components/PinGate';
 import { UsageTracker } from '@/components/UsageTracker';
+import { NotificationEngagementBeacon } from '@/components/NotificationEngagementBeacon';
 
 export const metadata: Metadata = {
   // Template so every page can set a one-word title and still carry the brand -
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   description: 'Deterministic momentum, portfolio, watchlist, and market-intelligence console for US technology stocks.',
   openGraph: {
     title: `${BRAND_NAME} - ${BRAND_TAGLINE}`,
-    description: 'US tech signals - scored, explained, overlaid on your book. Alerts hit your phone before the crowd catches on.',
+    description: 'US tech signals - scored, explained, overlaid on your book. Research, not advice; alerts when your setups trigger.',
     siteName: BRAND_NAME,
     type: 'website',
     images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: `${BRAND_NAME} logo` }],
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <PinGate />
         {children}
+        <NotificationEngagementBeacon />
         <UsageTracker />
         <Analytics />
         <SpeedInsights />

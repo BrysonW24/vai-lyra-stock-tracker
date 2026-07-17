@@ -29,7 +29,7 @@ const fmtPct = (p: number) => `${p >= 0 ? '+' : ''}${p.toFixed(2)}%`;
 const toneClass = (p: number) => (p >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]');
 
 /**
- * Scene 3: Act from the console — a one-screen preview of the real command centre:
+ * Scene 3: Act from the console - a one-screen preview of the real command centre:
  * KPI tiles, a global markets strip (S&P / ASX / Nikkei / Europe), the strongest-signals
  * table, the always-on intelligence carousel, and a Telegram-style alert. Staged reveal.
  */

@@ -639,7 +639,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
 
             <p className="mt-2 text-[8px] leading-snug text-[#5e6b78]">
               {account.dataSource === 'persisted'
-                ? 'Saved — positions, trades and equity curve survive app restarts.'
+                ? 'Saved - positions, trades and equity curve survive app restarts.'
                 : 'In-memory this session. Sign in for a persistent saved track record.'}
             </p>
           </>
@@ -680,14 +680,14 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
         {alertsOn && (
           <div className="mb-2 flex items-center gap-2 rounded-lg border border-[#2a1f08] bg-[#1a1206] px-2.5 py-1.5">
             <BadgePercent size={11} className="shrink-0 text-[#f3a33a]" />
-            <p className="text-[10px] text-[#a8913a]">Notified when any position moves <span className="font-semibold">±5%</span> — fills, approvals and risk blocks also flagged</p>
+            <p className="text-[10px] text-[#a8913a]">Notified when any position moves <span className="font-semibold">±5%</span> - fills, approvals and risk blocks also flagged</p>
           </div>
         )}
 
         {/* Channel status */}
         <div className="mb-2 flex items-center gap-1.5">
           <span className={`h-1.5 w-1.5 rounded-full ${channels.length ? 'bg-[#43d18b]' : 'bg-[#3a4a5a]'}`} />
-          <span className="text-[9px] text-[#6f7d8a]">{channels.length ? channels.join(' · ') : 'In-app only — configure Telegram in Settings for push delivery'}</span>
+          <span className="text-[9px] text-[#6f7d8a]">{channels.length ? channels.join(' · ') : 'In-app only - configure Telegram in Settings for push delivery'}</span>
         </div>
 
         {/* Flags feed */}
@@ -957,7 +957,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
         </div>
       )}
 
-      {/* Insight panel — same as command centre */}
+      {/* Insight panel - same as command centre */}
       <Insight />
 
       {/* Rotating quotes from investing greats */}

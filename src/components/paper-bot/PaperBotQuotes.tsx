@@ -279,7 +279,7 @@ export function PaperBotQuotes() {
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-[#3a4a5a] flex-1">Community chat <span className="text-[#8aa2ff]">coming soon</span> — share trades, ideas & conviction</p>
+        <p className="text-[10px] text-[#3a4a5a] flex-1">Community chat <span className="text-[#8aa2ff]">coming soon</span> - share trades, ideas & conviction</p>
       </div>
     </section>
   );

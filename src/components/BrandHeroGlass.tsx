@@ -6,7 +6,7 @@ import { Activity, BarChart3, TrendingUp, Gauge, LineChart, Check, Sparkles } fr
  * left, wired by glowing connector lines into a central glass card, on a glowing plinth,
  * with a result chip floating to the side. Mirrors the Vivacity.ai brand-image style
  * (glass + perspective + connected modules). See onboarding-aesthetic-prompt.md.
- * Pure presentational — safe in a server component.
+ * Pure presentational - safe in a server component.
  */
 
 const MODULES = [

@@ -78,7 +78,7 @@ export function PaperTickerInput({
           onQuoteResolved(null);
         }
       } catch {
-        setQuoteError('Connection error — check your network');
+        setQuoteError('Connection error - check your network');
         onQuoteResolved(null);
       } finally {
         setQuoteLoading(false);
@@ -150,7 +150,7 @@ export function PaperTickerInput({
               else if (e.key === 'Enter' && showSuggestions && activeIdx >= 0) { e.preventDefault(); pickSuggestion(suggestions[activeIdx].symbol); }
               else if (e.key === 'Escape') setFocused(false);
             }}
-            placeholder="Search — NVDA, AAPL, BHP…"
+            placeholder="Search - NVDA, AAPL, BHP…"
             spellCheck={false}
             autoCapitalize="characters"
             className="h-12 w-full rounded-xl border border-[#263241] bg-[#0a1018] pl-9 pr-3 font-mono text-[15px] font-bold text-[#dbe5ee] placeholder:font-normal placeholder:text-[#3a4a5a] outline-none focus:border-[#8aa2ff]/50 focus:ring-2 focus:ring-[#8aa2ff]/10 transition-all duration-200"
@@ -343,7 +343,7 @@ export function PaperTickerInput({
           </div>
           <div>
             <p className="text-[12px] font-semibold text-[#2a3a4a]">Search a ticker above</p>
-            <p className="text-[10px] text-[#1e2a38]">Live price · logo · order value — all auto-calculated</p>
+            <p className="text-[10px] text-[#1e2a38]">Live price · logo · order value - all auto-calculated</p>
           </div>
         </div>
       )}

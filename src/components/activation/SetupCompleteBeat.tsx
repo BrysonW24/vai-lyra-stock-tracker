@@ -6,7 +6,7 @@ import { Check } from 'lucide-react';
 import { prefersReducedMotion } from '@/lib/activation/animationTiming';
 
 /**
- * "You're all set" beat — a short success moment shown the instant the user finishes
+ * "You're all set" beat - a short success moment shown the instant the user finishes
  * onboarding, before the world flips to the dark command centre. A success mark blooms
  * in, a calibrating line sweeps, then it hands off to the console.
  */

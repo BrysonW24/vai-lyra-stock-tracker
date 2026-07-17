@@ -3,8 +3,8 @@ import { tickerLogoUrl } from '@/lib/ticker-logos';
 
 /**
  * Feature visualisation tiles for the light premium "Why Lyra" band.
- * Each value prop is shown as a small glass *visualisation* (not an icon card) — a
- * portfolio overlay with real company logos, a daily-brief digest, an alert bubble —
+ * Each value prop is shown as a small glass *visualisation* (not an icon card) - a
+ * portfolio overlay with real company logos, a daily-brief digest, an alert bubble -
  * matching the Vivacity.ai brand-image style. Presentational, server-safe.
  */
 

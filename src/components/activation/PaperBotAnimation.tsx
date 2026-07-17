@@ -199,7 +199,7 @@ export function PaperBotAnimation({ onComplete }: PaperBotAnimationProps) {
             </div>
             <p className="mt-0.5 font-mono text-[10px] leading-snug text-[#4a6a88]">
               When you&apos;re ready: the same approval gate, but filling against your real broker.
-              Paper bot is the proving ground — live bot is the graduation.
+              Paper bot is the proving ground - live bot is the graduation.
             </p>
           </div>
           <div className="shrink-0">

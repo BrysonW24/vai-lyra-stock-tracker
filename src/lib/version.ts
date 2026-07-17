@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.58.0',
+    date: '2026-07-18',
+    title: 'Prompt-injection fence on live news, resilient middleware pinned, honest copy',
+    highlights: [
+      'The live "smart money" feature reads market news headlines and asks the AI to extract backing events. Those headlines are untrusted outside text, so a hostile headline could try to smuggle instructions into the model. They now pass through the same injection fence the chat uses - stripped of known injection patterns and wrapped as data, never instructions.',
+      'The resilience fix that ended last session\'s outage (middleware fails safe instead of crashing the whole site) is now locked in by tests, so it can never silently regress.',
+      'Copy cleanup: replaced em dashes with plain hyphens across the interface to match house style, and corrected the site description that implied a market-timing edge ("before the crowd catches on") - Lyra is research, not a promise to beat the market.',
+    ],
+  },
+  {
     version: '0.57.0',
     date: '2026-07-18',
     title: 'The copilot can finally answer the macro questions it suggests',

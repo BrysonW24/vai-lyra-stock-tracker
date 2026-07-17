@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description: 'US tech signals - scored, explained, overlaid on your book. Alerts hit your phone before the crowd catches on.',
 };
 
-// Light premium "Vivacity.ai" brand surface — the calm front door before the dark command
+// Light premium "Vivacity.ai" brand surface - the calm front door before the dark command
 // centre. See onboarding-aesthetic-prompt.md. Palette grounded in the classic Vivacity mark:
 // cream #F7F6F2 · navy #0E1E3A · electric blue #1E63FF · icy cyan #5BC8FF.
 export default function WelcomePage() {
