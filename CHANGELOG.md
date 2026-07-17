@@ -6,6 +6,14 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.66.0] - 2026-07-18
+
+Paper Bot page rebuilt from panels - same surface, half the moving parts.
+
+### Changed
+
+- Under-the-hood: the Paper Bot page was one 970-line component; it is now a small orchestrator composing four focused panels (how-it-works, paper account, alerts feed, command line) with shared types in one place. Nothing changed visually or behaviourally - every class and interaction is byte-for-byte - but each panel can now be read, reviewed, and changed on its own.
+
 ## [0.65.0] - 2026-07-18
 
 The motion map - every loop, mapped and measured.
@@ -970,7 +978,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.64.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.66.0...HEAD
+[0.66.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.65.0...v0.66.0
 [0.64.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.63.0...v0.64.0
 [0.63.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.62.0...v0.63.0
 [0.62.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.61.0...v0.62.0

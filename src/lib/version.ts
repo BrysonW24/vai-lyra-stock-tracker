@@ -23,6 +23,14 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.66.0',
+    date: '2026-07-18',
+    title: 'Paper Bot page rebuilt from panels - same surface, half the moving parts',
+    highlights: [
+      'Under-the-hood: the Paper Bot page was one 970-line component; it is now a small orchestrator composing four focused panels (how-it-works, paper account, alerts feed, command line) with shared types in one place. Nothing changed visually or behaviourally - every class and interaction is byte-for-byte - but each panel can now be read, reviewed, and changed on its own.',
+    ],
+  },
+  {
     version: '0.65.0',
     date: '2026-07-18',
     title: 'The motion map - every loop, mapped and measured',
