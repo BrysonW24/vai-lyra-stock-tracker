@@ -1,5 +1,6 @@
 """Tests for multi-user alert gating and user-specific overlay logic."""
 from datetime import datetime, timezone
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from tests.test_signal_engine import settings, snapshot
@@ -142,24 +143,81 @@ def test_should_not_send_alert_when_alert_type_disabled() -> None:
     assert "disabled for user" in reason.lower()
 
 
-def test_load_portfolio_positions_filters_by_user_id() -> None:
-    """load_portfolio_positions should filter by user_id when provided."""
-    repo = SupabaseRepository(settings())
-    assert repo.enabled is False
+class _FakeQuery:
+    """Records every .eq() filter and returns only rows that satisfy ALL of them.
 
-    # Without Supabase, should return empty list
+    This is what makes the filter tests REAL: the old versions built a disconnected repo
+    and asserted []; deleting the `.eq('user_id', ...)` clause in supabase_repo kept them
+    green, so they never guarded the thing their names claim. Cross-user read leakage has
+    already shipped in this product once (migration 030 -> 032), so this must be exercised.
+    """
+
+    def __init__(self, rows: list[dict]) -> None:
+        self._rows = rows
+        self.filters: dict[str, object] = {}
+
+    def select(self, *_args, **_kwargs) -> "_FakeQuery":
+        return self
+
+    def eq(self, column: str, value: object) -> "_FakeQuery":
+        self.filters[column] = value
+        return self
+
+    def execute(self) -> object:
+        matched = [r for r in self._rows if all(r.get(k) == v for k, v in self.filters.items())]
+        return SimpleNamespace(data=matched)
+
+
+class _FakeClient:
+    def __init__(self, rows: list[dict]) -> None:
+        self.rows = rows
+        self.last_query: _FakeQuery | None = None
+
+    def table(self, _name: str) -> _FakeQuery:
+        self.last_query = _FakeQuery(self.rows)
+        return self.last_query
+
+
+def _repo_with_rows(rows: list[dict]) -> tuple[SupabaseRepository, _FakeClient]:
+    repo = SupabaseRepository(settings())
+    client = _FakeClient(rows)
+    repo.client = client  # type: ignore[assignment]
+    return repo, client
+
+
+def test_load_portfolio_positions_filters_by_user_id() -> None:
+    """The query must be constrained to the requested user_id, and another user's rows
+    must never appear in the result."""
+    rows = [
+        {"symbol": "AAA", "quantity": 1, "average_buy_price": 10, "is_active": True, "user_id": "user-alice"},
+        {"symbol": "BBB", "quantity": 2, "average_buy_price": 20, "is_active": True, "user_id": "user-bob"},
+    ]
+    repo, client = _repo_with_rows(rows)
+
     positions = repo.load_portfolio_positions(user_id="user-alice")
-    assert positions == []
+
+    assert client.last_query is not None
+    assert client.last_query.filters.get("user_id") == "user-alice"  # the scope was applied
+    symbols = {p.symbol for p in positions}
+    assert symbols == {"AAA"}  # only Alice's row
+    assert "BBB" not in symbols  # Bob's row never leaks
 
 
 def test_load_watchlist_items_filters_by_user_id() -> None:
-    """load_watchlist_items should filter by user_id when provided."""
-    repo = SupabaseRepository(settings())
-    assert repo.enabled is False
+    """Same guarantee for watchlist items: scoped query, no cross-user rows."""
+    rows = [
+        {"symbol": "AAA", "is_active": True, "user_id": "user-alice"},
+        {"symbol": "BBB", "is_active": True, "user_id": "user-bob"},
+    ]
+    repo, client = _repo_with_rows(rows)
 
-    # Without Supabase, should return empty list
     items = repo.load_watchlist_items(user_id="user-bob")
-    assert items == []
+
+    assert client.last_query is not None
+    assert client.last_query.filters.get("user_id") == "user-bob"
+    symbols = {i.symbol for i in items}
+    assert symbols == {"BBB"}
+    assert "AAA" not in symbols
 
 
 def test_load_active_user_ids_returns_empty_when_no_connection() -> None:
