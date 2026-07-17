@@ -94,13 +94,24 @@ jobs:
       - name: Send daily digest (weekly report on Fridays)
         run: python -m workers.stock_scanner.digest_job
 
+      # Not `curl -sf`: that exits 22 on any 4xx/5xx while hiding the status, body, and
+      # response headers - a 0.2s edge rejection and a 401 from the route look identical.
+      # The response carries no secrets, so print all of it and judge the status explicitly.
       - name: Sweep notification deliveries (release held, retry failed)
         if: env.APP_BASE_URL != '' && env.NOTIFICATION_DISPATCH_SECRET != ''
         run: |
-          curl -sf -X POST "$APP_BASE_URL/api/notifications/dispatch" \
+          STATUS=$(curl -s -o "$RUNNER_TEMP/sweep-body" -D "$RUNNER_TEMP/sweep-headers" \
+            -w '%{http_code}' -X POST "$APP_BASE_URL/api/notifications/dispatch" \
             -H "content-type: application/json" \
             -H "x-notification-secret: $NOTIFICATION_DISPATCH_SECRET" \
-            --data '{"sweep":true}'
+            --data '{"sweep":true}')
+          echo "sweep HTTP $STATUS"
+          cat "$RUNNER_TEMP/sweep-body" || true; echo
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 300 ]; then
+            echo "--- response headers (who rejected us: the route or the edge?) ---"
+            cat "$RUNNER_TEMP/sweep-headers" || true
+            exit 1
+          fi
 
       # Best-effort must not mean invisible. Every step above has run by now (including the digest),
       # so failing here loses nothing - it just makes a failed worker impossible to miss, and lets
