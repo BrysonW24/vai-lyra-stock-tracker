@@ -6,6 +6,13 @@
  * version (RELEASES[0].version in src/lib/version.ts) is unchanged vs origin/main, this BLOCKS the push
  * and tells you how to fix it. It also fails if package.json and version.ts have drifted apart.
  *
+ * NOT shippable, and therefore not gated: test files (`__tests__/`, `tests/`, `*.test.ts`, `*.spec.ts`).
+ * They never reach a user, so they cannot justify a user-facing changelog entry.
+ *
+ * The version compared is the one in the COMMITS BEING PUSHED (git show HEAD:...), not the working
+ * tree - otherwise an unrelated uncommitted bump satisfies this hook while CI, which only sees the
+ * commit, fails. The hook and CI must always agree.
+ *
  * The fix: prepend a new entry to RELEASES in src/lib/version.ts, then run `npm run release`.
  * Escape hatch (rare - docs-only fixups, emergencies): VD_SKIP_VERSION=1 git push
  */
@@ -55,6 +62,13 @@ const remoteSrc = trySh('git show origin/main:src/lib/version.ts');
 const changed = trySh('git diff --name-only origin/main...HEAD');
 if (remoteSrc && changed !== null) {
   const remoteVersion = versionFrom(remoteSrc);
+  // Judge the version in the COMMITS BEING PUSHED, not the working tree. Reading version.ts off disk
+  // let an unrelated uncommitted bump (e.g. a concurrent release in progress) satisfy the hook while
+  // CI - which only ever sees the commit - correctly failed. A gate that disagrees with CI is a gate
+  // that lies, so fall back to the disk copy only when HEAD has no version.ts.
+  const headSrc = trySh('git show HEAD:src/lib/version.ts');
+  const pushedVersion = (headSrc && versionFrom(headSrc)) || localVersion;
+
   const shippable = changed
     .split('\n')
     .filter(Boolean)
@@ -65,11 +79,15 @@ if (remoteSrc && changed !== null) {
       (f) =>
         /^(src|supabase|workers|public|content|sql|contracts)\//.test(f) ||
         /^(next\.config\.js|Dockerfile|vercel\.json)$/.test(f),
-    );
+    )
+    // Tests are NOT shippable: they never reach a user, so they cannot warrant a user-facing
+    // changelog entry. Forcing a version bump for a test-only fix produces either a meaningless
+    // release note or a VD_SKIP_VERSION bypass - both worse than simply not gating them.
+    .filter((f) => !/(^|\/)(__tests__|tests)\//.test(f) && !/\.(test|spec)\.[cm]?[jt]sx?$/.test(f));
 
-  if (shippable.length > 0 && remoteVersion && localVersion === remoteVersion) {
+  if (shippable.length > 0 && remoteVersion && pushedVersion === remoteVersion) {
     fail([
-      `You are pushing ${shippable.length} shippable change(s) but the version is still v${localVersion}.`,
+      `You are pushing ${shippable.length} shippable change(s) but the version is still v${pushedVersion}.`,
       'Bump it: add a new entry at the top of RELEASES in src/lib/version.ts, then run `npm run release`.',
       'Changed: ' + shippable.slice(0, 6).join(', ') + (shippable.length > 6 ? ', ...' : ''),
       'Emergency bypass: VD_SKIP_VERSION=1 git push',
