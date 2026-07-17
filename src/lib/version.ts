@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.28.0',
+    date: '2026-07-17',
+    title: 'Clearer notifications: an honest per-device push badge, real Telegram and WhatsApp logos, and sharper alert copy',
+    highlights: [
+      'The push badge now reflects THIS device, not just your account. Before, it showed a green "on" whenever any device you own was subscribed - so an iPhone that had never granted permission still looked done. It is now green only when this device has actually enabled push, and shows an amber "Not on this device" otherwise, so the one tap that matters is obvious.',
+      'Telegram and WhatsApp now show their real brand logos beside their fields and save buttons, matching Slack - no more generic placeholder icons. Nothing ships unbranded.',
+      'Sharper alert copy: the test push and the service-worker fallback no longer repeat "Lyra" in the headline (your phone already shows the app name), so the title reads as one clean line instead of wrapping onto two. The test message now confirms push is live and previews how a real alert will land.',
+    ],
+  },
+  {
     version: '0.27.0',
     date: '2026-07-17',
     title: 'Make it yours: a customisable bottom bar, a colourful Explore, cleaner type - and an honest goal bar',

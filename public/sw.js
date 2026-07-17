@@ -14,8 +14,8 @@ self.addEventListener('push', (event) => {
     payload = { body: event.data ? event.data.text() : '' };
   }
 
-  const title = payload.title || 'Lyra alert';
-  const body = payload.body || 'A market alert is ready to review.';
+  const title = payload.title || 'New alert';
+  const body = payload.body || 'Open Lyra to see what changed.';
   const url = payload.url || '/';
   const tag = payload.tag || payload.dedupeKey || 'lyra-alert';
 

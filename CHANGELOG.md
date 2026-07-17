@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.28.0] - 2026-07-17
+
+Clearer notifications: an honest per-device push badge, real Telegram and WhatsApp logos, and sharper alert copy.
+
+### Changed
+
+- The push badge now reflects THIS device, not just your account. Before, it showed a green "on" whenever any device you own was subscribed - so an iPhone that had never granted permission still looked done. It is now green only when this device has actually enabled push, and shows an amber "Not on this device" otherwise, so the one tap that matters is obvious.
+- Telegram and WhatsApp now show their real brand logos beside their fields and save buttons, matching Slack - no more generic placeholder icons. Nothing ships unbranded.
+- Sharper alert copy: the test push and the service-worker fallback no longer repeat "Lyra" in the headline (your phone already shows the app name), so the title reads as one clean line instead of wrapping onto two. The test message now confirms push is live and previews how a real alert will land.
+
 ## [0.27.0] - 2026-07-17
 
 Make it yours: a customisable bottom bar, a colourful Explore, cleaner type - and an honest goal bar.
@@ -557,7 +567,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.27.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.28.0...HEAD
+[0.28.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.24.0...v0.25.0

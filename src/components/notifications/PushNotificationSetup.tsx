@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { BellRing, Check, ExternalLink, MessageCircle, Save, Send, Smartphone, X } from 'lucide-react';
+import { AlertTriangle, BellRing, Check, ExternalLink, Save, Smartphone, X } from 'lucide-react';
 import { DEFAULT_NOTIFICATION_PREFERENCES, type NotificationPreferences } from '@/lib/notifications/types';
 import {
   getExistingPushSubscription,
@@ -17,6 +17,8 @@ import { VOICE_PRESETS } from '@/lib/notifications/voice';
 import type { NotificationEvent, VoiceId } from '@/lib/notifications/types';
 import { Toggle } from '@/components/Toggle';
 import { SlackLogo } from '@/components/SlackLogo';
+import { TelegramLogo } from '@/components/TelegramLogo';
+import { WhatsAppLogo } from '@/components/WhatsAppLogo';
 
 type Channel = 'telegram' | 'whatsapp' | 'slack';
 
@@ -65,14 +67,23 @@ const successButton =
 const dangerButton =
   'inline-flex items-center justify-center gap-1.5 rounded border border-[#7a2230] bg-[#2a1115] px-3 py-1.5 font-mono text-[11px] text-[#ff6b6b] transition hover:bg-[#351419] disabled:opacity-40';
 
-function StatusPill({ on, label }: { on: boolean; label: string }) {
+type PillTone = 'on' | 'off' | 'warn';
+
+function StatusPill({ on, label, tone }: { on: boolean; label: string; tone?: PillTone }) {
+  // `tone` wins when set; otherwise derive the classic on/off from the boolean. `warn` (amber) is
+  // for "a subscription exists on the account but NOT on this device" - a green tick there reads as
+  // "already done" and hides the one tap that matters.
+  const resolved: PillTone = tone ?? (on ? 'on' : 'off');
+  const cls =
+    resolved === 'on'
+      ? 'border-[#1d7f55] bg-[#0d251b] text-[#43d18b]'
+      : resolved === 'warn'
+        ? 'border-[#7a5a22] bg-[#241a0d] text-[#f3a33a]'
+        : 'border-[#263241] bg-[#0d141c] text-[#8190a0]';
+  const icon = resolved === 'on' ? <Check size={11} /> : resolved === 'warn' ? <AlertTriangle size={11} /> : <X size={11} />;
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[10px] ${
-        on ? 'border-[#1d7f55] bg-[#0d251b] text-[#43d18b]' : 'border-[#263241] bg-[#0d141c] text-[#8190a0]'
-      }`}
-    >
-      {on ? <Check size={11} /> : <X size={11} />} {label}
+    <span className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[10px] ${cls}`}>
+      {icon} {label}
     </span>
   );
 }
@@ -166,6 +177,22 @@ export function PushNotificationSetup() {
   const [channelNotice, setChannelNotice] = useState<{ channel: Channel; verified: boolean; message: string } | null>(null);
 
   const pushEnabled = prefs.pushEnabled && activePushCount > 0;
+  // Device-aware push state: the badge must reflect THIS device, not just that some subscription
+  // exists on the account. Green only when this device has actually granted permission; amber when
+  // a subscription exists elsewhere but this device has not been enabled yet.
+  const pushOnThisDevice = support.permission === 'granted' && activePushCount > 0;
+  const pushTone: PillTone = pushOnThisDevice
+    ? 'on'
+    : support.permission === 'denied' || activePushCount > 0
+      ? 'warn'
+      : 'off';
+  const pushPillLabel = pushOnThisDevice
+    ? 'Push on'
+    : support.permission === 'denied'
+      ? 'Push blocked here'
+      : activePushCount > 0
+        ? 'Not on this device'
+        : 'Push off';
   const permissionLabel = useMemo(() => {
     if (!support.supported) return 'Unsupported';
     if (support.permission === 'granted') return 'Allowed';
@@ -372,7 +399,7 @@ export function PushNotificationSetup() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-1.5">
-        <StatusPill on={pushEnabled} label={`Push ${pushEnabled ? 'on' : 'off'}`} />
+        <StatusPill on={pushTone === 'on'} tone={pushTone} label={pushPillLabel} />
         <StatusPill
           on={prefs.telegramEnabled && telegramVerified}
           label={telegramChatId && !telegramVerified ? 'Telegram unverified' : `Telegram ${prefs.telegramEnabled && telegramVerified ? 'on' : 'off'}`}
@@ -458,13 +485,13 @@ export function PushNotificationSetup() {
 
       <section className="grid gap-2 border-t border-[#1b2530] pt-3 md:grid-cols-2">
         <div>
-          <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-[#8190a0]" htmlFor="tg-id">
-            Telegram chat ID
+          <label className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-[#8190a0]" htmlFor="tg-id">
+            <TelegramLogo size={12} /> Telegram chat ID
           </label>
           <div className="flex gap-2">
             <input id="tg-id" inputMode="numeric" className={inputClass} value={telegramChatId} placeholder="123456789" onChange={(event) => setTelegramChatId(event.target.value.trim())} />
-            <button type="button" onClick={() => saveChannel('telegram')} disabled={busy !== null} className={secondaryButton}>
-              <Send size={13} />
+            <button type="button" onClick={() => saveChannel('telegram')} disabled={busy !== null} className={secondaryButton} aria-label="Save Telegram chat ID">
+              <TelegramLogo size={14} />
             </button>
           </div>
           <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] text-[#60a5fa] hover:underline">
@@ -473,13 +500,13 @@ export function PushNotificationSetup() {
         </div>
 
         <div>
-          <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-[#8190a0]" htmlFor="wa-phone">
-            WhatsApp number
+          <label className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-[#8190a0]" htmlFor="wa-phone">
+            <WhatsAppLogo size={12} /> WhatsApp number
           </label>
           <div className="flex gap-2">
             <input id="wa-phone" inputMode="tel" className={inputClass} value={whatsappPhone} placeholder="+61 400 000 000" onChange={(event) => setWhatsappPhone(event.target.value)} />
-            <button type="button" onClick={() => saveChannel('whatsapp')} disabled={busy !== null} className={secondaryButton}>
-              <MessageCircle size={13} />
+            <button type="button" onClick={() => saveChannel('whatsapp')} disabled={busy !== null} className={secondaryButton} aria-label="Save WhatsApp number">
+              <WhatsAppLogo size={14} />
             </button>
           </div>
         </div>
