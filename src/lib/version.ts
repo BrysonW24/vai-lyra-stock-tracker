@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.26.0',
+    date: '2026-07-17',
+    title: 'Error monitoring verified live in production - and the setup scaffolding is removed',
+    highlights: [
+      'Confirmed Sentry is armed in production: the DSN is inlined in the deployed client bundle, so a real crash - a browser error, a server exception, or a 500 in an API route - is now captured with a stack trace instead of vanishing. It stays optional and privacy-safe: with no DSN set (demo mode, self-hosting, forks of this repo) it sends nothing at all.',
+      'Removed the two temporary example routes the Sentry setup wizard created - a public page and API that deliberately throw an error. They existed only to prove reporting worked; with that confirmed, the app no longer exposes any deliberate crash endpoint.',
+      'No behaviour change for users: the monitoring runs silently in the background and only ever reports genuine errors, never usage or content.',
+    ],
+  },
+  {
     version: '0.25.0',
     date: '2026-07-17',
     title: 'Error monitoring: Sentry now catches crashes and server errors in production - optional and off by default',

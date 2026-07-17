@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-07-17
+
+Error monitoring verified live in production - and the setup scaffolding is removed.
+
+### Changed
+
+- Confirmed Sentry is armed in production: the DSN is inlined in the deployed client bundle, so a real crash - a browser error, a server exception, or a 500 in an API route - is now captured with a stack trace instead of vanishing. It stays optional and privacy-safe: with no DSN set (demo mode, self-hosting, forks of this repo) it sends nothing at all.
+- Removed the two temporary example routes the Sentry setup wizard created - a public page and API that deliberately throw an error. They existed only to prove reporting worked; with that confirmed, the app no longer exposes any deliberate crash endpoint.
+- No behaviour change for users: the monitoring runs silently in the background and only ever reports genuine errors, never usage or content.
+
 ## [0.25.0] - 2026-07-17
 
 Error monitoring: Sentry now catches crashes and server errors in production - optional and off by default.
@@ -535,7 +545,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.25.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.26.0...HEAD
+[0.26.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.22.0...v0.23.0
