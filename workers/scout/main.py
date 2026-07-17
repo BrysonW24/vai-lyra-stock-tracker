@@ -81,6 +81,8 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
             candidates = cluster_unmapped(list(pool.values()))
             summary["ideas_filed"] = _file_ideas(repo, candidates)
         else:
+            # Demo: no trailing window exists, so cluster tonight's pull alone.
+            candidates = cluster_unmapped(unmapped)
             logger.info("demo mode: %d items, %d idea candidates (not persisted)", len(items), len(candidates))
             for c in candidates:
                 logger.info("candidate: %s (confidence %d, %d evidence)", c.title, c.confidence, len(c.evidence))

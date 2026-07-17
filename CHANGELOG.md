@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.43.1] - 2026-07-17
+
+Scout demo-mode fix, proven by its first production run.
+
+### Changed
+
+- Fixed a crash in the scout worker when running with no database configured (the demo promise): a refactor left the keyless path referencing a value only computed on the live path. Pinned with a test that runs the whole orchestrator keyless.
+- The scout completed its first production run tonight: 400 broad-signal items read from 36 live feeds, attached across all ten verticals, with 110 unmapped items banked into the 14-day window where emerging-vertical drumbeats accumulate. No idea cards yet - the bar (3 items from 2 independent sources) is deliberately hard to clear on night one.
+
 ## [0.44.0] - 2026-07-17
 
 Your reviews now actually arrive - monthly, quarterly and yearly, with your real return.
@@ -738,7 +747,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.44.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.43.1...HEAD
+[0.43.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.44.0...v0.43.1
 [0.44.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.43.0...v0.44.0
 [0.43.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.42.0...v0.43.0
 [0.42.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.41.0...v0.42.0

@@ -135,3 +135,21 @@ class TestDeterminism:
     def test_item_id_is_stable(self):
         assert item_id("https://a.test/x", "Title") == item_id("https://a.test/x", "Title")
         assert item_id("https://a.test/x", "Title") != item_id("https://a.test/y", "Title")
+
+
+class TestOrchestratorDemoPath:
+    def test_run_scout_worker_demo_mode_completes(self, monkeypatch):
+        """The full orchestrator must run clean with NO Supabase client - the demo
+        promise. Pinned because a refactor once left the demo branch referencing a
+        variable only computed on the live path (UnboundLocalError on every keyless run)."""
+        from workers.scout import main as scout_main
+
+        class NoRepo:
+            client = None
+
+        # Keep the demo path off the network: no active sources -> demo_items().
+        monkeypatch.setattr(scout_main, "active_sources", lambda registry=None: [])
+        summary = scout_main.run_scout_worker(object(), NoRepo())
+        assert summary["status"] == "ok"
+        assert summary["items_fetched"] >= 3
+        assert summary["items_persisted"] == 0

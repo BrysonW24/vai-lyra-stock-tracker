@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.43.1',
+    date: '2026-07-17',
+    title: 'Scout demo-mode fix, proven by its first production run',
+    highlights: [
+      'Fixed a crash in the scout worker when running with no database configured (the demo promise): a refactor left the keyless path referencing a value only computed on the live path. Pinned with a test that runs the whole orchestrator keyless.',
+      'The scout completed its first production run tonight: 400 broad-signal items read from 36 live feeds, attached across all ten verticals, with 110 unmapped items banked into the 14-day window where emerging-vertical drumbeats accumulate. No idea cards yet - the bar (3 items from 2 independent sources) is deliberately hard to clear on night one.',
+    ],
+  },
+  {
     version: '0.44.0',
     date: '2026-07-17',
     title: 'Your reviews now actually arrive - monthly, quarterly and yearly, with your real return',
