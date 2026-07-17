@@ -32,8 +32,7 @@ alter table public.company_events alter column event_type drop not null;
 -- 3. The worker upserts on event_id, so it needs a unique constraint to conflict against.
 --    Partial: legacy rows have a null event_id and must not collide with each other.
 create unique index if not exists ux_company_events_event_id
-  on public.company_events(event_id)
-  where event_id is not null;
+  on public.company_events(event_id);
 
 -- 4. Read paths: the calendar filters and orders by event_date; the ticker index serves per-symbol reads.
 create index if not exists idx_company_events_event_date on public.company_events(event_date);

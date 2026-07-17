@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.41.0] - 2026-07-17
+
+The calendar and fundamentals are storing real data for the first time.
+
+### Changed
+
+- Company events and fundamentals now actually save. The nightly jobs had been reporting success while writing nothing at all: the upsert key was built as a partial index, which Postgres cannot use as a conflict target, so every single write was rejected and the jobs logged a warning and carried on. Both tables were empty. They now hold real rows, which means the market calendar reads live events and fundamentals have somewhere to land.
+- This was caught by watching a real run persist zero rows rather than by trusting a green tick - the job had been "succeeding" the whole time.
+
 ## [0.40.0] - 2026-07-17
 
 The new reviews could never have been delivered - the API was rejecting them.
@@ -697,7 +706,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.40.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.41.0...HEAD
+[0.41.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.40.0...v0.41.0
 [0.40.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.39.0...v0.40.0
 [0.39.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.38.0...v0.39.0
 [0.38.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.37.0...v0.38.0

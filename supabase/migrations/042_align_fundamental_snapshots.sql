@@ -31,8 +31,7 @@ alter table public.fundamental_snapshots add column if not exists eps_growth num
 --    a matching unique constraint or the write is rejected outright.
 alter table public.fundamental_snapshots add column if not exists snapshot_date date;
 create unique index if not exists ux_fundamental_snapshots_symbol_date
-  on public.fundamental_snapshots(symbol, snapshot_date)
-  where snapshot_date is not null;
+  on public.fundamental_snapshots(symbol, snapshot_date);
 
 -- 4. Serve the common read: latest snapshot per symbol.
 create index if not exists idx_fundamental_snapshots_symbol_date
