@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   buildTelegramTextForEvent,
   escapeHtml,
+  formatPct,
+  performanceBadge,
   scoreBar,
   TELEGRAM_MESSAGE_LIMIT,
 } from '../telegram-templates';
@@ -52,6 +54,72 @@ describe('scoreBar', () => {
   it('clamps out-of-range scores instead of over/under-filling', () => {
     expect([...scoreBar(999)].filter((c) => c === '⬜')).toHaveLength(0);
     expect([...scoreBar(-50)].filter((c) => c === '⬜')).toHaveLength(10);
+  });
+});
+
+describe('performanceBadge', () => {
+  it('escalates cash-with-wings across the 5 / 10 / 15% gain tiers', () => {
+    expect(performanceBadge(5)).toBe('💸');
+    expect(performanceBadge(10)).toBe('💸💸');
+    expect(performanceBadge(15)).toBe('💸💸💸');
+    expect(performanceBadge(42)).toBe('💸💸💸');
+  });
+
+  it('holds the boundaries exactly - 4.9 is not a 5% win', () => {
+    expect(performanceBadge(4.9)).toBe('🟢');
+    expect(performanceBadge(9.9)).toBe('💸');
+    expect(performanceBadge(14.9)).toBe('💸💸');
+  });
+
+  it('never dresses up a flat or losing period as a win', () => {
+    expect(performanceBadge(0)).toBe('➖');
+    expect(performanceBadge(-0.1)).toBe('🔻');
+    expect(performanceBadge(-30)).toBe('🔻');
+  });
+});
+
+describe('formatPct', () => {
+  it('is always explicit about direction', () => {
+    expect(formatPct(12.44)).toBe('+12.4%');
+    expect(formatPct(-6.15)).toBe('-6.2%');
+    expect(formatPct(0)).toBe('0.0%');
+  });
+});
+
+describe('review types', () => {
+  it('puts the performance badge in the header so a good period reads from the chat list', () => {
+    const text = buildTelegramTextForEvent(
+      event({ type: 'monthly_review', performancePct: 12.4, relatedEntityType: undefined, relatedEntityId: undefined }),
+    );
+    expect(text.startsWith('🗓 <b>Monthly review</b> · 💸💸 <b>+12.4%</b>')).toBe(true);
+  });
+
+  it('renders a losing month honestly rather than hiding it', () => {
+    const text = buildTelegramTextForEvent(
+      event({ type: 'quarterly_review', performancePct: -8.3, relatedEntityType: undefined, relatedEntityId: undefined }),
+    );
+    expect(text).toContain('🔻 <b>-8.3%</b>');
+    expect(text).not.toContain('💸');
+  });
+
+  it('gives every review period its own mark', () => {
+    const mk = (type: 'weekly_report' | 'monthly_review' | 'quarterly_review' | 'yearly_review') =>
+      buildTelegramTextForEvent(event({ type, relatedEntityType: undefined, relatedEntityId: undefined }));
+    expect(mk('weekly_report').startsWith('📊')).toBe(true);
+    expect(mk('monthly_review').startsWith('🗓')).toBe(true);
+    expect(mk('quarterly_review').startsWith('📆')).toBe(true);
+    expect(mk('yearly_review').startsWith('🏆')).toBe(true);
+  });
+
+  it('treats reviews as research output, so they carry the suffix', () => {
+    for (const type of ['monthly_review', 'quarterly_review', 'yearly_review'] as const) {
+      expect(buildTelegramTextForEvent(event({ type }))).toContain('Research, not advice.');
+    }
+  });
+
+  it('omits the badge on types that carry no measured outcome', () => {
+    const text = buildTelegramTextForEvent(event({ type: 'signal_alert', performancePct: 12.4 }));
+    expect(text).not.toContain('💸');
   });
 });
 

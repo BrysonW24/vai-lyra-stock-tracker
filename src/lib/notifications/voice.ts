@@ -43,6 +43,9 @@ const FAMILY_BY_TYPE: Record<NotificationType, EventFamily> = {
   kill_switch_enabled: 'orders',
   daily_digest: 'digest',
   weekly_report: 'digest',
+  monthly_review: 'digest',
+  quarterly_review: 'digest',
+  yearly_review: 'digest',
   test_notification: 'test',
 };
 

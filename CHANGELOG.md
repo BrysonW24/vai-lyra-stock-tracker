@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-07-17
+
+Weekly, monthly, quarterly and yearly reviews - see how you are actually doing.
+
+### Changed
+
+- Lyra can now deliver a weekly, monthly, quarterly or yearly review, so you can finally see how you are doing over a period that matters instead of only what fired in the last hour.
+- A good period looks good before you read a word: your return rides in the header with a cash badge that escalates as you climb - one at +5%, two at +10%, three at +15% and above.
+- A bad period is never dressed up. A losing review carries a red marker, not a softer emoji - if the cash badge could show up on a loss it would tell you nothing.
+- Reviews are written to land a finding, not dump statistics: what changed, what it cost or earned you, and the one habit behind it.
+- Delivery only for now. Nothing generates these on a schedule yet, and the return figure is not yet computed from your real positions - the jobs that do both are next.
+
 ## [0.37.0] - 2026-07-17
 
 Telegram alerts are readable now: colour-coded relevance, real formatting, no more wall of text.
@@ -664,7 +676,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.37.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.38.0...HEAD
+[0.38.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.37.0...v0.38.0
 [0.37.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.36.0...v0.37.0
 [0.36.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.35.0...v0.36.0
 [0.35.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.34.0...v0.35.0

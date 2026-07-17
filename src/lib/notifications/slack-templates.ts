@@ -43,7 +43,10 @@ const TYPE_STYLE: Record<NotificationType, SlackTypeStyle> = {
   order_rejected: { emoji: ':x:', label: 'Order rejected', framing: 'The deterministic risk engine rejected an intent.' },
   kill_switch_enabled: { emoji: ':electric_plug:', label: 'Kill switch', framing: 'Automated activity has been halted.' },
   daily_digest: { emoji: ':coffee:', label: 'Daily digest', framing: 'Your day in one message.' },
-  weekly_report: { emoji: ':bar_chart:', label: 'Weekly report', framing: 'The week, scored and summarised.' },
+  weekly_report: { emoji: ':bar_chart:', label: 'Weekly review', framing: 'Your week, scored and measured.' },
+  monthly_review: { emoji: ':calendar:', label: 'Monthly review', framing: 'A month of decisions, measured against what actually happened.' },
+  quarterly_review: { emoji: ':date:', label: 'Quarterly review', framing: 'Three months in - the trend behind the noise.' },
+  yearly_review: { emoji: ':trophy:', label: 'Year in review', framing: 'A full year of your investing, honestly scored.' },
   test_notification: { emoji: ':wave:', label: 'Test', framing: 'Just checking this channel reaches you.' },
 };
 
@@ -68,6 +71,9 @@ const SIGNAL_LIKE_TYPES: ReadonlySet<NotificationType> = new Set<NotificationTyp
   'watchlist_price_move',
   'daily_digest',
   'weekly_report',
+  'monthly_review',
+  'quarterly_review',
+  'yearly_review',
 ]);
 
 const PAPER_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([

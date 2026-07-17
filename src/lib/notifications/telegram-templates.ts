@@ -48,9 +48,48 @@ const TYPE_STYLE: Record<NotificationType, TelegramTypeStyle> = {
   order_rejected: { emoji: '❌', label: 'Order rejected', framing: 'The deterministic risk engine rejected an intent.' },
   kill_switch_enabled: { emoji: '🔌', label: 'Kill switch', framing: 'Automated activity has been halted.' },
   daily_digest: { emoji: '☕', label: 'Daily digest', framing: 'Your day in one message.' },
-  weekly_report: { emoji: '📊', label: 'Weekly report', framing: 'The week, scored and summarised.' },
+  weekly_report: { emoji: '📊', label: 'Weekly review', framing: 'Your week, scored and measured.' },
+  monthly_review: { emoji: '🗓', label: 'Monthly review', framing: 'A month of decisions, measured against what actually happened.' },
+  quarterly_review: { emoji: '📆', label: 'Quarterly review', framing: 'Three months in - the trend behind the noise.' },
+  yearly_review: { emoji: '🏆', label: 'Year in review', framing: 'A full year of your investing, honestly scored.' },
   test_notification: { emoji: '👋', label: 'Test', framing: 'Just checking this channel reaches you.' },
 };
+
+/** Types that report a measured outcome, so a performance badge is meaningful on them. */
+const OUTCOME_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
+  'weekly_report',
+  'monthly_review',
+  'quarterly_review',
+  'yearly_review',
+  'paper_trade_closed',
+  'signal_followup',
+]);
+
+/**
+ * Performance badge - escalating cash-with-wings so a good period LOOKS good before a
+ * single word is read, and a bad one is never dressed up as anything else.
+ *
+ *   >= +15%  💸💸💸      >= +10%  💸💸      >= +5%  💸
+ *   > 0      🟢          flat     ➖         < 0     🔻
+ *
+ * Tiers are on measured percent from the engine (event.performancePct), never inferred
+ * from prose. Honesty is the point: a loss gets a red arrow, not a softer emoji.
+ */
+export function performanceBadge(pct: number): string {
+  if (!Number.isFinite(pct)) return '';
+  if (pct >= 15) return '💸💸💸';
+  if (pct >= 10) return '💸💸';
+  if (pct >= 5) return '💸';
+  if (pct > 0) return '🟢';
+  if (pct === 0) return '➖';
+  return '🔻';
+}
+
+/** Signed percent, one decimal - always explicit about direction. */
+export function formatPct(pct: number): string {
+  const sign = pct > 0 ? '+' : '';
+  return `${sign}${pct.toFixed(1)}%`;
+}
 
 const SEVERITY_TAG: Record<NotificationSeverity, string> = {
   low: '',
@@ -73,6 +112,9 @@ const SIGNAL_LIKE_TYPES: ReadonlySet<NotificationType> = new Set<NotificationTyp
   'watchlist_price_move',
   'daily_digest',
   'weekly_report',
+  'monthly_review',
+  'quarterly_review',
+  'yearly_review',
 ]);
 
 const PAPER_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
@@ -190,8 +232,15 @@ export function buildTelegramTextForEvent(
       ? ` · <code>$${escapeHtml(event.relatedEntityId.toUpperCase())}</code>`
       : '';
 
-  // One dense header line: what fired, on what, how urgent - readable from the chat list.
-  const head = [`${style.emoji} <b>${escapeHtml(style.label)}</b>${symbol}`, severity]
+  // Performance rides in the header for outcome types, so a good period is visible from the
+  // chat list without opening the message - which is the whole point of a review.
+  const perf =
+    OUTCOME_TYPES.has(event.type) && Number.isFinite(event.performancePct)
+      ? `${performanceBadge(event.performancePct!)} <b>${formatPct(event.performancePct!)}</b>`
+      : '';
+
+  // One dense header line: what fired, on what, how it went, how urgent.
+  const head = [`${style.emoji} <b>${escapeHtml(style.label)}</b>${symbol}`, perf, severity]
     .filter(Boolean)
     .join(' · ');
 

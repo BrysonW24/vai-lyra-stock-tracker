@@ -42,7 +42,10 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   order_rejected: 'ORDER REJECTED',
   kill_switch_enabled: 'KILL SWITCH',
   daily_digest: 'DAILY DIGEST',
-  weekly_report: 'WEEKLY REPORT',
+  weekly_report: 'WEEKLY REVIEW',
+  monthly_review: 'MONTHLY REVIEW',
+  quarterly_review: 'QUARTERLY REVIEW',
+  yearly_review: 'YEAR IN REVIEW',
   test_notification: 'TEST',
 };
 
@@ -65,6 +68,9 @@ const SIGNAL_LIKE_TYPES: ReadonlySet<NotificationType> = new Set<NotificationTyp
   'watchlist_price_move',
   'daily_digest',
   'weekly_report',
+  'monthly_review',
+  'quarterly_review',
+  'yearly_review',
 ]);
 
 /** Truncate with a trailing ellipsis marker, never exceeding `max` characters. */

@@ -41,6 +41,9 @@ export type NotificationType =
   | 'kill_switch_enabled'
   | 'daily_digest'
   | 'weekly_report'
+  | 'monthly_review'
+  | 'quarterly_review'
+  | 'yearly_review'
   | 'test_notification';
 
 export type NotificationSeverity = 'low' | 'medium' | 'high' | 'critical';
@@ -62,6 +65,13 @@ export interface NotificationEvent {
   url?: string;
   /** 0-100 relevance from the deterministic engine. */
   relevanceScore: number;
+  /**
+   * Engine-measured performance over the event's window, as a percent (12.4 = +12.4%).
+   * Only set by types that actually report an outcome - the periodic reviews and closed
+   * paper trades. It drives the performance badge, so it must be a real measured number:
+   * a renderer must never infer "this went well" from prose.
+   */
+  performancePct?: number;
   /** Same-content collapse key (e.g. `${type}:${symbol}:${day}`). */
   dedupeKey: string;
   /** Exactly-once delivery key per channel attempt. */
