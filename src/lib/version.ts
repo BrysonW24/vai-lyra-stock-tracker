@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.54.0',
+    date: '2026-07-17',
+    title: 'The news intelligence layer can finally save, and the macro tapes stop showing frozen numbers',
+    highlights: [
+      'Diagnosed the nightly "fetched 25 news items but persisted 0" failure to its roots: the database tables for news, ticker-news mapping and hype scores were built in a different shape than the worker writes - one table did not even exist on a fresh install. Migration 049 aligns all three (apply it in the Supabase SQL editor; the nightly schema-drift check will remind you until you do), and 8 new drift tests pin the worker and the schema together so they can never silently split again.',
+      'The Markets tape now tells the truth: the risk regime appears as a word next to the dot, and a Sample badge shows whenever the numbers are the bundled demo rather than the live hourly snapshot - which the app can now actually read, for the first time, from the archive the worker builds every hour.',
+      'The AU Macro tape - the only sample surface in the app that never admitted it - gets the same honesty chip, and AUD/USD and the ASX 200 now display live from the hourly snapshot while the seeded rows (cash rate, CPI, jobs) say so plainly until their RBA/ABS feeds land.',
+      'The Daily Brief stops narrating a fabricated market regime: it reads the same live snapshot as the tape, so what it says about the day is what the engine actually measured.',
+      'Small honesty fix: the calendar drawer no longer claims an unknown ticker trades on NASDAQ - it says "US listing" unless it actually knows.',
+    ],
+  },
+  {
     version: '0.53.0',
     date: '2026-07-17',
     title: 'AI spend controls that actually hold on serverless',

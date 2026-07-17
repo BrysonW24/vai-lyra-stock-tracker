@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.54.0] - 2026-07-17
+
+The news intelligence layer can finally save, and the macro tapes stop showing frozen numbers.
+
+### Changed
+
+- Diagnosed the nightly "fetched 25 news items but persisted 0" failure to its roots: the database tables for news, ticker-news mapping and hype scores were built in a different shape than the worker writes - one table did not even exist on a fresh install. Migration 049 aligns all three (apply it in the Supabase SQL editor; the nightly schema-drift check will remind you until you do), and 8 new drift tests pin the worker and the schema together so they can never silently split again.
+- The Markets tape now tells the truth: the risk regime appears as a word next to the dot, and a Sample badge shows whenever the numbers are the bundled demo rather than the live hourly snapshot - which the app can now actually read, for the first time, from the archive the worker builds every hour.
+- The AU Macro tape - the only sample surface in the app that never admitted it - gets the same honesty chip, and AUD/USD and the ASX 200 now display live from the hourly snapshot while the seeded rows (cash rate, CPI, jobs) say so plainly until their RBA/ABS feeds land.
+- The Daily Brief stops narrating a fabricated market regime: it reads the same live snapshot as the tape, so what it says about the day is what the engine actually measured.
+- Small honesty fix: the calendar drawer no longer claims an unknown ticker trades on NASDAQ - it says "US listing" unless it actually knows.
+
 ## [0.53.0] - 2026-07-17
 
 AI spend controls that actually hold on serverless.
@@ -846,7 +858,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.53.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.54.0...HEAD
+[0.54.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.53.0...v0.54.0
 [0.53.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.52.0...v0.53.0
 [0.52.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.51.0...v0.52.0
 [0.51.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.50.0...v0.51.0
