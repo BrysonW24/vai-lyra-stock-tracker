@@ -21,13 +21,36 @@ Two conventions carry the whole design:
 
 | Gate | Command | Enforces | Runs in |
 |---|---|---|---|
-| Version bump | `npm run check:version` | shippable change => `RELEASES` entry; `package.json`/`version.ts`/`CHANGELOG.md` lockstep | pre-push hook + CI `version-guard` |
+| Version bump | `npm run check:version` | shippable change => `RELEASES` entry; `package.json`/`version.ts`/`CHANGELOG.md` lockstep. Judges the version in the COMMITS BEING PUSHED, not the working tree. Test files are exempt (they ship nothing). | pre-push hook + CI `version-guard` |
 | Onboarding parity | `npm run check:onboarding` | human + companion + agent onboarding surfaces match the codebase (stack, costs, env, routes, version) | CI |
-| Chain coverage | `npm run check:chains` | every code section has an owning skill chain; no dead paths or orphan chains in the map | CI |
+| Onboarding contract | `npm run check:onboarding-contract` | every onboarding answer is persisted, read back, and reaches the AI prompt; the core profile read never references a column newer than the baseline migration | CI |
+| Migration integrity | `npm run check:migrations` | unique version prefixes; no table created twice with different shapes (`create table if not exists` silently NO-OPs the second) | CI |
+| **Schema drift** | `npm run check:schema-drift` | **the LIVE database matches the migrations in this repo.** Needs a DB URL; `--require-db` makes a missing one a failure | nightly `schema-drift` job |
 
 Adding a gate: name it `scripts/check-<thing>.mjs`, give it a `check:<thing>` npm
 script, wire it into CI, and register it in this table. A gate that only runs when
 someone remembers it is not a gate.
+
+### The rule these gates exist to enforce: a green must be able to go red
+
+Every gate above was earned by a failure that a green build actively concealed. Read this before
+adding a `|| true`, a silent skip, or a "non-fatal" catch:
+
+- **`|| echo "(non-fatal)"` in the nightly** swallowed the exit code, so the events and fundamentals
+  workers failed EVERY night for months under a green tick. Best-effort must never mean invisible:
+  record the failure, keep going, fail the run at the end.
+- **A check that silently skips is the same lie as a check that always passes.** `check:schema-drift`
+  takes `--require-db` so a missing secret fails instead of skipping quietly.
+- **The version guard read `version.ts` off disk**, so an unrelated uncommitted bump satisfied the
+  hook while CI, which only sees the commit, failed. A gate that disagrees with CI is worse than no
+  gate.
+- **Tests must not depend on the machine.** Quiet-hours tests built clocks in the runner's timezone
+  while the router evaluates in `Australia/Sydney`; they passed in Sydney and failed on UTC runners,
+  making CI red ~9 hours of every day - and left the safety-critical bypass tests passing for the
+  wrong reason. `npm test` pins `TZ=UTC` so a local run is byte-identical to CI.
+- **Prose in a playbook does not hold a line.** `/data-integrity` Stage 1 already instructed agents to
+  diff migrations against the live project and call any unapplied one "finding #1". It said the right
+  thing and still seven migrations went unapplied back to 018. That instruction is now a script.
 
 `npm run doctor` (`scripts/doctor.mjs`) is the advisory layer on top: reports mode
 (demo/live/AI), missing wiring, hook integrity, and the Python interpreter - run it

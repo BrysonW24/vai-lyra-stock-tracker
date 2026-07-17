@@ -1,0 +1,212 @@
+#!/usr/bin/env node
+/**
+ * Schema-drift gate: does the LIVE database actually match the migrations in this repo?
+ *
+ * This is the guard that was missing. check-migrations.mjs only reads files - it can prove the
+ * migrations are internally coherent, but it can never know whether they were APPLIED. On
+ * 2026-07-17 an audit found SEVEN migrations that had never reached production, and every one of
+ * them failed silently:
+ *
+ *   037 operator_profiles.goal_target_amount  -> getUserConstraints 400'd on the missing column and
+ *                                                returned null, so the AI copilot ran with ZERO
+ *                                                personalisation for every user in prod
+ *   038 community_ideas / community_idea_votes -> the Ideas board could never save an idea or a vote
+ *   031 activation_events                      -> activation tracking wrote nowhere
+ *   033 user_settings.twin_capture_enabled     -> twin consent switch absent
+ *   + the company_events / fundamental_snapshots shape drift that broke the calendar and killed
+ *     every fundamentals snapshot
+ *
+ * Nothing anywhere told anyone. The app degraded quietly, the workers logged warnings into the void,
+ * and CI was green throughout - because CI never looks at the database.
+ *
+ * It was NOT a broken migration chain: 034/035/036 were applied while 031/033/037/038 were not.
+ * Migrations here are applied BY HAND via the Supabase SQL editor, so "someone forgot" is the normal
+ * failure mode, not the exception. That is precisely why this has to be mechanical.
+ *
+ * What it does: parses every migration for the tables/columns it should create, then asks the live
+ * database (information_schema) whether they exist, and reports exactly what is missing.
+ *
+ * Connection: reads SUPABASE_POOLER_URL / SUPABASE_DB_URL / DATABASE_URL from the environment, or
+ * from .env.local (gitignored). The URL holds the DB password, so it is never printed. Uses psql -
+ * no driver dependency, available locally and on the ubuntu runners.
+ *
+ * Usage:
+ *   node scripts/check-schema-drift.mjs                # skips loudly if no DB URL (local dev)
+ *   node scripts/check-schema-drift.mjs --require-db   # FAILS if no DB URL (use in scheduled CI)
+ *   node scripts/check-schema-drift.mjs --json
+ *
+ * Exit: 0 = live schema matches (or skipped without --require-db), 1 = drift found / no DB URL when required.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const jsonMode = process.argv.includes('--json');
+const requireDb = process.argv.includes('--require-db');
+const MIGRATIONS = path.join(root, 'supabase/migrations');
+
+// Objects we deliberately do not assert on: legacy columns kept only for backwards compatibility,
+// and anything created conditionally inside a DO block that this parser cannot evaluate.
+const IGNORE_TABLES = new Set(['schema_migrations']);
+
+// ---------------------------------------------------------------------------------------------
+// 1. Resolve the connection URL without ever printing it.
+function resolveDbUrl() {
+  for (const k of ['SUPABASE_POOLER_URL', 'SUPABASE_DB_URL', 'DATABASE_URL']) {
+    const v = process.env[k];
+    if (v && /postgres(ql)?:\/\//.test(v)) return v.replace(/^.*?(postgres(ql)?:\/\/)/, '$1').trim();
+  }
+  const envFile = path.join(root, '.env.local');
+  if (fs.existsSync(envFile)) {
+    for (const line of fs.readFileSync(envFile, 'utf8').split('\n')) {
+      if (/^(SUPABASE_POOLER_URL|SUPABASE_DB_URL|DATABASE_URL)=/.test(line) && /postgres(ql)?:\/\//.test(line)) {
+        return line.replace(/^.*?(postgres(ql)?:\/\/)/, '$1').replace(/["']$/, '').trim();
+      }
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------------------------
+// 2. What SHOULD exist, per the migrations.
+function expectedObjects() {
+  const tables = new Map(); // table -> Set(columns)
+  const files = fs.readdirSync(MIGRATIONS).filter((f) => f.endsWith('.sql')).sort();
+
+  for (const file of files) {
+    const sql = stripComments(fs.readFileSync(path.join(MIGRATIONS, file), 'utf8'));
+
+    // create table [if not exists] [public.]name ( col type, ... )
+    const re = /create table(?:\s+if not exists)?\s+(?:public\.)?(\w+)\s*\(/gi;
+    let m;
+    while ((m = re.exec(sql))) {
+      const table = m[1].toLowerCase();
+      if (IGNORE_TABLES.has(table)) continue;
+      const body = balanced(sql, re.lastIndex - 1);
+      if (body === null) continue;
+      if (!tables.has(table)) tables.set(table, new Set());
+      for (const line of body.split('\n')) {
+        const t = line.trim();
+        if (!t || /^(unique|primary|foreign|constraint|check|references|exclude)\b/i.test(t)) continue;
+        const cm = t.match(/^([a-z_][a-z0-9_]*)\s+/i);
+        if (cm) tables.get(table).add(cm[1].toLowerCase());
+      }
+    }
+
+    // alter table [public.]name add column [if not exists] col
+    for (const a of sql.matchAll(
+      /alter table\s+(?:public\.)?(\w+)\s+add column(?:\s+if not exists)?\s+([a-z_][a-z0-9_]*)/gi,
+    )) {
+      const table = a[1].toLowerCase();
+      if (IGNORE_TABLES.has(table)) continue;
+      if (!tables.has(table)) tables.set(table, new Set());
+      tables.get(table).add(a[2].toLowerCase());
+    }
+  }
+  return tables;
+}
+
+function stripComments(sql) {
+  return sql.replace(/--[^\n]*/g, '');
+}
+
+function balanced(s, open) {
+  let depth = 0;
+  for (let i = open; i < s.length; i++) {
+    if (s[i] === '(') depth++;
+    else if (s[i] === ')') {
+      depth--;
+      if (depth === 0) return s.slice(open + 1, i);
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------------------------
+// 3. What DOES exist, per the live database.
+function liveObjects(dbUrl) {
+  const out = execFileSync(
+    'psql',
+    [
+      dbUrl,
+      '-v', 'ON_ERROR_STOP=1',
+      '-qAt',
+      '-c',
+      "select table_name || '.' || column_name from information_schema.columns where table_schema='public';",
+    ],
+    { encoding: 'utf8', env: { ...process.env, PGCONNECT_TIMEOUT: '20' }, stdio: ['ignore', 'pipe', 'pipe'] },
+  );
+  const tables = new Map();
+  for (const row of out.split('\n')) {
+    const line = row.trim();
+    if (!line) continue;
+    const [table, column] = line.split('.');
+    if (!table || !column) continue;
+    if (!tables.has(table)) tables.set(table, new Set());
+    tables.get(table).add(column);
+  }
+  return tables;
+}
+
+// ---------------------------------------------------------------------------------------------
+const dbUrl = resolveDbUrl();
+if (!dbUrl) {
+  const msg =
+    'no database URL found (set SUPABASE_POOLER_URL / SUPABASE_DB_URL / DATABASE_URL, or put it in .env.local)';
+  if (requireDb) {
+    console.error(`\x1b[31m[schema-drift] FAIL - ${msg}\x1b[0m`);
+    console.error('  --require-db was passed, so a missing URL is a failure: this check must never be silently skipped where it is meant to run.');
+    process.exit(1);
+  }
+  console.log(`[schema-drift] SKIPPED - ${msg}. (Pass --require-db where this must run.)`);
+  process.exit(0);
+}
+
+let live;
+try {
+  live = liveObjects(dbUrl);
+} catch (err) {
+  const detail = String(err.stderr || err.message || err).replace(/postgres(ql)?:\/\/\S+/g, 'postgresql://***');
+  console.error(`\x1b[31m[schema-drift] FAIL - could not read the live schema.\x1b[0m\n  ${detail.trim().split('\n')[0]}`);
+  process.exit(1);
+}
+
+const expected = expectedObjects();
+const missingTables = [];
+const missingColumns = [];
+
+for (const [table, columns] of expected) {
+  if (!live.has(table)) {
+    missingTables.push(table);
+    continue;
+  }
+  const liveCols = live.get(table);
+  for (const col of columns) {
+    if (!liveCols.has(col)) missingColumns.push(`${table}.${col}`);
+  }
+}
+
+const ok = missingTables.length === 0 && missingColumns.length === 0;
+
+if (jsonMode) {
+  console.log(JSON.stringify({ ok, missingTables, missingColumns, tablesChecked: expected.size }, null, 2));
+} else if (ok) {
+  console.log(`[schema-drift] ok - live database matches the migrations (${expected.size} tables checked).`);
+} else {
+  console.error(`\n\x1b[31m[schema-drift] the live database does NOT match the migrations in this repo\x1b[0m`);
+  if (missingTables.length) {
+    console.error(`\n  MISSING TABLES (${missingTables.length}) - the migration that creates these has never been applied:`);
+    for (const t of missingTables.sort()) console.error(`    - ${t}`);
+  }
+  if (missingColumns.length) {
+    console.error(`\n  MISSING COLUMNS (${missingColumns.length}) - present in a migration, absent in the database:`);
+    for (const c of missingColumns.sort()) console.error(`    - ${c}`);
+  }
+  console.error(
+    '\nEvery one of these fails SILENTLY at runtime: the query 400s, the code swallows it, and the feature quietly does nothing.',
+  );
+  console.error('Apply the outstanding migrations (Supabase SQL editor, or psql against the pooler URL), then re-run.');
+}
+process.exit(ok ? 0 : 1);

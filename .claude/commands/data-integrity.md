@@ -29,14 +29,34 @@ that errors instead of degrading breaks the zero-key promise.**
 
 ## Stage 1 - Schema vs reality
 
-1. Diff `supabase/migrations/` against the live project (or the local shadow): any
-   migration authored but not applied is finding #1. New tables MUST have an RLS stanza
-   in the same migration - RLS-later is how 030 became necessary.
-2. `sql/_apply_all_scanner_schema.sql` must stay idempotent - re-running it twice locally
+> **Why this stage is now mechanical.** This stage used to *say* "diff the migrations against the
+> live project: any migration authored but not applied is finding #1". It said exactly the right
+> thing, and it did not work: on 2026-07-17 an audit found migrations going back to **018** that had
+> never been applied to prod. The AI copilot ran with ZERO personalisation (a missing
+> `goal_target_amount` made the whole profile read 400 and return null), the Ideas board could not
+> save a single idea or vote, and Slack alerting had no column to store its preference. All silent.
+> **A prose instruction in a playbook does not hold a line - only a gate does.** So the diff is now a
+> script, and it runs nightly against prod whether or not anyone reads this file.
+
+1. `npm run check:migrations` - file-level coherence: unique version prefixes, and no table created
+   twice with different shapes. (`create table if not exists` silently NO-OPs on the second
+   definition, which is how `company_events` had two incompatible shapes and the calendar broke.)
+2. `npm run check:schema-drift` - **the live database vs these migrations.** Needs a DB URL
+   (`SUPABASE_POOLER_URL` in gitignored `.env.local`, or the repo secret in CI). It also runs as its
+   own job in `nightly-maintenance.yml` with `--require-db`, so a missing secret FAILS rather than
+   skipping quietly.
+3. Migrations are applied BY HAND via the Supabase SQL editor here, so "someone forgot" is the
+   normal failure mode, not the exception. Assume drift until the gate says otherwise.
+4. **Ordering is part of correctness.** A migration that adds a column must sort BEFORE one that
+   indexes it. `041_reconcile_company_events` sorted after `040`, which indexes
+   `company_events(ticker)` - so a from-scratch build died on "column ticker does not exist". It was
+   renumbered to 039. Apply the batch in one transaction so a wrong order rolls back cleanly.
+5. New tables MUST have an RLS stanza in the same migration - RLS-later is how 030 became necessary.
+6. `sql/_apply_all_scanner_schema.sql` must stay idempotent - re-running it twice locally
    must be a no-op.
 
-**Gate:** you can state which migrations are applied where (local/live), or explicitly
-that live state is unreachable this session.
+**Gate:** `npm run check:migrations` passes AND `npm run check:schema-drift` reports parity against
+the live database. "I read the migrations and they look right" is NOT evidence - the gate is.
 
 ## Stage 2 - RLS + tenancy audit
 
