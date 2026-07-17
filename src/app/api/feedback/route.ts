@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { coerceFeedbackType, deliverFeedback } from '@/lib/feedback';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimitShared } from '@/lib/ratelimit';
 import { clientIp } from '@/lib/api/ai-guard';
 
 /**
@@ -12,7 +12,7 @@ import { clientIp } from '@/lib/api/ai-guard';
 
 export async function POST(request: NextRequest) {
   // Each submission can open a GitHub issue + post to Slack - dampen drive-by spam.
-  const rl = rateLimit(`ip:${clientIp(request)}`, { scope: 'feedback', capacity: 5, windowMs: 60_000 });
+  const rl = await rateLimitShared(`ip:${clientIp(request)}`, { scope: 'feedback', capacity: 5, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ ok: false, error: 'Too many submissions - wait a minute and try again.' }, { status: 429 });
   }

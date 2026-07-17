@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { buildLiveSignal } from '@/lib/live-signals';
 import { getOutcomeDistribution, formatOutcomeSummary } from '@/lib/outcomes';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimitShared } from '@/lib/ratelimit';
 import { clientIp } from '@/lib/api/ai-guard';
 
 /**
@@ -63,7 +63,7 @@ async function liveOutcomeSummary(status: string): Promise<{ summary: string; sa
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ symbol: string }> }) {
   // Unauthenticated Yahoo-backed refresh - same abuse damping as ticker-lookup.
-  const rl = rateLimit(`ip:${clientIp(request)}`, { scope: 'signals', capacity: 30, windowMs: 60_000 });
+  const rl = await rateLimitShared(`ip:${clientIp(request)}`, { scope: 'signals', capacity: 30, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ ok: false, reason: 'rate_limited' }, { status: 429 });
   }

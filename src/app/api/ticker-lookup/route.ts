@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { lookupMarketQuote } from '@/lib/market/quote';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimitShared } from '@/lib/ratelimit';
 import { clientIp } from '@/lib/api/ai-guard';
 
 /**
@@ -13,7 +13,7 @@ import { clientIp } from '@/lib/api/ai-guard';
 
 export async function GET(request: NextRequest) {
   // Unauthenticated Yahoo proxy - dampen abuse so it cannot be used as a fetch amplifier.
-  const rl = rateLimit(`ip:${clientIp(request)}`, { scope: 'lookup', capacity: 30, windowMs: 60_000 });
+  const rl = await rateLimitShared(`ip:${clientIp(request)}`, { scope: 'lookup', capacity: 30, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ valid: false, error: 'Too many lookups - wait a moment.' }, { status: 429 });
   }

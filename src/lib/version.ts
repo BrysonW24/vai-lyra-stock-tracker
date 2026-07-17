@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.23.0',
+    date: '2026-07-17',
+    title: 'Global rate limits: the abuse guard now counts across every serverless instance, not per-instance',
+    highlights: [
+      'The three unauthenticated endpoints (per-symbol signal refresh, ticker lookup, and in-app feedback) now enforce their rate limits across every serverless instance at once, using the shared Upstash counter instead of a separate in-memory bucket per instance. Before, a burst spread across instances could get several times the intended allowance; it is now one exact global budget per IP.',
+      'Fail-safe by design: with Upstash unconfigured (demo mode, self-host) or briefly unreachable, the limiter degrades to the in-process guard rather than failing open - it always does something, and the app still runs with zero keys.',
+      'Proven, not assumed: a new test clears the in-memory buckets between calls to simulate a request landing on a fresh, cold instance and shows the shared counter still blocks an over-budget request - the exact gap this closes.',
+    ],
+  },
+  {
     version: '0.22.0',
     date: '2026-07-17',
     title: 'One clean rail and an Explore drawer: the daily-drivers up front, the deep research one tap away',
