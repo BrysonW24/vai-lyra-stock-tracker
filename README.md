@@ -94,7 +94,7 @@ grain: the trigger reason, the symbol, a relevance score, and a link back into L
 
 <p align="center">
   <img src="assets/onboarding-alerts-channel-selection.png" width="30%" alt="Alerts - choose your channels and what to be alerted about" />
-  <img src="assets/notification-alert-mode-quiet-hours.png" width="30%" alt="Alert mode - quick mute, frequency, scope and quiet hours" />
+  <img src="assets/notification-pwa-push-ios.jpg" width="30%" alt="Web push - an alert on the iOS lock screen, no app store needed" />
   <img src="assets/notification-slack-signal.png" width="30%" alt="Slack - a live signal alert delivered to a channel" />
 </p>
 
