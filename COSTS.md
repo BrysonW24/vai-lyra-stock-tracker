@@ -4,6 +4,9 @@ Every service in the stack, priced. All prices are **USD, verified on the provid
 pricing page on 2026-07-16** unless marked otherwise. Prices drift - if this file is more
 than a few months old, spot-check the sources before budgeting.
 
+Companion file: [`DATA-ECONOMICS.md`](./DATA-ECONOMICS.md) - what the live deployment actually
+consumes (measured call volumes, table growth, free-tier runway). Prices live here; usage lives there.
+
 ## TL;DR - four cost scenarios
 
 | Scenario | What you get | Monthly cost |

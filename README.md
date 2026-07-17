@@ -22,7 +22,7 @@ This repo is built to be **shared as a link and replicated end to end**. Four th
 2. **An AI key (optional)** - set `OPENAI_API_KEY` server-side for hosted explanations, or paste any provider's key in **Settings -> AI** (BYOK, stays in your browser). The console is fully usable with no AI key at all.
 3. **Hosting (optional)** - free on Vercel, or your own server with **Coolify** using the included [`Dockerfile`](./Dockerfile): [deploy walkthrough](./docs/walkthroughs/04-deploy-your-own.md) + [Coolify runbook](./docs/runbooks/coolify-deploy.md).
 4. **Alerts where you live** - urgent setups and hourly summaries pushed to you: web push with zero accounts, Telegram in ~10 minutes, Slack via your own incoming webhook (paste it in Settings -> Notifications), WhatsApp honestly scoped: [alerts walkthrough](./docs/walkthroughs/06-alerts-on-your-phone.md).
-5. **Costs, fully itemised** - every service in the stack priced in [`COSTS.md`](./COSTS.md). Demo mode is $0; a fully live, always-on setup can run on free tiers.
+5. **Costs, fully itemised** - every service in the stack priced in [`COSTS.md`](./COSTS.md). Demo mode is $0; a fully live, always-on setup can run on free tiers - and [`DATA-ECONOMICS.md`](./DATA-ECONOMICS.md) shows the measured usage + how long the free tiers actually last.
 
 ## 0 - How to Access Lyra
 
