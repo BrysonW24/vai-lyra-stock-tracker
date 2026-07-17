@@ -17,8 +17,15 @@
  */
 
 import { withRetry, defaultIsRetryable, BackpressureLimiter } from '@/lib/ai/resilience';
+import { extractUsage, estimateCostUsd, type TokenUsage } from '@/lib/ai/cost';
 
 export type AiProvider = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'xai';
+
+/** One provider round-trip: the text plus the token usage the provider reported (null if omitted). */
+interface CompletionRaw {
+  text: string;
+  usage: TokenUsage | null;
+}
 
 export interface AiCompleteParams {
   provider: AiProvider;
@@ -42,6 +49,10 @@ export interface AiCompleteResult {
   provider: AiProvider;
   /** The model actually used (after default resolution) - useful for usage logging (AI-11). */
   model: string;
+  /** Token usage the provider reported, or null when it omitted a usage block. Never estimated. */
+  usage: TokenUsage | null;
+  /** Estimated USD at list price (real tokens x declared rate), or null when tokens/price unknown. */
+  costUsd: number | null;
 }
 
 /**
@@ -87,7 +98,7 @@ async function callAnthropic(
   prompt: string,
   maxTokens: number,
   temperature?: number,
-): Promise<string> {
+): Promise<CompletionRaw> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
@@ -101,7 +112,7 @@ async function callAnthropic(
   });
   if (!res.ok) throw new Error(describeProviderError('anthropic', res.status));
   const data = (await res.json()) as { content?: Array<{ text?: string }> };
-  return data.content?.[0]?.text?.trim() ?? '';
+  return { text: data.content?.[0]?.text?.trim() ?? '', usage: extractUsage('anthropic', data) };
 }
 
 interface OpenAiResponse {
@@ -110,6 +121,7 @@ interface OpenAiResponse {
     type?: string;
     content?: Array<{ type?: string; text?: string }>;
   }>;
+  usage?: { input_tokens?: number; output_tokens?: number };
 }
 
 function openAiReasoningEffort(): 'none' | 'low' | 'medium' | 'high' | 'xhigh' {
@@ -126,7 +138,7 @@ async function callOpenAiResponses(
   prompt: string,
   maxTokens: number,
   temperature?: number,
-): Promise<string> {
+): Promise<CompletionRaw> {
   const isGpt5 = /^gpt-5(?:\.|-|$)/i.test(model);
   const body = {
     model,
@@ -143,15 +155,16 @@ async function callOpenAiResponses(
   });
   if (!res.ok) throw new Error(describeProviderError('openai', res.status));
   const data = (await res.json()) as OpenAiResponse;
+  const usage = extractUsage('openai', data);
   const outputText = data.output_text?.trim();
-  if (outputText) return outputText;
-  return (
+  if (outputText) return { text: outputText, usage };
+  const joined =
     data.output
       ?.flatMap((item) => item.content ?? [])
       .map((content) => content.text ?? '')
       .join('')
-      .trim() ?? ''
-  );
+      .trim() ?? '';
+  return { text: joined, usage };
 }
 
 /** OpenRouter and xAI use the OpenAI chat-completions wire format. */
@@ -165,7 +178,7 @@ async function callOpenAiCompatible(
   maxTokens: number,
   temperature: number | undefined,
   extraHeaders?: Record<string, string>,
-): Promise<string> {
+): Promise<CompletionRaw> {
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}`, ...(extraHeaders ?? {}) },
@@ -180,8 +193,11 @@ async function callOpenAiCompatible(
     }),
   });
   if (!res.ok) throw new Error(describeProviderError(provider, res.status));
-  const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  return data.choices?.[0]?.message?.content?.trim() ?? '';
+  const data = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+  };
+  return { text: data.choices?.[0]?.message?.content?.trim() ?? '', usage: extractUsage(provider, data) };
 }
 
 async function callGoogle(
@@ -191,7 +207,7 @@ async function callGoogle(
   prompt: string,
   maxTokens: number,
   temperature?: number,
-): Promise<string> {
+): Promise<CompletionRaw> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const res = await fetch(url, {
     method: 'POST',
@@ -205,13 +221,14 @@ async function callGoogle(
   if (!res.ok) throw new Error(describeProviderError('google', res.status));
   const data = (await res.json()) as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
   };
-  return (
+  const text =
     data.candidates?.[0]?.content?.parts
       ?.map((part) => part.text ?? '')
       .join('')
-      .trim() ?? ''
-  );
+      .trim() ?? '';
+  return { text, usage: extractUsage('google', data) };
 }
 
 // --- resilience helpers -----------------------------------------------------
@@ -246,7 +263,7 @@ const providerLimiter = new BackpressureLimiter(6, 500);
 // --- public entry point -----------------------------------------------------
 
 /** Dispatch to the chosen provider adapter (one attempt, no retry/timeout). */
-async function dispatchCompletion(params: AiCompleteParams, model: string, maxTokens: number): Promise<string> {
+async function dispatchCompletion(params: AiCompleteParams, model: string, maxTokens: number): Promise<CompletionRaw> {
   const { provider, apiKey, system, prompt, temperature } = params;
   switch (provider) {
     case 'anthropic':
@@ -353,13 +370,13 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
   };
 
   try {
-    const text = await withRetry(
+    const raw = await withRetry(
       () => providerLimiter.run(() => withTimeout(dispatchCompletion(params, model, maxTokens), ATTEMPT_TIMEOUT_MS, `${provider} completion`)),
       { policy: { maxAttempts: 3, baseDelayMs: 400, maxDelayMs: 4000 }, isRetryable },
     );
     breaker.consecutiveFailures = 0;
     breaker.openedAt = null;
-    return { text, provider, model };
+    return { text: raw.text, provider, model, usage: raw.usage, costUsd: estimateCostUsd(provider, model, raw.usage) };
   } catch (error) {
     breaker.consecutiveFailures += 1;
     if (breaker.consecutiveFailures >= BREAKER_THRESHOLD) {

@@ -72,6 +72,27 @@ export default async function AiOpsPage() {
             </section>
           )}
 
+          <section className="space-y-1">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Tile
+                label="Est. cost"
+                value={report.cost.totalUsd !== null ? `$${report.cost.totalUsd.toFixed(report.cost.totalUsd < 1 ? 4 : 2)}` : 'n/a'}
+                tone="text-[#43d18b]"
+              />
+              <Tile
+                label="Avg $/run"
+                value={report.cost.avgUsdPerRun !== null ? `$${report.cost.avgUsdPerRun.toFixed(5)}` : 'n/a'}
+              />
+              <Tile label="Tokens in" value={report.cost.inputTokens.toLocaleString()} />
+              <Tile label="Tokens out" value={report.cost.outputTokens.toLocaleString()} tone="text-[#7fb0ff]" />
+            </div>
+            <p className="text-[9px] leading-snug text-[#6b7684]">
+              Tokens are provider-reported (real). USD is estimated at {report.cost.asOf} list prices.
+              {report.cost.pricedRuns} priced
+              {report.cost.unpricedRuns > 0 ? ` · ${report.cost.unpricedRuns} unpriced (provider omitted usage or model not in the price table - excluded from the total, never guessed)` : ''}.
+            </p>
+          </section>
+
           <section className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-md border border-[#1b2530] bg-[#0d1117] p-3">
               <h2 className="mb-2 text-xs font-semibold text-[#eef3f8]">By agent</h2>

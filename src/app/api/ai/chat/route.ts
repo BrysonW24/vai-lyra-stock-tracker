@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
     const prompt = `${history}\nLyra:`;
 
     const startedAt = Date.now();
-    const { text, model: usedModel } = await complete({
+    const { text, model: usedModel, usage, costUsd } = await complete({
       provider: creds.provider,
       apiKey: creds.apiKey,
       model: creds.model,
@@ -314,6 +314,9 @@ export async function POST(request: NextRequest) {
       status: 'ok',
       refusalReason: null,
       latencyMs,
+      inputTokens: usage?.inputTokens ?? null,
+      outputTokens: usage?.outputTokens ?? null,
+      costUsd,
     }).catch(() => {});
     if (last?.role === 'user') recordQuestionSignal(last.content);
 

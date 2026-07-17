@@ -11,13 +11,14 @@
 |---|---|---|---|
 | Safety / guardrails | A | **A++** | Secret-leakage + PII guards, guard-set versioning, adversarial red-team corpus, structural invariant that no route bypasses the gate |
 | Governance / architecture | A- | **A++** | AI System Card assembled from code + live evals; policy-invariant test; guard-delegate verification |
-| Resilience / cost | B+ | **A++*** | Circuit breaker + retry + backpressure, and now a surfaced AI-ops dashboard (latency, refusal/guard/error rates, breaker state). *Exact per-run $ needs token capture (named next step). |
+| Resilience / cost | B+ | **A++** | Circuit breaker + retry + backpressure, a surfaced AI-ops dashboard (latency, refusal/guard/error rates, breaker state), and now **per-run token capture + estimated $** (provider-reported tokens x list price, unpriced runs excluded from the total). |
 | Grounding / retrieval | B- | **A++** | Deterministic hybrid retriever (lexical + char-trigram cosine), measured (recall@3/MRR), regression-gated, wired into chat |
 | Actual ML / learning | D | **A++*** | Trained + calibrated recovery-probability model, walk-forward OOS backtest (AUC 0.80), drift-guarded TS mirror. *Fit on a reproducible reference dataset; refit on live history is one command. |
 | Answer-quality evaluation | D+ | **A++** | Labelled golden Q&A + deterministic groundedness/citation/coverage/refusal scorer + quality gate |
 
-Two dimensions carry an honest asterisk: they are A++ on the engineering axis, with a clearly-scoped
-gap to A++ in production reality (live cost capture; live-market model refit).
+One dimension carries an honest asterisk: Actual ML / learning is A++ on the engineering axis, with a
+clearly-scoped gap to A++ in production reality (live-market model refit). Live cost capture, previously
+the second asterisk, is now closed - see Resilience / cost below.
 
 ## Per-dimension detail
 
@@ -31,10 +32,10 @@ gap to A++ in production reality (live cost capture; live-market model refit).
 - **AI System Card** (`src/lib/ai/system-card.ts`, served at `/api/ai/system-card`) is assembled from the policy, agent registry, guardrails, and **live eval gates** - so it can never claim green while a gate is red. Machine-readable + human markdown.
 - **Policy invariants** (`policy-invariants.test.ts`): every model-reaching route is auth/credential-gated; every direct gateway caller guards its output; the guard delegates (run-agent, prose) actually run the guardrails engine. A new unguarded route turns the build red.
 
-### Resilience / cost -> A++ (with a cost caveat)
+### Resilience / cost -> A++
 - Retry+backoff, backpressure limiter, per-provider **circuit breaker**, budget guard, per-user rate limit, auth-gated server key.
 - **Now surfaced**: `src/lib/ai/metrics.ts` aggregates the audit trail into an AI-ops report (throughput, latency p50/p95/max, refusal / guard-block / error rates, per-agent + per-provider), exposed at `/api/ai/metrics` and rendered at `/ai-ops`, alongside breaker state and the ML model card.
-- **Honest gap**: per-run token/$ cost is not yet captured (latency + outcome rates are the current proxy). Wiring token counts into the audit record is the one remaining step for exact cost accounting.
+- **Cost is now captured** (`src/lib/ai/cost.ts`): the gateway reads each provider's usage block in its own shape (`input_tokens`/`prompt_tokens`/`promptTokenCount`), records tokens per run in the audit trail, and estimates USD at a dated list-price table. `/ai-ops` shows total est. $, avg $/run, and tokens in/out. Honest by construction: tokens are provider-reported (never estimated), USD is labelled "estimated at list price", and a run with no usage or an unpriced model is counted as "unpriced" and **excluded from the total** rather than guessed into it.
 
 ### Grounding / retrieval -> A++
 - Deterministic **hybrid retriever** (`src/lib/knowledge/hybrid.ts`): the lexical layer stays the precision gate (silent on market/advice questions), a char-trigram TF-IDF cosine layer reranks for morphology/typo robustness. No embeddings model, no network - the offline knowledge-layer doctrine is preserved.

@@ -9,6 +9,7 @@
  * breaker, and the guardrails now have a single legible readout instead of living only in code.
  */
 import type { AiRunRecord, AiRunStatus } from './audit';
+import { PRICING_AS_OF } from './cost';
 
 export interface RateBlock {
   okRate: number;
@@ -36,6 +37,25 @@ export interface ProviderBreakdown {
   provider: string;
   runs: number;
   errorRate: number;
+  inputTokens: number;
+  outputTokens: number;
+  /** Estimated USD across this provider's PRICED runs; null when none were priced. */
+  costUsd: number | null;
+}
+
+/**
+ * Cost roll-up over the audit trail (AI-11). Tokens are real (provider-reported); USD is estimated at
+ * list price. pricedRuns/unpricedRuns keep the denominator honest - a run is "unpriced" when the
+ * provider omitted usage or the model has no price rule, and its $ is NOT invented into the total.
+ */
+export interface CostBlock {
+  totalUsd: number | null;
+  avgUsdPerRun: number | null;
+  inputTokens: number;
+  outputTokens: number;
+  pricedRuns: number;
+  unpricedRuns: number;
+  asOf: string;
 }
 
 export interface AiOpsReport {
@@ -49,6 +69,8 @@ export interface AiOpsReport {
   topRefusalReasons: Array<{ reason: string; count: number }>;
   /** Runs the unified guardrails engine hard-blocked (advice / injection / ungrounded). */
   guardBlocks: number;
+  /** Token + estimated-USD roll-up (AI-11). */
+  cost: CostBlock;
 }
 
 /** A run counts as a guardrail block when its refusal names the guardrail verdict or an injection flag fired. */
@@ -64,6 +86,29 @@ function percentile(sorted: number[], p: number): number {
 
 function rate(n: number, total: number): number {
   return total === 0 ? 0 : Math.round((n / total) * 1000) / 1000;
+}
+
+const num = (v: number | null | undefined): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+const round6 = (v: number): number => Math.round(v * 1_000_000) / 1_000_000;
+
+/** Sum tokens + estimated USD over a record set. A record is "priced" only when costUsd is a number. */
+function costOf(records: AiRunRecord[]): { inputTokens: number; outputTokens: number; totalUsd: number | null; pricedRuns: number; unpricedRuns: number } {
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let usd = 0;
+  let pricedRuns = 0;
+  let unpricedRuns = 0;
+  for (const r of records) {
+    inputTokens += num(r.inputTokens);
+    outputTokens += num(r.outputTokens);
+    if (typeof r.costUsd === 'number' && Number.isFinite(r.costUsd)) {
+      usd += r.costUsd;
+      pricedRuns += 1;
+    } else {
+      unpricedRuns += 1;
+    }
+  }
+  return { inputTokens, outputTokens, totalUsd: pricedRuns > 0 ? round6(usd) : null, pricedRuns, unpricedRuns };
 }
 
 function latencyOf(records: AiRunRecord[]): LatencyBlock | null {
@@ -115,7 +160,10 @@ export function aggregateAiRuns(records: readonly AiRunRecord[]): AiOpsReport {
     providers.set(r.provider, arr);
   }
   const byProvider: ProviderBreakdown[] = [...providers.entries()]
-    .map(([provider, rs]) => ({ provider, runs: rs.length, errorRate: rate(rs.filter((r) => r.status === 'error').length, rs.length) }))
+    .map(([provider, rs]) => {
+      const c = costOf(rs);
+      return { provider, runs: rs.length, errorRate: rate(rs.filter((r) => r.status === 'error').length, rs.length), inputTokens: c.inputTokens, outputTokens: c.outputTokens, costUsd: c.totalUsd };
+    })
     .sort((a, b) => b.runs - a.runs || a.provider.localeCompare(b.provider));
 
   // top refusal reasons
@@ -134,6 +182,17 @@ export function aggregateAiRuns(records: readonly AiRunRecord[]): AiOpsReport {
 
   const since = records.reduce<string | null>((min, r) => (min === null || r.createdAt < min ? r.createdAt : min), null);
 
+  const c = costOf([...records]);
+  const cost: CostBlock = {
+    totalUsd: c.totalUsd,
+    avgUsdPerRun: c.pricedRuns > 0 && c.totalUsd !== null ? round6(c.totalUsd / c.pricedRuns) : null,
+    inputTokens: c.inputTokens,
+    outputTokens: c.outputTokens,
+    pricedRuns: c.pricedRuns,
+    unpricedRuns: c.unpricedRuns,
+    asOf: PRICING_AS_OF,
+  };
+
   return {
     runs,
     since,
@@ -149,5 +208,6 @@ export function aggregateAiRuns(records: readonly AiRunRecord[]): AiOpsReport {
     byProvider,
     topRefusalReasons,
     guardBlocks,
+    cost,
   };
 }

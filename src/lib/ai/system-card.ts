@@ -51,7 +51,7 @@ const LIMITS = [
   'The recovery-probability model ships fit on a reproducible reference dataset; refit on real history before production reliance.',
   'Retrieval is deterministic hybrid (lexical + char-trigram cosine) over Lyra\'s own docs - not a general web search.',
   'AI ops metrics reflect the serving process; durable cross-instance history lives in the ai_runs table.',
-  'Per-run token/cost capture is not yet wired; latency and outcome rates are the current cost proxies.',
+  'Token usage is captured per run (provider-reported); the USD figure in /ai-ops is estimated at list price, and a model with no price rule surfaces as "cost unknown" rather than a guessed number.',
 ];
 
 /** Build the live system card. Runs the eval gates, so it reflects the real, current state. */

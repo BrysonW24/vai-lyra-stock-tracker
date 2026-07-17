@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.62.0',
+    date: '2026-07-18',
+    title: 'Every AI call now shows its token cost',
+    highlights: [
+      'The AI Ops dashboard now shows what the AI actually costs: total estimated spend, average $ per run, and tokens in/out. Token counts come straight from each provider (real, not estimated); the dollar figure is calculated at list price and clearly labelled as an estimate.',
+      'Honest by design: a call where the provider did not report usage, or a model with no price on file, is counted as "unpriced" and left out of the total - never guessed into a wrong number. Priced and unpriced runs are shown side by side so the figure you see is trustworthy.',
+      'This closes the last cost gap in the AI posture scorecard: resilience/cost moves from A++* to a clean A++.',
+    ],
+  },
+  {
     version: '0.61.0',
     date: '2026-07-18',
     title: 'Paper-bot approvals are tamper-proof, and your bot feed is private',

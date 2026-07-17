@@ -113,10 +113,16 @@ async function runStructured(opts: {
   const started = Date.now();
   let text = '';
   let model = creds.model ?? '';
+  let inputTokens: number | null = null;
+  let outputTokens: number | null = null;
+  let costUsd: number | null = null;
   try {
     const r = await complete({ provider: creds.provider, apiKey: creds.apiKey, model: creds.model, system, prompt, maxTokens: 700, temperature: 0.3 });
     text = r.text;
     model = r.model;
+    inputTokens = r.usage?.inputTokens ?? null;
+    outputTokens = r.usage?.outputTokens ?? null;
+    costUsd = r.costUsd;
   } catch (err) {
     void recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: null, toolsUsed, injectionFlags: [], validationErrors: [], citationCount: 0, status: 'error', refusalReason: null, latencyMs: Date.now() - started }).catch(() => {});
     return { ok: false, agent, error: err instanceof Error ? err.message : 'model_error', evidenceIds, toolsUsed };
@@ -160,7 +166,7 @@ async function runStructured(opts: {
   const citationCount = Array.isArray(citations) ? citations.length : 0;
   const blocked = guardrailBlock.length > 0;
   const status = blocked || !validation.ok ? (refusalReason ? 'refused' : 'validation_failed') : 'ok';
-  void recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: hashInput(text), toolsUsed, injectionFlags: [...guardrailBlock, ...guardrailWarnings], validationErrors: validation.errors, citationCount, status, refusalReason: blocked || !validation.ok ? refusalReason : null, latencyMs }).catch(() => {});
+  void recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: hashInput(text), toolsUsed, injectionFlags: [...guardrailBlock, ...guardrailWarnings], validationErrors: validation.errors, citationCount, status, refusalReason: blocked || !validation.ok ? refusalReason : null, latencyMs, inputTokens, outputTokens, costUsd }).catch(() => {});
   if (blocked) return { ok: false, agent, error: refusalReason ?? 'guardrail_block', evidenceIds, toolsUsed };
   if (!validation.ok) return { ok: false, agent, error: refusalReason ?? validation.errors.join('; '), evidenceIds, toolsUsed };
   return { ok: true, agent, result: parsed, evidenceIds, toolsUsed };

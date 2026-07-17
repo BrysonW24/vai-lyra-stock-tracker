@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.62.0] - 2026-07-18
+
+Every AI call now shows its token cost.
+
+### Changed
+
+- The AI Ops dashboard now shows what the AI actually costs: total estimated spend, average $ per run, and tokens in/out. Token counts come straight from each provider (real, not estimated); the dollar figure is calculated at list price and clearly labelled as an estimate.
+- Honest by design: a call where the provider did not report usage, or a model with no price on file, is counted as "unpriced" and left out of the total - never guessed into a wrong number. Priced and unpriced runs are shown side by side so the figure you see is trustworthy.
+- This closes the last cost gap in the AI posture scorecard: resilience/cost moves from A++* to a clean A++.
+
 ## [0.61.0] - 2026-07-18
 
 Paper-bot approvals are tamper-proof, and your bot feed is private.
@@ -926,7 +936,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.61.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.62.0...HEAD
+[0.62.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.61.0...v0.62.0
 [0.61.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.60.0...v0.61.0
 [0.60.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.59.0...v0.60.0
 [0.59.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.58.0...v0.59.0

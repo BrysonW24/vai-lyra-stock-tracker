@@ -95,4 +95,37 @@ describe('ai metrics · aggregateAiRuns', () => {
     ]);
     expect(r.since).toBe('2026-07-16T01:00:00.000Z');
   });
+
+  it('rolls up token cost, and an unpriced run is counted but never added to the total', () => {
+    const r = aggregateAiRuns([
+      rec({ inputTokens: 1000, outputTokens: 500, costUsd: 0.0035 }),
+      rec({ inputTokens: 2000, outputTokens: 100, costUsd: 0.0045 }),
+      // costUsd absent -> unpriced: its tokens still count, its $ does not enter the total.
+      rec({ inputTokens: 999, outputTokens: 999 }),
+    ]);
+    expect(r.cost.pricedRuns).toBe(2);
+    expect(r.cost.unpricedRuns).toBe(1);
+    expect(r.cost.totalUsd).toBeCloseTo(0.008, 6);
+    expect(r.cost.avgUsdPerRun).toBeCloseTo(0.004, 6); // total / pricedRuns, NOT / all runs
+    expect(r.cost.inputTokens).toBe(3999); // every run's tokens sum, priced or not
+    expect(r.cost.outputTokens).toBe(1599);
+  });
+
+  it('reports a null total (not $0) when no run was priced - unknown, not free', () => {
+    const r = aggregateAiRuns([rec({ inputTokens: 100, outputTokens: 50 }), rec({})]);
+    expect(r.cost.totalUsd).toBeNull();
+    expect(r.cost.avgUsdPerRun).toBeNull();
+    expect(r.cost.pricedRuns).toBe(0);
+    expect(r.cost.unpricedRuns).toBe(2);
+  });
+
+  it('attributes token cost to the right provider', () => {
+    const r = aggregateAiRuns([
+      rec({ provider: 'anthropic', inputTokens: 1000, outputTokens: 200, costUsd: 0.002 }),
+      rec({ provider: 'openai', inputTokens: 500, outputTokens: 100, costUsd: 0.001 }),
+    ]);
+    const anthropic = r.byProvider.find((p) => p.provider === 'anthropic');
+    expect(anthropic?.inputTokens).toBe(1000);
+    expect(anthropic?.costUsd).toBeCloseTo(0.002, 6);
+  });
 });

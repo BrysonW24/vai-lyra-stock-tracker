@@ -41,6 +41,14 @@ export interface AiRunRecord {
   /** Populated when status is 'refused' - which refusal rule fired. */
   refusalReason: string | null;
   latencyMs: number | null;
+  /**
+   * Token usage the provider reported (AI-11). Absent/null when no successful completion happened
+   * (error/refused-before-model) or the provider omitted usage - never estimated. costUsd is the
+   * list-price estimate (real tokens x declared rate), null when tokens or the model price is unknown.
+   */
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  costUsd?: number | null;
   createdAt: string;
 }
 
@@ -109,6 +117,9 @@ class SupabaseAiRunWriter implements AiRunWriter {
         citationCount: record.citationCount,
         refusalReason: record.refusalReason,
         latencyMs: record.latencyMs,
+        inputTokens: record.inputTokens ?? null,
+        outputTokens: record.outputTokens ?? null,
+        costUsd: record.costUsd ?? null,
       },
       status: record.status,
       error_message: record.refusalReason,
