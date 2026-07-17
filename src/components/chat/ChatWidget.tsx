@@ -387,7 +387,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                   : 'Lyra runs on a model you choose. Add a free key or your own provider key in Settings. Browser keys stay on this device.'}
             </p>
             <Link
-              href="/account#ai-settings"
+              href="/account/ai"
               onClick={onClose}
               className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-[#101a2e] px-4 py-2 text-xs font-semibold text-[#8aa2ff] transition hover:bg-[#13203a]"
             >

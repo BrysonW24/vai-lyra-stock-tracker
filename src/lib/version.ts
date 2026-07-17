@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.32.0',
+    date: '2026-07-17',
+    title: 'Settings split into three focused pages instead of one long scroll',
+    highlights: [
+      'Account settings are now three separate pages with a tab switcher at the top: Account (your profile, a device PIN lock, and your data), AI Settings (the model that powers Lyra), and Notifications (push, Telegram, WhatsApp, Slack). No more scrolling one long page to find the setting you want.',
+      'Every link that used to jump to a section of the old page - the account menu, the AI prompts in chat, the setup checklist and product tour - now opens the right page directly.',
+    ],
+  },
+  {
     version: '0.31.0',
     date: '2026-07-17',
     title: 'Lyra listens to your onboarding: the copilot now tailors itself to how YOU answered',

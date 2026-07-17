@@ -25,7 +25,7 @@ export async function POST() {
       body: 'Push is working. This is exactly how your alerts will land.',
       triggerReason: 'You tapped Send test notification.',
       relevanceScore: 100,
-      url: '/account',
+      url: '/account/notifications',
       dedupeKey: `test_notification:${user.id}:${Date.now()}`,
       payload: { source: 'push_test' },
       forceInstant: true,

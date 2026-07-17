@@ -77,7 +77,24 @@ function SavedTick({ show }: { show: boolean }) {
   );
 }
 
-export function AccountSettings() {
+export type SettingsSection = 'account' | 'ai' | 'notifications';
+
+const SECTION_HEADERS: Record<SettingsSection, { title: string; subtitle: string }> = {
+  account: {
+    title: 'Account',
+    subtitle: 'Your profile, a local device lock, and your data - stored in this browser. Lyra is research software, not a broker, and never holds your money or trades.',
+  },
+  ai: {
+    title: 'AI Settings',
+    subtitle: 'Choose the model that powers Lyra explanations - the hosted beta by default, or bring your own key.',
+  },
+  notifications: {
+    title: 'Notifications',
+    subtitle: 'Where Lyra sends your alerts - push, Telegram, WhatsApp or Slack - and how they are worded.',
+  },
+};
+
+export function AccountSettings({ section }: { section: SettingsSection }) {
   const [profile, setProfile] = useState<AccountProfile>(DEFAULT_PROFILE);
   const [ai, setAi] = useState<AiSettings>(DEFAULT_AI);
   const [lock, setLock] = useState<LockSettings>(DEFAULT_LOCK);
@@ -247,13 +264,12 @@ export function AccountSettings() {
   return (
     <div className="space-y-2.5">
       <div className="terminal-panel rounded-md px-3 py-2.5">
-        <h1 className={pageTitleClass}>Account &amp; settings</h1>
-        <p className="mt-0.5 text-[11px] leading-snug text-[#8190a0]">
-          Stored locally in this browser - Lyra is research software, not a broker, and never holds your money or trades.
-        </p>
+        <h1 className={pageTitleClass}>{SECTION_HEADERS[section].title}</h1>
+        <p className="mt-0.5 text-[11px] leading-snug text-[#8190a0]">{SECTION_HEADERS[section].subtitle}</p>
       </div>
 
-      <div className="grid gap-2.5 lg:grid-cols-2">
+      <div className={section === 'account' ? 'grid gap-2.5 lg:grid-cols-2' : 'space-y-2.5'}>
+        {section === 'account' && (
         <Panel icon={UserRound} title="Profile" subtitle="Light details used to personalise the dashboard.">
           <div className="space-y-2.5">
             <div>
@@ -330,7 +346,9 @@ export function AccountSettings() {
             </div>
           </div>
         </Panel>
+        )}
 
+        {section === 'account' && (
         <Panel icon={Lock} title="Security · local PIN" subtitle="A light lock for this browser. Not account-level security.">
           <div className="space-y-3">
             <div className="flex items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs">
@@ -388,7 +406,9 @@ export function AccountSettings() {
             </p>
           </div>
         </Panel>
+        )}
 
+        {section === 'ai' && (
         <div id="ai-settings" className="scroll-mt-4">
           <Panel icon={BrainCircuit} title="AI assistance" subtitle="Hosted OpenAI beta by default. Optional BYOK when you want control.">
             <div className="space-y-2.5">
@@ -524,13 +544,17 @@ export function AccountSettings() {
             </div>
           </Panel>
         </div>
+        )}
 
+        {section === 'notifications' && (
         <div id="notifications" className="scroll-mt-4">
           <Panel icon={Send} title="Notifications" subtitle="Get signal alerts on Telegram or WhatsApp. Stored to your account only.">
             <NotificationsSetup />
           </Panel>
         </div>
+        )}
 
+        {section === 'account' && (
         <Panel icon={Trash2} title="Data &amp; privacy" subtitle="See it, keep it, or delete it - your call.">
           <div className="space-y-3">
             <p className="text-xs leading-relaxed text-[#a8b5c2]">
@@ -566,6 +590,7 @@ export function AccountSettings() {
             {privacyNote && <p className="text-[11px] leading-snug text-[#f3a33a]">{privacyNote}</p>}
           </div>
         </Panel>
+        )}
       </div>
 
       {lockNote && (

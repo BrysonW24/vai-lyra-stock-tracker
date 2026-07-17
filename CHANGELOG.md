@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-07-17
+
+Settings split into three focused pages instead of one long scroll.
+
+### Changed
+
+- Account settings are now three separate pages with a tab switcher at the top: Account (your profile, a device PIN lock, and your data), AI Settings (the model that powers Lyra), and Notifications (push, Telegram, WhatsApp, Slack). No more scrolling one long page to find the setting you want.
+- Every link that used to jump to a section of the old page - the account menu, the AI prompts in chat, the setup checklist and product tour - now opens the right page directly.
+
 ## [0.31.0] - 2026-07-17
 
 Lyra listens to your onboarding: the copilot now tailors itself to how YOU answered.
@@ -598,7 +607,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.31.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.32.0...HEAD
+[0.32.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.28.0...v0.29.0

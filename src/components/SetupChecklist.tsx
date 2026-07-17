@@ -53,7 +53,7 @@ export function SetupChecklist({ status }: { status: SetupStatus }) {
     { key: 'profile', label: 'Complete your profile', hint: 'Tailor Lyra to how you invest', href: '/onboarding', icon: Compass, done: status.profileComplete },
     { key: 'portfolio', label: 'Add your portfolio', hint: 'Make the signals about what you own', href: '/portfolio', icon: BriefcaseBusiness, done: status.hasPortfolio },
     { key: 'watchlist', label: 'Create a watchlist', hint: 'Track setups you want to catch', href: '/watchlist', icon: Star, done: status.hasWatchlist },
-    { key: 'notifications', label: 'Set up notifications', hint: 'Get alerts on Telegram or WhatsApp', href: '/account', icon: Bell, done: status.hasNotifications },
+    { key: 'notifications', label: 'Set up notifications', hint: 'Get alerts on Telegram or WhatsApp', href: '/account/notifications', icon: Bell, done: status.hasNotifications },
     { key: 'paper-bot', label: 'Try the Paper Bot', hint: 'Let the AI propose simulated trades for you', href: '/paper-bot', icon: Bot, done: status.hasPortfolio },
   ];
 

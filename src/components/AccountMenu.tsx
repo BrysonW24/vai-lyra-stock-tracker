@@ -193,7 +193,7 @@ export function AccountMenu() {
             <Settings size={15} className="text-[#8190a0]" /> Account
           </Link>
           <Link
-            href="/account#notifications"
+            href="/account/notifications"
             role="menuitem"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 border-t border-[#1b2530] px-3 py-2.5 text-sm text-[#cdd8e3] transition hover:bg-[#101720]"
@@ -201,7 +201,7 @@ export function AccountMenu() {
             <BellRing size={15} className="text-[#8190a0]" /> Notifications
           </Link>
           <Link
-            href="/account#ai-settings"
+            href="/account/ai"
             role="menuitem"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 border-t border-[#1b2530] px-3 py-2.5 text-sm text-[#cdd8e3] transition hover:bg-[#101720]"
