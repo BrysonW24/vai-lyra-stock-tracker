@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.33.0] - 2026-07-17
+
+Product updates and Ideas get the premium glass treatment.
+
+### Changed
+
+- The Product Updates page has been rebuilt around a single glass header with a sliding Product Updates / Ideas switch, replacing the stack of boxed panels that repeated the same sentence three times over.
+- Releases now read as a proper timeline: one continuous rail threading every version, with the build you are on marked by a lit amber node.
+- The Ideas board is cleaner and easier to scan - a functional toolbar showing how many ideas there are and how they are sorted, roomier upvote controls, and a friendlier empty state.
+- Glass surfaces now degrade gracefully: if your browser cannot blur, or you have asked your device to reduce transparency, every panel falls back to a solid, readable fill.
+
 ## [0.32.0] - 2026-07-17
 
 Settings split into three focused pages instead of one long scroll.
@@ -607,7 +618,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.32.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.33.0...HEAD
+[0.33.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.29.0...v0.30.0

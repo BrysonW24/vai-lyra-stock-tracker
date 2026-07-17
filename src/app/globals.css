@@ -140,6 +140,71 @@ textarea {
   -webkit-backdrop-filter: blur(18px) saturate(120%);
 }
 
+/*
+ * Recessed well - nested fields, list rows and controls sitting ON a glass panel.
+ * Deliberately has NO backdrop-filter of its own: stacking a second blur pass inside
+ * an already-blurred panel is pure GPU cost at 375px for no visual gain. The recess
+ * reads from the inset shadow + darker translucent fill instead.
+ */
+.glass-well {
+  border: 1px solid rgba(126, 148, 168, 0.12);
+  background: rgba(7, 10, 14, 0.42);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.32);
+}
+
+/* Segmented-control track - a well that holds a sliding glass thumb. */
+.glass-segment {
+  border: 1px solid rgba(126, 148, 168, 0.12);
+  background: rgba(7, 10, 14, 0.46);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.38);
+}
+
+/* The sliding thumb itself - amber-edged glass that carries the active tab. */
+.glass-thumb {
+  background: linear-gradient(155deg, rgba(60, 42, 16, 0.92), rgba(35, 24, 11, 0.86));
+  border: 1px solid rgba(154, 106, 31, 0.85);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 200, 120, 0.14),
+    0 6px 18px -8px rgba(243, 163, 58, 0.5);
+}
+
+/* Interactive row lift - hairline highlight on hover, no layout shift. */
+.glass-row {
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+.glass-row:hover {
+  background: rgba(126, 148, 168, 0.05);
+  box-shadow: inset 2px 0 0 rgba(243, 163, 58, 0.5);
+}
+
+/*
+ * Fallbacks. Glass is an enhancement, never a legibility dependency:
+ * without backdrop-filter support, or when the user asks for reduced transparency,
+ * every translucent surface collapses to a solid, AA-safe fill.
+ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .terminal-panel { background: #161d27; }
+  .terminal-panel-soft { background: #131a23; }
+  .glass-chrome { background: #0b1016; }
+  .glass-well, .glass-segment { background: #0a0e13; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .terminal-panel,
+  .terminal-panel-soft,
+  .glass-chrome,
+  .glass-well,
+  .glass-segment {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .terminal-panel { background: #161d27; }
+  .terminal-panel-soft { background: #131a23; }
+  .glass-chrome { background: #0b1016; }
+  .glass-well, .glass-segment { background: #0a0e13; }
+  .glass-thumb { background: #3c2a10; }
+}
+
 .numeric {
   font-variant-numeric: tabular-nums;
 }

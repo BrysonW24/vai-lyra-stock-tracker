@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.33.0',
+    date: '2026-07-17',
+    title: 'Product updates and Ideas get the premium glass treatment',
+    highlights: [
+      'The Product Updates page has been rebuilt around a single glass header with a sliding Product Updates / Ideas switch, replacing the stack of boxed panels that repeated the same sentence three times over.',
+      'Releases now read as a proper timeline: one continuous rail threading every version, with the build you are on marked by a lit amber node.',
+      'The Ideas board is cleaner and easier to scan - a functional toolbar showing how many ideas there are and how they are sorted, roomier upvote controls, and a friendlier empty state.',
+      'Glass surfaces now degrade gracefully: if your browser cannot blur, or you have asked your device to reduce transparency, every panel falls back to a solid, readable fill.',
+    ],
+  },
+  {
     version: '0.32.0',
     date: '2026-07-17',
     title: 'Settings split into three focused pages instead of one long scroll',

@@ -39,52 +39,62 @@ _Rule of thumb: **link** for humans, **fork** for builders, **AGENT-ONBOARDING.m
 ## 1 - Landing Page
 
 <p align="center">
-  <img src="assets/image-3.png" width="30%" alt="Landing - hero" />
-  <img src="assets/image-12.png" width="30%" alt="Landing - value props" />
-  <img src="assets/image-4.png" width="30%" alt="Landing - momentum engine" />
+  <img src="assets/landing-hero-see-the-setup.png" width="30%" alt="Landing - hero: see the setup before everyone else" />
+  <img src="assets/landing-why-lyra-market-made-readable.png" width="30%" alt="Landing - why Lyra: the market, made readable" />
+  <img src="assets/landing-ai-copilot-future-state.png" width="30%" alt="Landing - AI co-pilot future state" />
 </p>
 
 ## 2 - Onboarding
 
 <p align="center">
-  <img src="assets/image-5.png" width="30%" alt="Onboarding - reveal" />
-  <img src="assets/image-13.png" width="30%" alt="Onboarding - primer" />
-  <img src="assets/image-8.png" width="30%" alt="Onboarding - all set" />
+  <img src="assets/onboarding-splash-screen.png" width="30%" alt="Onboarding - splash, tap to continue" />
+  <img src="assets/onboarding-path-selection.png" width="30%" alt="Onboarding - choose your path" />
+  <img src="assets/onboarding-primer-command-centre-preview.png" width="30%" alt="Onboarding - primer, act from the console" />
 </p>
 <p align="center">
-  <img src="assets/image-14.png" width="30%" alt="Onboarding - capital" />
-  <img src="assets/image-7.png" width="30%" alt="Onboarding - watchlist" />
-  <img src="assets/image-9.png" width="30%" alt="Onboarding - alerts" />
+  <img src="assets/onboarding-market-universe-sectors.png" width="30%" alt="Onboarding - your market universe and sectors" />
+  <img src="assets/onboarding-capital-add-holdings.png" width="30%" alt="Onboarding - add your holdings" />
+  <img src="assets/onboarding-watchlist-targets.png" width="30%" alt="Onboarding - add your watchlist and targets" />
 </p>
 
 ## 3 - Command Centre
 
 <p align="center">
-  <img src="assets/image-1.png" width="30%" alt="Command centre - portfolio" />
-  <img src="assets/image-15.png" width="30%" alt="Command centre" />
-  <img src="assets/image-16.png" width="30%" alt="Command centre" />
+  <img src="assets/command-centre-kpi-tiles-market-context.png" width="30%" alt="Command centre - KPI tiles and market context" />
+  <img src="assets/command-centre-daily-brief.png" width="30%" alt="Command centre - daily brief" />
+  <img src="assets/command-centre-your-book-tiles.png" width="30%" alt="Command centre - your book tiles" />
 </p>
 <p align="center">
-  <img src="assets/image-17.png" width="30%" alt="Command centre" />
-  <img src="assets/image-18.png" width="30%" alt="Command centre" />
-  <img src="assets/image-19.png" width="30%" alt="Command centre" />
+  <img src="assets/radar-signal-scores.png" width="30%" alt="Signal radar - ranked scores" />
+  <img src="assets/intelligence-news-feed.png" width="30%" alt="Intelligence - ticker-tagged news feed" />
+  <img src="assets/event-calendar-agenda.png" width="30%" alt="Calendar - event agenda" />
+</p>
+<p align="center">
+  <img src="assets/ticker-universe-list.png" width="30%" alt="Ticker universe - tracked names by sector" />
+  <img src="assets/explore-navigation-hub.png" width="30%" alt="Explore - navigation hub" />
+  <img src="assets/account-settings-profile.png" width="30%" alt="Account and settings - profile" />
 </p>
 
-## 4 - Lyra AI 
+## 4 - Lyra AI
+
+The AI explains; the deterministic engine decides. Bring your own key or use the hosted
+beta - the model only ever answers from what is already on your dashboard.
 
 <p align="center">
-  <img src="assets/image-1.png" width="30%" alt="Command centre - portfolio" />
-  <img src="assets/image-15.png" width="30%" alt="Command centre" />
-  <img src="assets/image-16.png" width="30%" alt="Command centre" />
+  <img src="assets/ai-chat-connect-model-prompt.png" width="30%" alt="Ask Lyra - connect a model to chat" />
+  <img src="assets/ai-chat-watchlist-topic-prompts.png" width="30%" alt="Ask Lyra - grounded topic prompts" />
+  <img src="assets/account-ai-settings-openai-model.png" width="30%" alt="AI settings - choose the model that powers Lyra" />
 </p>
 
-## 5 - Lyra Notifcations
+## 5 - Lyra Notifications
+
+Strong setups and risk flags, delivered on the channels you pick - with quiet hours and
+per-scope control so alerts stay worth the buzz.
 
 <p align="center">
-<img src="image-2.png" width="30%"alt="Three Dots - Share Button" />
-<img src="image-1.png" width="30%"alt="Add to Home Screen" />
-<img src="image.png" width="30%"alt="Adding to Home Screen" />
-
+  <img src="assets/onboarding-alerts-channel-selection.png" width="30%" alt="Alerts - choose your channels and what to be alerted about" />
+  <img src="assets/notification-alert-mode-quiet-hours.png" width="30%" alt="Alert mode - quick mute, frequency, scope and quiet hours" />
+</p>
 
 ---
 

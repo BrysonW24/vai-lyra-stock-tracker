@@ -22,53 +22,61 @@ export function ProductUpdatesTimeline() {
   }, [query]);
 
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1b2530] px-3 py-2.5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Version history</p>
-        <span className="rounded-full border border-[#1d7f55] bg-[#0d251b] px-2 py-0.5 font-mono text-[10px] text-[#43d18b]">
-          You are on v{APP_VERSION}
-        </span>
-      </div>
-
-      <div className="border-b border-[#1b2530] px-3 py-2">
-        <div className="flex items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2.5 py-1.5">
+    <section className="terminal-panel overflow-hidden rounded-lg">
+      {/* Slim search toolbar. No "Version history" header and no "you are on vX" chip: the
+          hero above already names the surface and carries the live version. */}
+      <div className="border-b border-[#1b2530]/70 px-3 py-2">
+        <div className="glass-well flex items-center gap-2 rounded-md px-2.5 py-2 transition focus-within:border-[#9a6a1f]/60 focus-within:ring-1 focus-within:ring-[#f3a33a]/25">
           <Search size={13} className="shrink-0 text-[#6f7d8a]" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search updates"
+            aria-label="Search updates"
             className="w-full bg-transparent text-[13px] text-[#dbe5ee] outline-none placeholder:text-[#6f7d8a]"
           />
-          <span className="shrink-0 font-mono text-[10px] text-[#6f7d8a]">{filtered.length} of {RELEASES.length}</span>
+          <span className="shrink-0 font-mono text-[10px] text-[#6f7d8a]">{filtered.length}/{RELEASES.length}</span>
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="px-3 py-8 text-center text-[12px] text-[#8190a0]">No updates match &ldquo;{query}&rdquo;.</p>
+        <p className="px-3 py-10 text-center text-[12px] text-[#8190a0]">No updates match &ldquo;{query}&rdquo;.</p>
       ) : (
-        <ol className="divide-y divide-[#101820]">
-          {filtered.map((rel) => (
-            <li key={rel.version} className="px-3 py-3">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="font-mono text-sm font-semibold text-[#eef3f8]">v{rel.version}</span>
-                {rel.version === APP_VERSION && (
-                  <span className="rounded-full border border-[#1d7f55] bg-[#0d251b] px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em] text-[#43d18b]">
-                    Current
-                  </span>
-                )}
-                <span className="text-[10px] uppercase tracking-[0.12em] text-[#5d6b79]">{rel.date}</span>
-                <span className="text-[11px] text-[#a8b5c2]">- {rel.title}</span>
-              </div>
-              <ul className="mt-1.5 space-y-1">
-                {rel.highlights.map((h, j) => (
-                  <li key={j} className="flex gap-1.5 text-[11px] leading-relaxed text-[#a8b5c2]">
-                    <span className="mt-[3px] h-1 w-1 shrink-0 rounded-full bg-[#60a5fa]" />
-                    <span>{h}</span>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
+        <ol className="relative divide-y divide-[#101820]/80">
+          {/* Chronology rail - one continuous hairline threading every release node. */}
+          <span aria-hidden className="absolute bottom-3 left-[17px] top-3 w-px bg-gradient-to-b from-[#2b3947] via-[#1b2530] to-transparent" />
+          {filtered.map((rel) => {
+            const current = rel.version === APP_VERSION;
+            return (
+              <li key={rel.version} className="glass-row relative py-2.5 pl-9 pr-3">
+                {/* Release node - the current build gets an amber pulse-free halo. */}
+                <span
+                  aria-hidden
+                  className={`absolute left-[13px] top-[15px] h-2 w-2 rounded-full ring-4 ring-[#0d1117] ${
+                    current ? 'bg-[#f3a33a] shadow-[0_0_10px_2px_rgba(243,163,58,0.55)]' : 'bg-[#3a4754]'
+                  }`}
+                />
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span className={`font-mono text-sm font-semibold ${current ? 'text-[#f3a33a]' : 'text-[#eef3f8]'}`}>v{rel.version}</span>
+                  {current && (
+                    <span className="rounded-full border border-[#1d7f55]/70 bg-[#0d251b]/70 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-[#43d18b]">
+                      Current
+                    </span>
+                  )}
+                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-[#5d6b79]">{rel.date}</span>
+                </div>
+                <p className="mt-0.5 text-[12px] font-medium leading-snug text-[#c8d3de]">{rel.title}</p>
+                <ul className="mt-1.5 space-y-1">
+                  {rel.highlights.map((h, j) => (
+                    <li key={j} className="flex gap-1.5 text-[11px] leading-relaxed text-[#98a6b4]">
+                      <span className="mt-[5px] h-1 w-1 shrink-0 rounded-full bg-[#60a5fa]/70" />
+                      <span>{h}</span>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
         </ol>
       )}
     </section>
