@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.21.0',
+    date: '2026-07-17',
+    title: 'True orientation: both sides of every name you hold and watch, and a goal target that is your own number',
+    highlights: [
+      'The cockpit now shows a two-sided orientation across the names you hold AND the names you watch: what is good (opportunities) and what is bad (risks), side by side, from the live news flow. Not just downside and not just holdings - a balanced read of both sides at once, weighted toward the names where your money is on the line.',
+      'Bad news on a name you own no longer hides in a feed you have to go find. If something breaks on a holding, it surfaces as a risk right in the cockpit; if something good lands, it shows as an opportunity - each one links straight to the ticker.',
+      'Your goal is now YOUR number. Set a target like $50,000 and the whole cockpit re-anchors to it - the progress bar, the amount to go, and the pace all track the goal you actually stated. Leave it unset and it still climbs a sensible milestone ladder so there is always a next number to reach.',
+      'The target is saved to your profile (owner-scoped, private to you) and editable inline from the cockpit in one click - no digging through settings.',
+      'As always: every read is deterministic and two-sided by design - it shows the good and the bad, and never turns either into a buy or sell instruction.',
+    ],
+  },
+  {
     version: '0.20.0',
     date: '2026-07-17',
     title: 'The goal cockpit: your target, your progress, and the exact moves your money needs - exits first',

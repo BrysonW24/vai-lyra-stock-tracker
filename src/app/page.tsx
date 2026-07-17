@@ -28,6 +28,8 @@ import { LocalContextBar } from '@/components/LocalContextBar';
 import { GoalCockpit } from '@/components/GoalCockpit';
 import { computeGoalProgress } from '@/lib/goal';
 import { computePortfolioActions } from '@/lib/portfolio-actions';
+import { computeOrientation } from '@/lib/orientation';
+import { demoIntelligenceFeed } from '@/lib/intelligence';
 import { getUserConstraints } from '@/lib/ai/user-context';
 import { getDashboardData } from '@/lib/data';
 import { getMarketContext } from '@/lib/market-context';
@@ -65,7 +67,7 @@ export default async function OverviewPage() {
     investedBasis,
     cashAvailable,
     monthlyContribution: constraints?.monthlyContribution ?? null,
-    targetAmount: null,
+    targetAmount: constraints?.goalTargetAmount ?? null,
     primaryGoal: constraints?.primaryGoal ?? null,
   });
   const portfolioActions = computePortfolioActions({
@@ -75,6 +77,12 @@ export default async function OverviewPage() {
     riskComfort: constraints?.riskComfort ?? null,
     maxPositionPct: constraints?.maxPositionSizePct ?? null,
     goalBehind: goal.pace === 'behind',
+  });
+  // Two-sided orientation: the news flow (good and bad) across the names you hold AND watch.
+  const orientation = computeOrientation({
+    news: demoIntelligenceFeed,
+    heldSymbols: data.portfolio.map((h) => h.symbol),
+    watchedSymbols: data.watchlist.map((w) => w.symbol),
   });
   const cockpitEmpty = data.portfolio.length === 0 && cashAvailable <= 0;
   const cockpitCurrency = constraints?.baseCurrency ?? 'USD';
@@ -121,7 +129,7 @@ export default async function OverviewPage() {
   // Section order here is the DEFAULT layout; the user can reorder / hide via Customise. The goal
   // cockpit leads: where you stand against your goal and what your money needs from you, first.
   const sections: CommandSectionNode[] = [
-    { id: 'goal-cockpit', node: <GoalCockpit goal={goal} actions={portfolioActions} baseCurrency={cockpitCurrency} isEmptyState={cockpitEmpty} /> },
+    { id: 'goal-cockpit', node: <GoalCockpit goal={goal} actions={portfolioActions} orientation={orientation} baseCurrency={cockpitCurrency} currentTarget={constraints?.goalTargetAmount ?? null} canSetTarget={setupStatus.signedIn} isEmptyState={cockpitEmpty} /> },
     { id: 'runners', node: <ExecutiveStrip panels={stripPanels} /> },
     { id: 'metrics', node: <MetricStrip data={data} /> },
     { id: 'paper-bot', node: <PaperBotStrip account={paperAccount} /> },

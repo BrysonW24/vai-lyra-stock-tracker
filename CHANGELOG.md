@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-07-17
+
+True orientation: both sides of every name you hold and watch, and a goal target that is your own number.
+
+### Changed
+
+- The cockpit now shows a two-sided orientation across the names you hold AND the names you watch: what is good (opportunities) and what is bad (risks), side by side, from the live news flow. Not just downside and not just holdings - a balanced read of both sides at once, weighted toward the names where your money is on the line.
+- Bad news on a name you own no longer hides in a feed you have to go find. If something breaks on a holding, it surfaces as a risk right in the cockpit; if something good lands, it shows as an opportunity - each one links straight to the ticker.
+- Your goal is now YOUR number. Set a target like $50,000 and the whole cockpit re-anchors to it - the progress bar, the amount to go, and the pace all track the goal you actually stated. Leave it unset and it still climbs a sensible milestone ladder so there is always a next number to reach.
+- The target is saved to your profile (owner-scoped, private to you) and editable inline from the cockpit in one click - no digging through settings.
+- As always: every read is deterministic and two-sided by design - it shows the good and the bad, and never turns either into a buy or sell instruction.
+
 ## [0.20.0] - 2026-07-17
 
 The goal cockpit: your target, your progress, and the exact moves your money needs - exits first.
@@ -481,7 +493,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.20.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.21.0...HEAD
+[0.21.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.19.1...v0.20.0
 [0.19.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.18.0...v0.19.0

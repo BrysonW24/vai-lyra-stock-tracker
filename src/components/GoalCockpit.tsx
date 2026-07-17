@@ -3,6 +3,8 @@ import { ArrowUpRight, Target, ShieldAlert, TrendingUp, TrendingDown, Sparkles, 
 import { formatCurrency } from '@/lib/format';
 import type { GoalProgress, GoalPace } from '@/lib/goal';
 import type { PortfolioAction, ActionUrgency } from '@/lib/portfolio-actions';
+import type { Orientation, OrientationItem } from '@/lib/orientation';
+import { GoalTargetEditor } from '@/components/GoalTargetEditor';
 
 /**
  * GoalCockpit - the goal-oriented, action-first hero that leads the experience.
@@ -33,15 +35,36 @@ const KIND_ICON: Partial<Record<PortfolioAction['kind'], LucideIcon>> = {
   all_clear: CheckCircle2,
 };
 
+function OrientationRow({ item }: { item: OrientationItem }) {
+  return (
+    <Link href={`/tickers/${item.symbol}`} className="block rounded border border-[#1b2530] bg-[#0d1117] p-1.5 transition hover:brightness-125">
+      <div className="flex items-center gap-1.5">
+        <span className="font-mono text-[11px] font-semibold text-[#eef3f8]">{item.symbol}</span>
+        <span className={`rounded px-1 py-px font-mono text-[8px] uppercase tracking-[0.1em] ${item.held ? 'bg-[#0f2417] text-[#5fd08a]' : 'bg-[#0d1b2b] text-[#7fb0ff]'}`}>
+          {item.held ? 'held' : 'watch'}
+        </span>
+        <span className="ml-auto truncate font-mono text-[8px] text-[#5e6b78]">{item.sourceName}</span>
+      </div>
+      <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-[#c8d3de]">{item.headline}</p>
+    </Link>
+  );
+}
+
 interface Props {
   goal: GoalProgress;
   actions: PortfolioAction[];
+  /** Two-sided news read across held + watched names. Omitted when there is nothing to show. */
+  orientation?: Orientation;
   baseCurrency?: string;
+  /** The user's own saved target (null = milestone ladder). */
+  currentTarget?: number | null;
+  /** Whether the signed-in user can set/persist a target (hides the editor in demo). */
+  canSetTarget?: boolean;
   /** True when there is no capital/holdings yet - shows a start-here nudge instead of empty stats. */
   isEmptyState?: boolean;
 }
 
-export function GoalCockpit({ goal, actions, baseCurrency = 'USD', isEmptyState }: Props) {
+export function GoalCockpit({ goal, actions, orientation, baseCurrency = 'USD', currentTarget = null, canSetTarget, isEmptyState }: Props) {
   const cur = (n: number) => formatCurrency(n, baseCurrency);
   const pace = PACE_META[goal.pace];
   const returnPositive = goal.totalReturnDollars >= 0;
@@ -79,6 +102,14 @@ export function GoalCockpit({ goal, actions, baseCurrency = 'USD', isEmptyState 
           <div className="h-full rounded-full bg-gradient-to-r from-[#9a6a1f] to-[#f3a33a]" style={{ width: `${goal.progressPct}%` }} />
         </div>
         <p className="mt-1.5 text-[11px] leading-snug text-[#a8b5c2]">{goal.subline}</p>
+        {canSetTarget && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-[10px] text-[#5e6b78]">
+              {goal.targetIsMilestone ? 'Climbing the milestone ladder.' : 'Tracking your own target.'}
+            </span>
+            <GoalTargetEditor currentTarget={currentTarget} />
+          </div>
+        )}
       </div>
 
       {/* Action feed - what your money needs now */}
@@ -112,6 +143,42 @@ export function GoalCockpit({ goal, actions, baseCurrency = 'USD', isEmptyState 
             return <li key={a.id}>{a.href ? <Link href={a.href} className="block transition hover:brightness-125">{body}</Link> : body}</li>;
           })}
         </ul>
+
+        {/* Orientation - a true two-sided read across the names you hold AND watch: good and bad. */}
+        {orientation && (orientation.opportunities.length > 0 || orientation.risks.length > 0) && (
+          <div className="mt-3 border-t border-[#1b2530] pt-2.5">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+              Across your names - <span className="text-[#43d18b]">{orientation.opportunities.length} good</span>,{' '}
+              <span className="text-[#f0758a]">{orientation.risks.length} bad</span>
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#43d18b]">
+                  <TrendingUp size={11} /> Opportunities
+                </p>
+                <div className="space-y-1">
+                  {orientation.opportunities.length ? (
+                    orientation.opportunities.map((i) => <OrientationRow key={i.id} item={i} />)
+                  ) : (
+                    <p className="text-[10px] text-[#5e6b78]">Nothing notably good on your names right now.</p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <p className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#f0758a]">
+                  <TrendingDown size={11} /> Risks
+                </p>
+                <div className="space-y-1">
+                  {orientation.risks.length ? (
+                    orientation.risks.map((i) => <OrientationRow key={i.id} item={i} />)
+                  ) : (
+                    <p className="text-[10px] text-[#5e6b78]">Nothing notably bad on your names right now.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {isEmptyState && (
           <p className="mt-2 text-[11px] leading-snug text-[#7fb0ff]">

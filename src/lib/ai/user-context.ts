@@ -14,6 +14,8 @@ export interface UserConstraints {
   cashAvailable?: number | null;
   baseCurrency?: string | null;
   monthlyContribution?: number | null;
+  /** The user's own money goal - the account value they are working toward. Null = milestone ladder. */
+  goalTargetAmount?: number | null;
   maxPositionSizePct?: number | null;
   defaultTradeAmount?: number | null;
   primaryOutcome?: string | null;
@@ -40,7 +42,7 @@ export async function getUserConstraints(): Promise<UserConstraints | null> {
     const { data, error } = await supabase
       .from('operator_profiles')
       .select(
-        'experience_level, investing_style, preferred_timeframe, risk_comfort, primary_goal, cash_available, monthly_contribution, max_position_size_pct, default_trade_amount, primary_outcome, simulation_enabled, strategy_id, traded_before, beginner_motivation, beginner_knowledge, beginner_involvement, beginner_learning_style, beginner_horizon',
+        'experience_level, investing_style, preferred_timeframe, risk_comfort, primary_goal, cash_available, monthly_contribution, goal_target_amount, max_position_size_pct, default_trade_amount, primary_outcome, simulation_enabled, strategy_id, traded_before, beginner_motivation, beginner_knowledge, beginner_involvement, beginner_learning_style, beginner_horizon',
       )
       .eq('user_id', user.id)
       .maybeSingle();
@@ -59,6 +61,7 @@ export async function getUserConstraints(): Promise<UserConstraints | null> {
       cashAvailable: data.cash_available,
       baseCurrency: profile?.base_currency ?? 'USD',
       monthlyContribution: data.monthly_contribution,
+      goalTargetAmount: data.goal_target_amount,
       maxPositionSizePct: data.max_position_size_pct,
       defaultTradeAmount: data.default_trade_amount,
       primaryOutcome: data.primary_outcome,

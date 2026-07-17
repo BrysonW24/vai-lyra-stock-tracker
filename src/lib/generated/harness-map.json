@@ -348,6 +348,7 @@
         "src/lib/next-best-actions.ts",
         "src/lib/goal.ts",
         "src/lib/portfolio-actions.ts",
+        "src/lib/orientation.ts",
         "src/app/findings/",
         "src/app/api/findings/"
       ],
