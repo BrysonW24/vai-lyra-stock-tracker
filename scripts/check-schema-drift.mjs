@@ -125,6 +125,60 @@ function balanced(s, open) {
 }
 
 // ---------------------------------------------------------------------------------------------
+// 2b. RLS INVARIANT - the leak class this gate used to miss entirely.
+//
+// check-schema-drift once only compared table/column existence, so a policy regression (the exact
+// paper_trades cross-user READ leak: a `using (true)` SELECT policy ORing away owner-only RLS on a
+// user-keyed table) passed GREEN. This encodes the invariant instead of trusting a migration ran:
+//   Every table with a `user_id` column MUST have RLS enabled AND MUST NOT carry a permissive
+//   `using (true)` SELECT/ALL policy granted to anon / authenticated / public.
+// It is portable: drop this file into any Supabase app and it guards the same class.
+// Tables where a user_id column exists but public read is INTENTIONAL by design (shared boards,
+// not private data). Each entry is a deliberate exception with a reason - never add one to silence
+// the gate without understanding that anyone can read every row. This is the audit trail for
+// "why does this user-keyed table allow using(true)".
+const INTENTIONAL_PUBLIC_READ = new Map([
+  ['community_ideas', 'public community board - every user sees all ideas; user_id is the author, writes are still owner/maintainer-gated'],
+]);
+
+function liveRlsViolations(dbUrl) {
+  const sql = `
+    with user_tables as (
+      select distinct table_name
+      from information_schema.columns
+      where table_schema = 'public' and column_name = 'user_id'
+    )
+    select ut.table_name,
+           coalesce(bool_or(cls.relrowsecurity), false) as rls_enabled,
+           count(p.policyname) filter (
+             where p.cmd in ('SELECT', 'ALL')
+               and coalesce(p.qual, 'true') = 'true'
+               and (p.roles::text like '%anon%' or p.roles::text like '%authenticated%' or p.roles::text = '{public}')
+           ) as permissive_reads
+    from user_tables ut
+    join pg_class cls on cls.relname = ut.table_name and cls.relnamespace = 'public'::regnamespace
+    left join pg_policies p on p.schemaname = 'public' and p.tablename = ut.table_name
+    group by ut.table_name
+    order by ut.table_name;`;
+  const out = execFileSync(
+    'psql',
+    [dbUrl, '-v', 'ON_ERROR_STOP=1', '-qAt', '-F', '|', '-c', sql],
+    { encoding: 'utf8', env: { ...process.env, PGCONNECT_TIMEOUT: '20' }, stdio: ['ignore', 'pipe', 'pipe'] },
+  );
+  const violations = [];
+  for (const row of out.split('\n')) {
+    const line = row.trim();
+    if (!line) continue;
+    const [table, rlsEnabled, permissiveReads] = line.split('|');
+    if (rlsEnabled !== 't') violations.push(`${table}: RLS is DISABLED on a user-keyed table`);
+    if (Number(permissiveReads) > 0 && !INTENTIONAL_PUBLIC_READ.has(table)) {
+      violations.push(`${table}: has a permissive using(true) read policy - a cross-user READ leak (see paper_trades / migration 032)`);
+    }
+  }
+  return violations;
+}
+
+// ---------------------------------------------------------------------------------------------
 // 3. What DOES exist, per the live database.
 function liveObjects(dbUrl) {
   const out = execFileSync(
@@ -188,12 +242,21 @@ for (const [table, columns] of expected) {
   }
 }
 
-const ok = missingTables.length === 0 && missingColumns.length === 0;
+let rlsViolations = [];
+try {
+  rlsViolations = liveRlsViolations(dbUrl);
+} catch (err) {
+  const detail = String(err.stderr || err.message || err).replace(/postgres(ql)?:\/\/\S+/g, 'postgresql://***');
+  console.error(`\x1b[31m[schema-drift] FAIL - could not audit RLS policies.\x1b[0m\n  ${detail.trim().split('\n')[0]}`);
+  process.exit(1);
+}
+
+const ok = missingTables.length === 0 && missingColumns.length === 0 && rlsViolations.length === 0;
 
 if (jsonMode) {
-  console.log(JSON.stringify({ ok, missingTables, missingColumns, tablesChecked: expected.size }, null, 2));
+  console.log(JSON.stringify({ ok, missingTables, missingColumns, rlsViolations, tablesChecked: expected.size }, null, 2));
 } else if (ok) {
-  console.log(`[schema-drift] ok - live database matches the migrations (${expected.size} tables checked).`);
+  console.log(`[schema-drift] ok - live database matches the migrations (${expected.size} tables checked, RLS invariant holds).`);
 } else {
   console.error(`\n\x1b[31m[schema-drift] the live database does NOT match the migrations in this repo\x1b[0m`);
   if (missingTables.length) {
@@ -204,8 +267,12 @@ if (jsonMode) {
     console.error(`\n  MISSING COLUMNS (${missingColumns.length}) - present in a migration, absent in the database:`);
     for (const c of missingColumns.sort()) console.error(`    - ${c}`);
   }
+  if (rlsViolations.length) {
+    console.error(`\n  RLS VIOLATIONS (${rlsViolations.length}) - a user-keyed table is exposed. This is the cross-user leak class:`);
+    for (const v of rlsViolations.sort()) console.error(`    - ${v}`);
+  }
   console.error(
-    '\nEvery one of these fails SILENTLY at runtime: the query 400s, the code swallows it, and the feature quietly does nothing.',
+    '\nEvery one of these fails SILENTLY at runtime: the query 400s or leaks, the code swallows it, and the feature quietly does the wrong thing.',
   );
   console.error('Apply the outstanding migrations (Supabase SQL editor, or psql against the pooler URL), then re-run.');
 }

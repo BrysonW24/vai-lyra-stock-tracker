@@ -25,3 +25,7 @@ tmp/
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Corrupt/interrupted build output - regenerable, never tracked
+.next.stale-corrupt/
+.next-*/
