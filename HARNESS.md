@@ -21,7 +21,7 @@ Two conventions carry the whole design:
 
 | Gate | Command | Enforces | Runs in |
 |---|---|---|---|
-| Version bump | `npm run check:version` | shippable change => `RELEASES` entry; `package.json`/`version.ts`/`CHANGELOG.md` lockstep. Judges the version in the COMMITS BEING PUSHED, not the working tree. Test files are exempt (they ship nothing). | pre-push hook + CI `version-guard` |
+| Version bump | `npm run check:version` | shippable change => `RELEASES` entry; `package.json`/`version.ts`/`CHANGELOG.md` lockstep; **a moved version must move UP vs origin/main** (two agent sessions share one tree - the version counter has no lock). Judges the version in the COMMITS BEING PUSHED, not the working tree. Test files are exempt (they ship nothing). | pre-push hook + CI `version-guard` |
 | Onboarding parity | `npm run check:onboarding` | human + companion + agent onboarding surfaces match the codebase (stack, costs, env, routes, version) | CI |
 | Onboarding contract | `npm run check:onboarding-contract` | every onboarding answer is persisted, read back, and reaches the AI prompt; the core profile read never references a column newer than the baseline migration | CI |
 | Migration integrity | `npm run check:migrations` | unique version prefixes; no table created twice with different shapes (`create table if not exists` silently NO-OPs the second) | CI |
@@ -53,6 +53,18 @@ adding a `|| true`, a silent skip, or a "non-fatal" catch:
 - **Prose in a playbook does not hold a line.** `/data-integrity` Stage 1 already instructed agents to
   diff migrations against the live project and call any unapplied one "finding #1". It said the right
   thing and still seven migrations went unapplied back to 018. That instruction is now a script.
+- **Two sessions in one tree share the version counter, and it had no lock.** The guard checked that a
+  version entry EXISTED but never which DIRECTION it moved, so a session prepended 0.43.1 while
+  origin/main already carried 0.44.0 - APP_VERSION went backwards on a green push (landing badge,
+  `/whats-new`, and the deploy-smoke floor all regressed). The gate now requires a moved version to
+  move UP vs origin/main. Before cutting any release, `git fetch origin` and number ABOVE the remote
+  head - a concurrent session may have shipped while you worked.
+- **A `limit(N)` over growing data is a future silent truncation.** The scout's 14-day drumbeat window
+  read `limit(2000)` unordered: once nightly volume crossed it, clustering would have quietly weakened
+  with no error anywhere. The read is now ordered newest-first with a sized-for-3x limit, and FILLING
+  it flags `window_saturated` + an ERROR in the nightly log. Any cap you add must be observable when
+  it is hit - if nothing can notice the limit, the limit is a lie waiting to happen. (Same family:
+  unbounded tables need retention - `scout_items` prunes past 90 days.)
 
 `npm run doctor` (`scripts/doctor.mjs`) is the advisory layer on top: reports mode
 (demo/live/AI), missing wiring, hook integrity, and the Python interpreter - run it

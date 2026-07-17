@@ -28,6 +28,14 @@ from workers.stock_scanner.supabase_repo import SupabaseRepository
 logger = logging.getLogger(__name__)
 
 MAX_ITEMS_PER_RUN = 400
+# Clustering reads a trailing window of unmapped items - the accumulating drumbeat.
+WINDOW_DAYS = 14
+# Sized ~3x current volume (~110 unmapped/night x 14 days). If a read ever fills it,
+# the run says so loudly (window_saturated) instead of silently weakening clustering.
+WINDOW_LIMIT = 5000
+# scout_items is the drumbeat accumulator, not an archive: rows far beyond the clustering
+# window are dead weight (~2k rows/week unbounded), so the nightly run prunes them.
+RETENTION_DAYS = 90
 
 
 def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, Any]:
@@ -37,8 +45,11 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
         "sources_gated": 0,
         "items_fetched": 0,
         "items_persisted": 0,
+        "items_pruned": 0,
         "items_unmapped": 0,
+        "idea_candidates": 0,
         "ideas_filed": 0,
+        "window_saturated": False,
         "error": None,
     }
     try:
@@ -69,20 +80,36 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
         unmapped = [i for i in items if attachments[i.id].unmapped]
         summary["items_unmapped"] = len(unmapped)
 
+        # ONE pipeline for live and demo - mode only changes the window and the sinks.
+        # This function once held two cluster paths, and a refactor of the live one left
+        # the demo branch referencing a variable it never computed (UnboundLocalError on
+        # every keyless run). Demo mode doubles every code path it forks; so don't fork.
+        window: list[ScoutItem] = []
         if repo.client:
             summary["items_persisted"] = _persist_items(repo, items, attachments)
+            summary["items_pruned"] = _prune_old_items(repo)
             # Cluster over the trailing WINDOW, not just tonight's pull: an emerging
             # vertical announces itself as a drumbeat across days, and a single night
             # rarely carries three independent hits on its own.
-            window = _load_recent_unmapped(repo, days=14)
-            pool = {i.id: i for i in window}
-            for i in unmapped:
-                pool.setdefault(i.id, i)
-            candidates = cluster_unmapped(list(pool.values()))
+            window = _load_recent_unmapped(repo, days=WINDOW_DAYS)
+            if len(window) >= WINDOW_LIMIT:
+                # A silently truncated window weakens clustering with no error anywhere -
+                # a green that cannot go red. Say so where the nightly log is read.
+                summary["window_saturated"] = True
+                logger.error(
+                    "drumbeat window SATURATED at %d rows - oldest unmapped items are being "
+                    "dropped; raise WINDOW_LIMIT or shorten WINDOW_DAYS",
+                    WINDOW_LIMIT,
+                )
+        pool = {i.id: i for i in window}
+        for i in unmapped:
+            pool.setdefault(i.id, i)
+        candidates = cluster_unmapped(list(pool.values()))
+        summary["idea_candidates"] = len(candidates)
+
+        if repo.client:
             summary["ideas_filed"] = _file_ideas(repo, candidates)
         else:
-            # Demo: no trailing window exists, so cluster tonight's pull alone.
-            candidates = cluster_unmapped(unmapped)
             logger.info("demo mode: %d items, %d idea candidates (not persisted)", len(items), len(candidates))
             for c in candidates:
                 logger.info("candidate: %s (confidence %d, %d evidence)", c.title, c.confidence, len(c.evidence))
@@ -96,8 +123,12 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
         return summary
 
 
-def _load_recent_unmapped(repo: SupabaseRepository, days: int = 14) -> list[ScoutItem]:
-    """Trailing unmapped items from the store - the accumulating drumbeat window."""
+def _load_recent_unmapped(repo: SupabaseRepository, days: int = WINDOW_DAYS) -> list[ScoutItem]:
+    """Trailing unmapped items from the store - the accumulating drumbeat window.
+
+    Ordered newest-first so that IF the read ever fills WINDOW_LIMIT, what falls off is the
+    oldest signal (the caller flags saturation loudly) - unordered, Postgres would drop
+    arbitrary rows and the degradation would be both silent and random."""
     try:
         since = (datetime.now(tz=timezone.utc) - timedelta(days=days)).isoformat()
         result = (
@@ -105,7 +136,8 @@ def _load_recent_unmapped(repo: SupabaseRepository, days: int = 14) -> list[Scou
             .select("id, source_id, source_kind, url, title, summary, published_at")
             .eq("unmapped", True)
             .gte("created_at", since)
-            .limit(2000)
+            .order("created_at", desc=True)
+            .limit(WINDOW_LIMIT)
             .execute()
         )
         items: list[ScoutItem] = []
@@ -131,6 +163,22 @@ def _load_recent_unmapped(repo: SupabaseRepository, days: int = 14) -> list[Scou
     except Exception as exc:  # noqa: BLE001 - a failed window read degrades to this run only
         logger.error("load recent unmapped failed: %s", exc)
         return []
+
+
+def _prune_old_items(repo: SupabaseRepository, days: int = RETENTION_DAYS) -> int:
+    """Retention: drop scout_items far beyond the clustering window. Without this the table
+    grows unbounded (~2k rows/week) and every window read scans ever more dead history.
+    A failed prune degrades to growth for one night - it never blocks the run."""
+    try:
+        cutoff = (datetime.now(tz=timezone.utc) - timedelta(days=days)).isoformat()
+        result = repo.client.table("scout_items").delete().lt("created_at", cutoff).execute()
+        pruned = len(result.data or [])
+        if pruned:
+            logger.info("pruned %d scout_items older than %d days", pruned, days)
+        return pruned
+    except Exception as exc:  # noqa: BLE001
+        logger.error("prune scout_items failed: %s", exc)
+        return 0
 
 
 def _persist_items(repo: SupabaseRepository, items: list[ScoutItem], attachments: dict) -> int:

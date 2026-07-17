@@ -4,7 +4,8 @@
  *
  * If the commits being pushed change shippable code (src / supabase / workers / public) but the app
  * version (RELEASES[0].version in src/lib/version.ts) is unchanged vs origin/main, this BLOCKS the push
- * and tells you how to fix it. It also fails if package.json and version.ts have drifted apart.
+ * and tells you how to fix it. It also fails if package.json and version.ts have drifted apart, and if
+ * the version MOVED but not UPWARD vs origin/main (two sessions share the version counter - see below).
  *
  * NOT shippable, and therefore not gated: test files (`__tests__/`, `tests/`, `*.test.ts`, `*.spec.ts`).
  * They never reach a user, so they cannot justify a user-facing changelog entry.
@@ -42,6 +43,17 @@ const fail = (lines) => {
 
 // First version: '...' that appears after `export const RELEASES` = RELEASES[0].version.
 const versionFrom = (src) => src.match(/export const RELEASES[\s\S]*?\bversion:\s*'([^']+)'/)?.[1] ?? null;
+
+// Numeric semver compare: negative if a < b, 0 if equal, positive if a > b.
+const semverCmp = (a, b) => {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+};
 
 const localSrc = fs.readFileSync('src/lib/version.ts', 'utf8');
 const localVersion = versionFrom(localSrc);
@@ -91,6 +103,21 @@ if (remoteSrc && changed !== null) {
       'Bump it: add a new entry at the top of RELEASES in src/lib/version.ts, then run `npm run release`.',
       'Changed: ' + shippable.slice(0, 6).join(', ') + (shippable.length > 6 ? ', ...' : ''),
       'Emergency bypass: VD_SKIP_VERSION=1 git push',
+    ]);
+  }
+
+  // 3. A moved version must move UP. Two agent sessions sharing one tree share the version
+  // counter with no lock: on 2026-07-17 a session prepended 0.43.1 while origin/main already
+  // carried 0.44.0, so APP_VERSION (derived from RELEASES[0]) went BACKWARDS on a green push -
+  // the landing badge, /whats-new, and the deploy-smoke floor all regressed. Presence checking
+  // cannot see that; only comparing against origin/main's head can. Renumber ABOVE the remote
+  // head (fetch first if this fires unexpectedly - the other session may have shipped).
+  if (remoteVersion && pushedVersion !== remoteVersion && semverCmp(pushedVersion, remoteVersion) <= 0) {
+    fail([
+      `Version would move backwards: pushing v${pushedVersion} but origin/main already carries v${remoteVersion}.`,
+      'A concurrent session has likely shipped ahead of you. Renumber your RELEASES entry ABOVE',
+      `v${remoteVersion} in src/lib/version.ts, then run \`npm run release\` again.`,
+      'Deliberate rollback (rare): VD_SKIP_VERSION=1 git push',
     ]);
   }
 }

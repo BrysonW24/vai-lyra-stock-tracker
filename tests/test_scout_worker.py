@@ -8,6 +8,7 @@ recurs across INDEPENDENT sources becomes an idea candidate.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone
 
 from workers.scout.attach import attach, detect_symbols
@@ -153,3 +154,71 @@ class TestOrchestratorDemoPath:
         assert summary["status"] == "ok"
         assert summary["items_fetched"] >= 3
         assert summary["items_persisted"] == 0
+
+
+class FakeLiveRepo:
+    client = object()  # truthy is all the orchestrator checks
+
+
+class TestOrchestratorLivePath:
+    """Live-path plumbing with the sinks monkeypatched out - pins the window, the
+    saturation flag, retention pruning, and the single shared cluster path."""
+
+    def _run(self, monkeypatch, window):
+        from workers.scout import main as scout_main
+
+        monkeypatch.setattr(scout_main, "active_sources", lambda registry=None: [])
+        monkeypatch.setattr(scout_main, "_persist_items", lambda repo, items, attachments: len(items))
+        monkeypatch.setattr(scout_main, "_prune_old_items", lambda repo: 0)
+        monkeypatch.setattr(scout_main, "_load_recent_unmapped", lambda repo, days=14: window)
+        monkeypatch.setattr(scout_main, "_file_ideas", lambda repo, candidates: len(candidates))
+        return scout_main.run_scout_worker(object(), FakeLiveRepo())
+
+    def test_window_saturation_is_loud_not_silent(self, monkeypatch, caplog):
+        """A window read that fills WINDOW_LIMIT means the oldest signal is being dropped.
+        That must flag the summary and land an ERROR in the nightly log - silent
+        truncation weakens clustering with no red anywhere (the pattern HARNESS.md bans)."""
+        from workers.scout import main as scout_main
+
+        window = [item(f"Filler entry {i}", source_id=f"s{i % 7}") for i in range(scout_main.WINDOW_LIMIT)]
+        with caplog.at_level(logging.ERROR):
+            summary = self._run(monkeypatch, window)
+        assert summary["window_saturated"] is True
+        assert any("SATURATED" in r.message for r in caplog.records)
+
+    def test_unsaturated_window_stays_quiet(self, monkeypatch):
+        summary = self._run(monkeypatch, [])
+        assert summary["status"] == "ok"
+        assert summary["window_saturated"] is False
+        assert summary["items_pruned"] == 0
+
+    def test_live_and_demo_share_one_cluster_path(self, monkeypatch):
+        """The same drumbeat that promotes in TestCluster must flow through the live
+        orchestrator into ideas_filed - one pipeline, where mode only changes the
+        window and the sinks. Guards against the two-path fork ever reappearing."""
+        window = [
+            item("Commonwealth Fusion Systems raises new round", source_id="s1"),
+            item("Commonwealth Fusion Systems signs utility deal", source_id="s2"),
+            item("Milestone for Commonwealth Fusion Systems plant", source_id="s3"),
+        ]
+        summary = self._run(monkeypatch, window)
+        assert summary["idea_candidates"] == 1
+        assert summary["ideas_filed"] == 1
+
+    def test_prune_runs_on_the_live_path(self, monkeypatch):
+        from workers.scout import main as scout_main
+
+        pruned_with: list[object] = []
+
+        def fake_prune(repo):
+            pruned_with.append(repo)
+            return 42
+
+        monkeypatch.setattr(scout_main, "active_sources", lambda registry=None: [])
+        monkeypatch.setattr(scout_main, "_persist_items", lambda repo, items, attachments: len(items))
+        monkeypatch.setattr(scout_main, "_prune_old_items", fake_prune)
+        monkeypatch.setattr(scout_main, "_load_recent_unmapped", lambda repo, days=14: [])
+        monkeypatch.setattr(scout_main, "_file_ideas", lambda repo, candidates: 0)
+        summary = scout_main.run_scout_worker(object(), FakeLiveRepo())
+        assert summary["items_pruned"] == 42
+        assert len(pruned_with) == 1

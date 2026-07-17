@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.45.0',
+    date: '2026-07-17',
+    title: 'The harness learns from its own gaps',
+    highlights: [
+      'The version guard now blocks a release that would move the app version backwards. Two agent sessions can ship from one shared tree, and the version counter they share had no direction check - a real regression this week proved it.',
+      'Scout hardening: live and demo mode now share one clustering pipeline (the forked path caused a real crash), the 14-day drumbeat window announces loudly if it ever saturates instead of silently weakening, and scout items older than 90 days are pruned so the table cannot grow without bound.',
+      'The lessons behind every gate are now written where people actually read them: a new "How this repo stays honest" section in the README, hard rules in AGENT-ONBOARDING, and two new earned-lesson entries in HARNESS.md.',
+    ],
+  },
+  {
     version: '0.44.1',
     date: '2026-07-17',
     title: 'Scout demo-mode fix, proven by its first production run',

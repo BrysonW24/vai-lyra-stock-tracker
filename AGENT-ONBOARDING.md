@@ -72,7 +72,20 @@ is plain markdown with explicit stages and gates. The non-negotiables:
   add a section without an owner.
 - Every shippable change bumps the version: prepend an entry to `RELEASES` in
   `src/lib/version.ts`, run `npm run release`, commit + push. A pre-push hook enforces
-  this.
+  this. **You may not be alone in this tree** - another agent session can ship while you
+  work, and the version counter is shared. `git fetch origin` before cutting a release
+  and number ABOVE origin/main's head; the gate blocks a version that moves backwards.
+- **Demo mode doubles every code path you fork.** Everything here runs keyless, so a
+  worker or route has a live shape and a demo shape. Keep them ONE pipeline where mode
+  only changes inputs and sinks - a forked demo branch rots the moment the live branch
+  is refactored (it happened; the keyless path is now pinned by a test). If you touch a
+  worker, run it keyless before calling it done.
+- **No silent caps.** Any `limit(N)` over data that grows, any retry ceiling, any
+  truncation must be observable when it is hit (a summary flag + an ERROR in the log
+  that a human reads). A cap nothing can notice is a green that cannot go red.
+- **Where to spend a new check:** every deterministic gate added so far found real rot
+  on its first run. If a surface has never had one, assume it is hiding something -
+  see the earned-lessons list in [HARNESS.md](HARNESS.md).
 - TypeScript strict, no `any`, plain hyphens (never an em dash) in user-visible copy.
 - Conventions live in [CLAUDE.md](CLAUDE.md) - read it before editing.
 - If your change touches the stack, costs, routes, env vars, walkthroughs, or version, the

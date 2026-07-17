@@ -312,6 +312,20 @@ flowchart TD
 
 ---
 
+## 🛡️ How this repo stays honest
+
+Lyra is maintained largely by AI agents, so the repo carries its own enforcement layer: deterministic gates that fail loudly ([HARNESS.md](./HARNESS.md)), a skill-chain ownership map ([SKILL-CHAIN.md](./SKILL-CHAIN.md)), and CI + pre-push hooks that make the rules non-optional. A few hard-won principles shape all of it:
+
+- **A green must be able to go red.** Every gate exists because a green build once concealed a real failure - workers that failed nightly for months under `|| echo "(non-fatal)"`, migrations unapplied since 018 while a playbook politely said to check. Best-effort never means invisible, and a check that silently skips is the same lie as a check that always passes.
+- **Every surface without a deterministic check is probably hiding rot.** Each new gate found real bugs on its first run: migrations-from-zero found nine schema fossils, deploy-smoke was born from six live-only bugs behind green CI.
+- **One pipeline, whatever the mode.** Demo mode runs the whole product keyless, which means every forked demo/live code path is a bug waiting for a refactor. Paths stay shared; mode only changes inputs and sinks.
+- **No silent caps.** Any limit over growing data must announce when it fills, and unbounded tables get retention - a cap nothing can notice is a green that cannot go red.
+- **The version counter is shared state.** Multiple agent sessions can ship from one tree, so the version gate enforces that a moved version moves _up_ vs origin/main - a release can never regress the app version on a green push.
+
+The full gate table, the layer map, and the incident-by-incident lessons live in [HARNESS.md](./HARNESS.md) - also rendered interactively at [`/harness-map.html`](https://vai-lyra-stock-tracker.vercel.app/harness-map.html).
+
+---
+
 ## 📁 Project structure
 
 ```

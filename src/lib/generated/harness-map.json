@@ -6,7 +6,7 @@
   "stats": {
     "sections": 26,
     "chains": 13,
-    "gates": 5,
+    "gates": 7,
     "layers": 5
   },
   "chains": [
@@ -497,7 +497,7 @@
     {
       "name": "Version bump",
       "command": "npm run check:version",
-      "enforces": "shippable change => RELEASES entry; package.json/version.ts/CHANGELOG.md lockstep. Judges the version in the COMMITS BEING PUSHED, not the working tree. Test files are exempt (they ship nothing).",
+      "enforces": "shippable change => RELEASES entry; package.json/version.ts/CHANGELOG.md lockstep; a moved version must move UP vs origin/main (two agent sessions share one tree - the version counter has no lock). Judges the version in the COMMITS BEING PUSHED, not the working tree. Test files are exempt (they ship nothing).",
       "runsIn": "pre-push hook + CI version-guard"
     },
     {
@@ -523,6 +523,18 @@
       "command": "npm run check:schema-drift",
       "enforces": "the LIVE database matches the migrations in this repo. Needs a DB URL; --require-db makes a missing one a failure",
       "runsIn": "nightly schema-drift job"
+    },
+    {
+      "name": "Migrations from zero",
+      "command": "scripts/migrate-from-zero.sh",
+      "enforces": "the whole schema BUILDS on an empty database - every migration in order plus the sql/ reconcile, against throwaway Postgres. Kills the fresh-clone-cannot-build class (0.36.0). First run found one fossil seed + 8 fossil indexes",
+      "runsIn": "CI migrations-from-zero job"
+    },
+    {
+      "name": "Deploy smoke",
+      "command": "npm run check:deploy",
+      "enforces": "the LIVE SITE serves the version just pushed and its surfaces respond (health + content + middleware liveness). CI proves the build; this proves the deployment - six live-only bugs once shipped behind green CI",
+      "runsIn": "deploy-smoke workflow on every push to main"
     }
   ],
   "layers": [
@@ -533,7 +545,9 @@
         "A check that silently skips is the same lie as a check that always passes. check:schema-drift takes --require-db so a missing secret fails instead of skipping quietly.",
         "The version guard read version.ts off disk, so an unrelated uncommitted bump satisfied the hook while CI, which only sees the commit, failed. A gate that disagrees with CI is worse than no gate.",
         "Tests must not depend on the machine. Quiet-hours tests built clocks in the runner's timezone while the router evaluates in Australia/Sydney; they passed in Sydney and failed on UTC runners, making CI red ~9 hours of every day - and left the safety-critical bypass tests passing for the wrong reason. npm test pins TZ=UTC so a local run is byte-identical to CI.",
-        "Prose in a playbook does not hold a line. /data-integrity Stage 1 already instructed agents to diff migrations against the live project and call any unapplied one \"finding #1\". It said the right thing and still seven migrations went unapplied back to 018. That instruction is now a script."
+        "Prose in a playbook does not hold a line. /data-integrity Stage 1 already instructed agents to diff migrations against the live project and call any unapplied one \"finding #1\". It said the right thing and still seven migrations went unapplied back to 018. That instruction is now a script.",
+        "Two sessions in one tree share the version counter, and it had no lock. The guard checked that a version entry EXISTED but never which DIRECTION it moved, so a session prepended 0.43.1 while origin/main already carried 0.44.0 - APP_VERSION went backwards on a green push (landing badge, /whats-new, and the deploy-smoke floor all regressed). The gate now requires a moved version to move UP vs origin/main. Before cutting any release, git fetch origin and number ABOVE the remote head - a concurrent session may have shipped while you worked.",
+        "A limit(N) over growing data is a future silent truncation. The scout's 14-day drumbeat window read limit(2000) unordered: once nightly volume crossed it, clustering would have quietly weakened with no error anywhere. The read is now ordered newest-first with a sized-for-3x limit, and FILLING it flags window_saturated + an ERROR in the nightly log. Any cap you add must be observable when it is hit - if nothing can notice the limit, the limit is a lie waiting to happen. (Same family: unbounded tables need retention - scout_items prunes past 90 days.)"
       ]
     },
     {

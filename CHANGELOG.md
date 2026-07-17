@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.45.0] - 2026-07-17
+
+The harness learns from its own gaps.
+
+### Changed
+
+- The version guard now blocks a release that would move the app version backwards. Two agent sessions can ship from one shared tree, and the version counter they share had no direction check - a real regression this week proved it.
+- Scout hardening: live and demo mode now share one clustering pipeline (the forked path caused a real crash), the 14-day drumbeat window announces loudly if it ever saturates instead of silently weakening, and scout items older than 90 days are pruned so the table cannot grow without bound.
+- The lessons behind every gate are now written where people actually read them: a new "How this repo stays honest" section in the README, hard rules in AGENT-ONBOARDING, and two new earned-lesson entries in HARNESS.md.
+
 ## [0.44.1] - 2026-07-17
 
 Scout demo-mode fix, proven by its first production run.
@@ -747,7 +757,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.43.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.45.0...HEAD
+[0.45.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.44.1...v0.45.0
 [0.43.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.44.0...v0.43.1
 [0.44.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.43.0...v0.44.0
 [0.43.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.42.0...v0.43.0
