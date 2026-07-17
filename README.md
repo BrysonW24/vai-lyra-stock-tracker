@@ -89,12 +89,16 @@ beta - the model only ever answers from what is already on your dashboard.
 ## 5 - Lyra Notifications
 
 Strong setups and risk flags, delivered on the channels you pick - with quiet hours and
-per-scope control so alerts stay worth the buzz.
+per-scope control so alerts stay worth the buzz. Every alert carries the engine's own
+grain: the trigger reason, the symbol, a relevance score, and a link back into Lyra.
 
 <p align="center">
   <img src="assets/onboarding-alerts-channel-selection.png" width="30%" alt="Alerts - choose your channels and what to be alerted about" />
   <img src="assets/notification-alert-mode-quiet-hours.png" width="30%" alt="Alert mode - quick mute, frequency, scope and quiet hours" />
+  <img src="assets/notification-slack-signal.png" width="30%" alt="Slack - a live signal alert delivered to a channel" />
 </p>
+
+
 
 ---
 

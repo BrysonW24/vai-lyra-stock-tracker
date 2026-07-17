@@ -41,7 +41,16 @@ is plain markdown with explicit stages and gates. The non-negotiables:
    - alerts: the probe send actually arrives
    - deploy: `https://<domain>/api/health` returns ok with the right version
      (and `"cache":"upstash"` if you wired the optional Upstash Redis - else `"memory"`, both fine)
-5. **Report back like a colleague.** Finish with: what mode, what URLs, where the keys
+5. **Brand the channels you set up.** A Telegram bot or Slack app with a blank grey avatar
+   is unrecognisable in a busy chat. When your human sets one up, point them at the logo -
+   it is already in the repo, so never ask them to go hunting or make one:
+   - **Lyra mark** - `assets/logo-lyra.png` (512x512, meets Slack's minimum and Telegram's).
+     Telegram: BotFather -> `/setuserpic`. Slack: **Basic Information -> Display
+     Information -> App icon**.
+   - **Vivacity.ai mark** - `assets/logo-vivacity-ai.png` (1254x1254) for the publisher/org
+     identity, where the surface asks for the maker rather than the product.
+   - Same files serve the README gallery; do not generate new ones or re-crop these.
+6. **Report back like a colleague.** Finish with: what mode, what URLs, where the keys
    live, what it costs (see [COSTS.md](COSTS.md)), and what they can do next.
 
 ## Ground rules (security - no exceptions)
@@ -79,6 +88,8 @@ is plain markdown with explicit stages and gates. The non-negotiables:
 | Skill-chain registry + section ownership map | [SKILL-CHAIN.md](SKILL-CHAIN.md) |
 | The harness + coverage map, rendered visually | `/harness-map.html` (generated from the two files above) |
 | The stage-by-stage setup playbook | [.claude/commands/setup.md](.claude/commands/setup.md) |
+| Brand marks for Telegram/Slack avatars | `assets/logo-lyra.png` (product), `assets/logo-vivacity-ai.png` (maker) |
+| Alerts setup, channel by channel | [docs/walkthroughs/06-alerts-on-your-phone.md](docs/walkthroughs/06-alerts-on-your-phone.md) |
 | Human-paced deep dives | [docs/walkthroughs/](docs/walkthroughs/README.md) |
 | Deploy: Vercel CLI path | [docs/walkthroughs/04-deploy-your-own.md](docs/walkthroughs/04-deploy-your-own.md) |
 | Deploy: self-host (Docker/Coolify) | [docs/runbooks/coolify-deploy.md](docs/runbooks/coolify-deploy.md) |

@@ -174,7 +174,15 @@ delivery is free, and no business verification is involved. Full operational ref
 2. Pick a display name, then a unique username ending in `bot` (e.g. `my_lyra_alerts_bot`).
 3. BotFather replies with a token like `123456789:AAF...`. That is your `TELEGRAM_BOT_TOKEN`.
    Treat it like a password - server-side env only, never in a `NEXT_PUBLIC_*` variable.
-4. Optional hardening via BotFather: `/setjoingroups` -> Disable, `/setprivacy` -> Enable.
+   BotFather calls this "the token to access the HTTP API" - it still belongs in
+   `TELEGRAM_BOT_TOKEN`. That is the only name the code reads
+   (`src/lib/notifications/telegram.ts`); park it under any other name and every send
+   silently no-ops as `demo_logged` with no error to chase.
+4. **Give the bot the Lyra face** so an alert is recognisable at a glance: send
+   `/setuserpic` to BotFather, pick your bot, and upload
+   [`assets/logo-lyra.png`](../../assets/logo-lyra.png) (512x512). Do `/setdescription`
+   too if you want context in the bot's empty-chat screen.
+5. Optional hardening via BotFather: `/setjoingroups` -> Disable, `/setprivacy` -> Enable.
 
 You know it worked when: this returns your bot's username in the JSON:
 
@@ -303,9 +311,15 @@ user of your deployment can point alerts at their own workspace.
    **Create New App -> From scratch**) -> **Incoming Webhooks** -> toggle **On** ->
    **Add New Webhook to Workspace** -> pick the channel -> **Allow** -> copy the URL
    (it starts with `https://hooks.slack.com/services/`).
-2. In Lyra: **Settings -> Notifications -> Slack webhook** - paste the URL and hit the
+   Each webhook is **bound to the one channel you picked** - it cannot be redirected later.
+   To post somewhere else, add another webhook for that channel.
+2. **Give the app the Lyra face** while you are there: **Basic Information ->
+   Display Information -> App icon** -> upload
+   [`assets/logo-lyra.png`](../../assets/logo-lyra.png) (512x512, Slack's minimum). Name it
+   something obvious like "Lyra" so a signal is identifiable in a busy channel.
+3. In Lyra: **Settings -> Notifications -> Slack webhook** - paste the URL and hit the
    Slack button to save.
-3. Saving fires a **real verification message** at the webhook. The channel only turns on
+4. Saving fires a **real verification message** at the webhook. The channel only turns on
    when that message actually lands - if the URL is wrong or revoked, the UI tells you and
    nothing silently black-holes.
 

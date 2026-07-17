@@ -87,8 +87,20 @@ Walkthrough: `docs/walkthroughs/06-alerts-on-your-phone.md`. Offer in order of e
 - **Web push** - zero accounts: generate a VAPID keypair, set the env vars, enable in-app.
 - **Telegram** - the recommended phone channel (~10 minutes): BotFather bot,
   `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`, pairing per the walkthrough.
+  Two traps worth pre-empting: BotFather calls the token "the HTTP API token" but it MUST
+  land in `TELEGRAM_BOT_TOKEN` (any other name and sends silently no-op as `demo_logged`),
+  and the bot cannot message first - the human must press **Start** before `getUpdates`
+  reveals a chat id. Neither failure raises an error, so check both before debugging.
+- **Slack** - works today, ~2 minutes: the human's own incoming webhook pasted into
+  **Settings -> Notifications**, or `SLACK_UPDATES_WEBHOOK_URL` for release announces.
+  Each webhook is permanently bound to the single channel chosen at creation.
 - **WhatsApp** - be honest: the code ships architecture only; a user needs Meta Business
   API onboarding before this works. Do not oversell it.
+
+Whichever they pick, offer to brand it: `assets/logo-lyra.png` (512x512) is the product
+mark - Telegram `/setuserpic`, Slack **Basic Information -> Display Information -> App
+icon**. `assets/logo-vivacity-ai.png` is the maker mark. The files are in the repo; do not
+generate a new one.
 
 **Gate:** a test notification lands on their device (push test route or a Telegram message).
 
