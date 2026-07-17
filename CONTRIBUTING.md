@@ -6,11 +6,29 @@ minutes.
 
 ## Quick start
 
+**Just running it locally?** A plain clone is fine:
+
 ```bash
 git clone https://github.com/BrysonW24/vai-lyra-stock-tracker.git
 cd vai-lyra-stock-tracker
 npm install && npm run dev      # runs on built-in demo data, no keys needed
 ```
+
+**Contributing a change?** Work from a fork - you cannot push branches to this repo directly:
+
+```bash
+gh repo fork BrysonW24/vai-lyra-stock-tracker --clone    # or the Fork button on GitHub, then clone YOUR fork
+cd vai-lyra-stock-tracker
+npm install
+git checkout -b feat/my-change
+# ...make your change...
+git push -u origin feat/my-change     # pushes to your fork
+```
+
+Then open a pull request against `BrysonW24/vai-lyra-stock-tracker` `main`. To keep a
+button-forked clone current, add the source as `upstream` and rebase on it:
+`git remote add upstream https://github.com/BrysonW24/vai-lyra-stock-tracker.git` then
+`git pull --rebase upstream main` (the `gh repo fork --clone` path sets `upstream` up for you).
 
 Open http://localhost:3042 and you are in. No accounts, no backend, no API keys required to
 develop against the demo data.
@@ -61,4 +79,17 @@ npm run build          # production build, must pass
 npm run test           # if your change touches tested logic
 ```
 
-Keep PRs focused, fill in the pull-request template, and describe what you verified. Thank you.
+Keep PRs focused, fill in the pull-request template (it loads automatically when you open a
+PR), and describe what you verified.
+
+## Security issues
+
+Never open a public issue or PR containing vulnerability details - use the private path in
+[SECURITY.md](SECURITY.md) instead.
+
+## License
+
+By contributing, you agree that your contributions are licensed under the repository's
+[MIT License](LICENSE).
+
+Thank you.

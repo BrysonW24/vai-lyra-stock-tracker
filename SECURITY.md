@@ -34,6 +34,15 @@ With no keys configured the app runs entirely on built-in demo data and makes no
 
 If `OPENAI_API_KEY` is set server-side, keyless beta users can chat with Lyra through the hosted OpenAI gateway. Do not put this key in any `NEXT_PUBLIC_*` variable. Optional browser-entered BYOK keys are stored locally by the user's browser and override the hosted key for that user's requests.
 
-## Reporting
+## Reporting a vulnerability
 
-Found a vulnerability? Open a private issue or contact the maintainer directly rather than filing a public issue with details.
+Please do NOT file a public issue or PR containing exploit details.
+
+- **Preferred:** use GitHub's private reporting - the **Security** tab on this repo, then
+  **Report a vulnerability**. It opens a private advisory only the maintainer can see, and it
+  is enabled on this repository.
+- **Fallback:** contact the maintainer directly via their GitHub profile and allow time for a
+  fix before any public disclosure.
+
+This is a solo-maintained research project: expect an acknowledgement within a few days,
+severity-first triage, and no bounty program.
