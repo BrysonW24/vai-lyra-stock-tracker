@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.29.0] - 2026-07-17
+
+Product Updates gets an Ideas board: suggest features and upvote what we build next.
+
+### Changed
+
+- The Product Updates page now has a two-tone switch - Product Updates (the release history) and a new Ideas board where you can suggest a feature and upvote the ones you want most, so what gets built next is driven by what you vote for.
+- Each idea shows its date, title and description with a one-tap upvote and a live vote count, ranked most-wanted first. One vote per person per idea - tap again to take your vote back.
+- The in-app feedback box now links straight to the Ideas board when you pick "Idea", so a suggestion can become something others rally behind.
+- Fixed a confusing double changelog: the product-updates timeline is now generated from one source of truth (the version log) and is searchable, instead of a version list sitting next to a separate feed that had drifted out of date.
+
 ## [0.28.0] - 2026-07-17
 
 Clearer notifications: an honest per-device push badge, real Telegram and WhatsApp logos, and sharper alert copy.
@@ -567,7 +578,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.28.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.29.0...HEAD
+[0.29.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.25.0...v0.26.0

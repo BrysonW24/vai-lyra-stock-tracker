@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { containFocus, registerDialog } from '@/lib/focus-trap';
-import { MessageSquarePlus, X, Loader2, Check } from 'lucide-react';
+import { MessageSquarePlus, X, Loader2, Check, Lightbulb, ArrowRight } from 'lucide-react';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 type FeedbackType = 'idea' | 'bug' | 'other';
@@ -156,6 +156,19 @@ export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidget
                     </button>
                   ))}
                 </div>
+
+                {type === 'idea' && (
+                  <a
+                    href="/whats-new?tab=ideas"
+                    onClick={close}
+                    className="flex items-center justify-between gap-2 rounded-md border border-[#1d7f55] bg-[#0d251b] px-3 py-2 text-[12px] font-medium text-[#43d18b] transition hover:bg-[#103626]"
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <Lightbulb size={13} /> Post it on the Ideas board so others can vote
+                    </span>
+                    <ArrowRight size={13} className="shrink-0" />
+                  </a>
+                )}
 
                 <textarea
                   value={message}

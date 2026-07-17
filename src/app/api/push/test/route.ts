@@ -22,7 +22,7 @@ export async function POST() {
       type: 'test_notification',
       severity: 'low',
       title: "You're all set",
-      body: 'Push is working on this device. This is how a Lyra alert will land.',
+      body: 'Push is working. This is exactly how your alerts will land.',
       triggerReason: 'You tapped Send test notification.',
       relevanceScore: 100,
       url: '/account',

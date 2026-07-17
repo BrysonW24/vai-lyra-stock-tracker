@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.29.0',
+    date: '2026-07-17',
+    title: 'Product Updates gets an Ideas board: suggest features and upvote what we build next',
+    highlights: [
+      'The Product Updates page now has a two-tone switch - Product Updates (the release history) and a new Ideas board where you can suggest a feature and upvote the ones you want most, so what gets built next is driven by what you vote for.',
+      'Each idea shows its date, title and description with a one-tap upvote and a live vote count, ranked most-wanted first. One vote per person per idea - tap again to take your vote back.',
+      'The in-app feedback box now links straight to the Ideas board when you pick "Idea", so a suggestion can become something others rally behind.',
+      'Fixed a confusing double changelog: the product-updates timeline is now generated from one source of truth (the version log) and is searchable, instead of a version list sitting next to a separate feed that had drifted out of date.',
+    ],
+  },
+  {
     version: '0.28.0',
     date: '2026-07-17',
     title: 'Clearer notifications: an honest per-device push badge, real Telegram and WhatsApp logos, and sharper alert copy',
