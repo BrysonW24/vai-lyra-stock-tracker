@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-07-17
+
+The floating button gently nudges Feedback into view now and then.
+
+### Changed
+
+- The floating Ask Lyra / Feedback control now brings Feedback forward for a couple of seconds every so often, then slides back - a quiet reminder that the same button is where you tell us what to fix or build, so you never have to go looking for it.
+- It never interrupts: the nudge is skipped while a panel is open, and it stays completely still if your device is set to reduce motion.
+
 ## [0.29.0] - 2026-07-17
 
 Product Updates gets an Ideas board: suggest features and upvote what we build next.
@@ -578,7 +587,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.29.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.30.0...HEAD
+[0.30.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.26.0...v0.27.0

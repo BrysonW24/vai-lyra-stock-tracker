@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.30.0',
+    date: '2026-07-17',
+    title: 'The floating button gently nudges Feedback into view now and then',
+    highlights: [
+      'The floating Ask Lyra / Feedback control now brings Feedback forward for a couple of seconds every so often, then slides back - a quiet reminder that the same button is where you tell us what to fix or build, so you never have to go looking for it.',
+      'It never interrupts: the nudge is skipped while a panel is open, and it stays completely still if your device is set to reduce motion.',
+    ],
+  },
+  {
     version: '0.29.0',
     date: '2026-07-17',
     title: 'Product Updates gets an Ideas board: suggest features and upvote what we build next',

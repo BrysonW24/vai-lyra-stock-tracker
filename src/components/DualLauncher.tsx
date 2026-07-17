@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sparkles, MessageSquarePlus, ChevronRight } from 'lucide-react';
 import { ChatWidget } from './chat/ChatWidget';
 import { FeedbackWidget } from './FeedbackWidget';
@@ -26,6 +26,25 @@ export function DualLauncher() {
 
   const flip = () => setActive((a) => (a === 'chat' ? 'feedback' : 'chat'));
   const open = () => (active === 'chat' ? setChatOpen(true) : setFeedbackOpen(true));
+
+  // Gentle periodic nudge: every 30s bring Feedback forward for 2s, then slide back to Ask Lyra -
+  // a quiet reminder that this control also takes feedback. Never hijacks an open sheet, and stays
+  // still for anyone who prefers reduced motion.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const CYCLE_MS = 30_000;
+    const DWELL_MS = 2_000;
+    let dwell: ReturnType<typeof setTimeout> | undefined;
+    const id = setInterval(() => {
+      if (chatOpen || feedbackOpen) return;
+      setActive('feedback');
+      dwell = setTimeout(() => setActive((a) => (a === 'feedback' ? 'chat' : a)), DWELL_MS);
+    }, CYCLE_MS);
+    return () => {
+      clearInterval(id);
+      if (dwell) clearTimeout(dwell);
+    };
+  }, [chatOpen, feedbackOpen]);
 
   const slot = SLOTS.find((s) => s.id === active)!;
   const Icon = slot.icon;
