@@ -227,8 +227,12 @@ def main() -> None:
     settings = load_settings()
     repo = SupabaseRepository(settings)
     summary = run_fundamentals_worker(settings, repo)
-    if summary.get("status") == "failed":
-        raise SystemExit("fundamentals worker failed: " + str(summary.get("error")))
+    # The fatal handler in run_fundamentals_worker returns status "error", but this
+    # check used to test == "failed" only - so a total crash (e.g. the ticker load
+    # throwing on a DB outage) exited 0 and the nightly stayed green. Fail on anything
+    # that is not an explicit good outcome.
+    if summary.get("status") not in ("success", "no_tickers"):
+        raise SystemExit("fundamentals worker failed: " + str(summary.get("error") or summary.get("status")))
 
 
 if __name__ == "__main__":

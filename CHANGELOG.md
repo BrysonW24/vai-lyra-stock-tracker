@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.47.0] - 2026-07-17
+
+Honesty hardening: workers that store nothing now go red, and two privacy holes closed.
+
+### Changed
+
+- A full audit found four surviving pockets of the "green step that stored nothing" bug the last wave was meant to kill - and closed every one. The events worker's persist failures were being caught by an outer handler that reported success anyway; the intelligence worker had the whole pre-fix shape (swallow the write error, claim success); the fundamentals worker exited cleanly on a total crash because its fatal status was spelled differently from what the exit check looked for; and the scout's idea board could never save a card because its upsert key was a partial index Postgres refuses as a conflict target - the same class of bug fixed for two other tables last week, missed on a third.
+- Each fix ships with a test that reproduces the exact failure and would go red if it ever came back - proven by running them against the old code first. A worker that fetches data and stores none of it now fails loudly instead of decorating a green nightly run.
+- Closed a cross-user privacy hole: on a fresh install, the setup script re-opened a read leak that a prior migration had fixed, making every user's simulated paper trades readable with the public key. The reconcile step now senses the real table shape and keeps owner-only reads - verified closed on production.
+- Closed a privilege-escalation hole: the community ideas board trusted a role column any signed-in user could write to their own profile, so anyone could self-promote to moderator and rewrite others' ideas. A database trigger now blocks role changes outside the server - live on production.
+
 ## [0.46.0] - 2026-07-17
 
 The macro fleet: RBA decisions in your channels, a live calendar, CGT radar, and your return in AUD.
@@ -772,7 +783,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.46.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.47.0...HEAD
+[0.47.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.46.0...v0.47.0
 [0.46.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.45.0...v0.46.0
 [0.45.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.44.1...v0.45.0
 [0.43.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.44.0...v0.43.1

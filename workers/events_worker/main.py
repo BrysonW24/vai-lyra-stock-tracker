@@ -69,20 +69,19 @@ def run_events_worker(settings: Settings, repo: SupabaseRepository) -> dict[str,
             logger.error(f"Failed to fetch IPO calendar: {e}")
             ipos = []
 
-        # Persist events and IPOs to Supabase (guarded)
+        # Persist events and IPOs to Supabase. NOT wrapped in try/except: this exact
+        # wrapper once caught the raise that the v0.42.0 honesty fix in
+        # _persist_events_to_supabase was built to propagate, set status="success"
+        # anyway, and the tables sat empty under a green step. A persist failure must
+        # reach the outer handler, mark the run failed, and exit non-zero.
         if repo.enabled:
-            try:
-                _persist_events_to_supabase(repo, events)
-                _persist_ipos_to_supabase(repo, ipos)
-            except Exception as e:
-                logger.error(f"Failed to persist events/IPOs: {e}")
+            _persist_events_to_supabase(repo, events)
+            _persist_ipos_to_supabase(repo, ipos)
 
-        # Compute event risk for active tickers (load latest signals)
-        try:
-            risk_count = _compute_and_persist_event_risks(repo, tickers, events)
-            summary["event_risks_computed"] = risk_count
-        except Exception as e:
-            logger.error(f"Failed to compute event risks: {e}")
+        # Compute event risk for active tickers (load latest signals). Same rule: a
+        # failure here previously logged and moved on, reporting computed=0 as success.
+        risk_count = _compute_and_persist_event_risks(repo, tickers, events)
+        summary["event_risks_computed"] = risk_count
 
         summary["status"] = "success"
         logger.info(f"Events worker completed: {summary}")
@@ -144,40 +143,39 @@ def _persist_ipos_to_supabase(repo: SupabaseRepository, ipos: list) -> None:
         logger.debug("Supabase not enabled; skipping IPO persistence")
         return
 
-    try:
-        records = []
-        for ipo in ipos:
-            record = {
-                "symbol": ipo.symbol,
-                "company_name": ipo.company_name,
-                "ipo_date": ipo.ipo_date,
-                "exchange": ipo.exchange,
-                "category": ipo.category,
-                "status": ipo.status,
-                "offer_price": ipo.offer_price,
-                "shares_offered_m": ipo.shares_offered_m,
-                "proceeds_usd_m": ipo.proceeds_usd_m,
-                "valuation_usd_m": ipo.valuation_usd_m,
-                "revenue_ttm_usd_m": ipo.revenue_ttm_usd_m,
-                "revenue_growth_pct": ipo.revenue_growth_pct,
-                "gross_margin_pct": ipo.gross_margin_pct,
-                "net_income_usd_m": ipo.net_income_usd_m,
-                "profitable": ipo.profitable,
-                "employees": ipo.employees,
-                "products": ipo.products or [],
-                "notable_projects": ipo.notable_projects or [],
-                "key_people": ipo.key_people or [],
-                "description": ipo.description,
-                "domain": ipo.domain,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            }
-            records.append(record)
+    # No try/except here for the same reason as _persist_events_to_supabase above:
+    # a rejected write must fail the run, not decorate a green one with a log line.
+    records = []
+    for ipo in ipos:
+        record = {
+            "symbol": ipo.symbol,
+            "company_name": ipo.company_name,
+            "ipo_date": ipo.ipo_date,
+            "exchange": ipo.exchange,
+            "category": ipo.category,
+            "status": ipo.status,
+            "offer_price": ipo.offer_price,
+            "shares_offered_m": ipo.shares_offered_m,
+            "proceeds_usd_m": ipo.proceeds_usd_m,
+            "valuation_usd_m": ipo.valuation_usd_m,
+            "revenue_ttm_usd_m": ipo.revenue_ttm_usd_m,
+            "revenue_growth_pct": ipo.revenue_growth_pct,
+            "gross_margin_pct": ipo.gross_margin_pct,
+            "net_income_usd_m": ipo.net_income_usd_m,
+            "profitable": ipo.profitable,
+            "employees": ipo.employees,
+            "products": ipo.products or [],
+            "notable_projects": ipo.notable_projects or [],
+            "key_people": ipo.key_people or [],
+            "description": ipo.description,
+            "domain": ipo.domain,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        records.append(record)
 
-        if records:
-            repo.client.table("ipos").upsert(records, on_conflict="symbol").execute()
-            logger.info(f"Persisted {len(records)} IPO records to Supabase")
-    except Exception as e:
-        logger.error(f"Failed to persist IPOs to Supabase: {e}")
+    if records:
+        repo.client.table("ipos").upsert(records, on_conflict="symbol").execute()
+        logger.info(f"Persisted {len(records)} IPO records to Supabase")
 
 
 def _compute_and_persist_event_risks(
@@ -191,49 +189,48 @@ def _compute_and_persist_event_risks(
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     count = 0
 
-    try:
-        # Load latest signals for all tickers to check for strong_setup / watchlist_setup
-        signals = _load_latest_signals(repo)
-        signal_map = {s["symbol"]: s.get("status", "inactive") for s in signals}
+    # No blanket try/except: a compute or persist failure here used to log, return the
+    # count as if the risks were stored, and leave the run green. Signal loading keeps
+    # its own internal fallback (_load_latest_signals degrades to empty), but a rejected
+    # event_risks write must fail the run.
+    signals = _load_latest_signals(repo)
+    signal_map = {s["symbol"]: s.get("status", "inactive") for s in signals}
 
-        # Compute risk for each ticker
-        risk_records = []
-        for ticker in tickers:
-            signal_status = signal_map.get(ticker.symbol, "inactive")
+    # Compute risk for each ticker
+    risk_records = []
+    for ticker in tickers:
+        signal_status = signal_map.get(ticker.symbol, "inactive")
 
-            # Convert event dataclasses to dicts for the engine
-            event_dicts = []
-            for event in events:
-                event_dicts.append(
-                    {
-                        "id": event.id,
-                        "date": event.date,
-                        "type": event.type,
-                        "ticker": event.ticker,
-                        "title": event.title,
-                        "importance": event.importance,
-                    }
-                )
-
-            risk = event_risk_for_ticker(ticker.symbol, signal_status, event_dicts, today)
-            count += 1
-
-            risk_records.append(
+        # Convert event dataclasses to dicts for the engine
+        event_dicts = []
+        for event in events:
+            event_dicts.append(
                 {
-                    "symbol": ticker.symbol,
-                    "event_risk": risk,
-                    "risk_date": today,
-                    "computed_at": datetime.now(timezone.utc).isoformat(),
+                    "id": event.id,
+                    "date": event.date,
+                    "type": event.type,
+                    "ticker": event.ticker,
+                    "title": event.title,
+                    "importance": event.importance,
                 }
             )
 
-        # Persist to Supabase if enabled
-        if repo.client and risk_records:
-            repo.client.table("event_risks").upsert(risk_records, on_conflict="symbol,risk_date").execute()
-            logger.info(f"Persisted event risk for {len(risk_records)} tickers")
+        risk = event_risk_for_ticker(ticker.symbol, signal_status, event_dicts, today)
+        count += 1
 
-    except Exception as e:
-        logger.error(f"Failed to compute/persist event risks: {e}")
+        risk_records.append(
+            {
+                "symbol": ticker.symbol,
+                "event_risk": risk,
+                "risk_date": today,
+                "computed_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+
+    # Persist to Supabase if enabled
+    if repo.client and risk_records:
+        repo.client.table("event_risks").upsert(risk_records, on_conflict="symbol,risk_date").execute()
+        logger.info(f"Persisted event risk for {len(risk_records)} tickers")
 
     return count
 
@@ -292,8 +289,11 @@ def main() -> None:
     settings = load_settings()
     repo = SupabaseRepository(settings)
     summary = run_events_worker(settings, repo)
-    if summary.get("status") == "failed":
-        raise SystemExit("events worker failed: " + str(summary.get("error")))
+    # Fail on anything that is not an explicit good outcome. Checking == "failed" left a
+    # hole: an unexpected status (like the fatal handler's "error" in the fundamentals
+    # worker) exited 0 and the nightly stayed green through a total crash.
+    if summary.get("status") not in ("success", "no_tickers"):
+        raise SystemExit("events worker failed: " + str(summary.get("error") or summary.get("status")))
 
 
 if __name__ == "__main__":

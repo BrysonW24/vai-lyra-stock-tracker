@@ -1028,9 +1028,16 @@ create index if not exists idx_event_risks_symbol_date
 -- tables. RLS on + read-only policies; the worker's service-role key bypasses RLS.
 -- Idempotent - safe to re-run, safe regardless of migration/sql apply order.
 
+-- SCHEMA-SENSING, exactly like migration 032: two names in this list (paper_trades,
+-- trade_day_snapshots) are deployed as the USER-KEYED tables from 020/010, and the old
+-- blanket `using (true)` read policy here RE-OPENED the cross-user leak 032 fixed -
+-- on every fresh install, with the docs saying "safe to re-run". Permissive policies
+-- OR together, so one `using (true)` defeats every owner-only policy on the table.
+-- Rule: global read ONLY for tables with no user_id; owner-only read otherwise.
 do $$
 declare
   t text;
+  has_user_id boolean;
   scanner_tables text[] := array[
     'stock_tickers','stock_candles','stock_indicators','stock_signal_scores','stock_signals',
     'stock_scanner_runs',
@@ -1045,8 +1052,24 @@ begin
   foreach t in array scanner_tables loop
     if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = t) then
       execute format('alter table public.%I enable row level security;', t);
-      execute format('drop policy if exists %I on public.%I;', t || '_read', t);
-      execute format('create policy %I on public.%I for select to anon, authenticated using (true);', t || '_read', t);
+      select exists (
+        select 1 from information_schema.columns
+        where table_schema = 'public' and table_name = t and column_name = 'user_id'
+      ) into has_user_id;
+
+      if has_user_id then
+        -- User-keyed deployment of this name won the create-if-not-exists race:
+        -- drop any permissive read and re-assert owner-only SELECT (mirrors 032).
+        execute format('drop policy if exists %I on public.%I;', t || '_read', t);
+        execute format('drop policy if exists %I on public.%I;', t || '_owner_sel', t);
+        execute format(
+          'create policy %I on public.%I for select using (auth.uid() = user_id);',
+          t || '_owner_sel', t
+        );
+      else
+        execute format('drop policy if exists %I on public.%I;', t || '_read', t);
+        execute format('create policy %I on public.%I for select to anon, authenticated using (true);', t || '_read', t);
+      end if;
     end if;
   end loop;
 end $$;

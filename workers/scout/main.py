@@ -19,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from workers.scout.attach import attach
-from workers.scout.cluster import IdeaCandidate, cluster_unmapped
+from workers.scout.cluster import IdeaCandidate, cluster_unmapped, drumbeats
 from workers.scout.providers import ScoutItem, demo_items, fetch_source
 from workers.scout.sources import active_sources, gated_sources, load_sources
 from workers.stock_scanner.config import Settings
@@ -107,12 +107,37 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
         candidates = cluster_unmapped(list(pool.values()))
         summary["idea_candidates"] = len(candidates)
 
+        # The visible patience: below-bar clusters still building toward promotion, and
+        # tonight's per-theme attach counts - both feed the "what the scout saw" surface.
+        beats = drumbeats(list(pool.values()), promoted=candidates)
+        summary["drumbeats"] = len(beats)
+        theme_counts: dict[str, int] = {}
+        for item in items:
+            for theme in attachments[item.id].matched_themes:
+                theme_counts[theme] = theme_counts.get(theme, 0) + 1
+
         if repo.client:
             summary["ideas_filed"] = _file_ideas(repo, candidates)
+            _record_run(repo, summary, theme_counts, beats)
         else:
             logger.info("demo mode: %d items, %d idea candidates (not persisted)", len(items), len(candidates))
             for c in candidates:
                 logger.info("candidate: %s (confidence %d, %d evidence)", c.title, c.confidence, len(c.evidence))
+
+        # A run that saw work and stored NONE of it has failed, however cleanly each
+        # helper "handled" its own error. Without these guards the 42P10 partial-index
+        # bug on community_ideas.dedupe_key (043, fixed in 046) rejected every filed
+        # idea while this function reported ok and the nightly stayed green.
+        if repo.client and summary["items_fetched"] > 0 and summary["items_persisted"] == 0:
+            raise RuntimeError(
+                f"fetched {summary['items_fetched']} items but persisted 0 - "
+                "every scout_items write was rejected (see the errors above)"
+            )
+        if repo.client and summary["idea_candidates"] > 0 and summary["ideas_filed"] == 0:
+            raise RuntimeError(
+                f"clustered {summary['idea_candidates']} idea candidates but filed 0 - "
+                "every community_ideas upsert was rejected (see the errors above)"
+            )
 
         summary["status"] = "ok"
         return summary
@@ -208,12 +233,28 @@ def _persist_items(repo: SupabaseRepository, items: list[ScoutItem], attachments
         return 0
 
 
+def _source_names() -> dict[str, str]:
+    """Registry id -> human source name, so evidence links can say who reported it."""
+    try:
+        return {s.id: s.name for s in load_sources()}
+    except Exception as exc:  # noqa: BLE001
+        logger.error("load source names failed: %s", exc)
+        return {}
+
+
 def _file_ideas(repo: SupabaseRepository, candidates: list[IdeaCandidate]) -> int:
     """Upsert scout ideas by dedupe_key - a recurring cluster refreshes its card
-    (evidence + confidence) instead of stacking duplicates. Human rows are untouched."""
+    (evidence + confidence) instead of stacking duplicates. Human rows are untouched.
+    Evidence is enriched with the source's display name at filing time (the card must be
+    self-verifying: '2 independent sources' means naming them, not trusting registry ids)."""
+    names = _source_names()
     filed = 0
     for c in candidates:
         try:
+            evidence = [
+                {**e, "sourceName": names.get(str(e.get("sourceId")), str(e.get("sourceId") or ""))}
+                for e in c.evidence
+            ]
             repo.client.table("community_ideas").upsert(
                 {
                     "dedupe_key": c.dedupe_key,
@@ -221,7 +262,7 @@ def _file_ideas(repo: SupabaseRepository, candidates: list[IdeaCandidate]) -> in
                     "description": c.description,
                     "origin": "scout",
                     "kind": "vertical",
-                    "evidence": list(c.evidence),
+                    "evidence": evidence,
                     "confidence": c.confidence,
                     "status": "open",
                 },
@@ -231,6 +272,27 @@ def _file_ideas(repo: SupabaseRepository, candidates: list[IdeaCandidate]) -> in
         except Exception as exc:  # noqa: BLE001
             logger.error("file idea %s failed: %s", c.dedupe_key, exc)
     return filed
+
+
+def _record_run(repo: SupabaseRepository, summary: dict[str, Any], theme_counts: dict[str, int], beats: list[dict]) -> None:
+    """One ledger row per run so the product can show what the scout saw. Best-effort:
+    a failed insert loses one night of feed history, never the run."""
+    try:
+        repo.client.table("scout_runs").insert(
+            {
+                "items_fetched": summary["items_fetched"],
+                "items_persisted": summary["items_persisted"],
+                "items_unmapped": summary["items_unmapped"],
+                "ideas_filed": summary["ideas_filed"],
+                "sources_active": summary["sources_active"],
+                "sources_gated": summary["sources_gated"],
+                "window_saturated": summary["window_saturated"],
+                "theme_counts": theme_counts,
+                "drumbeats": beats,
+            }
+        ).execute()
+    except Exception as exc:  # noqa: BLE001
+        logger.error("record scout run failed: %s", exc)
 
 
 def main() -> None:

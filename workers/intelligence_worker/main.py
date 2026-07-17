@@ -78,6 +78,19 @@ def run_intelligence_worker(settings: Settings, repo: SupabaseRepository) -> dic
         hype_count = _compute_and_persist_hype(repo, all_news)
         summary["hype_scores_computed"] = hype_count
 
+        # A run that fetched news and stored NONE of it has failed, however cleanly the
+        # persist helper "handled" its own error. Same guard as the fundamentals worker
+        # (v0.42.0): this worker kept the pre-fix shape - persist helpers swallow, status
+        # goes success - and could report a green night while writing zero rows.
+        if repo.enabled and len(scored_items) > 0 and persisted_count == 0:
+            summary["status"] = "failed"
+            summary["error"] = (
+                f"fetched {len(all_news)} news items but persisted 0 - every write was "
+                "rejected (see the warnings above for the database error)"
+            )
+            logger.error(summary["error"])
+            return summary
+
         summary["status"] = "success"
         logger.info(f"Intelligence worker completed: {summary}")
         return summary
@@ -274,8 +287,10 @@ def main() -> None:
     settings = load_settings()
     repo = SupabaseRepository(settings)
     summary = run_intelligence_worker(settings, repo)
-    if summary.get("status") == "failed":
-        raise SystemExit("intelligence worker failed: " + str(summary.get("error")))
+    # Fail on anything that is not an explicit good outcome - == "failed" left unknown
+    # statuses (like a fatal handler returning "error") exiting 0 under a green step.
+    if summary.get("status") not in ("success", "no_tickers", "no_news"):
+        raise SystemExit("intelligence worker failed: " + str(summary.get("error") or summary.get("status")))
 
 
 if __name__ == "__main__":
