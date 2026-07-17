@@ -23,16 +23,23 @@ describe('GET /api/demo (Explore the demo first)', () => {
     expect(cookies).not.toContain('lyra_onboarded');
   });
 
-  it('a returning visitor who finished the tour goes straight to the console', async () => {
-    const res = await GET(req('lyra_onboarded=1; other=x'));
+  it('a returning visitor who FINISHED the tour goes straight to the console', async () => {
+    const res = await GET(req('lyra_demo_toured=1; other=x'));
     const location = res.headers.get('location') ?? '';
     expect(location.endsWith('/')).toBe(true);
     expect(location).not.toContain('/onboarding');
     expect(res.headers.getSetCookie().join('; ')).toContain('lyra_demo=1');
   });
 
-  it('an unrelated cookie does not count as onboarded', async () => {
-    const res = await GET(req('not_lyra_onboarded=1'));
+  it('a LEGACY pre-v0.67 stamp (lyra_onboarded without the journey) still gets the journey', async () => {
+    // The old demo route stamped lyra_onboarded on entry, so every earlier demo visitor
+    // carries it without ever having toured - it must not skip them past onboarding.
+    const res = await GET(req('lyra_onboarded=1'));
+    expect(res.headers.get('location')).toContain('/onboarding');
+  });
+
+  it('an unrelated cookie does not count as toured', async () => {
+    const res = await GET(req('not_lyra_demo_toured=1'));
     expect(res.headers.get('location')).toContain('/onboarding');
   });
 });

@@ -236,9 +236,12 @@ export default function OnboardingPage() {
         }
       } else {
         // Demo (unconfigured OR session-less demo tour) has no account to stamp - persist the
-        // onboarded flag in a cookie the middleware and /api/demo read, so the gate releases
-        // and a returning "Explore the demo" tap goes straight to the console.
+        // onboarded flag in a cookie the middleware reads so the gate releases, plus the
+        // toured marker /api/demo keys on so a returning "Explore the demo" tap goes straight
+        // to the console. Two cookies because pre-v0.67 demo entries stamped lyra_onboarded
+        // WITHOUT the journey - only completion may ever set lyra_demo_toured.
         document.cookie = 'lyra_onboarded=1; path=/; max-age=31536000; samesite=lax';
+        document.cookie = 'lyra_demo_toured=1; path=/; max-age=31536000; samesite=lax';
       }
 
       // Submit watchlist items, capturing each HTTP result so a 401 is not swallowed.

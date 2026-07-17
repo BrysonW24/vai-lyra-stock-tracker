@@ -6,6 +6,14 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.67.1] - 2026-07-18
+
+Demo journey unblocked for everyone who tried the demo before.
+
+### Changed
+
+- Anyone who tapped "Explore the demo first" before today carried a leftover cookie that made the app think they had already completed the new onboarding journey - so it skipped them straight to the console. The "already toured" check now keys on a marker that only finishing the journey can set, so earlier demo visitors (and your own phone) get the full experience on their next tap.
+
 ## [0.67.0] - 2026-07-18
 
 The demo now takes you through the full onboarding journey.
@@ -988,7 +996,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.67.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.67.1...HEAD
+[0.67.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.67.0...v0.67.1
 [0.67.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.66.0...v0.67.0
 [0.66.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.65.0...v0.66.0
 [0.64.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.63.0...v0.64.0

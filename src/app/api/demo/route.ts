@@ -14,8 +14,11 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   // A returning demo visitor who already finished the tour goes straight to the console -
   // re-running the questionnaire on every "Explore the demo" tap would punish curiosity.
-  const alreadyOnboarded = /(?:^|;\s*)lyra_onboarded=1(?:;|$)/.test(request.headers.get('cookie') ?? '');
-  const response = NextResponse.redirect(new URL(alreadyOnboarded ? '/' : '/onboarding', request.url));
+  // Keyed on lyra_demo_toured, which ONLY the onboarding completion sets. The pre-v0.67 demo
+  // route stamped lyra_onboarded on entry, so every earlier demo visitor carries a false
+  // "already toured" signal - keying on that would silently skip the journey for all of them.
+  const toured = /(?:^|;\s*)lyra_demo_toured=1(?:;|$)/.test(request.headers.get('cookie') ?? '');
+  const response = NextResponse.redirect(new URL(toured ? '/' : '/onboarding', request.url));
   response.cookies.set('lyra_demo', '1', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' });
   return response;
 }

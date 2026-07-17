@@ -23,6 +23,14 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.67.1',
+    date: '2026-07-18',
+    title: 'Demo journey unblocked for everyone who tried the demo before',
+    highlights: [
+      'Anyone who tapped "Explore the demo first" before today carried a leftover cookie that made the app think they had already completed the new onboarding journey - so it skipped them straight to the console. The "already toured" check now keys on a marker that only finishing the journey can set, so earlier demo visitors (and your own phone) get the full experience on their next tap.',
+    ],
+  },
+  {
     version: '0.67.0',
     date: '2026-07-18',
     title: 'The demo now takes you through the full onboarding journey',
