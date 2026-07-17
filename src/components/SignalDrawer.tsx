@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { bumpAiUsage } from '@/lib/usage-store';
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, LineChart, Sparkles } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
@@ -55,6 +56,7 @@ function SignalAiNarration({ symbol }: { symbol: string }) {
     if (!hasKey && !serverBacked) return;
 
     let cancelled = false;
+    bumpAiUsage();
     fetch('/api/ai/explain-signal', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

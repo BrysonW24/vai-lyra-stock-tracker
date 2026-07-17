@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { bumpAiUsage } from '@/lib/usage-store';
 import Link from 'next/link';
 import { X, Send, Loader2, Sparkles, ShieldCheck, KeyRound, SquarePen, ArrowUpRight, Star, Plus, Check, Undo2, RotateCcw } from 'lucide-react';
 import { loadAi, loadProfile, loadAgent, type AiSettings } from '@/lib/account';
@@ -261,6 +262,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     setStatus('sending');
     try {
       const agentActions = loadAgent().actionsEnabled;
+      bumpAiUsage();
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -3,31 +3,41 @@
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { track } from '@vercel/analytics';
+import { ensureSession, recordSurfaceVisit, accrueSurfaceDwell } from '@/lib/usage-store';
 
 /**
- * Privacy-first usage tracking on top of Vercel Web Analytics.
+ * Usage tracking - two complementary layers:
  *
- * Pageviews / most-visited pages are captured automatically by <Analytics/>. This adds
- * two custom events for the behaviour Bryson asked about:
- *   - `page_time`  → { path, seconds }  (time on screen, flushed on route change + tab hide)
- *   - `ui_click`   → { label, path }    (most-clicked buttons/links, label only)
+ *  1. LOCAL (private, in-app): feeds the "Your Activity" page from the user's OWN browser storage -
+ *     sessions, per-surface visits + dwell (the heatmap), all on-device, no server, no plan needed.
+ *  2. VERCEL Web Analytics (owner-side aggregate): default pageviews are captured by <Analytics/>;
+ *     this adds `page_time` and `ui_click` custom events (visible in the Vercel dashboard). `track()`
+ *     is a safe no-op until Vercel Analytics is enabled, and custom events may require the Pro plan.
  *
- * No PII, no content, no cookies - only the element's visible label + the route. `track()`
- * is a safe no-op until Vercel Analytics is enabled, and custom events may require the
- * Vercel Pro plan; default pageviews work on any plan.
+ * No PII, no content, no cookies - only the route + a visible label. Both layers are best-effort and
+ * never block the app.
  */
 export function UsageTracker() {
   const pathname = usePathname();
   const enteredAt = useRef<number>(Date.now());
   const currentPath = useRef<string>(pathname);
 
-  // Flush time spent on the path we are leaving when the route changes.
+  // One local session per browser session (deduped in the store).
+  useEffect(() => {
+    ensureSession();
+  }, []);
+
+  // On route change: flush time on the path we are leaving (Vercel + local dwell), then count the
+  // local visit to the new surface.
   useEffect(() => {
     const now = Date.now();
-    const seconds = Math.round((now - enteredAt.current) / 1000);
-    if (currentPath.current !== pathname && seconds > 0 && seconds < 3600) {
-      track('page_time', { path: currentPath.current, seconds });
+    const ms = now - enteredAt.current;
+    const seconds = Math.round(ms / 1000);
+    if (currentPath.current !== pathname) {
+      if (seconds > 0 && seconds < 3600) track('page_time', { path: currentPath.current, seconds });
+      accrueSurfaceDwell(currentPath.current, ms);
     }
+    recordSurfaceVisit(pathname, 0);
     enteredAt.current = now;
     currentPath.current = pathname;
   }, [pathname]);
@@ -35,11 +45,12 @@ export function UsageTracker() {
   // Flush on tab hide / page unload so short and abandoned sessions still count.
   useEffect(() => {
     const flush = () => {
-      const seconds = Math.round((Date.now() - enteredAt.current) / 1000);
-      if (seconds > 0 && seconds < 3600) {
-        track('page_time', { path: currentPath.current, seconds });
-      }
-      enteredAt.current = Date.now();
+      const now = Date.now();
+      const ms = now - enteredAt.current;
+      const seconds = Math.round(ms / 1000);
+      if (seconds > 0 && seconds < 3600) track('page_time', { path: currentPath.current, seconds });
+      accrueSurfaceDwell(currentPath.current, ms);
+      enteredAt.current = now;
     };
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') flush();
@@ -52,7 +63,7 @@ export function UsageTracker() {
     };
   }, []);
 
-  // Delegated click tracking for buttons + links - captures the visible label only.
+  // Delegated click tracking for buttons + links (Vercel only) - captures the visible label only.
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { bumpAiUsage } from '@/lib/usage-store';
 import { Sparkles } from 'lucide-react';
 import type { DailyBrief } from '@/lib/daily-brief';
 import { loadAi } from '@/lib/account';
@@ -24,6 +25,7 @@ export function BriefAiNarration({ brief }: { brief: DailyBrief }) {
 
     let cancelled = false;
     setLoading(true);
+    bumpAiUsage();
     fetch('/api/ai/brief', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

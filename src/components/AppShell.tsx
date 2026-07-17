@@ -45,6 +45,7 @@ import {
   Target,
   LayoutGrid,
   X,
+  Activity,
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -102,6 +103,7 @@ const navItems: NavItem[] = [
   { href: '/education', label: 'Education', short: 'Learn', icon: GraduationCap, bucket: 'learn' },
   { href: '/settings', label: 'Strategy Rules', short: 'Rules', icon: SlidersHorizontal, bucket: 'learn' },
   { href: '/saved', label: 'Saved', short: 'Saved', icon: Bookmark, bucket: 'learn' },
+  { href: '/usage', label: 'Your Activity', short: 'Activity', icon: Activity, bucket: 'learn' },
   { href: '/whats-new', label: "What's New", short: 'New', icon: Sparkles, bucket: 'learn' },
 ];
 

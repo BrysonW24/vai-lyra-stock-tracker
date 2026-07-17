@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-07-17
+
+Your Activity: a private, on-device dashboard of how you use Lyra - time, sessions, AI questions, and a surface heatmap.
+
+### Changed
+
+- A new Your Activity page (in Explore under Learn & set up) shows how you actually use Lyra: total time on the app, number of sessions, active days, average session length, and how many AI questions you have asked.
+- A surface heatmap shows which parts of Lyra you live in - every surface you visit, tinted brighter the more you use it, with a ranked most-used breakdown (visits, share, and time on each). Click any tile to jump straight there.
+- Private by design: it is computed entirely from your own browser storage and never leaves your device - no account needed, no server, nothing tracked about you anywhere. A one-click "Clear my activity" wipes it whenever you want.
+- It also quietly powers the owner-side Vercel analytics that was already wired, so the same navigation now feeds both your personal page and the aggregate dashboard - without double-counting or sending any content.
+
 ## [0.23.0] - 2026-07-17
 
 Global rate limits: the abuse guard now counts across every serverless instance, not per-instance.
@@ -514,7 +525,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.23.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.20.0...v0.21.0

@@ -432,6 +432,7 @@
         "src/app/trades/",
         "src/app/trading/",
         "src/app/twin/",
+        "src/app/usage/",
         "src/app/watchlist/",
         "src/app/wire/"
       ],
@@ -453,8 +454,11 @@
         "src/lib/format.ts",
         "src/lib/gradient.ts",
         "src/lib/research-queue.ts",
+        "src/lib/surfaces.ts",
         "src/lib/ticker-logos.ts",
         "src/lib/ui.ts",
+        "src/lib/usage.ts",
+        "src/lib/usage-store.ts",
         "public/"
       ],
       "chains": [
