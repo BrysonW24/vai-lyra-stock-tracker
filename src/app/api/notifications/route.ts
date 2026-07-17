@@ -48,6 +48,8 @@ interface PreferenceRow {
   muted_until?: string | null;
   muted_symbols?: string[] | null;
   muted_themes?: string[] | null;
+  alert_mode?: string | null;
+  max_alerts_per_hour?: number | null;
 }
 
 interface PreferencePatchBody {
@@ -165,6 +167,14 @@ function coercePrefs(
       (prefs.muted_until ? new Date(prefs.muted_until).getTime() > Date.now() : false),
     mutedSymbols: prefs.muted_symbols ?? DEFAULT_NOTIFICATION_PREFERENCES.mutedSymbols,
     mutedThemes: prefs.muted_themes ?? DEFAULT_NOTIFICATION_PREFERENCES.mutedThemes,
+    alertMode:
+      prefs.alert_mode === 'quiet' || prefs.alert_mode === 'muted' || prefs.alert_mode === 'custom'
+        ? prefs.alert_mode
+        : DEFAULT_NOTIFICATION_PREFERENCES.alertMode,
+    maxAlertsPerHour:
+      typeof prefs.max_alerts_per_hour === 'number' && Number.isFinite(prefs.max_alerts_per_hour)
+        ? prefs.max_alerts_per_hour
+        : DEFAULT_NOTIFICATION_PREFERENCES.maxAlertsPerHour,
   };
 }
 
@@ -264,6 +274,14 @@ export async function PATCH(request: NextRequest) {
             ),
           ).slice(0, 100)
         : [];
+    if (hasOwn(preferences, 'alertMode')) {
+      const mode = (preferences as { alertMode?: unknown }).alertMode;
+      patch.alert_mode = mode === 'quiet' || mode === 'muted' || mode === 'custom' ? mode : 'live';
+    }
+    if (hasOwn(preferences, 'maxAlertsPerHour')) {
+      const cap = Number((preferences as { maxAlertsPerHour?: unknown }).maxAlertsPerHour);
+      patch.max_alerts_per_hour = Number.isFinite(cap) ? Math.max(0, Math.min(60, Math.round(cap))) : 6;
+    }
     if (hasOwn(preferences, 'mutedSymbols')) patch.muted_symbols = normaliseList(preferences.mutedSymbols);
     if (hasOwn(preferences, 'mutedThemes')) {
       // Themes are matched case-insensitively by the router; store lowercase for readability.

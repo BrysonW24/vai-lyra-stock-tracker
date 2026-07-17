@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { sendWebPush, type StoredPushSubscription } from '@/lib/push/server';
-import { buildIdempotencyKey, routeNotification } from './router';
+import { buildIdempotencyKey, routeNotification, PERIODIC_REPORT_TYPES, SAFETY_CRITICAL_TYPES } from './router';
 import { renderNotificationText, renderNotificationPushBody } from './templates';
 import { buildTelegramTextForEvent } from './telegram-templates';
 import { DEFAULT_NOTIFICATION_PREFERENCES, type ChannelType, type NotificationEvent, type NotificationPreferences, type NotificationType } from './types';
@@ -42,6 +42,8 @@ interface PreferenceRow {
   muted_until?: string | null;
   muted_symbols?: string[] | null;
   muted_themes?: string[] | null;
+  alert_mode?: string | null;
+  max_alerts_per_hour?: number | null;
 }
 
 interface ChannelRow {
@@ -143,7 +145,16 @@ async function loadPreferences(
     displayName,
     prefs: {
       ...DEFAULT_NOTIFICATION_PREFERENCES,
-      muteAll: Boolean(prefsRow.mute_all) || snoozed,
+      // alert_mode 'muted' folds into muteAll - one enforcement point for both mute surfaces.
+      muteAll: Boolean(prefsRow.mute_all) || snoozed || prefsRow.alert_mode === 'muted',
+      alertMode:
+        prefsRow.alert_mode === 'quiet' || prefsRow.alert_mode === 'muted' || prefsRow.alert_mode === 'custom'
+          ? prefsRow.alert_mode
+          : DEFAULT_NOTIFICATION_PREFERENCES.alertMode,
+      maxAlertsPerHour:
+        typeof prefsRow.max_alerts_per_hour === 'number' && Number.isFinite(prefsRow.max_alerts_per_hour)
+          ? Math.max(0, Math.min(60, prefsRow.max_alerts_per_hour))
+          : DEFAULT_NOTIFICATION_PREFERENCES.maxAlertsPerHour,
       mutedSymbols: prefsRow.muted_symbols ?? DEFAULT_NOTIFICATION_PREFERENCES.mutedSymbols,
       mutedThemes: prefsRow.muted_themes ?? DEFAULT_NOTIFICATION_PREFERENCES.mutedThemes,
       instantAlerts: prefsRow.alerts_enabled ?? DEFAULT_NOTIFICATION_PREFERENCES.instantAlerts,
@@ -454,6 +465,13 @@ export async function releaseHeldEvents(supabase: SupabaseLike, userId: string, 
   if (eventIds.length === 0) return 0;
 
   const { prefs, channels, displayName } = await loadPreferences(supabase, userId, now);
+  // The release must not undo the rate cap: draining twenty held alerts at once is the same
+  // flood the cap exists to stop. Release at most the remaining budget this pass; the rest
+  // stay held for the next tick. Uncapped (0) releases everything, as before.
+  let budget =
+    prefs.maxAlertsPerHour > 0
+      ? Math.max(0, prefs.maxAlertsPerHour - (await countRecentInstantEvents(supabase, userId, now)))
+      : Number.POSITIVE_INFINITY;
   let released = 0;
   for (const eventId of eventIds) {
     const { data: row } = await supabase.from('notification_events').select('*').eq('id', eventId).maybeSingle();
@@ -465,6 +483,7 @@ export async function releaseHeldEvents(supabase: SupabaseLike, userId: string, 
     const event = eventFromRow(storedRow);
     const decision = routeNotification(event, prefs, { now });
     if (!decision.deliver || decision.deferredToDigest) continue; // still inside quiet hours - keep holding
+    if (rateCapApplies(event.type) && budget <= 0) continue; // window exhausted - keep holding for the next tick
     // CLAIM before sending. Release runs from two overlapping schedulers (the top of every
     // dispatchNotificationEvent for this user AND the nightly/on-demand sweep), and the old
     // read -> send -> mark pattern let both runners pass the held check before either marked,
@@ -492,8 +511,35 @@ export async function releaseHeldEvents(supabase: SupabaseLike, userId: string, 
     }
     await supabase.from('notification_deliveries').update({ status: 'released' }).eq('event_id', eventId).eq('channel', 'held');
     released += 1;
+    if (rateCapApplies(event.type)) budget -= 1;
   }
   return released;
+}
+
+const INSTANT_CHANNELS = ['push', 'telegram', 'whatsapp', 'slack'] as const;
+const RATE_WINDOW_MS = 60 * 60 * 1000;
+
+/**
+ * Distinct events actually SENT to this user over the rolling rate window - the measure the
+ * per-user rate cap compares against. Distinct events, not delivery rows: one alert fanned out
+ * to push + Slack is one ping-burst to the human, not two.
+ */
+async function countRecentInstantEvents(supabase: SupabaseLike, userId: string, now: Date): Promise<number> {
+  const since = new Date(now.getTime() - RATE_WINDOW_MS).toISOString();
+  const { data } = await supabase
+    .from('notification_deliveries')
+    .select('event_id')
+    .eq('user_id', userId)
+    .eq('status', 'sent')
+    .in('channel', [...INSTANT_CHANNELS])
+    .gte('created_at', since);
+  const rows = (data as { event_id: string }[] | null) || [];
+  return new Set(rows.map((row) => row.event_id).filter(Boolean)).size;
+}
+
+/** True when the rate cap applies to this event type - safety-critical and scheduled digests never rate-limit. */
+function rateCapApplies(type: NotificationType): boolean {
+  return !SAFETY_CRITICAL_TYPES.has(type) && type !== 'daily_digest' && !PERIODIC_REPORT_TYPES.has(type);
 }
 
 const RETRYABLE_CHAT_CHANNELS = ['telegram', 'whatsapp', 'slack'] as const;
@@ -786,6 +832,33 @@ export async function dispatchNotificationEvent(
       suppressedChannels,
       errors,
     };
+  }
+
+  // Rate governor - the founder's live report was six pushes in five minutes. Once this user
+  // has received maxAlertsPerHour distinct instant alerts inside the rolling hour, further
+  // non-critical events PARK as held (the same rails as quiet hours) and drain later as the
+  // window frees - late beats lost, and the phone stops buzzing. Approvals/kill-switch and
+  // scheduled digests never rate-limit.
+  if (prefs.maxAlertsPerHour > 0 && rateCapApplies(event.type) && !input.forceInstant) {
+    const recent = await countRecentInstantEvents(supabase, input.userId, now);
+    if (recent >= prefs.maxAlertsPerHour) {
+      await insertDelivery(supabase, {
+        eventId: event.id,
+        userId: event.userId,
+        channel: 'held',
+        status: 'held',
+        errorMessage: `held by the rate cap (${prefs.maxAlertsPerHour}/hour) - releases as the window frees`,
+        idempotencyKey: `${event.id}:held`,
+      });
+      return {
+        ok: true,
+        eventId: event.id,
+        deliveredChannels: ['held'],
+        suppressedChannels,
+        routeReason: 'rate cap',
+        errors,
+      };
+    }
   }
 
   for (const channel of decision.channels) {

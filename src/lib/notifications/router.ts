@@ -44,6 +44,7 @@ export const DROP_REASONS = {
   mutedSymbol: 'muted symbol',
   mutedTheme: 'muted theme',
   duplicate: 'duplicate',
+  quietMode: 'quiet mode',
   paperTradeAlertsDisabled: 'paper trade alerts disabled',
   orderApprovalAlertsDisabled: 'order approval alerts disabled',
   watchlistMovementAlertsDisabled: 'watchlist movement alerts disabled',
@@ -66,12 +67,20 @@ export const DROP_REASONS = {
  * orderApprovalAlerts chatter toggle do NOT apply to these two types. The only
  * thing that can stop them is having no enabled channel at all.
  */
-const SAFETY_CRITICAL_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
+export const SAFETY_CRITICAL_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'kill_switch_enabled',
   'order_approval_required',
   'paper_approval_required',
   'risk_blocked',
 ]);
+
+/**
+ * Quiet mode ("Only portfolio risk & strong setups", the AccountMenu hint) - enforced HERE, not
+ * in localStorage. Beyond the always-on safety-critical set, quiet lets through: portfolio risk,
+ * a signal_alert at or above this relevance bar (a strong setup), and the scheduled digest /
+ * periodic-report types (they ARE the quiet user's summary). Everything else drops.
+ */
+export const QUIET_MIN_SIGNAL_RELEVANCE = 75;
 
 const PAPER_TRADE_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'paper_trade_opened',
@@ -113,7 +122,7 @@ const MACRO_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
  * scheduler that emits them owns the send time, and holding a monthly review overnight
  * to re-release it as a stale ping the next morning helps nobody.
  */
-const PERIODIC_REPORT_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
+export const PERIODIC_REPORT_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'weekly_report',
   'monthly_review',
   'quarterly_review',
@@ -274,6 +283,21 @@ export function routeNotification(
       return { deliver: false, reason: DROP_REASONS.noChannels };
     }
     return { deliver: true, channels, deferredToDigest: false };
+  }
+
+  // 4b. Quiet mode - server-enforced (the localStorage-only version was theatre: the founder
+  // switched to Quiet and kept receiving everything). Only portfolio risk, strong setups
+  // (signal_alert at/above the relevance bar), and the scheduled digest/periodic types survive;
+  // those last two fall through to their own gates below. Safety-critical already returned.
+  if (prefs.alertMode === 'quiet') {
+    const quietAllowed =
+      event.type === 'portfolio_risk' ||
+      (event.type === 'signal_alert' && event.relevanceScore >= QUIET_MIN_SIGNAL_RELEVANCE) ||
+      event.type === 'daily_digest' ||
+      PERIODIC_REPORT_TYPES.has(event.type);
+    if (!quietAllowed) {
+      return { deliver: false, reason: DROP_REASONS.quietMode };
+    }
   }
 
   // 5. Paper-trade events respect the paperTradeAlerts toggle.

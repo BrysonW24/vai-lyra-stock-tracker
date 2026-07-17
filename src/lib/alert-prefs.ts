@@ -93,6 +93,9 @@ export function saveAlertPrefs(patch: Partial<AlertPrefs>): AlertPrefs {
         body: JSON.stringify({
           preferences: {
             muteAll: next.mode === 'muted',
+            // The router enforces quiet/muted server-side (alert_mode column) - Live/Custom
+            // change nothing there, but syncing the mode keeps the account's truth current.
+            alertMode: next.mode,
             mutedUntil: next.mutedUntil !== null ? new Date(next.mutedUntil).toISOString() : null,
           },
         }),

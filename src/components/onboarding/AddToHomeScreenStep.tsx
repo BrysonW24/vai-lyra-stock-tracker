@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
 import Image from 'next/image';
-import { Smartphone, Share, SquarePlus, BellRing, ArrowRight } from 'lucide-react';
+import { Smartphone, Share, SquarePlus, BellRing, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { detectInstallPlatformFromBrowser } from '@/lib/install-platform';
 
 /**
  * "Put Lyra on your Home Screen" - the final onboarding beat before the console. Functional,
  * not cosmetic: on iPhone, alert push notifications ONLY work once Lyra is installed to the
  * Home Screen, so the alerts the questionnaire just configured depend on this step. iOS gets
- * a real screenshot walkthrough (privacy-cropped), Android gets the Chrome steps, an
- * already-installed app skips the beat entirely.
+ * a real screenshot walkthrough (privacy-cropped), Android gets the Chrome steps. An
+ * already-installed app gets a short "you're already set" confirmation - NEVER a silent skip:
+ * an invisible beat makes the journey feel like it lost a step (founder-reported).
  */
 
 const IOS_STEPS: Array<{ caption: React.ReactNode; src: string; width: number; height: number; alt: string }> = [
@@ -59,12 +59,37 @@ const IOS_STEPS: Array<{ caption: React.ReactNode; src: string; width: number; h
 export function AddToHomeScreenStep({ onDone }: { onDone: () => void }) {
   const platform = detectInstallPlatformFromBrowser();
 
-  // Already running from the Home Screen - nothing to teach; hand straight to the console.
-  useEffect(() => {
-    if (platform === 'installed') onDone();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [platform]);
-  if (platform === 'installed') return null;
+  // Already running from the Home Screen: confirm it instead of teaching it - same beat count
+  // as every other journey, with the payoff shot standing in for the walkthrough.
+  if (platform === 'installed') {
+    return (
+      <div className="min-h-screen overflow-y-auto bg-[#07090c] text-[#eef3f8]">
+        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-5 py-10 text-center">
+          <span className="grid h-14 w-14 place-items-center rounded-2xl border border-[#1d7f55]/50 bg-[#0d251b] text-[#43d18b] shadow-[0_0_40px_-12px_rgba(67,209,139,0.55)]">
+            <CheckCircle2 size={26} />
+          </span>
+          <h1 className="mt-4 text-[22px] font-semibold tracking-tight">Already on your Home Screen</h1>
+          <p className="mt-2 text-[13px] leading-relaxed text-[#a8b5c2]">
+            You&apos;re running Lyra as an installed app - one tap away, full screen, and alerts can reach this phone.
+          </p>
+          <Image
+            src="/onboarding/a2hs-4-installed.png"
+            width={560}
+            height={560}
+            alt="The Lyra app icon installed on an iPhone Home Screen"
+            className="mt-5 w-56 rounded-xl border border-[#1b2530]"
+          />
+          <button
+            type="button"
+            onClick={onDone}
+            className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#1d7f55] bg-[#0d251b] px-4 py-3 text-[14px] font-semibold text-[#43d18b] transition hover:bg-[#103626]"
+          >
+            <SquarePlus size={16} /> Open my console <ArrowRight size={15} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen overflow-y-auto bg-[#07090c] text-[#eef3f8]">
@@ -81,6 +106,10 @@ export function AddToHomeScreenStep({ onDone }: { onDone: () => void }) {
           <p className="mt-2 inline-flex items-start gap-1.5 rounded-lg border border-[#5a4a1a] bg-[#231a08] px-3 py-2 text-left text-[11px] leading-snug text-[#f3a33a]">
             <BellRing size={13} className="mt-0.5 shrink-0" />
             <span>On iPhone, the alerts you just set up can only reach your phone once Lyra is on your Home Screen.</span>
+          </p>
+          <p className="mt-2 text-[11px] leading-snug text-[#6f7d8a]">
+            Heads-up: the Home Screen app runs its own fresh session. Create your account here first - then sign in
+            from the installed app and everything you just set up carries over.
           </p>
         </div>
 

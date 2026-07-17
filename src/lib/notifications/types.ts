@@ -152,6 +152,19 @@ export interface NotificationPreferences {
    * non-safety-critical event (an approval request or kill-switch must never be silenced by a mute).
    */
   muteAll: boolean;
+  /**
+   * The operator-facing alert mode, enforced SERVER-SIDE (column alert_mode). 'quiet' delivers only
+   * safety-critical events, portfolio risk, strong setups, and scheduled digests; 'muted' is folded
+   * into muteAll by the loader. 'live'/'custom' change nothing here ('custom' is expressed through
+   * the individual toggles).
+   */
+  alertMode: 'live' | 'quiet' | 'muted' | 'custom';
+  /**
+   * Instant-alert rate cap per rolling hour (column max_alerts_per_hour). Excess events park as
+   * 'held' and drain later - late beats lost. 0 disables the cap. Safety-critical types and
+   * scheduled digests are exempt.
+   */
+  maxAlertsPerHour: number;
   /** Events below this relevance are dropped. */
   minRelevanceScore: number;
   paperTradeAlerts: boolean;
@@ -178,6 +191,9 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   mutedThemes: [],
   mutedSymbols: [],
   muteAll: false,
+  alertMode: 'live',
+  // Founder-reported flood: six pushes in five minutes with nothing throttling volume.
+  maxAlertsPerHour: 6,
   minRelevanceScore: 40,
   paperTradeAlerts: true,
   orderApprovalAlerts: true,

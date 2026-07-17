@@ -65,10 +65,20 @@ export default function OnboardingPage() {
   // left off), otherwise start a fresh setup. Done in an effect (client-only) to avoid an SSR/
   // hydration mismatch from reading localStorage.
   useEffect(() => {
+    const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     // ?fresh=1 (the /api/demo reset switch) replays the journey from the very first beat:
     // drop the resume checkpoint so the reveal plays again instead of resuming mid-flow.
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('fresh') === '1') {
+    if (params?.get('fresh') === '1') {
       clearOnboardingProgress();
+    }
+    // ?beat=homescreen deep-links straight to the Add-to-Home-Screen beat - for reviewing,
+    // demos and screenshots without replaying the questionnaire. Preview-only convenience:
+    // its onDone still runs the normal completion path.
+    if (params?.get('beat') === 'homescreen') {
+      setState(createInitialOnboardingState('full_setup'));
+      setPhase('homescreen');
+      setHydrated(true);
+      return;
     }
     const saved = loadOnboardingProgress();
     if (saved) {

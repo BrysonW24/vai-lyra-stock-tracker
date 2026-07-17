@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.69.0',
+    date: '2026-07-18',
+    title: 'Your phone stops buzzing: a real rate cap, and Quiet mode that means it',
+    highlights: [
+      'Alerts are now capped at 6 per hour (adjustable, 0-60). Anything over the cap is held and delivered later as the window frees - late beats lost - so a fresh watchlist plus an hourly scan can never again fire one notification per minute. Approval requests, kill-switch notices and your scheduled digests are never rate-limited.',
+      'Quiet mode is now enforced on the server, not just painted in the menu. Switching to Quiet really does mean only portfolio risk, strong setups and your digests get through - everything else stays silent. (It used to live only in your browser while the server kept sending everything.)',
+      'The Add-to-Home-Screen step no longer skips silently when you are already running the installed app - it shows a short "already on your Home Screen" confirmation instead, so the journey never feels like it lost a step. Plus a heads-up that the installed app runs its own session: create your account first and everything carries over.',
+      'Review tools: /onboarding?beat=homescreen deep-links straight to the Home-Screen step.',
+    ],
+  },
+  {
     version: '0.68.1',
     date: '2026-07-18',
     title: 'A replay switch for the onboarding journey',
