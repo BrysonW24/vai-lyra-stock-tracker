@@ -23,6 +23,14 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.19.1',
+    date: '2026-07-17',
+    title: 'Landing polish: the alert-channel pills get their own line',
+    highlights: [
+      'On the landing page, the Telegram / Slack / WhatsApp pills now sit on their own line below the "Alerts, where you live" label instead of wrapping unevenly beside it on narrow screens.',
+    ],
+  },
+  {
     version: '0.19.0',
     date: '2026-07-17',
     title: 'Quantified upside and honest freshness: the high-upside shortlist finally puts a number on the payoff, the live scanner covers the small caps, and stale boards say so',

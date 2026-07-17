@@ -134,31 +134,33 @@ export function FutureStateAI() {
       </div>
 
       {/* Delivery - the real Telegram + Slack + WhatsApp integration (live today) */}
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+      <div className="mt-5 flex flex-col items-center gap-2">
         <span className="text-[11px] font-medium text-[#5A6B82]">Alerts, where you live -</span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 py-1 shadow-sm backdrop-blur">
-          <span className="grid h-4 w-4 shrink-0 place-items-center overflow-hidden rounded-[4px] bg-white">
-            {/* eslint-disable-next-line @next/next/no-img-element -- favicon CDN, not a bundled asset */}
-            <img src={faviconUrl('telegram.org', 14)} alt="Telegram" width={14} height={14} />
+        <div className="flex flex-wrap items-center justify-center gap-2.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 py-1 shadow-sm backdrop-blur">
+            <span className="grid h-4 w-4 shrink-0 place-items-center overflow-hidden rounded-[4px] bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element -- favicon CDN, not a bundled asset */}
+              <img src={faviconUrl('telegram.org', 14)} alt="Telegram" width={14} height={14} />
+            </span>
+            <span className="text-[11px] font-semibold text-[#0E1E3A]">Telegram</span>
           </span>
-          <span className="text-[11px] font-semibold text-[#0E1E3A]">Telegram</span>
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 py-1 shadow-sm backdrop-blur">
-          <span className="grid h-4 w-4 shrink-0 place-items-center overflow-hidden rounded-[4px] bg-white">
-            <SlackLogo size={12} />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 py-1 shadow-sm backdrop-blur">
+            <span className="grid h-4 w-4 shrink-0 place-items-center overflow-hidden rounded-[4px] bg-white">
+              <SlackLogo size={12} />
+            </span>
+            <span className="text-[11px] font-semibold text-[#0E1E3A]">Slack</span>
           </span>
-          <span className="text-[11px] font-semibold text-[#0E1E3A]">Slack</span>
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 py-1 shadow-sm backdrop-blur">
-          <span className="grid h-4 w-4 shrink-0 place-items-center overflow-hidden rounded-[4px] bg-white">
-            {/* eslint-disable-next-line @next/next/no-img-element -- favicon CDN, not a bundled asset */}
-            <img src={faviconUrl('whatsapp.com', 14)} alt="WhatsApp" width={14} height={14} />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 py-1 shadow-sm backdrop-blur">
+            <span className="grid h-4 w-4 shrink-0 place-items-center overflow-hidden rounded-[4px] bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element -- favicon CDN, not a bundled asset */}
+              <img src={faviconUrl('whatsapp.com', 14)} alt="WhatsApp" width={14} height={14} />
+            </span>
+            <span className="text-[11px] font-semibold text-[#0E1E3A]">WhatsApp</span>
           </span>
-          <span className="text-[11px] font-semibold text-[#0E1E3A]">WhatsApp</span>
-        </span>
-        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1FA971]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#1FA971]" /> Live now
-        </span>
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1FA971]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#1FA971]" /> Live now
+          </span>
+        </div>
       </div>
 
       <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-[#8290a0]">

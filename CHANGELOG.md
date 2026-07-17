@@ -6,6 +6,14 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-07-17
+
+Landing polish: the alert-channel pills get their own line.
+
+### Changed
+
+- On the landing page, the Telegram / Slack / WhatsApp pills now sit on their own line below the "Alerts, where you live" label instead of wrapping unevenly beside it on narrow screens.
+
 ## [0.19.0] - 2026-07-17
 
 Quantified upside and honest freshness: the high-upside shortlist finally puts a number on the payoff, the live scanner covers the small caps, and stale boards say so.
@@ -461,7 +469,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.19.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.19.1...HEAD
+[0.19.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.16.0...v0.17.0
