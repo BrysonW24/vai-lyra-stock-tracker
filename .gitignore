@@ -22,3 +22,6 @@ tmp/
 
 # Local MCP tooling config - project-specific, not part of the shareable app
 .mcp.json
+
+# Sentry Config File
+.env.sentry-build-plugin

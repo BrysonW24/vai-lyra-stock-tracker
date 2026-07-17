@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.25.0',
+    date: '2026-07-17',
+    title: 'Error monitoring: Sentry now catches crashes and server errors in production - optional and off by default',
+    highlights: [
+      'Wired Sentry across all three Next.js runtimes (browser, server, edge) so a real crash - a frontend error, an unhandled server exception, a 500 in an API route - is captured with a stack trace instead of vanishing. Until now the only production signal was /api/health plus the scanner paging on failure.',
+      'Optional and privacy-safe by design: it reports only when a Sentry DSN is set in the host environment, so demo mode, self-hosting, and forks of this repo send nothing at all. No session replay, no user data - just errors and a 10% trace sample in production.',
+      'The root error boundary now reports the crashes that reach it, and source maps upload on production builds so a real-user stack trace points at real code instead of minified noise.',
+    ],
+  },
+  {
     version: '0.24.0',
     date: '2026-07-17',
     title: 'Your Activity: a private, on-device dashboard of how you use Lyra - time, sessions, AI questions, and a surface heatmap',

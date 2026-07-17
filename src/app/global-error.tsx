@@ -1,10 +1,19 @@
 'use client';
 
+import * as Sentry from '@sentry/nextjs';
+import { useEffect } from 'react';
+
 /**
  * Root-layout error boundary - the last net when even the layout throws. Must render its own
  * <html>/<body> and use zero app imports (anything it imports can be the thing that crashed).
+ * The only imports here are vendor (Sentry + React), never app code.
  */
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    // Report the crash that reached the root boundary (a no-op when Sentry has no DSN).
+    Sentry.captureException(error);
+  }, [error]);
+
   return (
     <html lang="en">
       <body style={{ margin: 0, background: '#080a0d', color: '#eef3f8', fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}>
