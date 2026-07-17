@@ -23,6 +23,14 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.68.1',
+    date: '2026-07-18',
+    title: 'A replay switch for the onboarding journey',
+    highlights: [
+      'Visit /api/demo?fresh=1 to replay the full onboarding journey from the very first beat - it clears the toured stamps and the resume checkpoint, so the reveal, primer, questionnaire and Home-Screen walkthrough all play again. For reviewing the flow, showing it off, or taking screenshots - repeatable forever.',
+    ],
+  },
+  {
     version: '0.68.0',
     date: '2026-07-18',
     title: 'Onboarding now teaches you to put Lyra on your Home Screen',

@@ -42,4 +42,16 @@ describe('GET /api/demo (Explore the demo first)', () => {
     const res = await GET(req('not_lyra_demo_toured=1'));
     expect(res.headers.get('location')).toContain('/onboarding');
   });
+
+  it('?fresh=1 resets the tour even for a genuinely-toured visitor and clears the stamps', async () => {
+    const res = await GET(
+      new Request('http://localhost/api/demo?fresh=1', { headers: { cookie: 'lyra_demo_toured=1; lyra_onboarded=1' } }),
+    );
+    expect(res.headers.get('location')).toContain('/onboarding?fresh=1');
+    const cookies = res.headers.getSetCookie().join(' | ');
+    expect(cookies).toContain('lyra_demo=1'); // demo mode stays on
+    // Both stamps expire (Max-Age=0), so the journey replays from the first beat.
+    expect(cookies).toMatch(/lyra_demo_toured=;[^|]*Max-Age=0/i);
+    expect(cookies).toMatch(/lyra_onboarded=;[^|]*Max-Age=0/i);
+  });
 });

@@ -6,6 +6,14 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.68.1] - 2026-07-18
+
+A replay switch for the onboarding journey.
+
+### Changed
+
+- Visit /api/demo?fresh=1 to replay the full onboarding journey from the very first beat - it clears the toured stamps and the resume checkpoint, so the reveal, primer, questionnaire and Home-Screen walkthrough all play again. For reviewing the flow, showing it off, or taking screenshots - repeatable forever.
+
 ## [0.68.0] - 2026-07-18
 
 Onboarding now teaches you to put Lyra on your Home Screen.
@@ -1005,7 +1013,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.68.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.68.1...HEAD
+[0.68.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.68.0...v0.68.1
 [0.68.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.67.1...v0.68.0
 [0.67.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.67.0...v0.67.1
 [0.67.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.66.0...v0.67.0

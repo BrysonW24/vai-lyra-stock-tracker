@@ -65,6 +65,11 @@ export default function OnboardingPage() {
   // left off), otherwise start a fresh setup. Done in an effect (client-only) to avoid an SSR/
   // hydration mismatch from reading localStorage.
   useEffect(() => {
+    // ?fresh=1 (the /api/demo reset switch) replays the journey from the very first beat:
+    // drop the resume checkpoint so the reveal plays again instead of resuming mid-flow.
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('fresh') === '1') {
+      clearOnboardingProgress();
+    }
     const saved = loadOnboardingProgress();
     if (saved) {
       setState(saved.state);
