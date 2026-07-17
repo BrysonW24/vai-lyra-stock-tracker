@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.60.0] - 2026-07-18
+
+Retrieval quality: the right doc wins again.
+
+### Changed
+
+- Fixed a measured retrieval regression: asking about going live with Supabase could rank a "where to next" pointer from another walkthrough above the actual go-live guide. The semantic reranker now also weighs which doc a section belongs to, so the doc that covers your topic beats a doc that merely links to it.
+- The retrieval quality gate (recall@1/@3/MRR vs the lexical baseline) is green again - the hybrid reranker measurably beats or matches lexical on every labelled question.
+
 ## [0.59.0] - 2026-07-18
 
 The accumulator wave: five loops that store learnings and compound.
@@ -907,7 +916,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.59.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.60.0...HEAD
+[0.60.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.59.0...v0.60.0
 [0.59.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.58.0...v0.59.0
 [0.58.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.57.0...v0.58.0
 [0.57.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.56.0...v0.57.0

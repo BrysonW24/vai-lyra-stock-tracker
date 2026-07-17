@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.60.0',
+    date: '2026-07-18',
+    title: 'Retrieval quality: the right doc wins again',
+    highlights: [
+      'Fixed a measured retrieval regression: asking about going live with Supabase could rank a "where to next" pointer from another walkthrough above the actual go-live guide. The semantic reranker now also weighs which doc a section belongs to, so the doc that covers your topic beats a doc that merely links to it.',
+      'The retrieval quality gate (recall@1/@3/MRR vs the lexical baseline) is green again - the hybrid reranker measurably beats or matches lexical on every labelled question.',
+    ],
+  },
+  {
     version: '0.59.0',
     date: '2026-07-18',
     title: 'The accumulator wave: five loops that store learnings and compound',

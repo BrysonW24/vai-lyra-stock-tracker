@@ -19,9 +19,12 @@ let vindex: VectorIndex | null = null;
 function getVectorIndex(): VectorIndex {
   if (!vindex) {
     // Heading + title carry more topical signal than body, so include them (title/heading repeated
-    // to weight them) alongside the body text.
+    // to weight them) alongside the body text. The source path is in the mix too: a doc's slug
+    // (03-go-live-supabase) is topical evidence its chunks belong to a query, which keeps a
+    // cross-reference stub in ANOTHER doc ("Where to next" pointing at going live) from
+    // out-scoring the doc that actually covers the topic.
     vindex = buildVectorIndex(
-      CHUNKS.map((c) => ({ id: c.id, text: `${c.docTitle} ${c.heading} ${c.heading} ${c.text}` })),
+      CHUNKS.map((c) => ({ id: c.id, text: `${c.source} ${c.docTitle} ${c.heading} ${c.heading} ${c.text}` })),
     );
   }
   return vindex;
