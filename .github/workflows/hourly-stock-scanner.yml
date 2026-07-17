@@ -6,8 +6,14 @@ name: Hourly Stock Scanner
 
 on:
   schedule:
-    # Every hour at :05. Cron is UTC. The worker's market-hours guard decides whether to scan.
-    - cron: '5 * * * *'
+    # Two firings an hour at uncongested minutes. GitHub load-sheds scheduled runs
+    # (observed: the single ':05' cron actually fired every ~2h for days, including
+    # dropped 13:05/14:05 slots during US market open) - two offset attempts restore
+    # a real hourly cadence. Congested minutes (:00/:05/:30) are dropped most, so odd
+    # offsets. Cron is UTC. The worker's market-hours guard decides whether to scan,
+    # and the concurrency group queues a second firing behind a running one.
+    - cron: '17 * * * *'
+    - cron: '47 * * * *'
   workflow_dispatch: {}
 
 concurrency:
