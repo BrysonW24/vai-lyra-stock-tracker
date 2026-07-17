@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.55.0] - 2026-07-17
+
+New vertical: Fusion Energy - the first vertical drafted by the scout loop.
+
+### Changed
+
+- Fusion Energy joins the vertical map: a full supply chain from the tritium fuel cycle through HTS magnets, cryogenics, plasma heating and confinement developers to the utilities and hyperscalers signing the first fusion power purchase agreements - drafted from the scout's own Commonwealth Fusion Systems drumbeat and adversarially verified claim by claim against primary sources.
+- Honest by construction: nearly every fusion pure-play is private, and the vertical says so - private developers (Commonwealth Fusion, Helion, TAE, Tokamak Energy) live in the chain descriptions, while the five public company rows (Alphabet, Eni, Nucor, Air Liquide, Furukawa Electric) each carry dated, sourced fusion exposure. smallCapOpportunity scores a candid 15; the ETF list is honestly empty.
+- Ten dated capital events anchor the chain - the Microsoft-Helion and Google-CFS PPAs, the DOE Milestone program, CFS's 863M Series B2, Eni's billion-dollar offtake - every date and amount re-verified this session, including one the verifiers corrected by nine years against the primary source.
+- The loop closes: fusion news that previously banked as unmapped now attaches to the new vertical on the scout's next run (pinned by a test), and the sources whose evidence seeded the card earn credit through the outcome-stamping ledger.
+
 ## [0.52.0] - 2026-07-17
 
 The scout loop closes: accepted cards queue a build, and your verdicts teach the machine.
@@ -836,7 +847,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.52.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.53.0...HEAD
+[0.53.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.52.0...v0.53.0
 [0.52.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.51.0...v0.52.0
 [0.51.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.50.0...v0.51.0
 [0.50.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.49.0...v0.50.0

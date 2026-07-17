@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.55.0',
+    date: '2026-07-17',
+    title: 'New vertical: Fusion Energy - the first vertical drafted by the scout loop',
+    highlights: [
+      'Fusion Energy joins the vertical map: a full supply chain from the tritium fuel cycle through HTS magnets, cryogenics, plasma heating and confinement developers to the utilities and hyperscalers signing the first fusion power purchase agreements - drafted from the scout\'s own Commonwealth Fusion Systems drumbeat and adversarially verified claim by claim against primary sources.',
+      'Honest by construction: nearly every fusion pure-play is private, and the vertical says so - private developers (Commonwealth Fusion, Helion, TAE, Tokamak Energy) live in the chain descriptions, while the five public company rows (Alphabet, Eni, Nucor, Air Liquide, Furukawa Electric) each carry dated, sourced fusion exposure. smallCapOpportunity scores a candid 15; the ETF list is honestly empty.',
+      'Ten dated capital events anchor the chain - the Microsoft-Helion and Google-CFS PPAs, the DOE Milestone program, CFS\'s 863M Series B2, Eni\'s billion-dollar offtake - every date and amount re-verified this session, including one the verifiers corrected by nine years against the primary source.',
+      'The loop closes: fusion news that previously banked as unmapped now attaches to the new vertical on the scout\'s next run (pinned by a test), and the sources whose evidence seeded the card earn credit through the outcome-stamping ledger.',
+    ],
+  },
+  {
     version: '0.52.0',
     date: '2026-07-17',
     title: 'The scout loop closes: accepted cards queue a build, and your verdicts teach the machine',

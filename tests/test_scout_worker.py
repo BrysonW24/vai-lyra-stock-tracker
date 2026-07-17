@@ -468,3 +468,20 @@ class TestOrchestratorLivePath:
         summary = scout_main.run_scout_worker(object(), FakeLiveRepo())
         assert summary["items_pruned"] == 42
         assert len(pruned_with) == 1
+
+
+class TestFusionVerticalAttach:
+    """The loop-closing pin for the fusion-energy vertical (drafted from a scout card):
+    the news that ANNOUNCED the vertical must now attach to it instead of banking as
+    unmapped - that is the entire point of accepting the card."""
+
+    def test_fusion_headline_attaches_to_the_new_vertical(self):
+        a = attach(
+            "Commonwealth Fusion Systems tokamak hits construction milestone",
+            "The SPARC fusion device moved closer to first plasma.",
+        )
+        assert "fusion-energy" in a.matched_themes
+
+    def test_unrelated_headline_still_unmapped(self):
+        a = attach("Local bakery wins pie contest", "The crust was praised by judges.")
+        assert a.unmapped
