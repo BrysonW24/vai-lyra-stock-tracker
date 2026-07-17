@@ -44,6 +44,8 @@ export type NotificationType =
   | 'monthly_review'
   | 'quarterly_review'
   | 'yearly_review'
+  | 'macro_event'
+  | 'cgt_anniversary'
   | 'test_notification';
 
 /**
@@ -82,6 +84,8 @@ const NOTIFICATION_TYPE_ROSTER: Record<NotificationType, true> = {
   monthly_review: true,
   quarterly_review: true,
   yearly_review: true,
+  macro_event: true,
+  cgt_anniversary: true,
   test_notification: true,
 };
 
@@ -172,7 +176,10 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   orderApprovalAlerts: true,
   watchlistMovementAlerts: true,
   portfolioMovementAlerts: true,
-  macroAlerts: false,
+  // Default ON since v0.45.0: the macro pillar (RBA/FOMC decision alerts, morning
+  // companions) is core research, not chatter - 8 decision days a year, seeded from
+  // published schedules. Users who stored an explicit false keep their false.
+  macroAlerts: true,
   themeAlerts: true,
 };
 

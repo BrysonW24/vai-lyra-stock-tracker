@@ -10,6 +10,7 @@ import {
   eventTypeClass,
   eventBadgeLabel,
   eventRiskForTicker,
+  macroEventMeta,
 } from '@/lib/calendar';
 import { DetailDrawer } from '@/components/DetailDrawer';
 
@@ -45,10 +46,12 @@ export function CalendarEventDrawer({
   const days = daysUntil(event.date, today);
   const when = days === 0 ? 'Today' : days < 0 ? `${Math.abs(days)}d ago` : `in ${days}d`;
   const isEarnings = event.type === 'earnings';
+  const macroMeta = macroEventMeta(event);
 
   const facts: Array<[string, string]> = [
     ['Date', event.date],
-    ['When', when],
+    // Seeded macro events know their announcement time; date-only events keep the countdown.
+    ['When', macroMeta ? `${when} · ${macroMeta.timeLocal}` : when],
     ['Importance', event.importance],
     ['Type', eventTypeLabel(event.type)],
   ];
@@ -73,6 +76,21 @@ export function CalendarEventDrawer({
           </div>
         ))}
       </div>
+
+      {event.description && (
+        <div className="rounded-md border border-[#263241] bg-[#0d141c] p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">What this is</p>
+          <p className="mt-1.5 text-xs leading-5 text-[#dbe5ee]">{event.description}</p>
+        </div>
+      )}
+
+      {macroMeta && (
+        <div className="rounded-md border border-[#263241] bg-[#0d141c] p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Why it matters</p>
+          <p className="mt-1.5 text-xs leading-5 text-[#a8b5c2]">{macroMeta.framing}</p>
+          <p className="mt-2 text-[10px] leading-4 text-[#5e6b78]">Research, not advice.</p>
+        </div>
+      )}
 
       {event.ticker && (
         <div className="rounded-md border border-[#263241] bg-[#0d141c] p-3 font-mono text-xs">
@@ -116,6 +134,17 @@ export function CalendarEventDrawer({
         >
           Open {event.ticker} <ArrowUpRight size={12} />
         </Link>
+      )}
+
+      {macroMeta && (
+        <a
+          href={macroMeta.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+        >
+          {macroMeta.sourceLabel} <ArrowUpRight size={12} />
+        </a>
       )}
     </DetailDrawer>
   );

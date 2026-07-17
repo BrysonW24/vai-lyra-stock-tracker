@@ -16,8 +16,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from workers.stock_scanner.cgt_radar import send_cgt_notices
 from workers.stock_scanner.config import Settings, load_settings
+from workers.stock_scanner.event_radar import send_event_notices
 from workers.stock_scanner.logger import get_logger
+from workers.stock_scanner.macro_calendar import seed_macro_calendar, send_macro_companions
 from workers.stock_scanner.notification_dispatch import dispatch_notification
 from workers.stock_scanner.review_job import (
     PortfolioPerformance,
@@ -113,6 +116,29 @@ def with_weekly_performance(
     return title, "\n".join(lines), {**payload, "performance_pct": performance.performance_pct}
 
 
+def aud_terms_line(
+    repo: SupabaseRepository,
+    window_start: datetime,
+    usd_pct: float,
+) -> str | None:
+    """The week's return in the user's own currency: combine the measured USD return with
+    the stored AUD/USD move ((1+usd)*(1+fx_gain)-1, where a falling AUD lifts the AUD
+    value of USD holdings). 'About' wording is deliberate - positions are marked at
+    stored closes, not an executable FX rate. None until snapshot history covers the
+    window; the line is then omitted, never guessed."""
+    start_rate = repo.load_snapshot_value_at_or_after("audusd_price", window_start)
+    latest_rate = repo.load_latest_snapshot_value("audusd_price")
+    if not start_rate or not latest_rate or start_rate <= 0:
+        return None
+    fx_move_pct = ((latest_rate - start_rate) / start_rate) * 100
+    aud_pct = ((1 + usd_pct / 100) * (1 + (-fx_move_pct) / 100) - 1) * 100
+    direction = "fell" if fx_move_pct < 0 else "rose"
+    return (
+        f"In AUD terms: about {format_pct(aud_pct)} "
+        f"(AUD {direction} {abs(fx_move_pct):.1f}% against the USD this week)."
+    )
+
+
 def send_digests(
     repo: SupabaseRepository,
     settings: Settings,
@@ -163,6 +189,11 @@ def send_digests(
                 performance = portfolio_performance_for_user(repo, settings, user_id, since)
                 if performance is not None:
                     title, body, payload = with_weekly_performance(title, body, payload, performance)
+                    aud_line = aud_terms_line(repo, since, performance.performance_pct)
+                    if aud_line is not None:
+                        lines = body.split("\n")
+                        lines.insert(max(len(lines) - 1, 0), aud_line)
+                        body = "\n".join(lines)
             result = dispatch_notification(
                 settings,
                 user_id=user_id,
@@ -205,14 +236,30 @@ def main() -> None:
             LOGGER.info("Supabase not configured - digest job is a no-op (demo mode)")
             repo.finish_run(run_id, status="skipped")
             return
+        # Seed the macro calendar first so tonight's companions (and the frontend
+        # calendar) see the rows. Idempotent upsert on event_id - safe every night.
+        seeded = seed_macro_calendar(repo)
         sent = send_digests(repo, settings)
         reviews_sent = send_periodic_reviews(repo, settings)
-        LOGGER.info("Digest job finished: digests_sent=%s reviews_sent=%s", sent, reviews_sent)
+        macro_sent = send_macro_companions(repo, settings)
+        cgt_sent = send_cgt_notices(repo, settings)
+        events_sent = send_event_notices(repo, settings)
+        LOGGER.info(
+            "Digest job finished: digests=%s reviews=%s macro=%s cgt=%s events=%s calendar_rows=%s",
+            sent, reviews_sent, macro_sent, cgt_sent, events_sent, seeded,
+        )
         repo.finish_run(
             run_id,
             status="success",
-            alerts_sent=sent + reviews_sent,
-            payload={"digests_sent": sent, "reviews_sent": reviews_sent},
+            alerts_sent=sent + reviews_sent + macro_sent + cgt_sent + events_sent,
+            payload={
+                "digests_sent": sent,
+                "reviews_sent": reviews_sent,
+                "macro_companions_sent": macro_sent,
+                "cgt_notices_sent": cgt_sent,
+                "event_notices_sent": events_sent,
+                "macro_calendar_rows": seeded,
+            },
         )
     except Exception as exc:
         LOGGER.exception("Digest job failed")

@@ -55,6 +55,7 @@ export function mapEventRow(row: EventRow): CalendarEvent | null {
     ticker: row.ticker ?? null,
     title: row.title,
     importance: (IMPORTANCE.has(row.importance ?? '') ? row.importance : 'medium') as EventImportance,
+    description: row.description ?? null,
   };
 }
 

@@ -424,6 +424,83 @@ class SupabaseRepository:
             logger.warning("load_notification_channel(%s, %s) failed: %s", user_id, channel_type, exc)
         return None
 
+    def load_company_events_window(self, start: date, end: date) -> list[dict[str, Any]]:
+        """company_events rows (earnings etc.) with event_date inside [start, end]."""
+        if not self.client:
+            return []
+        result = (
+            self.client.table("company_events")
+            .select("event_id, event_date, event_type, ticker, title, importance")
+            .gte("event_date", start.isoformat())
+            .lte("event_date", end.isoformat())
+            .order("event_date", desc=False)
+            .limit(500)
+            .execute()
+        )
+        return list(result.data or [])
+
+    def load_upcoming_ipos(self, start: date, end: date) -> list[dict[str, Any]]:
+        """ipos rows listing inside [start, end]."""
+        if not self.client:
+            return []
+        result = (
+            self.client.table("ipos")
+            .select("symbol, company_name, ipo_date, exchange, status, valuation_usd_m")
+            .gte("ipo_date", start.isoformat())
+            .lte("ipo_date", end.isoformat())
+            .limit(100)
+            .execute()
+        )
+        return list(result.data or [])
+
+    def upsert_market_calendar_events(self, rows: list[dict[str, Any]]) -> int:
+        """Idempotent upsert of macro calendar rows on the event_id unique key (a full
+        unique constraint - migration 044 doctrine: never target a partial index)."""
+        if not self.client or not rows:
+            return 0
+        self.client.table("market_calendar_events").upsert(rows, on_conflict="event_id").execute()
+        return len(rows)
+
+    def load_snapshot_value_at_or_after(self, key: str, start: datetime) -> float | None:
+        """A numeric payload field from the EARLIEST market-context snapshot at/after
+        `start` - the window-open baseline for benchmark and AUD-terms lines. None when
+        no snapshot covers the window (history only accrues once captures land) - callers
+        omit the line, never guess."""
+        if not self.client:
+            return None
+        result = (
+            self.client.table("market_context_snapshots")
+            .select("payload")
+            .gte("captured_at", start.isoformat())
+            .order("captured_at", desc=False)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        payload = rows[0].get("payload") if rows else None
+        value = payload.get(key) if isinstance(payload, dict) else None
+        return float(value) if value is not None else None
+
+    def load_latest_snapshot_value(self, key: str) -> float | None:
+        """Same field from the most recent snapshot."""
+        if not self.client:
+            return None
+        result = (
+            self.client.table("market_context_snapshots")
+            .select("payload")
+            .order("captured_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        payload = rows[0].get("payload") if rows else None
+        value = payload.get(key) if isinstance(payload, dict) else None
+        return float(value) if value is not None else None
+
+    def load_latest_audusd(self) -> float | None:
+        """AUD/USD from the most recent snapshot. None until the capture ships."""
+        return self.load_latest_snapshot_value("audusd_price")
+
     def save_market_context_snapshot(
         self,
         payload: dict[str, Any],
@@ -438,6 +515,11 @@ class SupabaseRepository:
 
         self.client.table("market_context_snapshots").insert(
             {
+                # captured_at is NOT NULL with no column default - omitting it made every
+                # insert violate the constraint, and the caller's broad exception guard
+                # swallowed the failure, so the hourly macro archive stayed EMPTY while
+                # the log said "skipped (non-fatal)". Same failure family as v0.41/v0.42.
+                "captured_at": payload.get("captured_at") or datetime.now(timezone.utc).isoformat(),
                 "payload": payload,
                 "regime": regime,
                 "fear_greed": fear_greed,

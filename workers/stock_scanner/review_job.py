@@ -239,6 +239,28 @@ def format_pct(value: float) -> str:
     return f"{sign}{value:.1f}%"
 
 
+def benchmark_line(
+    repo: SupabaseRepository,
+    window_start: datetime,
+    portfolio_pct: float,
+) -> str | None:
+    """'You vs the S&P 500' from stored market-context snapshots - the index close at
+    the window open vs the latest. None until snapshot history covers the window (the
+    capture bug fixed in this release means history starts accruing now); the line is
+    then omitted, never estimated."""
+    start_value = repo.load_snapshot_value_at_or_after("sp500_price", window_start)
+    latest_value = repo.load_latest_snapshot_value("sp500_price")
+    if not start_value or not latest_value or start_value <= 0:
+        return None
+    index_pct = ((latest_value - start_value) / start_value) * 100
+    delta = portfolio_pct - index_pct
+    verdict = "ahead of" if delta > 0 else "behind" if delta < 0 else "level with"
+    return (
+        f"S&P 500 over the same window: {format_pct(index_pct)}. "
+        f"You are {format_pct(abs(delta)) if delta != 0 else '0.0%'} {verdict} the index."
+    )
+
+
 def compose_review(
     target: ReviewTarget,
     performance: PortfolioPerformance | None,
@@ -338,6 +360,13 @@ def send_periodic_reviews(
         for target in targets:
             performance = portfolio_performance_for_user(repo, settings, user_id, target.window_start)
             title, body, payload = compose_review(target, performance)
+            if performance is not None:
+                versus = benchmark_line(repo, target.window_start, performance.performance_pct)
+                if versus is not None:
+                    # Land before the closing research suffix, like the weekly fold.
+                    lines = body.split("\n")
+                    lines.insert(max(len(lines) - 1, 0), versus)
+                    body = "\n".join(lines)
             dedupe_key = f"{target.notification_type}:{user_id}:{target.period_key}"
             result = dispatch_notification(
                 settings,

@@ -218,6 +218,14 @@ class FakeRepo:
     def latest_close(self, symbol, timeframe):
         return 110.0
 
+    # No snapshot history: the benchmark line must be OMITTED, never estimated,
+    # and the review must still send without it.
+    def load_snapshot_value_at_or_after(self, key, start):
+        return None
+
+    def load_latest_snapshot_value(self, key):
+        return None
+
     def save_alert(self, **kwargs):
         self.saved_alerts.append(kwargs)
 

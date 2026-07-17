@@ -8,6 +8,7 @@ import { AiOfferCard } from '@/components/AiOfferCard';
 import { ExecutiveStrip } from '@/components/ExecutiveStrip';
 import { PrimeSetupsBoard } from '@/components/PrimeSetupsBoard';
 import { CatalystCountdown } from '@/components/CatalystCountdown';
+import { getCalendarEventsLive } from '@/lib/calendar-live';
 import { CatalystRadar } from '@/components/CatalystRadar';
 import { SignalEventsPanel } from '@/components/SignalEventsPanel';
 import { WatchlistTriggerBoard } from '@/components/WatchlistTriggerBoard';
@@ -46,7 +47,7 @@ export const metadata = { title: 'Command' };
 export default async function OverviewPage() {
   // These four are independent - fetch them concurrently instead of one-after-another
   // so the server render waits on the slowest, not the sum.
-  const [data, marketContext, macroContext, setupStatus, paperAccount, twinAffinity, constraints] = await Promise.all([
+  const [data, marketContext, macroContext, setupStatus, paperAccount, twinAffinity, constraints, calendar] = await Promise.all([
     getDashboardData(),
     getMarketContext(),
     getMacroContext(),
@@ -54,6 +55,9 @@ export default async function OverviewPage() {
     getPaperAccountSummaryAuthAware(),
     loadTwinAffinity().catch(() => null),
     getUserConstraints().catch(() => null),
+    // Live calendar feeds the countdown hero (RBA/FOMC/IPO/earnings). Degrades to the
+    // sample set inside getCalendarEventsLive; a hard failure just means no live moments.
+    getCalendarEventsLive().catch(() => null),
   ]);
 
   // Goal cockpit inputs: standing (equity = holdings + cash), return basis, and the risk/goal profile
@@ -148,7 +152,7 @@ export default async function OverviewPage() {
     { id: 'daily-brief', node: <DailyBriefCard data={data} market={marketContext} /> },
     { id: 'next-best', node: <NextBestActions signals={data.signals} portfolio={data.portfolio} watchlist={data.watchlist} /> },
     { id: 'prime', node: <PrimeSetupsBoard signals={data.signals} /> },
-    { id: 'countdown', node: <CatalystCountdown /> },
+    { id: 'countdown', node: <CatalystCountdown events={calendar?.events ?? []} /> },
     { id: 'charts', node: <HoldingsMomentumBoard holdings={data.portfolio} signals={data.signals} tickers={data.tickers} /> },
     { id: 'signals', node: <SignalEventsPanel signals={data.signals} /> },
     { id: 'catalysts', node: <CatalystRadar /> },

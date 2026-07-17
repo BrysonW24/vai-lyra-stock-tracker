@@ -99,6 +99,9 @@ const THEME_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>(['t
 const MACRO_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'capital_event',
   'investor_move',
+  // RBA/FOMC decision alerts and morning companions (v0.45.0) - the macroAlerts
+  // preference is the single opt-out for the whole macro pillar.
+  'macro_event',
 ]);
 
 /**

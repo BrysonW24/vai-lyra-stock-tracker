@@ -23,6 +23,21 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.46.0',
+    date: '2026-07-17',
+    title: 'The macro fleet: RBA decisions in your channels, a live calendar, CGT radar, and your return in AUD',
+    highlights: [
+      'Lyra now watches the Reserve Bank. On each of the 8 decision days a year (seeded from the RBA\'s published 2026-27 schedule, verified at the source), a dedicated job fires minutes after the 2:30pm announcement: it reads the official statement, extracts held / cut / raised and the new cash rate from the Board\'s own words, measures the AUD/USD move since just before the announcement, and tells you what that does to your US holdings in AUD terms. If the statement cannot be read, the alert still fires - it just refuses to quote a number it never saw.',
+      'Morning companions ride the nightly run: a pre-brief on decision mornings, a note when the Board minutes drop two weeks later, a heads-up when the RBA Chart Pack updates the morning after each meeting, and an FOMC morning-after brief the day the Fed moves overnight.',
+      'The calendar is finally alive end to end: 56 seeded macro events (every RBA decision, minutes and Chart Pack date for 2026-27, every 2026 FOMC decision) now flow into the events table nothing had ever written to, and the calendar drawer stops being four bare facts - macro events show what the event is, why it matters, the announcement\'s local time, and a link to the primary source. Earnings for names you hold or watch, and imminent IPO listings, now alert the morning before they land.',
+      'The Command page countdown ticks to real instants now - the next RBA decision counts down to 2:30pm Sydney and the FOMC to 2:00pm New York, timezone-correct across daylight saving, fed live from the calendar instead of a hand-curated list.',
+      'CGT radar: every position with a purchase date now shows where it sits against the Australian 12-month CGT discount - a quiet held-duration badge that turns amber inside 30 days of the anniversary and green past it - and gains get a notification at 30 and 7 days out. Date math from your records, general information not tax advice.',
+      'Your reviews now benchmark honestly: the monthly, quarterly and yearly reviews add a you-vs-S&P-500 line, and the Friday weekly report translates your USD return into AUD terms using the week\'s actual currency move. Both lines are measured from stored market snapshots and are silently omitted until enough history exists - never estimated.',
+      'Found and fixed along the way: the hourly market snapshot (regime, VIX, AUD/USD) had been failing to store since the table was created - a NOT NULL column the insert never supplied, swallowed by a catch-all guard. The macro history archive starts accruing for real tonight.',
+      'Macro alerts are ON by default from this release (they were silently off) - 8 decision days a year is signal, not noise. One toggle in notification settings turns the whole pillar off.',
+    ],
+  },
+  {
     version: '0.45.0',
     date: '2026-07-17',
     title: 'The harness learns from its own gaps',

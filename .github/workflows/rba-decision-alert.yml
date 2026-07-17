@@ -1,0 +1,58 @@
+name: RBA Decision Alert
+
+# The 2:30pm Sydney cash rate call, in the user's channels minutes later. Fires at
+# 2:31pm Sydney year-round via two month-gated cron lines (Sydney is AEST UTC+10
+# Apr-Oct and AEDT UTC+11 Nov-Mar; a fixed UTC offset would drift an hour for half
+# the year). The job itself is gated by the seeded decision calendar
+# (workers/stock_scanner/macro_calendar.RBA_DECISION_DATES, verified from the RBA's
+# published schedule) and exits clean in seconds on every non-decision day - 8 real
+# runs a year, ~250 cheap no-ops.
+#
+# Known risk, by design: rba.gov.au 403s some datacenter IPs (documented in
+# docs/messaging-roadmap.md). If the runner is blocked, the alert still fires from
+# the seeded calendar alone - "decision is out, read it at rba.gov.au" - without
+# quoting a number it never read. A green here means the alert DELIVERED, not that
+# the statement parsed; the job log states which.
+
+on:
+  schedule:
+    # 2:31pm AEST (Apr-Oct) = 04:31 UTC
+    - cron: '31 4 * 4-10 1-5'
+    # 2:31pm AEDT (Nov-Mar) = 03:31 UTC
+    - cron: '31 3 * 1-3,11,12 1-5'
+  workflow_dispatch: {}
+
+concurrency:
+  group: rba-decision-alert
+  cancel-in-progress: false
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: Production
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DEFAULT_USER_ID: ${{ secrets.DEFAULT_USER_ID }}
+      APP_BASE_URL: ${{ vars.APP_BASE_URL || secrets.APP_BASE_URL }}
+      NOTIFICATION_DISPATCH_SECRET: ${{ secrets.NOTIFICATION_DISPATCH_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install worker dependencies
+        run: pip install -r requirements.txt
+
+      - name: RBA decision alert (calendar-gated)
+        run: python -m workers.stock_scanner.rba_decision_job
+
+      - name: Keepalive (reset the 60-day cron auto-disable clock)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/rba-decision-alert.yml/enable" || true

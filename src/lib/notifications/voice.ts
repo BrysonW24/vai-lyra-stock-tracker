@@ -46,6 +46,9 @@ const FAMILY_BY_TYPE: Record<NotificationType, EventFamily> = {
   monthly_review: 'digest',
   quarterly_review: 'digest',
   yearly_review: 'digest',
+  // Macro briefs read as research; the CGT radar describes the user's own book.
+  macro_event: 'research',
+  cgt_anniversary: 'portfolio',
   test_notification: 'test',
 };
 

@@ -47,6 +47,8 @@ const TYPE_STYLE: Record<NotificationType, SlackTypeStyle> = {
   monthly_review: { emoji: ':calendar:', label: 'Monthly review', framing: 'A month of decisions, measured against what actually happened.' },
   quarterly_review: { emoji: ':date:', label: 'Quarterly review', framing: 'Three months in - the trend behind the noise.' },
   yearly_review: { emoji: ':trophy:', label: 'Year in review', framing: 'A full year of your investing, honestly scored.' },
+  macro_event: { emoji: ':classical_building:', label: 'Macro', framing: 'A central-bank or economic event that moves the whole board.' },
+  cgt_anniversary: { emoji: ':spiral_calendar_pad:', label: 'CGT anniversary', framing: 'A date from your own records worth knowing about.' },
   test_notification: { emoji: ':wave:', label: 'Test', framing: 'Just checking this channel reaches you.' },
 };
 
@@ -74,6 +76,7 @@ const SIGNAL_LIKE_TYPES: ReadonlySet<NotificationType> = new Set<NotificationTyp
   'monthly_review',
   'quarterly_review',
   'yearly_review',
+  'macro_event',
 ]);
 
 const PAPER_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([

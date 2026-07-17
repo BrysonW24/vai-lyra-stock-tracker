@@ -11,6 +11,72 @@ export interface CalendarEvent {
   ticker: string | null; // null for MACRO events
   title: string;
   importance: EventImportance;
+  /** Long-form context from the events table. The column always existed - it was
+   * silently dropped at mapEventRow until v0.45.0, which left macro events rendering
+   * as four bare facts with no explanation. */
+  description?: string | null;
+}
+
+/**
+ * Deep metadata for seeded macro events, keyed on the stable event_id prefixes the
+ * macro calendar writer uses (workers/stock_scanner/macro_calendar.py). Gives the
+ * drawer what a bare row cannot: the announcement's local time, the primary source,
+ * and one line of impact framing. Unknown ids return null - only seeded events get
+ * the deep treatment, nothing is guessed for arbitrary rows.
+ */
+export interface MacroEventMeta {
+  timeLocal: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  framing: string;
+}
+
+const MACRO_EVENT_META: Array<{ prefix: string; meta: MacroEventMeta }> = [
+  {
+    prefix: 'rba-decision-',
+    meta: {
+      timeLocal: '2:30pm Sydney',
+      sourceLabel: 'RBA media releases',
+      sourceUrl: 'https://www.rba.gov.au/media-releases/',
+      framing:
+        'The cash rate sets the price of money in Australia. For USD holdings the transmission is the currency: cuts tend to soften the AUD, lifting the AUD value of US positions; hikes tend to do the opposite.',
+    },
+  },
+  {
+    prefix: 'rba-minutes-',
+    meta: {
+      timeLocal: '11:30am Sydney',
+      sourceLabel: 'RBA Board minutes',
+      sourceUrl: 'https://www.rba.gov.au/monetary-policy/rba-board-minutes/',
+      framing:
+        'The fullest read on how the Board weighed its last decision - the place forward guidance actually lives.',
+    },
+  },
+  {
+    prefix: 'rba-chart-pack-',
+    meta: {
+      timeLocal: '11:30am Sydney',
+      sourceLabel: 'RBA Chart Pack',
+      sourceUrl: 'https://www.rba.gov.au/chart-pack/',
+      framing:
+        "The RBA's own distilled read on the world and Australian economy - 17 sections, updated after every Board meeting.",
+    },
+  },
+  {
+    prefix: 'fomc-decision-',
+    meta: {
+      timeLocal: '2:00pm ET',
+      sourceLabel: 'Federal Reserve',
+      sourceUrl: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm',
+      framing:
+        'US rates set the discount rate on every growth stock. Long-duration tech reprices first when the path shifts.',
+    },
+  },
+];
+
+export function macroEventMeta(event: CalendarEvent): MacroEventMeta | null {
+  const match = MACRO_EVENT_META.find(({ prefix }) => event.id.startsWith(prefix));
+  return match ? match.meta : null;
 }
 
 /** The date the sample event set was authored around - anchorCalendarEvents shifts from here. */

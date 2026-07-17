@@ -8,6 +8,7 @@ import { AddHoldingForm } from '@/components/portfolio/AddHoldingForm';
 import { TickerLogo } from '@/components/TickerLogo';
 import type { ActionState, DashboardData, PortfolioHolding, SignalRow, SignalStatus } from '@/types/scanner';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass } from '@/lib/format';
+import { cgtBadgeClass, cgtStatusFor } from '@/lib/cgt';
 import { loadLocalHoldings, PORTFOLIO_CHANGED_EVENT, type LocalHolding } from '@/lib/local-portfolio';
 
 /** Build display holdings from the user's local book, pricing each off the live signal set. */
@@ -63,6 +64,11 @@ export function PortfolioView({ data }: { data: DashboardData }) {
   const demo = data.generatedFrom !== 'supabase';
   const [holdings, setHoldings] = useState<PortfolioHolding[]>(data.portfolio);
   const [lastTrade, setLastTrade] = useState('-');
+  // Client-side clock for CGT badges; set after mount to keep SSR/CSR markup identical.
+  const [todayIso, setTodayIso] = useState('');
+  useEffect(() => {
+    setTodayIso(new Date().toISOString().slice(0, 10));
+  }, []);
 
   useEffect(() => {
     function sync() {
@@ -142,6 +148,7 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                       <th className="px-3 py-2">Market Value</th>
                       <th className="px-3 py-2">Unrealised P/L</th>
                       <th className="px-3 py-2">Weight</th>
+                      <th className="px-3 py-2">Held</th>
                       <th className="px-3 py-2">Signal</th>
                       <th className="px-3 py-2">RSI</th>
                       <th className="px-3 py-2">MACD</th>
@@ -166,6 +173,20 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                           {formatCurrency(holding.unrealisedPnl)} / {formatPercent(holding.unrealisedPnlPercent)}
                         </td>
                         <td className="px-3 py-2">{formatPercent(holding.portfolioWeight)}</td>
+                        <td className="px-3 py-2">
+                          {(() => {
+                            const cgt = cgtStatusFor(holding.purchaseDate, todayIso);
+                            if (!cgt) return <span className="text-[#5e6b78]">-</span>;
+                            return (
+                              <span
+                                className={`inline-block rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.08em] ${cgtBadgeClass(cgt.state)}`}
+                                title="Australian CGT applies a 50% discount to gains on assets held over 12 months. Date math from your records. General information, not tax advice."
+                              >
+                                {cgt.label}
+                              </span>
+                            );
+                          })()}
+                        </td>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-2">
                             <span>{holding.signalScore} <span className={toneClass(holding.scoreDelta)}>{formatSignedNumber(holding.scoreDelta, 0)}</span></span>
@@ -196,6 +217,16 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                       <div className="shrink-0 text-right font-mono">
                         <p className={`text-sm ${toneClass(holding.unrealisedPnl)}`}>{formatPercent(holding.unrealisedPnlPercent)}</p>
                         <p className="text-[10px] text-[#f3a33a]">{holding.actionState.replaceAll('_', ' ')}</p>
+                        {(() => {
+                          const cgt = cgtStatusFor(holding.purchaseDate, todayIso);
+                          // Mobile keeps only the states worth a glance - quiet while building.
+                          if (!cgt || cgt.state === 'building') return null;
+                          return (
+                            <p className={`mt-0.5 inline-block rounded border px-1 py-px text-[9px] uppercase tracking-[0.08em] ${cgtBadgeClass(cgt.state)}`}>
+                              {cgt.label}
+                            </p>
+                          );
+                        })()}
                       </div>
                     </div>
                   </Link>

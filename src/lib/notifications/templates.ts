@@ -46,6 +46,8 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   monthly_review: 'MONTHLY REVIEW',
   quarterly_review: 'QUARTERLY REVIEW',
   yearly_review: 'YEAR IN REVIEW',
+  macro_event: 'MACRO',
+  cgt_anniversary: 'CGT ANNIVERSARY',
   test_notification: 'TEST',
 };
 
@@ -71,6 +73,7 @@ const SIGNAL_LIKE_TYPES: ReadonlySet<NotificationType> = new Set<NotificationTyp
   'monthly_review',
   'quarterly_review',
   'yearly_review',
+  'macro_event',
 ]);
 
 /** Truncate with a trailing ellipsis marker, never exceeding `max` characters. */

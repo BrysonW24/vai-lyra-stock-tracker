@@ -50,6 +50,11 @@ class MarketSnapshot:
     oil_change_pct: Optional[float]
     btc_price: Optional[float]
     btc_change_pct: Optional[float]
+    # AUD/USD matters uniquely here: the audience is Australian holding US stocks, so
+    # this pair converts every USD return into what the user actually banks. Feeds the
+    # macro companions and the weekly report's AUD-terms line.
+    audusd_price: Optional[float]
+    audusd_change_pct: Optional[float]
     fear_greed_index: Optional[int]
     fear_greed_label: Optional[str]
     regime: str  # 'risk_on', 'neutral', 'risk_off'
@@ -73,6 +78,8 @@ class MarketSnapshot:
             "oil_change_pct": self.oil_change_pct,
             "btc_price": self.btc_price,
             "btc_change_pct": self.btc_change_pct,
+            "audusd_price": self.audusd_price,
+            "audusd_change_pct": self.audusd_change_pct,
             "fear_greed_index": self.fear_greed_index,
             "fear_greed_label": self.fear_greed_label,
             "regime": self.regime,
@@ -191,6 +198,9 @@ def build_market_context() -> MarketSnapshot:
     gold = _fetch_yahoo("GC=F")
     oil = _fetch_yahoo("CL=F")
 
+    # FX: the AUD lens on USD holdings (same free Yahoo endpoint as the indices)
+    audusd = _fetch_yahoo("AUDUSD=X")
+
     # Fetch crypto and sentiment
     btc = _fetch_crypto_btc()
     fear_greed, fear_label = _fetch_fear_greed()
@@ -222,6 +232,8 @@ def build_market_context() -> MarketSnapshot:
         oil_change_pct=oil.get("change_pct"),
         btc_price=btc.get("price"),
         btc_change_pct=btc.get("change_pct"),
+        audusd_price=audusd.get("price"),
+        audusd_change_pct=audusd.get("change_pct"),
         fear_greed_index=fear_greed,
         fear_greed_label=fear_label,
         regime=regime,
