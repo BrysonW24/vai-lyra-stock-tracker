@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.48.0',
+    date: '2026-07-17',
+    title: 'See what the scout sees - the live feed, self-verifying evidence, and an AI read',
+    highlights: [
+      'The Ideas board now opens with "What the scout saw": last night\'s read counts per vertical, the freshest items with their sources, and - the best part - the drumbeats still BUILDING toward promotion ("Commonwealth Fusion Systems - 2/3 items, 1/2 sources, needs 1 more independent source"). The bar stays hard; the patience is finally visible instead of looking like an empty board.',
+      'Scout cards are self-verifying now: every evidence link names its source and date, and long evidence lists expand in place - "2 independent sources" is something you can check at a glance, not something you have to trust.',
+      'Each scout card gains an optional AI read: 2-4 plain sentences on what the evidence collectively suggests, grounded STRICTLY in the attached headlines, guarded against invented facts and advice, and cached so one generation serves everyone. If AI is off or the guard rejects, the deterministic summary simply stands - the card never depends on a model.',
+      'Under the hood: the nightly scout writes a run ledger (scout_runs) the product reads, drumbeats are computed by the same Python that promotes ideas so the surface can never drift from the real bar, and this release also carries the cluster-side code the previous two releases referenced.',
+    ],
+  },
+  {
     version: '0.47.0',
     date: '2026-07-17',
     title: 'Honesty hardening: workers that store nothing now go red, and two privacy holes closed',

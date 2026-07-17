@@ -12,7 +12,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from workers.scout.attach import attach, detect_symbols
-from workers.scout.cluster import cluster_unmapped
+from workers.scout.cluster import IdeaCandidate, cluster_unmapped, drumbeats
 from workers.scout.providers import ScoutItem, demo_items, item_id, parse_feed_xml
 from workers.scout.sources import ScoutSource, active_sources, load_sources
 
@@ -136,6 +136,129 @@ class TestDeterminism:
     def test_item_id_is_stable(self):
         assert item_id("https://a.test/x", "Title") == item_id("https://a.test/x", "Title")
         assert item_id("https://a.test/x", "Title") != item_id("https://a.test/y", "Title")
+
+
+class TestDrumbeats:
+    """Below-bar clusters made visible - the feed's 'building signals' list."""
+
+    def test_building_entity_reports_what_it_still_needs(self):
+        items = [
+            item("Commonwealth Fusion Systems raises new round", source_id="s1"),
+            item("Commonwealth Fusion Systems milestone update", source_id="s1"),
+        ]
+        out = drumbeats(items)
+        assert len(out) == 1
+        beat = out[0]
+        assert beat["entity"] == "Commonwealth Fusion Systems"
+        assert beat["items"] == 2 and beat["sources"] == 1
+        assert beat["needItems"] == 1 and beat["needSources"] == 1
+        assert beat["latest"]["title"]
+
+    def test_promoted_entities_never_appear_as_drumbeats(self):
+        items = [
+            item("Commonwealth Fusion Systems raises new round", source_id="s1"),
+            item("Commonwealth Fusion Systems signs utility deal", source_id="s2"),
+            item("Milestone for Commonwealth Fusion Systems plant", source_id="s3"),
+        ]
+        promoted = cluster_unmapped(items)
+        assert len(promoted) == 1
+        assert drumbeats(items, promoted=promoted) == []
+
+    def test_bar_clearers_are_candidates_not_drumbeats(self):
+        # Even with no promoted list passed, an above-bar cluster is not a drumbeat.
+        items = [
+            item("Commonwealth Fusion Systems raises new round", source_id="s1"),
+            item("Commonwealth Fusion Systems signs utility deal", source_id="s2"),
+            item("Milestone for Commonwealth Fusion Systems plant", source_id="s3"),
+        ]
+        assert drumbeats(items) == []
+
+    def test_single_mentions_are_not_drumbeats(self):
+        assert drumbeats([item("Commonwealth Fusion Systems raises", source_id="s1")]) == []
+
+
+class TestEvidenceShape:
+    def test_candidate_evidence_carries_published_at(self):
+        items = [
+            item("Commonwealth Fusion Systems raises new round", source_id="s1"),
+            item("Commonwealth Fusion Systems signs utility deal", source_id="s2"),
+            item("Milestone for Commonwealth Fusion Systems plant", source_id="s3"),
+        ]
+        out = cluster_unmapped(items)
+        assert all("publishedAt" in ev and ev["publishedAt"] for ev in out[0].evidence)
+
+
+class _LogTable:
+    def __init__(self, log, name):
+        self._log = log
+        self._name = name
+
+    def upsert(self, record, on_conflict=None):
+        self._log.append(("upsert", self._name, record, on_conflict))
+        return self
+
+    def insert(self, record):
+        self._log.append(("insert", self._name, record))
+        return self
+
+    def execute(self):
+        return None
+
+
+class _LogClient:
+    def __init__(self):
+        self.log = []
+
+    def table(self, name):
+        return _LogTable(self.log, name)
+
+
+class _LogRepo:
+    def __init__(self):
+        self.client = _LogClient()
+
+
+class TestFilingAndLedger:
+    def test_file_ideas_enriches_evidence_with_source_names(self):
+        """The card must be self-verifying: '2 independent sources' means NAMING them.
+        Evidence rows gain sourceName from the registry at filing time; unknown ids
+        fall back to the raw id rather than dropping the row."""
+        from workers.scout import main as scout_main
+
+        real = load_sources()[0]
+        cand = IdeaCandidate(
+            dedupe_key="scout-vertical-test-entity",
+            title="Emerging signal: Test Entity",
+            description="d",
+            confidence=50,
+            evidence=(
+                {"itemId": "i1", "title": "t1", "url": None, "sourceId": real.id, "publishedAt": None},
+                {"itemId": "i2", "title": "t2", "url": None, "sourceId": "not-in-registry", "publishedAt": None},
+            ),
+        )
+        repo = _LogRepo()
+        assert scout_main._file_ideas(repo, [cand]) == 1
+        (_, table, record, on_conflict) = repo.client.log[0]
+        assert table == "community_ideas" and on_conflict == "dedupe_key"
+        assert record["evidence"][0]["sourceName"] == real.name
+        assert record["evidence"][1]["sourceName"] == "not-in-registry"
+
+    def test_record_run_writes_the_ledger_row(self):
+        from workers.scout import main as scout_main
+
+        repo = _LogRepo()
+        summary = {
+            "items_fetched": 400, "items_persisted": 400, "items_unmapped": 110,
+            "ideas_filed": 0, "sources_active": 36, "sources_gated": 64,
+            "window_saturated": False,
+        }
+        beats = [{"entity": "Test Co", "items": 2, "sources": 1, "needItems": 1, "needSources": 1, "latest": {"title": "t", "url": None}}]
+        scout_main._record_run(repo, summary, {"agi-infrastructure": 96}, beats)
+        (_, table, record) = repo.client.log[0]
+        assert table == "scout_runs"
+        assert record["items_fetched"] == 400
+        assert record["theme_counts"] == {"agi-infrastructure": 96}
+        assert record["drumbeats"] == beats
 
 
 class TestOrchestratorDemoPath:

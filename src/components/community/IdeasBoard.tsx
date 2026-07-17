@@ -1,13 +1,17 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Bot, ChevronUp, ExternalLink, Lightbulb, Loader2, Plus, X } from 'lucide-react';
+import { Bot, ChevronUp, ExternalLink, Lightbulb, Loader2, Plus, Sparkles, X } from 'lucide-react';
+import { loadAi } from '@/lib/account';
 
 interface IdeaEvidence {
   itemId?: string;
   title: string;
   url: string | null;
   sourceId?: string;
+  /** Human source name, enriched at filing time (falls back to sourceId for old cards). */
+  sourceName?: string;
+  publishedAt?: string | null;
 }
 
 interface Idea {
@@ -73,6 +77,46 @@ export function IdeasBoard() {
   const [submitting, setSubmitting] = useState(false);
   const [formNote, setFormNote] = useState<string | null>(null);
   const [voteNote, setVoteNote] = useState<string | null>(null);
+  const [expandedEvidence, setExpandedEvidence] = useState<Set<string>>(new Set());
+  // AI reads per scout card: undefined = not asked, 'loading', or the grounded text.
+  const [briefs, setBriefs] = useState<Record<string, 'loading' | string>>({});
+  const [aiAvailable, setAiAvailable] = useState(false);
+
+  useEffect(() => {
+    // Same availability check the daily brief uses: BYOK wins, OpenAI/Google may be
+    // server-backed - the route decides without exposing key presence to the bundle.
+    const ai = loadAi();
+    setAiAvailable(Boolean(ai.apiKey?.trim()) || ai.provider === 'openai' || ai.provider === 'google');
+  }, []);
+
+  async function loadBrief(idea: Idea) {
+    if (briefs[idea.id] !== undefined) return;
+    setBriefs((prev) => ({ ...prev, [idea.id]: 'loading' }));
+    try {
+      const res = await fetch('/api/community/ideas/brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ideaId: idea.id, ai: loadAi() }),
+      });
+      const data = (await res.json()) as { ok?: boolean; text?: string };
+      setBriefs((prev) => {
+        const next = { ...prev };
+        if (data.ok && data.text) next[idea.id] = data.text;
+        else delete next[idea.id]; // fall back to the template description silently
+        return next;
+      });
+      if (!data.ok || !data.text) {
+        setVoteNote('AI read unavailable right now - the card text above is the deterministic summary.');
+        setTimeout(() => setVoteNote(null), 2600);
+      }
+    } catch {
+      setBriefs((prev) => {
+        const next = { ...prev };
+        delete next[idea.id];
+        return next;
+      });
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -283,22 +327,63 @@ export function IdeasBoard() {
                   </div>
                   <p className="mt-1 text-[13px] font-semibold leading-snug text-[#eef3f8]">{idea.title}</p>
                   {idea.description && <p className="mt-0.5 text-[12px] leading-relaxed text-[#98a6b4]">{idea.description}</p>}
+                  {typeof briefs[idea.id] === 'string' && briefs[idea.id] !== 'loading' && (
+                    <div className="mt-1.5 border-l-2 border-[#9a6a1f]/60 bg-[#13100a]/60 py-1 pl-2 pr-1">
+                      <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#f3a33a]"><Sparkles size={10} /> Lyra&apos;s read - grounded in the evidence below</p>
+                      <p className="mt-0.5 text-[12px] leading-relaxed text-[#dbe5ee]">{briefs[idea.id]}</p>
+                    </div>
+                  )}
+                  {idea.origin === 'scout' && idea.evidence.length > 0 && aiAvailable && !demo && briefs[idea.id] === undefined && (
+                    <button
+                      type="button"
+                      onClick={() => loadBrief(idea)}
+                      className="mt-1.5 inline-flex min-h-[32px] items-center gap-1 rounded border border-[#9a6a1f]/50 bg-[#23180b]/60 px-2 text-[10px] font-medium text-[#f3a33a] transition hover:border-[#9a6a1f] hover:bg-[#2a1f0f]"
+                    >
+                      <Sparkles size={11} /> AI read of this signal
+                    </button>
+                  )}
+                  {briefs[idea.id] === 'loading' && (
+                    <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#8190a0]"><Loader2 size={11} className="animate-spin" /> Reading the evidence...</p>
+                  )}
                   {idea.evidence.length > 0 && (
                     <ul className="mt-1.5 space-y-0.5">
-                      {idea.evidence.slice(0, 4).map((ev, i) => (
+                      {(expandedEvidence.has(idea.id) ? idea.evidence : idea.evidence.slice(0, 4)).map((ev, i) => (
                         <li key={`${idea.id}-ev-${i}`} className="flex items-start gap-1 text-[11px] leading-snug text-[#8190a0]">
                           <ExternalLink size={10} className="mt-0.5 shrink-0 text-[#5d6b79]" />
-                          {ev.url ? (
-                            <a href={ev.url} target="_blank" rel="noopener noreferrer" className="truncate underline decoration-[#3a4754] underline-offset-2 transition hover:text-[#c8d3de]">
-                              {ev.title}
-                            </a>
-                          ) : (
-                            <span className="truncate">{ev.title}</span>
-                          )}
+                          <span className="min-w-0">
+                            {ev.url ? (
+                              <a href={ev.url} target="_blank" rel="noopener noreferrer" className="underline decoration-[#3a4754] underline-offset-2 transition hover:text-[#c8d3de]">
+                                {ev.title}
+                              </a>
+                            ) : (
+                              <span>{ev.title}</span>
+                            )}
+                            {(ev.sourceName || ev.sourceId || ev.publishedAt) && (
+                              <span className="text-[#5d6b79]">
+                                {' '}- {ev.sourceName || ev.sourceId}
+                                {ev.publishedAt && <> · {fmtDate(ev.publishedAt)}</>}
+                              </span>
+                            )}
+                          </span>
                         </li>
                       ))}
                       {idea.evidence.length > 4 && (
-                        <li className="text-[10px] text-[#5d6b79]">+ {idea.evidence.length - 4} more evidence links</li>
+                        <li>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedEvidence((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(idea.id)) next.delete(idea.id);
+                                else next.add(idea.id);
+                                return next;
+                              })
+                            }
+                            className="min-h-[32px] text-[10px] font-medium text-[#5d6b79] underline decoration-[#3a4754] underline-offset-2 transition hover:text-[#c8d3de]"
+                          >
+                            {expandedEvidence.has(idea.id) ? 'Show fewer evidence links' : `+ ${idea.evidence.length - 4} more evidence links`}
+                          </button>
+                        </li>
                       )}
                     </ul>
                   )}

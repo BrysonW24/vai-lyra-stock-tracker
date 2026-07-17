@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from workers.scout.providers import ScoutItem
 
@@ -45,7 +46,7 @@ class IdeaCandidate:
     title: str
     description: str
     confidence: int          # breadth-derived, 0-100
-    evidence: tuple[dict, ...]  # [{itemId, title, url, sourceId}]
+    evidence: tuple[dict, ...]  # [{itemId, title, url, sourceId, publishedAt}]
 
 
 def _entities(text: str) -> set[str]:
@@ -89,7 +90,13 @@ def cluster_unmapped(items: list[ScoutItem]) -> list[IdeaCandidate]:
         claimed.update(h.id for h in hits)
         confidence = min(90, 20 + 10 * len(hits) + 5 * len(sources))
         evidence = tuple(
-            {"itemId": h.id, "title": h.title, "url": h.url, "sourceId": h.source_id}
+            {
+                "itemId": h.id,
+                "title": h.title,
+                "url": h.url,
+                "sourceId": h.source_id,
+                "publishedAt": h.published_at.isoformat() if h.published_at else None,
+            }
             for h in hits[:8]
         )
         candidates.append(
@@ -108,3 +115,44 @@ def cluster_unmapped(items: list[ScoutItem]) -> list[IdeaCandidate]:
             )
         )
     return candidates
+
+
+def drumbeats(items: list[ScoutItem], promoted: list[IdeaCandidate] | None = None, limit: int = 10) -> list[dict]:
+    """Below-bar clusters that are BUILDING toward promotion - the visible patience.
+
+    The promotion bar (>= MIN_ITEMS items, >= MIN_SOURCES sources) is deliberately hard, so
+    for days the board can look empty while signal accumulates invisibly. This surfaces the
+    accumulation itself: entities with >= 2 hits that have NOT yet cleared the bar, with how
+    far they have to go. Same extraction, same junk filter, same tie-break as promotion -
+    computed here in Python so the frontend can never drift from the real clusterer.
+    """
+    promoted_keys = {c.dedupe_key for c in (promoted or [])}
+    by_entity: dict[str, list[ScoutItem]] = {}
+    for item in items:
+        for entity in _entities(f"{item.title} {item.summary}"):
+            by_entity.setdefault(entity, []).append(item)
+
+    out: list[dict] = []
+    ranked = sorted(by_entity.items(), key=lambda kv: (-len(kv[1]), -len(kv[0]), kv[0]))
+    for entity, hits in ranked:
+        if f"scout-vertical-{slugify(entity)}" in promoted_keys:
+            continue
+        sources = {h.source_id for h in hits}
+        if len(hits) < 2:
+            continue  # a single mention is not a drumbeat
+        if len(hits) >= MIN_ITEMS and len(sources) >= MIN_SOURCES:
+            continue  # clears the bar - it is a candidate, not a drumbeat
+        latest = max(hits, key=lambda h: h.published_at or datetime.min.replace(tzinfo=timezone.utc))
+        out.append(
+            {
+                "entity": entity,
+                "items": len(hits),
+                "sources": len(sources),
+                "needItems": max(0, MIN_ITEMS - len(hits)),
+                "needSources": max(0, MIN_SOURCES - len(sources)),
+                "latest": {"title": latest.title, "url": latest.url},
+            }
+        )
+        if len(out) >= limit:
+            break
+    return out

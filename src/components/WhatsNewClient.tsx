@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Lightbulb, Sparkles } from 'lucide-react';
 import { ProductUpdatesTimeline } from '@/components/ProductUpdatesTimeline';
 import { IdeasBoard } from '@/components/community/IdeasBoard';
+import { ScoutFeed } from '@/components/community/ScoutFeed';
 import { APP_VERSION } from '@/lib/version';
 
 type Tab = 'updates' | 'ideas';
@@ -75,7 +76,14 @@ export function WhatsNewClient() {
         </div>
       </section>
 
-      {tab === 'updates' ? <ProductUpdatesTimeline /> : <IdeasBoard />}
+      {tab === 'updates' ? (
+        <ProductUpdatesTimeline />
+      ) : (
+        <div className="space-y-3">
+          <ScoutFeed />
+          <IdeasBoard />
+        </div>
+      )}
     </div>
   );
 }

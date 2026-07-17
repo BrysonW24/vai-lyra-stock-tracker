@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.48.0] - 2026-07-17
+
+See what the scout sees - the live feed, self-verifying evidence, and an AI read.
+
+### Changed
+
+- The Ideas board now opens with "What the scout saw": last night's read counts per vertical, the freshest items with their sources, and - the best part - the drumbeats still BUILDING toward promotion ("Commonwealth Fusion Systems - 2/3 items, 1/2 sources, needs 1 more independent source"). The bar stays hard; the patience is finally visible instead of looking like an empty board.
+- Scout cards are self-verifying now: every evidence link names its source and date, and long evidence lists expand in place - "2 independent sources" is something you can check at a glance, not something you have to trust.
+- Each scout card gains an optional AI read: 2-4 plain sentences on what the evidence collectively suggests, grounded STRICTLY in the attached headlines, guarded against invented facts and advice, and cached so one generation serves everyone. If AI is off or the guard rejects, the deterministic summary simply stands - the card never depends on a model.
+- Under the hood: the nightly scout writes a run ledger (scout_runs) the product reads, drumbeats are computed by the same Python that promotes ideas so the surface can never drift from the real bar, and this release also carries the cluster-side code the previous two releases referenced.
+
 ## [0.47.0] - 2026-07-17
 
 Honesty hardening: workers that store nothing now go red, and two privacy holes closed.
@@ -783,7 +794,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.47.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.48.0...HEAD
+[0.48.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.47.0...v0.48.0
 [0.47.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.46.0...v0.47.0
 [0.46.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.45.0...v0.46.0
 [0.45.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.44.1...v0.45.0

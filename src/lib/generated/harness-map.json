@@ -268,6 +268,7 @@
         "src/lib/calendar.ts",
         "src/lib/calendar-live.ts",
         "src/lib/capex-events.ts",
+        "src/lib/cgt.ts",
         "src/lib/catalysts.ts",
         "src/lib/commodities.ts",
         "src/lib/feed.ts",

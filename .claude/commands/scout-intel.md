@@ -3,8 +3,11 @@
 You are Claude Code running in the Lyra repo. Run the scout upkeep loop: the source
 registry stays real, the fetch layer degrades cleanly, attachment stays conservative,
 clustering stays junk-free, and every idea card the scout files carries evidence a human
-can check. This chain owns `workers/scout/` and `content/scout-sources.jsonl`, and shares
-the ideas surface with `/feedback-loop` (board UI + `src/app/api/community/`).
+can check. This chain owns `workers/scout/`, `content/scout-sources.jsonl`, and the feed
+surface ("what the scout saw": `src/app/api/scout/` + `src/components/community/ScoutFeed.tsx`,
+backed by the `scout_runs` ledger the worker writes each run). It shares the ideas surface
+with `/feedback-loop` (board UI + `src/app/api/community/`, including the grounded AI-read
+route `src/app/api/community/ideas/brief/`).
 
 Doctrine: **the scout notices, humans decide.** The scout only files evidence-linked
 cards (origin='scout') on the community ideas board - it NEVER mutates the vertical map,
