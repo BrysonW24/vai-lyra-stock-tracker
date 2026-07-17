@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { sendWebPush, type StoredPushSubscription } from '@/lib/push/server';
 import { buildIdempotencyKey, routeNotification } from './router';
 import { renderNotificationText, renderNotificationPushBody } from './templates';
+import { buildTelegramTextForEvent } from './telegram-templates';
 import { DEFAULT_NOTIFICATION_PREFERENCES, type ChannelType, type NotificationEvent, type NotificationPreferences, type NotificationType } from './types';
 import { sendTelegramMessage } from './telegram';
 import { sendWhatsAppMessage } from './whatsapp';
@@ -309,10 +310,12 @@ async function deliverChat(
     const idempotencyKey = `${buildIdempotencyKey(event.id, channelType)}:${destination.id}${idempotencySuffix}`;
     const result =
       channelType === 'telegram'
-        ? await sendTelegramMessage(destination.destination!, text, idempotencyKey, {
-            eventId: event.id,
-            userId: event.userId,
-          })
+        ? await sendTelegramMessage(
+            destination.destination!,
+            buildTelegramTextForEvent(event, { voice: voiceOpts.voice, name: voiceOpts.name }),
+            idempotencyKey,
+            { eventId: event.id, userId: event.userId, parseMode: 'HTML' },
+          )
         : channelType === 'slack'
           ? await sendSlackMessage(
               destination.destination!,

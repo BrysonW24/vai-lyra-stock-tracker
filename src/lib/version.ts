@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.37.0',
+    date: '2026-07-17',
+    title: 'Telegram alerts are readable now: colour-coded relevance, real formatting, no more wall of text',
+    highlights: [
+      'Telegram alerts have been rebuilt. Slack had a purpose-built layout while Telegram fell back to a plain-text format meant for the wire - one dense paragraph, no formatting, capped at 399 characters on a channel that allows 4096. Alerts now arrive with a proper header, bold title, scannable body and a tappable link.',
+      'Your relevance score is now a colour-coded meter you read at a glance - green for a strong 70+, amber in the middle, red below 40 - instead of a number buried in a sentence.',
+      'The engine\'s reason for firing now sits in its own quoted block, so the provenance reads as a citation and never gets lost in the narrative.',
+      'Your chosen alert personality (Analyst, Coach, Minimal or Narrator) now applies to Telegram too. Previously only Slack honoured it.',
+      'An alert can no longer be lost to a formatting bug: if the rich layout ever fails to parse, the message is re-sent as plain text rather than silently dropped.',
+    ],
+  },
+  {
     version: '0.36.0',
     date: '2026-07-17',
     title: 'The Ideas board can actually save your ideas now - four migrations had never reached production',

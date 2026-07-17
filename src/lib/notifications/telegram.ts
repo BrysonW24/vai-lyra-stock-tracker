@@ -62,6 +62,12 @@ export interface SendTelegramOptions {
   /** Owning user id when known - 'unpaired' otherwise (webhook replies pre-pairing). */
   userId?: string;
   attempt?: number;
+  /**
+   * Telegram parse mode. Omit for plain text. 'HTML' unlocks the rich layout built by
+   * telegram-templates.ts - but Telegram rejects the ENTIRE message with a 400 if the
+   * markup is malformed, so only pass it for text from a renderer that escapes its inputs.
+   */
+  parseMode?: 'HTML' | 'MarkdownV2';
 }
 
 interface TelegramSendResponse {
@@ -116,23 +122,52 @@ export async function sendTelegramMessage(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
   try {
-    const res = await fetch(`${TELEGRAM_API_BASE}/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: text.slice(0, TELEGRAM_TEXT_LIMIT),
-        disable_web_page_preview: true,
-      }),
-      signal: controller.signal,
-    });
+    const post = (payload: Record<string, unknown>) =>
+      fetch(`${TELEGRAM_API_BASE}/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
 
-    const raw = await res.text();
+    const basePayload = {
+      chat_id: chatId,
+      text: text.slice(0, TELEGRAM_TEXT_LIMIT),
+      disable_web_page_preview: true,
+    };
+
+    let res = await post(options.parseMode ? { ...basePayload, parse_mode: options.parseMode } : basePayload);
+    let raw = await res.text();
     let parsed: TelegramSendResponse = {};
     try {
       parsed = JSON.parse(raw) as TelegramSendResponse;
     } catch {
       // Non-JSON body (proxy error page etc.) - fall through to the failure branch.
+    }
+
+    // Telegram 400s the WHOLE message on malformed markup. An alert is worth more than its
+    // formatting, so retry once as plain text rather than let a rendering bug swallow it.
+    const isParseFailure =
+      options.parseMode !== undefined &&
+      res.status === 400 &&
+      /can't parse entities|unsupported start tag|unclosed|entity/i.test(parsed.description ?? '');
+    if (isParseFailure) {
+      console.warn(
+        JSON.stringify({
+          at: 'telegram.send',
+          status: 'parse_mode_fallback',
+          idempotencyKey,
+          detail: redactBotToken(parsed.description ?? '', token).slice(0, 200),
+        }),
+      );
+      res = await post(basePayload);
+      raw = await res.text();
+      parsed = {};
+      try {
+        parsed = JSON.parse(raw) as TelegramSendResponse;
+      } catch {
+        /* fall through to the failure branch */
+      }
     }
 
     if (!res.ok || parsed.ok !== true) {

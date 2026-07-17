@@ -95,9 +95,8 @@ grain: the trigger reason, the symbol, a relevance score, and a link back into L
 <p align="center">
   <img src="assets/notification-pwa-push-ios.jpg" width="30%" alt="Web push - an alert on the iOS lock screen, no app store needed" />
   <img src="assets/notification-slack-signal.png" width="30%" alt="Slack - a live signal alert delivered to a channel" />
+  <img src="assets/notification-telegram-signal.png" width="30%" alt="Telegram - a signal with a relevance meter and the engine's trigger reason" />
 </p>
-
-
 
 ---
 
