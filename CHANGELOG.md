@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.44.0] - 2026-07-17
+
+Your reviews now actually arrive - monthly, quarterly and yearly, with your real return.
+
+### Changed
+
+- The periodic reviews finally have a scheduler. On the last trading day of every month, quarter and year, Lyra now measures your portfolio and sends the review to your channels - and if a run is missed, it self-heals: the review arrives a night late instead of never, and can never double-send.
+- The performance number is real, not narrated. Your return is measured from the same stored prices the scanner scored: positions you held at the start of the period are measured from the period-open price, and positions you bought during the period are measured from what you actually paid - so nothing is credited or blamed for price action you never held. Positions with no price data are skipped and the skip is counted, never hidden.
+- Each review names your best and toughest position for the period with its measured move, so you can really see how you did at every zoom level - week, month, quarter, year.
+- The Friday weekly report now carries your measured weekly portfolio return too, and Slack reviews show the same cash-with-wings performance tiers as Telegram (5% / 10% / 15%), with losses shown honestly in red.
+- Under the hood the measured number now survives the whole pipeline: it rides the dispatch API, is stored with the event, and is rebuilt correctly when a review held by quiet hours is released later - previously the renderers supported a performance badge that nothing could ever feed.
+
 ## [0.43.0] - 2026-07-17
 
 Deploys verify themselves now - and a fresh clone is proven to build, on every push.
@@ -726,7 +738,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.43.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.44.0...HEAD
+[0.44.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.43.0...v0.44.0
 [0.43.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.42.0...v0.43.0
 [0.42.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.41.0...v0.42.0
 [0.41.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.40.0...v0.41.0

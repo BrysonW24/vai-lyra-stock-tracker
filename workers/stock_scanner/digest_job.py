@@ -19,6 +19,12 @@ from typing import Any
 from workers.stock_scanner.config import Settings, load_settings
 from workers.stock_scanner.logger import get_logger
 from workers.stock_scanner.notification_dispatch import dispatch_notification
+from workers.stock_scanner.review_job import (
+    PortfolioPerformance,
+    format_pct,
+    portfolio_performance_for_user,
+    send_periodic_reviews,
+)
 from workers.stock_scanner.supabase_repo import SupabaseRepository
 
 LOGGER = get_logger("stock_scanner.digest_job")
@@ -88,6 +94,25 @@ def _digest_enabled(prefs: dict[str, Any], key: str) -> bool:
     return True if value is None else bool(value)
 
 
+def with_weekly_performance(
+    title: str,
+    body: str,
+    payload: dict[str, Any],
+    performance: PortfolioPerformance,
+) -> tuple[str, str, dict[str, Any]]:
+    """Fold the engine-measured weekly portfolio return into a composed weekly report.
+    The line lands before the closing 'Research, not advice.' suffix; the pct also goes
+    into the payload so the stored event carries the measured number."""
+    line = (
+        f"Portfolio this week: {format_pct(performance.performance_pct)} across "
+        f"{performance.positions_measured} measured position"
+        f"{'s' if performance.positions_measured != 1 else ''}."
+    )
+    lines = body.split("\n")
+    lines.insert(max(len(lines) - 1, 0), line)
+    return title, "\n".join(lines), {**payload, "performance_pct": performance.performance_pct}
+
+
 def send_digests(
     repo: SupabaseRepository,
     settings: Settings,
@@ -130,6 +155,14 @@ def send_digests(
         for notification_type, window_label, signals, since in jobs:
             alerts = repo.load_alerts_since(since, user_id=user_id)
             title, body, payload = compose_digest(signals, alerts, window_label)
+            # The weekly report is an outcome type: attach the REAL portfolio return
+            # over the week, measured from stored candles. None (no positions / no
+            # data) degrades to the plain digest - never an invented number.
+            performance = None
+            if notification_type == "weekly_report":
+                performance = portfolio_performance_for_user(repo, settings, user_id, since)
+                if performance is not None:
+                    title, body, payload = with_weekly_performance(title, body, payload, performance)
             result = dispatch_notification(
                 settings,
                 user_id=user_id,
@@ -142,6 +175,7 @@ def send_digests(
                 relevance_score=100,
                 notification_type=notification_type,
                 url="/radar",
+                performance_pct=performance.performance_pct if performance else None,
             )
             repo.save_alert(
                 signal_id=None,
@@ -172,8 +206,14 @@ def main() -> None:
             repo.finish_run(run_id, status="skipped")
             return
         sent = send_digests(repo, settings)
-        LOGGER.info("Digest job finished: digests_sent=%s", sent)
-        repo.finish_run(run_id, status="success", alerts_sent=sent, payload={"digests_sent": sent})
+        reviews_sent = send_periodic_reviews(repo, settings)
+        LOGGER.info("Digest job finished: digests_sent=%s reviews_sent=%s", sent, reviews_sent)
+        repo.finish_run(
+            run_id,
+            status="success",
+            alerts_sent=sent + reviews_sent,
+            payload={"digests_sent": sent, "reviews_sent": reviews_sent},
+        )
     except Exception as exc:
         LOGGER.exception("Digest job failed")
         repo.finish_run(run_id, status="failed", error_message=str(exc))

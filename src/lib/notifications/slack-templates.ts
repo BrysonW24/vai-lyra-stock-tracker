@@ -85,6 +85,39 @@ const PAPER_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'paper_position_move',
 ]);
 
+/**
+ * Types that report a measured outcome - same roster as telegram-templates. Only these may
+ * show the performance grain, and only from event.performancePct (engine-measured): a
+ * renderer must never infer "this went well" from prose.
+ */
+const OUTCOME_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
+  'weekly_report',
+  'monthly_review',
+  'quarterly_review',
+  'yearly_review',
+  'paper_trade_closed',
+  'signal_followup',
+]);
+
+/**
+ * Slack-native mirror of the Telegram cash-with-wings tiers (shortcodes, per this file's
+ * doctrine): 5% one, 10% two, 15% three; modest gain green dot, flat dash, loss red triangle.
+ */
+function slackPerformanceBadge(pct: number): string {
+  if (!Number.isFinite(pct)) return '';
+  if (pct >= 15) return ':money_with_wings::money_with_wings::money_with_wings:';
+  if (pct >= 10) return ':money_with_wings::money_with_wings:';
+  if (pct >= 5) return ':money_with_wings:';
+  if (pct > 0) return ':large_green_circle:';
+  if (pct === 0) return ':heavy_minus_sign:';
+  return ':small_red_triangle_down:';
+}
+
+function formatSlackPct(pct: number): string {
+  const sign = pct > 0 ? '+' : '';
+  return `${sign}${pct.toFixed(1)}%`;
+}
+
 /** Keep comfortably inside the adapter's 4000-char clamp while allowing digests room to breathe. */
 export const SLACK_MESSAGE_LIMIT = 2_900;
 
@@ -140,7 +173,13 @@ export function buildSlackTextForEvent(
 
   const header = severity ? `${style.emoji} *${style.label}* - ${severity}` : `${style.emoji} *${style.label}*`;
 
-  const grains: string[] = [`> *Why:* ${event.triggerReason}`];
+  const grains: string[] = [];
+  if (OUTCOME_TYPES.has(event.type) && Number.isFinite(event.performancePct)) {
+    grains.push(
+      `> *Period return:* ${slackPerformanceBadge(event.performancePct!)} *${formatSlackPct(event.performancePct!)}*`,
+    );
+  }
+  grains.push(`> *Why:* ${event.triggerReason}`);
   if (event.relatedEntityType === 'symbol' && event.relatedEntityId) {
     grains.push(`> *Symbol:* \`${event.relatedEntityId.toUpperCase()}\``);
   }

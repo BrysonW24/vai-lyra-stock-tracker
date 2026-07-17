@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.44.0',
+    date: '2026-07-17',
+    title: 'Your reviews now actually arrive - monthly, quarterly and yearly, with your real return',
+    highlights: [
+      'The periodic reviews finally have a scheduler. On the last trading day of every month, quarter and year, Lyra now measures your portfolio and sends the review to your channels - and if a run is missed, it self-heals: the review arrives a night late instead of never, and can never double-send.',
+      'The performance number is real, not narrated. Your return is measured from the same stored prices the scanner scored: positions you held at the start of the period are measured from the period-open price, and positions you bought during the period are measured from what you actually paid - so nothing is credited or blamed for price action you never held. Positions with no price data are skipped and the skip is counted, never hidden.',
+      'Each review names your best and toughest position for the period with its measured move, so you can really see how you did at every zoom level - week, month, quarter, year.',
+      'The Friday weekly report now carries your measured weekly portfolio return too, and Slack reviews show the same cash-with-wings performance tiers as Telegram (5% / 10% / 15%), with losses shown honestly in red.',
+      'Under the hood the measured number now survives the whole pipeline: it rides the dispatch API, is stored with the event, and is rebuilt correctly when a review held by quiet hours is released later - previously the renderers supported a performance badge that nothing could ever feed.',
+    ],
+  },
+  {
     version: '0.43.0',
     date: '2026-07-17',
     title: 'Deploys verify themselves now - and a fresh clone is proven to build, on every push',

@@ -489,6 +489,43 @@ class SupabaseRepository:
             for row in (result.data or [])
         }
 
+    def first_close_at_or_after(self, symbol: str, timeframe: str, start: datetime) -> float | None:
+        """Close of the earliest stored candle at/after `start` - the period-start baseline
+        the review job measures from. Same stored-candle source the scores used, so every
+        published performance number is reproducible. None when no candle covers the window."""
+        if not self.client:
+            return None
+        result = (
+            self.client.table("stock_candles")
+            .select("close")
+            .eq("symbol", symbol)
+            .eq("timeframe", timeframe)
+            .gte("candle_time", start.isoformat())
+            .order("candle_time", desc=False)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        value = rows[0].get("close") if rows else None
+        return float(value) if value is not None else None
+
+    def latest_close(self, symbol: str, timeframe: str) -> float | None:
+        """Close of the most recent stored candle for the symbol. None when never scanned."""
+        if not self.client:
+            return None
+        result = (
+            self.client.table("stock_candles")
+            .select("close")
+            .eq("symbol", symbol)
+            .eq("timeframe", timeframe)
+            .order("candle_time", desc=True)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        value = rows[0].get("close") if rows else None
+        return float(value) if value is not None else None
+
     def load_candles_from(self, symbol: str, timeframe: str, start: datetime) -> list[Candle]:
         """Stored candles from `start` onward (ascending). Outcomes are computed from the
         SAME stored candles the score used, so every published number is reproducible."""

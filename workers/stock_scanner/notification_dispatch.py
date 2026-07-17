@@ -45,10 +45,14 @@ def dispatch_notification(
     relevance_score: float = 100,
     notification_type: str | None = None,
     url: str | None = None,
+    performance_pct: float | None = None,
 ) -> DispatchResult:
     """POST one event to the JS notification router. `notification_type` overrides the
     alert_type mapping for event families that have no scanner alert_type (daily_digest,
-    weekly_report, signal_followup); `url` overrides the deep link the same way."""
+    weekly_report, signal_followup); `url` overrides the deep link the same way.
+    `performance_pct` is the engine-measured period return for outcome-reporting types
+    (the periodic reviews, closed trades) - it drives the renderer's performance badge,
+    so only pass a number actually computed from stored candles/positions."""
     if not user_id or not settings.notification_dispatch_url or not settings.notification_dispatch_secret:
         return DispatchResult(attempted=False, ok=False, error_message="notification dispatch not configured")
 
@@ -74,6 +78,8 @@ def dispatch_notification(
         "payload": payload,
         "dedupeKey": dedupe_key,
     }
+    if performance_pct is not None:
+        request_body["performancePct"] = performance_pct
 
     req = Request(
         settings.notification_dispatch_url,

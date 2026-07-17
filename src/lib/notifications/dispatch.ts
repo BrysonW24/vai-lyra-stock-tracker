@@ -66,6 +66,12 @@ export interface DispatchNotificationInput {
   relatedEntityType?: string;
   relatedEntityId?: string;
   relevanceScore?: number;
+  /**
+   * Engine-measured performance percent for outcome-reporting types (reviews, closed
+   * trades). Persisted inside the event payload as `performance_pct` so held-event
+   * release and retry re-renders keep the badge - there is no dedicated column.
+   */
+  performancePct?: number;
   url?: string;
   payload?: Record<string, unknown>;
   dedupeKey?: string;
@@ -365,6 +371,13 @@ interface StoredEventRow {
   created_at?: string | null;
   symbol?: string | null;
   theme?: string | null;
+  payload?: Record<string, unknown> | null;
+}
+
+/** performance_pct out of a stored payload - only a real finite number survives. */
+function performancePctFromPayload(payload: Record<string, unknown> | null | undefined): number | undefined {
+  const value = payload?.performance_pct;
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 /** Reconstruct a NotificationEvent from a stored notification_events row (for held-event release). */
@@ -381,6 +394,7 @@ function eventFromRow(row: StoredEventRow): NotificationEvent {
     relatedEntityType: row.related_entity_type ?? undefined,
     relatedEntityId: row.related_entity_id ?? undefined,
     relevanceScore: Number(row.relevance_score ?? 100),
+    performancePct: performancePctFromPayload(row.payload),
     dedupeKey: row.dedupe_key ?? row.id,
     idempotencyKey: row.idempotency_key ?? `${row.id}:event`,
     url: row.url ?? undefined,
@@ -614,7 +628,14 @@ export async function dispatchNotificationEvent(
       related_entity_id: input.relatedEntityId ?? input.symbol ?? input.theme ?? null,
       relevance_score: input.relevanceScore ?? 100,
       url: eventUrl(input),
-      payload: input.payload ?? {},
+      payload: {
+        ...(input.payload ?? {}),
+        // Stored in the payload jsonb (no dedicated column) so held-release and
+        // retry re-renders can rebuild event.performancePct via eventFromRow.
+        ...(typeof input.performancePct === 'number' && Number.isFinite(input.performancePct)
+          ? { performance_pct: input.performancePct }
+          : {}),
+      },
       dedupe_key: input.dedupeKey ?? null,
       idempotency_key: input.idempotencyKey ?? randomUUID(),
     })
@@ -640,6 +661,10 @@ export async function dispatchNotificationEvent(
     relatedEntityType: inserted.related_entity_type ?? undefined,
     relatedEntityId: inserted.related_entity_id ?? undefined,
     relevanceScore: Number(input.relevanceScore ?? 100),
+    performancePct:
+      typeof input.performancePct === 'number' && Number.isFinite(input.performancePct)
+        ? input.performancePct
+        : undefined,
     dedupeKey: input.dedupeKey ?? inserted.id,
     idempotencyKey: input.idempotencyKey ?? `${inserted.id}:event`,
     url: inserted.url ?? eventUrl(input),

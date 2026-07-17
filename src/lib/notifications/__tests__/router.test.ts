@@ -293,6 +293,51 @@ describe('routeNotification - digest preference gates', () => {
   });
 });
 
+describe('routeNotification - periodic reviews (monthly/quarterly/yearly)', () => {
+  const REVIEW_TYPES = ['monthly_review', 'quarterly_review', 'yearly_review'] as const;
+
+  function reviewEvent(type: (typeof REVIEW_TYPES)[number]): NotificationEvent {
+    return event({
+      type,
+      relatedEntityType: undefined,
+      relatedEntityId: undefined,
+      relevanceScore: 100,
+      dedupeKey: buildDedupeKey(type, 'user-1', '2026-06'),
+    });
+  }
+
+  it.each(REVIEW_TYPES)('delivers a %s when weeklyDigest is on', (type) => {
+    const decision = routeNotification(reviewEvent(type), prefs(), { now: DAYTIME });
+    expect(decision).toEqual({ deliver: true, channels: ['telegram', 'whatsapp'], deferredToDigest: false });
+  });
+
+  it.each(REVIEW_TYPES)('drops a %s when weeklyDigest (the periodic-reports gate) is off', (type) => {
+    const decision = routeNotification(reviewEvent(type), prefs({ weeklyDigest: false }), { now: DAYTIME });
+    expect(decision).toEqual({ deliver: false, reason: DROP_REASONS.weeklyDigestDisabled });
+  });
+
+  it.each(REVIEW_TYPES)(
+    'never digest-defers a %s during quiet hours - the scheduler owns the send time',
+    (type) => {
+      const decision = routeNotification(
+        reviewEvent(type),
+        prefs({ quietHoursEnabled: true, quietStart: '22:00', quietEnd: '07:00', timezone: ZONE }),
+        { now: SYD_LATE_NIGHT },
+      );
+      expect(decision).toEqual({ deliver: true, channels: ['telegram', 'whatsapp'], deferredToDigest: false });
+    },
+  );
+
+  it.each(REVIEW_TYPES)('drops a %s with no channels enabled', (type) => {
+    const decision = routeNotification(
+      reviewEvent(type),
+      prefs({ telegramEnabled: false, whatsappEnabled: false }),
+      { now: DAYTIME },
+    );
+    expect(decision).toEqual({ deliver: false, reason: DROP_REASONS.noChannels });
+  });
+});
+
 describe('routeNotification - order chatter toggle', () => {
   it('drops order_intent_created when orderApprovalAlerts is off', () => {
     const intent = event({

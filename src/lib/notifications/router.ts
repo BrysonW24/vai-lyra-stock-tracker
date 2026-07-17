@@ -101,6 +101,21 @@ const MACRO_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
   'investor_move',
 ]);
 
+/**
+ * Scheduled periodic reports beyond the daily digest: the Friday weekly report and the
+ * month/quarter/year reviews. One preference (weeklyDigest) gates all of them - they share
+ * a cadence-report nature and a separate toggle per cadence would need a schema change for
+ * near-zero user value. Like the daily digest they are never deferred-to-digest: the
+ * scheduler that emits them owns the send time, and holding a monthly review overnight
+ * to re-release it as a stale ping the next morning helps nobody.
+ */
+const PERIODIC_REPORT_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
+  'weekly_report',
+  'monthly_review',
+  'quarterly_review',
+  'yearly_review',
+]);
+
 /** relatedEntityType values that identify a symbol-scoped event. */
 const SYMBOL_ENTITY_TYPES: ReadonlySet<string> = new Set(['symbol', 'ticker', 'stock']);
 
@@ -291,7 +306,7 @@ export function routeNotification(
     }
     return { deliver: true, channels, deferredToDigest: false };
   }
-  if (event.type === 'weekly_report') {
+  if (PERIODIC_REPORT_TYPES.has(event.type)) {
     if (!prefs.weeklyDigest) {
       return { deliver: false, reason: DROP_REASONS.weeklyDigestDisabled };
     }
