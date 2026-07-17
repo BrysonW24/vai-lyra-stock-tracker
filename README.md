@@ -34,25 +34,7 @@ This repo is built to be **shared as a link and replicated end to end**. Four th
 
 _Rule of thumb: **link** for humans, **fork** for builders, **AGENT-ONBOARDING.md** for agents. The clone is for people who want to run their own Lyra, not for people who just want to see it._
 
-<p align="center">
-  <img src="image-2.png" width="30%"
-  alt="Three Dots - Share Button" />
-  <img src="image-1.png" width="30%"
-  alt="Add to Home Screen" />
-  <img src="image.png" width="30%"
-  alt="Adding to Home Screen" />
-</p>
-
-## 1 - Lyra Notifcations
-
-<!-- <p align="center">
-  <img src="image-2.png" width="30%"
-  alt="Three Dots - Share Button" />
-  <img src="image-1.png" width="30%"
-  alt="Add to Home Screen" />
-  <img src="image.png" width="30%"
-  alt="Adding to Home Screen" />
-</p> -->
+---
 
 ## 1 - Landing Page
 
@@ -67,15 +49,12 @@ _Rule of thumb: **link** for humans, **fork** for builders, **AGENT-ONBOARDING.m
 <p align="center">
   <img src="assets/image-5.png" width="30%" alt="Onboarding - reveal" />
   <img src="assets/image-13.png" width="30%" alt="Onboarding - primer" />
-  <img src="assets/image-6.png" width="30%" alt="Onboarding - questionnaire" />
+  <img src="assets/image-8.png" width="30%" alt="Onboarding - all set" />
 </p>
 <p align="center">
   <img src="assets/image-14.png" width="30%" alt="Onboarding - capital" />
   <img src="assets/image-7.png" width="30%" alt="Onboarding - watchlist" />
   <img src="assets/image-9.png" width="30%" alt="Onboarding - alerts" />
-</p>
-<p align="center">
-  <img src="assets/image-8.png" width="30%" alt="Onboarding - all set" />
 </p>
 
 ## 3 - Command Centre
@@ -90,9 +69,21 @@ _Rule of thumb: **link** for humans, **fork** for builders, **AGENT-ONBOARDING.m
   <img src="assets/image-18.png" width="30%" alt="Command centre" />
   <img src="assets/image-19.png" width="30%" alt="Command centre" />
 </p>
+
+## 4 - Lyra AI 
+
 <p align="center">
-  <img src="assets/image-20.png" width="30%" alt="Command centre" />
+  <img src="assets/image-1.png" width="30%" alt="Command centre - portfolio" />
+  <img src="assets/image-15.png" width="30%" alt="Command centre" />
+  <img src="assets/image-16.png" width="30%" alt="Command centre" />
 </p>
+
+## 5 - Lyra Notifcations
+
+<p align="center">
+<img src="image-2.png" width="30%"alt="Three Dots - Share Button" />
+<img src="image-1.png" width="30%"alt="Add to Home Screen" />
+<img src="image.png" width="30%"alt="Adding to Home Screen" />
 
 
 ---
@@ -143,6 +134,30 @@ Every brief and explanation has a deterministic fallback, so the app still works
 Run **`npm run doctor`** anytime to see exactly what's configured, what's missing, and which mode you're in. 🩺
 
 Copy [`.env.example`](./.env.example) to `.env.local` and fill in only what you need. See [`QUICKSTART.md`](./QUICKSTART.md) for the friendly walkthrough and [`SECURITY.md`](./SECURITY.md) for key-handling rules (never put a secret in a `NEXT_PUBLIC_*` variable).
+
+---
+
+## ⏱️ How long setup takes
+
+Lyra installs in tiers - stop wherever you want. Times assume you already have Node 20+, npm 10+, and git on the machine.
+
+| Tier | You end up with | Fresh time |
+|------|-----------------|------------|
+| 🎮 **Demo** | The full console on built-in sample data, zero keys | **5-10 min** |
+| 📡 **Live (local)** | Your own Supabase + real hourly scanning, still $0 | **+45-90 min** |
+| ☁️ **Deployed** | Cloud always-on: Vercel/Coolify host + hourly GitHub Actions scanner | **+30-90 min** |
+
+**In short:** seeing it run is about **5-10 minutes**; a real personal live instance is about **1 to 1.5 hours**; fully deployed and always-on is about **1.5 to 3 hours** (Vercel path - longer for a self-hosted Coolify box).
+
+What tends to eat the time, and how the repo softens it:
+
+- **Supabase schema is the biggest manual step** - apply the migrations in [`supabase/migrations/`](./supabase/migrations/) in numeric order in the SQL editor. This is most of the "live" time.
+- **Silent auth trap:** a new Supabase project defaults its Site URL to `:3000`; Lyra runs on `:3042`, so the email-confirmation link fails until you set it to match.
+- **The Python worker does not read `.env.local`** - run `set -a; source .env.local; set +a` before `npm run worker:scan`, or the scan runs green but writes nothing.
+- **The first scan is slow** - yfinance pulls 180 days of hourly candles per symbol and occasionally rate-limits. A few minutes is normal.
+- **`NEXT_PUBLIC_*` are build-time on Vercel/Coolify** - set them as build variables, not runtime, or the deploy silently runs in demo mode.
+
+The [walkthroughs](./docs/walkthroughs/README.md) give a "you know it worked when" checkpoint plus a symptom-to-fix table after every step, and Claude Code users can run **`/setup`** to have an agent drive the whole thing. Full itemised costs: [`COSTS.md`](./COSTS.md).
 
 ---
 
