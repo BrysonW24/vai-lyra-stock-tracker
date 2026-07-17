@@ -1,0 +1,60 @@
+# Post-deploy smoke gate: after every push of shippable code to main, wait for the live
+# site to serve THIS commit's version, then probe the public surfaces. CI proves the
+# build - this proves the DEPLOYMENT. Six live-only bugs once shipped behind green CI;
+# a deploy nobody verifies is a deploy that fails silently.
+#
+# Race-safe by design: the version check passes on >= this commit's version, so when a
+# later push supersedes this one mid-poll (a normal day here), the run stays green.
+name: Deploy Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'next.config.js'
+      - 'vercel.json'
+      - 'supabase/**'
+  workflow_dispatch:
+
+concurrency:
+  # A newer push's smoke run supersedes an older one - only the latest matters.
+  group: deploy-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Wait for deploy + probe live surfaces
+        env:
+          APP_BASE_URL: ${{ vars.APP_BASE_URL || secrets.APP_BASE_URL || 'https://vai-lyra-stock-tracker.vercel.app' }}
+        run: node scripts/check-deploy-health.mjs --timeout 600 --interval 15
+
+      # On failure, page the operator on every channel that has credentials configured
+      # (same pattern as the hourly scanner alert).
+      - name: Notify on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_FEEDBACK_WEBHOOK_URL }}
+        run: |
+          MSG="Lyra DEPLOY SMOKE FAILED - the live site did not verify after push ${GITHUB_SHA::7}. https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+            curl -sf -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              -d chat_id="${TELEGRAM_CHAT_ID}" -d text="$MSG" >/dev/null || true
+          fi
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -sf -X POST "$SLACK_WEBHOOK" -H 'Content-Type: application/json' \
+              -d "{\"text\":\"$MSG\"}" >/dev/null || true
+          fi

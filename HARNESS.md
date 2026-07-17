@@ -26,6 +26,8 @@ Two conventions carry the whole design:
 | Onboarding contract | `npm run check:onboarding-contract` | every onboarding answer is persisted, read back, and reaches the AI prompt; the core profile read never references a column newer than the baseline migration | CI |
 | Migration integrity | `npm run check:migrations` | unique version prefixes; no table created twice with different shapes (`create table if not exists` silently NO-OPs the second) | CI |
 | **Schema drift** | `npm run check:schema-drift` | **the LIVE database matches the migrations in this repo.** Needs a DB URL; `--require-db` makes a missing one a failure | nightly `schema-drift` job |
+| Migrations from zero | `scripts/migrate-from-zero.sh` | **the whole schema BUILDS on an empty database** - every migration in order plus the sql/ reconcile, against throwaway Postgres. Kills the fresh-clone-cannot-build class (0.36.0). First run found one fossil seed + 8 fossil indexes | CI `migrations-from-zero` job |
+| Deploy smoke | `npm run check:deploy` | **the LIVE SITE serves the version just pushed** and its surfaces respond (health + content + middleware liveness). CI proves the build; this proves the deployment - six live-only bugs once shipped behind green CI | `deploy-smoke` workflow on every push to main |
 
 Adding a gate: name it `scripts/check-<thing>.mjs`, give it a `check:<thing>` npm
 script, wire it into CI, and register it in this table. A gate that only runs when

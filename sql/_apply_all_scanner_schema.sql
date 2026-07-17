@@ -341,18 +341,20 @@ values
 ('CRM', 35, 271.50, 9.95, '2026-05-20', 20, 'Demo holding for SaaS exposure.')
 on conflict do nothing;
 
+-- Demo watchlist seed. Multi-user schema (migration 008) is unique(user_id, symbol) and
+-- these demo rows carry a NULL user_id, which never conflicts - so idempotency must come
+-- from WHERE NOT EXISTS, not ON CONFLICT. The old `on conflict (symbol)` referenced a
+-- single-user-era constraint no migration creates (caught by migrate-from-zero.sh).
 insert into watchlist_items (symbol, target_price, target_signal_score, notes)
-values
-('SNOW', 128, 75, 'Notify if score clears 75 and price returns below 130.'),
-('PANW', 285, 75, 'Watch histogram recovery and volume above 1.0x.'),
-('CRWD', 335, 75, 'Wait for RSI reset below 50.')
-on conflict (symbol) do update
-set
-  target_price = excluded.target_price,
-  target_signal_score = excluded.target_signal_score,
-  notes = excluded.notes,
-  is_active = true,
-  updated_at = now();
+select v.symbol, v.target_price, v.target_signal_score, v.notes
+from (values
+  ('SNOW', 128::numeric, 75, 'Notify if score clears 75 and price returns below 130.'),
+  ('PANW', 285::numeric, 75, 'Watch histogram recovery and volume above 1.0x.'),
+  ('CRWD', 335::numeric, 75, 'Wait for RSI reset below 50.')
+) as v(symbol, target_price, target_signal_score, notes)
+where not exists (
+  select 1 from watchlist_items w where w.symbol = v.symbol and w.user_id is null
+);
 
 
 -- ============================================================
@@ -435,8 +437,17 @@ create table if not exists backtest_runs (
   created_at timestamptz default now()
 );
 
-create index if not exists idx_backtest_runs_strategy_symbol
+-- Legacy-shape index guard (migrate-from-zero.sh): the migrations-built backtest_runs
+-- has no strategy_name column - this index only applies on installs carrying the old shape.
+do $$ begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'backtest_runs' and column_name = 'strategy_name'
+  ) then
+    create index if not exists idx_backtest_runs_strategy_symbol
 on backtest_runs(strategy_name, symbol);
+  end if;
+end $$;
 
 create index if not exists idx_backtest_runs_created
 on backtest_runs(created_at desc);
@@ -488,8 +499,17 @@ create table if not exists backtest_trades (
   unique(run_id, sequence_num)
 );
 
-create index if not exists idx_backtest_trades_run_id
+-- Legacy-shape index guard (migrate-from-zero.sh): the migrations-built backtest_trades
+-- has no run_id column - this index only applies on installs carrying the old shape.
+do $$ begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'backtest_trades' and column_name = 'run_id'
+  ) then
+    create index if not exists idx_backtest_trades_run_id
 on backtest_trades(run_id, sequence_num);
+  end if;
+end $$;
 
 create table if not exists paper_trades (
   id uuid primary key default gen_random_uuid(),
@@ -512,11 +532,29 @@ create table if not exists paper_trades (
 create index if not exists idx_paper_trades_symbol
 on paper_trades(symbol);
 
-create index if not exists idx_paper_trades_status
+-- Legacy-shape index guard (migrate-from-zero.sh): the migrations-built paper_trades
+-- has no status column - this index only applies on installs carrying the old shape.
+do $$ begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'paper_trades' and column_name = 'status'
+  ) then
+    create index if not exists idx_paper_trades_status
 on paper_trades(status);
+  end if;
+end $$;
 
-create index if not exists idx_paper_trades_opened
+-- Legacy-shape index guard (migrate-from-zero.sh): the migrations-built paper_trades
+-- has no opened_at column - this index only applies on installs carrying the old shape.
+do $$ begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'paper_trades' and column_name = 'opened_at'
+  ) then
+    create index if not exists idx_paper_trades_opened
 on paper_trades(opened_at desc);
+  end if;
+end $$;
 
 create table if not exists paper_portfolio_snapshots (
   id uuid primary key default gen_random_uuid(),
@@ -688,8 +726,17 @@ create index if not exists idx_news_items_published
 create index if not exists idx_news_items_sentiment
   on news_items(sentiment);
 
-create index if not exists idx_news_items_category
+-- Legacy-shape index guard (migrate-from-zero.sh): the migrations-built news_items
+-- has no category column - this index only applies on installs carrying the old shape.
+do $$ begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'news_items' and column_name = 'category'
+  ) then
+    create index if not exists idx_news_items_category
   on news_items(category);
+  end if;
+end $$;
 
 -- Ticker-to-news mapping with relevance and sentiment scores
 create table if not exists ticker_news_map (
@@ -706,14 +753,41 @@ create table if not exists ticker_news_map (
   unique(ticker, headline, source)
 );
 
-create index if not exists idx_ticker_news_map_ticker
+-- Legacy-shape index guard (migrate-from-zero.sh): the migrations-built ticker_news_map
+-- has no ticker column - this index only applies on installs carrying the old shape.
+do $$ begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'ticker_news_map' and column_name = 'ticker'
+  ) then
+    create index if not exists idx_ticker_news_map_ticker
   on ticker_news_map(ticker);
+  end if;
+end $$;
 
-create index if not exists idx_ticker_news_map_published
+-- Legacy-shape index guard (migrate-from-zero.sh): the migrations-built ticker_news_map
+-- has no published_at column - this index only applies on installs carrying the old shape.
+do $$ begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'ticker_news_map' and column_name = 'published_at'
+  ) then
+    create index if not exists idx_ticker_news_map_published
   on ticker_news_map(published_at desc);
+  end if;
+end $$;
 
-create index if not exists idx_ticker_news_map_relevance
+-- Legacy-shape index guard (migrate-from-zero.sh): the migrations-built ticker_news_map
+-- has no ticker column - this index only applies on installs carrying the old shape.
+do $$ begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'ticker_news_map' and column_name = 'ticker'
+  ) then
+    create index if not exists idx_ticker_news_map_relevance
   on ticker_news_map(ticker, relevance);
+  end if;
+end $$;
 
 -- Per-ticker hype scores
 -- Hype is CONTEXT: buzz intensity, not a trade signal

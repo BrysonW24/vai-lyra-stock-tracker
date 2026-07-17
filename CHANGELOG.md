@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.43.0] - 2026-07-17
+
+Deploys verify themselves now - and a fresh clone is proven to build, on every push.
+
+### Changed
+
+- Every push to main now gets a deploy smoke check: a workflow waits for the live site to actually serve the version that was just pushed, then probes the health endpoint, the landing page content, and the sign-in gate - and pages Telegram and Slack if any of it fails. CI proves the build; this finally proves the DEPLOYMENT, which is where six past bugs slipped through behind green tests.
+- A fresh install is now a guarantee, not a hope: CI builds the ENTIRE database schema from empty on every push - all 43 migrations in order plus the reconcile script, against a throwaway Postgres. The class of bug where a new clone could not build the schema at all (it shipped once) now turns the build red before it merges.
+- The new gate paid for itself on its first run: it caught a demo seed writing against a constraint that no longer exists and 8 stale indexes referencing columns from pre-multi-user table shapes - all of which would have broken every fresh install following the documented setup path. All repaired, with guards that stay correct on both old and new installs.
+- Both gates are registered in the harness enforcement map (HARNESS.md) with the one rule every Lyra gate must obey: a green must be able to go red.
+
 ## [0.42.0] - 2026-07-17
 
 A background job that stores nothing now says so, instead of reporting success.
@@ -715,7 +726,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.42.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.43.0...HEAD
+[0.43.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.42.0...v0.43.0
 [0.42.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.41.0...v0.42.0
 [0.41.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.40.0...v0.41.0
 [0.40.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.39.0...v0.40.0

@@ -83,3 +83,29 @@ jobs:
         run: pip install -r requirements.txt
       - name: Worker tests
         run: python -m pytest tests -q
+
+  # A fresh clone must be able to build the ENTIRE schema from an empty database - every
+  # migration in order, then the sql/ reconcile. The 0.36.0 incident (a fresh install
+  # failed outright on a migration-ordering bug, and four migrations had silently never
+  # reached prod) is the class this kills: schema buildability is now a gate, not a hope.
+  migrations-from-zero:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lyra_zero
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply every migration + reconcile against an empty database
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/lyra_zero
+        run: bash scripts/migrate-from-zero.sh
