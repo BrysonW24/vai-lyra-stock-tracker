@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.55.0] - 2026-07-17
+
+The middleware can no longer take down the whole site.
+
+### Changed
+
+- Hardened the auth middleware so a single failed network call can never 500 the entire app again. It checks your session on every request; that check used to run with no safety net, so if the auth service blipped or the edge could not reach it, every page and API returned a server error at once - a total outage from one throw. It now fails SAFE: if auth is momentarily unavailable, public pages and APIs pass straight through (they enforce their own auth) and app pages fall back to the signed-out landing, never a crash.
+- This is the kind of resilience a gate should have: it degrades to the safe, signed-out experience instead of taking everything down, and it never serves protected content when it cannot verify you.
+
 ## [0.54.0] - 2026-07-17
 
 The news intelligence layer can finally save, and the macro tapes stop showing frozen numbers.
@@ -858,7 +867,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.54.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.55.0...HEAD
+[0.55.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.54.0...v0.55.0
 [0.54.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.53.0...v0.54.0
 [0.53.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.52.0...v0.53.0
 [0.52.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.51.0...v0.52.0

@@ -33,27 +33,41 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  const supabase = createServerClient(url, key, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-      },
-    },
-  });
-
-  const { data } = await supabase.auth.getUser();
   const { pathname } = request.nextUrl;
-
   const isPublic =
     PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
     pathname.startsWith('/api'); // API routes enforce their own auth (401)
 
-  if (!data.user && !isPublic) {
+  // Resolve the session, but NEVER let a Supabase/edge hiccup crash the middleware. Before this
+  // guard, `getUser()` throwing (auth service blip, edge fetch failure, malformed env at the edge)
+  // returned MIDDLEWARE_INVOCATION_FAILED - a 500 on EVERY route, a total site outage from one
+  // failed network call. A gate is not allowed to take down the whole app. On any failure we
+  // FAIL SAFE: API/public paths pass through (they enforce their own auth), and app pages are
+  // treated as signed-out - redirected to the public landing, never served, never 500.
+  let user: { user_metadata?: Record<string, unknown> } | null = null;
+  try {
+    const supabase = createServerClient(url, key, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        },
+      },
+    });
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // Auth unavailable. Public/API through; app pages fail closed to /welcome (a demo-tour
+    // cookie still gets the read-only tour, matching the signed-out branch below).
+    if (isPublic || request.cookies.get('lyra_demo')?.value === '1') return response;
+    return NextResponse.redirect(new URL('/welcome', request.url));
+  }
+
+  if (!user && !isPublic) {
     // Read-only demo tour (set by /api/demo): doctrine says a visitor sees the product
     // BEFORE signing up. Reads work via the anon key's read-only RLS; every write API
     // still requires a session, so the tour cannot touch data.
@@ -70,8 +84,8 @@ export async function middleware(request: NextRequest) {
   // into it and cannot reach the rest of the app until done. The flag lives on the
   // user's metadata (set when onboarding completes) and is read from the session here,
   // so there is no extra DB query per request.
-  const onboarded = Boolean(data.user?.user_metadata?.onboarded);
-  if (data.user && !onboarded && !isPublic && !pathname.startsWith('/onboarding')) {
+  const onboarded = Boolean(user?.user_metadata?.onboarded);
+  if (user && !onboarded && !isPublic && !pathname.startsWith('/onboarding')) {
     return NextResponse.redirect(new URL('/onboarding', request.url));
   }
 

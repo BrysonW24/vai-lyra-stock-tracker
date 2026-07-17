@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.55.0',
+    date: '2026-07-17',
+    title: 'The middleware can no longer take down the whole site',
+    highlights: [
+      'Hardened the auth middleware so a single failed network call can never 500 the entire app again. It checks your session on every request; that check used to run with no safety net, so if the auth service blipped or the edge could not reach it, every page and API returned a server error at once - a total outage from one throw. It now fails SAFE: if auth is momentarily unavailable, public pages and APIs pass straight through (they enforce their own auth) and app pages fall back to the signed-out landing, never a crash.',
+      'This is the kind of resilience a gate should have: it degrades to the safe, signed-out experience instead of taking everything down, and it never serves protected content when it cannot verify you.',
+    ],
+  },
+  {
     version: '0.54.0',
     date: '2026-07-17',
     title: 'The news intelligence layer can finally save, and the macro tapes stop showing frozen numbers',
