@@ -38,11 +38,22 @@ function prefs(overrides: Partial<NotificationPreferences> = {}): NotificationPr
   };
 }
 
-// Local-time clocks - the router reads local hours/minutes, so these are
-// deterministic regardless of the machine timezone.
+// Local-time clocks. These are built in the RUNNER's zone and are only safe where the code under
+// test also reads local hours (i.e. isWithinQuietHours called with NO timezone) - constructing and
+// reading in the same zone cancels out, so they are deterministic anywhere.
+// They are NOT safe for routeNotification: it evaluates the window in prefs.timezone (which defaults
+// to Australia/Sydney), so a local clock inverts the window on a UTC runner. Zone-routed tests must
+// use the ZONE-anchored instants below instead. (This mismatch made CI red for ~9h of every day.)
 const DAYTIME = new Date(2026, 5, 11, 14, 0);
 const LATE_NIGHT = new Date(2026, 5, 11, 23, 30);
 const EARLY_MORNING = new Date(2026, 5, 12, 6, 30);
+
+// Zone-anchored clocks for anything routed through prefs.timezone. Absolute UTC instants chosen to
+// land on a known Sydney wall-clock. June = AEST (UTC+10), no DST ambiguity.
+const ZONE = 'Australia/Sydney';
+const SYD_DAYTIME = new Date('2026-06-11T04:00:00Z'); // 14:00 Sydney
+const SYD_LATE_NIGHT = new Date('2026-06-11T13:30:00Z'); // 23:30 Sydney
+const SYD_EARLY_MORNING = new Date('2026-06-11T20:30:00Z'); // 06:30 Sydney (12 June)
 
 describe('routeNotification - relevance floor', () => {
   it('drops events below minRelevanceScore', () => {
@@ -111,26 +122,28 @@ describe('routeNotification - dedupe suppression', () => {
 });
 
 describe('routeNotification - quiet hours (overnight 22:00-07:00)', () => {
-  const quietPrefs = prefs({ quietHoursEnabled: true, quietStart: '22:00', quietEnd: '07:00' });
+  const quietPrefs = prefs({ quietHoursEnabled: true, quietStart: '22:00', quietEnd: '07:00', timezone: ZONE });
 
   it('defers a non-critical event to digest late at night', () => {
-    const decision = routeNotification(event(), quietPrefs, { now: LATE_NIGHT });
+    const decision = routeNotification(event(), quietPrefs, { now: SYD_LATE_NIGHT });
     expect(decision).toEqual({ deliver: true, channels: ['telegram', 'whatsapp'], deferredToDigest: true });
   });
 
   it('defers a non-critical event to digest in the early morning (window wraps midnight)', () => {
-    const decision = routeNotification(event(), quietPrefs, { now: EARLY_MORNING });
+    const decision = routeNotification(event(), quietPrefs, { now: SYD_EARLY_MORNING });
     expect(decision).toEqual({ deliver: true, channels: ['telegram', 'whatsapp'], deferredToDigest: true });
   });
 
   it('delivers instantly outside the window', () => {
-    const decision = routeNotification(event(), quietPrefs, { now: DAYTIME });
+    const decision = routeNotification(event(), quietPrefs, { now: SYD_DAYTIME });
     expect(decision).toEqual({ deliver: true, channels: ['telegram', 'whatsapp'], deferredToDigest: false });
   });
 });
 
 describe('routeNotification - safety-critical bypass', () => {
-  const quietPrefs = prefs({ quietHoursEnabled: true, quietStart: '22:00', quietEnd: '07:00' });
+  // Zone-anchored: without an explicit timezone these passed for the WRONG reason on a UTC runner
+  // (the window inverted, so "during quiet hours" was never actually quiet and the bypass was untested).
+  const quietPrefs = prefs({ quietHoursEnabled: true, quietStart: '22:00', quietEnd: '07:00', timezone: ZONE });
 
   it('kill_switch_enabled delivers instantly during quiet hours', () => {
     const killSwitch = event({
@@ -140,7 +153,7 @@ describe('routeNotification - safety-critical bypass', () => {
       relevanceScore: 100,
       dedupeKey: buildDedupeKey('kill_switch_enabled', 'daily_loss', '2026-06-11'),
     });
-    const decision = routeNotification(killSwitch, quietPrefs, { now: LATE_NIGHT });
+    const decision = routeNotification(killSwitch, quietPrefs, { now: SYD_LATE_NIGHT });
     expect(decision).toEqual({ deliver: true, channels: ['telegram', 'whatsapp'], deferredToDigest: false });
   });
 
@@ -152,7 +165,7 @@ describe('routeNotification - safety-critical bypass', () => {
       relevanceScore: 100,
       dedupeKey: buildDedupeKey('order_approval_required', 'oi-9', '2026-06-11'),
     });
-    const decision = routeNotification(approval, quietPrefs, { now: LATE_NIGHT });
+    const decision = routeNotification(approval, quietPrefs, { now: SYD_LATE_NIGHT });
     expect(decision).toEqual({ deliver: true, channels: ['telegram', 'whatsapp'], deferredToDigest: false });
   });
 
@@ -273,8 +286,8 @@ describe('routeNotification - digest preference gates', () => {
   it('delivers a daily digest without digest-deferral even during quiet hours', () => {
     const decision = routeNotification(
       digest,
-      prefs({ dailyDigest: true, quietHoursEnabled: true, quietStart: '22:00', quietEnd: '07:00' }),
-      { now: EARLY_MORNING },
+      prefs({ dailyDigest: true, quietHoursEnabled: true, quietStart: '22:00', quietEnd: '07:00', timezone: ZONE }),
+      { now: SYD_EARLY_MORNING },
     );
     expect(decision).toEqual({ deliver: true, channels: ['telegram', 'whatsapp'], deferredToDigest: false });
   });
@@ -338,10 +351,12 @@ describe('isWithinQuietHours', () => {
 });
 
 describe('routeNotification - forceInstant', () => {
-  const quietPrefs = prefs({ quietHoursEnabled: true, quietStart: '22:00', quietEnd: '07:00' });
+  // Zone-anchored so "during quiet hours" is genuinely quiet on every runner - otherwise this
+  // proves nothing about forceInstant beating the window.
+  const quietPrefs = prefs({ quietHoursEnabled: true, quietStart: '22:00', quietEnd: '07:00', timezone: ZONE });
 
   it('delivers instantly during quiet hours when forceInstant is true', () => {
-    const decision = routeNotification(event(), quietPrefs, { now: LATE_NIGHT, forceInstant: true });
+    const decision = routeNotification(event(), quietPrefs, { now: SYD_LATE_NIGHT, forceInstant: true });
     expect(decision).toEqual({ deliver: true, channels: ['telegram', 'whatsapp'], deferredToDigest: false });
   });
 
