@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.67.0] - 2026-07-18
+
+The demo now takes you through the full onboarding journey.
+
+### Changed
+
+- "Explore the demo first" no longer teleports you into a dense dashboard. A first-time visitor now gets the complete experience: the Lyra reveal, the feature primer, and the full setup questionnaire - strategy, watchlist, portfolio, capital and alert preferences - before landing in a command centre personalised by their answers. Everything persists locally in the read-only tour; nothing needs an account.
+- Fixed alongside it: a demo visitor who reached onboarding could never actually FINISH it - every cloud save requires a sign-in, so the finish button surfaced a permanent retry error. The tour now skips cloud writes cleanly and completes.
+- Returning demo visitors who already finished the tour skip straight to the console - tapping the demo button twice never repeats the questionnaire.
+
 ## [0.66.0] - 2026-07-18
 
 Paper Bot page rebuilt from panels - same surface, half the moving parts.
@@ -978,7 +988,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.66.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.67.0...HEAD
+[0.67.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.66.0...v0.67.0
 [0.66.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.65.0...v0.66.0
 [0.64.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.63.0...v0.64.0
 [0.63.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.62.0...v0.63.0

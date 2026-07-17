@@ -169,6 +169,13 @@ export default function OnboardingPage() {
     setIsSaving(true);
     setSaveError(null);
 
+    // Demo tour on a CONFIGURED deploy: the visitor has the lyra_demo cookie but NO session, so
+    // every cloud save would 401 - which used to block Finish forever with a retry error. The
+    // demo tour skips cloud writes entirely (the local persistence below is the demo's truth)
+    // and completes like the unconfigured demo does. A signed-in user never carries this cookie
+    // through onboarding, so live saves are unaffected.
+    const demoTour = typeof document !== 'undefined' && /(?:^|;\s*)lyra_demo=1(?:;|$)/.test(document.cookie);
+
     // Collect REAL (non-demo) save failures. A 401 (server-side cookie not valid) or a 5xx must
     // NOT be swallowed - if any real failure lands we keep the resumable checkpoint and let the
     // user retry, instead of showing "You're all set" while their book silently dropped. Demo-mode
@@ -177,6 +184,7 @@ export default function OnboardingPage() {
 
     // Post one watchlist item; returns 'ok' | 'demo' | 'failed'. Demo never blocks completion.
     const postWatchlist = async (item: WatchlistItem): Promise<'ok' | 'demo' | 'failed'> => {
+      if (demoTour) return 'demo'; // session-less tour: the local watchlist below is the truth
       try {
         const res = await fetch('/api/watchlist', {
           method: 'POST',
@@ -205,7 +213,7 @@ export default function OnboardingPage() {
 
     try {
       // Sync operator profile + capital + strategy + alerts so AI can ground on user constraints.
-      if (isSupabaseConfigured() && state.profile) {
+      if (isSupabaseConfigured() && !demoTour && state.profile) {
         const completeness = calculateSetupCompleteness(state);
         const result = await syncOperatorProfile(state.profile, completeness.percentage, {
           capital: state.capital,
@@ -219,7 +227,7 @@ export default function OnboardingPage() {
       }
 
       // Mark the account onboarded so the mandatory-onboarding gate releases.
-      if (isSupabaseConfigured()) {
+      if (isSupabaseConfigured() && !demoTour) {
         try {
           const supabase = createSupabaseBrowserClient();
           await supabase?.auth.updateUser({ data: { onboarded: true } });
@@ -227,8 +235,9 @@ export default function OnboardingPage() {
           console.warn('Failed to mark account onboarded:', error);
         }
       } else {
-        // Demo mode has no auth backend - persist the onboarded flag in a cookie the
-        // middleware reads so the mandatory-onboarding gate releases on every route.
+        // Demo (unconfigured OR session-less demo tour) has no account to stamp - persist the
+        // onboarded flag in a cookie the middleware and /api/demo read, so the gate releases
+        // and a returning "Explore the demo" tap goes straight to the console.
         document.cookie = 'lyra_onboarded=1; path=/; max-age=31536000; samesite=lax';
       }
 
@@ -262,7 +271,8 @@ export default function OnboardingPage() {
       }
 
       // Submit portfolio holdings using the atomic REPLACE endpoint, capturing the result.
-      if (state.portfolio.length > 0) {
+      // Skipped on the session-less demo tour (would 401); saveLocalHoldings below is its truth.
+      if (state.portfolio.length > 0 && !demoTour) {
         try {
           const res = await fetch('/api/portfolio', {
             method: 'PUT',

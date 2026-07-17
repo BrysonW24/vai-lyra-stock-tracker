@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.67.0',
+    date: '2026-07-18',
+    title: 'The demo now takes you through the full onboarding journey',
+    highlights: [
+      '"Explore the demo first" no longer teleports you into a dense dashboard. A first-time visitor now gets the complete experience: the Lyra reveal, the feature primer, and the full setup questionnaire - strategy, watchlist, portfolio, capital and alert preferences - before landing in a command centre personalised by their answers. Everything persists locally in the read-only tour; nothing needs an account.',
+      'Fixed alongside it: a demo visitor who reached onboarding could never actually FINISH it - every cloud save requires a sign-in, so the finish button surfaced a permanent retry error. The tour now skips cloud writes cleanly and completes.',
+      'Returning demo visitors who already finished the tour skip straight to the console - tapping the demo button twice never repeats the questionnaire.',
+    ],
+  },
+  {
     version: '0.66.0',
     date: '2026-07-18',
     title: 'Paper Bot page rebuilt from panels - same surface, half the moving parts',
