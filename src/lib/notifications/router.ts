@@ -10,7 +10,7 @@
  *
  * Rule order (first match wins):
  *   1. relevance floor          -> drop
- *   2. muted symbol / theme     -> drop
+ *   2. mutes (global / symbol / theme) -> drop (global mute exempts safety-critical types)
  *   3. duplicate dedupe key     -> drop
  *   4. safety-critical types    -> deliver instantly (see comment at the rule)
  *   5. paper-trade toggle       -> drop when disabled
@@ -40,6 +40,7 @@ export interface RouteOptions {
 /** Stable machine-readable drop reasons so callers and audits never string-match prose. */
 export const DROP_REASONS = {
   belowRelevanceFloor: 'below relevance floor',
+  mutedAll: 'muted all',
   mutedSymbol: 'muted symbol',
   mutedTheme: 'muted theme',
   duplicate: 'duplicate',
@@ -245,7 +246,13 @@ export function routeNotification(
     return { deliver: false, reason: DROP_REASONS.belowRelevanceFloor };
   }
 
-  // 2. Mutes - symbol first, then theme.
+  // 2. Mutes - global first, then symbol, then theme. The global mute ("Muted" mode or a timed
+  // snooze) drops everything EXCEPT the safety-critical types: a mute is a request for silence,
+  // not for an approval workflow to stall or a kill-switch notice to vanish - those keep the same
+  // only-no-channels-can-stop-them contract documented at SAFETY_CRITICAL_TYPES.
+  if (prefs.muteAll && !SAFETY_CRITICAL_TYPES.has(event.type)) {
+    return { deliver: false, reason: DROP_REASONS.mutedAll };
+  }
   if (matchesMutedList(event, prefs.mutedSymbols, SYMBOL_ENTITY_TYPES)) {
     return { deliver: false, reason: DROP_REASONS.mutedSymbol };
   }

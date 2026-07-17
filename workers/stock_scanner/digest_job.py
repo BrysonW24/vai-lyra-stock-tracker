@@ -175,7 +175,11 @@ def send_digests(
         jobs: list[tuple[str, str, list[dict[str, Any]], datetime]] = []
         if _digest_enabled(prefs, "digest_enabled"):
             jobs.append(("daily_digest", "today", daily_signals, daily_since))
-        if is_friday and _digest_enabled(prefs, "weekly_report_enabled"):
+        # weekly_digest_enabled is the REAL column (migration 024) and the same gate the JS
+        # router reads (prefs.weeklyDigest) and review_job._reviews_enabled mirrors. This used
+        # to read the phantom key "weekly_report_enabled" - a column that exists in no schema -
+        # so the missing key defaulted open and a user's weekly opt-out was silently ignored.
+        if is_friday and _digest_enabled(prefs, "weekly_digest_enabled"):
             jobs.append(("weekly_report", "this week", weekly_signals, now - timedelta(days=7)))
 
         for notification_type, window_label, signals, since in jobs:

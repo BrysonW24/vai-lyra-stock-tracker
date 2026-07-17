@@ -134,8 +134,12 @@ class TestSendDigests:
         assert calls == []
 
     def test_weekly_report_disabled_pref_keeps_daily_on_friday(self, monkeypatch):
+        # weekly_digest_enabled is the REAL schema column (migration 024) - the one the settings
+        # PATCH writes and the JS router reads. The old fixture injected the phantom key
+        # "weekly_report_enabled" (exists in no schema), so this test passed for the wrong reason
+        # while the actual opt-out was ignored and the weekly report fired for everyone.
         calls = _capture(monkeypatch)
-        repo = FakeRepo(prefs={"weekly_report_enabled": False})
+        repo = FakeRepo(prefs={"weekly_digest_enabled": False})
         sent = digest_job.send_digests(repo, dispatch_settings(), now=FRIDAY)
         assert [c["notification_type"] for c in calls] == ["daily_digest"]
         assert sent == 1

@@ -6,7 +6,14 @@ import { useEffect, useState } from 'react';
  * Alert preferences - the operator-facing alert mode + frequency + quiet hours + scope.
  * Persisted to localStorage (demo-safe) and shared across the header status badge and the
  * account-menu controls via a same-tab custom event, so changing the mode in one place
- * updates the other instantly. Live enforcement is applied by the backend alert engine.
+ * updates the other instantly.
+ *
+ * Mutes are ENFORCED SERVER-SIDE: any change to mode / mutedUntil also PATCHes
+ * /api/notifications (user_alert_preferences.mute_all / muted_until), which the dispatch
+ * router reads before any channel sends. localStorage remains the optimistic cache; for a
+ * signed-out/demo session the PATCH 401s harmlessly and the badge is the whole story.
+ * Before this sync existed the "Muted" badge was localStorage-only and every channel kept
+ * sending - a visible control that silently did nothing.
  */
 
 export type AlertMode = 'live' | 'quiet' | 'muted' | 'custom';
@@ -76,6 +83,24 @@ export function saveAlertPrefs(patch: Partial<AlertPrefs>): AlertPrefs {
     /* ignore */
   }
   window.dispatchEvent(new Event(EVENT));
+  // Server sync for the mute half - the part the dispatch router actually enforces. Only fires
+  // when the patch touches mute state; fire-and-forget (a 401 in demo/signed-out is expected).
+  if ('mode' in patch || 'mutedUntil' in patch) {
+    try {
+      void fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          preferences: {
+            muteAll: next.mode === 'muted',
+            mutedUntil: next.mutedUntil !== null ? new Date(next.mutedUntil).toISOString() : null,
+          },
+        }),
+      }).catch(() => {});
+    } catch {
+      /* never let a sync failure break the local save */
+    }
+  }
   return next;
 }
 

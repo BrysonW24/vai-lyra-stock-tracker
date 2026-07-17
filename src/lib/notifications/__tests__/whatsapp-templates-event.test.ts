@@ -70,4 +70,30 @@ describe('buildWhatsAppMessageForEvent', () => {
     // Digest mapping must still produce a valid template via the today fallback date.
     expect(message.kind).toBe('template');
   });
+
+  it('renders periodic reviews as honest text carrying the FULL measured body - never the signal template', () => {
+    // These used to fall through to the signal template: "Lyra signal: PORTFOLIO score 100
+    // (+0 vs last scan)" - a review mislabeled as a signal with a fabricated-looking delta and
+    // the entire measured body (return %, movers, benchmark) silently dropped.
+    const reviewBody = 'July return +2.4% vs S&P 500 +1.1%. Best: NVDA +9.2%. Toughest: TSLA -4.0%.';
+    for (const type of ['monthly_review', 'quarterly_review', 'yearly_review'] as const) {
+      const message = buildWhatsAppMessageForEvent(
+        baseEvent({ type, title: 'Monthly review', body: reviewBody, triggerReason: 'Scheduled July 2026 review' }),
+      );
+      expect(message.kind).toBe('text');
+      if (message.kind !== 'text') continue;
+      expect(message.body).toContain(reviewBody); // the measured content survives
+      expect(message.body).not.toContain('vs last scan'); // and it is not dressed as a signal
+    }
+  });
+
+  it('renders macro events and CGT notices as text with their bodies intact (same body-dropping class)', () => {
+    for (const type of ['macro_event', 'cgt_anniversary'] as const) {
+      const body = 'RBA held the cash rate at 3.85%. Statement tone: neutral.';
+      const message = buildWhatsAppMessageForEvent(baseEvent({ type, title: 'RBA decision', body }));
+      expect(message.kind).toBe('text');
+      if (message.kind !== 'text') continue;
+      expect(message.body).toContain(body);
+    }
+  });
 });

@@ -5,111 +5,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sweepNotifications } from '../dispatch';
-
-type Row = Record<string, unknown>;
-
-/** Minimal thenable query builder over in-memory tables - just the chains dispatch uses. */
-class FakeQuery {
-  private filters: Array<(row: Row) => boolean> = [];
-  private patch: Row | null = null;
-  private inserted: Row | null = null;
-  private max: number | null = null;
-
-  constructor(private readonly rows: Row[]) {}
-
-  select(_columns?: string) {
-    return this;
-  }
-  eq(column: string, value: unknown) {
-    this.filters.push((row) => row[column] === value);
-    return this;
-  }
-  in(column: string, values: unknown[]) {
-    this.filters.push((row) => values.includes(row[column]));
-    return this;
-  }
-  gte(column: string, value: string) {
-    this.filters.push((row) => String(row[column] ?? '') >= value);
-    return this;
-  }
-  order() {
-    return this;
-  }
-  limit(count: number) {
-    this.max = count;
-    return this;
-  }
-  update(patch: Row) {
-    this.patch = patch;
-    return this;
-  }
-  insert(row: Row) {
-    this.inserted = row;
-    return this;
-  }
-  private matches(): Row[] {
-    const filtered = this.rows.filter((row) => this.filters.every((filter) => filter(row)));
-    return this.max === null ? filtered : filtered.slice(0, this.max);
-  }
-  private run(): { data: Row[] | null; error: null } {
-    if (this.inserted) {
-      this.rows.push({ created_at: new Date().toISOString(), ...this.inserted });
-      return { data: null, error: null };
-    }
-    if (this.patch) {
-      for (const row of this.matches()) Object.assign(row, this.patch);
-      return { data: null, error: null };
-    }
-    return { data: this.matches(), error: null };
-  }
-  maybeSingle(): Promise<{ data: Row | null; error: null }> {
-    return Promise.resolve({ data: this.matches()[0] ?? null, error: null });
-  }
-  then<T>(resolve: (value: { data: Row[] | null; error: null }) => T): Promise<T> {
-    return Promise.resolve(resolve(this.run()));
-  }
-}
-
-function fakeSupabase(tables: Record<string, Row[]>) {
-  return {
-    from: (table: string) => new FakeQuery(tables[table] ?? (tables[table] = [])),
-  };
-}
-
-const WEBHOOK = 'https://hooks.slack.com/services/T111/B222/secretsecretsecret';
-
-function baseTables(): Record<string, Row[]> {
-  return {
-    user_alert_preferences: [
-      { user_id: 'u1', quiet_hours_enabled: false, slack_enabled: true, min_signal_score: 40 },
-    ],
-    notification_channels: [
-      { id: 'ch-1', user_id: 'u1', channel_type: 'slack', destination: WEBHOOK, is_active: true, is_verified: true },
-    ],
-    profiles: [],
-    push_subscriptions: [],
-    notification_events: [],
-    notification_deliveries: [],
-  };
-}
-
-function eventRow(id: string): Row {
-  return {
-    id,
-    type: 'signal_alert',
-    severity: 'medium',
-    user_id: 'u1',
-    title: 'NVDA signal',
-    body: 'NVDA entered the reset band.',
-    trigger_reason: 'score crossed 80',
-    evidence_refs: [],
-    relevance_score: 90,
-    dedupe_key: `signal_alert:nvda:${id}`,
-    idempotency_key: `${id}:event`,
-    url: '/tickers/NVDA',
-    created_at: new Date().toISOString(),
-  };
-}
+import { baseTables, eventRow, fakeSupabase } from './fake-supabase';
 
 describe('sweepNotifications', () => {
   beforeEach(() => {
@@ -160,8 +56,9 @@ describe('sweepNotifications', () => {
 
     const first = await sweepNotifications(fakeSupabase(tables), new Date());
     expect(first.retried).toBe(1);
-    const retryRow = tables.notification_deliveries.find((row) =>
-      String(row.idempotency_key ?? '').endsWith(':retry1'),
+    // The sent retry row (per-destination), not the claim marker - both keys end ':retry1'.
+    const retryRow = tables.notification_deliveries.find(
+      (row) => String(row.idempotency_key ?? '').endsWith(':retry1') && row.status === 'sent',
     );
     expect(retryRow?.status).toBe('sent');
 

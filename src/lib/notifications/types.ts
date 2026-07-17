@@ -146,6 +146,12 @@ export interface NotificationPreferences {
   timezone?: string;
   mutedThemes: string[];
   mutedSymbols: string[];
+  /**
+   * Global mute - the AccountMenu "Muted" mode / timed "Mute 1h/4h/tomorrow" snooze, resolved
+   * server-side by loadPreferences from user_alert_preferences.mute_all + muted_until. Drops every
+   * non-safety-critical event (an approval request or kill-switch must never be silenced by a mute).
+   */
+  muteAll: boolean;
   /** Events below this relevance are dropped. */
   minRelevanceScore: number;
   paperTradeAlerts: boolean;
@@ -171,6 +177,7 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   timezone: 'Australia/Sydney',
   mutedThemes: [],
   mutedSymbols: [],
+  muteAll: false,
   minRelevanceScore: 40,
   paperTradeAlerts: true,
   orderApprovalAlerts: true,

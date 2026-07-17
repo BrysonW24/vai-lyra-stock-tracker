@@ -257,6 +257,16 @@ const TEXT_FALLBACK_EVENT_TYPES: ReadonlySet<NotificationEvent['type']> = new Se
   'paper_fill',
   'paper_position_move',
   'test_notification',
+  // Periodic reviews + macro/CGT notices carry a measured multi-line body (portfolio return,
+  // best/toughest movers, benchmark line) that no registered template has slots for. They used to
+  // fall through to the signal template, which mislabeled a review as "Lyra signal: PORTFOLIO
+  // score 100 (+0 vs last scan)" and DROPPED the entire body - a fabricated-looking delta and zero
+  // content. The honest text fallback preserves title + body + why, same trade-off as approvals.
+  'monthly_review',
+  'quarterly_review',
+  'yearly_review',
+  'macro_event',
+  'cgt_anniversary',
 ]);
 
 /** Symbol slot from the event, or a neutral label when the event is not symbol-scoped. */

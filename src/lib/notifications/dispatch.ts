@@ -38,6 +38,10 @@ interface PreferenceRow {
   portfolio_movement_alerts?: boolean | null;
   macro_alerts?: boolean | null;
   theme_alerts?: boolean | null;
+  mute_all?: boolean | null;
+  muted_until?: string | null;
+  muted_symbols?: string[] | null;
+  muted_themes?: string[] | null;
 }
 
 interface ChannelRow {
@@ -115,6 +119,7 @@ async function loadActiveChannels(supabase: SupabaseLike, userId: string): Promi
 async function loadPreferences(
   supabase: SupabaseLike,
   userId: string,
+  now: Date = new Date(),
 ): Promise<{ prefs: NotificationPreferences; channels: ChannelRow[]; displayName?: string }> {
   const [{ data: row }, channels, { data: profileRow }] = await Promise.all([
     supabase.from('user_alert_preferences').select('*').eq('user_id', userId).maybeSingle(),
@@ -128,12 +133,19 @@ async function loadPreferences(
   const hasTelegram = channels.some((channel) => channel.channel_type === 'telegram');
   const hasWhatsApp = channels.some((channel) => channel.channel_type === 'whatsapp');
   const hasSlack = channels.some((channel) => channel.channel_type === 'slack');
+  // Timed snooze: active while now < muted_until. An unparseable timestamp fails OPEN (no mute) -
+  // silently muting every alert forever on a bad value would be worse than delivering.
+  const mutedUntil = prefsRow.muted_until ? new Date(prefsRow.muted_until) : null;
+  const snoozed = mutedUntil !== null && Number.isFinite(mutedUntil.getTime()) && now < mutedUntil;
 
   return {
     channels,
     displayName,
     prefs: {
       ...DEFAULT_NOTIFICATION_PREFERENCES,
+      muteAll: Boolean(prefsRow.mute_all) || snoozed,
+      mutedSymbols: prefsRow.muted_symbols ?? DEFAULT_NOTIFICATION_PREFERENCES.mutedSymbols,
+      mutedThemes: prefsRow.muted_themes ?? DEFAULT_NOTIFICATION_PREFERENCES.mutedThemes,
       instantAlerts: prefsRow.alerts_enabled ?? DEFAULT_NOTIFICATION_PREFERENCES.instantAlerts,
       dailyDigest: prefsRow.digest_enabled ?? DEFAULT_NOTIFICATION_PREFERENCES.dailyDigest,
       weeklyDigest: prefsRow.weekly_digest_enabled ?? DEFAULT_NOTIFICATION_PREFERENCES.weeklyDigest,
@@ -441,7 +453,7 @@ export async function releaseHeldEvents(supabase: SupabaseLike, userId: string, 
   ).filter(Boolean);
   if (eventIds.length === 0) return 0;
 
-  const { prefs, channels, displayName } = await loadPreferences(supabase, userId);
+  const { prefs, channels, displayName } = await loadPreferences(supabase, userId, now);
   let released = 0;
   for (const eventId of eventIds) {
     const { data: row } = await supabase.from('notification_events').select('*').eq('id', eventId).maybeSingle();
@@ -453,6 +465,19 @@ export async function releaseHeldEvents(supabase: SupabaseLike, userId: string, 
     const event = eventFromRow(storedRow);
     const decision = routeNotification(event, prefs, { now });
     if (!decision.deliver || decision.deferredToDigest) continue; // still inside quiet hours - keep holding
+    // CLAIM before sending. Release runs from two overlapping schedulers (the top of every
+    // dispatchNotificationEvent for this user AND the nightly/on-demand sweep), and the old
+    // read -> send -> mark pattern let both runners pass the held check before either marked,
+    // double-sending the alert. The atomic UPDATE ... WHERE status='held' serialises on the row:
+    // exactly one runner sees its row come back and owns the delivery; the loser sees zero rows.
+    const { data: claimed } = await supabase
+      .from('notification_deliveries')
+      .update({ status: 'releasing', attempted_at: now.toISOString() })
+      .eq('event_id', eventId)
+      .eq('channel', 'held')
+      .eq('status', 'held')
+      .select('id');
+    if (!claimed || (claimed as { id: string }[]).length === 0) continue; // another runner owns it
     const releaseInput: DispatchNotificationInput = {
       userId,
       type: event.type,
@@ -494,6 +519,21 @@ export interface SweepResult {
  */
 export async function sweepNotifications(supabase: SupabaseLike, now: Date = new Date()): Promise<SweepResult> {
   const errors: string[] = [];
+
+  // 0. Crash recovery: a runner that died between claiming a held row ('releasing', stamped via
+  // attempted_at) and delivering would strand that event forever. Any claim older than the stale
+  // window goes back to 'held' so this sweep re-releases it - late delivery over silent loss.
+  const staleClaimBefore = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
+  try {
+    await supabase
+      .from('notification_deliveries')
+      .update({ status: 'held' })
+      .eq('channel', 'held')
+      .eq('status', 'releasing')
+      .lt('attempted_at', staleClaimBefore);
+  } catch {
+    /* recovery is best-effort - never blocks the sweep */
+  }
 
   // 1. Held-event release across all users.
   const { data: heldRows } = await supabase
@@ -555,13 +595,28 @@ export async function sweepNotifications(supabase: SupabaseLike, now: Date = new
           .maybeSingle();
         if (!eventRow) continue;
         const event = eventFromRow(eventRow as StoredEventRow);
-        const { prefs, channels, displayName } = await loadPreferences(supabase, candidate.user_id);
+        const { prefs, channels, displayName } = await loadPreferences(supabase, candidate.user_id, now);
         const decision = routeNotification(event, prefs, { now });
         // Prefs may have changed since the failure; a retry must still obey the router.
         // Deferred means inside quiet hours right now - leave it for a later sweep.
         if (!decision.deliver || decision.deferredToDigest) continue;
         const channelType = candidate.channel as Extract<ChannelType, 'telegram' | 'whatsapp' | 'slack'>;
         if (!decision.channels.includes(channelType)) continue;
+        // CLAIM before sending. Two overlapping sweeps both pass the alreadyRetried check above
+        // (each read history before either wrote), so the old code sent the retry twice. The claim
+        // is an INSERT whose idempotency_key is unique per event+channel retry; under the DB's
+        // uq_notification_deliveries_idem index the second runner's identical insert fails 23505
+        // and skips. The key ends with RETRY_SUFFIX so future sweeps' alreadyRetried guard sees it.
+        const claimKey = `${candidate.event_id}:${candidate.channel}:claim${RETRY_SUFFIX}`;
+        const { error: claimError } = await supabase.from('notification_deliveries').insert({
+          event_id: candidate.event_id,
+          user_id: candidate.user_id,
+          channel: candidate.channel,
+          status: 'retrying',
+          idempotency_key: claimKey,
+          error_message: 'retry claim - the sweep that wrote this row owns the retry attempt',
+        });
+        if (claimError) continue; // 23505 = another sweep owns this retry; any other error: do not send unclaimed
         const result = await deliverChat(
           supabase,
           event,
@@ -691,7 +746,7 @@ export async function dispatchNotificationEvent(
     createdAt: inserted.created_at ?? now.toISOString(),
   };
 
-  const { prefs, channels, displayName } = await loadPreferences(supabase, input.userId);
+  const { prefs, channels, displayName } = await loadPreferences(supabase, input.userId, now);
   const decision = routeNotification(event, prefs, { now, forceInstant: input.forceInstant });
   if (!decision.deliver) {
     await insertDelivery(supabase, {

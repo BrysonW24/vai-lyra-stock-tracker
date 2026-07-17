@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.63.0',
+    date: '2026-07-18',
+    title: 'Mute genuinely mutes, alerts never double-send, and reviews read right on WhatsApp',
+    highlights: [
+      'The Mute button is now real. The "Muted" mode and timed snoozes ("Mute 1h/4h/tomorrow") used to live only in your browser - the server kept sending to Slack, Telegram, WhatsApp and push regardless. Mutes now sync to the server and every delivery path honors them, including per-symbol and per-theme mutes. One deliberate exception: an approval request or kill-switch notice still gets through - a mute asks for silence, not for a decision to stall.',
+      'The same alert can no longer arrive twice. Two background schedulers could overlap and both deliver a held or retried notification; each delivery is now claimed atomically before sending (backed by a database unique index), so exactly one sender wins - and if a claimer crashes mid-flight, the nightly sweep recovers the alert instead of losing it.',
+      'Monthly, quarterly and yearly reviews on WhatsApp now carry their actual content - portfolio return, best and toughest movers, benchmark comparison. They were being squeezed into the signal-alert template, which dropped the entire review body and dressed it up as a score. Macro and CGT notices had the same bug; all fixed.',
+      'Turning off the weekly digest now actually turns it off. The Friday weekly report was gated on a preference column that never existed, so the opt-out was silently ignored and the report fired for everyone.',
+    ],
+  },
+  {
     version: '0.62.0',
     date: '2026-07-18',
     title: 'Every AI call now shows its token cost',

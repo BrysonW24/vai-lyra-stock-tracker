@@ -44,6 +44,10 @@ interface PreferenceRow {
   portfolio_movement_alerts?: boolean | null;
   macro_alerts?: boolean | null;
   theme_alerts?: boolean | null;
+  mute_all?: boolean | null;
+  muted_until?: string | null;
+  muted_symbols?: string[] | null;
+  muted_themes?: string[] | null;
 }
 
 interface PreferencePatchBody {
@@ -154,10 +158,17 @@ function coercePrefs(
     portfolioMovementAlerts: prefs.portfolio_movement_alerts ?? DEFAULT_NOTIFICATION_PREFERENCES.portfolioMovementAlerts,
     macroAlerts: prefs.macro_alerts ?? DEFAULT_NOTIFICATION_PREFERENCES.macroAlerts,
     themeAlerts: prefs.theme_alerts ?? DEFAULT_NOTIFICATION_PREFERENCES.themeAlerts,
+    // muteAll resolves the same way the dispatch loader does: the indefinite mode OR an
+    // unexpired timed snooze. The client hydrates its badge from this.
+    muteAll:
+      Boolean(prefs.mute_all) ||
+      (prefs.muted_until ? new Date(prefs.muted_until).getTime() > Date.now() : false),
+    mutedSymbols: prefs.muted_symbols ?? DEFAULT_NOTIFICATION_PREFERENCES.mutedSymbols,
+    mutedThemes: prefs.muted_themes ?? DEFAULT_NOTIFICATION_PREFERENCES.mutedThemes,
   };
 }
 
-function hasOwn<T extends object>(object: T, key: keyof NotificationPreferences): boolean {
+function hasOwn<T extends object>(object: T, key: keyof NotificationPreferences | 'mutedUntil'): boolean {
   return Object.prototype.hasOwnProperty.call(object, key);
 }
 
@@ -232,6 +243,32 @@ export async function PATCH(request: NextRequest) {
     if (hasOwn(preferences, 'portfolioMovementAlerts')) patch.portfolio_movement_alerts = Boolean(preferences.portfolioMovementAlerts);
     if (hasOwn(preferences, 'macroAlerts')) patch.macro_alerts = Boolean(preferences.macroAlerts);
     if (hasOwn(preferences, 'themeAlerts')) patch.theme_alerts = Boolean(preferences.themeAlerts);
+    // Mutes - the server-enforced half of the AccountMenu mute controls (migration 051). muteAll is
+    // the indefinite "Muted" mode; mutedUntil a timed snooze (null clears it; an unparseable value
+    // stores null - failing OPEN mirrors the dispatch loader, which never lets a bad value mute
+    // everything forever). Symbol/theme lists are capped + normalised, never trusted raw.
+    if (hasOwn(preferences, 'muteAll')) patch.mute_all = Boolean((preferences as { muteAll?: unknown }).muteAll);
+    if (hasOwn(preferences, 'mutedUntil')) {
+      const raw = (preferences as { mutedUntil?: unknown }).mutedUntil;
+      const parsed = typeof raw === 'string' || typeof raw === 'number' ? new Date(raw) : null;
+      patch.muted_until = parsed && Number.isFinite(parsed.getTime()) ? parsed.toISOString() : null;
+    }
+    const normaliseList = (value: unknown): string[] =>
+      Array.isArray(value)
+        ? Array.from(
+            new Set(
+              value
+                .filter((item): item is string => typeof item === 'string')
+                .map((item) => item.trim().toUpperCase())
+                .filter((item) => item.length > 0 && item.length <= 24),
+            ),
+          ).slice(0, 100)
+        : [];
+    if (hasOwn(preferences, 'mutedSymbols')) patch.muted_symbols = normaliseList(preferences.mutedSymbols);
+    if (hasOwn(preferences, 'mutedThemes')) {
+      // Themes are matched case-insensitively by the router; store lowercase for readability.
+      patch.muted_themes = normaliseList(preferences.mutedThemes).map((item) => item.toLowerCase());
+    }
 
     const { error } = await supabase.from('user_alert_preferences').upsert(patch, { onConflict: 'user_id' });
     if (error) return NextResponse.json({ ok: false, error: error.message || 'Failed to save preferences' }, { status: 400 });
