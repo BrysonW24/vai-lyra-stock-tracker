@@ -14,6 +14,13 @@ import { clientIp } from '@/lib/api/ai-guard';
  * date/title/description/votes the board shows.
  */
 
+export interface IdeaEvidence {
+  itemId?: string;
+  title: string;
+  url: string | null;
+  sourceId?: string;
+}
+
 export interface CommunityIdea {
   id: string;
   title: string;
@@ -22,13 +29,32 @@ export interface CommunityIdea {
   voteCount: number;
   createdAt: string;
   voted: boolean;
+  /** 'human' (default) or 'scout' - the AI scout files onto the same board. */
+  origin: string;
+  /** feature | vertical | content-gap | frontend | backend. */
+  kind: string;
+  /** Scout receipts: the items that triggered the card. Empty for human ideas. */
+  evidence: IdeaEvidence[];
+  /** Breadth-derived scout confidence (0-100); null for human ideas. */
+  confidence: number | null;
 }
 
 /** Sample ideas shown only in demo mode (no Supabase) so the board demonstrates its shape. */
 const DEMO_IDEAS: CommunityIdea[] = [
-  { id: 'demo-1', title: 'Price-target alerts per holding', description: 'Let me set a target price on each position and get pinged when it is hit.', status: 'open', voteCount: 12, createdAt: '2026-07-10T00:00:00.000Z', voted: false },
-  { id: 'demo-2', title: 'A lighter daytime theme', description: 'A high-contrast light theme for using Lyra at a bright desk.', status: 'planned', voteCount: 7, createdAt: '2026-07-12T00:00:00.000Z', voted: false },
-  { id: 'demo-3', title: 'Export my watchlist to CSV', description: 'One tap to export the watchlist with each name and its current score.', status: 'open', voteCount: 4, createdAt: '2026-07-14T00:00:00.000Z', voted: false },
+  { id: 'demo-1', title: 'Price-target alerts per holding', description: 'Let me set a target price on each position and get pinged when it is hit.', status: 'open', voteCount: 12, createdAt: '2026-07-10T00:00:00.000Z', voted: false, origin: 'human', kind: 'feature', evidence: [], confidence: null },
+  {
+    id: 'demo-scout-1',
+    title: 'Emerging signal: Commercial Fusion',
+    description: 'The scout saw fusion-energy funding recur across 4 items from 3 independent sources, and none of it attaches to any existing vertical. Filed automatically; nothing changes unless accepted.',
+    status: 'open', voteCount: 9, createdAt: '2026-07-15T00:00:00.000Z', voted: false,
+    origin: 'scout', kind: 'vertical', confidence: 75,
+    evidence: [
+      { title: 'US Department of Energy announces fusion pilot funding round', url: 'https://example.com/doe-fusion', sourceId: 'rss-doe-newsroom' },
+      { title: 'Second fusion startup signs utility power purchase agreement', url: 'https://example.com/fusion-ppa', sourceId: 'rss-spacenews' },
+    ],
+  },
+  { id: 'demo-2', title: 'A lighter daytime theme', description: 'A high-contrast light theme for using Lyra at a bright desk.', status: 'planned', voteCount: 7, createdAt: '2026-07-12T00:00:00.000Z', voted: false, origin: 'human', kind: 'feature', evidence: [], confidence: null },
+  { id: 'demo-3', title: 'Export my watchlist to CSV', description: 'One tap to export the watchlist with each name and its current score.', status: 'open', voteCount: 4, createdAt: '2026-07-14T00:00:00.000Z', voted: false, origin: 'human', kind: 'feature', evidence: [], confidence: null },
 ];
 
 function isMissingTable(error: { code?: string; message?: string } | null): boolean {
@@ -45,12 +71,29 @@ export async function GET() {
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
 
-  const { data, error } = await supabase
+  // Scout columns arrive with migration 043 - fall back to the 038 shape when the
+  // columns are missing so the board never 400s on an unapplied migration.
+  let scoutColumns = true;
+  const first = await supabase
     .from('community_ideas')
-    .select('id, title, description, status, vote_count, created_at')
+    .select('id, title, description, status, vote_count, created_at, origin, kind, evidence, confidence')
     .order('vote_count', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(200);
+
+  let data: Record<string, unknown>[] | null = first.data;
+  let error = first.error;
+  if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''))) {
+    scoutColumns = false;
+    const second = await supabase
+      .from('community_ideas')
+      .select('id, title, description, status, vote_count, created_at')
+      .order('vote_count', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(200);
+    data = second.data;
+    error = second.error;
+  }
 
   if (error) {
     if (isMissingTable(error)) {
@@ -58,6 +101,13 @@ export async function GET() {
       return NextResponse.json({ ok: true, pendingMigration: true, signedIn: Boolean(user), ideas: [] });
     }
     return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+  }
+
+  // Maintainer flag drives the status controls in the UI; RLS is the real authority.
+  let maintainer = false;
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+    maintainer = profile?.role === 'maintainer';
   }
 
   let votedIds = new Set<string>();
@@ -74,9 +124,13 @@ export async function GET() {
     voteCount: Number(row.vote_count ?? 0),
     createdAt: row.created_at as string,
     voted: votedIds.has(row.id as string),
+    origin: scoutColumns ? ((row.origin as string) ?? 'human') : 'human',
+    kind: scoutColumns ? ((row.kind as string) ?? 'feature') : 'feature',
+    evidence: scoutColumns && Array.isArray(row.evidence) ? (row.evidence as IdeaEvidence[]) : [],
+    confidence: scoutColumns && typeof row.confidence === 'number' ? row.confidence : null,
   }));
 
-  return NextResponse.json({ ok: true, signedIn: Boolean(user), ideas });
+  return NextResponse.json({ ok: true, signedIn: Boolean(user), maintainer, ideas });
 }
 
 export async function POST(request: NextRequest) {
@@ -131,6 +185,10 @@ export async function POST(request: NextRequest) {
       voteCount: Number(data.vote_count ?? 0),
       createdAt: data.created_at,
       voted: false,
+      origin: 'human',
+      kind: 'feature',
+      evidence: [],
+      confidence: null,
     } satisfies CommunityIdea,
   });
 }

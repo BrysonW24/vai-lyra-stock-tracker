@@ -40,6 +40,7 @@ Every chain honours the same contract:
 | [/security-sweep](.claude/commands/security-sweep.md) | New route/secret/dependency, quarterly | Secrets -> authz fail-closed -> abuse limits -> deps triage |
 | [/ux-surface](.claude/commands/ux-surface.md) | A surface feels rough, after feature work | One surface to premium: demo render, 375px, states, a11y, engine truth |
 | [/logs-to-genui](.claude/commands/logs-to-genui.md) | Operational question needs a view | Logs/events -> deterministic metrics -> GenUI (AI does layout only) |
+| [/scout-intel](.claude/commands/scout-intel.md) | Scout cards look junky, feeds die, access lands | Registry health -> attachment honesty -> cluster quality -> access expansion |
 
 Sub-skills (invoked by chains, not standalone owners):
 [/sync-human-onboarding](.claude/commands/sync-human-onboarding.md),
@@ -74,6 +75,7 @@ multiple owning chains per row are allowed; a parent path claims everything unde
 | Data API routes | `src/app/api/portfolio/` `src/app/api/trades/` `src/app/api/trading/` `src/app/api/watchlist/` `src/app/api/small-caps/` `src/app/api/ticker-lookup/` `src/app/api/ingestion/` `src/app/api/interaction/` | data-integrity |
 | Signal engine route | `src/app/api/signals/` | signal-quality |
 | Ingest workers (horizon 2) | `workers/events_worker/` `workers/fundamentals_worker/` `workers/intelligence_worker/` | data-integrity |
+| Scout worker (broad signal -> ideas board) | `workers/scout/` | scout-intel |
 | Auth, env, abuse, account | `src/lib/auth/` `src/lib/env.ts` `src/lib/ratelimit.ts` `src/lib/account.ts` `src/app/api/account/` `SECURITY.md` `PRIVACY.md` `docs/security/` | security-sweep |
 | Findings + GenUI | `src/lib/findings/` `src/lib/next-best-actions.ts` `src/lib/goal.ts` `src/lib/portfolio-actions.ts` `src/lib/orientation.ts` `src/app/findings/` `src/app/api/findings/` | logs-to-genui |
 | Feedback intake | `src/lib/feedback.ts` `src/app/api/feedback/` `src/app/api/community/` | feedback-loop |

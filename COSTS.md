@@ -40,6 +40,7 @@ entirely optional - the deterministic engine works without any AI key.
 | Upstash Redis | Free | **$0** | Optional cache (quotes + hot reads) over serverless REST; the Vercel marketplace integration injects the env vars. Free tier is command-metered; without it Lyra falls back to a built-in in-process cache at no cost. Pricing page not re-verified line-by-line on 2026-07-16 - treat limits as indicative |
 | yfinance | Open-source library | **$0** | Unofficial Yahoo Finance access, personal use only, no SLA - Yahoo intermittently rate-limits or breaks it. Fine for a hobby scanner, never a commercial data source |
 | Finnhub | Free | **$0** | Free API key; hard 30 calls/sec global cap (verified on provider docs). The commonly cited 60 calls/min free limit + US$12-100/mo paid bundles could not be re-confirmed on their JS-rendered pricing page on 2026-07-16 - treat as indicative. Personal use, no redistribution |
+| Firecrawl | Free / Hobby | **$0** / ~US$16/mo | OPTIONAL - activates the scout's ~22 registered crawl targets (pages with no RSS, e.g. DoD daily contracts). Free tier ~500 one-time credits; Hobby ~3,000 credits/mo (indicative, from their pricing page 2026-07-17 - re-verify before paying). Scout runs fine without it on the open RSS + Finnhub layers |
 
 ### Notifications
 

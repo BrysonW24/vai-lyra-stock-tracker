@@ -73,9 +73,9 @@
   about the rails, because it is built from them.</p>
 
   <div class="stats">
-    <span class="stat"><b>25</b> mapped sections</span>
-    <span class="stat"><b>12</b> skill chains</span>
-    <span class="stat"><b>3</b> deterministic gates</span>
+    <span class="stat"><b>26</b> mapped sections</span>
+    <span class="stat"><b>13</b> skill chains</span>
+    <span class="stat"><b>5</b> deterministic gates</span>
     <span class="stat"><b>5</b> enforcement layers</span>
     <span class="stat"><b>0</b> orphans <span class="hint">(CI-enforced)</span></span>
   </div>
@@ -147,6 +147,11 @@
         <span class="cid">/logs-to-genui</span>
         <span class="cwhen">Operational question needs a view</span>
         <span class="cjob">Logs/events -&gt; deterministic metrics -&gt; GenUI (AI does layout only)</span>
+      </button>
+      <button class="chain" data-chain="scout-intel" type="button" aria-pressed="false">
+        <span class="cid">/scout-intel</span>
+        <span class="cwhen">Scout cards look junky, feeds die, access lands</span>
+        <span class="cjob">Registry health -&gt; attachment honesty -&gt; cluster quality -&gt; access expansion</span>
       </button>
   </div>
 
@@ -237,6 +242,11 @@
         <div class="apaths"><code>workers/events_worker/</code> <code>workers/fundamentals_worker/</code> <code>workers/intelligence_worker/</code></div>
         <div class="aowners"><button class="badge" data-chain="data-integrity" type="button">/data-integrity</button></div>
       </div>
+      <div class="area" data-chains="scout-intel" data-text="scout worker (broad signal -&gt; ideas board) workers/scout/ scout-intel">
+        <div class="aname">Scout worker (broad signal -&gt; ideas board)</div>
+        <div class="apaths"><code>workers/scout/</code></div>
+        <div class="aowners"><button class="badge" data-chain="scout-intel" type="button">/scout-intel</button></div>
+      </div>
       <div class="area" data-chains="security-sweep" data-text="auth, env, abuse, account src/lib/auth/ src/lib/env.ts src/lib/ratelimit.ts src/lib/account.ts src/app/api/account/ security.md privacy.md docs/security/ security-sweep">
         <div class="aname">Auth, env, abuse, account</div>
         <div class="apaths"><code>src/lib/auth/</code> <code>src/lib/env.ts</code> <code>src/lib/ratelimit.ts</code> <code>src/lib/account.ts</code> <code>src/app/api/account/</code> <code>SECURITY.md</code> <code>PRIVACY.md</code> <code>docs/security/</code></div>
@@ -286,7 +296,7 @@
         <tr>
           <td class="gname">Version bump</td>
           <td><code>npm run check:version</code></td>
-          <td>shippable change =&gt; RELEASES entry; package.json/version.ts/CHANGELOG.md lockstep</td>
+          <td>shippable change =&gt; RELEASES entry; package.json/version.ts/CHANGELOG.md lockstep. Judges the version in the COMMITS BEING PUSHED, not the working tree. Test files are exempt (they ship nothing).</td>
           <td class="gruns">pre-push hook + CI version-guard</td>
         </tr>
         <tr>
@@ -296,10 +306,22 @@
           <td class="gruns">CI</td>
         </tr>
         <tr>
-          <td class="gname">Chain coverage</td>
-          <td><code>npm run check:chains</code></td>
-          <td>every code section has an owning skill chain; no dead paths or orphan chains in the map</td>
+          <td class="gname">Onboarding contract</td>
+          <td><code>npm run check:onboarding-contract</code></td>
+          <td>every onboarding answer is persisted, read back, and reaches the AI prompt; the core profile read never references a column newer than the baseline migration</td>
           <td class="gruns">CI</td>
+        </tr>
+        <tr>
+          <td class="gname">Migration integrity</td>
+          <td><code>npm run check:migrations</code></td>
+          <td>unique version prefixes; no table created twice with different shapes (create table if not exists silently NO-OPs the second)</td>
+          <td class="gruns">CI</td>
+        </tr>
+        <tr>
+          <td class="gname">Schema drift</td>
+          <td><code>npm run check:schema-drift</code></td>
+          <td>the LIVE database matches the migrations in this repo. Needs a DB URL; --require-db makes a missing one a failure</td>
+          <td class="gruns">nightly schema-drift job</td>
         </tr>
     </tbody>
   </table>
@@ -308,7 +330,7 @@
   <div class="layers">
       <div class="layer">
         <h3>Layer 1 - Deterministic gates (`scripts/check-*.mjs`)</h3>
-        <ul></ul>
+        <ul><li>|| echo &quot;(non-fatal)&quot; in the nightly swallowed the exit code, so the events and fundamentals workers failed EVERY night for months under a green tick. Best-effort must never mean invisible: record the failure, keep going, fail the run at the end.</li><li>A check that silently skips is the same lie as a check that always passes. check:schema-drift takes --require-db so a missing secret fails instead of skipping quietly.</li><li>The version guard read version.ts off disk, so an unrelated uncommitted bump satisfied the hook while CI, which only sees the commit, failed. A gate that disagrees with CI is worse than no gate.</li><li>Tests must not depend on the machine. Quiet-hours tests built clocks in the runner&#39;s timezone while the router evaluates in Australia/Sydney; they passed in Sydney and failed on UTC runners, making CI red ~9 hours of every day - and left the safety-critical bypass tests passing for the wrong reason. npm test pins TZ=UTC so a local run is byte-identical to CI.</li><li>Prose in a playbook does not hold a line. /data-integrity Stage 1 already instructed agents to diff migrations against the live project and call any unapplied one &quot;finding #1&quot;. It said the right thing and still seven migrations went unapplied back to 018. That instruction is now a script.</li></ul>
       </div>
       <div class="layer">
         <h3>Layer 2 - Git hooks + CI</h3>

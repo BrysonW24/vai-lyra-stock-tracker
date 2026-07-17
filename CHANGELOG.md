@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.39.0] - 2026-07-17
+
+The AI scout: Lyra now reads the wide world nightly and files evidence-linked ideas on the board.
+
+### Changed
+
+- Lyra can now NOTICE. A nightly scout reads a curated registry of 100 broad-signal sources - 36 open feeds (NASA, DoE, DoD, SpaceNews, SemiAnalysis, World Nuclear News, IEEE Spectrum, mining and quantum trade press) plus the Finnhub general-news firehose - and deterministically attaches every item to the vertical map. All 36 feeds were verified live before shipping.
+- Signal with NO home vertical is the interesting part: when an unmapped entity recurs across at least 3 items from 2 independent sources inside a 14-day window, the scout files an idea card on the SAME Ideas board humans use - marked Scout, with the evidence links attached and a confidence that is pure breadth math, never a model opinion.
+- Humans stay in charge by construction: the scout only ever writes cards. It cannot touch the vertical map, and moving a card (planned, in progress, shipped, declined) is maintainer-only, enforced in the database, with one-tap status controls on the board for the maintainer.
+- The registry also encodes where the scout will grow: 22 crawl targets (pages with high signal but no feed, like the DoD daily contract announcements) light up the moment a Firecrawl key lands, and 41 niche voices on X - from Dylan Patel to fusion and uranium specialists - are registered for when X API access exists. Gated honestly: registered intent, not pretended coverage.
+- Fully harness-owned from day one: a new /scout-intel skill chain owns the worker, 17 new tests pin the honest behaviours (two-letter tickers never match bare text, one outlet drumbeating is never signal), and the nightly job reports failures loudly instead of green-ticking.
+
 ## [0.38.0] - 2026-07-17
 
 Weekly, monthly, quarterly and yearly reviews - see how you are actually doing.
@@ -676,7 +688,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.38.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.39.0...HEAD
+[0.39.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.38.0...v0.39.0
 [0.38.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.37.0...v0.38.0
 [0.37.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.36.0...v0.37.0
 [0.36.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.35.0...v0.36.0

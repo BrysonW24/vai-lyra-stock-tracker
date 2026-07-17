@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronUp, Lightbulb, Loader2, Plus, X } from 'lucide-react';
+import { Bot, ChevronUp, ExternalLink, Lightbulb, Loader2, Plus, X } from 'lucide-react';
+
+interface IdeaEvidence {
+  itemId?: string;
+  title: string;
+  url: string | null;
+  sourceId?: string;
+}
 
 interface Idea {
   id: string;
@@ -11,12 +18,17 @@ interface Idea {
   voteCount: number;
   createdAt: string;
   voted: boolean;
+  origin: string;
+  kind: string;
+  evidence: IdeaEvidence[];
+  confidence: number | null;
 }
 
 interface IdeasResponse {
   ok: boolean;
   ideas?: Idea[];
   signedIn?: boolean;
+  maintainer?: boolean;
   demo?: boolean;
   pendingMigration?: boolean;
   error?: string;
@@ -37,9 +49,20 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
   declined: { label: 'Not planned', cls: 'border-[#3a4754] bg-[#141b23] text-[#8190a0]' },
 };
 
+const ALL_STATUSES = ['open', 'planned', 'in_progress', 'shipped', 'declined'];
+
+/** Non-default idea kinds get a chip so scout cards say what they propose. */
+const KIND_LABEL: Record<string, string> = {
+  vertical: 'New vertical',
+  'content-gap': 'Content gap',
+  frontend: 'Frontend',
+  backend: 'Backend',
+};
+
 export function IdeasBoard() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [signedIn, setSignedIn] = useState(false);
+  const [maintainer, setMaintainer] = useState(false);
   const [demo, setDemo] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +81,7 @@ export function IdeasBoard() {
       const data = (await res.json()) as IdeasResponse;
       setIdeas(data.ideas ?? []);
       setSignedIn(Boolean(data.signedIn));
+      setMaintainer(Boolean(data.maintainer));
       setDemo(Boolean(data.demo));
       if (!data.ok) setError(data.error ?? 'Could not load ideas.');
     } catch {
@@ -104,6 +128,28 @@ export function IdeasBoard() {
       setIdeas((prev) => prev.map((i) => (i.id === idea.id ? { ...i, voted: Boolean(data.voted), voteCount: Number(data.voteCount ?? i.voteCount) } : i)));
     } catch {
       setIdeas((prev) => prev.map((i) => (i.id === idea.id ? idea : i)));
+      setVoteNote('Could not reach the server.');
+      setTimeout(() => setVoteNote(null), 2600);
+    }
+  }
+
+  async function setStatus(idea: Idea, status: string) {
+    const prev = idea.status;
+    setIdeas((list) => list.map((i) => (i.id === idea.id ? { ...i, status } : i)));
+    try {
+      const res = await fetch('/api/community/ideas/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ideaId: idea.id, status }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setIdeas((list) => list.map((i) => (i.id === idea.id ? { ...i, status: prev } : i)));
+        setVoteNote(data.error ?? 'Could not update status.');
+        setTimeout(() => setVoteNote(null), 2600);
+      }
+    } catch {
+      setIdeas((list) => list.map((i) => (i.id === idea.id ? { ...i, status: prev } : i)));
       setVoteNote('Could not reach the server.');
       setTimeout(() => setVoteNote(null), 2600);
     }
@@ -218,12 +264,63 @@ export function IdeasBoard() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#5d6b79]">{fmtDate(idea.createdAt)}</span>
+                    {idea.origin === 'scout' && (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full border border-[#2a4a7a] bg-[#0f1a2c] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#7fb0ff]"
+                        title="Raised automatically by the AI scout from recurring unmapped news signal. Nothing changes unless a human accepts it."
+                      >
+                        <Bot size={9} /> Scout{typeof idea.confidence === 'number' ? ` ${idea.confidence}` : ''}
+                      </span>
+                    )}
+                    {KIND_LABEL[idea.kind] && (
+                      <span className="rounded-full border border-[#3a4754] bg-[#141b23] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#a8b5c2]">
+                        {KIND_LABEL[idea.kind]}
+                      </span>
+                    )}
                     {status && (
                       <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] ${status.cls}`}>{status.label}</span>
                     )}
                   </div>
                   <p className="mt-1 text-[13px] font-semibold leading-snug text-[#eef3f8]">{idea.title}</p>
                   {idea.description && <p className="mt-0.5 text-[12px] leading-relaxed text-[#98a6b4]">{idea.description}</p>}
+                  {idea.evidence.length > 0 && (
+                    <ul className="mt-1.5 space-y-0.5">
+                      {idea.evidence.slice(0, 4).map((ev, i) => (
+                        <li key={`${idea.id}-ev-${i}`} className="flex items-start gap-1 text-[11px] leading-snug text-[#8190a0]">
+                          <ExternalLink size={10} className="mt-0.5 shrink-0 text-[#5d6b79]" />
+                          {ev.url ? (
+                            <a href={ev.url} target="_blank" rel="noopener noreferrer" className="truncate underline decoration-[#3a4754] underline-offset-2 transition hover:text-[#c8d3de]">
+                              {ev.title}
+                            </a>
+                          ) : (
+                            <span className="truncate">{ev.title}</span>
+                          )}
+                        </li>
+                      ))}
+                      {idea.evidence.length > 4 && (
+                        <li className="text-[10px] text-[#5d6b79]">+ {idea.evidence.length - 4} more evidence links</li>
+                      )}
+                    </ul>
+                  )}
+                  {maintainer && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                      {ALL_STATUSES.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setStatus(idea, s)}
+                          disabled={idea.status === s}
+                          className={`rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.08em] transition ${
+                            idea.status === s
+                              ? 'border-[#43d18b] bg-[#0c1f16] text-[#5fd08a]'
+                              : 'border-[#263241] bg-[#0d141c] text-[#6f7d8a] hover:text-[#c8d3de]'
+                          }`}
+                        >
+                          {STATUS_META[s]?.label ?? 'Open'}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"

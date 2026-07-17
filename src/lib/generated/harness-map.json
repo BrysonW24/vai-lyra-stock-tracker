@@ -4,9 +4,9 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 25,
-    "chains": 12,
-    "gates": 3,
+    "sections": 26,
+    "chains": 13,
+    "gates": 5,
     "layers": 5
   },
   "chains": [
@@ -81,6 +81,12 @@
       "file": ".claude/commands/logs-to-genui.md",
       "runWhen": "Operational question needs a view",
       "job": "Logs/events -> deterministic metrics -> GenUI (AI does layout only)"
+    },
+    {
+      "id": "scout-intel",
+      "file": ".claude/commands/scout-intel.md",
+      "runWhen": "Scout cards look junky, feeds die, access lands",
+      "job": "Registry health -> attachment honesty -> cluster quality -> access expansion"
     }
   ],
   "sections": [
@@ -326,6 +332,15 @@
       ]
     },
     {
+      "section": "Scout worker (broad signal -> ideas board)",
+      "paths": [
+        "workers/scout/"
+      ],
+      "chains": [
+        "scout-intel"
+      ]
+    },
+    {
       "section": "Auth, env, abuse, account",
       "paths": [
         "src/lib/auth/",
@@ -482,7 +497,7 @@
     {
       "name": "Version bump",
       "command": "npm run check:version",
-      "enforces": "shippable change => RELEASES entry; package.json/version.ts/CHANGELOG.md lockstep",
+      "enforces": "shippable change => RELEASES entry; package.json/version.ts/CHANGELOG.md lockstep. Judges the version in the COMMITS BEING PUSHED, not the working tree. Test files are exempt (they ship nothing).",
       "runsIn": "pre-push hook + CI version-guard"
     },
     {
@@ -492,16 +507,34 @@
       "runsIn": "CI"
     },
     {
-      "name": "Chain coverage",
-      "command": "npm run check:chains",
-      "enforces": "every code section has an owning skill chain; no dead paths or orphan chains in the map",
+      "name": "Onboarding contract",
+      "command": "npm run check:onboarding-contract",
+      "enforces": "every onboarding answer is persisted, read back, and reaches the AI prompt; the core profile read never references a column newer than the baseline migration",
       "runsIn": "CI"
+    },
+    {
+      "name": "Migration integrity",
+      "command": "npm run check:migrations",
+      "enforces": "unique version prefixes; no table created twice with different shapes (create table if not exists silently NO-OPs the second)",
+      "runsIn": "CI"
+    },
+    {
+      "name": "Schema drift",
+      "command": "npm run check:schema-drift",
+      "enforces": "the LIVE database matches the migrations in this repo. Needs a DB URL; --require-db makes a missing one a failure",
+      "runsIn": "nightly schema-drift job"
     }
   ],
   "layers": [
     {
       "title": "Layer 1 - Deterministic gates (`scripts/check-*.mjs`)",
-      "items": []
+      "items": [
+        "|| echo \"(non-fatal)\" in the nightly swallowed the exit code, so the events and fundamentals workers failed EVERY night for months under a green tick. Best-effort must never mean invisible: record the failure, keep going, fail the run at the end.",
+        "A check that silently skips is the same lie as a check that always passes. check:schema-drift takes --require-db so a missing secret fails instead of skipping quietly.",
+        "The version guard read version.ts off disk, so an unrelated uncommitted bump satisfied the hook while CI, which only sees the commit, failed. A gate that disagrees with CI is worse than no gate.",
+        "Tests must not depend on the machine. Quiet-hours tests built clocks in the runner's timezone while the router evaluates in Australia/Sydney; they passed in Sydney and failed on UTC runners, making CI red ~9 hours of every day - and left the safety-critical bypass tests passing for the wrong reason. npm test pins TZ=UTC so a local run is byte-identical to CI.",
+        "Prose in a playbook does not hold a line. /data-integrity Stage 1 already instructed agents to diff migrations against the live project and call any unapplied one \"finding #1\". It said the right thing and still seven migrations went unapplied back to 018. That instruction is now a script."
+      ]
     },
     {
       "title": "Layer 2 - Git hooks + CI",

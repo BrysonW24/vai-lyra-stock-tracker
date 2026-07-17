@@ -18,6 +18,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Does the LIVE database still match the migrations in this repo?
+  #
+  # Migrations here are applied BY HAND via the Supabase SQL editor, so "someone forgot" is the
+  # normal failure mode. On 2026-07-17 an audit found migrations going back to 018 that had never
+  # been applied - the AI copilot ran with zero personalisation, the Ideas board could not save a
+  # single vote, and Slack alerting had no column to store its preference. Every one failed silently
+  # and nothing anywhere reported it, because no check had ever looked at the database.
+  #
+  # Its OWN job on purpose: drift must be visible without ever blocking the digest below. It runs in
+  # parallel and turns the run red on its own.
+  schema-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: Production
+    env:
+      SUPABASE_POOLER_URL: ${{ secrets.SUPABASE_POOLER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Live schema vs migrations
+        # --require-db so a missing secret FAILS instead of skipping quietly. A check that silently
+        # skips is the same lie as a check that always passes.
+        run: node scripts/check-schema-drift.mjs --require-db
+
   maintain:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -43,13 +69,24 @@ jobs:
         run: pip install -r requirements.txt
 
       # Horizon-2 workers first so tonight's digest can see today's events/fundamentals.
-      # Each is best-effort: one failing source must not block outcome labeling.
+      # Each is best-effort: one failing source must not block outcome labeling OR the digest.
+      #
+      # But best-effort must NEVER mean invisible. These previously ended in `|| echo "(non-fatal)"`,
+      # which swallowed the exit code and rendered a green tick - so the events worker (querying a
+      # table that does not exist) and the fundamentals worker (writing 13 columns that did not
+      # exist) failed EVERY night for months while this job reported success. A green that cannot
+      # go red is not a signal.
+      #
+      # So: record the failure, keep going, and fail the run at the END (see "Report worker
+      # failures"). Every step still runs; the run still goes red; nothing hides.
       - name: Events + IPO worker
-        run: python -m workers.events_worker.main || echo "events worker failed (non-fatal)"
+        run: python -m workers.events_worker.main || echo "events" >> "$RUNNER_TEMP/worker-failures"
       - name: Fundamentals worker
-        run: python -m workers.fundamentals_worker.main || echo "fundamentals worker failed (non-fatal)"
+        run: python -m workers.fundamentals_worker.main || echo "fundamentals" >> "$RUNNER_TEMP/worker-failures"
       - name: Intelligence worker
-        run: python -m workers.intelligence_worker.main || echo "intelligence worker failed (non-fatal)"
+        run: python -m workers.intelligence_worker.main || echo "intelligence" >> "$RUNNER_TEMP/worker-failures"
+      - name: Scout worker (broad signal -> ideas board)
+        run: python -m workers.scout.main || echo "scout" >> "$RUNNER_TEMP/worker-failures"
 
       - name: Label signal outcomes + send follow-ups
         run: python -m workers.stock_scanner.outcome_job
@@ -64,6 +101,20 @@ jobs:
             -H "content-type: application/json" \
             -H "x-notification-secret: $NOTIFICATION_DISPATCH_SECRET" \
             --data '{"sweep":true}'
+
+      # Best-effort must not mean invisible. Every step above has run by now (including the digest),
+      # so failing here loses nothing - it just makes a failed worker impossible to miss, and lets
+      # the "Notify on failure" step below actually fire. Before this, a worker could fail nightly
+      # forever and the run stayed green.
+      - name: Report worker failures (a green that cannot go red is not a signal)
+        if: always()
+        run: |
+          if [ -s "$RUNNER_TEMP/worker-failures" ]; then
+            FAILED=$(tr '\n' ' ' < "$RUNNER_TEMP/worker-failures")
+            echo "::error::Nightly workers FAILED: ${FAILED}- see the step logs above for the traceback."
+            exit 1
+          fi
+          echo "All nightly workers completed successfully."
 
       - name: Notify on failure
         if: failure()
