@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Landmark, Cpu, Wallet, Sparkles } from 'lucide-react';
 import { TickerLogo } from '@/components/TickerLogo';
 import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
-import { ValueChainMap } from '@/components/smallcaps/ValueChainMap';
+import { ChainExplorer, type ChainVertical } from '@/components/smallcaps/ChainExplorer';
 import { StoryDrawer } from '@/components/smallcaps/StoryDrawer';
 import { captureInteraction } from '@/lib/twin/capture';
 import {
@@ -22,8 +22,10 @@ interface EmergenceShortlistProps {
   shortlist: LifecycleCandidate[];
   /** Stage counts across the WHOLE small-cap universe (for the arc header). */
   distribution: Record<LifecycleStage, number>;
-  /** Value chains keyed by theme slug, so selecting a name renders its chain with the name focused. */
+  /** Value chains for EVERY vertical, keyed by theme slug (the explorer switches between them). */
   chainsByTheme: Record<string, ValueChain>;
+  /** Chip order + metadata for every vertical in the chain explorer. */
+  verticals: ChainVertical[];
   /** Per-symbol chain position (its nodes across themes + raw materials), for the story drawer. */
   positionsBySymbol: Record<string, CompanyChainPosition>;
 }
@@ -52,7 +54,7 @@ const HELP_TERMS: HelpTerm[] = [
 function BackingBadges({ candidate }: { candidate: LifecycleCandidate }) {
   const b = candidate.backing;
   return (
-    <div className="flex flex-wrap items-center gap-1">
+    <>
       {b.government && (
         <span className="inline-flex items-center gap-1 rounded border border-[#2a4a7a] bg-[#0f1a2c] px-1 py-0.5 font-mono text-[9px] text-[#8aa2ff]" title="Government contract, grant or backer on record">
           <Landmark size={9} /> Gov
@@ -71,7 +73,7 @@ function BackingBadges({ candidate }: { candidate: LifecycleCandidate }) {
       {b.strength === 0 && (
         <span className="rounded border border-[#263241] bg-[#0d141c] px-1 py-0.5 font-mono text-[9px] text-[#6f7d8a]">No disclosed backing</span>
       )}
-    </div>
+    </>
   );
 }
 
@@ -135,17 +137,9 @@ function LifecycleArc({ distribution, active }: { distribution: Record<Lifecycle
  * shows where each sits on the lifecycle arc and who is funding it, and lets you trace the selected
  * name end-to-end through its value chain back to raw materials. Research only.
  */
-export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, positionsBySymbol }: EmergenceShortlistProps) {
+export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, verticals, positionsBySymbol }: EmergenceShortlistProps) {
   const [selected, setSelected] = useState<string | null>(shortlist[0]?.symbol ?? null);
   const active = shortlist.find((c) => c.symbol === selected) ?? shortlist[0] ?? null;
-  const activeChain = active ? chainsByTheme[active.theme] : undefined;
-  // Re-focus the chain on the selected symbol (chains are cached per theme with a default focus).
-  const focusedChain: ValueChain | undefined = activeChain
-    ? { ...activeChain, focusSymbol: active?.symbol, tiers: activeChain.tiers.map((t) => ({
-        ...t,
-        nodes: t.nodes.map((n) => ({ ...n, hasFocus: n.companies.some((c) => c.symbol === active?.symbol) })),
-      })) }
-    : undefined;
 
   return (
     <div className="space-y-3">
@@ -207,18 +201,14 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, pos
                     {c.emergence.total}
                   </span>
                 </div>
-                <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                <div className="mt-1 flex flex-wrap items-center gap-1">
                   <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] ${STAGE_TONE[c.stage]}`}>
                     {LIFECYCLE_LABEL[c.stage]}
                   </span>
                   <span className="rounded border border-[#263241] bg-[#0d141c] px-1 py-0.5 font-mono text-[9px] text-[#8190a0]" title={c.themeName}>
                     {c.themeEmoji} {c.themeName}
                   </span>
-                </div>
-                <div className="mt-1.5">
                   <BackingBadges candidate={c} />
-                </div>
-                <div className="mt-1.5">
                   <UpsideBadge upside={c.upside} />
                 </div>
               </button>
@@ -229,7 +219,7 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, pos
           )}
         </section>
 
-        {/* Dense story drawer + full value chain for the selected name */}
+        {/* Dense story drawer + the all-verticals chain explorer, following the selected name */}
         <div className="space-y-3">
           {active ? (
             <StoryDrawer candidate={active} position={positionsBySymbol[active.symbol] ?? null} />
@@ -239,7 +229,12 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, pos
             </section>
           )}
 
-          {focusedChain && <ValueChainMap chain={focusedChain} />}
+          <ChainExplorer
+            chains={chainsByTheme}
+            verticals={verticals}
+            followTheme={active?.theme}
+            focusSymbol={active?.symbol}
+          />
         </div>
       </div>
     </div>

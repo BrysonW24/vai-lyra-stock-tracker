@@ -360,7 +360,8 @@
       "section": "Feedback intake",
       "paths": [
         "src/lib/feedback.ts",
-        "src/app/api/feedback/"
+        "src/app/api/feedback/",
+        "src/app/api/community/"
       ],
       "chains": [
         "feedback-loop"
@@ -370,7 +371,6 @@
       "section": "Release + health plumbing",
       "paths": [
         "src/lib/version.ts",
-        "src/lib/release-notes.ts",
         "src/app/whats-new/",
         "src/app/api/health/",
         "scripts/",

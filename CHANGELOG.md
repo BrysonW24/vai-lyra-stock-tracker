@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-07-17
+
+The chain explorer: every vertical traced end to end, and the chains are finally deep.
+
+### Changed
+
+- The end-to-end value chain is now an interactive explorer on Small Caps: chip tabs switch between all ten verticals - AGI Infrastructure, Quantum, Robotics, Space, Power Grid, Nuclear, Semiconductors, Critical Minerals, Defence and Cybersecurity - and selecting a shortlist name snaps the explorer to its vertical with the name highlighted where it sits in the chain.
+- The chains got deep. Nine verticals had only 2-4 supply-chain tiers mapped while AGI had 16 - every vertical now carries 8-12 nodes spanning end demand down to raw materials, with 120 companies and 95 capital events across the map (was 45 companies and 48 events). Every new row passed an adversarial fact-check before landing, and the ones that did not were struck.
+- Backing integrity held: every small cap on the map now connects to at least one DISCLOSED backing source - 16 real capital events landed (DOE loans, US Navy contracts, NASA agreements, an Nvidia partnership), 5 names were honestly resized out of small-cap (Argan and MYR Group outgrew it), and 6 names with no defensible backing were removed rather than propped up.
+- The chain is no longer hidden below the fold: a "Trace the full chain" action on every selected name jumps straight to the explorer, the shortlist cards are one-line compact instead of four stacked rows, and a verticals strip in the page header shows all ten focus areas with their tracked small-cap counts.
+- AGI Infrastructure now wears a robot instead of a brain (a brain read as biotech), and Robotics & Automation takes the mechanical arm - every vertical has a distinct mark.
+
 ## [0.34.0] - 2026-07-17
 
 The nightly jobs were failing silently every night - your digest, calendar and fundamentals are fixed.
@@ -630,7 +642,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.34.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.35.0...HEAD
+[0.35.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.34.0...v0.35.0
 [0.34.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.33.0...v0.34.0
 [0.33.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.31.0...v0.32.0

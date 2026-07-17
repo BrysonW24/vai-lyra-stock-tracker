@@ -2,7 +2,7 @@
   {
     "slug": "agi-infrastructure",
     "name": "AGI Infrastructure",
-    "emoji": "🧠",
+    "emoji": "🤖",
     "thesis": "The AGI race is decided by physical capacity - compute clusters, power contracts, transformers, and data centre shells - not by model announcements.",
     "thesisLong": "Frontier AI labs are converging on the same constraint set: gigawatt-scale power, multi-year GPU supply agreements, and data centre shells that take longer to permit than the chips inside them take to depreciate. Training compute for frontier models has grown roughly 4-5x per year, which means the binding inputs are now electricity, transformers, switchgear, cooling, and land near transmission - not algorithmic ideas. Hyperscaler capex guidance for 2025-2026 sits in the hundreds of billions of dollars per year, and a rising share of it is electrical and mechanical plant rather than silicon. That makes the investable surface much wider than GPU designers: utilities signing data centre power agreements, transformer and switchgear makers, cooling specialists, electrical contractors, and land-plus-power platforms all sit on the critical path. The research question for each company is whether it owns capacity on a bottleneck that hyperscalers must clear to keep scaling. Names with contracted backlog tied to data centre buildouts carry evidence; names with AI in the deck but no backlog carry narrative.",
     "horizon": "2024-2030",
@@ -249,7 +249,7 @@
   {
     "slug": "robotics-automation",
     "name": "Robotics & Automation",
-    "emoji": "🤖",
+    "emoji": "🦾",
     "thesis": "Foundation models are colliding with cheap actuators to make general-purpose robotics plausible, but the proven economics today are in industrial and warehouse automation.",
     "thesisLong": "The same transformer architectures driving language models are being applied to robot control, and capital is flowing into humanoid programs at unprecedented scale. The near-term reality is narrower: industrial arms, warehouse automation, and surgical robotics already generate revenue and are compounding with labour scarcity in manufacturing economies. Humanoids remain mostly pre-commercial, with bill-of-materials cost, battery life, reliability, and manipulation training data as the binding constraints. The supply chain - precision actuators, harmonic drives, sensors, and batteries - may capture value earlier than the platform makers, mirroring how component suppliers monetised early smartphone cycles. Research attention belongs on shipped units, installed-base growth, and component design wins rather than demo footage.",
     "horizon": "2026-2035",

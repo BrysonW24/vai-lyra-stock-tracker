@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Landmark, Cpu, Wallet, AlertTriangle } from 'lucide-react';
+import { Landmark, Cpu, Wallet, AlertTriangle, ArrowDown } from 'lucide-react';
 import { TickerLogo } from '@/components/TickerLogo';
 import {
   LIFECYCLE_ORDER,
@@ -241,6 +241,14 @@ export function StoryDrawer({ candidate: c, position }: StoryDrawerProps) {
 
       {/* Actions */}
       <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+        <button
+          type="button"
+          onClick={() => document.getElementById('chain-explorer')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="inline-flex items-center gap-1 rounded border border-[#1f5132] bg-[#0f2417] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#5fd08a] transition hover:bg-[#123020]"
+          title="Jump to the end-to-end value chain with this name highlighted"
+        >
+          Trace the full chain <ArrowDown size={9} />
+        </button>
         <Link
           href={`/tickers/${c.symbol}`}
           className="rounded border border-[#27496b] bg-[#0d1b2b] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#7fb0ff] transition hover:bg-[#0f2236]"

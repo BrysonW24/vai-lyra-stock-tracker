@@ -1022,5 +1022,1052 @@
       "Customer concentration in a handful of funded programs",
       "A modality shift strands specialised tooling"
     ]
+  },
+  {
+    "id": "space-satellite-components",
+    "theme": "space-economy",
+    "layer": 3,
+    "name": "Satellite components and subsystems",
+    "description": "The merchant market for spacecraft power, propulsion and pointing hardware - solar cells and arrays from Rocket Lab's SolAero and Boeing's Spectrolab, Moog thrusters and actuation, star trackers, reaction wheels and precision timing from specialists like Frequency Electronics.",
+    "whyItMatters": "Constellation-scale manufacturing multiplies demand for every subsystem, and a single sold-out component line - space solar cells especially - can gate an entire constellation's deployment schedule.",
+    "scarcity": 65,
+    "bottleneck": 70,
+    "pricingPower": 60,
+    "commodities": [
+      "Gallium",
+      "Silicon",
+      "Aluminium",
+      "Rare earths"
+    ],
+    "risks": [
+      "Vertical integration by constellation owners shrinks the merchant market",
+      "Qualified solar cell and component capacity is concentrated in a handful of lines",
+      "Per-unit price deflation as satellite volumes scale"
+    ]
+  },
+  {
+    "id": "space-critical-materials",
+    "theme": "space-economy",
+    "layer": 9,
+    "name": "Critical materials and gases for space",
+    "description": "The raw inputs at the bottom of the stack - aerospace-grade titanium and nickel superalloys from mills like ATI and Carpenter Technology, helium for tank pressurisation, xenon and krypton for electric propulsion, and germanium substrates for space solar cells.",
+    "whyItMatters": "Every vehicle and satellite ultimately resolves to a narrow base of qualified mills and gas suppliers; sanctions on Russian titanium and Ukraine-driven noble-gas shortages showed how fast this layer can bind the chain above it.",
+    "scarcity": 70,
+    "bottleneck": 65,
+    "pricingPower": 55,
+    "commodities": [
+      "Titanium",
+      "Helium",
+      "Nickel",
+      "Aluminium"
+    ],
+    "risks": [
+      "Commodity and gas price volatility swamps thin pure-play revenue pools",
+      "Russian titanium and Ukrainian noble-gas supply remain geopolitical fault lines",
+      "Aerospace qualification cycles keep new mills out for years"
+    ]
+  },
+  {
+    "id": "grid-generation-equipment",
+    "theme": "power-grid",
+    "layer": 2,
+    "name": "Generation equipment - turbines and generators",
+    "description": "Gas turbines, steam turbines and generators from GE Vernova, Siemens Energy and Mitsubishi Power - the heavy machinery behind new dispatchable capacity. Delivery slots for large gas turbines are now reserved years in advance.",
+    "whyItMatters": "Data-centre and electrification load is being met first with gas-fired capacity, making turbine delivery slots a sold-out, price-setting constraint.",
+    "scarcity": 80,
+    "bottleneck": 82,
+    "pricingPower": 80,
+    "commodities": [
+      "Steel",
+      "Nickel",
+      "Copper"
+    ],
+    "risks": [
+      "Order book overbuild if data-centre load disappoints",
+      "Capacity expansion normalises lead times later in the cycle",
+      "Policy swings between gas and renewables"
+    ]
+  },
+  {
+    "id": "grid-distribution-edge",
+    "theme": "power-grid",
+    "layer": 3,
+    "name": "Distribution equipment and grid edge",
+    "description": "Distribution transformers, switchgear, meters, connectors and enclosures from Hubbell, Eaton, Schneider Electric and Itron that carry power the last mile to homes, factories and data centres.",
+    "whyItMatters": "Distribution transformer shortages have become as acute as large power transformers, and every electrified end use multiplies the equipment count at the grid edge.",
+    "scarcity": 70,
+    "bottleneck": 75,
+    "pricingPower": 70,
+    "commodities": [
+      "Copper",
+      "Steel",
+      "Aluminium"
+    ],
+    "risks": [
+      "New distribution transformer capacity relieves pricing",
+      "Housing and construction slowdowns cut baseline demand",
+      "Commodity input cost swings"
+    ]
+  },
+  {
+    "id": "grid-software-analytics",
+    "theme": "power-grid",
+    "layer": 4,
+    "name": "Grid software and metering intelligence",
+    "description": "The ADMS, DERMS and metering platforms - Itron, GE Vernova's GridOS, Schneider Electric and Oracle Utilities - that let utilities squeeze more throughput from existing wires and manage distributed resources.",
+    "whyItMatters": "When new hardware takes years to arrive, software that unlocks capacity from the installed grid becomes the fastest deployable megawatt.",
+    "scarcity": 55,
+    "bottleneck": 45,
+    "pricingPower": 65,
+    "commodities": [
+      "Silicon",
+      "Electricity"
+    ],
+    "risks": [
+      "Utility software sales cycles are slow",
+      "Competition from large industrial software incumbents",
+      "Cyber incidents could reshape procurement"
+    ]
+  },
+  {
+    "id": "grid-wire-cable",
+    "theme": "power-grid",
+    "layer": 5,
+    "name": "Wire, cable and conductors",
+    "description": "High- and medium-voltage cable, overhead conductor and conduit from Prysmian, Nexans, Southwire and Atkore - the copper and aluminium arteries of every grid project. HVDC and subsea cable capacity is booked years ahead.",
+    "whyItMatters": "Cable plants and conductor capacity are a quieter bottleneck than transformers, but no transmission line gets energised without them.",
+    "scarcity": 70,
+    "bottleneck": 72,
+    "pricingPower": 65,
+    "commodities": [
+      "Copper",
+      "Aluminium",
+      "Steel"
+    ],
+    "risks": [
+      "Metal price pass-through lags squeeze margins",
+      "New cable plant capacity arrives later this decade",
+      "Project delays push out deliveries"
+    ]
+  },
+  {
+    "id": "grid-electrical-steel",
+    "theme": "power-grid",
+    "layer": 6,
+    "name": "Electrical steel and transformer cores",
+    "description": "Grain-oriented electrical steel (GOES) - the specialised core laminations inside every transformer - with Cleveland-Cliffs the only US producer and most non-Chinese supply from Japan, Korea and Europe.",
+    "whyItMatters": "GOES supply is the raw-material chokepoint behind the transformer shortage; without more of it, transformer capacity expansions cannot deliver.",
+    "scarcity": 85,
+    "bottleneck": 85,
+    "pricingPower": 75,
+    "commodities": [
+      "Steel",
+      "Silicon"
+    ],
+    "risks": [
+      "Trade policy reshapes import availability",
+      "New GOES capacity is slow and capital intensive",
+      "Amorphous core substitution in some transformer classes"
+    ]
+  },
+  {
+    "id": "grid-copper-aluminium",
+    "theme": "power-grid",
+    "layer": 7,
+    "name": "Copper and aluminium supply",
+    "description": "The upstream metal producers - Freeport-McMoRan, Southern Copper, BHP, Alcoa - whose output feeds every conductor, transformer winding and busbar in the buildout.",
+    "whyItMatters": "Grid expansion is among the most copper-intensive activities in the economy; long-dated mine supply decides whether the buildout's inputs stay affordable.",
+    "scarcity": 75,
+    "bottleneck": 65,
+    "pricingPower": 60,
+    "commodities": [
+      "Copper",
+      "Aluminium"
+    ],
+    "risks": [
+      "Copper price cyclicality overwhelms the structural story",
+      "Mine development timelines stretch past a decade",
+      "Aluminium substitution for copper at the margin"
+    ]
+  },
+  {
+    "id": "nuc-nuclear-utilities",
+    "theme": "nuclear-uranium",
+    "layer": 1,
+    "name": "Nuclear utilities and fleet operators",
+    "description": "Operators of the existing reactor fleet - Constellation, Vistra, Talen, Duke, Dominion - signing long-dated hyperscaler power deals and restarting shuttered units like Three Mile Island Unit 1 and Palisades.",
+    "whyItMatters": "The operating fleet is where nuclear demand meets revenue today: PPAs and restarts convert data-centre power hunger into contracted fuel and capacity demand for everything upstream.",
+    "scarcity": 65,
+    "bottleneck": 60,
+    "pricingPower": 72,
+    "commodities": [
+      "Uranium",
+      "Water",
+      "Steel"
+    ],
+    "risks": [
+      "Regulatory pushback on co-located and behind-the-meter deals",
+      "Hedges and regulated tariffs cap upside from power prices",
+      "A single extended plant outage can dominate earnings"
+    ]
+  },
+  {
+    "id": "nuc-components-services",
+    "theme": "nuclear-uranium",
+    "layer": 2,
+    "name": "Reactor components, services and instrumentation",
+    "description": "Makers of nuclear-qualified reactor systems, pumps, instrumentation and outage services - BWX Technologies, Curtiss-Wright, Mirion, GE Vernova's nuclear arm - serving the operating fleet, refurbishments and new builds.",
+    "whyItMatters": "Every life extension, uprate, restart and SMR order flows through a small pool of certified manufacturers whose qualifications take years to earn and cannot be quickly replicated.",
+    "scarcity": 78,
+    "bottleneck": 72,
+    "pricingPower": 70,
+    "commodities": [
+      "Steel",
+      "Nickel",
+      "Titanium",
+      "Copper"
+    ],
+    "risks": [
+      "New-build delays push order books to the right",
+      "Nuclear-qualified welders and engineers are themselves scarce",
+      "Long-cycle fixed-price contracts carry cost overrun risk"
+    ]
+  },
+  {
+    "id": "nuc-conversion",
+    "theme": "nuclear-uranium",
+    "layer": 3,
+    "name": "Uranium conversion",
+    "description": "The UF6 conversion step between mining and enrichment, concentrated in a handful of Western sites - Cameco's Port Hope, ConverDyn's Metropolis plant and Orano's French facilities, with Westinghouse working to restart conversion at Springfields.",
+    "whyItMatters": "Conversion is the thinnest link in the Western fuel cycle - prices rose severalfold after 2021 because conversion capacity, not mined uranium, set the binding constraint.",
+    "scarcity": 88,
+    "bottleneck": 86,
+    "pricingPower": 82,
+    "commodities": [
+      "Uranium",
+      "Electricity"
+    ],
+    "risks": [
+      "Restarted Metropolis capacity can loosen the market over time",
+      "A single-site outage ripples through the whole fuel cycle",
+      "No listed pure play, so investable exposure is indirect"
+    ]
+  },
+  {
+    "id": "nuc-uranium-developers",
+    "theme": "nuclear-uranium",
+    "layer": 4,
+    "name": "Uranium developers and restarts",
+    "description": "Development-stage projects and restart pipelines - NexGen's Rook I, Denison's Wheeler River, and the US in-situ recovery wave led by UEC, enCore and Ur-Energy - that form the next tranche of supply.",
+    "whyItMatters": "The gap between reactor demand and mine supply only closes if this pipeline delivers, and it is where permitting slippage, financing risk and dilution concentrate.",
+    "scarcity": 55,
+    "bottleneck": 62,
+    "pricingPower": 40,
+    "commodities": [
+      "Water",
+      "Steel",
+      "Electricity"
+    ],
+    "risks": [
+      "Construction and permitting slippage is the norm, not the exception",
+      "Financing windows open and close with uranium sentiment",
+      "Many projects need incentive prices above the current term price"
+    ]
+  },
+  {
+    "id": "nuc-physical-royalties",
+    "theme": "nuclear-uranium",
+    "layer": 4,
+    "name": "Physical uranium and royalties",
+    "description": "Vehicles that hold pounds rather than mines - Sprott Physical Uranium Trust, Yellow Cake and Uranium Royalty Corp - absorbing spot supply and financing miners through royalties and streams.",
+    "whyItMatters": "Physical trusts removed tens of millions of pounds from the spot market and now act as the marginal buyer that sets the visible price signal for the entire chain.",
+    "scarcity": 45,
+    "bottleneck": 50,
+    "pricingPower": 35,
+    "commodities": [
+      "Uranium"
+    ],
+    "risks": [
+      "Discounts to net asset value can persist for years",
+      "Trust buying stalls when units trade below NAV",
+      "Royalty value depends on mines actually reaching production"
+    ]
+  },
+  {
+    "id": "nuc-mining-inputs",
+    "theme": "nuclear-uranium",
+    "layer": 5,
+    "name": "Mining inputs and wellfield services",
+    "description": "The consumables and services beneath the miners - sulphuric acid for in-situ recovery, drilling contractors and wellfield construction - where shortages have already cut Kazatomprom's stated production plans.",
+    "whyItMatters": "The raw upstream constraint is no longer just ore: Kazatomprom publicly blamed sulphuric acid shortages for production downgrades in 2024-2025, making acid and drilling capacity a genuine supply governor.",
+    "scarcity": 60,
+    "bottleneck": 76,
+    "pricingPower": 55,
+    "commodities": [
+      "Sulphur",
+      "Steel",
+      "Water",
+      "Electricity"
+    ],
+    "risks": [
+      "Acid supply normalises as new plants commission",
+      "Service cost inflation squeezes miner margins",
+      "Few listed pure plays, so exposure is mostly indirect"
+    ]
+  },
+  {
+    "id": "semi-end-markets",
+    "theme": "semiconductors",
+    "layer": 1,
+    "name": "Chip end demand",
+    "description": "The device and system makers that consume finished chips - Apple, Dell, HPE, the hyperscalers and global automakers - whose product cycles set semiconductor volumes.",
+    "whyItMatters": "Every wafer start ultimately clears through a phone, server, car or appliance, so end-market inventory and refresh cycles decide when the semiconductor cycle turns.",
+    "scarcity": 30,
+    "bottleneck": 25,
+    "pricingPower": 55,
+    "commodities": [
+      "Silicon",
+      "Copper",
+      "Aluminium"
+    ],
+    "risks": [
+      "Consumer electronics demand is mature and cyclical",
+      "Inventory corrections cascade down the whole chain",
+      "Tariffs on finished electronics reshape demand maps"
+    ]
+  },
+  {
+    "id": "semi-eda-ip",
+    "theme": "semiconductors",
+    "layer": 2,
+    "name": "EDA software and IP",
+    "description": "The design-tool duopoly of Synopsys and Cadence plus architecture licensors like Arm - the software and IP without which no advanced chip can be designed.",
+    "whyItMatters": "EDA access has become an export-control weapon: two US companies gate the design of essentially every leading-edge chip on earth.",
+    "scarcity": 88,
+    "bottleneck": 75,
+    "pricingPower": 90,
+    "commodities": [
+      "Electricity"
+    ],
+    "risks": [
+      "Export-control policy swings on China EDA access",
+      "AI-assisted design tools could reshape who captures value",
+      "Customer consolidation concentrates renewal risk"
+    ]
+  },
+  {
+    "id": "semi-power-analog",
+    "theme": "semiconductors",
+    "layer": 2,
+    "name": "Power and analog semiconductors",
+    "description": "Power, analog and mixed-signal chipmakers - Texas Instruments, Analog Devices, Infineon, onsemi, Monolithic Power - plus GaN and SiC specialists like Navitas serving AI data-centre power delivery and vehicles.",
+    "whyItMatters": "AI racks moving toward 800-volt power architectures and electrifying vehicles both multiply power-semiconductor content, in a tier far less crowded than GPU designers.",
+    "scarcity": 45,
+    "bottleneck": 50,
+    "pricingPower": 55,
+    "commodities": [
+      "Silicon",
+      "Gallium",
+      "Copper"
+    ],
+    "risks": [
+      "Analog inventory cycles produce long corrections",
+      "Chinese domestic substitution in commodity analog",
+      "SiC and GaN price competition erodes early margins"
+    ]
+  },
+  {
+    "id": "semi-packaging-test",
+    "theme": "semiconductors",
+    "layer": 3,
+    "name": "Packaging, assembly and test",
+    "description": "The OSATs - Amkor, ASE, JCET - and the test ecosystem of Teradyne, Advantest and FormFactor that assemble, package and verify chips after wafer fabrication.",
+    "whyItMatters": "Advanced packaging and known-good-die testing have become gating steps for AI silicon, and CHIPS-funded onshoring is rebuilding this tier in the US for the first time in decades.",
+    "scarcity": 60,
+    "bottleneck": 70,
+    "pricingPower": 45,
+    "commodities": [
+      "Copper",
+      "Silicon",
+      "Electricity"
+    ],
+    "risks": [
+      "Thin OSAT margins versus foundries taking packaging in-house",
+      "Heavy geographic concentration in Taiwan and Southeast Asia",
+      "Utilisation swings amplify earnings cyclicality"
+    ]
+  },
+  {
+    "id": "semi-equipment-subsystems",
+    "theme": "semiconductors",
+    "layer": 4,
+    "name": "Equipment subsystems and components",
+    "description": "The sub-suppliers behind the tool makers - MKS Instruments, Advanced Energy, Ultra Clean, Ichor, VAT - providing RF power, vacuum, gas delivery and precision components inside ASML, Applied Materials and Lam Research tools.",
+    "whyItMatters": "Every equipment order fans out into this quieter tier, where single-qualified components create choke points the headline equipment names depend on.",
+    "scarcity": 65,
+    "bottleneck": 68,
+    "pricingPower": 50,
+    "commodities": [
+      "Steel",
+      "Aluminium",
+      "Copper"
+    ],
+    "risks": [
+      "Subsystem orders swing harder than OEM equipment revenue",
+      "Concentration on a handful of equipment OEM customers",
+      "Qualification lock-in cuts both ways when platforms change"
+    ]
+  },
+  {
+    "id": "semi-critical-inputs",
+    "theme": "semiconductors",
+    "layer": 5,
+    "name": "Critical raw inputs",
+    "description": "The rawest upstream inputs - ultra-pure polysilicon from Hemlock and Wacker, high-purity quartz from Spruce Pine, gallium, germanium, neon and helium - that every fab and wafer maker consumes.",
+    "whyItMatters": "China's export controls on gallium and germanium showed this deepest tier can be weaponised, and single-site concentrations like Spruce Pine quartz have no quick substitutes.",
+    "scarcity": 85,
+    "bottleneck": 80,
+    "pricingPower": 65,
+    "commodities": [
+      "Silicon",
+      "Gallium",
+      "Helium",
+      "Rare earths"
+    ],
+    "risks": [
+      "Chinese export controls on gallium and germanium",
+      "Single-site supply concentration for high-purity quartz",
+      "Opaque pricing in thin, specialised markets"
+    ]
+  },
+  {
+    "id": "min-defence-ev-end-demand",
+    "theme": "critical-minerals",
+    "layer": 1,
+    "name": "Defence and electrification end demand",
+    "description": "The end markets that consume critical minerals - defence primes like Lockheed Martin and RTX, EV makers like Tesla and GM, and wind and grid OEMs like GE Vernova - whose magnets, batteries and motors resolve to mined material.",
+    "whyItMatters": "Procurement and stockpiling decisions at this tier set demand and the premium buyers will pay for non-Chinese supply, which is what makes the rest of the chain financeable.",
+    "scarcity": 30,
+    "bottleneck": 25,
+    "pricingPower": 70,
+    "commodities": [
+      "Rare earths",
+      "Lithium",
+      "Copper",
+      "Graphite",
+      "Nickel",
+      "Cobalt"
+    ],
+    "risks": [
+      "EV demand softness reduces mineral pull-through",
+      "Substitution engineering cuts rare earth content per unit",
+      "Defence budgets shift with political cycles"
+    ]
+  },
+  {
+    "id": "min-magnet-manufacturing",
+    "theme": "critical-minerals",
+    "layer": 2,
+    "name": "Permanent magnet manufacturing",
+    "description": "Sintered NdFeB magnet plants outside China - MP Materials' Fort Worth facility, e-VAC's South Carolina plant, USA Rare Earth's Stillwater site - turning refined oxides and metal into finished magnets for defence and EV motors.",
+    "whyItMatters": "Magnets are where refined rare earths become defence and EV components, and ex-China magnet capacity remains a small fraction of Western demand.",
+    "scarcity": 85,
+    "bottleneck": 85,
+    "pricingPower": 65,
+    "commodities": [
+      "Rare earths",
+      "Electricity",
+      "Copper"
+    ],
+    "risks": [
+      "Chinese export controls squeeze feedstock as well as competition",
+      "Ramp and yield execution at first-of-a-kind Western plants",
+      "Defence and auto qualification cycles are slow"
+    ]
+  },
+  {
+    "id": "min-battery-materials",
+    "theme": "critical-minerals",
+    "layer": 3,
+    "name": "Battery materials and conversion",
+    "description": "Battery-grade lithium conversion, cathode and anode materials, and synthetic graphite - Albemarle's conversion plants, Novonix's Chattanooga anode facility, Tesla's Corpus Christi lithium refinery.",
+    "whyItMatters": "Like rare earth separation, battery-grade conversion is a midstream step China dominates, and graphite export licensing made closing that gap an explicit Western policy priority.",
+    "scarcity": 75,
+    "bottleneck": 80,
+    "pricingPower": 45,
+    "commodities": [
+      "Lithium",
+      "Graphite",
+      "Nickel",
+      "Cobalt",
+      "Electricity",
+      "Water"
+    ],
+    "risks": [
+      "Chinese oversupply keeps conversion margins thin",
+      "Western cathode and anode plants face brutal cost curves against incumbents",
+      "Chemistry shifts like LFP and sodium-ion reshuffle input demand"
+    ]
+  },
+  {
+    "id": "min-lithium-producers",
+    "theme": "critical-minerals",
+    "layer": 4,
+    "name": "Lithium producers",
+    "description": "The miners of spodumene and brine - Albemarle, SQM, and emerging US supply led by Lithium Americas' Thacker Pass - feeding the battery chain's base metal.",
+    "whyItMatters": "Lithium has no practical substitute in EV and storage batteries, and the post-2022 price crash curtailed exactly the supply the 2030s demand curve needs.",
+    "scarcity": 60,
+    "bottleneck": 55,
+    "pricingPower": 40,
+    "commodities": [
+      "Water",
+      "Electricity",
+      "Steel"
+    ],
+    "risks": [
+      "Prices are set by marginal Chinese and African supply",
+      "Brine and clay projects carry novel process risk",
+      "Demand growth is hostage to EV adoption rates"
+    ]
+  },
+  {
+    "id": "min-mining-equipment-services",
+    "theme": "critical-minerals",
+    "layer": 5,
+    "name": "Mining equipment and services",
+    "description": "The trucks, shovels, drills and contractors every mine buildout must hire - Caterpillar and Komatsu fleets, Epiroc drilling systems, and the EPC and drilling firms that construct new operations.",
+    "whyItMatters": "Long equipment lead times and scarce skilled contractors add years and capex to every new Western mine, making this tier a quiet tax on the whole buildout.",
+    "scarcity": 45,
+    "bottleneck": 50,
+    "pricingPower": 60,
+    "commodities": [
+      "Steel",
+      "Copper",
+      "Aluminium",
+      "Electricity"
+    ],
+    "risks": [
+      "Mining capex cycles swing orders violently",
+      "Exposure is diluted across all commodities, not just critical minerals",
+      "Fleet electrification raises the R&D burden"
+    ]
+  },
+  {
+    "id": "min-exploration-development",
+    "theme": "critical-minerals",
+    "layer": 6,
+    "name": "Exploration and pre-production development",
+    "description": "Pre-revenue developers and explorers holding the West's undeveloped deposits - Perpetua's Stibnite antimony-gold project, NioCorp's Elk Creek, Ramaco's Brook Mine rare earth seams - plus the grassroots drill plays behind them.",
+    "whyItMatters": "This is the rawest upstream bottleneck: with 10-15 years from discovery to production, today's permitting and financing queue IS the 2030s Western supply curve.",
+    "scarcity": 70,
+    "bottleneck": 88,
+    "pricingPower": 25,
+    "commodities": [
+      "Electricity",
+      "Water",
+      "Steel"
+    ],
+    "risks": [
+      "Most projects never secure construction financing",
+      "Permitting timelines are measured in decades, not years",
+      "Equity dilution is the default funding model"
+    ]
+  },
+  {
+    "id": "def-software-c2",
+    "theme": "defence-drones",
+    "layer": 2,
+    "name": "Defence software and battle management",
+    "description": "Software-defined command, control and targeting layers - Palantir's Maven and TITAN work, Anduril's Lattice - that fuse sensor data and task autonomous systems across a battlefield.",
+    "whyItMatters": "Software is where the attritable-mass thesis earns technology margins: whoever owns the C2 layer directs the drones, sensors and effectors below it.",
+    "scarcity": 60,
+    "bottleneck": 55,
+    "pricingPower": 78,
+    "commodities": [],
+    "risks": [
+      "Primes and government-owned software compete for the same layer",
+      "Program awards are politically contested and frequently protested",
+      "Classified work limits outside visibility into performance"
+    ]
+  },
+  {
+    "id": "def-munitions-energetics",
+    "theme": "defence-drones",
+    "layer": 4,
+    "name": "Munitions and solid rocket motors",
+    "description": "Missiles, artillery shells, interceptors and the solid rocket motors and energetics beneath them - Lockheed, RTX, Northrop and L3Harris Aerojet lines running at replenishment rates after Ukraine drained Western stockpiles.",
+    "whyItMatters": "Every rearmament budget flows into a munitions industrial base where motor and energetics capacity, not funding, is the limiter on delivery rates.",
+    "scarcity": 80,
+    "bottleneck": 85,
+    "pricingPower": 70,
+    "commodities": [
+      "Steel",
+      "Aluminium",
+      "Copper",
+      "Titanium"
+    ],
+    "risks": [
+      "Energetic materials and precursor chemicals are single-sourced",
+      "New facilities take years to build and qualify",
+      "A broad de-escalation would slow replenishment urgency"
+    ]
+  },
+  {
+    "id": "def-electronics-sensors",
+    "theme": "defence-drones",
+    "layer": 4,
+    "name": "Defence electronics and sensors",
+    "description": "Radars, electro-optics, electronic warfare, seekers and rugged mission computing - Leonardo DRS, Elbit, Mercury Systems and L3Harris units embedded in nearly every platform and munition.",
+    "whyItMatters": "Sensor and EW content per platform keeps rising - drones, counter-UAS and precision munitions are all guided by this layer's chips and apertures.",
+    "scarcity": 65,
+    "bottleneck": 70,
+    "pricingPower": 65,
+    "commodities": [
+      "Silicon",
+      "Gallium",
+      "Rare earths"
+    ],
+    "risks": [
+      "Component obsolescence and long qualification cycles",
+      "Consolidated prime customers squeeze suppliers on price",
+      "Export controls on GaN and RF parts limit addressable markets"
+    ]
+  },
+  {
+    "id": "def-drone-components",
+    "theme": "defence-drones",
+    "layer": 5,
+    "name": "Small-drone components",
+    "description": "Motors, flight controllers, gimbals, radios and batteries for small UAS - a supply chain dominated by China's DJI ecosystem that NDAA rules now force Western vendors like Unusual Machines to rebuild onshore.",
+    "whyItMatters": "Every Western small-drone program is gated by non-Chinese component supply - the theme's most explicit reshoring bottleneck sits in this tier.",
+    "scarcity": 70,
+    "bottleneck": 80,
+    "pricingPower": 55,
+    "commodities": [
+      "Rare earths",
+      "Lithium",
+      "Silicon",
+      "Copper",
+      "Aluminium"
+    ],
+    "risks": [
+      "Chinese components remain drastically cheaper without policy mandates",
+      "Sub-scale Western vendors depend on procurement protection",
+      "Standards churn across drone programs fragments volumes"
+    ]
+  },
+  {
+    "id": "def-castings-forgings",
+    "theme": "defence-drones",
+    "layer": 6,
+    "name": "Castings, forgings and aerostructures",
+    "description": "Precision castings, forgings and specialty-alloy structures from Howmet, Carpenter Technology, ATI and Ducommun that become airframes, engine parts and missile bodies.",
+    "whyItMatters": "Forging and casting throughput is the physical limit under every missile and airframe ramp - lead times in this tier set delivery rates above it.",
+    "scarcity": 70,
+    "bottleneck": 75,
+    "pricingPower": 70,
+    "commodities": [
+      "Titanium",
+      "Nickel",
+      "Steel",
+      "Aluminium"
+    ],
+    "risks": [
+      "Capacity added for the ramp becomes overhang in a downturn",
+      "Skilled foundry and forge labour is scarce",
+      "Alloy input price swings squeeze fixed-price contracts"
+    ]
+  },
+  {
+    "id": "def-critical-materials",
+    "theme": "defence-drones",
+    "layer": 7,
+    "name": "Defence critical materials",
+    "description": "The raw inputs the whole chain resolves to - rare earth magnets for drone motors and guidance fins, titanium sponge, gallium for radar semiconductors and energetic precursors - much of it processed in China.",
+    "whyItMatters": "China's export controls on gallium, germanium and rare earths target this tier directly, making it the deepest and most policy-sensitive link in the defence supply chain.",
+    "scarcity": 85,
+    "bottleneck": 85,
+    "pricingPower": 55,
+    "commodities": [
+      "Rare earths",
+      "Titanium",
+      "Gallium"
+    ],
+    "risks": [
+      "Chinese export controls can halt shipments abruptly",
+      "Western substitution capacity is years from scale",
+      "Stockpiling policy shifts distort demand signals"
+    ]
+  },
+  {
+    "id": "rob-warehouse-industrial",
+    "theme": "robotics-automation",
+    "layer": 1,
+    "name": "Warehouse and industrial automation",
+    "description": "Deployed automation that already earns revenue - Symbotic case-handling systems, Amazon Robotics fleets, and industrial arms and cells from FANUC, ABB, Yaskawa and Rockwell-integrated lines.",
+    "whyItMatters": "This is where robotics economics are already proven; installed-base growth here funds and de-risks the component supply chain the humanoid thesis will eventually need.",
+    "scarcity": 45,
+    "bottleneck": 40,
+    "pricingPower": 50,
+    "commodities": [
+      "Steel",
+      "Aluminium",
+      "Copper",
+      "Electricity"
+    ],
+    "risks": [
+      "Warehouse capex tracks the e-commerce cycle",
+      "Heavy customer concentration in a few retail giants",
+      "Chinese integrators compress system pricing"
+    ]
+  },
+  {
+    "id": "rob-surgical-medical",
+    "theme": "robotics-automation",
+    "layer": 1,
+    "name": "Surgical and medical robotics",
+    "description": "Robotic surgery platforms with razor-and-blade economics - Intuitive Surgical's da Vinci installed base, Stryker Mako, Medtronic Hugo and Procept BioRobotics' Aquabeam.",
+    "whyItMatters": "Surgical robotics proves robots can command premium pricing when they earn recurring instrument revenue per procedure - the business model every other robot category wants.",
+    "scarcity": 70,
+    "bottleneck": 45,
+    "pricingPower": 85,
+    "commodities": [
+      "Titanium",
+      "Steel",
+      "Silicon"
+    ],
+    "risks": [
+      "Regulatory approval cycles are long and binary",
+      "Hospital capex sensitivity delays system placements",
+      "Incumbent moats leave little room for new entrants"
+    ]
+  },
+  {
+    "id": "rob-embodied-ai-software",
+    "theme": "robotics-automation",
+    "layer": 2,
+    "name": "Robot foundation models and simulation",
+    "description": "The software brains and training pipelines - NVIDIA Isaac and GR00T, Google DeepMind robotics models, Physical Intelligence, and the sim-to-real toolchains that generate manipulation training data.",
+    "whyItMatters": "Manipulation training data and transferable robot policies are the theme's stated binding constraint - whoever cracks generalisation sets the humanoid timeline.",
+    "scarcity": 70,
+    "bottleneck": 75,
+    "pricingPower": 65,
+    "commodities": [
+      "Electricity",
+      "Silicon"
+    ],
+    "risks": [
+      "Open-source robot models compress software value",
+      "The sim-to-real gap keeps resisting shortcuts",
+      "Most of the strongest teams are private"
+    ]
+  },
+  {
+    "id": "rob-robot-compute-semis",
+    "theme": "robotics-automation",
+    "layer": 3,
+    "name": "Robot compute and motion-control silicon",
+    "description": "Edge AI computers and control chips inside every robot - NVIDIA Jetson Thor, Qualcomm robotics platforms, Ambarella vision SoCs, and the analog motion-control and power silicon from TI, ADI and STMicroelectronics.",
+    "whyItMatters": "Every actuator and camera terminates in silicon; robot bill-of-materials shifts toward compute as autonomy rises, mirroring the electronics ramp inside cars.",
+    "scarcity": 55,
+    "bottleneck": 60,
+    "pricingPower": 65,
+    "commodities": [
+      "Silicon",
+      "Gallium",
+      "Copper"
+    ],
+    "risks": [
+      "Industrial and auto analog demand is deeply cyclical",
+      "Chinese MCU substitution at the commodity end",
+      "One platform vendor could capture the whole compute layer"
+    ]
+  },
+  {
+    "id": "rob-batteries-power",
+    "theme": "robotics-automation",
+    "layer": 4,
+    "name": "Robot batteries and power systems",
+    "description": "High energy-density cells, packs and power electronics for mobile robots and humanoids - drawing on the same lithium-ion supply chain as EVs, dominated by CATL, LG Energy Solution and Panasonic, with silicon-anode specialists like Amprius pushing density.",
+    "whyItMatters": "Battery life is a named binding constraint on humanoids - runtime per charge decides whether a robot does a full shift of work or none.",
+    "scarcity": 50,
+    "bottleneck": 60,
+    "pricingPower": 45,
+    "commodities": [
+      "Lithium",
+      "Nickel",
+      "Cobalt",
+      "Graphite",
+      "Copper"
+    ],
+    "risks": [
+      "EV demand sets cell pricing, not robotics",
+      "Energy density improves far slower than compute",
+      "China dominates cell manufacturing capacity"
+    ]
+  },
+  {
+    "id": "rob-rare-earth-magnets",
+    "theme": "robotics-automation",
+    "layer": 5,
+    "name": "Rare earth magnets and motor materials",
+    "description": "Sintered NdFeB permanent magnets and the mined rare earths behind them - MP Materials, Lynas and USA Rare Earth building ex-China supply against a market where China controls most refining and magnet output.",
+    "whyItMatters": "Every servo motor in every actuator needs NdFeB magnets; China's export controls on rare earths make this the deepest single point of failure in the robotics chain.",
+    "scarcity": 85,
+    "bottleneck": 90,
+    "pricingPower": 60,
+    "commodities": [
+      "Rare earths",
+      "Steel",
+      "Copper"
+    ],
+    "risks": [
+      "China export controls and price influence",
+      "Ex-China processing capacity is years away at scale",
+      "Commodity price swings swamp equity fundamentals"
+    ]
+  },
+  {
+    "id": "cyber-gov-mission",
+    "theme": "cybersecurity",
+    "layer": 1,
+    "name": "Government cyber and mission services",
+    "description": "Federal cyber operations, compliance automation and mission IT delivered by Leidos, Booz Allen Hamilton, CACI and Telos into the DoD, intelligence community and civilian agencies.",
+    "whyItMatters": "Government is the stickiest end demand in security - multi-year contract vehicles and rising nation-state threat activity keep budgets growing through commercial IT cycles.",
+    "scarcity": 55,
+    "bottleneck": 50,
+    "pricingPower": 45,
+    "commodities": [],
+    "risks": [
+      "Continuing-resolution funding gaps delay awards",
+      "Cost-plus contracting structurally caps margins",
+      "Efficiency-driven cuts to contractor spend"
+    ]
+  },
+  {
+    "id": "cyber-network-edge",
+    "theme": "cybersecurity",
+    "layer": 2,
+    "name": "Network, edge and cloud security",
+    "description": "Cloud-delivered network defence and secure access service edge - Zscaler, Cloudflare, Fortinet, Netskope - replacing appliance perimeters as traffic moves to cloud and remote work.",
+    "whyItMatters": "The enterprise perimeter is being rebuilt in the cloud, and whoever carries the traffic controls the inspection point for everything else in the stack.",
+    "scarcity": 50,
+    "bottleneck": 55,
+    "pricingPower": 65,
+    "commodities": [
+      "Electricity"
+    ],
+    "risks": [
+      "Hardware-to-SaaS transition cannibalises firewall vendors",
+      "Hyperscalers bundle native network security",
+      "Price competition intensifies as SASE matures"
+    ]
+  },
+  {
+    "id": "cyber-secops-ai",
+    "theme": "cybersecurity",
+    "layer": 3,
+    "name": "Security operations, SIEM and AI SOC",
+    "description": "The detection-and-response layer - Splunk under Cisco, Microsoft Sentinel, CrowdStrike and SentinelOne AI SIEM, Rapid7 - where security telemetry is aggregated and increasingly triaged by AI agents.",
+    "whyItMatters": "The security analyst shortage makes the SOC the natural first home for AI agents, and whoever owns the telemetry owns the data advantage for training them.",
+    "scarcity": 55,
+    "bottleneck": 65,
+    "pricingPower": 60,
+    "commodities": [
+      "Electricity"
+    ],
+    "risks": [
+      "Ingest-based pricing breaks as telemetry volumes explode",
+      "AI SOC agents deflate analyst- and seat-based pricing",
+      "Platform vendors absorb standalone SIEM"
+    ]
+  },
+  {
+    "id": "cyber-data-pqc",
+    "theme": "cybersecurity",
+    "layer": 4,
+    "name": "Data security, encryption and post-quantum migration",
+    "description": "Data resilience, encryption and key management - Rubrik, Varonis, Commvault, Thales - plus the multi-year migration of certificates, HSMs and protocols to the NIST post-quantum standards finalised in 2024.",
+    "whyItMatters": "Ransomware turned backup into a security product, and the decade-long post-quantum re-encryption of global infrastructure is one of the few genuinely new spend cycles in a mature theme.",
+    "scarcity": 55,
+    "bottleneck": 60,
+    "pricingPower": 60,
+    "commodities": [
+      "Electricity"
+    ],
+    "risks": [
+      "Post-quantum migration timelines keep slipping right",
+      "Backup incumbents and hyperscalers bundle data security",
+      "Crypto-agility standards commoditise point vendors"
+    ]
+  },
+  {
+    "id": "cyber-hardware-silicon",
+    "theme": "cybersecurity",
+    "layer": 5,
+    "name": "Security hardware and silicon",
+    "description": "The physical trust anchors - Fortinet's custom SPU ASICs, hardware security modules from Thales and Utimaco, NXP and Infineon secure elements, and NVIDIA BlueField DPUs that offload security processing.",
+    "whyItMatters": "Every zero-trust architecture ultimately roots in tamper-resistant silicon, and line-rate inspection of AI-era traffic increasingly requires dedicated hardware rather than general-purpose CPUs.",
+    "scarcity": 65,
+    "bottleneck": 60,
+    "pricingPower": 60,
+    "commodities": [
+      "Silicon",
+      "Copper",
+      "Gallium"
+    ],
+    "risks": [
+      "Cloud delivery shifts value from appliances to software",
+      "Long certification cycles slow product refreshes",
+      "Secure-element supply concentrated in a few vendors"
+    ]
+  },
+  {
+    "id": "cyber-trusted-foundry",
+    "theme": "cybersecurity",
+    "layer": 6,
+    "name": "Trusted foundry and secure chip supply",
+    "description": "Accredited onshore fabrication of defence and security-critical chips - GlobalFoundries' DMEA-accredited Trusted Foundry fabs in Vermont and New York, plus Intel's secure-enclave programs for the DoD.",
+    "whyItMatters": "Security guarantees are only as strong as the supply chain that made the silicon, which makes accredited onshore fabs the raw upstream bottleneck of the entire trust stack.",
+    "scarcity": 80,
+    "bottleneck": 75,
+    "pricingPower": 55,
+    "commodities": [
+      "Silicon",
+      "Gallium",
+      "Copper",
+      "Water",
+      "Electricity"
+    ],
+    "risks": [
+      "Mature-node economics depend on subsidy support",
+      "Accreditation limits the supplier pool to a handful of fabs",
+      "Defence chip demand is lumpy against commercial cycles"
+    ]
+  },
+  {
+    "id": "q-software-pqc",
+    "theme": "quantum-computing",
+    "layer": 1,
+    "name": "Quantum software and post-quantum cryptography",
+    "description": "Algorithm developers, error-correction software and the post-quantum cryptography migration - IBM's Qiskit ecosystem, Quantinuum, SandboxAQ, SEALSQ and Arqit - where NIST-standardised PQC gives the theme revenue before the hardware matures.",
+    "whyItMatters": "PQC migration is mandated by published NIST standards and paid for from existing enterprise security budgets, making it the nearest-term real revenue anywhere in the theme.",
+    "scarcity": 40,
+    "bottleneck": 35,
+    "pricingPower": 40,
+    "commodities": [
+      "Electricity"
+    ],
+    "risks": [
+      "PQC spend flows mostly to incumbent security vendors",
+      "Quantum software has little moat without hardware advantage",
+      "Migration timelines slip as enterprises defer spend"
+    ]
+  },
+  {
+    "id": "q-networking-sensing",
+    "theme": "quantum-computing",
+    "layer": 1,
+    "name": "Quantum networking and sensing",
+    "description": "Quantum key distribution, quantum-safe networks, atomic clocks and quantum sensors - IonQ's networking acquisitions, Toshiba's QKD systems and defence sensing programs - productising quantum physics ahead of full computers.",
+    "whyItMatters": "Networking and sensing monetise quantum effects years before fault-tolerant computing arrives, anchored by government and defence buyers with real budgets.",
+    "scarcity": 55,
+    "bottleneck": 45,
+    "pricingPower": 45,
+    "commodities": [
+      "Silicon",
+      "Gallium",
+      "Electricity"
+    ],
+    "risks": [
+      "Government-dominated demand is lumpy and political",
+      "Classical alternatives undercut QKD economics",
+      "Quantum network standards remain immature"
+    ]
+  },
+  {
+    "id": "q-photonics-components",
+    "theme": "quantum-computing",
+    "layer": 3,
+    "name": "Photonics, lasers and detectors",
+    "description": "Precision lasers, modulators, single-photon detectors and photonic integrated circuits - from Coherent, Hamamatsu, Thorlabs and Quantum Computing Inc's lithium niobate foundry - consumed by trapped-ion, neutral-atom and photonic machines.",
+    "whyItMatters": "Three of the four leading qubit modalities are built from photonics, so laser and detector supply is a common input regardless of which platform wins.",
+    "scarcity": 60,
+    "bottleneck": 60,
+    "pricingPower": 55,
+    "commodities": [
+      "Silicon",
+      "Gallium",
+      "Copper"
+    ],
+    "risks": [
+      "Quantum is a tiny share of overall photonics demand",
+      "Specialised components carry single-source supply risk",
+      "A superconducting-modality win reduces photonics content"
+    ]
+  },
+  {
+    "id": "q-chip-fabrication",
+    "theme": "quantum-computing",
+    "layer": 3,
+    "name": "Quantum chip fabrication",
+    "description": "Specialised foundry services for superconducting and photonic quantum chips - GlobalFoundries manufacturing PsiQuantum's photonic wafers, SkyWater fabricating superconducting devices for D-Wave, and Rigetti's own in-house fab.",
+    "whyItMatters": "Qubit chips need semiconductor-grade process control years before volumes justify it, so a handful of qualified fab lines gate every hardware roadmap.",
+    "scarcity": 70,
+    "bottleneck": 65,
+    "pricingPower": 50,
+    "commodities": [
+      "Silicon",
+      "Electricity",
+      "Water"
+    ],
+    "risks": [
+      "Volumes are far too small for normal foundry economics",
+      "Process knowledge concentrated in a few lines",
+      "A modality shift strands tooling investment"
+    ]
+  },
+  {
+    "id": "q-superconducting-materials",
+    "theme": "quantum-computing",
+    "layer": 4,
+    "name": "Superconducting materials and wire",
+    "description": "Niobium, niobium-titanium wire and tantalum films that superconducting qubits, resonators and cryostat wiring are made from - niobium supply dominated by Brazil's CBMM, with wire specialists such as Bruker's superconductor unit and Luvata.",
+    "whyItMatters": "Superconducting qubits and the wiring and magnets around them resolve to a thin industrial base of niobium and tantalum products with very few qualified sources.",
+    "scarcity": 70,
+    "bottleneck": 60,
+    "pricingPower": 55,
+    "commodities": [
+      "Niobium",
+      "Titanium",
+      "Tantalum",
+      "Copper"
+    ],
+    "risks": [
+      "Niobium supply concentrated in a single Brazilian producer",
+      "Quantum volumes are negligible for materials suppliers",
+      "Formulation shifts change which materials matter"
+    ]
+  },
+  {
+    "id": "q-helium-isotopes",
+    "theme": "quantum-computing",
+    "layer": 5,
+    "name": "Helium and isotopes",
+    "description": "Liquid helium, scarce helium-3 for dilution refrigerators and isotopically enriched silicon-28 - bulk helium supplied by industrial gas majors like Linde and Air Products, while helium-3 is largely a byproduct of government tritium stockpiles.",
+    "whyItMatters": "Every superconducting machine sits inside a dilution refrigerator that cannot run without helium isotopes, the rawest and least substitutable input in the entire chain.",
+    "scarcity": 85,
+    "bottleneck": 75,
+    "pricingPower": 65,
+    "commodities": [
+      "Helium",
+      "Natural gas",
+      "Electricity"
+    ],
+    "risks": [
+      "Helium-3 supply is a government byproduct with no market elasticity",
+      "Helium prices spike on plant outages and export disruptions",
+      "Closed-loop recycling reduces per-machine demand over time"
+    ]
   }
 ]
