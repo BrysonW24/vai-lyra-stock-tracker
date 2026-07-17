@@ -235,27 +235,44 @@ def _compute_and_persist_event_risks(
 
 def _load_latest_signals(repo: SupabaseRepository) -> list[dict]:
     """
-    Load the latest signal snapshot for all tickers from Supabase.
-    Returns a list of signal records with at least 'symbol' and 'status' keys.
+    Load the LATEST signal per symbol from Supabase.
+
+    Returns records with 'symbol' and 'status' keys ('strong_setup' | 'watchlist_setup' |
+    'inactive'), matching what event_risk_for_ticker expects.
+
+    Three bugs lived here and all three failed silently, leaving every ticker "inactive" and the
+    whole event-risk layer inert:
+      1. it queried table "signals", which has never existed (the table is stock_signals) - Postgres
+         answered PGRST205 every night and the except-branch swallowed it;
+      2. it selected column "status", but the column is "signal_status";
+      3. it built the map with a dict comprehension over a newest-first list, so the OLDEST row won
+         for each symbol. Newest must win.
     Guarded: if client is None, return empty list.
     """
     if not repo.client:
         return []
 
     try:
-        # Query signals table ordered by timestamp desc, grouping by symbol
-        # (assumes signals table has symbol, status, and a timestamp/created_at column)
         result = (
-            repo.client.table("signals")
-            .select("symbol, status")
+            repo.client.table("stock_signals")
+            .select("symbol, signal_status, created_at")
             .order("created_at", desc=True)
             .limit(1000)
             .execute()
         )
-        return result.data or []
+        rows = result.data or []
     except Exception as e:
         logger.warning(f"Failed to load latest signals: {e}")
         return []
+
+    # Rows arrive newest-first, so the first time a symbol appears is its latest signal.
+    latest: dict[str, dict] = {}
+    for row in rows:
+        symbol = row.get("symbol")
+        if not symbol or symbol in latest:
+            continue
+        latest[symbol] = {"symbol": symbol, "status": row.get("signal_status") or "inactive"}
+    return list(latest.values())
 
 
 def main() -> None:

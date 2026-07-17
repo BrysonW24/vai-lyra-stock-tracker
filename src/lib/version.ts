@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.34.0',
+    date: '2026-07-17',
+    title: 'The nightly jobs were failing silently every night - your digest, calendar and fundamentals are fixed',
+    highlights: [
+      'Your daily digest is fixed. It had been crashing every single night before a single message went out: a market-wide digest was being filed against a made-up ticker called "MARKET", and the database rejected it outright. A digest is not about one stock, so it is now filed with no ticker - which is the honest answer and what the schema always allowed.',
+      'The market calendar reads live events again. The events table had been defined twice with two different shapes, and the version the app actually reads never took effect - so every calendar lookup asked for a date column that was not there. The two definitions are now reconciled into one.',
+      'Company fundamentals are being saved again. Every nightly snapshot, for every ticker, was silently rejected because the table was missing thirteen of the columns the job writes - including cash, debt and the P/E ratios. Nothing had been stored.',
+      'Event risk actually works now. The nightly job was reading a table that has never existed, so every ticker came back "inactive" and no event risk was ever raised. It also kept the OLDEST reading per stock instead of the newest.',
+      'Added a build gate that blocks this whole class of bug: it fails the build if two migrations share a version number or define the same table with different shapes - the exact traps that let all of the above fail quietly for so long.',
+    ],
+  },
+  {
     version: '0.33.0',
     date: '2026-07-17',
     title: 'Product updates and Ideas get the premium glass treatment',

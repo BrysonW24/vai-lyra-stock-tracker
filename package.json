@@ -1,6 +1,6 @@
 {
   "name": "vai-lyra-stock-tracker",
-  "version": "0.33.0",
+  "version": "0.34.0",
   "private": true,
   "description": "Hourly tech stock momentum scanner dashboard and Python worker.",
   "scripts": {
@@ -27,6 +27,7 @@
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "check:onboarding": "node scripts/check-onboarding-parity.mjs",
     "check:onboarding-contract": "node scripts/check-onboarding-contract.mjs",
+    "check:migrations": "node scripts/check-migrations.mjs",
     "check:chains": "node scripts/check-skill-chains.mjs"
   },
   "dependencies": {

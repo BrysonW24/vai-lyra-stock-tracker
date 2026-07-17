@@ -57,6 +57,8 @@ jobs:
         run: npm run check:onboarding
       - name: Onboarding contract (captured values are persisted, read, and reach the AI)
         run: npm run check:onboarding-contract
+      - name: Migration integrity (unique versions, no silent table-shape collisions)
+        run: npm run check:migrations
       - name: Skill-chain coverage (every code section has an owning chain)
         run: npm run check:chains
       - name: Unit tests

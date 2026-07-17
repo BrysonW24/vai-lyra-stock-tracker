@@ -328,7 +328,10 @@ class SupabaseRepository:
     def save_alert(
         self,
         signal_id: str | None,
-        symbol: str,
+        # None for market-wide alerts (digests, weekly reports) that are not about one ticker.
+        # stock_alerts.symbol is nullable WITH a foreign key to stock_tickers (migration 009), so a
+        # sentinel string like "MARKET" is rejected by the FK - NULL is the correct value.
+        symbol: str | None,
         alert_type: str,
         channel: str,
         message: str,

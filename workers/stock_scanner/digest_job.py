@@ -145,7 +145,10 @@ def send_digests(
             )
             repo.save_alert(
                 signal_id=None,
-                symbol="MARKET",
+                # A digest is market-wide, not about one ticker. stock_alerts.symbol carries a foreign
+                # key to stock_tickers, so the old "MARKET" sentinel violated it and crashed the whole
+                # digest job every night. The column is nullable - NULL is the honest value.
+                symbol=None,
                 alert_type=notification_type,
                 channel="multi_channel",
                 message=title,
