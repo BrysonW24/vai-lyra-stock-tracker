@@ -37,8 +37,11 @@ interface StrategyPickerProps {
   onNext?: () => void;
 }
 
+// Keyed by the strategy's actual display NAME (strat.name). 'Oversold Recovery' is the flagship
+// preset's real name - it was briefly 'Momentum Recovery', which left this lookup falling back
+// to the raw description for the most-recommended strategy.
 const PLAIN_SUMMARY: Record<string, string> = {
-  'Momentum Recovery': 'A beaten-down stock that is starting to turn back up - catch the early bounce.',
+  'Oversold Recovery': 'A beaten-down stock that is starting to turn back up - catch the early bounce.',
   'Oversold Bounce': 'A stock that has been sold off hard and may snap back sharply.',
   'Trend Continuation': 'A stock already climbing steadily that looks likely to keep going.',
   'Breakout Watch': 'A stock coiling quietly near a key level that could break out soon.',
@@ -101,12 +104,16 @@ const PROFILE_QUESTIONS: ProfileQuestion[] = [
   },
 ];
 
-/** Map the plain profile answers to a recommended strategy name. */
-function recommendStrategyName(o: StrategyOverrides): string {
-  if (o.approach === 'day' || o.risk === 'aggressive' || o.growth === 'high') return 'Breakout Watch';
-  if (o.approach === 'compound' || o.risk === 'cautious' || o.growth === 'steady') return 'Trend Continuation';
-  if (o.approach === 'waves') return 'Momentum Recovery';
-  return 'Momentum Recovery';
+/**
+ * Map the plain profile answers to a recommended strategy ID. Match by ID, never display
+ * name: the flagship preset was renamed 'Momentum Recovery' -> 'Oversold Recovery' and the
+ * old name-based lookup silently returned nothing, so the whole 'waves'/default path
+ * recommended no strategy. IDs are stable; names are copy.
+ */
+function recommendStrategyId(o: StrategyOverrides): string {
+  if (o.approach === 'day' || o.risk === 'aggressive' || o.growth === 'high') return 'breakout-watch';
+  if (o.approach === 'compound' || o.risk === 'cautious' || o.growth === 'steady') return 'trend-continuation';
+  return 'momentum-recovery';
 }
 
 export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps) {
@@ -133,8 +140,8 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
 
   const handleProfileChange = (key: ProfileQuestion['key'], val: string) => {
     const overrides = { ...value.overrides, [key]: val };
-    const recName = recommendStrategyName(overrides);
-    const rec = list.find((s) => s.name === recName);
+    const recId = recommendStrategyId(overrides);
+    const rec = list.find((s) => s.id === recId);
     onChange({ strategyId: rec?.id ?? value.strategyId, overrides });
   };
 

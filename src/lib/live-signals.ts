@@ -20,6 +20,7 @@ import type {
   SignalRow,
   SignalStatus,
 } from '@/types/scanner';
+import { computeLyraScore } from '@/lib/score-model';
 
 const ALERT_THRESHOLD = 75;
 const WATCHLIST_THRESHOLD = 60;
@@ -181,34 +182,35 @@ function buildSnap(ohlcv: Ohlcv, rsi: number[], macdLine: number[], signal: numb
 // ---- Scoring + states (ports of signal_engine.py) --------------------------
 
 function scoreSnap(s: Snap, prev: Snap | null): ScoreBreakdown & { final: number } {
-  let rsiScore = 0;
-  let macdScore = 0;
-  let priceLocationScore = 0;
-  let trendScore = 0;
-  let volumeScore = 0;
-
-  if (s.rsi14 >= 35 && s.rsi14 <= 50) rsiScore += 10;
-  if (s.rsiD1 > 0) rsiScore += 10;
-  if (s.rsiD2 > 0) rsiScore += 5;
-
-  if (s.hist < 0) macdScore += 8;
-  if (s.histD1 > 0) macdScore += 12;
-  if (s.histD2 > 0) macdScore += 5;
-  if (s.macd < s.macdSignal && s.histD1 > 0) macdScore += 5;
-
-  if (s.distFrom60Low != null && s.distFrom60Low <= 10) priceLocationScore += 10;
-  if (s.sma50 != null && s.close <= s.sma50 * 1.03) priceLocationScore += 5;
-
-  if (s.sma200 != null && s.close >= s.sma200) trendScore += 10;
-  else if (s.sma200 != null && s.close >= s.sma200 * 0.95) trendScore += 5;
-  if (s.sma20 != null && s.sma50 != null && s.sma20 >= s.sma50 * 0.95) trendScore += 5;
-
-  if (s.volumeRatio != null && s.volumeRatio >= 0.8) volumeScore += 5;
-  if (s.volumeRatio != null && s.volumeRatio >= 1.0) volumeScore += 5;
-  if (prev && s.volume > prev.volume) volumeScore += 5;
-
-  const final = Math.min(rsiScore + macdScore + priceLocationScore + trendScore + volumeScore, 100);
-  return { final, rsiScore, macdScore, priceLocationScore, trendScore, volumeScore };
+  // One canonical TS scorer now lives in src/lib/score-model.ts (guarded against Python drift
+  // by contracts/score-golden-vectors.json). This used to be a hand-inlined third copy of the
+  // weights; it delegates so a weight can only be edited in one place.
+  const c = computeLyraScore({
+    rsi14: s.rsi14,
+    rsiD1: s.rsiD1,
+    rsiD2: s.rsiD2,
+    macd: s.macd,
+    macdSignal: s.macdSignal,
+    hist: s.hist,
+    histD1: s.histD1,
+    histD2: s.histD2,
+    close: s.close,
+    sma20: s.sma20,
+    sma50: s.sma50,
+    sma200: s.sma200,
+    distFrom60Low: s.distFrom60Low,
+    volumeRatio: s.volumeRatio,
+    volume: s.volume,
+    prevVolume: prev ? prev.volume : null,
+  });
+  return {
+    final: c.final,
+    rsiScore: c.rsiScore,
+    macdScore: c.macdScore,
+    priceLocationScore: c.priceLocationScore,
+    trendScore: c.trendScore,
+    volumeScore: c.volumeScore,
+  };
 }
 
 function statusFor(score: number, prev: number | null): SignalStatus {

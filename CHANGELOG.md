@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.51.0] - 2026-07-17
+
+Track Record: the real numbers, and one score that cannot silently drift.
+
+### Changed
+
+- New Track Record page (in Practice) shows how Lyra's signals have ACTUALLY resolved - win rate, average and median forward return at 1, 5, 20 and 60 days - measured from real labelled outcomes, not a backtest and not an estimate. It leads with the sample size and the exact date window, gates any group under 20 resolved signals as "still measuring", and when there is no history it says "not yet measured" rather than showing a decorative number.
+- This replaces invented statistics. The strategy presets carried hardcoded win rates (the flagship claimed 67%) with a code comment saying they came from simulation - they did not, and the real measured win rate for the high-conviction signal is closer to 44%, with a roughly break-even median. Showing the humbler truth is the whole point of a research tool; the preset numbers are now clearly labelled illustrative everywhere they appear.
+- Under the hood: the deterministic score now has ONE canonical implementation instead of three near-copies, and a cross-language parity contract (shared golden vectors) makes the TypeScript and Python scorers prove they agree on every commit - if either drifts, its own tests go red. Building the contract already caught and corrected the documented numbers.
+- Also fixed: the onboarding strategy recommender silently recommended nothing on its main path because it matched by a display name that had been renamed - it now matches by stable ID.
+
 ## [0.50.0] - 2026-07-17
 
 Scout gets its own tab - perception and proposals, cleanly separated.
@@ -814,7 +825,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.50.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.51.0...HEAD
+[0.51.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.50.0...v0.51.0
 [0.50.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.49.0...v0.50.0
 [0.49.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.48.0...v0.49.0
 [0.48.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.47.0...v0.48.0

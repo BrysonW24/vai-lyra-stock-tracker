@@ -59,7 +59,7 @@ multiple owning chains per row are allowed; a parent path claims everything unde
 | Section | Paths | Owning chains |
 |---|---|---|
 | Scanner + scoring engine | `workers/stock_scanner/` | signal-quality |
-| Signal + scoring libs | `src/lib/candle-series.ts` `src/lib/live-signals.ts` `src/lib/outcomes.ts` `src/lib/paper-trading.ts` `src/lib/prime-setups.ts` `src/lib/score-breakdown.ts` `src/lib/score-history.ts` `src/lib/signal-events.ts` `src/lib/signal-intelligence.ts` `src/lib/simulation.ts` `src/lib/strategy.ts` `src/lib/trade-snapshots.ts` `src/lib/universe.ts` `src/lib/twin/` | signal-quality |
+| Signal + scoring libs | `src/lib/candle-series.ts` `src/lib/live-signals.ts` `src/lib/outcomes.ts` `src/lib/paper-trading.ts` `src/lib/prime-setups.ts` `src/lib/score-breakdown.ts` `src/lib/score-history.ts` `src/lib/score-model.ts` `src/lib/track-record.ts` `src/lib/signal-events.ts` `src/lib/signal-intelligence.ts` `src/lib/simulation.ts` `src/lib/strategy.ts` `src/lib/trade-snapshots.ts` `src/lib/universe.ts` `src/lib/twin/` | signal-quality |
 | Pine mirror + recovery model + paper spine + edge/plan math | `src/lib/pine/` `src/lib/ml/` `src/lib/trading/` `src/lib/edge/` | signal-quality |
 | Worker dispatch seam | `workers/stock_scanner/notification_dispatch.py` `workers/stock_scanner/digest_job.py` | notification-health, signal-quality |
 | AI layer | `src/lib/ai/` `src/lib/knowledge/` `src/lib/api/` `src/lib/daily-brief.ts` `src/lib/saved-prompts.ts` `content/` | ai-quality |
@@ -74,6 +74,7 @@ multiple owning chains per row are allowed; a parent path claims everything unde
 | Market-intel data libs | `src/lib/calendar.ts` `src/lib/calendar-live.ts` `src/lib/capex-events.ts` `src/lib/cgt.ts` `src/lib/catalysts.ts` `src/lib/commodities.ts` `src/lib/feed.ts` `src/lib/filings.ts` `src/lib/finance-facts.ts` `src/lib/fundamentals.ts` `src/lib/gov-awards.ts` `src/lib/insider-flow.ts` `src/lib/intelligence.ts` `src/lib/interest.ts` `src/lib/ipos.ts` `src/lib/ipos-live.ts` `src/lib/macro-context.ts` `src/lib/market-board.ts` `src/lib/market-context.ts` `src/lib/small-cap-lifecycle.ts` `src/lib/small-cap-research.ts` `src/lib/smart-money.ts` `src/lib/smart-money-live.ts` `src/lib/transcripts.ts` `src/lib/value-chain.ts` `src/lib/world-radar.ts` | data-integrity |
 | Data API routes | `src/app/api/portfolio/` `src/app/api/trades/` `src/app/api/trading/` `src/app/api/watchlist/` `src/app/api/small-caps/` `src/app/api/ticker-lookup/` `src/app/api/ingestion/` `src/app/api/interaction/` | data-integrity |
 | Signal engine route | `src/app/api/signals/` | signal-quality |
+| Track record (measured outcomes) | `src/app/track-record/` `src/app/api/track-record/` | signal-quality |
 | Ingest workers (horizon 2) | `workers/events_worker/` `workers/fundamentals_worker/` `workers/intelligence_worker/` | data-integrity |
 | Scout worker (broad signal -> ideas board) | `workers/scout/` | scout-intel |
 | Scout feed surface (what the scout saw) | `src/app/api/scout/` `src/components/community/ScoutFeed.tsx` `src/components/community/ScoutBridge.tsx` | scout-intel |

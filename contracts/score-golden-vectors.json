@@ -1,0 +1,55 @@
+{
+  "_comment": "Cross-language parity contract for Lyra's deterministic score. Each case's inputs are fed to BOTH the TS scorer (src/lib/score-model.ts, asserted by src/lib/__tests__/score-parity.test.ts) and the Python engine (workers/stock_scanner/signal_engine.py::calculate_score, asserted by tests/test_score_parity.py). If either language drifts from these numbers, its own test goes red. Expected values were computed by hand from the shared weights (RSI band10+rising10+5, MACD neg8+impr12+5+belowSig5, price low10+nearSma50 5, trend aboveSma200 10 | near5 + sma20vs50 5, volume 0.8x 5 + 1.0x 5 + rising 5, capped at 100). Edit weights in ONE place and update these vectors deliberately.",
+  "cases": [
+    {
+      "name": "all-null awards nothing",
+      "inputs": {
+        "rsi14": null, "rsiD1": null, "rsiD2": null,
+        "macd": null, "macdSignal": null, "hist": null, "histD1": null, "histD2": null,
+        "close": null, "sma20": null, "sma50": null, "sma200": null,
+        "distFrom60Low": null, "volumeRatio": null, "volume": null, "prevVolume": null
+      },
+      "expected": { "rsiScore": 0, "macdScore": 0, "priceLocationScore": 0, "trendScore": 0, "volumeScore": 0, "final": 0 }
+    },
+    {
+      "name": "textbook oversold-recovery, above 200 SMA, strong volume",
+      "inputs": {
+        "rsi14": 42, "rsiD1": 1.5, "rsiD2": 0.8,
+        "macd": -0.5, "macdSignal": -0.3, "hist": -0.2, "histD1": 0.1, "histD2": 0.05,
+        "close": 100, "sma20": 98, "sma50": 99, "sma200": 95,
+        "distFrom60Low": 4.2, "volumeRatio": 1.4, "volume": 2000, "prevVolume": 1500
+      },
+      "expected": { "rsiScore": 25, "macdScore": 30, "priceLocationScore": 15, "trendScore": 15, "volumeScore": 15, "final": 100 }
+    },
+    {
+      "name": "RSI in band but flat deltas; near-but-below 200 SMA",
+      "inputs": {
+        "rsi14": 50, "rsiD1": 0, "rsiD2": -1,
+        "macd": 0.2, "macdSignal": 0.1, "hist": 0.3, "histD1": -0.1, "histD2": 0,
+        "close": 96, "sma20": 100, "sma50": 101, "sma200": 100,
+        "distFrom60Low": 15, "volumeRatio": 0.85, "volume": 900, "prevVolume": 1000
+      },
+      "expected": { "rsiScore": 10, "macdScore": 0, "priceLocationScore": 5, "trendScore": 10, "volumeScore": 5, "final": 30 }
+    },
+    {
+      "name": "below-signal-while-improving MACD term fires; price near 60-low only",
+      "inputs": {
+        "rsi14": 30, "rsiD1": -0.2, "rsiD2": 0.4,
+        "macd": -1.0, "macdSignal": -0.5, "hist": -0.4, "histD1": 0.2, "histD2": -0.1,
+        "close": 50, "sma20": 60, "sma50": 40, "sma200": 70,
+        "distFrom60Low": 9.9, "volumeRatio": 0.79, "volume": 500, "prevVolume": 500
+      },
+      "expected": { "rsiScore": 5, "macdScore": 25, "priceLocationScore": 10, "trendScore": 5, "volumeScore": 0, "final": 45 }
+    },
+    {
+      "name": "exact boundary: rsi 35, dist 10, ratio 1.0, close == sma50*1.03",
+      "inputs": {
+        "rsi14": 35, "rsiD1": 0.01, "rsiD2": 0.01,
+        "macd": -2, "macdSignal": -1, "hist": 0, "histD1": 0, "histD2": 0.001,
+        "close": 103, "sma20": 100, "sma50": 100, "sma200": 110,
+        "distFrom60Low": 10, "volumeRatio": 1.0, "volume": 100, "prevVolume": 100
+      },
+      "expected": { "rsiScore": 25, "macdScore": 5, "priceLocationScore": 15, "trendScore": 5, "volumeScore": 10, "final": 60 }
+    }
+  ]
+}

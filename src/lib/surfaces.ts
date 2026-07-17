@@ -33,6 +33,7 @@ export const SURFACE_LABELS: Record<string, string> = {
   '/trading': 'Live Bot',
   '/simulation': 'Simulation Lab',
   '/strategy-lab': 'Strategy Lab',
+  '/track-record': 'Track Record',
   '/calculators': 'Calculators',
   '/education': 'Education',
   '/settings': 'Strategy Rules',

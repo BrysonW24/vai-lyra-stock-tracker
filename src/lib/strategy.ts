@@ -12,13 +12,24 @@ export interface StrategyRule {
   value: number | number[] | string;
 }
 
+/**
+ * ILLUSTRATIVE preset stats. These are hand-authored EXAMPLE figures to show the SHAPE of a
+ * strategy (roughly how selective, roughly what a good/bad month looks like) - they are NOT
+ * measured, NOT backtested, and must never be presented as a real track record. An earlier
+ * comment on these claimed they were "derived from historical simulation": that was false, and
+ * the real measured numbers were nothing like them (the flagship preset's invented 67% win rate
+ * was inverted from the ~44% the live signal actually posts). The measured record lives at
+ * /track-record, aggregated from real signal_outcomes. Any UI that shows these MUST label them
+ * illustrative. See src/lib/track-record.ts for the honest numbers.
+ */
 export interface StrategyBacktestStats {
-  winRate: number; // % of trades that were profitable
-  avgReturn: number; // average return % per trade
-  medianReturn: number; // median return % per trade
-  maxDrawdown: number; // worst drawdown %
-  bestSector: string; // sector with highest hit rate
-  sampleSize: number; // number of historical trades evaluated
+  /** ILLUSTRATIVE win rate % - an example, not a measured result. */
+  winRate: number;
+  avgReturn: number; // illustrative average return % per trade
+  medianReturn: number; // illustrative median return % per trade
+  maxDrawdown: number; // illustrative worst drawdown %
+  bestSector: string; // illustrative sector tilt
+  sampleSize: number; // illustrative - NOT a real evaluated-trade count
 }
 
 export interface Strategy {
@@ -69,7 +80,8 @@ export function matchStrategy(strategy: Strategy, signals: SignalRow[]): SignalR
 
 /**
  * Preset strategies: ~7 research-grade oversold-recovery and mean-reversion patterns.
- * All backtest stats are illustrative, derived from historical simulation.
+ * The backtestStats on each are ILLUSTRATIVE example figures, NOT measured or simulated -
+ * see the StrategyBacktestStats doc comment above and use /track-record for real numbers.
  * NOT financial advice.
  *
  * UNIT NOTE: distanceFromLow, priceVsSma20/50/200 and priceChange1d are already

@@ -15,6 +15,7 @@ import {
   CalendarDays,
   Calculator,
   Coins,
+  Trophy,
   FileText,
   Gem,
   FlaskConical,
@@ -101,6 +102,7 @@ const navItems: NavItem[] = [
   { href: '/trading', label: 'Live Bot', short: 'Live Bot', icon: ShieldCheck, bucket: 'practice' },
   { href: '/simulation', label: 'Simulation Lab', short: 'Simulate', icon: Calculator, bucket: 'practice' },
   { href: '/strategy-lab', label: 'Strategy Lab', short: 'Strategy', icon: FlaskConical, bucket: 'practice' },
+  { href: '/track-record', label: 'Track Record', short: 'Record', icon: Trophy, bucket: 'practice' },
   { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins, bucket: 'practice' },
   // LEARN & SET UP
   { href: '/education', label: 'Education', short: 'Learn', icon: GraduationCap, bucket: 'learn' },
