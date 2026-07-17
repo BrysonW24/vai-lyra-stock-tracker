@@ -40,6 +40,7 @@ is plain markdown with explicit stages and gates. The non-negotiables:
    - scanner: a real scan writes rows
    - alerts: the probe send actually arrives
    - deploy: `https://<domain>/api/health` returns ok with the right version
+     (and `"cache":"upstash"` if you wired the optional Upstash Redis - else `"memory"`, both fine)
 5. **Report back like a colleague.** Finish with: what mode, what URLs, where the keys
    live, what it costs (see [COSTS.md](COSTS.md)), and what they can do next.
 

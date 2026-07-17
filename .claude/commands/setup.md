@@ -124,8 +124,16 @@ Walkthrough: `docs/walkthroughs/04-deploy-your-own.md`. Offer both paths with co
   every `NEXT_PUBLIC_*` variable as a **Build Variable** - they are inlined at build time, and a
   runtime-only value silently ships a demo-mode build.
 
+- **Optional - shared cache (either path, $0):** add Upstash Redis. On Vercel, add the
+  "Upstash for Redis" marketplace integration (Storage -> Create Database); it injects the
+  `KV_REST_API_URL` / `KV_REST_API_TOKEN` pair, which `src/lib/cache.ts` reads with no code change.
+  Redeploy. Without it Lyra uses an in-process cache - fine, but not shared across serverless
+  instances (each cold instance starts cold). Skippable on a first deploy. A Redis-backed shared rate
+  limiter (`rateLimitShared`) also ships, ready to wire to any route that needs cross-instance limits.
+
 **Gate:** `curl https://<their-app>/api/health` returns `"ok":true`, the version matching
-`src/lib/version.ts` `RELEASES[0]`, and `"mode":"live"` (or `"demo"` if they chose demo).
+`src/lib/version.ts` `RELEASES[0]`, and `"mode":"live"` (or `"demo"` if they chose demo). If Upstash
+was wired, `"cache":"upstash"` (else `"memory"` - both healthy).
 
 ## Wrap up
 

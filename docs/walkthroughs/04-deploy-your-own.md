@@ -77,6 +77,7 @@ Optional server-only secrets, used by the API routes if present (all from `.env.
 | `NOTIFICATION_DISPATCH_SECRET` | Lets the GitHub Actions scanner call `/api/notifications/dispatch` on this deploy | Invent a long random string - it must MATCH the same-named GitHub Actions secret |
 | `FINNHUB_API_KEY` | Live news / fundamentals / earnings data | finnhub.io free tier |
 | `TELEGRAM_WEBHOOK_SECRET` | Secures the Telegram webhook route | Invent it; set the same value when registering the webhook |
+| `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | A shared cache across serverless instances (falls back to an in-process cache when unset) | Add the "Upstash for Redis" marketplace integration (**Storage -> Create Database**); it injects these (as `KV_REST_API_*`, which Lyra also accepts) |
 
 Skip everything optional on a first deploy - you can add them and redeploy later.
 
@@ -102,6 +103,7 @@ Expected:
 
 - `version` must equal the top entry of `RELEASES` in `src/lib/version.ts` on the commit you deployed (`0.6.0` at the time of writing). If it does not, you are looking at a stale deploy.
 - `mode` is `"live"` when both `NEXT_PUBLIC_SUPABASE_*` vars were present at build time, `"demo"` otherwise.
+- `cache` is `"upstash"` when the Upstash Redis vars (A2) are wired, `"memory"` otherwise - both are healthy; Redis just shares the cache across serverless instances (which the in-process fallback cannot).
 
 ### A4. Auto-deploy on push
 

@@ -209,6 +209,7 @@ Step-by-step instructions for every stage - from first clone to your own deploye
 - **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS
 - **Worker:** Python (pandas, yfinance, `ta`, Supabase client) + pytest
 - **Data:** Supabase (Postgres) with row-level security; read-only on the frontend
+- **Cache:** Upstash Redis over REST (optional) - a shared read-through cache across serverless instances; falls back to an in-process map when unset, so it is never required
 - **AI:** provider/model-agnostic gateway in [`src/lib/ai/gateway.ts`](./src/lib/ai/gateway.ts)
 - **Scheduler:** GitHub Actions (hourly)
 - **Alerts:** Telegram Bot API, Slack incoming webhooks, WhatsApp Cloud API, Web Push
