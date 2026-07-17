@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
       'NEXT STEPS: After your answer, add one final line in exactly this form: "FOLLOW_UPS: question one || question two || question three". Give 2-3 short, natural questions THIS user would most likely want to ask next, each fully answerable from the same dashboard data and specific (name the tickers or sections). Phrase them as the user would ask ("Why is...", "Compare...", "What about..."). Put nothing after that line.',
       toneFor(profileForTone),
       constraintsBlock
-        ? 'PERSONALISATION: Size every concrete suggestion against YOUR PROFILE & CONSTRAINTS below - say roughly how many shares or what dollar amount fits the available cash and max position size, and tie the idea to the stated goal. Never propose a position above the max position size. If a setup does not fit the cash or risk, say so plainly rather than ignoring it.'
+        ? 'PERSONALISATION: Read everything against YOUR PROFILE & CONSTRAINTS below and tie what you say to the stated goal, horizon and risk comfort. CHECK ideas against the constraints - flag when a name sits outside their risk comfort, when a setup would breach the max position size, or when something does not fit the available cash - but do NOT prescribe a trade: never state how many shares to buy or a dollar amount to put in, and never tell them to buy, sell, hold or size a position (that is the NOT ADVICE rule, and it wins). Describe the fit and let them decide.'
         : false,
       constraintsBlock || false,
       `CONTEXT (deterministic, from the latest scan):\n${buildGrounding(data, new Date())}`,

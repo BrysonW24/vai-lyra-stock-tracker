@@ -68,6 +68,19 @@ describe('buildConstraintsBlock - beginner individualisation reaches the prompt'
   it('returns empty string when there is nothing to say', () => {
     expect(buildConstraintsBlock({})).toBe('');
   });
+
+  // The constraints header once instructed the model to "size every idea against these" and
+  // "say roughly how many shares or what dollar amount fits" - directly contradicting the
+  // NOT ADVICE guardrail in the same composed prompt ("never tell the user to ... size a
+  // position"). Research-only is the AFSL bright line and wins: the header must frame the
+  // constraints as a CHECK, never a prescription. If this test fails, the contradiction is back.
+  it('frames constraints as a check, never a trade prescription (NOT ADVICE wins)', () => {
+    const block = buildConstraintsBlock(brandNewBeginner);
+    expect(block).toMatch(/CHECK ideas against these/i);
+    expect(block).toMatch(/never prescribe a share count or dollar amount/i);
+    expect(block).not.toMatch(/size every idea/i);
+    expect(block).not.toMatch(/how many shares/i);
+  });
 });
 
 describe('deriveTone - the voice individualises per user', () => {

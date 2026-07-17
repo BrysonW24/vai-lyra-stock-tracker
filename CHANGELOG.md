@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.49.0] - 2026-07-17
+
+One doctrine for the copilot: research that checks your fit, never a trade to place.
+
+### Changed
+
+- Resolved a contradiction that had lived inside Lyra's own instructions: when you had a saved profile, the copilot was told to "size every idea" and say how many shares or dollars fit - while the same prompt's non-negotiable rule says Lyra never tells you to buy, sell, hold or size a position. Research-only is the line, and it wins.
+- The copilot now CHECKS ideas against your goal, cash and risk comfort - flagging when a name sits outside your comfort or would breach your max position size - but never prescribes a share count or dollar amount. It describes the fit and leaves the decision with you, which is the whole point of a research tool.
+- Pinned with a test so the contradiction cannot quietly return.
+
 ## [0.48.0] - 2026-07-17
 
 See what the scout sees - the live feed, self-verifying evidence, and an AI read.
@@ -794,7 +804,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.48.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.49.0...HEAD
+[0.49.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.48.0...v0.49.0
 [0.48.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.47.0...v0.48.0
 [0.47.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.46.0...v0.47.0
 [0.46.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.45.0...v0.46.0

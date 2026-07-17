@@ -2,8 +2,9 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { formatCurrency } from '@/lib/format';
 
 /**
- * Signed-in user constraints from operator_profiles. This lets Lyra size suggestions against the
- * user's cash, max position size, risk, and goal instead of giving generic market commentary.
+ * Signed-in user constraints from operator_profiles. This lets Lyra CHECK ideas against the
+ * user's cash, max position size, risk, and goal (flagging misfits) instead of giving generic
+ * market commentary - without ever prescribing a trade size, which the NOT ADVICE guardrail forbids.
  */
 export interface UserConstraints {
   experienceLevel?: string;
@@ -203,5 +204,5 @@ export function buildConstraintsBlock(c: UserConstraints): string {
   if (c.simulationEnabled) lines.push('- Paper/simulation mode is ON - no real money is at stake.');
 
   if (!lines.length) return '';
-  return `YOUR PROFILE & CONSTRAINTS (size every idea against these - never suggest more than the max position size, frame suggestions against the available cash, and relate them to the goal):\n${lines.join('\n')}`;
+  return `YOUR PROFILE & CONSTRAINTS (CHECK ideas against these and relate them to the goal - flag when something breaches the max position size or does not fit the available cash - but never prescribe a share count or dollar amount; the NOT ADVICE rule wins):\n${lines.join('\n')}`;
 }

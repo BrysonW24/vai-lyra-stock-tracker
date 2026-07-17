@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.49.0',
+    date: '2026-07-17',
+    title: 'One doctrine for the copilot: research that checks your fit, never a trade to place',
+    highlights: [
+      'Resolved a contradiction that had lived inside Lyra\'s own instructions: when you had a saved profile, the copilot was told to "size every idea" and say how many shares or dollars fit - while the same prompt\'s non-negotiable rule says Lyra never tells you to buy, sell, hold or size a position. Research-only is the line, and it wins.',
+      'The copilot now CHECKS ideas against your goal, cash and risk comfort - flagging when a name sits outside your comfort or would breach your max position size - but never prescribes a share count or dollar amount. It describes the fit and leaves the decision with you, which is the whole point of a research tool.',
+      'Pinned with a test so the contradiction cannot quietly return.',
+    ],
+  },
+  {
     version: '0.48.0',
     date: '2026-07-17',
     title: 'See what the scout sees - the live feed, self-verifying evidence, and an AI read',
