@@ -23,7 +23,7 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
-    version: '0.43.1',
+    version: '0.44.1',
     date: '2026-07-17',
     title: 'Scout demo-mode fix, proven by its first production run',
     highlights: [

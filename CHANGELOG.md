@@ -6,7 +6,7 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
-## [0.43.1] - 2026-07-17
+## [0.44.1] - 2026-07-17
 
 Scout demo-mode fix, proven by its first production run.
 
