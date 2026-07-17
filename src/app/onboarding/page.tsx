@@ -36,6 +36,7 @@ import { ActivationSequence } from '@/components/activation/ActivationSequence';
 import { LyraReveal } from '@/components/activation/LyraReveal';
 import { SceneSlider } from '@/components/activation/SceneSlider';
 import { SetupCompleteBeat } from '@/components/activation/SetupCompleteBeat';
+import { AddToHomeScreenStep } from '@/components/onboarding/AddToHomeScreenStep';
 
 /** Fire-and-forget activation beacon (closed slug set; server no-ops in demo/anon). */
 function logActivation(event: string, detail: { step?: number; path?: string } = {}): void {
@@ -55,7 +56,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [state, setState] = useState<OnboardingState | null>(null);
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [phase, setPhase] = useState<'reveal' | 'primer' | 'questionnaire' | 'complete'>('reveal');
+  const [phase, setPhase] = useState<'reveal' | 'primer' | 'questionnaire' | 'homescreen' | 'complete'>('reveal');
   const [isSaving, setIsSaving] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -118,6 +119,18 @@ export default function OnboardingPage() {
   }
   if (phase === 'primer') {
     return <ActivationSequence mode="intro" onDone={() => setPhase('questionnaire')} />;
+  }
+  if (phase === 'homescreen') {
+    // Final beat: put Lyra on the Home Screen (functional on iPhone - push alerts need it).
+    // Clears the checkpoint on the way out so a later visit starts clean.
+    return (
+      <AddToHomeScreenStep
+        onDone={() => {
+          clearOnboardingProgress();
+          setPhase('complete');
+        }}
+      />
+    );
   }
   if (phase === 'complete') {
     return <SetupCompleteBeat />;
@@ -357,12 +370,14 @@ export default function OnboardingPage() {
         riskComfort: state.profile?.riskComfort,
       });
 
-      // Onboarding done - drop the resumable checkpoint so a re-visit starts clean.
+      // Onboarding done - drop the resumable checkpoint so a re-visit starts clean. (The
+      // homescreen beat re-checkpoints itself so a closed tab resumes there; its onDone clears.)
       clearOnboardingProgress();
       logActivation('onboarding_finished', { path: state.path });
 
-      // Show the success beat only AFTER all saves are done; it navigates to the command centre when done.
-      setPhase('complete');
+      // Saves done - one last beat teaches Add-to-Home-Screen (alerts on iPhone depend on it),
+      // then the success beat hands off to the command centre.
+      setPhase('homescreen');
     } finally {
       setIsSaving(false);
     }

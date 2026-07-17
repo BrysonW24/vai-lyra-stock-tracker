@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.68.0',
+    date: '2026-07-18',
+    title: 'Onboarding now teaches you to put Lyra on your Home Screen',
+    highlights: [
+      'A new final beat in onboarding walks you through installing Lyra on your phone - on iPhone with a real four-step screenshot walkthrough (menu -> Share -> Add to Home Screen -> done, with the Lyra icon on your Home Screen as the payoff), on Android with the Chrome steps. This is functional, not cosmetic: on iPhone, the alerts you just configured can only reach your phone once Lyra is installed to the Home Screen.',
+      'Smart about context: if you are already running Lyra from your Home Screen the step skips itself, and on a computer it points you to open Lyra on your phone. Skippable either way - it never blocks the console.',
+    ],
+  },
+  {
     version: '0.67.1',
     date: '2026-07-18',
     title: 'Demo journey unblocked for everyone who tried the demo before',

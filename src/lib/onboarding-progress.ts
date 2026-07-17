@@ -10,7 +10,7 @@ import { SETUP_PATHS } from './onboarding';
 
 const KEY = 'lyra.onboarding.progress';
 
-export type OnboardingPhase = 'reveal' | 'primer' | 'questionnaire' | 'complete';
+export type OnboardingPhase = 'reveal' | 'primer' | 'questionnaire' | 'homescreen' | 'complete';
 
 export interface OnboardingProgress {
   state: OnboardingState;

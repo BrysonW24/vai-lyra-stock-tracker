@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.68.0] - 2026-07-18
+
+Onboarding now teaches you to put Lyra on your Home Screen.
+
+### Changed
+
+- A new final beat in onboarding walks you through installing Lyra on your phone - on iPhone with a real four-step screenshot walkthrough (menu -> Share -> Add to Home Screen -> done, with the Lyra icon on your Home Screen as the payoff), on Android with the Chrome steps. This is functional, not cosmetic: on iPhone, the alerts you just configured can only reach your phone once Lyra is installed to the Home Screen.
+- Smart about context: if you are already running Lyra from your Home Screen the step skips itself, and on a computer it points you to open Lyra on your phone. Skippable either way - it never blocks the console.
+
 ## [0.67.1] - 2026-07-18
 
 Demo journey unblocked for everyone who tried the demo before.
@@ -996,7 +1005,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.67.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.68.0...HEAD
+[0.68.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.67.1...v0.68.0
 [0.67.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.67.0...v0.67.1
 [0.67.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.66.0...v0.67.0
 [0.66.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.65.0...v0.66.0
