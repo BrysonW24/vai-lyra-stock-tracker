@@ -327,6 +327,13 @@ export function IdeasBoard() {
                   </div>
                   <p className="mt-1 text-[13px] font-semibold leading-snug text-[#eef3f8]">{idea.title}</p>
                   {idea.description && <p className="mt-0.5 text-[12px] leading-relaxed text-[#98a6b4]">{idea.description}</p>}
+                  {idea.origin === 'scout' && idea.kind === 'vertical' && (idea.status === 'planned' || idea.status === 'in_progress') && (
+                    <p className="mt-1 text-[10px] leading-snug text-[#7fb0ff]">
+                      {idea.status === 'planned'
+                        ? 'Queued for drafting - the next agent session builds this vertical as a reviewable PR (/draft-vertical).'
+                        : 'Being drafted - a vertical PR is in flight for this card.'}
+                    </p>
+                  )}
                   {typeof briefs[idea.id] === 'string' && briefs[idea.id] !== 'loading' && (
                     <div className="mt-1.5 border-l-2 border-[#9a6a1f]/60 bg-[#13100a]/60 py-1 pl-2 pr-1">
                       <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#f3a33a]"><Sparkles size={10} /> Lyra&apos;s read - grounded in the evidence below</p>

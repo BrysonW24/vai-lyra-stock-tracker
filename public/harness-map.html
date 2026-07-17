@@ -73,8 +73,8 @@
   about the rails, because it is built from them.</p>
 
   <div class="stats">
-    <span class="stat"><b>27</b> mapped sections</span>
-    <span class="stat"><b>13</b> skill chains</span>
+    <span class="stat"><b>28</b> mapped sections</span>
+    <span class="stat"><b>14</b> skill chains</span>
     <span class="stat"><b>7</b> deterministic gates</span>
     <span class="stat"><b>5</b> enforcement layers</span>
     <span class="stat"><b>0</b> orphans <span class="hint">(CI-enforced)</span></span>
@@ -153,6 +153,11 @@
         <span class="cwhen">Scout cards look junky, feeds die, access lands</span>
         <span class="cjob">Registry health -&gt; attachment honesty -&gt; cluster quality -&gt; access expansion</span>
       </button>
+      <button class="chain" data-chain="draft-vertical" type="button" aria-pressed="false">
+        <span class="cid">/draft-vertical</span>
+        <span class="cwhen">A scout card was accepted (npm run scout:queue shows it)</span>
+        <span class="cjob">Queue -&gt; evidence -&gt; author+verify draft -&gt; vertical PR (human merges)</span>
+      </button>
   </div>
 
   <p class="sec-label">Coverage map - every section, its paths, and its owning chain(s)</p>
@@ -162,9 +167,9 @@
         <div class="apaths"><code>workers/stock_scanner/</code></div>
         <div class="aowners"><button class="badge" data-chain="signal-quality" type="button">/signal-quality</button></div>
       </div>
-      <div class="area" data-chains="signal-quality" data-text="signal + scoring libs src/lib/candle-series.ts src/lib/live-signals.ts src/lib/outcomes.ts src/lib/paper-trading.ts src/lib/prime-setups.ts src/lib/score-breakdown.ts src/lib/score-history.ts src/lib/signal-events.ts src/lib/signal-intelligence.ts src/lib/simulation.ts src/lib/strategy.ts src/lib/trade-snapshots.ts src/lib/universe.ts src/lib/twin/ signal-quality">
+      <div class="area" data-chains="signal-quality" data-text="signal + scoring libs src/lib/candle-series.ts src/lib/live-signals.ts src/lib/outcomes.ts src/lib/paper-trading.ts src/lib/prime-setups.ts src/lib/score-breakdown.ts src/lib/score-history.ts src/lib/score-model.ts src/lib/track-record.ts src/lib/signal-events.ts src/lib/signal-intelligence.ts src/lib/simulation.ts src/lib/strategy.ts src/lib/trade-snapshots.ts src/lib/universe.ts src/lib/twin/ signal-quality">
         <div class="aname">Signal + scoring libs</div>
-        <div class="apaths"><code>src/lib/candle-series.ts</code> <code>src/lib/live-signals.ts</code> <code>src/lib/outcomes.ts</code> <code>src/lib/paper-trading.ts</code> <code>src/lib/prime-setups.ts</code> <code>src/lib/score-breakdown.ts</code> <code>src/lib/score-history.ts</code> <code>src/lib/signal-events.ts</code> <code>src/lib/signal-intelligence.ts</code> <code>src/lib/simulation.ts</code> <code>src/lib/strategy.ts</code> <code>src/lib/trade-snapshots.ts</code> <code>src/lib/universe.ts</code> <code>src/lib/twin/</code></div>
+        <div class="apaths"><code>src/lib/candle-series.ts</code> <code>src/lib/live-signals.ts</code> <code>src/lib/outcomes.ts</code> <code>src/lib/paper-trading.ts</code> <code>src/lib/prime-setups.ts</code> <code>src/lib/score-breakdown.ts</code> <code>src/lib/score-history.ts</code> <code>src/lib/score-model.ts</code> <code>src/lib/track-record.ts</code> <code>src/lib/signal-events.ts</code> <code>src/lib/signal-intelligence.ts</code> <code>src/lib/simulation.ts</code> <code>src/lib/strategy.ts</code> <code>src/lib/trade-snapshots.ts</code> <code>src/lib/universe.ts</code> <code>src/lib/twin/</code></div>
         <div class="aowners"><button class="badge" data-chain="signal-quality" type="button">/signal-quality</button></div>
       </div>
       <div class="area" data-chains="signal-quality" data-text="pine mirror + recovery model + paper spine + edge/plan math src/lib/pine/ src/lib/ml/ src/lib/trading/ src/lib/edge/ signal-quality">
@@ -235,6 +240,11 @@
       <div class="area" data-chains="signal-quality" data-text="signal engine route src/app/api/signals/ signal-quality">
         <div class="aname">Signal engine route</div>
         <div class="apaths"><code>src/app/api/signals/</code></div>
+        <div class="aowners"><button class="badge" data-chain="signal-quality" type="button">/signal-quality</button></div>
+      </div>
+      <div class="area" data-chains="signal-quality" data-text="track record (measured outcomes) src/app/track-record/ src/app/api/track-record/ signal-quality">
+        <div class="aname">Track record (measured outcomes)</div>
+        <div class="apaths"><code>src/app/track-record/</code> <code>src/app/api/track-record/</code></div>
         <div class="aowners"><button class="badge" data-chain="signal-quality" type="button">/signal-quality</button></div>
       </div>
       <div class="area" data-chains="data-integrity" data-text="ingest workers (horizon 2) workers/events_worker/ workers/fundamentals_worker/ workers/intelligence_worker/ data-integrity">

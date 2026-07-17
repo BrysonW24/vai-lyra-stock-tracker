@@ -20,6 +20,7 @@ from typing import Any
 
 from workers.scout.attach import attach
 from workers.scout.cluster import IdeaCandidate, cluster_unmapped, drumbeats
+from workers.scout.outcomes import load_stoplist, stamp_outcomes
 from workers.scout.providers import ScoutItem, demo_items, fetch_source
 from workers.scout.sources import active_sources, gated_sources, load_sources
 from workers.stock_scanner.config import Settings
@@ -85,7 +86,13 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
         # the demo branch referencing a variable it never computed (UnboundLocalError on
         # every keyless run). Demo mode doubles every code path it forks; so don't fork.
         window: list[ScoutItem] = []
+        stoplist: set[str] = set()
         if repo.client:
+            # Learning first (v3): stamp yesterday's verdicts, THEN load the stoplist so
+            # tonight's clustering already respects a card declined this morning.
+            summary["outcomes"] = stamp_outcomes(repo)
+            stoplist = load_stoplist(repo)
+            summary["stoplist_size"] = len(stoplist)
             summary["items_persisted"] = _persist_items(repo, items, attachments)
             summary["items_pruned"] = _prune_old_items(repo)
             # Cluster over the trailing WINDOW, not just tonight's pull: an emerging
@@ -104,12 +111,12 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
         pool = {i.id: i for i in window}
         for i in unmapped:
             pool.setdefault(i.id, i)
-        candidates = cluster_unmapped(list(pool.values()))
+        candidates = cluster_unmapped(list(pool.values()), stoplist=stoplist)
         summary["idea_candidates"] = len(candidates)
 
         # The visible patience: below-bar clusters still building toward promotion, and
         # tonight's per-theme attach counts - both feed the "what the scout saw" surface.
-        beats = drumbeats(list(pool.values()), promoted=candidates)
+        beats = drumbeats(list(pool.values()), promoted=candidates, stoplist=stoplist)
         summary["drumbeats"] = len(beats)
         theme_counts: dict[str, int] = {}
         for item in items:

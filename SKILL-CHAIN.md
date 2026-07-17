@@ -41,6 +41,7 @@ Every chain honours the same contract:
 | [/ux-surface](.claude/commands/ux-surface.md) | A surface feels rough, after feature work | One surface to premium: demo render, 375px, states, a11y, engine truth |
 | [/logs-to-genui](.claude/commands/logs-to-genui.md) | Operational question needs a view | Logs/events -> deterministic metrics -> GenUI (AI does layout only) |
 | [/scout-intel](.claude/commands/scout-intel.md) | Scout cards look junky, feeds die, access lands | Registry health -> attachment honesty -> cluster quality -> access expansion |
+| [/draft-vertical](.claude/commands/draft-vertical.md) | A scout card was accepted (`npm run scout:queue` shows it) | Queue -> evidence -> author+verify draft -> vertical PR (human merges) |
 
 Sub-skills (invoked by chains, not standalone owners):
 [/sync-human-onboarding](.claude/commands/sync-human-onboarding.md),

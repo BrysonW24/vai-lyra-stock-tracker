@@ -44,12 +44,21 @@ interface FeedItem {
   unmapped: boolean;
 }
 
+interface SourceScore {
+  sourceName: string;
+  accepted: number;
+  declined: number;
+}
+
 interface FeedResponse {
   ok: boolean;
   demo?: boolean;
   pendingMigration?: boolean;
   run?: RunSummary | null;
   items?: FeedItem[];
+  themeTotals?: Record<string, number>;
+  sourceScores?: SourceScore[];
+  stoplistCount?: number;
   error?: string;
 }
 
@@ -71,6 +80,9 @@ const VISIBLE_ITEMS = 6;
 export function ScoutFeed() {
   const [run, setRun] = useState<RunSummary | null>(null);
   const [items, setItems] = useState<FeedItem[]>([]);
+  const [themeTotals, setThemeTotals] = useState<Record<string, number>>({});
+  const [sourceScores, setSourceScores] = useState<SourceScore[]>([]);
+  const [stoplistCount, setStoplistCount] = useState(0);
   const [demo, setDemo] = useState(false);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -84,6 +96,9 @@ export function ScoutFeed() {
         if (cancelled) return;
         setRun(data.run ?? null);
         setItems(data.items ?? []);
+        setThemeTotals(data.themeTotals ?? {});
+        setSourceScores(data.sourceScores ?? []);
+        setStoplistCount(data.stoplistCount ?? 0);
         setDemo(Boolean(data.demo));
         setFailed(!data.ok);
       })
@@ -98,13 +113,16 @@ export function ScoutFeed() {
     };
   }, []);
 
+  // The measurement chips: trailing-window attach totals when the ledger has history
+  // (that IS the "did this theme attract news?" number), else tonight's counts.
+  const totalsMode = Object.keys(themeTotals).length > 0;
   const themeChips = useMemo(() => {
-    if (!run) return [];
-    return Object.entries(run.themeCounts)
+    const counts = totalsMode ? themeTotals : run?.themeCounts ?? {};
+    return Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8)
       .map(([slug, count]) => ({ slug, count, meta: THEME_META[slug] }));
-  }, [run]);
+  }, [totalsMode, themeTotals, run]);
 
   // Nothing useful to show and nothing pending: stay out of the way entirely.
   if (failed) return null;
@@ -139,13 +157,18 @@ export function ScoutFeed() {
               </p>
 
               {themeChips.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {themeChips.map(({ slug, count, meta }) => (
-                    <span key={slug} className="inline-flex items-center gap-1 rounded-full border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 text-[10px] text-[#a8b5c2]">
-                      {meta ? `${meta.emoji} ${meta.name}` : slug}
-                      <span className="font-mono font-semibold text-[#c8d3de]">{count}</span>
-                    </span>
-                  ))}
+                <div>
+                  {totalsMode && (
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5d6b79]">Attach volume - trailing 14 nights</p>
+                  )}
+                  <div className="flex flex-wrap gap-1">
+                    {themeChips.map(({ slug, count, meta }) => (
+                      <span key={slug} className="inline-flex items-center gap-1 rounded-full border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 text-[10px] text-[#a8b5c2]">
+                        {meta ? `${meta.emoji} ${meta.name}` : slug}
+                        <span className="font-mono font-semibold text-[#c8d3de]">{count}</span>
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -167,6 +190,30 @@ export function ScoutFeed() {
                     ))}
                   </ul>
                 </div>
+              )}
+
+              {sourceScores.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5d6b79]">Earned source scores - from your verdicts</p>
+                  <ul className="mt-1 space-y-0.5">
+                    {sourceScores.map((s) => (
+                      <li key={s.sourceName} className="flex items-center justify-between gap-2 text-[11px] leading-snug">
+                        <span className="min-w-0 truncate text-[#a8b5c2]">{s.sourceName}</span>
+                        <span className="shrink-0 font-mono text-[10px]">
+                          <span className="text-[#43d18b]">+{s.accepted}</span>
+                          <span className="text-[#4c5866]"> · </span>
+                          <span className="text-[#f0758a]">-{s.declined}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {stoplistCount > 0 && (
+                <p className="text-[10px] text-[#6f7d8a]">
+                  {stoplistCount} entit{stoplistCount === 1 ? 'y' : 'ies'} stop-listed by your verdicts - declined signals never re-file.
+                </p>
               )}
 
               {run.windowSaturated && (

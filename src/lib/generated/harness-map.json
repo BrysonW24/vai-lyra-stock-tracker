@@ -4,8 +4,8 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 27,
-    "chains": 13,
+    "sections": 28,
+    "chains": 14,
     "gates": 7,
     "layers": 5
   },
@@ -87,6 +87,12 @@
       "file": ".claude/commands/scout-intel.md",
       "runWhen": "Scout cards look junky, feeds die, access lands",
       "job": "Registry health -> attachment honesty -> cluster quality -> access expansion"
+    },
+    {
+      "id": "draft-vertical",
+      "file": ".claude/commands/draft-vertical.md",
+      "runWhen": "A scout card was accepted (npm run scout:queue shows it)",
+      "job": "Queue -> evidence -> author+verify draft -> vertical PR (human merges)"
     }
   ],
   "sections": [
@@ -109,6 +115,8 @@
         "src/lib/prime-setups.ts",
         "src/lib/score-breakdown.ts",
         "src/lib/score-history.ts",
+        "src/lib/score-model.ts",
+        "src/lib/track-record.ts",
         "src/lib/signal-events.ts",
         "src/lib/signal-intelligence.ts",
         "src/lib/simulation.ts",
@@ -316,6 +324,16 @@
       "section": "Signal engine route",
       "paths": [
         "src/app/api/signals/"
+      ],
+      "chains": [
+        "signal-quality"
+      ]
+    },
+    {
+      "section": "Track record (measured outcomes)",
+      "paths": [
+        "src/app/track-record/",
+        "src/app/api/track-record/"
       ],
       "chains": [
         "signal-quality"

@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 
 from workers.scout.attach import attach, detect_symbols
 from workers.scout.cluster import IdeaCandidate, cluster_unmapped, drumbeats
+from workers.scout.outcomes import load_stoplist, stamp_outcomes
 from workers.scout.providers import ScoutItem, demo_items, item_id, parse_feed_xml
 from workers.scout.sources import ScoutSource, active_sources, load_sources
 
@@ -216,6 +217,128 @@ class _LogClient:
 class _LogRepo:
     def __init__(self):
         self.client = _LogClient()
+
+
+class _FakeResult:
+    def __init__(self, data):
+        self.data = data
+
+
+class _FakeQuery:
+    """Chainable read/write fake: selects serve the table's preset rows; writes log."""
+
+    def __init__(self, db, name):
+        self._db = db
+        self._name = name
+        self._op = "select"
+        self._payload = None
+        self._maybe = False
+
+    def select(self, *a, **k):
+        return self
+
+    def eq(self, *a):
+        return self
+
+    def is_(self, *a):
+        return self
+
+    def in_(self, *a):
+        return self
+
+    def limit(self, n):
+        return self
+
+    def maybe_single(self):
+        self._maybe = True
+        return self
+
+    def upsert(self, record, on_conflict=None):
+        self._op = "upsert"
+        self._payload = record
+        return self
+
+    def update(self, record):
+        self._op = "update"
+        self._payload = record
+        return self
+
+    def execute(self):
+        if self._op == "select":
+            rows = self._db.rows.get(self._name, [])
+            return _FakeResult(rows[0] if self._maybe and rows else None if self._maybe else rows)
+        self._db.log.append((self._op, self._name, self._payload))
+        return _FakeResult(None)
+
+
+class _FakeDb:
+    def __init__(self, rows=None):
+        self.rows = rows or {}
+        self.log = []
+
+    def table(self, name):
+        return _FakeQuery(self, name)
+
+
+class _DbRepo:
+    def __init__(self, rows=None):
+        self.client = _FakeDb(rows)
+
+
+class TestOutcomeStamping:
+    """v3: verdicts become deterministic feedback, each card exactly once."""
+
+    def test_accepted_card_credits_its_sources_and_stamps(self):
+        repo = _DbRepo({
+            "community_ideas": [{
+                "id": "card-1", "title": "Emerging signal: Test Co", "status": "planned",
+                "kind": "vertical", "dedupe_key": "scout-vertical-test-co",
+                "evidence": [
+                    {"sourceId": "rss-a", "title": "t1"},
+                    {"sourceId": "rss-a", "title": "t2"},
+                    {"sourceId": "rss-b", "title": "t3"},
+                ],
+            }],
+        })
+        out = stamp_outcomes(repo)
+        assert out == {"stamped": 1, "credited": 3, "debited": 0, "stoplisted": 0}
+        scores = [p for op, name, p in repo.client.log if op == "upsert" and name == "scout_source_scores"]
+        by_source = {p["source_id"]: p for p in scores}
+        assert by_source["rss-a"]["accepted"] == 2 and by_source["rss-a"]["declined"] == 0
+        assert by_source["rss-b"]["accepted"] == 1
+        stamps = [p for op, name, p in repo.client.log if op == "update" and name == "community_ideas"]
+        assert len(stamps) == 1 and stamps[0]["stamped_at"]
+
+    def test_declined_vertical_debits_and_joins_the_stoplist(self):
+        repo = _DbRepo({
+            "community_ideas": [{
+                "id": "card-2", "title": "Emerging signal: Noise Term", "status": "declined",
+                "kind": "vertical", "dedupe_key": "scout-vertical-noise-term",
+                "evidence": [{"sourceId": "rss-junk", "title": "t"}],
+            }],
+        })
+        out = stamp_outcomes(repo)
+        assert out["debited"] == 1 and out["stoplisted"] == 1 and out["stamped"] == 1
+        stop = [p for op, name, p in repo.client.log if name == "scout_stoplist"]
+        assert stop[0]["slug"] == "noise-term" and stop[0]["entity"] == "Noise Term"
+
+    def test_load_stoplist_returns_slugs(self):
+        repo = _DbRepo({"scout_stoplist": [{"slug": "noise-term"}, {"slug": "other"}]})
+        assert load_stoplist(repo) == {"noise-term", "other"}
+
+
+class TestStoplistEnforcement:
+    def test_stoplisted_entity_never_promotes_or_drumbeats(self):
+        """A human declined it once - the same entity must not re-file OR reappear as a
+        building drumbeat, however loud its coverage gets."""
+        items = [
+            item("Commonwealth Fusion Systems raises new round", source_id="s1"),
+            item("Commonwealth Fusion Systems signs utility deal", source_id="s2"),
+            item("Milestone for Commonwealth Fusion Systems plant", source_id="s3"),
+        ]
+        stop = {"commonwealth-fusion-systems"}
+        assert cluster_unmapped(items, stoplist=stop) == []
+        assert drumbeats(items, stoplist=stop) == []
 
 
 class TestFilingAndLedger:

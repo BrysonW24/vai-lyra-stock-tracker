@@ -65,15 +65,20 @@ def slugify(entity: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", entity.lower()).strip("-")
 
 
-def cluster_unmapped(items: list[ScoutItem]) -> list[IdeaCandidate]:
+def cluster_unmapped(items: list[ScoutItem], stoplist: set[str] | None = None) -> list[IdeaCandidate]:
     """Promote recurring unmapped entities into idea candidates.
 
     Bar: an entity must appear in >= MIN_ITEMS items from >= MIN_SOURCES distinct
     sources. One outlet drumbeating a term is marketing; several independently is signal.
+    `stoplist` holds slugs from human-DECLINED cards (v3): a rejected entity never
+    re-files, so the junk filter is accumulated verdicts, not just the hand-curated list.
     """
+    stoplist = stoplist or set()
     by_entity: dict[str, list[ScoutItem]] = {}
     for item in items:
         for entity in _entities(f"{item.title} {item.summary}"):
+            if slugify(entity) in stoplist:
+                continue
             by_entity.setdefault(entity, []).append(item)
 
     candidates: list[IdeaCandidate] = []
@@ -117,7 +122,12 @@ def cluster_unmapped(items: list[ScoutItem]) -> list[IdeaCandidate]:
     return candidates
 
 
-def drumbeats(items: list[ScoutItem], promoted: list[IdeaCandidate] | None = None, limit: int = 10) -> list[dict]:
+def drumbeats(
+    items: list[ScoutItem],
+    promoted: list[IdeaCandidate] | None = None,
+    limit: int = 10,
+    stoplist: set[str] | None = None,
+) -> list[dict]:
     """Below-bar clusters that are BUILDING toward promotion - the visible patience.
 
     The promotion bar (>= MIN_ITEMS items, >= MIN_SOURCES sources) is deliberately hard, so
@@ -127,9 +137,12 @@ def drumbeats(items: list[ScoutItem], promoted: list[IdeaCandidate] | None = Non
     computed here in Python so the frontend can never drift from the real clusterer.
     """
     promoted_keys = {c.dedupe_key for c in (promoted or [])}
+    stoplist = stoplist or set()
     by_entity: dict[str, list[ScoutItem]] = {}
     for item in items:
         for entity in _entities(f"{item.title} {item.summary}"):
+            if slugify(entity) in stoplist:
+                continue
             by_entity.setdefault(entity, []).append(item)
 
     out: list[dict] = []

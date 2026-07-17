@@ -27,6 +27,18 @@ describe('GET /api/scout/feed', () => {
     for (const item of data.items!) expect(item.sourceName.length).toBeGreaterThan(0);
   });
 
+  it('serves the v3 learning surfaces in demo (source scores, stoplist, theme totals)', async () => {
+    const response = await GET();
+    const data = (await response.json()) as {
+      sourceScores?: { sourceName: string; accepted: number; declined: number }[];
+      stoplistCount?: number;
+      themeTotals?: Record<string, number>;
+    };
+    expect(data.sourceScores!.length).toBeGreaterThan(0);
+    expect(data.stoplistCount).toBeGreaterThan(0);
+    expect(Object.keys(data.themeTotals!).length).toBeGreaterThan(0);
+  });
+
   it('demo drumbeats state exactly what promotion still needs', async () => {
     const response = await GET();
     const data = (await response.json()) as {

@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.52.0',
+    date: '2026-07-17',
+    title: 'The scout loop closes: accepted cards queue a build, and your verdicts teach the machine',
+    highlights: [
+      'v2 - Draft-a-vertical: accepting a scout card now queues real creation. Set a scout card to Planned and it enters the drafting queue (npm run scout:queue lists it, evidence attached); the /draft-vertical playbook turns it into a reviewable pull request - theme, companies, chain nodes, backing events, and the attach keywords that make the scout start MAPPING that news instead of banking it as unmapped. Agents draft, humans merge - the vertical map never changes without your review.',
+      'v3 - Your verdicts stop evaporating. A nightly stamping pass reads every decided card exactly once: accepted cards credit the sources whose evidence backed them, declined cards debit them - an earned source leaderboard now lives on the Scout tab. Declined entities join a stop-list, so a signal you rejected can never re-file or reappear as a drumbeat. All counts, no model opinion.',
+      'Shipped verticals get measured, not assumed: the Scout tab\'s theme chips now show attach volume over the trailing 14 nights - whether a vertical is actually attracting news is a number you can watch, and a scout-born vertical that goes quiet shows it.',
+      'The full loop, end to end: noticed -> drumbeat -> card -> your verdict -> either a drafted vertical PR (and the news starts attaching) or a stop-listed entity (and the noise never returns) - with every verdict sharpening which sources earn trust.',
+    ],
+  },
+  {
     version: '0.51.0',
     date: '2026-07-17',
     title: 'Track Record: the real numbers, and one score that cannot silently drift',

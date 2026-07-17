@@ -45,6 +45,13 @@ export interface ScoutFeedItem {
   unmapped: boolean;
 }
 
+/** v3: earned source score - evidence appearances in accepted vs declined cards. */
+export interface ScoutSourceScore {
+  sourceName: string;
+  accepted: number;
+  declined: number;
+}
+
 const SOURCE_NAMES: Record<string, string> = Object.fromEntries(
   (scoutSources as { id: string; name: string }[]).map((s) => [s.id, s.name]),
 );
@@ -68,6 +75,12 @@ const DEMO_RUN: ScoutRunSummary = {
   ],
 };
 
+const DEMO_SCORES: ScoutSourceScore[] = [
+  { sourceName: 'DOE Newsroom', accepted: 3, declined: 0 },
+  { sourceName: 'World Nuclear News', accepted: 2, declined: 1 },
+  { sourceName: 'PR Newswire Tech', accepted: 0, declined: 4 },
+];
+
 const DEMO_ITEMS: ScoutFeedItem[] = [
   { id: 'demo-f1', title: 'US Department of Energy announces fusion pilot funding round', url: 'https://example.com/doe-fusion', sourceName: 'DOE Newsroom', publishedAt: '2026-07-17T14:00:00.000Z', themes: [], unmapped: true },
   { id: 'demo-f2', title: 'Hyperscaler expands data-centre campus with dedicated substation', url: 'https://example.com/dc-substation', sourceName: 'Data Center Dynamics', publishedAt: '2026-07-17T11:00:00.000Z', themes: ['agi-infrastructure'], unmapped: false },
@@ -82,25 +95,30 @@ function isMissingTable(error: { code?: string; message?: string } | null): bool
 export async function GET() {
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
-    return NextResponse.json({ ok: true, demo: true, run: DEMO_RUN, items: DEMO_ITEMS });
+    return NextResponse.json({
+      ok: true, demo: true, run: DEMO_RUN, items: DEMO_ITEMS,
+      themeTotals: DEMO_RUN.themeCounts, sourceScores: DEMO_SCORES, stoplistCount: 2,
+    });
   }
 
-  // Latest run ledger row (migration 044). Missing table -> the panel says "first run tonight".
+  // Last 14 run ledger rows (migration 045): newest is the panel's headline, and the
+  // window sum is the "did this theme attract news?" measurement (v3 - shipped verticals
+  // are measured by the attach volume they actually earn, not by anyone's opinion).
   let run: ScoutRunSummary | null = null;
+  const themeTotals: Record<string, number> = {};
   let pendingMigration = false;
   const runRes = await supabase
     .from('scout_runs')
     .select('run_at, items_fetched, items_unmapped, ideas_filed, sources_active, sources_gated, window_saturated, theme_counts, drumbeats')
     .order('run_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(14);
   if (runRes.error) {
     if (!isMissingTable(runRes.error)) {
       return NextResponse.json({ ok: false, error: runRes.error.message }, { status: 400 });
     }
     pendingMigration = true;
-  } else if (runRes.data) {
-    const r = runRes.data;
+  } else if (runRes.data && runRes.data.length > 0) {
+    const r = runRes.data[0];
     run = {
       runAt: r.run_at as string,
       itemsFetched: Number(r.items_fetched ?? 0),
@@ -112,7 +130,30 @@ export async function GET() {
       themeCounts: (r.theme_counts ?? {}) as Record<string, number>,
       drumbeats: Array.isArray(r.drumbeats) ? (r.drumbeats as ScoutDrumbeat[]) : [],
     };
+    for (const row of runRes.data) {
+      for (const [slug, count] of Object.entries((row.theme_counts ?? {}) as Record<string, number>)) {
+        themeTotals[slug] = (themeTotals[slug] ?? 0) + Number(count || 0);
+      }
+    }
   }
+
+  // v3 surfaces (migration 048): the earned source leaderboard and the verdict stoplist.
+  // Both degrade to empty when unapplied - the panel simply omits the sections.
+  let sourceScores: ScoutSourceScore[] = [];
+  let stoplistCount = 0;
+  const scoresRes = await supabase.from('scout_source_scores').select('source_id, accepted, declined');
+  if (!scoresRes.error && scoresRes.data) {
+    sourceScores = scoresRes.data
+      .map((row) => ({
+        sourceName: SOURCE_NAMES[row.source_id as string] ?? (row.source_id as string),
+        accepted: Number(row.accepted ?? 0),
+        declined: Number(row.declined ?? 0),
+      }))
+      .sort((a, b) => b.accepted + b.declined - (a.accepted + a.declined))
+      .slice(0, 8);
+  }
+  const stopRes = await supabase.from('scout_stoplist').select('slug', { count: 'exact', head: true });
+  if (!stopRes.error && typeof stopRes.count === 'number') stoplistCount = stopRes.count;
 
   // Freshest items the scout read (migration 043). Missing table -> empty list, same flag.
   let items: ScoutFeedItem[] = [];
@@ -138,5 +179,5 @@ export async function GET() {
     }));
   }
 
-  return NextResponse.json({ ok: true, pendingMigration, run, items });
+  return NextResponse.json({ ok: true, pendingMigration, run, items, themeTotals, sourceScores, stoplistCount });
 }
