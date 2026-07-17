@@ -61,6 +61,8 @@ jobs:
         run: npm run check:migrations
       - name: Skill-chain coverage (every code section has an owning chain)
         run: npm run check:chains
+      - name: Learning ledgers parse clean (a ledger that stops parsing stops teaching)
+        run: npm run check:ledgers
       - name: Unit tests
         run: npm run test
       - name: Build

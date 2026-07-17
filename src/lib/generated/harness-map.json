@@ -6,7 +6,7 @@
   "stats": {
     "sections": 28,
     "chains": 14,
-    "gates": 7,
+    "gates": 8,
     "layers": 5
   },
   "chains": [
@@ -565,6 +565,12 @@
       "command": "npm run check:deploy",
       "enforces": "the LIVE SITE serves the version just pushed and its surfaces respond (health + content + middleware liveness). CI proves the build; this proves the deployment - six live-only bugs once shipped behind green CI",
       "runsIn": "deploy-smoke workflow on every push to main"
+    },
+    {
+      "name": "Learning ledgers",
+      "command": "npm run check:ledgers",
+      "enforces": "harness-incidents.jsonl + .claude/content-rules.jsonl parse clean (valid JSONL, required fields, unique ids) - a ledger that stops parsing stops teaching, silently",
+      "runsIn": "CI"
     }
   ],
   "layers": [

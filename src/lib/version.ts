@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.59.0',
+    date: '2026-07-18',
+    title: 'The accumulator wave: five loops that store learnings and compound',
+    highlights: [
+      'Alerts finally learn from you: every alert deep link is now tagged, and opening one records an engagement - the first behavioral signal the notification layer has ever kept. Over time Lyra can show which alert types YOU actually act on, and whether relevance scores predict behavior instead of just claiming to.',
+      'The scoring engine gains its evidence ledger: every night, each score component\'s values are joined to the real labeled outcomes and rebuilt into a component-efficacy table (win rate and average return per component band at 5 and 20 days). The engine stays deterministic - the ledger arms the humans who retune it.',
+      'The copilot\'s unanswered questions become the content backlog: recurring topics asked by multiple users that match nothing in the vertical map are filed as content-gap cards on the Ideas board - aggregate counts only, never a quote, never an identity.',
+      'Scout mis-attaches are correctable now: a maintainer-recorded exception (that tritium wastewater story is not fusion news) is enforced on every future run - the same accumulate-and-enforce shape as the verdict stop-list.',
+      'The repo itself keeps ledgers too: every incident that earned a gate lives machine-readable in harness-incidents.jsonl, and every rule the adversarial verifiers learned drafting content lives in a content-rules ledger that seeds future drafts - both gate-checked so a ledger that stops parsing goes red.',
+    ],
+  },
+  {
     version: '0.58.0',
     date: '2026-07-18',
     title: 'Prompt-injection fence on live news, resilient middleware pinned, honest copy',

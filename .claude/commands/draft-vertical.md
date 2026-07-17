@@ -27,7 +27,10 @@ Research framing only, never advice.
 ## Stage 2 - Author + adversarially verify (workflow)
 
 Use a multi-agent workflow (author + verify + deterministic merge, the same shape as the
-chain-fattening builds). Authors draft, verifiers try to KILL each row:
+chain-fattening builds). **First, read `.claude/content-rules.jsonl`** - every rule in it
+was learned by a verifier killing a real defect in a previous draft; include the relevant
+rules verbatim in BOTH author and verifier prompts so past kills are pre-empted, not
+re-discovered. Authors draft, verifiers try to KILL each row:
 
 - **Theme row** (`content/themes.jsonl`): slug, name, emoji, one-paragraph thesis.
 - **Companies** (`content/theme-companies.jsonl`): REAL tickers only - every ticker

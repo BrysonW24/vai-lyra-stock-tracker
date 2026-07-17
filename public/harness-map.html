@@ -75,7 +75,7 @@
   <div class="stats">
     <span class="stat"><b>28</b> mapped sections</span>
     <span class="stat"><b>14</b> skill chains</span>
-    <span class="stat"><b>7</b> deterministic gates</span>
+    <span class="stat"><b>8</b> deterministic gates</span>
     <span class="stat"><b>5</b> enforcement layers</span>
     <span class="stat"><b>0</b> orphans <span class="hint">(CI-enforced)</span></span>
   </div>
@@ -349,6 +349,12 @@
           <td><code>npm run check:deploy</code></td>
           <td>the LIVE SITE serves the version just pushed and its surfaces respond (health + content + middleware liveness). CI proves the build; this proves the deployment - six live-only bugs once shipped behind green CI</td>
           <td class="gruns">deploy-smoke workflow on every push to main</td>
+        </tr>
+        <tr>
+          <td class="gname">Learning ledgers</td>
+          <td><code>npm run check:ledgers</code></td>
+          <td>harness-incidents.jsonl + .claude/content-rules.jsonl parse clean (valid JSONL, required fields, unique ids) - a ledger that stops parsing stops teaching, silently</td>
+          <td class="gruns">CI</td>
         </tr>
     </tbody>
   </table>

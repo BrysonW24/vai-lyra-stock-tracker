@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Any
 
 from workers.stock_scanner.supabase_repo import SupabaseRepository
 
@@ -29,7 +28,7 @@ logger = logging.getLogger(__name__)
 ACCEPT_STATUSES = ("planned", "in_progress", "shipped")
 DECLINE_STATUSES = ("declined",)
 
-STOPLIST_PREFIX = "scout-vertical-"
+STOPLIST_PREFIXES = ("scout-vertical-", "scout-gap-")
 
 
 def stamp_outcomes(repo: SupabaseRepository) -> dict[str, int]:
@@ -55,7 +54,7 @@ def stamp_outcomes(repo: SupabaseRepository) -> dict[str, int]:
         try:
             accepted = card["status"] in ACCEPT_STATUSES
             _score_sources(repo, card, accepted=accepted, out=out)
-            if not accepted and card.get("kind") == "vertical":
+            if not accepted and card.get("kind") in ("vertical", "content-gap"):
                 _stoplist_entity(repo, card, out)
             repo.client.table("community_ideas").update(
                 {"stamped_at": datetime.now(tz=timezone.utc).isoformat()}
@@ -75,7 +74,6 @@ def _score_sources(repo: SupabaseRepository, card: dict, accepted: bool, out: di
         source_id = str(ev.get("sourceId") or "").strip()
         if source_id:
             counts[source_id] = counts.get(source_id, 0) + 1
-    field = "accepted" if accepted else "declined"
     for source_id, n in counts.items():
         existing = (
             repo.client.table("scout_source_scores")
@@ -98,17 +96,36 @@ def _score_sources(repo: SupabaseRepository, card: dict, accepted: bool, out: di
 
 
 def _stoplist_entity(repo: SupabaseRepository, card: dict, out: dict) -> None:
-    """A declined vertical's entity can never re-file: slug joins the stoplist."""
+    """A declined vertical's or content-gap's entity can never re-file: slug joins the stoplist."""
     dedupe_key = str(card.get("dedupe_key") or "")
-    if not dedupe_key.startswith(STOPLIST_PREFIX):
+    prefix = next((p for p in STOPLIST_PREFIXES if dedupe_key.startswith(p)), None)
+    if prefix is None:
         return
-    slug = dedupe_key[len(STOPLIST_PREFIX):]
-    entity = str(card.get("title") or "").removeprefix("Emerging signal: ").strip() or slug
+    slug = dedupe_key[len(prefix):]
+    entity = (
+        str(card.get("title") or "")
+        .removeprefix("Emerging signal: ")
+        .removeprefix("Content gap: ")
+        .strip()
+        or slug
+    )
     repo.client.table("scout_stoplist").upsert(
         {"slug": slug, "entity": entity, "dedupe_key": dedupe_key},
         on_conflict="slug",
     ).execute()
     out["stoplisted"] += 1
+
+
+def load_attach_exceptions(repo: SupabaseRepository) -> frozenset[tuple[str, str]]:
+    """(theme, term) pairs a maintainer ruled must never attach - enforced by attach().
+    Empty on any failure: a missed exception degrades to one more night of a known
+    mis-attach, never a crash."""
+    try:
+        result = repo.client.table("scout_attach_exceptions").select("theme, term").limit(2000).execute()
+        return frozenset((str(r["theme"]), str(r["term"]).lower()) for r in (result.data or []))
+    except Exception as exc:  # noqa: BLE001
+        logger.error("load attach exceptions failed: %s", exc)
+        return frozenset()
 
 
 def load_stoplist(repo: SupabaseRepository) -> set[str]:

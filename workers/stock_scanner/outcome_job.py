@@ -215,9 +215,16 @@ def main() -> None:
         distributions = aggregate_outcomes(outcomes)
         followups_sent = send_followups(repo, settings, followup_candidates, distributions)
 
+        # The learning ledger rides the labeling job (no new scheduler - built AND wired):
+        # rebuild component_efficacy from tonight's full outcome x component join, so
+        # /signal-quality always retunes from current evidence.
+        from workers.stock_scanner.efficacy_job import rebuild_component_efficacy
+
+        efficacy_rows = rebuild_component_efficacy(repo)
+
         LOGGER.info(
-            "Outcome job finished: labeled=%s saved=%s cohorts=%s followups_sent=%s",
-            len(outcomes), saved, len(distributions), followups_sent,
+            "Outcome job finished: labeled=%s saved=%s cohorts=%s followups_sent=%s efficacy_rows=%s",
+            len(outcomes), saved, len(distributions), followups_sent, efficacy_rows,
         )
         repo.finish_run(
             run_id,

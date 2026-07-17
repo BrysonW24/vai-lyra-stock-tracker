@@ -20,7 +20,7 @@ from typing import Any
 
 from workers.scout.attach import attach
 from workers.scout.cluster import IdeaCandidate, cluster_unmapped, drumbeats
-from workers.scout.outcomes import load_stoplist, stamp_outcomes
+from workers.scout.outcomes import load_attach_exceptions, load_stoplist, stamp_outcomes
 from workers.scout.providers import ScoutItem, demo_items, fetch_source
 from workers.scout.sources import active_sources, gated_sources, load_sources
 from workers.stock_scanner.config import Settings
@@ -83,8 +83,11 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
         items = list(seen.values())[:MAX_ITEMS_PER_RUN]
         summary["items_fetched"] = len(items)
 
-        # Attach each item to the vertical map (deterministic).
-        attachments = {item.id: attach(item.title, item.summary) for item in items}
+        # Attach each item to the vertical map (deterministic). Accumulated maintainer
+        # corrections (scout_attach_exceptions) are enforced here - a recorded
+        # mis-attach can never recur (v3 attach learning).
+        exceptions = load_attach_exceptions(repo) if repo.client else frozenset()
+        attachments = {item.id: attach(item.title, item.summary, exceptions=exceptions) for item in items}
         unmapped = [i for i in items if attachments[i.id].unmapped]
         summary["items_unmapped"] = len(unmapped)
 
@@ -135,6 +138,11 @@ def run_scout_worker(settings: Settings, repo: SupabaseRepository) -> dict[str, 
 
         if persist_live:
             summary["ideas_filed"] = _file_ideas(repo, candidates)
+            # Second AI writer: recurring unmapped copilot questions -> content-gap
+            # cards (aggregate counts only, never quotes - see gapminer docstring).
+            from workers.scout.gapminer import mine_content_gaps
+
+            summary["gap_cards"] = mine_content_gaps(repo, stoplist=stoplist)
             _record_run(repo, summary, theme_counts, beats)
         else:
             reason = "demo fallback (no live sources)" if used_demo_fallback else "demo mode (no Supabase)"

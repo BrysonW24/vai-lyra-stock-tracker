@@ -109,22 +109,31 @@ def detect_symbols(text: str) -> tuple[str, ...]:
     return tuple(found)
 
 
-def attach(title: str, summary: str) -> Attachment:
-    """Match one item against the vertical map."""
+def attach(title: str, summary: str, exceptions: frozenset[tuple[str, str]] | None = None) -> Attachment:
+    """Match one item against the vertical map.
+
+    `exceptions` holds accumulated human corrections as (theme, term) pairs (v3 attach
+    learning, scout_attach_exceptions): a term a maintainer ruled must NOT attach to a
+    theme (tritium wastewater cleanup is not fusion energy). Corrections are enforced
+    here - once recorded, the same mis-attach can never recur."""
     text = f"{title} {summary}"
     lower = text.lower()
     index = build_index()
+    exceptions = exceptions or frozenset()
     themes: set[str] = set()
+
+    def allowed(term: str, slug: str) -> bool:
+        return (slug, term) not in exceptions
 
     for term, slugs in index.items():
         if " " in term:
             if term in lower:
-                themes.update(slugs)
+                themes.update(s for s in slugs if allowed(term, s))
         elif re.search(rf"\b{re.escape(term)}\b", lower):
             # Single terms only attach when unambiguous (one owning theme) - a word
             # shared by three themes is noise, a word owned by one is signal.
             if len(slugs) == 1:
-                themes.update(slugs)
+                themes.update(s for s in slugs if allowed(term, s))
 
     symbols = detect_symbols(text)
     for sym in symbols:

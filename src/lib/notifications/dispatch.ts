@@ -203,6 +203,23 @@ function eventUrl(input: DispatchNotificationInput): string {
   return '/';
 }
 
+/**
+ * Tag an alert's deep link so OPENING it becomes a recorded engagement (nid + ch ->
+ * /api/notifications/engaged via the client beacon). This is the first behavioral
+ * validation the alert layer has ever had - relevance scores were previously never
+ * checked against what users actually act on. Internal links only: an external URL is
+ * left untouched (a foreign site would just drop unknown params anyway, and the beacon
+ * only runs inside Lyra). Applied at DELIVERY time, so held-release re-renders and
+ * sweep retries tag identically.
+ */
+export function tagEngagementUrl(url: string | undefined, eventId: string, channel: string): string | undefined {
+  if (!url) return url;
+  const isInternal = url.startsWith('/') && !url.startsWith('//');
+  if (!isInternal) return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}nid=${encodeURIComponent(eventId)}&ch=${encodeURIComponent(channel)}`;
+}
+
 async function deliverPush(
   supabase: SupabaseLike,
   event: NotificationEvent,
@@ -231,7 +248,7 @@ async function deliverPush(
       title: event.title,
       // Push carries the same substance as chat (data line + Why + disclaimer), not a bare title.
       body: renderNotificationPushBody(event),
-      url: event.url,
+      url: tagEngagementUrl(event.url, event.id, 'push'),
       tag: event.dedupeKey,
       dedupeKey: event.dedupeKey,
       data: { eventId: event.id, type: event.type, symbol: input.symbol, theme: input.theme },
@@ -301,13 +318,16 @@ async function deliverChat(
     return { delivered: [], suppressed: [channelType], errors: [] };
   }
 
-  const text = renderNotificationText(event);
+  // Channel-tagged copy so this delivery's deep link records WHICH channel earned the
+  // engagement - the renderers below only ever see the tagged event.
+  const taggedEvent: NotificationEvent = { ...event, url: tagEngagementUrl(event.url, event.id, channelType) };
+  const text = renderNotificationText(taggedEvent);
   // WhatsApp business-initiated sends (every scanner/alert send is one - we are messaging the
   // user, not replying inside their 24h customer-service window) MUST use a pre-approved Meta
   // template, not freeform text, or Meta rejects them. Map the event's structured fields into a
   // typed WhatsAppTemplateMessage via the existing builders. Freeform text is reserved for genuine
   // in-window webhook replies, which do not flow through this dispatch path. Telegram keeps text.
-  const whatsAppMessage = channelType === 'whatsapp' ? buildWhatsAppMessageForEvent(event) : null;
+  const whatsAppMessage = channelType === 'whatsapp' ? buildWhatsAppMessageForEvent(taggedEvent) : null;
   const delivered: string[] = [];
   const suppressed: string[] = [];
   const errors: string[] = [];
@@ -318,14 +338,14 @@ async function deliverChat(
       channelType === 'telegram'
         ? await sendTelegramMessage(
             destination.destination!,
-            buildTelegramTextForEvent(event, { voice: voiceOpts.voice, name: voiceOpts.name }),
+            buildTelegramTextForEvent(taggedEvent, { voice: voiceOpts.voice, name: voiceOpts.name }),
             idempotencyKey,
             { eventId: event.id, userId: event.userId, parseMode: 'HTML' },
           )
         : channelType === 'slack'
           ? await sendSlackMessage(
               destination.destination!,
-              buildSlackTextForEvent(event, { voice: voiceOpts.voice, name: voiceOpts.name }),
+              buildSlackTextForEvent(taggedEvent, { voice: voiceOpts.voice, name: voiceOpts.name }),
               idempotencyKey,
               { eventId: event.id, userId: event.userId },
             )

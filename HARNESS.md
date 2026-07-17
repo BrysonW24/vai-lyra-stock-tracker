@@ -28,6 +28,7 @@ Two conventions carry the whole design:
 | **Schema drift** | `npm run check:schema-drift` | **the LIVE database matches the migrations in this repo.** Needs a DB URL; `--require-db` makes a missing one a failure | nightly `schema-drift` job |
 | Migrations from zero | `scripts/migrate-from-zero.sh` | **the whole schema BUILDS on an empty database** - every migration in order plus the sql/ reconcile, against throwaway Postgres. Kills the fresh-clone-cannot-build class (0.36.0). First run found one fossil seed + 8 fossil indexes | CI `migrations-from-zero` job |
 | Deploy smoke | `npm run check:deploy` | **the LIVE SITE serves the version just pushed** and its surfaces respond (health + content + middleware liveness). CI proves the build; this proves the deployment - six live-only bugs once shipped behind green CI | `deploy-smoke` workflow on every push to main |
+| Learning ledgers | `npm run check:ledgers` | `harness-incidents.jsonl` + `.claude/content-rules.jsonl` parse clean (valid JSONL, required fields, unique ids) - a ledger that stops parsing stops teaching, silently | CI |
 
 Adding a gate: name it `scripts/check-<thing>.mjs`, give it a `check:<thing>` npm
 script, wire it into CI, and register it in this table. A gate that only runs when
@@ -35,8 +36,11 @@ someone remembers it is not a gate.
 
 ### The rule these gates exist to enforce: a green must be able to go red
 
-Every gate above was earned by a failure that a green build actively concealed. Read this before
-adding a `|| true`, a silent skip, or a "non-fatal" catch:
+Every gate above was earned by a failure that a green build actively concealed. The full
+incident history is machine-readable in [`harness-incidents.jsonl`](harness-incidents.jsonl)
+(gate-checked by `check:ledgers`) - **grep it before debugging a familiar failure**, and
+append a row whenever an incident earns a new gate. The highlights, before you add a
+`|| true`, a silent skip, or a "non-fatal" catch:
 
 - **`|| echo "(non-fatal)"` in the nightly** swallowed the exit code, so the events and fundamentals
   workers failed EVERY night for months under a green tick. Best-effort must never mean invisible:

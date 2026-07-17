@@ -86,6 +86,10 @@ is plain markdown with explicit stages and gates. The non-negotiables:
 - **Where to spend a new check:** every deterministic gate added so far found real rot
   on its first run. If a surface has never had one, assume it is hiding something -
   see the earned-lessons list in [HARNESS.md](HARNESS.md).
+- **Before debugging a familiar failure, grep the ledgers.** `harness-incidents.jsonl`
+  (repo root) holds every incident that earned a gate, machine-readable; append a row
+  when an incident earns a new one. Content workflows read and grow
+  `.claude/content-rules.jsonl` the same way. Both are gate-checked (`npm run check:ledgers`).
 - TypeScript strict, no `any`, plain hyphens (never an em dash) in user-visible copy.
 - Conventions live in [CLAUDE.md](CLAUDE.md) - read it before editing.
 - If your change touches the stack, costs, routes, env vars, walkthroughs, or version, the
