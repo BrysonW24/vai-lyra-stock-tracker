@@ -6,6 +6,14 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.69.1] - 2026-07-18
+
+Home-Screen walkthrough polish.
+
+### Changed
+
+- The Safari-menu screenshot in step 1 is now compact and centered instead of full-width, and the Lyra icon in the final payoff shot is dead-centered. Reviewed live on the iOS simulator.
+
 ## [0.69.0] - 2026-07-18
 
 Your phone stops buzzing: a real rate cap, and Quiet mode that means it.
@@ -1024,7 +1032,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.69.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.69.1...HEAD
+[0.69.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.69.0...v0.69.1
 [0.69.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.68.1...v0.69.0
 [0.68.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.68.0...v0.68.1
 [0.68.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.67.1...v0.68.0

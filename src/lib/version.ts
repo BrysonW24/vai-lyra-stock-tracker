@@ -23,6 +23,14 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.69.1',
+    date: '2026-07-18',
+    title: 'Home-Screen walkthrough polish',
+    highlights: [
+      'The Safari-menu screenshot in step 1 is now compact and centered instead of full-width, and the Lyra icon in the final payoff shot is dead-centered. Reviewed live on the iOS simulator.',
+    ],
+  },
+  {
     version: '0.69.0',
     date: '2026-07-18',
     title: 'Your phone stops buzzing: a real rate cap, and Quiet mode that means it',

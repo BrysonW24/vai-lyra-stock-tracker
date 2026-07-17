@@ -13,7 +13,7 @@ import { detectInstallPlatformFromBrowser } from '@/lib/install-platform';
  * an invisible beat makes the journey feel like it lost a step (founder-reported).
  */
 
-const IOS_STEPS: Array<{ caption: React.ReactNode; src: string; width: number; height: number; alt: string }> = [
+const IOS_STEPS: Array<{ caption: React.ReactNode; src: string; width: number; height: number; alt: string; imgClass?: string }> = [
   {
     caption: (
       <>Tap the <span className="font-semibold text-[#eef3f8]">menu button</span> in Safari&apos;s toolbar, then tap{' '}
@@ -23,6 +23,8 @@ const IOS_STEPS: Array<{ caption: React.ReactNode; src: string; width: number; h
     width: 640,
     height: 878,
     alt: 'Safari menu open with the Share row at the top',
+    // Tall menu shot reads better small and centered than full-bleed (founder note).
+    imgClass: 'mx-auto w-56',
   },
   {
     caption: (
@@ -129,7 +131,7 @@ export function AddToHomeScreenStep({ onDone }: { onDone: () => void }) {
                   width={step.width}
                   height={step.height}
                   alt={step.alt}
-                  className="mt-3 w-full rounded-lg border border-[#263241]"
+                  className={`mt-3 rounded-lg border border-[#263241] ${step.imgClass ?? 'w-full'}`}
                   priority={i === 0}
                 />
               </li>
