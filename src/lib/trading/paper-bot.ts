@@ -123,7 +123,7 @@ export function requiresApproval(intent: OrderIntent, settings: TradingSettings 
  * Returns research_only / blocked_missing_evidence when the agent declines, blocked_by_risk when the
  * risk engine blocks, or proposed (with requiresApproval) when it is a valid paper candidate.
  */
-export async function proposeBotRun(params: { symbol: string; quantity: number; creds: AiCreds }): Promise<BotRun> {
+export async function proposeBotRun(params: { symbol: string; quantity: number; creds: AiCreds; owner: string }): Promise<BotRun> {
   const data = await getDashboardData();
   const signal = data.signals.find((s) => s.symbol === params.symbol.toUpperCase());
   if (!signal) return { status: 'error', error: 'unknown_symbol' };
@@ -153,10 +153,10 @@ export async function proposeBotRun(params: { symbol: string; quantity: number; 
   const portfolioValue = data.portfolio.reduce((sum, h) => sum + h.marketValue, 0) || 100000;
   const report = runPreTradeChecks(intent, buildPaperContext(PAPER_SETTINGS, portfolioValue));
   if (!report.passed) {
-    recordFlag({ kind: 'risk_blocked', symbol: params.symbol.toUpperCase(), message: `${params.symbol.toUpperCase()} blocked by the risk gate - not paper-eligible` });
+    recordFlag(params.owner, { kind: 'risk_blocked', symbol: params.symbol.toUpperCase(), message: `${params.symbol.toUpperCase()} blocked by the risk gate - not paper-eligible` });
     return { status: 'blocked_by_risk', verdict, intent: { ...intent, status: 'blocked' }, report };
   }
-  recordFlag({ kind: 'approval_pending', symbol: params.symbol.toUpperCase(), message: `${params.symbol.toUpperCase()} is paper-eligible - ${params.quantity} share order awaiting your approval` });
+  recordFlag(params.owner, { kind: 'approval_pending', symbol: params.symbol.toUpperCase(), message: `${params.symbol.toUpperCase()} is paper-eligible - ${params.quantity} share order awaiting your approval` });
   return {
     status: 'proposed',
     verdict,
@@ -170,7 +170,7 @@ export async function proposeBotRun(params: { symbol: string; quantity: number; 
  * EXECUTE: re-run the risk gate at execution time (a passed proposal can be blocked if conditions
  * changed), then simulate the paper fill. Only an already-approved intent should reach here.
  */
-export async function executeBotRun(intent: OrderIntent): Promise<BotRun> {
+export async function executeBotRun(intent: OrderIntent, owner: string): Promise<BotRun> {
   const data = await getDashboardData();
   const signal = data.signals.find((s) => s.symbol === intent.symbol);
   const referencePrice = signal?.close ?? intent.notionalValue / Math.max(1, intent.quantity);
@@ -182,7 +182,7 @@ export async function executeBotRun(intent: OrderIntent): Promise<BotRun> {
   const fill = simulatePaperFill(intent, referencePrice);
   // The fill now LIVES in the paper account so it can be viewed + analysed (positions, P/L, track record).
   recordPaperFill({ symbol: fill.symbol, side: fill.side, quantity: fill.quantity, fillPrice: fill.fillPrice, simulatedFee: fill.simulatedFee });
-  recordFlag({ kind: 'fill', symbol: fill.symbol, message: `Paper filled ${fill.side.toUpperCase()} ${fill.quantity} ${fill.symbol} @ $${fill.fillPrice} (notional $${fill.notional.toLocaleString()})` });
+  recordFlag(owner, { kind: 'fill', symbol: fill.symbol, message: `Paper filled ${fill.side.toUpperCase()} ${fill.quantity} ${fill.symbol} @ $${fill.fillPrice} (notional $${fill.notional.toLocaleString()})` });
   // Durable, per-user persistence for authenticated users (RLS-scoped); a no-op in demo mode.
   await persistFillIfAuthed(fill, intent);
   return { status: 'paper_executed', intent: { ...intent, status: 'paper_executed' }, report, fill };
@@ -202,7 +202,7 @@ export interface CloseRun {
  * the approval. Re-runs the risk gate, simulates the sell fill, books realised P/L (in-memory + durable),
  * and removes the position. Returns no_position when there is nothing to close.
  */
-export async function runClose(symbol: string): Promise<CloseRun> {
+export async function runClose(symbol: string, owner: string): Promise<CloseRun> {
   const sym = symbol.toUpperCase();
   const data = await getDashboardData();
   const summary = await getPaperAccountSummaryAuthAware();
@@ -230,7 +230,7 @@ export async function runClose(symbol: string): Promise<CloseRun> {
   const closed = closePaperPosition(sym, fill.fillPrice, fill.simulatedFee); // in-memory realised P/L
   await persistCloseIfAuthed(sym, fill.fillPrice, fill.simulatedFee); // durable if authed
   const realisedPnl = closed?.realisedPnl;
-  recordFlag({
+  recordFlag(owner, {
     kind: 'fill',
     symbol: sym,
     message: `Paper closed ${pos.quantity} ${sym} @ $${fill.fillPrice} · realised ${realisedPnl !== undefined ? `${realisedPnl >= 0 ? '+' : ''}${realisedPnl}` : 'n/a'}`,

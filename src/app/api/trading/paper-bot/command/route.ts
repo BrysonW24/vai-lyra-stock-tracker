@@ -4,6 +4,7 @@ import type { AiCreds } from '@/lib/ai/run-agent';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
 import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { guardAiRoute } from '@/lib/api/ai-guard';
+import { DEMO_OWNER } from '@/lib/trading/notifications-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,9 @@ export async function POST(req: NextRequest) {
   }
 
   const creds: AiCreds = { provider: resolved.provider, apiKey: resolved.apiKey, model: resolved.model };
-  const result = await runPaperBotCommand(line, creds, guard.identity);
+  // identity scopes the pending-intent state (per-caller); flagOwner scopes the notification feed
+  // (per signed-in user, else the shared demo bucket) so one user's flags never surface to another.
+  const flagOwner = guard.authenticated ? guard.identity : DEMO_OWNER;
+  const result = await runPaperBotCommand(line, creds, guard.identity, flagOwner);
   return NextResponse.json(result);
 }

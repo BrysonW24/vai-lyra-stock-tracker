@@ -33,6 +33,7 @@ interface Verdict {
   confidence?: number;
 }
 interface Intent {
+  id?: string;
   symbol: string;
   side: string;
   quantity: number;
@@ -71,6 +72,8 @@ interface BotRun {
   report?: Report;
   fill?: Fill;
   requiresApproval?: boolean;
+  /** Server-signed capability carried across propose -> approve -> execute (the approval gate). */
+  token?: string;
 }
 interface AccountPosition {
   symbol: string;
@@ -168,6 +171,8 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
   });
   const [run, setRun] = useState<BotRun | null>(null);
   const [intent, setIntent] = useState<Intent | null>(null);
+  // Server-signed capability from propose/approve; sent back so the server can verify the gate.
+  const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState<Action | null>(null);
   const [account, setAccount] = useState<Account | null>(null);
   const [showHow, setShowHow] = useState(true);
@@ -289,19 +294,21 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
     const r = await call('propose', { symbol: symbol.trim().toUpperCase(), quantity, ai: { provider: ai.provider, apiKey: ai.apiKey, model: ai.model } });
     setRun(r);
     setIntent(r.intent ?? null);
+    setToken(r.token ?? null);
   }
   async function approve() {
     if (tourStep === 2) setTourStep(3);
     if (!intent) return;
-    const r = await call('approve', { intent });
+    const r = await call('approve', { intent, token });
     if (r.ok && r.intent) {
       setIntent(r.intent);
+      setToken(r.token ?? null);
       setRun((prev) => (prev ? { ...prev, intent: r.intent, status: 'proposed' } : prev));
     }
   }
   async function execute() {
     if (!intent) return;
-    const r = await call('execute', { intent });
+    const r = await call('execute', { intent, token });
     setRun(r);
     if (r.intent) setIntent(r.intent);
     if (r.status === 'paper_executed') {

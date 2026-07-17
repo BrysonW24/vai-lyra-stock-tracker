@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.61.0] - 2026-07-18
+
+Paper-bot approvals are tamper-proof, and your bot feed is private.
+
+### Changed
+
+- The paper trading approval gate is now a signed, server-verified capability. Before, the approve and execute steps trusted whatever the browser sent - so a crafted request could have skipped the AI-evidence and risk checks and booked a paper fill outright. Every step is now cryptographically bound to you and to the exact order, so a fabricated, tampered, or replayed approval is refused. Paper only, as always - no real money is ever involved.
+- Your paper-bot notification feed - approvals, fills, position moves - is now private to you. It used to be one shared feed, so on a multi-user deployment one signed-in person could see (and clear) another's bot activity. Flags are now scoped per user and can only ever be read or marked read by their owner.
+- Under the hood: the capability is stateless (it survives serverless restarts) and portable - a clean pattern any request/response API can reuse to make a multi-step approval unforgeable without server-side session storage.
+
 ## [0.60.0] - 2026-07-18
 
 Retrieval quality: the right doc wins again.
@@ -916,7 +926,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.60.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.61.0...HEAD
+[0.61.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.60.0...v0.61.0
 [0.60.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.59.0...v0.60.0
 [0.59.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.58.0...v0.59.0
 [0.58.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.57.0...v0.58.0

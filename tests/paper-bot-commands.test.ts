@@ -10,7 +10,7 @@ const CREDS = { provider: 'google' as const, apiKey: '' };
 describe('paper-bot CLI safety', () => {
   it('refuses anything that sounds like live/real trading', async () => {
     for (const line of ['live', 'go live', 'real money buy NVDA', 'golive']) {
-      const r = await runPaperBotCommand(line, CREDS, 'test-user');
+      const r = await runPaperBotCommand(line, CREDS, 'test-user', 'test-user');
       expect(r.ok).toBe(false);
       expect(r.kind).toBe('refused');
       expect(r.lines.join(' ')).toMatch(/paper-only|permanently disabled/i);
@@ -18,31 +18,31 @@ describe('paper-bot CLI safety', () => {
   });
 
   it('execute is blocked unless an order has been proposed and approved', async () => {
-    const r = await runPaperBotCommand('execute', CREDS, 'test-user');
+    const r = await runPaperBotCommand('execute', CREDS, 'test-user', 'test-user');
     expect(r.ok).toBe(false);
     expect(r.lines.join(' ')).toMatch(/nothing to execute|approve/i);
   });
 
   it('approve does nothing when there is no pending order', async () => {
-    const r = await runPaperBotCommand('approve', CREDS, 'test-user');
+    const r = await runPaperBotCommand('approve', CREDS, 'test-user', 'test-user');
     expect(r.ok).toBe(false);
     expect(r.lines.join(' ')).toMatch(/nothing to approve/i);
   });
 
   it('propose validates its arguments', async () => {
-    const r = await runPaperBotCommand('propose', CREDS, 'test-user');
+    const r = await runPaperBotCommand('propose', CREDS, 'test-user', 'test-user');
     expect(r.ok).toBe(false);
     expect(r.kind).toBe('usage');
   });
 
   it('unknown commands are refused, not guessed into an action', async () => {
-    const r = await runPaperBotCommand('delete everything', CREDS, 'test-user');
+    const r = await runPaperBotCommand('delete everything', CREDS, 'test-user', 'test-user');
     expect(r.ok).toBe(false);
     expect(r.kind).toBe('unknown');
   });
 
   it('help lists the command set', async () => {
-    const r = await runPaperBotCommand('help', CREDS, 'test-user');
+    const r = await runPaperBotCommand('help', CREDS, 'test-user', 'test-user');
     expect(r.ok).toBe(true);
     expect(r.lines.join('\n')).toMatch(/propose <SYM> <QTY>/);
     // No live/real-money command verb is advertised in the allowlist.
@@ -50,7 +50,7 @@ describe('paper-bot CLI safety', () => {
   });
 
   it('status returns account + channel lines without needing AI', async () => {
-    const r = await runPaperBotCommand('status', CREDS, 'test-user');
+    const r = await runPaperBotCommand('status', CREDS, 'test-user', 'test-user');
     expect(r.ok).toBe(true);
     expect(r.lines.join(' ')).toMatch(/equity/i);
     expect(r.lines.join(' ')).toMatch(/channels/i);

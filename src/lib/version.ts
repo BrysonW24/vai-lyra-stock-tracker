@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.61.0',
+    date: '2026-07-18',
+    title: 'Paper-bot approvals are tamper-proof, and your bot feed is private',
+    highlights: [
+      'The paper trading approval gate is now a signed, server-verified capability. Before, the approve and execute steps trusted whatever the browser sent - so a crafted request could have skipped the AI-evidence and risk checks and booked a paper fill outright. Every step is now cryptographically bound to you and to the exact order, so a fabricated, tampered, or replayed approval is refused. Paper only, as always - no real money is ever involved.',
+      'Your paper-bot notification feed - approvals, fills, position moves - is now private to you. It used to be one shared feed, so on a multi-user deployment one signed-in person could see (and clear) another\'s bot activity. Flags are now scoped per user and can only ever be read or marked read by their owner.',
+      'Under the hood: the capability is stateless (it survives serverless restarts) and portable - a clean pattern any request/response API can reuse to make a multi-step approval unforgeable without server-side session storage.',
+    ],
+  },
+  {
     version: '0.60.0',
     date: '2026-07-18',
     title: 'Retrieval quality: the right doc wins again',

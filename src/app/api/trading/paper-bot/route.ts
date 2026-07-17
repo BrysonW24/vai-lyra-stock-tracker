@@ -7,14 +7,23 @@ import { guardAiRoute } from '@/lib/api/ai-guard';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { dispatchNotificationEvent } from '@/lib/notifications/dispatch';
 import { buildPaperOrderIntent } from '@/lib/trading/order-intent-builder';
+import { signClaim, verifyClaim, type IntentClaim, type IntentStage } from '@/lib/trading/intent-signing';
+import { DEMO_OWNER } from '@/lib/trading/notifications-store';
 
 interface PaperBotRequest {
   action: 'propose' | 'approve' | 'execute';
   symbol?: string;
   quantity?: number;
   intent?: OrderIntent;
+  /** Server-signed capability from the previous step (proposed -> approve, approved -> execute). */
+  token?: unknown;
   ai?: { provider: AiProvider; apiKey: string; model?: string };
   tour?: boolean;
+}
+
+/** Build the signed claim for an intent at a given stage, bound to the caller and the tour flag. */
+function claimFor(intent: OrderIntent, owner: string, stage: IntentStage, tour: boolean): IntentClaim {
+  return { id: intent.id, symbol: intent.symbol, side: intent.side, quantity: intent.quantity, owner, stage, tour };
 }
 
 async function dispatchPaperBotNotification(params: {
@@ -94,7 +103,12 @@ export async function POST(request: NextRequest) {
   try {
     const guard = await guardAiRoute<PaperBotRequest>(request, { scope: 'paper-bot' });
     if (!guard.ok) return guard.response;
-    const { action, symbol, quantity, intent, ai, tour } = guard.body;
+    const { action, symbol, quantity, intent, token, ai } = guard.body;
+    const tour = Boolean(guard.body.tour);
+    // caller binds the signed capability so one user's token cannot be replayed by another.
+    const caller = guard.identity;
+    // flagOwner scopes the notification feed (per signed-in user, else the shared demo bucket).
+    const flagOwner = guard.authenticated ? guard.identity : DEMO_OWNER;
 
     if (action === 'propose') {
       if (tour) {
@@ -118,33 +132,44 @@ export async function POST(request: NextRequest) {
           intent: mockIntent,
           requiresApproval: true
         };
-        return NextResponse.json({ ok: true, ...run });
+        // Issue the proposed-stage capability (tour=true is bound in, so it cannot be flipped to a real fill).
+        const proposedToken = signClaim(claimFor(mockIntent, caller, 'proposed', true));
+        return NextResponse.json({ ok: true, ...run, token: proposedToken });
       }
 
       if (!ai || !symbol) return NextResponse.json({ ok: false, reason: 'bad_request' });
       const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated });
       if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
-      const run = await proposeBotRun({ symbol, quantity: quantity && quantity > 0 ? quantity : 10, creds: { provider: creds.provider, apiKey: creds.apiKey, model: creds.model } });
+      const run = await proposeBotRun({ symbol, quantity: quantity && quantity > 0 ? quantity : 10, creds: { provider: creds.provider, apiKey: creds.apiKey, model: creds.model }, owner: flagOwner });
       await dispatchPaperBotNotification({ action: 'propose', symbol, run });
-      return NextResponse.json({ ok: true, ...run });
+      // Only a genuine, risk-gate-passed proposal gets a capability; nothing else can be approved.
+      const proposedToken = run.status === 'proposed' && run.intent ? signClaim(claimFor(run.intent, caller, 'proposed', false)) : undefined;
+      return NextResponse.json({ ok: true, ...run, token: proposedToken });
     }
 
     if (action === 'approve') {
       if (!intent) return NextResponse.json({ ok: false, reason: 'no_intent' });
-      if (intent.status !== 'pending_approval') {
+      // The server-signed capability - NOT the client's claimed status - is the gate. A fabricated
+      // intent has no valid proposed-stage token, so it can never be approved.
+      if (!verifyClaim(claimFor(intent, caller, 'proposed', tour), token)) {
         return NextResponse.json({ ok: false, reason: 'not_pending', intentStatus: intent.status });
       }
-      return NextResponse.json({ ok: true, status: 'approved', intent: { ...intent, status: 'approved' } });
+      const approved = { ...intent, status: 'approved' as const };
+      const approvedToken = signClaim(claimFor(approved, caller, 'approved', tour));
+      return NextResponse.json({ ok: true, status: 'approved', intent: approved, token: approvedToken });
     }
 
     if (action === 'execute') {
       if (!intent) return NextResponse.json({ ok: false, reason: 'no_intent' });
-      // Approval gate: only an explicitly approved intent may execute. Blocks AI / unapproved paths.
-      if (intent.status !== 'approved') {
+      // Approval gate: only a server-signed approved-stage capability may execute. AI / unapproved /
+      // fabricated intents have no valid token, so none can ever reach a paper fill.
+      if (!verifyClaim(claimFor(intent, caller, 'approved', tour), token)) {
         return NextResponse.json({ ok: false, reason: 'not_approved', intentStatus: intent.status });
       }
 
-      if (tour || intent.reasonCode === 'tour_mode') {
+      // The tour flag is signed into the capability, so this branch is authentic - a real approved
+      // intent (tour=false) can never be diverted into the fixed-price mock fill.
+      if (tour) {
         const fill = {
           symbol: intent.symbol,
           side: intent.side,
@@ -158,7 +183,7 @@ export async function POST(request: NextRequest) {
         };
         const { recordPaperFill } = await import('@/lib/trading/paper-account-store');
         recordPaperFill(fill);
-        
+
         // Persist it if authed so the 15-second polling doesn't erase the mock trade
         const { persistFillIfAuthed } = await import('@/lib/trading/paper-account-repo');
         await persistFillIfAuthed(fill, intent);
@@ -172,7 +197,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true, ...run });
       }
 
-      const run = await executeBotRun(intent);
+      const run = await executeBotRun(intent, flagOwner);
       await dispatchPaperBotNotification({ action: 'execute', symbol: intent.symbol, run });
       return NextResponse.json({ ok: true, ...run });
     }

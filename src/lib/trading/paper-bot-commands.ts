@@ -66,10 +66,11 @@ function statusLines(s: Awaited<ReturnType<typeof getPaperAccountSummary>>): str
 
 /**
  * Execute one command line for a specific caller. `identity` scopes the pending-intent state so
- * one user's proposal cannot be approved/executed by another. Reads/writes the in-memory stores
- * and the engine.
+ * one user's proposal cannot be approved/executed by another; `flagOwner` (user id when signed in,
+ * else DEMO_OWNER) scopes the notification feed so one user's flags never surface to another.
+ * Reads/writes the in-memory stores and the engine.
  */
-export async function runPaperBotCommand(rawLine: string, creds: AiCreds, identity: string): Promise<CommandResult> {
+export async function runPaperBotCommand(rawLine: string, creds: AiCreds, identity: string, flagOwner: string): Promise<CommandResult> {
   const line = rawLine.trim();
   if (!line) return { ok: false, kind: 'noop', lines: ['Type `help` for commands.'] };
   const [verb, ...args] = line.split(/\s+/);
@@ -107,7 +108,7 @@ export async function runPaperBotCommand(rawLine: string, creds: AiCreds, identi
       const symbol = (args[0] ?? '').toUpperCase();
       const quantity = Number(args[1]);
       if (!symbol || !Number.isFinite(quantity) || quantity <= 0) return { ok: false, kind: 'usage', lines: ['Usage: propose <SYMBOL> <QTY>   e.g. propose NVDA 10'] };
-      const run = await proposeBotRun({ symbol, quantity, creds });
+      const run = await proposeBotRun({ symbol, quantity, creds, owner: flagOwner });
       if (run.status === 'error') return { ok: false, kind: 'error', lines: [`Could not assess ${symbol}: ${run.error}`] };
       if (run.status !== 'proposed') {
         const v = run.verdict as { readiness?: string; reasons?: string[] } | undefined;
@@ -143,7 +144,7 @@ export async function runPaperBotCommand(rawLine: string, creds: AiCreds, identi
       const toFill = getPending(identity);
       if (!toFill) return { ok: false, kind: 'nothing', lines: ['Nothing to execute. `propose` then `approve` first.'] };
       if (toFill.status !== 'approved') return { ok: false, kind: 'guard', lines: ['Order is not approved. Type `approve` first.'] };
-      const run = await executeBotRun(toFill);
+      const run = await executeBotRun(toFill, flagOwner);
       if (run.status !== 'paper_executed' || !run.fill) {
         return { ok: false, kind: run.status, lines: [`Execution ${run.status.replace(/_/g, ' ')}${run.error ? `: ${run.error}` : ''}.`] };
       }
@@ -155,7 +156,7 @@ export async function runPaperBotCommand(rawLine: string, creds: AiCreds, identi
     case 'close': {
       const symbol = (args[0] ?? '').toUpperCase();
       if (!symbol) return { ok: false, kind: 'usage', lines: ['Usage: close <SYMBOL>   e.g. close NVDA'] };
-      const run = await runClose(symbol);
+      const run = await runClose(symbol, flagOwner);
       if (run.status === 'no_position') return { ok: false, kind: 'no_position', lines: [`No open ${symbol} position to close.`] };
       if (run.status === 'blocked_by_risk') return { ok: false, kind: 'blocked', lines: [`Close blocked by the risk gate for ${symbol}.`] };
       if (run.status !== 'closed' || !run.fill) return { ok: false, kind: 'error', lines: [`Could not close ${symbol}${run.error ? `: ${run.error}` : ''}.`] };
@@ -164,7 +165,7 @@ export async function runPaperBotCommand(rawLine: string, creds: AiCreds, identi
 
     case 'flags':
     case 'alerts': {
-      const flags = listFlags(8);
+      const flags = listFlags(flagOwner, 8);
       if (!flags.length) return { ok: true, kind: 'flags', lines: ['No flags yet.'] };
       return { ok: true, kind: 'flags', lines: flags.map((fl) => `[${fl.severity}] ${fl.message}`) };
     }

@@ -10,7 +10,7 @@
  */
 import { getDashboardData } from '@/lib/data';
 import { DEFAULT_PAPER_STARTING_CASH } from '@/lib/edge/costs';
-import { maybeFlagPositionMove } from './notifications-store';
+import { maybeFlagPositionMove, DEMO_OWNER } from './notifications-store';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -189,8 +189,10 @@ export async function getPaperAccountSummary(): Promise<PaperAccountSummary> {
     const unrealisedPnl = round2(mv - cost - p.totalFees);
     totalPnl += unrealisedPnl;
     const unrealisedPnlPct = cost > 0 ? round2((unrealisedPnl / cost) * 100) : 0;
-    // Raise a flag when a position crosses a fresh ±5% band (deduped inside the store).
-    maybeFlagPositionMove(p.symbol, unrealisedPnlPct);
+    // Raise a flag when a position crosses a fresh ±5% band (deduped inside the store). The in-memory
+    // store is the demo/single-user path (authed users read the persisted summary), so its flags
+    // belong to the shared demo feed.
+    maybeFlagPositionMove(DEMO_OWNER, p.symbol, unrealisedPnlPct);
     return {
       ...p,
       currentPrice: round2(currentPrice),
