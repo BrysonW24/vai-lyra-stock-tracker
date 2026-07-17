@@ -1,4 +1,4 @@
--- 038: reconcile company_events to the ONE shape the app and the worker actually use.
+-- 039: reconcile company_events to the ONE shape the app and the worker actually use.
 --
 -- THE BUG (silent, nightly, since the events worker shipped):
 -- Two migrations define public.company_events with incompatible shapes:

@@ -48,8 +48,8 @@ if (!fs.existsSync(dirPath)) {
 const KNOWN_COLLISIONS = {
   company_events: {
     canonical: '040_events_ipos_tables.sql',
-    resolvedBy: '041_reconcile_company_events.sql',
-    note: '014 created it first (symbol/event_time/impact_level), so 040 (event_id/event_date/ticker/title/importance) silently no-op\'d. Both real consumers - the events worker and src/lib/calendar-live.ts - speak the 040 shape, so 041 adds those columns by ALTER and relaxes 014\'s NOT NULL on symbol.',
+    resolvedBy: '039_reconcile_company_events.sql',
+    note: '014 created it first (symbol/event_time/impact_level), so 040 (event_id/event_date/ticker/title/importance) silently no-op\'d. Both real consumers - the events worker and src/lib/calendar-live.ts - speak the 040 shape, so 039 adds those columns by ALTER and relaxes 014\'s NOT NULL on symbol. 039 MUST sort before 040: 040 indexes company_events(ticker), which does not exist until the reconcile adds it.',
   },
   notification_channels: {
     canonical: '009_alerts_notifications.sql',

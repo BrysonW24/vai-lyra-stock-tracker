@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-07-17
+
+The Ideas board can actually save your ideas now - four migrations had never reached production.
+
+### Changed
+
+- Your ideas and upvotes now save. The Ideas board shipped without its two database tables ever being created in production, so every suggestion and vote was writing into nothing. The tables are in place now - along with three other database changes that had silently never been applied: your goal target can persist, activation tracking records again, and the digital twin has its consent switch.
+- Fixed the ordering bug that caused it. A migration that adds columns to the calendar table was numbered to run AFTER the one that indexes those same columns, so setting up a database from scratch failed outright with "column ticker does not exist". The reconcile now runs first, and a fresh clone can build the whole schema in one pass.
+- The nightly jobs are now writing to a database that matches them: the calendar, fundamentals and event-risk tables all have the columns their jobs have been trying to fill.
+
 ## [0.35.0] - 2026-07-17
 
 The chain explorer: every vertical traced end to end, and the chains are finally deep.
@@ -642,7 +652,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.35.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.36.0...HEAD
+[0.36.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.35.0...v0.36.0
 [0.35.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.34.0...v0.35.0
 [0.34.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.33.0...v0.34.0
 [0.33.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.32.0...v0.33.0

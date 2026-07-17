@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.36.0',
+    date: '2026-07-17',
+    title: 'The Ideas board can actually save your ideas now - four migrations had never reached production',
+    highlights: [
+      'Your ideas and upvotes now save. The Ideas board shipped without its two database tables ever being created in production, so every suggestion and vote was writing into nothing. The tables are in place now - along with three other database changes that had silently never been applied: your goal target can persist, activation tracking records again, and the digital twin has its consent switch.',
+      'Fixed the ordering bug that caused it. A migration that adds columns to the calendar table was numbered to run AFTER the one that indexes those same columns, so setting up a database from scratch failed outright with "column ticker does not exist". The reconcile now runs first, and a fresh clone can build the whole schema in one pass.',
+      'The nightly jobs are now writing to a database that matches them: the calendar, fundamentals and event-risk tables all have the columns their jobs have been trying to fill.',
+    ],
+  },
+  {
     version: '0.35.0',
     date: '2026-07-17',
     title: 'The chain explorer: every vertical traced end to end, and the chains are finally deep',
