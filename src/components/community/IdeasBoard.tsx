@@ -250,7 +250,7 @@ export function IdeasBoard() {
         <button
           type="button"
           onClick={() => { setShowForm((s) => !s); setFormNote(null); }}
-          className="inline-flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-md border border-[#1d7f55]/80 bg-[#0d251b]/80 px-2.5 text-[11px] font-medium text-[#43d18b] transition hover:border-[#25a06c] hover:bg-[#103626]/90"
+          className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-md border border-[#1d7f55]/80 bg-[#0d251b]/80 px-2.5 text-[11px] font-medium text-[#43d18b] transition hover:border-[#25a06c] hover:bg-[#103626]/90 sm:min-h-[36px]"
         >
           {showForm ? <X size={13} /> : <Plus size={13} />} {showForm ? 'Close' : 'Add your idea'}
         </button>
@@ -279,7 +279,7 @@ export function IdeasBoard() {
               type="button"
               onClick={submitIdea}
               disabled={submitting}
-              className="inline-flex min-h-[36px] items-center gap-1.5 rounded-md border border-[#1d7f55]/80 bg-[#0d251b]/80 px-3 text-[11px] font-medium text-[#43d18b] transition hover:bg-[#103626]/90 disabled:opacity-40"
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md border border-[#1d7f55]/80 bg-[#0d251b]/80 px-3 text-[11px] font-medium text-[#43d18b] transition hover:bg-[#103626]/90 disabled:opacity-40 sm:min-h-[36px]"
             >
               {submitting ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />} Post idea
             </button>
@@ -344,7 +344,7 @@ export function IdeasBoard() {
                     <button
                       type="button"
                       onClick={() => loadBrief(idea)}
-                      className="mt-1.5 inline-flex min-h-[32px] items-center gap-1 rounded border border-[#9a6a1f]/50 bg-[#23180b]/60 px-2 text-[10px] font-medium text-[#f3a33a] transition hover:border-[#9a6a1f] hover:bg-[#2a1f0f]"
+                      className="mt-1.5 inline-flex min-h-[44px] items-center gap-1 rounded border border-[#9a6a1f]/50 bg-[#23180b]/60 px-2 text-[10px] font-medium text-[#f3a33a] transition hover:border-[#9a6a1f] hover:bg-[#2a1f0f] sm:min-h-[32px]"
                     >
                       <Sparkles size={11} /> AI read of this signal
                     </button>
@@ -386,7 +386,7 @@ export function IdeasBoard() {
                                 return next;
                               })
                             }
-                            className="min-h-[32px] text-[10px] font-medium text-[#5d6b79] underline decoration-[#3a4754] underline-offset-2 transition hover:text-[#c8d3de]"
+                            className="min-h-[44px] text-[10px] font-medium text-[#5d6b79] underline decoration-[#3a4754] underline-offset-2 transition hover:text-[#c8d3de] sm:min-h-[32px]"
                           >
                             {expandedEvidence.has(idea.id) ? 'Show fewer evidence links' : `+ ${idea.evidence.length - 4} more evidence links`}
                           </button>

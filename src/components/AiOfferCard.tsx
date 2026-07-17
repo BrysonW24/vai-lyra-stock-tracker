@@ -76,7 +76,7 @@ export function AiOfferCard() {
           <div className="mt-10 w-full max-w-lg rounded-xl border border-[#1d2733] bg-[#0b1016] p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">AI copilot setup</span>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="grid h-7 w-7 place-items-center rounded text-[#8190a0] transition hover:bg-[#151c25] hover:text-[#eef3f8]">
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="grid h-11 w-11 place-items-center rounded text-[#8190a0] transition hover:bg-[#151c25] hover:text-[#eef3f8] sm:h-7 sm:w-7">
                 <X size={15} />
               </button>
             </div>

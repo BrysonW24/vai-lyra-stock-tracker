@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.64.0',
+    date: '2026-07-18',
+    title: 'Thumb-sized tap targets everywhere, and the alert API contract is pinned',
+    highlights: [
+      'Every remaining small control now meets the 44px mobile touch floor: settings toggles, modal close buttons, the product-tour skip, table filters, and the community feed actions. Desktop keeps its dense look - the tap target grows only where fingers need it.',
+      'The notification API is now contract-tested: the mute settings you save are proven to land in the database (with symbols normalised and a bad snooze timestamp failing open, never muting you forever), and the dispatch route\'s authorization boundary - who may send alerts to whom - is pinned so it can never silently regress.',
+    ],
+  },
+  {
     version: '0.63.0',
     date: '2026-07-18',
     title: 'Mute genuinely mutes, alerts never double-send, and reviews read right on WhatsApp',

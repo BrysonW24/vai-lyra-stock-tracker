@@ -195,7 +195,7 @@ export function SignalTable({
             </label>
             <button
               type="button"
-              className="flex h-8 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-[11px] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+              className="flex h-11 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-[11px] text-[#a8b5c2] transition hover:text-[#eef3f8] sm:h-8"
               onClick={() => setDense((value) => !value)}
             >
               <Rows3 size={14} />

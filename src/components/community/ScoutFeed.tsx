@@ -256,7 +256,7 @@ export function ScoutFeed() {
                 <button
                   type="button"
                   onClick={() => setShowAll((s) => !s)}
-                  className="mt-1 inline-flex min-h-[32px] items-center gap-1 text-[10px] font-medium text-[#8190a0] transition hover:text-[#c8d3de]"
+                  className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-[10px] font-medium text-[#8190a0] transition hover:text-[#c8d3de] sm:min-h-[32px]"
                 >
                   {showAll ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
                   {showAll ? 'Show fewer' : `Show all ${items.length}`}

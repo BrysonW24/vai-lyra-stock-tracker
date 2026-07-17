@@ -78,7 +78,7 @@ export function ProductTour() {
           <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
             <Sparkles size={13} className="text-[#f3a33a]" /> Quick tour
           </span>
-          <button type="button" onClick={close} aria-label="Skip tour" className="grid h-7 w-7 place-items-center rounded text-[#8190a0] transition hover:text-[#eef3f8]">
+          <button type="button" onClick={close} aria-label="Skip tour" className="grid h-11 w-11 place-items-center rounded text-[#8190a0] transition hover:text-[#eef3f8] sm:h-7 sm:w-7">
             <X size={15} />
           </button>
         </div>

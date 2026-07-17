@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.64.0] - 2026-07-18
+
+Thumb-sized tap targets everywhere, and the alert API contract is pinned.
+
+### Changed
+
+- Every remaining small control now meets the 44px mobile touch floor: settings toggles, modal close buttons, the product-tour skip, table filters, and the community feed actions. Desktop keeps its dense look - the tap target grows only where fingers need it.
+- The notification API is now contract-tested: the mute settings you save are proven to land in the database (with symbols normalised and a bad snooze timestamp failing open, never muting you forever), and the dispatch route's authorization boundary - who may send alerts to whom - is pinned so it can never silently regress.
+
 ## [0.63.0] - 2026-07-18
 
 Mute genuinely mutes, alerts never double-send, and reviews read right on WhatsApp.
@@ -947,7 +956,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.63.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.64.0...HEAD
+[0.64.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.63.0...v0.64.0
 [0.63.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.62.0...v0.63.0
 [0.62.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.61.0...v0.62.0
 [0.61.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.60.0...v0.61.0
