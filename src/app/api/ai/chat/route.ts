@@ -172,6 +172,18 @@ export async function POST(request: NextRequest) {
     const data = await getDashboardData();
     const constraints = await getUserConstraints();
     const constraintsBlock = constraints ? buildConstraintsBlock(constraints) : '';
+    // Tone is derived from the authoritative server-side profile when signed in: it carries the
+    // beginner learning-style onboarding captured (brief vs step-by-step), which the client-sent
+    // profile does not. Falls back to the client profile for demo/unauthenticated sessions.
+    const profileForTone: ChatProfile = constraints
+      ? {
+          ...profile,
+          experienceLevel: constraints.experienceLevel ?? profile?.experienceLevel,
+          tradedBefore: constraints.tradedBefore ?? profile?.tradedBefore,
+          riskComfort: constraints.riskComfort ?? profile?.riskComfort,
+          beginnerLearningStyle: constraints.beginnerLearningStyle ?? undefined,
+        }
+      : (profile ?? {});
     // Knowledge layer: when the question is about Lyra itself (setup, deployment, costs, how
     // the score works), retrieve the relevant doc sections so the answer is grounded and
     // citable. Deterministic HYBRID retrieval (lexical gate + char-trigram cosine rerank);
@@ -188,7 +200,7 @@ export async function POST(request: NextRequest) {
         ? 'ACTIONS (enabled): ONLY when the user EXPLICITLY asks to add, track, watch, save, or log a specific stock/trade, you may PROPOSE one action by adding a line BEFORE the FOLLOW_UPS line. Forms: "ACTION: add_watchlist || SYMBOL", "ACTION: add_portfolio || SYMBOL", or "ACTION: log_trade || BUY || SYMBOL || AMOUNT". Use the real ticker and numeric dollar amount. Propose at most ONE action, and only the one they asked for. CRITICAL: you do NOT perform the action - the user confirms it via a button. So phrase your reply as an OFFER awaiting their confirmation. NEVER claim you have already added, saved, logged, or processed it. NEVER propose selling, ordering, money movement, or anything they did not explicitly request.'
         : 'You cannot take actions or change the user data; you explain and answer only.',
       'NEXT STEPS: After your answer, add one final line in exactly this form: "FOLLOW_UPS: question one || question two || question three". Give 2-3 short, natural questions THIS user would most likely want to ask next, each fully answerable from the same dashboard data and specific (name the tickers or sections). Phrase them as the user would ask ("Why is...", "Compare...", "What about..."). Put nothing after that line.',
-      toneFor(profile),
+      toneFor(profileForTone),
       constraintsBlock
         ? 'PERSONALISATION: Size every concrete suggestion against YOUR PROFILE & CONSTRAINTS below - say roughly how many shares or what dollar amount fits the available cash and max position size, and tie the idea to the stated goal. Never propose a position above the max position size. If a setup does not fit the cash or risk, say so plainly rather than ignoring it.'
         : false,

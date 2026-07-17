@@ -55,6 +55,8 @@ jobs:
         run: npm run lint
       - name: Onboarding parity (human + html + agent surfaces vs the codebase)
         run: npm run check:onboarding
+      - name: Onboarding contract (captured values are persisted, read, and reach the AI)
+        run: npm run check:onboarding-contract
       - name: Skill-chain coverage (every code section has an owning chain)
         run: npm run check:chains
       - name: Unit tests

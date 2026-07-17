@@ -44,6 +44,7 @@ change. Parity is enforced, not hoped for:
 | Tool | What it does |
 |---|---|
 | `npm run check:onboarding` ([scripts/check-onboarding-parity.mjs](scripts/check-onboarding-parity.mjs)) | Deterministic drift gate: companion vs its served copy, stack tiles vs `StackSection.tsx`, goal cards vs `UltimateGoals.tsx`, landing logo files exist, ledger/agent-doc links resolve, walkthrough count is coherent, onboarding docs are in the knowledge `SOURCES`. Runs in CI; `--json` for tooling. |
+| `npm run check:onboarding-contract` ([scripts/check-onboarding-contract.mjs](scripts/check-onboarding-contract.mjs)) | Deterministic CONTRACT gate for the DATA the onboarding captures (as opposed to the doc surfaces above): proves every profile answer is persisted (`/api/onboarding`), read back (`getUserConstraints`), and emitted into the AI prompt (`buildConstraintsBlock` + `deriveTone`), and that the profile read can never 400 the whole profile on an unapplied migration. Runs in CI; `--json` for tooling. |
 | [/onboarding-parity](.claude/commands/onboarding-parity.md) | The skill chain: scope drift -> sync each affected surface -> recompile knowledge -> prove with the gate. Run after any onboarding-visible change. |
 | [/sync-human-onboarding](.claude/commands/sync-human-onboarding.md) | Walkthroughs + QUICKSTART + this ledger vs the code. |
 | [/sync-companion-onboarding](.claude/commands/sync-companion-onboarding.md) | The HTML companion (+ served copy + landing twins) vs the stack/costs. |

@@ -50,6 +50,7 @@ It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supa
 - `npm run worker:test` - run worker tests.
 - `npm run check:chains` - skill-chain coverage gate: every code section must have an owning chain in `SKILL-CHAIN.md` (runs in CI).
 - `npm run check:onboarding` - onboarding-surface parity gate (runs in CI).
+- `npm run check:onboarding-contract` - onboarding CONTRACT gate (runs in CI): proves every value onboarding captures is persisted, read back, and reaches the AI prompt, and that the profile read can never 400 the whole profile on an unapplied migration. Fails loudly if the capture -> persist -> AI pipeline drifts.
 
 ## Conventions
 

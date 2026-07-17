@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.31.0',
+    date: '2026-07-17',
+    title: 'Lyra listens to your onboarding: the copilot now tailors itself to how YOU answered',
+    highlights: [
+      'The AI copilot now reads your full onboarding profile. If you told us you are new and want step-by-step explanations, a few-months horizon, or just the signal with no lecture, Lyra tailors its depth, tone and framing to exactly that - instead of treating every beginner the same.',
+      'Lyra sizes ideas against your own money goal now - suggestions relate to the target you actually set, not a generic milestone.',
+      'Hardened the profile read so a not-yet-applied database change can never blank out your whole personalisation. At worst one optional field falls back to a sensible default; the rest of your profile always reaches the AI.',
+      'Added a deterministic build gate that proves every onboarding answer is saved, read back, and reaches the AI - so this personalisation can never silently drift if the code changes later.',
+    ],
+  },
+  {
     version: '0.30.0',
     date: '2026-07-17',
     title: 'The floating button gently nudges Feedback into view now and then',

@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-07-17
+
+Lyra listens to your onboarding: the copilot now tailors itself to how YOU answered.
+
+### Changed
+
+- The AI copilot now reads your full onboarding profile. If you told us you are new and want step-by-step explanations, a few-months horizon, or just the signal with no lecture, Lyra tailors its depth, tone and framing to exactly that - instead of treating every beginner the same.
+- Lyra sizes ideas against your own money goal now - suggestions relate to the target you actually set, not a generic milestone.
+- Hardened the profile read so a not-yet-applied database change can never blank out your whole personalisation. At worst one optional field falls back to a sensible default; the rest of your profile always reaches the AI.
+- Added a deterministic build gate that proves every onboarding answer is saved, read back, and reaches the AI - so this personalisation can never silently drift if the code changes later.
+
 ## [0.30.0] - 2026-07-17
 
 The floating button gently nudges Feedback into view now and then.
@@ -587,7 +598,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.30.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.31.0...HEAD
+[0.31.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.27.0...v0.28.0

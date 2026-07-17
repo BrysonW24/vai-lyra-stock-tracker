@@ -117,14 +117,27 @@ export interface ChatProfile {
   tradedBefore?: string;
   /** 'conservative' | 'balanced' | 'aggressive' | 'experimental' if known. */
   riskComfort?: string;
+  /** How a brand-new user asked to be taught, from onboarding: shapes brevity vs step-by-step. */
+  beginnerLearningStyle?: string;
 }
 
 /** A one-line tone instruction so answers resonate with how the user invests. */
 export function deriveTone(profile?: ChatProfile): string {
   const risk = profile?.riskComfort;
+  const isBeginner = profile?.tradedBefore === 'no' || profile?.experienceLevel === 'beginner';
+  const style = profile?.beginnerLearningStyle;
+
+  // A beginner who asked for "just the signal" wants brevity over teaching. Honour their stated
+  // preference rather than defaulting every beginner to the same warm-explainer voice.
+  if (isBeginner && style === 'just_signal') {
+    return 'TONE: brief and plain - lead with the answer in one or two sentences, define a term only if essential, and skip the teaching unless they ask for it.';
+  }
   if (risk === 'conservative') return 'TONE: cautious and protective - lead with risk and downside, never pressure, prefer "consider" over "do".';
   if (risk === 'aggressive' || risk === 'experimental') return 'TONE: direct and decisive - get to the point fast, the user wants conviction, not hand-holding.';
-  if (profile?.tradedBefore === 'no' || profile?.experienceLevel === 'beginner') return 'TONE: warm and plain-English - define any jargon, assume little prior knowledge.';
+  if (isBeginner) {
+    if (style === 'step_by_step') return 'TONE: warm and plain-English - define any jargon, assume little prior knowledge, and lay guidance out as short numbered steps.';
+    return 'TONE: warm and plain-English - define any jargon, assume little prior knowledge.';
+  }
   if (profile?.experienceLevel === 'professional' || profile?.experienceLevel === 'advanced') return 'TONE: concise and technical - assume fluency, skip the basics.';
   return 'TONE: clear, calm and balanced.';
 }
