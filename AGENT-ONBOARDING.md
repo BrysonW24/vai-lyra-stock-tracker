@@ -103,6 +103,8 @@ is plain markdown with explicit stages and gates. The non-negotiables:
 | The complete onboarding asset ledger | [ONBOARDING.md](ONBOARDING.md) |
 | The agent harness (gates, hooks, CI, guards) | [HARNESS.md](HARNESS.md) |
 | Skill-chain registry + section ownership map | [SKILL-CHAIN.md](SKILL-CHAIN.md) |
+| Every loop in the system, end to end (the motion map) | [LOOPS.md](LOOPS.md) |
+| Data weight: usage, budgets, retention horizons | [DATA-ECONOMICS.md](DATA-ECONOMICS.md) |
 | The harness + coverage map, rendered visually | `/harness-map.html` (generated from the two files above) |
 | The stage-by-stage setup playbook | [.claude/commands/setup.md](.claude/commands/setup.md) |
 | Brand marks for Telegram/Slack avatars | `assets/logo-lyra.png` (product), `assets/logo-vivacity-ai.png` (maker) |

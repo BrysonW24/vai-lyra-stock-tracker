@@ -25,6 +25,10 @@ const SOURCES = [
   'ONBOARDING.md',
   'AGENT-ONBOARDING.md',
   'COSTS.md',
+  // TODO(joint pass): add 'DATA-ECONOMICS.md' + 'LOOPS.md' so the copilot can answer cost/loop
+  // questions - blocked on extending the labelled eval set in src/lib/knowledge/__tests__ first:
+  // adding them today flips one eval query's top-1 under the hybrid rerank (recall@1 0.917 ->
+  // 0.833) and reds the hybrid>=lexical quality gate. Corpus and eval set must move together.
   'SECURITY.md',
   'DISCLAIMER.md',
   'docs/walkthroughs/01-what-is-lyra.md',

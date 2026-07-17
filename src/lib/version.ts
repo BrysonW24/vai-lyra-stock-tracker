@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.65.0',
+    date: '2026-07-18',
+    title: 'The motion map - every loop, mapped and measured',
+    highlights: [
+      'New LOOPS.md at the repo root: all 12 loops in the system mapped end to end with ASCII diagrams - the hourly scan, outcome learning, digests and reviews, notifications (both directions, including chat commands), the scout, macro and calendar, the horizon-2 workers, the AI copilot, the paper bot, data economics, releases, and the agent-learning ledgers. Each loop names its trigger, its ledger, who reads it back, what closes it, and the gate that keeps it honest. Every claim was adversarially verified against the code.',
+      'DATA-ECONOMICS.md now carries audited retention benefit horizons: every reader of every growing table traced to its exact lookback window, then independently re-verified. Headlines: candles are needed for 380 days (the yearly review baseline - a naive 180-day prune would silently corrupt it), alerts for 31 days, indicators are read by nothing at all, and the learning tables are keep-forever. With horizons enforced the database plateaus around 130 MB and the free tier holds to ~2029+.',
+      'A standing nightly gate (npm run check:data-economics) now measures the database against those budgets: size vs the 250/300 MB tripwires, each table vs its declared budget, and how many rows sit past their benefit horizon. It reports and pages - it never deletes. Pruning ships per table only after founder ratification.',
+      'The agent harness map (/harness-map.html) refreshed with the new gate, and README / CLAUDE.md / AGENT-ONBOARDING.md all point at the three-legged doc set: ARCHITECTURE (structure), HARNESS (enforcement), LOOPS (motion).',
+    ],
+  },
+  {
     version: '0.64.0',
     date: '2026-07-18',
     title: 'Thumb-sized tap targets everywhere, and the alert API contract is pinned',

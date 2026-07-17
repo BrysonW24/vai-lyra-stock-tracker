@@ -6,7 +6,7 @@
   "stats": {
     "sections": 28,
     "chains": 14,
-    "gates": 8,
+    "gates": 9,
     "layers": 5
   },
   "chains": [
@@ -292,6 +292,7 @@
         "src/lib/macro-context.ts",
         "src/lib/market-board.ts",
         "src/lib/market-context.ts",
+        "src/lib/market-context-live.ts",
         "src/lib/small-cap-lifecycle.ts",
         "src/lib/small-cap-research.ts",
         "src/lib/smart-money.ts",
@@ -571,6 +572,12 @@
       "command": "npm run check:ledgers",
       "enforces": "harness-incidents.jsonl + .claude/content-rules.jsonl parse clean (valid JSONL, required fields, unique ids) - a ledger that stops parsing stops teaching, silently",
       "runsIn": "CI"
+    },
+    {
+      "name": "Data economics",
+      "command": "npm run check:data-economics",
+      "enforces": "the database stays on course to remain FREE - DB size vs the DATA-ECONOMICS.md tripwires (warn 250 MB / fail 300 MB of the 500 MB free tier), each table vs its budget, sunk rows past each benefit horizon (reporting only - a check never deletes). Needs a DB URL; --require-db in the nightly",
+      "runsIn": "nightly schema-drift job"
     }
   ],
   "layers": [

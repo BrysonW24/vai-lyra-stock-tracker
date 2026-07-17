@@ -6,6 +6,20 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.65.0] - 2026-07-18
+
+The motion map - every loop, mapped and measured.
+
+### Added
+
+- LOOPS.md: all 12 loops in the system mapped end to end with ASCII diagrams - trigger, ledger, who reads it back, what closes each loop, and the gate that keeps it honest. Adversarially verified against the code.
+- DATA-ECONOMICS.md section 6: audited retention benefit horizons for every growing table (candles 380d, alerts 31d, indicators read-by-nothing, learning tables keep-forever) plus the free-forever plateau math.
+- Nightly gate `npm run check:data-economics`: DB size vs tripwires, per-table budgets, sunk rows past each benefit horizon. Reports and pages, never deletes.
+
+### Changed
+
+- Harness map regenerated with the data-economics gate; README, CLAUDE.md and AGENT-ONBOARDING.md now index the three-legged doc set: ARCHITECTURE (structure), HARNESS (enforcement), LOOPS (motion).
+
 ## [0.64.0] - 2026-07-18
 
 Thumb-sized tap targets everywhere, and the alert API contract is pinned.

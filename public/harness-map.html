@@ -75,7 +75,7 @@
   <div class="stats">
     <span class="stat"><b>28</b> mapped sections</span>
     <span class="stat"><b>14</b> skill chains</span>
-    <span class="stat"><b>8</b> deterministic gates</span>
+    <span class="stat"><b>9</b> deterministic gates</span>
     <span class="stat"><b>5</b> enforcement layers</span>
     <span class="stat"><b>0</b> orphans <span class="hint">(CI-enforced)</span></span>
   </div>
@@ -227,9 +227,9 @@
         <div class="apaths"><code>src/lib/supabase/</code> <code>src/lib/cache.ts</code> <code>src/lib/data.ts</code> <code>src/lib/demo-data.ts</code> <code>src/lib/ingestion/</code> <code>src/lib/market/</code> <code>src/lib/generated/</code></div>
         <div class="aowners"><button class="badge" data-chain="data-integrity" type="button">/data-integrity</button></div>
       </div>
-      <div class="area" data-chains="data-integrity" data-text="market-intel data libs src/lib/calendar.ts src/lib/calendar-live.ts src/lib/capex-events.ts src/lib/cgt.ts src/lib/catalysts.ts src/lib/commodities.ts src/lib/feed.ts src/lib/filings.ts src/lib/finance-facts.ts src/lib/fundamentals.ts src/lib/gov-awards.ts src/lib/insider-flow.ts src/lib/intelligence.ts src/lib/interest.ts src/lib/ipos.ts src/lib/ipos-live.ts src/lib/macro-context.ts src/lib/market-board.ts src/lib/market-context.ts src/lib/small-cap-lifecycle.ts src/lib/small-cap-research.ts src/lib/smart-money.ts src/lib/smart-money-live.ts src/lib/transcripts.ts src/lib/value-chain.ts src/lib/world-radar.ts data-integrity">
+      <div class="area" data-chains="data-integrity" data-text="market-intel data libs src/lib/calendar.ts src/lib/calendar-live.ts src/lib/capex-events.ts src/lib/cgt.ts src/lib/catalysts.ts src/lib/commodities.ts src/lib/feed.ts src/lib/filings.ts src/lib/finance-facts.ts src/lib/fundamentals.ts src/lib/gov-awards.ts src/lib/insider-flow.ts src/lib/intelligence.ts src/lib/interest.ts src/lib/ipos.ts src/lib/ipos-live.ts src/lib/macro-context.ts src/lib/market-board.ts src/lib/market-context.ts src/lib/market-context-live.ts src/lib/small-cap-lifecycle.ts src/lib/small-cap-research.ts src/lib/smart-money.ts src/lib/smart-money-live.ts src/lib/transcripts.ts src/lib/value-chain.ts src/lib/world-radar.ts data-integrity">
         <div class="aname">Market-intel data libs</div>
-        <div class="apaths"><code>src/lib/calendar.ts</code> <code>src/lib/calendar-live.ts</code> <code>src/lib/capex-events.ts</code> <code>src/lib/cgt.ts</code> <code>src/lib/catalysts.ts</code> <code>src/lib/commodities.ts</code> <code>src/lib/feed.ts</code> <code>src/lib/filings.ts</code> <code>src/lib/finance-facts.ts</code> <code>src/lib/fundamentals.ts</code> <code>src/lib/gov-awards.ts</code> <code>src/lib/insider-flow.ts</code> <code>src/lib/intelligence.ts</code> <code>src/lib/interest.ts</code> <code>src/lib/ipos.ts</code> <code>src/lib/ipos-live.ts</code> <code>src/lib/macro-context.ts</code> <code>src/lib/market-board.ts</code> <code>src/lib/market-context.ts</code> <code>src/lib/small-cap-lifecycle.ts</code> <code>src/lib/small-cap-research.ts</code> <code>src/lib/smart-money.ts</code> <code>src/lib/smart-money-live.ts</code> <code>src/lib/transcripts.ts</code> <code>src/lib/value-chain.ts</code> <code>src/lib/world-radar.ts</code></div>
+        <div class="apaths"><code>src/lib/calendar.ts</code> <code>src/lib/calendar-live.ts</code> <code>src/lib/capex-events.ts</code> <code>src/lib/cgt.ts</code> <code>src/lib/catalysts.ts</code> <code>src/lib/commodities.ts</code> <code>src/lib/feed.ts</code> <code>src/lib/filings.ts</code> <code>src/lib/finance-facts.ts</code> <code>src/lib/fundamentals.ts</code> <code>src/lib/gov-awards.ts</code> <code>src/lib/insider-flow.ts</code> <code>src/lib/intelligence.ts</code> <code>src/lib/interest.ts</code> <code>src/lib/ipos.ts</code> <code>src/lib/ipos-live.ts</code> <code>src/lib/macro-context.ts</code> <code>src/lib/market-board.ts</code> <code>src/lib/market-context.ts</code> <code>src/lib/market-context-live.ts</code> <code>src/lib/small-cap-lifecycle.ts</code> <code>src/lib/small-cap-research.ts</code> <code>src/lib/smart-money.ts</code> <code>src/lib/smart-money-live.ts</code> <code>src/lib/transcripts.ts</code> <code>src/lib/value-chain.ts</code> <code>src/lib/world-radar.ts</code></div>
         <div class="aowners"><button class="badge" data-chain="data-integrity" type="button">/data-integrity</button></div>
       </div>
       <div class="area" data-chains="data-integrity" data-text="data api routes src/app/api/portfolio/ src/app/api/trades/ src/app/api/trading/ src/app/api/watchlist/ src/app/api/small-caps/ src/app/api/ticker-lookup/ src/app/api/ingestion/ src/app/api/interaction/ data-integrity">
@@ -355,6 +355,12 @@
           <td><code>npm run check:ledgers</code></td>
           <td>harness-incidents.jsonl + .claude/content-rules.jsonl parse clean (valid JSONL, required fields, unique ids) - a ledger that stops parsing stops teaching, silently</td>
           <td class="gruns">CI</td>
+        </tr>
+        <tr>
+          <td class="gname">Data economics</td>
+          <td><code>npm run check:data-economics</code></td>
+          <td>the database stays on course to remain FREE - DB size vs the DATA-ECONOMICS.md tripwires (warn 250 MB / fail 300 MB of the 500 MB free tier), each table vs its budget, sunk rows past each benefit horizon (reporting only - a check never deletes). Needs a DB URL; --require-db in the nightly</td>
+          <td class="gruns">nightly schema-drift job</td>
         </tr>
     </tbody>
   </table>
