@@ -116,11 +116,12 @@
       ]
     },
     {
-      "section": "Pine mirror + recovery model + paper spine",
+      "section": "Pine mirror + recovery model + paper spine + edge/plan math",
       "paths": [
         "src/lib/pine/",
         "src/lib/ml/",
-        "src/lib/trading/"
+        "src/lib/trading/",
+        "src/lib/edge/"
       ],
       "chains": [
         "signal-quality"
@@ -259,6 +260,7 @@
       "section": "Market-intel data libs",
       "paths": [
         "src/lib/calendar.ts",
+        "src/lib/calendar-live.ts",
         "src/lib/capex-events.ts",
         "src/lib/catalysts.ts",
         "src/lib/commodities.ts",
@@ -344,6 +346,8 @@
       "paths": [
         "src/lib/findings/",
         "src/lib/next-best-actions.ts",
+        "src/lib/goal.ts",
+        "src/lib/portfolio-actions.ts",
         "src/app/findings/",
         "src/app/api/findings/"
       ],
@@ -411,6 +415,7 @@
         "src/app/ipos/",
         "src/app/paper/",
         "src/app/paper-bot/",
+        "src/app/plan/",
         "src/app/portfolio/",
         "src/app/privacy/",
         "src/app/radar/",
@@ -443,6 +448,7 @@
         "src/lib/command-layout.ts",
         "src/lib/comparison.ts",
         "src/lib/education.ts",
+        "src/lib/focus-trap.ts",
         "src/lib/format.ts",
         "src/lib/gradient.ts",
         "src/lib/research-queue.ts",

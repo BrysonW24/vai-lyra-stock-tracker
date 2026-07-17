@@ -75,7 +75,7 @@ multiple owning chains per row are allowed; a parent path claims everything unde
 | Signal engine route | `src/app/api/signals/` | signal-quality |
 | Ingest workers (horizon 2) | `workers/events_worker/` `workers/fundamentals_worker/` `workers/intelligence_worker/` | data-integrity |
 | Auth, env, abuse, account | `src/lib/auth/` `src/lib/env.ts` `src/lib/ratelimit.ts` `src/lib/account.ts` `src/app/api/account/` `SECURITY.md` `PRIVACY.md` `docs/security/` | security-sweep |
-| Findings + GenUI | `src/lib/findings/` `src/lib/next-best-actions.ts` `src/app/findings/` `src/app/api/findings/` | logs-to-genui |
+| Findings + GenUI | `src/lib/findings/` `src/lib/next-best-actions.ts` `src/lib/goal.ts` `src/lib/portfolio-actions.ts` `src/app/findings/` `src/app/api/findings/` | logs-to-genui |
 | Feedback intake | `src/lib/feedback.ts` `src/app/api/feedback/` | feedback-loop |
 | Release + health plumbing | `src/lib/version.ts` `src/lib/release-notes.ts` `src/app/whats-new/` `src/app/api/health/` `scripts/` `tests/` `src/lib/__tests__/` `.githooks/` `.github/` `CHANGELOG.md` | production-keeper |
 | Harness self-maintenance | `.claude/commands/` `SKILL-CHAIN.md` `HARNESS.md` `CLAUDE.md` | production-keeper |

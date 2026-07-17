@@ -25,6 +25,10 @@ import { SignalTable } from '@/components/SignalTable';
 import { StatusBadge } from '@/components/StatusBadge';
 import { CommandLayout, type CommandSectionNode } from '@/components/CommandLayout';
 import { LocalContextBar } from '@/components/LocalContextBar';
+import { GoalCockpit } from '@/components/GoalCockpit';
+import { computeGoalProgress } from '@/lib/goal';
+import { computePortfolioActions } from '@/lib/portfolio-actions';
+import { getUserConstraints } from '@/lib/ai/user-context';
 import { getDashboardData } from '@/lib/data';
 import { getMarketContext } from '@/lib/market-context';
 import { getMacroContext } from '@/lib/macro-context';
@@ -40,14 +44,40 @@ export const metadata = { title: 'Command' };
 export default async function OverviewPage() {
   // These four are independent - fetch them concurrently instead of one-after-another
   // so the server render waits on the slowest, not the sum.
-  const [data, marketContext, macroContext, setupStatus, paperAccount, twinAffinity] = await Promise.all([
+  const [data, marketContext, macroContext, setupStatus, paperAccount, twinAffinity, constraints] = await Promise.all([
     getDashboardData(),
     getMarketContext(),
     getMacroContext(),
     getSetupStatus(),
     getPaperAccountSummaryAuthAware(),
     loadTwinAffinity().catch(() => null),
+    getUserConstraints().catch(() => null),
   ]);
+
+  // Goal cockpit inputs: standing (equity = holdings + cash), return basis, and the risk/goal profile
+  // that personalises the action thresholds. Deterministic; safe in demo (constraints null -> cash 0).
+  const holdingsMarketValue = data.portfolio.reduce((sum, h) => sum + h.marketValue, 0);
+  const investedBasis = data.portfolio.reduce((sum, h) => sum + h.averagePrice * h.quantity, 0);
+  const cashAvailable = typeof constraints?.cashAvailable === 'number' ? constraints.cashAvailable : 0;
+  const equity = holdingsMarketValue + cashAvailable;
+  const goal = computeGoalProgress({
+    equity,
+    investedBasis,
+    cashAvailable,
+    monthlyContribution: constraints?.monthlyContribution ?? null,
+    targetAmount: null,
+    primaryGoal: constraints?.primaryGoal ?? null,
+  });
+  const portfolioActions = computePortfolioActions({
+    holdings: data.portfolio,
+    cashAvailable,
+    equity,
+    riskComfort: constraints?.riskComfort ?? null,
+    maxPositionPct: constraints?.maxPositionSizePct ?? null,
+    goalBehind: goal.pace === 'behind',
+  });
+  const cockpitEmpty = data.portfolio.length === 0 && cashAvailable <= 0;
+  const cockpitCurrency = constraints?.baseCurrency ?? 'USD';
   // Strongest setups: real strong_setup rows when they exist; otherwise fall back to
   // the top-scored names so the table is never blank (labelled honestly below).
   const trueStrong = data.signals.filter((signal) => signal.status === 'strong_setup');
@@ -88,8 +118,10 @@ export default async function OverviewPage() {
     },
   ];
 
-  // Section order here is the DEFAULT layout; the user can reorder / hide via Customise.
+  // Section order here is the DEFAULT layout; the user can reorder / hide via Customise. The goal
+  // cockpit leads: where you stand against your goal and what your money needs from you, first.
   const sections: CommandSectionNode[] = [
+    { id: 'goal-cockpit', node: <GoalCockpit goal={goal} actions={portfolioActions} baseCurrency={cockpitCurrency} isEmptyState={cockpitEmpty} /> },
     { id: 'runners', node: <ExecutiveStrip panels={stripPanels} /> },
     { id: 'metrics', node: <MetricStrip data={data} /> },
     { id: 'paper-bot', node: <PaperBotStrip account={paperAccount} /> },
