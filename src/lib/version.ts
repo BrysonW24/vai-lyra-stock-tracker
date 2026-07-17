@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.40.0',
+    date: '2026-07-17',
+    title: 'The new reviews could never have been delivered - the API was rejecting them',
+    highlights: [
+      'Fixed a gap that would have made the weekly, monthly, quarterly and yearly reviews impossible to send. Every renderer supported them, but the endpoint that actually accepts an alert kept its own hand-written list of allowed types - and the reviews were not on it. They would have been turned away as "type is invalid" and never reached you.',
+      'Closed the whole class of bug rather than the one instance: the list of valid alert types is now generated from a single source that the compiler forces to stay complete, so adding a new kind of alert can never again leave the door shut behind it.',
+    ],
+  },
+  {
     version: '0.39.0',
     date: '2026-07-17',
     title: 'The AI scout: Lyra now reads the wide world nightly and files evidence-linked ideas on the board',

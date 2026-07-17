@@ -46,6 +46,50 @@ export type NotificationType =
   | 'yearly_review'
   | 'test_notification';
 
+/**
+ * Runtime roster of every NotificationType.
+ *
+ * Built from a Record so TypeScript FORCES it complete: add a member to the union above
+ * and this fails to compile until it is listed here. That matters because allowlists
+ * elsewhere (the dispatch route's VALID_TYPES) derive from this - a hand-maintained Set
+ * silently rejected the review types when they were added, since a Set, unlike a Record,
+ * cannot be checked for exhaustiveness. Never hand-write a parallel list of these.
+ */
+const NOTIFICATION_TYPE_ROSTER: Record<NotificationType, true> = {
+  signal_alert: true,
+  signal_followup: true,
+  theme_breakout: true,
+  small_cap_discovery: true,
+  capital_event: true,
+  investor_move: true,
+  portfolio_news: true,
+  portfolio_risk: true,
+  portfolio_price_move: true,
+  watchlist_price_move: true,
+  paper_trade_opened: true,
+  paper_trade_closed: true,
+  paper_trade_stop_hit: true,
+  paper_approval_required: true,
+  paper_fill: true,
+  paper_position_move: true,
+  risk_blocked: true,
+  order_intent_created: true,
+  order_approval_required: true,
+  order_rejected: true,
+  kill_switch_enabled: true,
+  daily_digest: true,
+  weekly_report: true,
+  monthly_review: true,
+  quarterly_review: true,
+  yearly_review: true,
+  test_notification: true,
+};
+
+export const NOTIFICATION_TYPES = Object.keys(NOTIFICATION_TYPE_ROSTER) as readonly NotificationType[];
+
+export const isNotificationType = (value: unknown): value is NotificationType =>
+  typeof value === 'string' && Object.prototype.hasOwnProperty.call(NOTIFICATION_TYPE_ROSTER, value);
+
 export type NotificationSeverity = 'low' | 'medium' | 'high' | 'critical';
 
 export interface NotificationEvent {

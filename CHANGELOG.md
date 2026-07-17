@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-07-17
+
+The new reviews could never have been delivered - the API was rejecting them.
+
+### Changed
+
+- Fixed a gap that would have made the weekly, monthly, quarterly and yearly reviews impossible to send. Every renderer supported them, but the endpoint that actually accepts an alert kept its own hand-written list of allowed types - and the reviews were not on it. They would have been turned away as "type is invalid" and never reached you.
+- Closed the whole class of bug rather than the one instance: the list of valid alert types is now generated from a single source that the compiler forces to stay complete, so adding a new kind of alert can never again leave the door shut behind it.
+
 ## [0.39.0] - 2026-07-17
 
 The AI scout: Lyra now reads the wide world nightly and files evidence-linked ideas on the board.
@@ -688,7 +697,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.39.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.40.0...HEAD
+[0.40.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.39.0...v0.40.0
 [0.39.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.38.0...v0.39.0
 [0.38.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.37.0...v0.38.0
 [0.37.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.36.0...v0.37.0

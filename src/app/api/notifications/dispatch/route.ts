@@ -2,38 +2,15 @@ import { timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { dispatchNotificationEvent, sweepNotifications, type DispatchNotificationInput } from '@/lib/notifications/dispatch';
 import { createSupabaseServerClient, createSupabaseServiceClient } from '@/lib/supabase/server';
-import type { NotificationType } from '@/lib/notifications/types';
+import { isNotificationType } from '@/lib/notifications/types';
 
-const VALID_TYPES: ReadonlySet<NotificationType> = new Set<NotificationType>([
-  'signal_alert',
-  'signal_followup',
-  'theme_breakout',
-  'small_cap_discovery',
-  'capital_event',
-  'investor_move',
-  'portfolio_news',
-  'portfolio_risk',
-  'portfolio_price_move',
-  'watchlist_price_move',
-  'paper_trade_opened',
-  'paper_trade_closed',
-  'paper_trade_stop_hit',
-  'paper_approval_required',
-  'paper_fill',
-  'paper_position_move',
-  'risk_blocked',
-  'order_intent_created',
-  'order_approval_required',
-  'order_rejected',
-  'kill_switch_enabled',
-  'daily_digest',
-  'weekly_report',
-  'test_notification',
-]);
-
-function isValidType(value: unknown): value is NotificationType {
-  return typeof value === 'string' && VALID_TYPES.has(value as NotificationType);
-}
+/**
+ * Derived from the roster in types.ts, never hand-maintained. The previous hand-written Set
+ * silently fell out of sync the moment new types were added (the periodic reviews were
+ * rejected here as "type is invalid" while every renderer already supported them) because
+ * a Set cannot be exhaustiveness-checked. The roster is a Record, so it can.
+ */
+const isValidType = isNotificationType;
 
 function validateBody(body: Partial<DispatchNotificationInput>): string | null {
   if (!body.userId) return 'userId is required.';
