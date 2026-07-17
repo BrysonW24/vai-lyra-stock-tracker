@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.50.0',
+    date: '2026-07-17',
+    title: 'Scout gets its own tab - perception and proposals, cleanly separated',
+    highlights: [
+      'The What\'s New page now switches between three surfaces: Updates (the changelog), Ideas (the community board, where scout cards land as proposals), and Scout (the perception stream - what the AI scout read, per-vertical counts, and the drumbeats building toward promotion). The feed no longer pushes human ideas below the fold, and it has room to grow.',
+      'The tab is named Scout deliberately, not "AI Signals" - in Lyra, "signals" means the deterministic trading signals the engine computes, and that word stays reserved for them. The scout reads news; it never generates trading signals.',
+      'A one-line bridge on the Ideas tab ("Scout: 8 signals building toward promotion") keeps the story walkable in one tap - the board explains its own sparseness. Deep-link with ?tab=scout.',
+    ],
+  },
+  {
     version: '0.49.0',
     date: '2026-07-17',
     title: 'One doctrine for the copilot: research that checks your fit, never a trade to place',

@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.50.0] - 2026-07-17
+
+Scout gets its own tab - perception and proposals, cleanly separated.
+
+### Changed
+
+- The What's New page now switches between three surfaces: Updates (the changelog), Ideas (the community board, where scout cards land as proposals), and Scout (the perception stream - what the AI scout read, per-vertical counts, and the drumbeats building toward promotion). The feed no longer pushes human ideas below the fold, and it has room to grow.
+- The tab is named Scout deliberately, not "AI Signals" - in Lyra, "signals" means the deterministic trading signals the engine computes, and that word stays reserved for them. The scout reads news; it never generates trading signals.
+- A one-line bridge on the Ideas tab ("Scout: 8 signals building toward promotion") keeps the story walkable in one tap - the board explains its own sparseness. Deep-link with ?tab=scout.
+
 ## [0.49.0] - 2026-07-17
 
 One doctrine for the copilot: research that checks your fit, never a trade to place.
@@ -804,7 +814,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.49.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.50.0...HEAD
+[0.50.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.49.0...v0.50.0
 [0.49.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.48.0...v0.49.0
 [0.48.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.47.0...v0.48.0
 [0.47.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.46.0...v0.47.0

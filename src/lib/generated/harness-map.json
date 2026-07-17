@@ -4,7 +4,7 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 26,
+    "sections": 27,
     "chains": 13,
     "gates": 7,
     "layers": 5
@@ -336,6 +336,17 @@
       "section": "Scout worker (broad signal -> ideas board)",
       "paths": [
         "workers/scout/"
+      ],
+      "chains": [
+        "scout-intel"
+      ]
+    },
+    {
+      "section": "Scout feed surface (what the scout saw)",
+      "paths": [
+        "src/app/api/scout/",
+        "src/components/community/ScoutFeed.tsx",
+        "src/components/community/ScoutBridge.tsx"
       ],
       "chains": [
         "scout-intel"

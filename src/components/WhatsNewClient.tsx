@@ -2,31 +2,38 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Lightbulb, Sparkles } from 'lucide-react';
+import { Lightbulb, Radar, Sparkles } from 'lucide-react';
 import { ProductUpdatesTimeline } from '@/components/ProductUpdatesTimeline';
 import { IdeasBoard } from '@/components/community/IdeasBoard';
+import { ScoutBridge } from '@/components/community/ScoutBridge';
 import { ScoutFeed } from '@/components/community/ScoutFeed';
 import { APP_VERSION } from '@/lib/version';
 
-type Tab = 'updates' | 'ideas';
+type Tab = 'updates' | 'ideas' | 'scout';
 
 /**
  * The /whats-new surface: one glass hero carrying the title, the live version, and a sliding
- * two-tone switch between Product Updates (the one true changelog, generated from RELEASES)
- * and Ideas (the community voting board). Deep-linkable via ?tab=ideas so the feedback
- * widget's "Idea" flow can jump straight here.
+ * switch across three surfaces - Product Updates (the one true changelog, generated from
+ * RELEASES), Ideas (the community voting board, where scout cards land as proposals), and
+ * Scout (the perception stream: what the AI scout read, per-theme counts, and the drumbeats
+ * building toward promotion). Perception and proposals are deliberately separate tabs with a
+ * one-line bridge on Ideas - NOT one stacked column - so human ideas stay above the fold and
+ * the feed has room to grow. Deep-linkable via ?tab=ideas / ?tab=scout.
  *
  * The hero and the switch are deliberately ONE panel: they were three stacked bordered boxes
  * (header / blurb / toggle) which read as clumped chrome and cost three blur passes on mobile.
  */
 export function WhatsNewClient() {
   const params = useSearchParams();
-  const [tab, setTab] = useState<Tab>(params.get('tab') === 'ideas' ? 'ideas' : 'updates');
+  const initial = params.get('tab');
+  const [tab, setTab] = useState<Tab>(initial === 'ideas' ? 'ideas' : initial === 'scout' ? 'scout' : 'updates');
 
   const tabs: { id: Tab; label: string; icon: typeof Sparkles }[] = [
-    { id: 'updates', label: 'Product Updates', icon: Sparkles },
+    { id: 'updates', label: 'Updates', icon: Sparkles },
     { id: 'ideas', label: 'Ideas', icon: Lightbulb },
+    { id: 'scout', label: 'Scout', icon: Radar },
   ];
+  const activeIndex = tabs.findIndex((t) => t.id === tab);
 
   return (
     <div className="space-y-3">
@@ -47,13 +54,13 @@ export function WhatsNewClient() {
         </div>
 
         <div className="px-3.5 pb-3 pt-3">
-          <div className="glass-segment relative grid grid-cols-2 gap-1 rounded-lg p-1" role="tablist">
-            {/* Sliding thumb - the active tab's glass carrier. */}
+          <div className="glass-segment relative grid grid-cols-3 gap-1 rounded-lg p-1" role="tablist">
+            {/* Sliding thumb - the active tab's glass carrier. translate-x % is relative to
+                the thumb's OWN width, so each step is one thumb-width plus the 0.25rem gap. */}
             <span
               aria-hidden
-              className={`glass-thumb pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.375rem)] rounded-md transition-transform duration-300 ease-out motion-reduce:transition-none ${
-                tab === 'ideas' ? 'translate-x-[calc(100%+0.25rem)]' : 'translate-x-0'
-              }`}
+              className="glass-thumb pointer-events-none absolute inset-y-1 left-1 w-[calc((100%-1rem)/3)] rounded-md transition-transform duration-300 ease-out motion-reduce:transition-none"
+              style={{ transform: `translateX(calc(${activeIndex * 100}% + ${activeIndex * 0.25}rem))` }}
             />
             {tabs.map(({ id, label, icon: Icon }) => {
               const active = tab === id;
@@ -64,7 +71,7 @@ export function WhatsNewClient() {
                   role="tab"
                   aria-selected={active}
                   onClick={() => setTab(id)}
-                  className={`relative z-10 inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-md px-3 text-[12px] font-semibold transition-colors ${
+                  className={`relative z-10 inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-md px-2 text-[12px] font-semibold transition-colors ${
                     active ? 'text-[#f3a33a]' : 'text-[#8190a0] hover:text-[#c8d3de]'
                   }`}
                 >
@@ -76,14 +83,14 @@ export function WhatsNewClient() {
         </div>
       </section>
 
-      {tab === 'updates' ? (
-        <ProductUpdatesTimeline />
-      ) : (
+      {tab === 'updates' && <ProductUpdatesTimeline />}
+      {tab === 'ideas' && (
         <div className="space-y-3">
-          <ScoutFeed />
+          <ScoutBridge onOpen={() => setTab('scout')} />
           <IdeasBoard />
         </div>
       )}
+      {tab === 'scout' && <ScoutFeed />}
     </div>
   );
 }
