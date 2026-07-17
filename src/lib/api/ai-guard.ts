@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSessionUser } from '@/lib/supabase/server';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimitShared } from '@/lib/ratelimit';
 
 /**
  * Shared guard for the AI + paper-bot API surface. It exists to close the class of holes the
@@ -91,8 +91,11 @@ export async function guardAiRoute<T>(
   const user = await getSessionUser().catch(() => null);
   const identity = user?.id ?? `ip:${clientIp(request)}`;
 
-  // 3. Rate limit.
-  const rl = rateLimit(identity, { scope, capacity, windowMs });
+  // 3. Rate limit - SHARED (Upstash) so the budget holds across every serverless instance.
+  // On Vercel each request can hit a different lambda; the old in-process limiter reset per
+  // instance, so a caller effectively got (instances x capacity). rateLimitShared uses one
+  // Redis counter and only falls back to in-memory when Upstash is unconfigured (local/demo).
+  const rl = await rateLimitShared(identity, { scope, capacity, windowMs });
   if (!rl.allowed) {
     return {
       ok: false,

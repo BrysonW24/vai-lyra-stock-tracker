@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { runPaperBotCommand } from '@/lib/trading/paper-bot-commands';
 import type { AiCreds } from '@/lib/ai/run-agent';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,14 @@ export async function POST(req: NextRequest) {
   const line = typeof guard.body.line === 'string' ? guard.body.line : '';
   // Resolve the AI key the same way every AI route does; the server key only when authenticated.
   const resolved = resolveAiCredentials(guard.body.ai, { authenticated: guard.authenticated });
+
+  // Hosted/shared key rides the house budget (the AI 'propose' command was uncapped here);
+  // BYOK spends the user's own quota. A block short-circuits before the model call.
+  if (resolved.source !== 'user' && resolved.apiKey) {
+    const budget = await chargeHostedBudgetShared(resolved.source, 800);
+    if (budget.decision === 'block') return NextResponse.json({ ok: false, reason: 'budget' });
+  }
+
   const creds: AiCreds = { provider: resolved.provider, apiKey: resolved.apiKey, model: resolved.model };
   const result = await runPaperBotCommand(line, creds, guard.identity);
   return NextResponse.json(result);

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { guardProse } from '@/lib/ai/guardrails/prose';
-import { chargeHostedBudget } from '@/lib/ai/budget-tracker';
+import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { getDashboardData } from '@/lib/data';
 import { buildGrounding, type ChatProfile } from '@/lib/ai/chat-context';
 import { buildHybridKnowledgeBlock } from '@/lib/knowledge/hybrid';
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     // Hosted/shared key rides the house budget; BYOK spends the user's own quota untouched.
     if (creds.source !== 'user') {
-      const budget = chargeHostedBudget(creds.source, 600);
+      const budget = await chargeHostedBudgetShared(creds.source, 600);
       if (budget.decision === 'block') return NextResponse.json({ ok: false, reason: 'budget' });
     }
 

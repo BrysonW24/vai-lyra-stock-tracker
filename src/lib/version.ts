@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.53.0',
+    date: '2026-07-17',
+    title: 'AI spend controls that actually hold on serverless',
+    highlights: [
+      'The guardrails that stop the shared AI key being run up - the per-caller rate limit and the daily token budget - now live in one shared store (Redis) instead of each serverless instance keeping its own count. On Vercel every request can land on a different instance, so the old in-memory limits reset constantly and were mostly decorative; now the ceiling is a single counter that holds across the whole fleet, and it falls back to in-memory locally without ever failing a call open.',
+      'Three AI paths that were skipping the budget entirely - the GenUI composer, the research agent, and the paper-bot command - now charge the house budget like the chat does. An oversized single call is blocked before it spends anything, and a blocked call is rolled back so it is never double-counted. BYOK requests keep spending only the user\'s own key, untouched.',
+      'All of it pinned with tests, including the fail-safe: if the shared store is unreachable, the budget still enforces via the in-memory path rather than waving calls through.',
+    ],
+  },
+  {
     version: '0.52.0',
     date: '2026-07-17',
     title: 'The scout loop closes: accepted cards queue a build, and your verdicts teach the machine',

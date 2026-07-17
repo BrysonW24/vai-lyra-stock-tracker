@@ -3,6 +3,7 @@ import type { AiProvider } from '@/lib/ai/gateway';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { runResearchAnalyst } from '@/lib/ai/run-agent';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 
 interface AgentRequest {
@@ -26,6 +27,14 @@ export async function POST(request: NextRequest) {
 
     const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated });
     if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
+
+    // Hosted/shared key rides the house budget (was skipped here - an agent run is the
+    // heaviest AI path, multiple tool-augmented model calls, and it could burn the server
+    // key uncapped). Charge more per run than a single chat turn.
+    if (creds.source !== 'user') {
+      const budget = await chargeHostedBudgetShared(creds.source, 1500);
+      if (budget.decision === 'block') return NextResponse.json({ ok: false, reason: 'budget' });
+    }
 
     if (question && detectInjectionAttempt(question)) {
       return NextResponse.json({ ok: false, reason: 'refused' });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 import { getDemoFinding } from '@/lib/findings/demo-findings';
 import { getLiveFindings } from '@/lib/findings/server';
@@ -58,6 +59,14 @@ export async function POST(request: NextRequest) {
     const creds = resolveAiCredentials(body.ai, { authenticated: guard.authenticated });
     if (!creds.apiKey) {
       return NextResponse.json({ ok: true, view: fallback, reason: 'no_key' });
+    }
+
+    // Hosted/shared key rides the house budget (was skipped here - any signed-in user could
+    // burn the server key through GenUI with no ceiling); BYOK spends the user's own quota.
+    // A budget block degrades to the deterministic default view, never an error.
+    if (creds.source !== 'user') {
+      const budget = await chargeHostedBudgetShared(creds.source, 800);
+      if (budget.decision === 'block') return NextResponse.json({ ok: true, view: fallback, reason: 'budget' });
     }
 
     // Read-only twin framing (authenticated users only). It tunes emphasis, never the numbers.
