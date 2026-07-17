@@ -1,6 +1,6 @@
 {
   "name": "vai-lyra-stock-tracker",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "private": true,
   "description": "Hourly tech stock momentum scanner dashboard and Python worker.",
   "scripts": {

@@ -43,6 +43,9 @@ import {
   Telescope,
   Fingerprint,
   Target,
+  LayoutGrid,
+  X,
+  type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { DashboardData } from '@/types/scanner';
@@ -53,55 +56,64 @@ import { AlertStatusBadge } from '@/components/AlertStatusBadge';
 import { AccountMenu } from '@/components/AccountMenu';
 import { captureInteraction } from '@/lib/twin/capture';
 
-// Full section map. Desktop shows it as an icon rail (scrollable, with visible group
-// dividers); below xl the same list renders as an always-on, horizontally-scrollable
-// bottom bar so every surface (Education included) is permanently reachable without
-// opening a menu. `group` renders as a divider on the rail whenever it changes - the
-// grouping used to live only in comments, which left 32 identical dots to memorise.
-const navItems = [
-  // -- Yours --
-  { href: '/', label: 'Command', short: 'Command', icon: Gauge, group: 'yours' },
-  { href: '/portfolio', label: 'Portfolio', short: 'Portfolio', icon: BriefcaseBusiness, group: 'yours' },
-  { href: '/trades', label: 'Trade Log', short: 'Trades', icon: ReceiptText, group: 'yours' },
-  { href: '/watchlist', label: 'Watchlist', short: 'Watchlist', icon: Star, group: 'yours' },
-  { href: '/twin', label: 'Your Twin', short: 'Twin', icon: Fingerprint, group: 'yours' },
-  { href: '/plan', label: 'Trade Plan', short: 'Plan', icon: Target, group: 'yours' },
-  // Investigation surfaces - research, not daily-driver, so they sit after the personal surfaces
-  // (were #2/#3, which over-promoted them on the mobile bottom bar before they earned it).
-  { href: '/findings', label: 'Findings', short: 'Find', icon: Telescope, group: 'investigate' },
-  { href: '/graph', label: 'Investigation Graph', short: 'Graph', icon: Network, group: 'investigate' },
-  { href: '/charts', label: 'Charts', short: 'Charts', icon: PieChart, group: 'investigate' },
-  { href: '/saved', label: 'Saved', short: 'Saved', icon: Bookmark, group: 'investigate' },
-  { href: '/wire', label: 'Live Wire', short: 'Wire', icon: Rss, group: 'investigate' },
-  { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper, group: 'investigate' },
-  { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays, group: 'investigate' },
-  // -- Signals --
-  { href: '/radar', label: 'Signal Radar', short: 'Radar', icon: Radar, group: 'signals' },
-  { href: '/smart-money', label: 'Smart Money', short: 'Smart $', icon: Banknote, group: 'signals' },
-  // -- Research --
-  { href: '/themes', label: 'World Radar', short: 'Themes', icon: Globe, group: 'research' },
-  { href: '/supply-chain', label: 'Supply Chain', short: 'Chain', icon: Workflow, group: 'research' },
-  { href: '/small-caps', label: 'Small Caps', short: 'SmCaps', icon: Microscope, group: 'research' },
-  { href: '/investors', label: 'Investor Radar', short: 'Funds', icon: Landmark, group: 'research' },
-  { href: '/awards', label: 'Gov Awards', short: 'Awards', icon: ScrollText, group: 'research' },
-  { href: '/flows', label: 'Capital Flows', short: 'Flows', icon: ArrowLeftRight, group: 'research' },
-  { href: '/filings', label: 'Filings & Evidence', short: 'Filings', icon: FileText, group: 'research' },
-  { href: '/ipos', label: 'IPO Radar', short: 'IPOs', icon: Rocket, group: 'research' },
-  { href: '/commodities', label: 'Commodities', short: 'Commod', icon: Gem, group: 'research' },
-  { href: '/fundamentals', label: 'Fundamentals', short: 'Fundies', icon: BarChart3, group: 'research' },
-  // -- Analysis tools --
-  { href: '/comparison', label: 'Comparison Lab', short: 'Compare', icon: GitCompare, group: 'analysis' },
-  { href: '/simulation', label: 'Simulation Lab', short: 'Simulate', icon: Calculator, group: 'analysis' },
-  { href: '/strategy-lab', label: 'Strategy Lab', short: 'Strategy', icon: FlaskConical, group: 'analysis' },
-  { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins, group: 'analysis' },
-  // -- Trading layer --
-  { href: '/paper-bot', label: 'Paper Bot', short: 'Paper Bot', icon: Bot, group: 'trading' },
-  { href: '/trading', label: 'Live Bot', short: 'Live Bot', icon: ShieldCheck, group: 'trading' },
-  // -- Learn & settings --
-  { href: '/education', label: 'Education', short: 'Learn', icon: GraduationCap, group: 'learn' },
-  { href: '/whats-new', label: "What's New", short: 'New', icon: Sparkles, group: 'learn' },
-  { href: '/settings', label: 'Strategy Rules', short: 'Rules', icon: SlidersHorizontal, group: 'learn' },
+// The full section map, grouped BY JOB (what you're trying to do), not by data type. A slim set of
+// daily-drivers (`primary`) stays permanently on the rail / bottom bar; everything else lives one
+// tap away in the grouped Explore drawer, so the ~30 research surfaces stop shouting at once. The
+// cockpit-led Command page owns the first screen; Explore is the door to the depth behind it.
+type NavItem = { href: string; label: string; short: string; icon: LucideIcon; bucket: NavBucketId; primary?: boolean };
+type NavBucketId = 'desk' | 'discover' | 'research' | 'practice' | 'learn';
+
+const navItems: NavItem[] = [
+  // YOUR DESK - what you own and act on
+  { href: '/', label: 'Command', short: 'Home', icon: Gauge, bucket: 'desk', primary: true },
+  { href: '/portfolio', label: 'Portfolio', short: 'Book', icon: BriefcaseBusiness, bucket: 'desk', primary: true },
+  { href: '/watchlist', label: 'Watchlist', short: 'Watch', icon: Star, bucket: 'desk', primary: true },
+  { href: '/plan', label: 'Trade Plan', short: 'Plan', icon: Target, bucket: 'desk', primary: true },
+  { href: '/trades', label: 'Trade Log', short: 'Trades', icon: ReceiptText, bucket: 'desk' },
+  { href: '/twin', label: 'Your Twin', short: 'Twin', icon: Fingerprint, bucket: 'desk' },
+  // DISCOVER - find the next opportunity
+  { href: '/radar', label: 'Signal Radar', short: 'Radar', icon: Radar, bucket: 'discover' },
+  { href: '/small-caps', label: 'Small Caps', short: 'SmCaps', icon: Microscope, bucket: 'discover' },
+  { href: '/themes', label: 'World Radar', short: 'Themes', icon: Globe, bucket: 'discover' },
+  { href: '/smart-money', label: 'Smart Money', short: 'Smart $', icon: Banknote, bucket: 'discover' },
+  { href: '/investors', label: 'Investor Radar', short: 'Funds', icon: Landmark, bucket: 'discover' },
+  { href: '/ipos', label: 'IPO Radar', short: 'IPOs', icon: Rocket, bucket: 'discover' },
+  { href: '/calendar', label: 'Calendar', short: 'Calendar', icon: CalendarDays, bucket: 'discover' },
+  { href: '/wire', label: 'Live Wire', short: 'Wire', icon: Rss, bucket: 'discover' },
+  { href: '/findings', label: 'Findings', short: 'Find', icon: Telescope, bucket: 'discover' },
+  // RESEARCH - dig into the evidence
+  { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper, bucket: 'research' },
+  { href: '/filings', label: 'Filings & Evidence', short: 'Filings', icon: FileText, bucket: 'research' },
+  { href: '/fundamentals', label: 'Fundamentals', short: 'Fundies', icon: BarChart3, bucket: 'research' },
+  { href: '/supply-chain', label: 'Supply Chain', short: 'Chain', icon: Workflow, bucket: 'research' },
+  { href: '/comparison', label: 'Comparison Lab', short: 'Compare', icon: GitCompare, bucket: 'research' },
+  { href: '/charts', label: 'Charts', short: 'Charts', icon: PieChart, bucket: 'research' },
+  { href: '/graph', label: 'Investigation Graph', short: 'Graph', icon: Network, bucket: 'research' },
+  { href: '/awards', label: 'Gov Awards', short: 'Awards', icon: ScrollText, bucket: 'research' },
+  { href: '/flows', label: 'Capital Flows', short: 'Flows', icon: ArrowLeftRight, bucket: 'research' },
+  { href: '/commodities', label: 'Commodities', short: 'Commod', icon: Gem, bucket: 'research' },
+  // PRACTICE - test ideas with no real money
+  { href: '/paper-bot', label: 'Paper Bot', short: 'Paper Bot', icon: Bot, bucket: 'practice' },
+  { href: '/trading', label: 'Live Bot', short: 'Live Bot', icon: ShieldCheck, bucket: 'practice' },
+  { href: '/simulation', label: 'Simulation Lab', short: 'Simulate', icon: Calculator, bucket: 'practice' },
+  { href: '/strategy-lab', label: 'Strategy Lab', short: 'Strategy', icon: FlaskConical, bucket: 'practice' },
+  { href: '/calculators', label: 'Calculators', short: 'Calc', icon: Coins, bucket: 'practice' },
+  // LEARN & SET UP
+  { href: '/education', label: 'Education', short: 'Learn', icon: GraduationCap, bucket: 'learn' },
+  { href: '/settings', label: 'Strategy Rules', short: 'Rules', icon: SlidersHorizontal, bucket: 'learn' },
+  { href: '/saved', label: 'Saved', short: 'Saved', icon: Bookmark, bucket: 'learn' },
+  { href: '/whats-new', label: "What's New", short: 'New', icon: Sparkles, bucket: 'learn' },
 ];
+
+const NAV_BUCKETS: { id: NavBucketId; label: string; blurb: string }[] = [
+  { id: 'desk', label: 'Your desk', blurb: 'What you own and act on' },
+  { id: 'discover', label: 'Discover', blurb: 'Find the next opportunity' },
+  { id: 'research', label: 'Research', blurb: 'Dig into the evidence' },
+  { id: 'practice', label: 'Practice', blurb: 'Test ideas with no real money' },
+  { id: 'learn', label: 'Learn & set up', blurb: 'Get better, tune the rules' },
+];
+
+const PRIMARY_ITEMS = navItems.filter((item) => item.primary);
 
 // Lyra colour ramp - nav icons ascend through the brand palette and descend back
 // (ping-pong), so the rail reads as one continuous Lyra gradient wave.
@@ -135,6 +147,23 @@ export function AppShell({ data, children }: AppShellProps) {
   // Boundary-aware: /paper-bot must not also light up /paper (startsWith without the '/' boundary).
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/'));
   const navScrollRef = useRef<HTMLDivElement>(null);
+
+  // Explore drawer: the ~30 non-daily surfaces live here, grouped by job. Close on navigation and on
+  // Escape so it never traps the user. exploreActive lights the Explore control when the current route
+  // is one of the drawer's surfaces (not a primary), so you always know you are "inside" Explore.
+  const [exploreOpen, setExploreOpen] = useState(false);
+  const exploreActive = !PRIMARY_ITEMS.some((item) => isActive(item.href));
+  useEffect(() => {
+    setExploreOpen(false);
+  }, [pathname]);
+  useEffect(() => {
+    if (!exploreOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setExploreOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [exploreOpen]);
 
   // Trading-twin cadence: one session_open per full load (deduped in the capture helper). Inert until
   // the user opts in - the server enforces the consent gate.
@@ -173,32 +202,42 @@ export function AppShell({ data, children }: AppShellProps) {
         <Link href="/" className="grid h-14 shrink-0 place-items-center border-b border-[#1b2530]">
           <BrandLogo size={30} />
         </Link>
-        {/* overflow-y-auto is load-bearing: 32 items x 48px outruns a 1080p viewport, and a
-            fixed aside without it silently CLIPS everything below the fold (Paper Bot,
-            Education, Settings were unreachable from the rail). */}
+        {/* Slim rail: the daily-drivers, then one Explore door to everything else. The 30 research
+            surfaces used to live here as an icon wall that outran the viewport - they now sit grouped
+            in the Explore drawer, so the rail is scannable and the cockpit owns the screen. */}
         <nav className="mt-2 flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {navItems.map((item, i) => (
-            <div key={item.href} className="flex flex-col items-center">
-              {i > 0 && item.group !== navItems[i - 1].group && (
-                <span aria-hidden className="mb-1 mt-1 h-px w-7 shrink-0 bg-[#1b2530]" />
-              )}
-              <Link
-                href={item.href}
-                title={item.label}
-                aria-current={isActive(item.href) ? 'page' : undefined}
-                className={`group relative grid h-11 w-11 place-items-center rounded-md transition ${
-                  isActive(item.href)
-                    ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40'
-                    : 'hover:bg-[#151c25]'
-                }`}
-              >
-                <item.icon size={18} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-75 transition group-hover:opacity-100'} />
-                <span className="pointer-events-none absolute left-14 z-20 hidden whitespace-nowrap rounded-md border border-[#263241] bg-[#101720] px-2 py-1 text-xs text-[#dbe5ee] shadow-xl group-hover:block group-focus-visible:block">
-                  {item.label}
-                </span>
-              </Link>
-            </div>
+          {PRIMARY_ITEMS.map((item, i) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              title={item.label}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              className={`group relative grid h-11 w-11 place-items-center rounded-md transition ${
+                isActive(item.href) ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40' : 'hover:bg-[#151c25]'
+              }`}
+            >
+              <item.icon size={18} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-75 transition group-hover:opacity-100'} />
+              <span className="pointer-events-none absolute left-14 z-20 hidden whitespace-nowrap rounded-md border border-[#263241] bg-[#101720] px-2 py-1 text-xs text-[#dbe5ee] shadow-xl group-hover:block group-focus-visible:block">
+                {item.label}
+              </span>
+            </Link>
           ))}
+          <span aria-hidden className="mb-1 mt-1 h-px w-7 shrink-0 bg-[#1b2530]" />
+          <button
+            type="button"
+            onClick={() => setExploreOpen(true)}
+            title="Explore everything"
+            aria-haspopup="dialog"
+            aria-expanded={exploreOpen}
+            className={`group relative grid h-11 w-11 place-items-center rounded-md transition ${
+              exploreActive ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40' : 'text-[#a8b5c2] hover:bg-[#151c25]'
+            }`}
+          >
+            <LayoutGrid size={18} className={exploreActive ? undefined : 'opacity-75 transition group-hover:opacity-100'} />
+            <span className="pointer-events-none absolute left-14 z-20 hidden whitespace-nowrap rounded-md border border-[#263241] bg-[#101720] px-2 py-1 text-xs text-[#dbe5ee] shadow-xl group-hover:block group-focus-visible:block">
+              Explore everything
+            </span>
+          </button>
         </nav>
       </aside>
 
@@ -329,24 +368,88 @@ export function AppShell({ data, children }: AppShellProps) {
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         aria-label="Primary"
       >
-        <div ref={navScrollRef} className="no-scrollbar flex snap-x snap-proximity gap-1.5 overflow-x-auto px-3 py-2 scroll-px-3">
-          {navItems.map((item, i) => (
+        <div ref={navScrollRef} className="flex items-stretch gap-1 px-2 py-2">
+          {PRIMARY_ITEMS.map((item, i) => (
             <Link
               href={item.href}
               key={item.href}
               aria-current={isActive(item.href) ? 'page' : undefined}
-              className={`flex min-w-[73px] shrink-0 snap-start flex-col items-center gap-2 rounded-md px-2 py-3 text-[12px] font-medium transition ${
-                isActive(item.href)
-                  ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40'
-                  : 'text-[#8190a0] active:bg-[#151c25]'
+              className={`flex flex-1 flex-col items-center gap-1.5 rounded-md px-1 py-2 text-[11px] font-medium transition ${
+                isActive(item.href) ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40' : 'text-[#8190a0] active:bg-[#151c25]'
               }`}
             >
-              <item.icon size={22} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-80'} />
+              <item.icon size={20} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-80'} />
               <span className="whitespace-nowrap">{item.short}</span>
             </Link>
           ))}
+          <button
+            type="button"
+            onClick={() => setExploreOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={exploreOpen}
+            className={`flex flex-1 flex-col items-center gap-1.5 rounded-md px-1 py-2 text-[11px] font-medium transition ${
+              exploreActive ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40' : 'text-[#8190a0] active:bg-[#151c25]'
+            }`}
+          >
+            <LayoutGrid size={20} className={exploreActive ? undefined : 'opacity-80'} />
+            <span className="whitespace-nowrap">Explore</span>
+          </button>
         </div>
       </nav>
+
+      {/* Explore drawer - every surface behind the daily-drivers, grouped by the job it does. Opens
+          from the rail/bottom-bar Explore control; closes on backdrop, X, Escape, or navigation. */}
+      {exploreOpen && (
+        <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Explore all surfaces">
+          <button type="button" aria-label="Close Explore" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setExploreOpen(false)} />
+          <div className="glass-chrome relative ml-auto flex h-full w-full max-w-md flex-col border-l border-[#1b2530] shadow-2xl">
+            <div className="flex items-center gap-2 border-b border-[#1b2530] px-4 py-3">
+              <LayoutGrid size={16} className="text-[#f3a33a]" />
+              <h2 className="text-sm font-semibold text-[#eef3f8]">Explore</h2>
+              <span className="text-[11px] text-[#8190a0]">everything behind your desk</span>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setExploreOpen(false)}
+                aria-label="Close"
+                className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
+              {NAV_BUCKETS.map((bucket) => (
+                <div key={bucket.id}>
+                  <div className="mb-1.5 flex items-baseline gap-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#dbe5ee]">{bucket.label}</p>
+                    <p className="text-[10px] text-[#5e6b78]">{bucket.blurb}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {navItems
+                      .filter((item) => item.bucket === bucket.id)
+                      .map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setExploreOpen(false)}
+                          aria-current={isActive(item.href) ? 'page' : undefined}
+                          className={`flex items-center gap-2 rounded-md border px-2.5 py-2 text-[12px] transition ${
+                            isActive(item.href)
+                              ? 'border-[#f3a33a]/40 bg-[#23180b] text-[#f3a33a]'
+                              : 'border-[#1b2530] bg-[#0d1117] text-[#c3ccd6] hover:border-[#2a3646] hover:bg-[#101720]'
+                          }`}
+                        >
+                          <item.icon size={15} className="shrink-0 opacity-80" />
+                          <span className="truncate">{item.label}</span>
+                        </Link>
+                      ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <DualLauncher />
       <RatingPrompt />

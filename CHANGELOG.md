@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-07-17
+
+One clean rail and an Explore drawer: the daily-drivers up front, the deep research one tap away.
+
+### Changed
+
+- The navigation no longer shows all 34 surfaces at once. The rail (and the mobile bar) now carry just the daily-drivers - Command, Portfolio, Watchlist, Plan - so the goal cockpit owns the screen instead of competing with a wall of icons.
+- Everything else lives in a new Explore drawer, grouped by the job it does: Your Desk, Discover, Research, Practice, and Learn. One tap opens it, one tap gets you anywhere, and it closes on Escape, a tap outside, or when you navigate.
+- Nothing was removed - all 34 surfaces are still there, just organised by what you are trying to DO rather than listed flat. The Explore control highlights when you are inside one of its surfaces, so you always know where you are.
+- On mobile this replaces a 34-item horizontal scroll with five evenly-spaced tabs, so the thing you need is no longer three swipes away.
+
 ## [0.21.0] - 2026-07-17
 
 True orientation: both sides of every name you hold and watch, and a goal target that is your own number.
@@ -493,7 +504,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.19.1...v0.20.0
 [0.19.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.19.0...v0.19.1

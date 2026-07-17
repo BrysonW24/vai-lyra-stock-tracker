@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.22.0',
+    date: '2026-07-17',
+    title: 'One clean rail and an Explore drawer: the daily-drivers up front, the deep research one tap away',
+    highlights: [
+      'The navigation no longer shows all 34 surfaces at once. The rail (and the mobile bar) now carry just the daily-drivers - Command, Portfolio, Watchlist, Plan - so the goal cockpit owns the screen instead of competing with a wall of icons.',
+      'Everything else lives in a new Explore drawer, grouped by the job it does: Your Desk, Discover, Research, Practice, and Learn. One tap opens it, one tap gets you anywhere, and it closes on Escape, a tap outside, or when you navigate.',
+      'Nothing was removed - all 34 surfaces are still there, just organised by what you are trying to DO rather than listed flat. The Explore control highlights when you are inside one of its surfaces, so you always know where you are.',
+      'On mobile this replaces a 34-item horizontal scroll with five evenly-spaced tabs, so the thing you need is no longer three swipes away.',
+    ],
+  },
+  {
     version: '0.21.0',
     date: '2026-07-17',
     title: 'True orientation: both sides of every name you hold and watch, and a goal target that is your own number',
