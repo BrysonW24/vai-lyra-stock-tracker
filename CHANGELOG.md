@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.42.0] - 2026-07-17
+
+A background job that stores nothing now says so, instead of reporting success.
+
+### Changed
+
+- The nightly jobs can no longer claim success while saving nothing. Both the events and fundamentals jobs caught their own database errors, logged a quiet warning, and reported "success" - so for months the dashboards showed a healthy green run while the tables sat completely empty. A job that fetches 21 events and stores none of them has failed, and it now says so loudly enough to trigger an alert.
+- The per-stock log no longer lies either: it used to print "snapshot + metrics persisted" for every company regardless of whether the write actually succeeded. It now reports the real number stored.
+
 ## [0.41.0] - 2026-07-17
 
 The calendar and fundamentals are storing real data for the first time.
@@ -706,7 +715,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.41.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.42.0...HEAD
+[0.42.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.41.0...v0.42.0
 [0.41.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.40.0...v0.41.0
 [0.40.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.39.0...v0.40.0
 [0.39.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.38.0...v0.39.0

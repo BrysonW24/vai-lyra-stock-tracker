@@ -74,7 +74,11 @@ def run_fundamentals_worker(settings: Settings, repo: SupabaseRepository) -> dic
                 metrics_count = _persist_valuation_metrics(repo, metrics, snapshot_date)
                 metrics_persisted += metrics_count
 
-                logger.info(f"Processed {ticker.symbol}: snapshot + metrics persisted")
+                # Report what actually landed. This line used to claim "snapshot + metrics persisted"
+                # unconditionally - it printed for AAPL while the upsert was being rejected.
+                logger.info(
+                    f"Processed {ticker.symbol}: {snap_count} snapshot, {metrics_count} metrics persisted"
+                )
 
             except Exception as e:
                 logger.error(f"Failed to process {ticker.symbol}: {e}")
@@ -83,6 +87,21 @@ def run_fundamentals_worker(settings: Settings, repo: SupabaseRepository) -> dic
         summary["fundamentals_fetched"] = fundamentals_fetched
         summary["snapshots_persisted"] = snapshots_persisted
         summary["metrics_persisted"] = metrics_persisted
+
+        # A run that fetched fundamentals and stored NONE of them has failed, however cleanly each
+        # individual write "handled" its own error. This is the exact shape of the bug that hid for
+        # months: every upsert was rejected (42P10 - the ON CONFLICT target was a partial index),
+        # _persist_snapshot logged a warning and returned 0, and this function still reported
+        # "success" to a green workflow step while the table sat at zero rows.
+        if fundamentals_fetched > 0 and snapshots_persisted == 0:
+            summary["status"] = "failed"
+            summary["error"] = (
+                f"fetched {fundamentals_fetched} fundamentals but persisted 0 snapshots - "
+                "every write was rejected (see the warnings above for the database error)"
+            )
+            logger.error(summary["error"])
+            return summary
+
         summary["status"] = "success"
 
         logger.info(

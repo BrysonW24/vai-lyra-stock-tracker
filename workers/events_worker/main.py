@@ -109,25 +109,30 @@ def _persist_events_to_supabase(repo: SupabaseRepository, events: list) -> None:
         logger.debug("Supabase not enabled; skipping event persistence")
         return
 
-    try:
-        records = []
-        for event in events:
-            record = {
-                "event_id": event.id,
-                "event_date": event.date,
-                "event_type": event.type,
-                "ticker": event.ticker,
-                "title": event.title,
-                "importance": event.importance,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            }
-            records.append(record)
+    # NOTE: this used to wrap the upsert in `except Exception: logger.error(...)` and return normally.
+    # That made a write failure INVISIBLE: run_events_worker went on to set status="success", the
+    # workflow step went green, and company_events sat at ZERO rows for months while the upsert was
+    # rejected every single night (42P10 - the ON CONFLICT target was a partial index). A job that
+    # fetches 21 events and stores none of them has FAILED; it must say so.
+    # Let it raise: run_events_worker's handler marks the run failed, main() exits non-zero, and the
+    # nightly records it. The per-worker guard in nightly-maintenance.yml means one bad source still
+    # does not block outcome labeling or the digest.
+    records = []
+    for event in events:
+        record = {
+            "event_id": event.id,
+            "event_date": event.date,
+            "event_type": event.type,
+            "ticker": event.ticker,
+            "title": event.title,
+            "importance": event.importance,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        records.append(record)
 
-        if records:
-            repo.client.table("company_events").upsert(records, on_conflict="event_id").execute()
-            logger.info(f"Persisted {len(records)} calendar events to Supabase")
-    except Exception as e:
-        logger.error(f"Failed to persist events to Supabase: {e}")
+    if records:
+        repo.client.table("company_events").upsert(records, on_conflict="event_id").execute()
+        logger.info(f"Persisted {len(records)} calendar events to Supabase")
 
 
 def _persist_ipos_to_supabase(repo: SupabaseRepository, ipos: list) -> None:

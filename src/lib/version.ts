@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.42.0',
+    date: '2026-07-17',
+    title: 'A background job that stores nothing now says so, instead of reporting success',
+    highlights: [
+      'The nightly jobs can no longer claim success while saving nothing. Both the events and fundamentals jobs caught their own database errors, logged a quiet warning, and reported "success" - so for months the dashboards showed a healthy green run while the tables sat completely empty. A job that fetches 21 events and stores none of them has failed, and it now says so loudly enough to trigger an alert.',
+      'The per-stock log no longer lies either: it used to print "snapshot + metrics persisted" for every company regardless of whether the write actually succeeded. It now reports the real number stored.',
+    ],
+  },
+  {
     version: '0.41.0',
     date: '2026-07-17',
     title: 'The calendar and fundamentals are storing real data for the first time',
