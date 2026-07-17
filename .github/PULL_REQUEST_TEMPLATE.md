@@ -1,7 +1,8 @@
-> **Before you open this PR:** Lyra generally does not accept code pull requests - the
-> intended path is to [fork and build your own](../CONTRIBUTING.md), and to share bugs or
-> ideas on the [issue tracker](https://github.com/BrysonW24/vai-lyra-stock-tracker/issues).
-> If we already agreed in an issue that this change belongs upstream, carry on below.
+> **Before you open this PR:** Lyra is maintainer-driven - the usual path is to
+> [fork and build your own](../CONTRIBUTING.md), and to share bugs or ideas on the
+> [issue tracker](https://github.com/BrysonW24/vai-lyra-stock-tracker/issues). But if we
+> talked this change through in an issue first, or you are one of the special ones
+> (you know who you are), carry on below.
 
 ## What changed
 

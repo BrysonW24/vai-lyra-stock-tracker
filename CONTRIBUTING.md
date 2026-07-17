@@ -9,10 +9,10 @@ one person - so contributing works a little differently here than in most repos:
 - **Found a bug or have an idea? Open an issue.** Bug reports, feature ideas, and feedback
   are very welcome on the
   [issue tracker](https://github.com/BrysonW24/vai-lyra-stock-tracker/issues).
-- **Code pull requests are generally not accepted.** The codebase is maintainer-driven. An
-  unsolicited PR will usually be closed with thanks and a pointer to the issue tracker. If
-  you believe a fix genuinely belongs upstream, open an issue first so we can talk it
-  through before you write any code.
+- **Code pull requests: it depends on who is asking.** The codebase is maintainer-driven,
+  so a drive-by PR from a stranger will usually be closed with thanks and a pointer to the
+  issue tracker. But if we have talked it through in an issue first - or you are one of the
+  special ones (you know who you are) - the merge button has been known to move.
 
 ## Run it locally (no fork needed)
 
