@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.57.0] - 2026-07-18
+
+The copilot can finally answer the macro questions it suggests.
+
+### Changed
+
+- The AI chat is now grounded in the live market snapshot: regime, VIX, Fear & Greed, yields and index moves flow into its context, so "what regime are we in?" - a question the UI itself proposes - gets answered from measured data instead of inviting a guess.
+- The honesty carries through: when only sample values are available the grounding says so explicitly and instructs the model to disclose it, so demo numbers can never be presented as today's market.
+
 ## [0.56.0] - 2026-07-18
 
 Fabricated demo data can no longer masquerade as real.
@@ -876,7 +885,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.56.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.57.0...HEAD
+[0.57.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.56.0...v0.57.0
 [0.56.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.55.0...v0.56.0
 [0.55.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.54.0...v0.55.0
 [0.54.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.53.0...v0.54.0

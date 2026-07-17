@@ -5,6 +5,7 @@
  * onboarding profile. The model phrases; it never invents a number or gives advice.
  */
 import type { DashboardData } from '@/types/scanner';
+import type { MarketContextSnapshot } from '@/lib/market-context';
 import { derivePrimeSetups } from '@/lib/prime-setups';
 import { deriveCatalystRadar } from '@/lib/catalysts';
 import { formatCurrency, formatSignedNumber, formatSignedPercent } from '@/lib/format';
@@ -143,9 +144,31 @@ export function deriveTone(profile?: ChatProfile): string {
 }
 
 /** Compact, structured snapshot of the user's world for grounding. Numbers come from the scan. */
-export function buildGrounding(data: DashboardData, now: Date): string {
+export function buildGrounding(data: DashboardData, now: Date, market?: MarketContextSnapshot): string {
   const sigBy = new Map(data.signals.map((s) => [s.symbol, s]));
   const lines: string[] = [];
+
+  // MACRO first: the UI's own suggested questions ask about regime/VIX/sentiment, and
+  // until this block existed the model had NO grounded macro fact to answer them with -
+  // hallucination pressure on exactly the questions the product invites. The source tag
+  // is part of the contract: when the snapshot is the bundled sample, the model must say
+  // so rather than present demo numbers as today's market.
+  if (market) {
+    const pct = (v: number | null) => (v === null ? null : `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`);
+    const macroBits = [
+      `regime ${market.regime.replace('_', ' ')}`,
+      market.vixPrice !== null ? `VIX ${market.vixPrice.toFixed(1)}${pct(market.vixChangePct) ? ` (${pct(market.vixChangePct)})` : ''}` : null,
+      market.fearGreedIndex !== null ? `Fear&Greed ${market.fearGreedIndex}${market.fearGreedLabel ? ` (${market.fearGreedLabel})` : ''}` : null,
+      market.yield10y !== null ? `10Y ${market.yield10y.toFixed(2)}%` : null,
+      market.sp500ChangePct !== null ? `S&P500 ${pct(market.sp500ChangePct)}` : null,
+      market.nasdaqChangePct !== null ? `Nasdaq ${pct(market.nasdaqChangePct)}` : null,
+    ].filter(Boolean);
+    lines.push(
+      market.source === 'live'
+        ? `MACRO (live hourly snapshot): ${macroBits.join(', ')}.`
+        : `MACRO (SAMPLE values - live capture not yet available; if asked about today's market, say these are sample numbers): ${macroBits.join(', ')}.`,
+    );
+  }
 
   if (data.portfolio.length > 0) {
     const value = data.portfolio.reduce((sum, h) => sum + h.marketValue, 0);

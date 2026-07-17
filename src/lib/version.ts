@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.57.0',
+    date: '2026-07-18',
+    title: 'The copilot can finally answer the macro questions it suggests',
+    highlights: [
+      'The AI chat is now grounded in the live market snapshot: regime, VIX, Fear & Greed, yields and index moves flow into its context, so "what regime are we in?" - a question the UI itself proposes - gets answered from measured data instead of inviting a guess.',
+      'The honesty carries through: when only sample values are available the grounding says so explicitly and instructs the model to disclose it, so demo numbers can never be presented as today\'s market.',
+    ],
+  },
+  {
     version: '0.56.0',
     date: '2026-07-18',
     title: 'Fabricated demo data can no longer masquerade as real',

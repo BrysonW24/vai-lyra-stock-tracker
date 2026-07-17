@@ -4,6 +4,7 @@ import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { guardProse } from '@/lib/ai/guardrails/prose';
 import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { getDashboardData } from '@/lib/data';
+import { getMarketContextLive } from '@/lib/market-context-live';
 import { buildGrounding, type ChatProfile } from '@/lib/ai/chat-context';
 import { buildHybridKnowledgeBlock } from '@/lib/knowledge/hybrid';
 import { getUserConstraints, buildConstraintsBlock } from '@/lib/ai/user-context';
@@ -170,6 +171,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await getDashboardData();
+    const market = await getMarketContextLive();
     const constraints = await getUserConstraints();
     const constraintsBlock = constraints ? buildConstraintsBlock(constraints) : '';
     // Tone is derived from the authoritative server-side profile when signed in: it carries the
@@ -205,7 +207,7 @@ export async function POST(request: NextRequest) {
         ? 'PERSONALISATION: Read everything against YOUR PROFILE & CONSTRAINTS below and tie what you say to the stated goal, horizon and risk comfort. CHECK ideas against the constraints - flag when a name sits outside their risk comfort, when a setup would breach the max position size, or when something does not fit the available cash - but do NOT prescribe a trade: never state how many shares to buy or a dollar amount to put in, and never tell them to buy, sell, hold or size a position (that is the NOT ADVICE rule, and it wins). Describe the fit and let them decide.'
         : false,
       constraintsBlock || false,
-      `CONTEXT (deterministic, from the latest scan):\n${buildGrounding(data, new Date())}`,
+      `CONTEXT (deterministic, from the latest scan):\n${buildGrounding(data, new Date(), market)}`,
       knowledgeBlock || false,
     ]);
     // Cross-session memory: on a fresh session (short in-session history) seed context from the user's
