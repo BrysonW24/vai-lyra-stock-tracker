@@ -6,6 +6,14 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.70.2] - 2026-07-18
+
+Notch fix, without double-padding the ears.
+
+### Changed
+
+- The welcome screen no longer pads the landscape notch ears twice - the page owns the top and bottom insets, the document body owns the left and right ones.
+
 ## [0.70.1] - 2026-07-18
 
 Welcome screen clears the notch.
@@ -1051,7 +1059,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.70.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.70.2...HEAD
+[0.70.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.70.1...v0.70.2
 [0.70.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.70.0...v0.70.1
 [0.70.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.69.1...v0.70.0
 [0.69.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.69.0...v0.69.1

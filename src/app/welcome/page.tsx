@@ -54,15 +54,15 @@ export default function WelcomePage() {
         </svg>
       </div>
 
-      {/* Safe-area padding inline: the iOS shell sets contentInset 'never', so the web
-          layer owns the notch/home-bar insets (px-5/py-6 folded into the calc). */}
+      {/* Safe-area padding: the iOS shell sets contentInset 'never', so the web layer owns
+          the insets. Only the VERTICAL pads fold env() in here (py-6) - body already carries
+          padding-left/right: env(safe-area-inset-left/right) in globals.css, so repeating the
+          horizontal insets here would double-pad the landscape notch ears. px-5 stays flat. */}
       <div
-        className="relative mx-auto flex min-h-screen max-w-6xl flex-col"
+        className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-5"
         style={{
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1.5rem)',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)',
-          paddingLeft: 'calc(env(safe-area-inset-left, 0px) + 1.25rem)',
-          paddingRight: 'calc(env(safe-area-inset-right, 0px) + 1.25rem)',
         }}
       >
         {/* Top bar - classic Vivacity.ai mark + Lyra product lockup, version badge on the right */}

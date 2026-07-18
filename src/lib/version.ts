@@ -23,6 +23,14 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.70.2',
+    date: '2026-07-18',
+    title: 'Notch fix, without double-padding the ears',
+    highlights: [
+      'The welcome screen no longer pads the landscape notch ears twice - the page owns the top and bottom insets, the document body owns the left and right ones.',
+    ],
+  },
+  {
     version: '0.70.1',
     date: '2026-07-18',
     title: 'Welcome screen clears the notch',
