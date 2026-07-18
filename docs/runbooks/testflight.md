@@ -28,7 +28,9 @@ app IS the iOS app. Consequences:
 - `ios/App/ExportOptions.plist` - CLI export config (App Store Connect upload, automatic
   signing).
 - 1024px alpha-free app icon + dark splash in `ios/App/App/Assets.xcassets`.
-- Automatic signing is configured; NO team is selected yet (founder-gated, below).
+- Automatic signing is configured with the team baked in (`DEVELOPMENT_TEAM = NJ2U92XAJB`,
+  mirrored as `teamID` in ExportOptions.plist). The Apple ID still has to be signed into
+  Xcode once (founder-gated, below) so the signing certificate can be minted.
 - Sanity check any time:
   `xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO`
 
@@ -40,12 +42,13 @@ app IS the iOS app. Consequences:
    enrolled in the Apple Developer Program.
 2. Open `ios/App/App.xcodeproj`, select the blue App project icon in the sidebar, then the
    App TARGET > Signing & Capabilities tab.
-3. Tick "Automatically manage signing" (should already be on) and pick your Team in the
-   dropdown. Xcode mints the signing certificate and registers the bundle id
-   `com.vivacityai.lyra` in the developer portal on its own - no manual portal work needed.
-4. If Xcode complains about the bundle id being unavailable, register it manually at
-   developer.apple.com/account/resources/identifiers > `+` > App IDs > App >
-   Bundle ID explicit `com.vivacityai.lyra`, then retry team selection.
+3. Tick "Automatically manage signing" (should already be on). The team (NJ2U92XAJB) is
+   already set in the project; once the account is added, Xcode mints the signing
+   certificate on its own.
+4. The App ID `com.vivacityai.lyra` is registered in the developer portal (done
+   2026-07-18, explicit bundle id, description "Lyra"). If the planned APNs push wave
+   lands, its Push Notifications capability is toggled on that same portal page:
+   developer.apple.com/account/resources/identifiers.
 
 ### 2. Create the App Store Connect app record
 

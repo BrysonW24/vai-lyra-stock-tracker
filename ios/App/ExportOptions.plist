@@ -5,11 +5,11 @@
 	<!-- CLI archive export for TestFlight: method app-store-connect + destination upload
 	     pushes the build straight to App Store Connect in one xcodebuild -exportArchive step.
 	     Auth comes from the Apple ID signed into Xcode (or an ASC API key via the
-	     -authenticationKey* flags). If export fails asking for a team, add:
-	       <key>teamID</key><string>...</string>  (value: Xcode > Settings > Accounts,
-	     or developer.apple.com/account > Membership details). -->
+	     -authenticationKey* flags). teamID matches DEVELOPMENT_TEAM in the Xcode project. -->
 	<key>method</key>
 	<string>app-store-connect</string>
+	<key>teamID</key>
+	<string>NJ2U92XAJB</string>
 	<key>destination</key>
 	<string>upload</string>
 	<key>signingStyle</key>
