@@ -9,7 +9,7 @@ lanes plus parked work items. Current pack: the iOS TestFlight beta.
 |---|---|---|
 | [prompt-1-ios-release-pipeline.md](prompt-1-ios-release-pipeline.md) | A - native release | `64acaa0` shipped (hygiene, privacy manifest, export config, runbook v1); runbook + ExportOptions edits in flight |
 | [prompt-2-native-experience.md](prompt-2-native-experience.md) | B - web-side shell UX | Modules + tests + component integration built, UNCOMMITTED; needs release flow |
-| [prompt-3-beta-qa-feedback.md](prompt-3-beta-qa-feedback.md) | C - beta QA + tester experience | Not started - fire once Lane A can produce a simulator build |
+| [prompt-3-beta-qa-feedback.md](prompt-3-beta-qa-feedback.md) | C - beta QA + tester experience | COMPLETE (run by the orchestrator 2026-07-18): [qa-report-ios-beta.md](qa-report-ios-beta.md), tester guide, review checklist shipped; 2 findings routed (Lane A dark-mode pin, coordinator errorPath) |
 
 To fire a lane: open a fresh Claude Code session in this repo and paste the prompt block
 from the corresponding file verbatim. Lanes are file-disjoint and safe to run concurrently.
