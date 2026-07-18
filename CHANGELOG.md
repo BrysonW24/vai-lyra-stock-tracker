@@ -6,6 +6,14 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.70.1] - 2026-07-18
+
+Welcome screen clears the notch.
+
+### Changed
+
+- The signed-out welcome screen now respects the iPhone safe areas - the Lyra header no longer collides with the status bar clock inside the iOS app (and landscape ears are padded too).
+
 ## [0.70.0] - 2026-07-18
 
 First-class inside the iOS app.
@@ -1043,7 +1051,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.70.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.70.1...HEAD
+[0.70.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.70.0...v0.70.1
 [0.70.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.69.1...v0.70.0
 [0.69.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.69.0...v0.69.1
 [0.69.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.68.1...v0.69.0

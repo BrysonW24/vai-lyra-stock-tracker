@@ -54,7 +54,17 @@ export default function WelcomePage() {
         </svg>
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-6">
+      {/* Safe-area padding inline: the iOS shell sets contentInset 'never', so the web
+          layer owns the notch/home-bar insets (px-5/py-6 folded into the calc). */}
+      <div
+        className="relative mx-auto flex min-h-screen max-w-6xl flex-col"
+        style={{
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1.5rem)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)',
+          paddingLeft: 'calc(env(safe-area-inset-left, 0px) + 1.25rem)',
+          paddingRight: 'calc(env(safe-area-inset-right, 0px) + 1.25rem)',
+        }}
+      >
         {/* Top bar - classic Vivacity.ai mark + Lyra product lockup, version badge on the right */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">

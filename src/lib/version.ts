@@ -23,6 +23,14 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.70.1',
+    date: '2026-07-18',
+    title: 'Welcome screen clears the notch',
+    highlights: [
+      'The signed-out welcome screen now respects the iPhone safe areas - the Lyra header no longer collides with the status bar clock inside the iOS app (and landscape ears are padded too).',
+    ],
+  },
+  {
     version: '0.70.0',
     date: '2026-07-18',
     title: 'First-class inside the iOS app',
