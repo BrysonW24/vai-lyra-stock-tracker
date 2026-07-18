@@ -102,10 +102,17 @@ Notes:
   delete any time.
 - If export fails asking for a team, add `teamID` to `ios/App/ExportOptions.plist` (the
   comment in that file says where to find the value).
-- Headless/CI variant (future): create an App Store Connect API key (Users and Access >
-  Integrations > App Store Connect API - FOUNDER decision, it is a powerful credential)
-  and pass `-authenticationKeyPath/-authenticationKeyID/-authenticationKeyIssuerID`.
-  Do NOT wire this into GitHub Actions without the founder explicitly deciding to.
+- Headless variant (PROVEN on build 2, 2026-07-18): an App Store Connect API key exists
+  (name `app-store-api-key`, Key ID `G9WM65LW7V`, Admin access; key IDs are identifiers,
+  not secrets). The one-and-only .p8 lives at
+  `~/.appstoreconnect/private_keys/AuthKey_G9WM65LW7V.p8` (chmod 600; Apple never
+  re-issues it - if the Mac is lost, revoke and mint a new key). Append to the
+  exportArchive command:
+  `-authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_G9WM65LW7V.p8
+  -authenticationKeyID G9WM65LW7V
+  -authenticationKeyIssuerID 6c4498c0-f83e-4828-828c-f12a5f5fd156`
+  This removes the signed-into-Xcode requirement entirely. Still do NOT wire it into
+  GitHub Actions without the founder explicitly deciding to put the .p8 in repo secrets.
 
 ## TestFlight distribution
 
