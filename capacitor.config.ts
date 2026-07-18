@@ -14,6 +14,9 @@ const config: CapacitorConfig = {
   server: {
     url: 'https://lyra.vivacityai.com.au',
     cleartext: false,
+    // Remote shells do NOT fall back to webDir automatically - without errorPath a
+    // no-network cold start shows a bare WKWebView error (QA finding, 2026-07-18).
+    errorPath: 'index.html',
   },
   ios: {
     contentInset: 'automatic',
