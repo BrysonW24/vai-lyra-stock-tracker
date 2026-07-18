@@ -5,6 +5,10 @@ App/App/public
 DerivedData
 xcuserdata
 
+# Founder's personal TestFlight screenshots - PUBLIC repo, never commit these
+# (they contain personal email, client email subjects, device details)
+testflight/
+
 # Cordova plugins for Capacitor
 capacitor-cordova-ios-plugins
 
