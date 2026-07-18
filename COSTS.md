@@ -53,6 +53,12 @@ entirely optional - the deterministic engine works without any AI key.
 | Web Push (VAPID) | W3C standard | **$0** | Browser-native push, self-generated keypair, no vendor account. Free by design of the standard (no pricing page exists to verify) |
 | WhatsApp Cloud API | Meta | not costed | Lyra's WhatsApp layer is architecture-only today (see `docs/walkthroughs/06-alerts-on-your-phone.md`); Meta conversation pricing applies if you ever wire it |
 
+### Native app distribution (optional iOS beta)
+
+| Service | Tier | Price | What you get / limits |
+|---|---|---|---|
+| Apple Developer Program | Membership | **US$99/yr** | Required for TestFlight + App Store distribution of the iOS shell (`ios/`). Standard published membership fee (founder enrolled 2026-07-18; page not re-verified line-by-line). The shell adds zero runtime cost - it is a remote WKWebView loading the same production web app |
+
 ### AI (optional)
 
 | Service | Tier | Price per 1M tokens | Notes |
