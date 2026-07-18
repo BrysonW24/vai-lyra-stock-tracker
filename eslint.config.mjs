@@ -15,6 +15,9 @@ const config = [
       'coverage/**',
       'src/lib/generated/**', // compiled from content/*.jsonl - never hand-edited
       'next-env.d.ts',
+      'ios/**', // Capacitor shell: Xcode project + gitignored archive output (Capacitor's own JS bridge is not ours to lint)
+      'native/**', // offline fallback shell page
+
     ],
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),

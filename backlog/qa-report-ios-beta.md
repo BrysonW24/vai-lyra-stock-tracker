@@ -24,8 +24,8 @@ continuing the TestFlight path.
 | 4 | Splash assets | PARTIAL | Dark branded splash installed in asset catalog and build green; the launch frame itself was not captured mid-animation - eyeball on first device launch | founder device pass |
 | 5 | Safe areas, launched surface (light) | PASS | No notch/status-bar collision on welcome; content insets correctly | - |
 | 6 | Status bar legibility (light) | PASS | Dark text on light band, readable | - |
-| 7 | Dark mode appearance | FAIL (cosmetic) | Native chrome goes black while the page stays light (Lyra is a light-only design) - harsh seam at the status bar. Fix: pin the shell to light appearance (UIUserInterfaceStyle = Light in Info.plist) so the chrome always matches the light-only web app | Lane A |
-| 8 | Offline fallback | FAIL (config gap) | The offline page DOES ship in the app bundle (public/index.html, verified in the built .app), but Capacitor remote shells do not serve webDir on load failure automatically - server.errorPath is not set in capacitor.config.ts, so a cold start without network shows the default WKWebView error instead of the branded page | coordinator |
+| 7 | Dark mode appearance | OPEN (cosmetic, low) | CORRECTED DIAGNOSIS (orchestrator finish pass): the app is dark-native (:root color-scheme: dark, themeColor #0d141c) with a light marketing surface on /welcome - the black-chrome-on-light-page seam is specific to that page, and a hard UIUserInterfaceStyle pin would just move the seam onto the dark in-app surfaces. Correct fix is web-side: make /welcome declare its true (light) scheme or blend its top background. Low severity - a pass-through page | ux-surface chain (web) |
+| 8 | Offline fallback | FIXED | server.errorPath: 'index.html' added to capacitor.config.ts (f3cc321), synced, simulator build green - a no-network cold start now serves the branded offline page that ships in the bundle | closed (was coordinator) |
 | 9 | External links escape the shell | CODE-VERIFIED | Two independent layers: Capacitor 8 natively ejects off-app navigations + Lane B's resolveExternalHref module (unit-tested) routes external http(s) to window.open. Runtime tap-through owed on device | Lane B (runtime confirm) |
 | 10 | Native share sheet | CODE-VERIFIED | Web Share API with capability gating and clipboard fallback; Lane B's own comment correctly notes navigator.share in WKWebView must be confirmed on a real device - if absent, the affordance hides coherently | founder device pass |
 | 11 | Session persistence across relaunch | EXPECTED-PASS | WKWebView uses the default persistent data store (cookies + localStorage survive relaunch by architecture). BLOCKED for runtime proof: agent cannot complete an interactive sign-in | founder device pass |
@@ -34,12 +34,26 @@ continuing the TestFlight path.
 | 14 | PWA install prompts suppressed in shell | CODE-PENDING | Lane B edited AddToHomeScreenStep + PushNotificationSetup for shell awareness but the work is uncommitted - re-verify this row after Lane B lands and deploys | Lane B |
 | 15 | Web push inside the shell | CONFIRMED-ABSENT (expected) | Web push does not fire inside WKWebView - this is the designed Phase 2 gap (APNs, docs/product/native-app.md). Row 14's components must not promise push inside the shell | Lane B (same deploy) |
 
-## FAIL count by owner
+## FAIL count by owner (updated, orchestrator finish pass)
 
-- Lane A: 1 - pin light appearance (one Info.plist key)
-- Coordinator: 1 - add server.errorPath to capacitor.config.ts + cap sync (then rows 8 re-tests)
-- Lane B: 0 FAILs; 2 runtime confirmations ride their upcoming deploy (rows 9, 14/15)
+- Coordinator: 0 open - errorPath FIXED (f3cc321)
+- Lane A: 0 open - the dark-mode finding was rerouted to the web after corrected diagnosis
+- Lane B: 0 open - the native sweep LANDED as v0.70.0 (dbd9457); rows 9/14/15 confirmations
+  ride the prod deploy + first device session
+- ux-surface chain: 1 cosmetic backlog item - /welcome dark-scheme seam (row 7, low)
 - Founder device pass: rows 4, 10, 11, 12, 13 - all covered by the tester guide's checklist
+
+## Finish-pass log (2026-07-18, orchestrator)
+
+- TestFlight build 1 SHIPPED (Lane A + founder: team NJ2U92XAJB signing, ASC record, upload -
+  see docs/runbooks/testflight.md).
+- Lane B self-landed v0.70.0 while gates were running; the commit matches the exact tree the
+  orchestrator verified: type-check clean, 904/904 tests green (TZ=UTC), build green.
+- Stray Lyra/ blank Xcode template at repo root: contents verified pure "New Project"
+  boilerplate (281 lines, no custom code) and deleted.
+- Local lint noise: ESLint was scanning ios/ (including Lane A's gitignored .xcarchive
+  output - Capacitor's own bridge JS); `ios/**` and `native/**` added to eslint ignores. CI
+  was never affected (archives exist only on the build machine).
 
 ## Companion docs shipped with this report
 
