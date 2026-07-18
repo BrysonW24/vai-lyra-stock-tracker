@@ -53,11 +53,11 @@ app IS the iOS app. Consequences:
 ### 2. Create the App Store Connect app record
 
 1. appstoreconnect.apple.com > Apps > `+` > New App.
-2. Platform: iOS. Name: `Lyra` (if taken, use `Lyra - Market Radar`). Primary language:
-   English (Australia). Bundle ID: pick `com.vivacityai.lyra` from the dropdown (it appears
-   once step 1 registered it). SKU: `lyra-ios`. User access: Full Access.
+2. DONE 2026-07-18: the app record is `Lyra - Market Scanner` (plain "Lyra" was taken),
+   platform iOS, bundle ID `com.vivacityai.lyra`, primary language English (Australia).
 3. That is all TestFlight needs. The App Store product page (screenshots, description,
-   review notes) is only required for a PUBLIC App Store release, not for TestFlight.
+   review notes, "Add for Review") is only for a PUBLIC App Store release - ignore the
+   whole "Prepare for Submission" page while beta testing.
 
 ## First upload - Xcode GUI (recommended for build 1)
 
@@ -143,6 +143,14 @@ Notes:
 - **"No signing certificate" / "No profiles for com.vivacityai.lyra"**: the Apple ID is
   not signed into Xcode or no team is selected - redo One-time founder setup step 1.
   For CLI builds, `-allowProvisioningUpdates` must be present.
+- **"Your team has no devices from which to generate a provisioning profile"**: a fresh
+  team has zero registered devices and DEVELOPMENT profiles need at least one (hit on
+  build 1). Fix: plug an iPhone into the Mac (Developer Mode on: Settings > Privacy &
+  Security), then build once TO that device to auto-register it:
+  `xcodebuild -project ios/App/App.xcodeproj -scheme App -destination 'id=<device-udid>'
+  build -allowProvisioningUpdates -allowProvisioningDeviceRegistration`
+  (UDID via `xcrun xctrace list devices`). Or register the UDID by hand at
+  developer.apple.com/account/resources/devices. Then re-run the archive.
 - **"0 valid identities found"** from `security find-identity -v -p codesigning`: same
   cause - certificates are minted when a team is first selected in Xcode.
 - **Upload rejected: bundle version already used**: `CURRENT_PROJECT_VERSION` was not
