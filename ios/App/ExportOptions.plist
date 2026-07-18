@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- CLI archive export for TestFlight: method app-store-connect + destination upload
+	     pushes the build straight to App Store Connect in one xcodebuild -exportArchive step.
+	     Auth comes from the Apple ID signed into Xcode (or an ASC API key via the
+	     -authenticationKey* flags). If export fails asking for a team, add:
+	       <key>teamID</key><string>...</string>  (value: Xcode > Settings > Accounts,
+	     or developer.apple.com/account > Membership details). -->
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>destination</key>
+	<string>upload</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>uploadSymbols</key>
+	<true/>
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+</dict>
+</plist>
