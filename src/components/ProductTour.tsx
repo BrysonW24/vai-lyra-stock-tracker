@@ -72,7 +72,7 @@ export function ProductTour() {
   const Icon = step.icon;
 
   return (
-    <div className="fixed inset-0 z-[90] grid place-items-end justify-center bg-black/50 px-4 pb-6 backdrop-blur-sm sm:place-items-center sm:pb-0">
+    <div className="fixed inset-0 z-[90] grid place-items-end justify-center bg-black/50 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:place-items-center sm:pb-0">
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#0d1117]/95 shadow-2xl backdrop-blur">
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">

@@ -6,6 +6,7 @@ import { BRAND_NAME, BRAND_TAGLINE } from '@/lib/brand';
 import { PinGate } from '@/components/PinGate';
 import { UsageTracker } from '@/components/UsageTracker';
 import { NotificationEngagementBeacon } from '@/components/NotificationEngagementBeacon';
+import ExternalLinkBoundary from '@/components/native/ExternalLinkBoundary';
 
 export const metadata: Metadata = {
   // Template so every page can set a one-word title and still carry the brand -
@@ -45,6 +46,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#0d141c',
+  // Edge-to-edge rendering for the iOS shell and installed PWA. Without cover,
+  // env(safe-area-inset-*) is always 0 and every safe-area pad in the app is inert.
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -55,6 +59,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         <NotificationEngagementBeacon />
         <UsageTracker />
+        <ExternalLinkBoundary />
         <Analytics />
         <SpeedInsights />
       </body>

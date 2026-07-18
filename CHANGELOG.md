@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.70.0] - 2026-07-18
+
+First-class inside the iOS app.
+
+### Changed
+
+- The site now knows when it is running inside the Lyra iOS app (one shell-detection module, invisible to browsers) and adapts: external links open in Safari instead of trapping you in the app, and the onboarding Home-Screen step becomes a simple confirmation.
+- Edge-to-edge safe areas: headers, drawers, sheets, the tour card, and the launchers all clear the iPhone notch and home indicator - in the app, the installed web app, and Safari landscape.
+- New Share button on ticker pages and the Track Record page - opens the system share sheet where the browser supports it, with a copy-link fallback.
+- Phase 2 native push (APNs) is designed and documented in docs/product/native-app.md - web push cannot reach the app shell, so alerts there stay on Telegram/Slack/WhatsApp until it ships.
+
 ## [0.69.1] - 2026-07-18
 
 Home-Screen walkthrough polish.
@@ -1032,7 +1043,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.69.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.70.0...HEAD
+[0.70.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.69.1...v0.70.0
 [0.69.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.69.0...v0.69.1
 [0.69.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.68.1...v0.69.0
 [0.68.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.68.0...v0.68.1

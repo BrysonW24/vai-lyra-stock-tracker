@@ -312,7 +312,10 @@ export function AppShell({ data, children }: AppShellProps) {
       </aside>
 
       <div className="xl:pl-[72px]">
-        <header className="glass-chrome sticky top-0 z-20 border-b border-[#1b2530]">
+        <header
+          className="glass-chrome sticky top-0 z-20 border-b border-[#1b2530]"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
           <div className="flex h-14 items-center gap-3 px-3 md:px-5">
             <Link href="/" className="hidden min-w-[150px] items-center md:flex">
               <BrandLogo size={26} showWordmark />
@@ -435,7 +438,11 @@ export function AppShell({ data, children }: AppShellProps) {
 
       <nav
         className="glass-chrome fixed bottom-0 left-0 right-0 z-30 border-t border-[#1b2530] xl:hidden"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)' }}
+        style={{
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
+        }}
         aria-label="Primary"
       >
         <div ref={navScrollRef} className="flex items-stretch gap-0.5 px-1.5 pt-2 pb-1">
@@ -472,8 +479,14 @@ export function AppShell({ data, children }: AppShellProps) {
       {exploreOpen && (
         <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Explore all surfaces">
           <button type="button" aria-label="Close Explore" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeExplore} />
-          <div className="glass-chrome relative ml-auto flex h-full w-full max-w-md flex-col border-l border-[#1b2530] shadow-2xl">
-            <div className="flex items-center gap-2 border-b border-[#1b2530] px-4 py-3">
+          <div
+            className="glass-chrome relative ml-auto flex h-full w-full max-w-md flex-col border-l border-[#1b2530] shadow-2xl"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)', paddingRight: 'env(safe-area-inset-right)' }}
+          >
+            <div
+              className="flex items-center gap-2 border-b border-[#1b2530] px-4 py-3"
+              style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+            >
               {customizing ? <Pin size={16} className="text-[#f3a33a]" /> : <LayoutGrid size={16} className="text-[#f3a33a]" />}
               <h2 className="text-sm font-semibold text-[#eef3f8]">{customizing ? 'Customise your bar' : 'Explore'}</h2>
               <span className="hidden text-[11px] text-[#8190a0] sm:inline">

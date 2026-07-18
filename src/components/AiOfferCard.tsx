@@ -72,7 +72,11 @@ export function AiOfferCard() {
       </section>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm" onClick={() => setOpen(false)}>
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
+          style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}
+          onClick={() => setOpen(false)}
+        >
           <div className="mt-10 w-full max-w-lg rounded-xl border border-[#1d2733] bg-[#0b1016] p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">AI copilot setup</span>

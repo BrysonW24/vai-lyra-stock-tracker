@@ -51,7 +51,7 @@ export function DualLauncher() {
 
   return (
     <>
-      <div className="fixed bottom-20 right-3 z-40 flex flex-col items-center gap-1.5 xl:bottom-4">
+      <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] z-40 flex flex-col items-center gap-1.5 xl:bottom-4">
         {/* position dots */}
         <div className="flex items-center gap-1.5">
           {SLOTS.map((s) => (

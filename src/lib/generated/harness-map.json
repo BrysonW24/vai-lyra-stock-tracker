@@ -207,6 +207,7 @@
         "src/lib/onboarding-summary.ts",
         "src/lib/sync-onboarding.ts",
         "src/lib/setup-status.ts",
+        "src/lib/install-platform.ts",
         "src/lib/local-watchlist.ts",
         "src/lib/local-portfolio.ts",
         "src/lib/activation/"
@@ -506,6 +507,7 @@
         "src/lib/ui.ts",
         "src/lib/usage.ts",
         "src/lib/usage-store.ts",
+        "src/lib/native/",
         "public/"
       ],
       "chains": [

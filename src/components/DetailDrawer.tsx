@@ -76,8 +76,12 @@ export function DetailDrawer({ open, onClose, title, subtitle, badge, children }
         className={`absolute right-0 top-0 flex h-full w-full max-w-[440px] flex-col overflow-y-auto border-l border-[#1b2530] bg-[#0b1016] shadow-2xl transition-transform duration-300 ${
           shown ? 'translate-x-0' : 'translate-x-full'
         }`}
+        style={{ paddingRight: 'env(safe-area-inset-right)' }}
       >
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-2 border-b border-[#1b2530] bg-[#0b1016]/95 px-4 py-3 backdrop-blur">
+        <div
+          className="sticky top-0 z-10 flex items-start justify-between gap-2 border-b border-[#1b2530] bg-[#0b1016]/95 px-4 py-3 backdrop-blur"
+          style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+        >
           <div className="min-w-0">
             {badge}
             <p className="truncate text-sm font-semibold text-[#eef3f8]">{title}</p>

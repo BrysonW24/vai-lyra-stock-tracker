@@ -74,9 +74,19 @@ export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClo
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden />
-      <aside ref={asideRef} role="dialog" aria-modal="true" aria-label="Investigation detail" className="flex h-full w-full max-w-xl flex-col border-l border-[#1b2530] bg-[#070b10] shadow-2xl md:w-[34rem]">
+      <aside
+        ref={asideRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Investigation detail"
+        className="flex h-full w-full max-w-xl flex-col border-l border-[#1b2530] bg-[#070b10] shadow-2xl md:w-[34rem]"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)', paddingRight: 'env(safe-area-inset-right)' }}
+      >
         {/* breadcrumb + controls */}
-        <div className="flex items-center gap-2 border-b border-[#1b2530] px-3 py-2">
+        <div
+          className="flex items-center gap-2 border-b border-[#1b2530] px-3 py-2"
+          style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
+        >
           {stack.length > 1 && (
             <button type="button" onClick={onBack} className="rounded border border-[#1b2530] px-2 py-0.5 text-[10px] text-[#a8b5c2] hover:border-[#2b3a4a]">
               &lt;- Back

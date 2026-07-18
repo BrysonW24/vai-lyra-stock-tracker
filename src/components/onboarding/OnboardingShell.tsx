@@ -86,7 +86,10 @@ export function OnboardingShell({
   return (
     <div className="min-h-screen text-[#eef3f8]">
       {/* Header */}
-      <header className="glass-chrome sticky top-0 z-20 border-b border-[#1b2530]">
+      <header
+        className="glass-chrome sticky top-0 z-20 border-b border-[#1b2530]"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="flex h-14 items-center justify-between px-3 md:px-5">
           <div className="flex items-center gap-2">
             {canGoBack && (

@@ -90,7 +90,10 @@ export function RatingPrompt() {
   const active = hover || stars;
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-40 mx-auto max-w-sm rounded-xl border border-[#263241] bg-[#0b1118] p-3 shadow-2xl xl:left-auto xl:right-4 xl:mx-0">
+    <div
+      className="fixed inset-x-3 bottom-3 z-40 mx-auto max-w-sm rounded-xl border border-[#263241] bg-[#0b1118] p-3 shadow-2xl xl:left-auto xl:right-4 xl:mx-0"
+      style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+    >
       {sent ? (
         <p className="py-2 text-center text-[12px] text-[#43d18b]">Thank you - that helps shape what we build next.</p>
       ) : (

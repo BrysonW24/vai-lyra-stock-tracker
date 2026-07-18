@@ -334,6 +334,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-3 backdrop-blur-sm sm:items-center"
+      style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
       onClick={onClose}
     >
       <div

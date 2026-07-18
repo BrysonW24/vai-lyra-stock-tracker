@@ -6,6 +6,7 @@ import { Toggle } from '@/components/Toggle';
 import { BellRing, Smartphone } from 'lucide-react';
 import { faviconUrl } from '@/lib/ticker-logos';
 import { getPushSupportStatus, subscribeToPush } from '@/lib/push/client';
+import { useIsNativeShell } from '@/lib/native/platform';
 
 interface AlertPreferencePanelProps {
   alerts: AlertPreferences;
@@ -60,6 +61,7 @@ function ChannelCard({ logo, name, status, on }: { logo: ReactNode; name: string
 }
 
 export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferencePanelProps) {
+  const nativeShell = useIsNativeShell();
   const [pushBusy, setPushBusy] = useState(false);
   const [pushNote, setPushNote] = useState<string | null>(null);
   const didResetPush = useRef(false);
@@ -86,9 +88,15 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
     setPushNote(null);
     try {
       const status = getPushSupportStatus();
-      // iOS has no web push unless the app is installed to the Home Screen.
+      // iOS has no web push unless the app is installed to the Home Screen. Inside the native
+      // shell web push never works (WKWebView) - point at the channels that do instead of
+      // teaching an install the user does not need.
       if (!status.supported || !status.standalone) {
-        setPushNote('Add Lyra to your Home Screen, then finish enabling push from Settings.');
+        setPushNote(
+          nativeShell
+            ? 'In-app push is coming to the Lyra app - Telegram alerts work today.'
+            : 'Add Lyra to your Home Screen, then finish enabling push from Settings.'
+        );
         return;
       }
       const subscription = await subscribeToPush();
@@ -158,7 +166,9 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
           />
         </div>
         <p className="mt-1.5 text-[11px] leading-snug text-[#5d6b79]">
-          Add Lyra to your home screen, then enable native push in Settings.
+          {nativeShell
+            ? 'Telegram is the most reliable alert channel in the app today.'
+            : 'Add Lyra to your home screen, then enable native push in Settings.'}
         </p>
         {pushNote && (
           <p className={`mt-1 text-[11px] leading-snug ${alerts.pushEnabled ? 'text-[#43d18b]' : 'text-[#f3a33a]'}`}>

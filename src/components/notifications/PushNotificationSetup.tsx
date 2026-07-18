@@ -16,6 +16,7 @@ import { buildSlackTextForEvent } from '@/lib/notifications/slack-templates';
 import { VOICE_PRESETS } from '@/lib/notifications/voice';
 import type { NotificationEvent, VoiceId } from '@/lib/notifications/types';
 import { Toggle } from '@/components/Toggle';
+import { useIsNativeShell } from '@/lib/native/platform';
 import { SlackLogo } from '@/components/SlackLogo';
 import { TelegramLogo } from '@/components/TelegramLogo';
 import { WhatsAppLogo } from '@/components/WhatsAppLogo';
@@ -157,6 +158,7 @@ function channelVerified(channels: NotificationApiState['channels'], channel: Ch
 }
 
 export function PushNotificationSetup() {
+  const nativeShell = useIsNativeShell();
   const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_NOTIFICATION_PREFERENCES);
   const [support, setSupport] = useState<PushSupportStatus>({ supported: false, permission: 'unsupported', standalone: false });
   const [activePushCount, setActivePushCount] = useState(0);
@@ -424,7 +426,10 @@ export function PushNotificationSetup() {
               Permission: {permissionLabel}. Active devices: {activePushCount}.
             </p>
           </div>
-          <StatusPill on={support.standalone} label={support.standalone ? 'Home Screen' : 'Browser'} />
+          <StatusPill
+            on={support.standalone}
+            label={support.standalone ? 'Home Screen' : nativeShell ? 'Lyra app' : 'Browser'}
+          />
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -476,9 +481,14 @@ export function PushNotificationSetup() {
         {settingsLoaded && !pushConfigured && (
           <p className="text-[11px] leading-snug text-[#f3a33a]">VAPID keys are not configured in this environment.</p>
         )}
-        {!support.standalone && (
+        {!support.standalone && !nativeShell && (
           <p className="text-[11px] leading-snug text-[#6f7d8a]">
             On iPhone, open Lyra from the Home Screen before enabling push.
+          </p>
+        )}
+        {nativeShell && (
+          <p className="text-[11px] leading-snug text-[#6f7d8a]">
+            In-app push is coming to the Lyra app - Telegram, Slack, and WhatsApp alerts work today.
           </p>
         )}
       </section>

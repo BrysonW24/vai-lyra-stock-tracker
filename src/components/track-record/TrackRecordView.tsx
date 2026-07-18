@@ -7,6 +7,7 @@ import {
   formatPct,
   MIN_SAMPLE_FOR_CONFIDENCE,
 } from '@/lib/track-record';
+import { ShareButton } from '@/components/native/ShareButton';
 
 interface TrackRecordResponse extends TrackRecord {
   ok: boolean;
@@ -71,7 +72,14 @@ export function TrackRecordView() {
   return (
     <div className="space-y-4 pb-28 xl:pb-6">
       <header className="space-y-1">
-        <h1 className="text-[20px] font-semibold text-[#eef3f8]">Track Record</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-[20px] font-semibold text-[#eef3f8]">Track Record</h1>
+          <ShareButton
+            title="Lyra - measured signal track record"
+            text="How Lyra's signals have actually resolved - real labelled outcomes, not a backtest."
+            url="/track-record"
+          />
+        </div>
         <p className="max-w-2xl text-[13px] leading-relaxed text-[#9fb0c0]">
           How Lyra&apos;s signals have actually resolved, measured from real labelled outcomes - not a
           backtest, not an estimate. Win rate is the share of setups that beat round-trip friction at

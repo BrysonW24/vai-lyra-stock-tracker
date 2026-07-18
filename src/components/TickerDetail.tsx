@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { OutcomeHistoryPanel } from '@/components/tickers/OutcomeHistoryPanel';
 import { TickerInsightsPanel } from '@/components/tickers/TickerInsightsPanel';
 import { SaveButton } from '@/components/research/SaveButton';
+import { ShareButton } from '@/components/native/ShareButton';
 import { MetricHelp } from '@/components/education/MetricHelp';
 import { buildScoreBreakdown } from '@/lib/score-breakdown';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, formatSignedPercent, relativeTime, toneClass, trendArrow } from '@/lib/format';
@@ -62,6 +63,11 @@ export function TickerDetail({ signal, scoreHistory }: TickerDetailProps) {
                 {signal.lifecycleState.replaceAll('_', ' ')}
               </span>
               <SaveButton symbol={signal.symbol} label={signal.companyName} score={signal.score} price={signal.close} />
+              <ShareButton
+                title={`${signal.symbol} on Lyra`}
+                text={`${signal.symbol} (${signal.companyName}) - Lyra oversold-recovery signal, score ${signal.score}`}
+                url={`/tickers/${encodeURIComponent(signal.symbol)}`}
+              />
             </div>
             <p className="mt-1 text-sm text-[#8190a0]">{signal.companyName}</p>
           </div>

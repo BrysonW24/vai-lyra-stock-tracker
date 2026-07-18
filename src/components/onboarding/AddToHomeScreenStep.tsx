@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { Smartphone, Share, SquarePlus, BellRing, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { detectInstallPlatformFromBrowser } from '@/lib/install-platform';
+import { isNativeShell } from '@/lib/native/platform';
 
 /**
  * "Put Lyra on your Home Screen" - the final onboarding beat before the console. Functional,
@@ -60,6 +61,34 @@ const IOS_STEPS: Array<{ caption: React.ReactNode; src: string; width: number; h
 
 export function AddToHomeScreenStep({ onDone }: { onDone: () => void }) {
   const platform = detectInstallPlatformFromBrowser();
+
+  // Inside the native iOS shell there is nothing to install - teaching "Add to Home Screen"
+  // would be nonsense. Same beat count as every other journey (never a silent skip), with a
+  // confirmation standing in for the walkthrough. Direct isNativeShell() call is safe here:
+  // this component only mounts client-side, after user interaction (same idiom as the
+  // detectInstallPlatformFromBrowser call above).
+  if (isNativeShell()) {
+    return (
+      <div className="min-h-screen overflow-y-auto bg-[#07090c] text-[#eef3f8]">
+        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-5 py-10 text-center">
+          <span className="grid h-14 w-14 place-items-center rounded-2xl border border-[#1d7f55]/50 bg-[#0d251b] text-[#43d18b] shadow-[0_0_40px_-12px_rgba(67,209,139,0.55)]">
+            <CheckCircle2 size={26} />
+          </span>
+          <h1 className="mt-4 text-[22px] font-semibold tracking-tight">You&apos;re already in the Lyra app</h1>
+          <p className="mt-2 text-[13px] leading-relaxed text-[#a8b5c2]">
+            No install needed - Lyra is on this phone, one tap away, full screen.
+          </p>
+          <button
+            type="button"
+            onClick={onDone}
+            className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#1d7f55] bg-[#0d251b] px-4 py-3 text-[14px] font-semibold text-[#43d18b] transition hover:bg-[#103626]"
+          >
+            <SquarePlus size={16} /> Open my console <ArrowRight size={15} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Already running from the Home Screen: confirm it instead of teaching it - same beat count
   // as every other journey, with the payoff shot standing in for the walkthrough.

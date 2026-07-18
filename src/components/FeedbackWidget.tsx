@@ -97,7 +97,7 @@ export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidget
           type="button"
           onClick={() => setInternalOpen(true)}
           aria-label="Send feedback"
-          className="fixed bottom-20 right-3 z-40 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-[#dbe5ee] shadow-[0_12px_34px_-12px_rgba(0,0,0,0.85)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#f3a33a]/40 xl:bottom-4"
+          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] z-40 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-[#dbe5ee] shadow-[0_12px_34px_-12px_rgba(0,0,0,0.85)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#f3a33a]/40 xl:bottom-4"
         >
           <MessageSquarePlus size={15} className="text-[#f3a33a]" /> Feedback
         </button>
@@ -106,6 +106,7 @@ export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidget
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 backdrop-blur-sm sm:items-center"
+          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
           onClick={close}
         >
           <div
