@@ -19,7 +19,10 @@ const config: CapacitorConfig = {
     errorPath: 'index.html',
   },
   ios: {
-    contentInset: 'automatic',
+    // 'never', not 'automatic': the web layer owns safe areas via viewport-fit=cover +
+    // env(safe-area-inset-*) CSS (v0.70.0). Automatic insets would stack on top of the
+    // CSS pads and double-inset every safe-area-aware surface.
+    contentInset: 'never',
   },
 };
 
