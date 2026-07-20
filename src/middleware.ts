@@ -9,7 +9,19 @@ import { createServerClient } from '@supabase/ssr';
  * Public paths (auth screens, the auth API callbacks) are always allowed through so a
  * signed-out user can actually reach the login/sign-up flow.
  */
-const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/welcome', '/privacy'];
+/**
+ * Paths reachable without signing in.
+ *
+ * /support and /terms were added 2026-07-20. Their absence here was the real defect: the
+ * pages could have existed and still been unreachable, because middleware redirected every
+ * non-public path to /welcome. Externally that looked like a 307 to a 186KB page that was
+ * byte-identical to a nonsense path, so any status-code check reported "200, healthy".
+ *
+ * These three MUST stay public. App Store Connect requires a support URL and a privacy
+ * policy URL, and a reviewer opens both without an account. A legal page behind a login is
+ * the same as no legal page.
+ */
+const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/welcome', '/privacy', '/support', '/terms'];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.71.0',
+    date: '2026-07-20',
+    title: 'Support and Terms pages, reachable without signing in',
+    highlights: [
+      'Added a Support page with contact details, how to report a problem, common questions, and how to get your data deleted.',
+      'Added a Terms of Service page stating plainly that Lyra is research software, not financial advice, and is not connected to any brokerage.',
+      'Fixed the real defect behind both: /support and /terms were not in the middleware public list, so every visit was redirected to /welcome. A legal page behind a sign-in is the same as no legal page, and App Store Connect requires a working support URL.',
+    ],
+  },
+  {
     version: '0.70.2',
     date: '2026-07-18',
     title: 'Notch fix, without double-padding the ears',
