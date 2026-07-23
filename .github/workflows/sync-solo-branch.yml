@@ -1,0 +1,42 @@
+# Keep the `solo` branch in lockstep with main.
+#
+# Lyra Solo is not a fork of the product - it is the SAME code where the deployment env
+# decides the mode: the solo branch deploys as a Vercel preview with no Supabase env in
+# scope, so middleware runs the app open (no accounts), persistence lives in the
+# browser's local twins, and AI is BYOK-only (resolveAiCredentials refuses server keys
+# to unauthenticated callers). The moment solo trails main it starts accumulating the
+# exact class of drift a second codebase would have, so a machine keeps them equal.
+#
+# Fast-forward only: if this ever fails, someone committed directly to solo - that is
+# drift by definition. Do not merge it; move the change to main and let this catch it up.
+name: Sync solo branch
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-solo
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fast-forward solo to main
+        run: |
+          git push origin main:solo || {
+            echo "::error::solo has diverged from main - it must never carry its own commits."
+            echo "::error::Recover: move any solo-only commit onto main, then force solo back:"
+            echo "::error::  git push origin main:solo --force-with-lease"
+            exit 1
+          }
