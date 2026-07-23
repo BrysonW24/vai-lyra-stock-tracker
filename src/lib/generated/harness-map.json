@@ -474,6 +474,8 @@
         "src/app/smart-money/",
         "src/app/strategy-lab/",
         "src/app/supply-chain/",
+        "src/app/support/",
+        "src/app/terms/",
         "src/app/themes/",
         "src/app/tickers/",
         "src/app/trades/",
