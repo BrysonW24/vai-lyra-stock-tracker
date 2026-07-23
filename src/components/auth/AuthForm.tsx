@@ -87,9 +87,10 @@ export function AuthForm({ mode, initialError = null }: { mode: 'login' | 'signu
 
       {demo && (
         <p className="mb-3 rounded-md border border-[#9a6a1f]/40 bg-[#2a1f0f]/60 px-3 py-2 text-[11px] leading-snug text-[#f3a33a]">
-          Demo mode - this deployment has no Supabase configured, so there are no accounts to sign
-          {mode === 'signup' ? ' up for' : ' into'}. Continue straight into the demo console; add
-          the Supabase env vars (see .env.example) to turn real accounts on.
+          Solo mode - this Lyra runs without accounts, so there is nothing to sign
+          {mode === 'signup' ? ' up for' : ' into'}. Your watchlist, holdings, and trade log stay
+          in this browser. Continue straight in; self-hosters can add the Supabase env vars (see
+          .env.example) to turn real accounts on.
         </p>
       )}
 
@@ -164,7 +165,7 @@ export function AuthForm({ mode, initialError = null }: { mode: 'login' | 'signu
           disabled={loading}
           className="w-full rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.65)] transition hover:brightness-110 disabled:opacity-50"
         >
-          {loading ? 'Working…' : demo ? 'Continue in demo' : mode === 'signup' ? 'Create account' : 'Sign in'}
+          {loading ? 'Working…' : demo ? 'Continue without an account' : mode === 'signup' ? 'Create account' : 'Sign in'}
         </button>
       </form>
 

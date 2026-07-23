@@ -5,6 +5,9 @@ import { bumpAiUsage } from '@/lib/usage-store';
 import Link from 'next/link';
 import { X, Send, Loader2, Sparkles, ShieldCheck, KeyRound, SquarePen, ArrowUpRight, Star, Plus, Check, Undo2, RotateCcw } from 'lucide-react';
 import { loadAi, loadProfile, loadAgent, type AiSettings } from '@/lib/account';
+import { addLocalWatchItem, removeLocalWatchItem } from '@/lib/local-watchlist';
+import { addLocalHolding, removeLocalHolding } from '@/lib/local-portfolio';
+import { addLocalTradeLog, undoLocalTradeLog, LOCAL_TRADE_ID_PREFIX } from '@/lib/local-trades';
 import { containFocus, registerDialog } from '@/lib/focus-trap';
 import { loadOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadSavedPrompts, toggleSavedPrompt } from '@/lib/saved-prompts';
@@ -301,24 +304,48 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
             : { side: msg.action.side ?? 'buy', symbol, notional: msg.action.notional ?? 0, source: 'chat' };
       const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = (await res.json()) as { ok?: boolean; demo?: boolean; data?: { id?: string }; error?: string };
-      setMessages((m) =>
-        m.map((x, j) => {
-          if (j !== i) return x;
-          if (data.ok) return { ...x, actionStatus: 'done', undoId: data.data?.id };
-          // demo (Supabase not configured) OR signed-out (401) both resolve to "sign in to save".
-          if (data.demo || res.status === 401) return { ...x, actionStatus: 'demo' };
-          return { ...x, actionStatus: 'failed' };
-        }),
-      );
+      let outcome: Pick<ChatMessage, 'actionStatus' | 'undoId'>;
+      if (data.ok) {
+        outcome = { actionStatus: 'done', undoId: data.data?.id };
+      } else if (data.demo) {
+        // Solo/demo deployment - there is no server store AT ALL, so "sign in to save" would
+        // point at accounts that do not exist. Save to the browser-local twins instead; the
+        // local- undo ids route undoAction to the same stores.
+        if (type === 'add_watchlist') {
+          addLocalWatchItem({ symbol });
+          outcome = { actionStatus: 'done', undoId: `${LOCAL_TRADE_ID_PREFIX}${symbol}` };
+        } else if (type === 'add_portfolio') {
+          addLocalHolding({ symbol, quantity: msg.qty ?? 10, averageBuyPrice: msg.price ?? 0 });
+          outcome = { actionStatus: 'done', undoId: `${LOCAL_TRADE_ID_PREFIX}${symbol}` };
+        } else {
+          const log = await addLocalTradeLog({ side: msg.action.side ?? 'buy', symbol, notional: msg.action.notional ?? 0, source: 'chat' });
+          // null = no notional or no live quote - refusing beats logging a made-up fill.
+          outcome = log ? { actionStatus: 'done', undoId: log.id } : { actionStatus: 'failed' };
+        }
+      } else if (res.status === 401) {
+        // Configured deploy, signed out: accounts DO exist here, so "sign in to save" is right.
+        outcome = { actionStatus: 'demo' };
+      } else {
+        outcome = { actionStatus: 'failed' };
+      }
+      setMessages((m) => m.map((x, j) => (j === i ? { ...x, ...outcome } : x)));
     } catch {
       setMessages((m) => m.map((x, j) => (j === i ? { ...x, actionStatus: 'failed' } : x)));
     }
   };
 
-  /** Reversibility: undo the action via the matching soft-delete endpoint. */
+  /** Reversibility: undo the action via the matching soft-delete endpoint (or local store). */
   const undoAction = async (i: number) => {
     const msg = messages[i];
     if (!msg.action || !msg.undoId) return;
+    // Local- ids came from the browser-local twins (Solo/demo mode) - undo there directly.
+    if (msg.undoId.startsWith(LOCAL_TRADE_ID_PREFIX)) {
+      if (msg.action.type === 'add_watchlist') removeLocalWatchItem(msg.action.symbol);
+      else if (msg.action.type === 'add_portfolio') removeLocalHolding(msg.action.symbol);
+      else undoLocalTradeLog(msg.undoId);
+      setMessages((m) => m.map((x, j) => (j === i ? { ...x, actionStatus: 'undone' } : x)));
+      return;
+    }
     const endpoint = msg.action.type === 'add_watchlist' ? '/api/watchlist' : msg.action.type === 'add_portfolio' ? '/api/portfolio' : '/api/trades';
     setMessages((m) => m.map((x, j) => (j === i ? { ...x, actionStatus: 'running' } : x)));
     try {
@@ -515,7 +542,10 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                             <Check size={12} className="text-[#43d18b]" />
                             <span className="text-[11.5px] text-[#43d18b]">
                               {m.action.type === 'log_trade'
-                                ? `${m.action.symbol} trade logged. Cash and holdings updated.`
+                                ? m.undoId?.startsWith(LOCAL_TRADE_ID_PREFIX)
+                                  ? // Local rows track holdings but not a cash balance - do not claim cash moved.
+                                    `${m.action.symbol} trade logged on this device. Holdings updated.`
+                                  : `${m.action.symbol} trade logged. Cash and holdings updated.`
                                 : `${m.action.symbol} added to your ${m.action.type === 'add_watchlist' ? 'watchlist' : 'portfolio'}.`}
                             </span>
                             {m.undoId && (

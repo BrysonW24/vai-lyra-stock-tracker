@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { searchUniverse } from '@/lib/universe';
+import { addLocalWatchItem } from '@/lib/local-watchlist';
 import { TickerLogo } from '@/components/TickerLogo';
 
 export function AddWatchRuleForm() {
@@ -60,18 +61,32 @@ export function AddWatchRuleForm() {
         error?: string;
       };
 
-      if (!result.ok) {
+      // Solo/demo deployments (no Supabase) answer {ok:false, demo:true}. That is not an
+      // error - it means "no server to save to", so the item goes to the browser's local
+      // watchlist instead of being silently dropped (the onboarding flow already did this;
+      // this form was the surface that forgot - items entered here evaporated).
+      if (!result.ok && result.demo) {
+        addLocalWatchItem({
+          symbol: formData.symbol,
+          targetBuyPrice: Number(formData.targetPrice) || undefined,
+          notes: formData.notes || undefined,
+        });
+        setStatus({
+          type: 'success',
+          message: `Watching ${formData.symbol} - saved on this device`,
+        });
+      } else if (!result.ok) {
         setStatus({
           type: 'error',
           message: result.error || 'Failed to add watch rule',
         });
         return;
+      } else {
+        setStatus({
+          type: 'success',
+          message: `Watching ${formData.symbol}`,
+        });
       }
-
-      setStatus({
-        type: 'success',
-        message: `Watching ${formData.symbol}`,
-      });
 
       // Reset form
       setFormData({

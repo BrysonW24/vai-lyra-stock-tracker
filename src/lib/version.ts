@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.72.0',
+    date: '2026-07-20',
+    title: 'Lyra Solo - the no-account, bring-your-own-key mode is now first-class',
+    highlights: [
+      'Solo deployments (no Supabase configured) no longer lose your work: the add-watch-rule form and quick actions save to a browser-local watchlist, and a new "Your watch rules - on this device" panel on the Watchlist page shows them back to you.',
+      'Trades you log in chat now persist on this device in Solo mode, with real fill prices from the live quote lookup, holdings that actually move, and undo that unwinds in reverse order per symbol - exactly the server contract, browser-local. The Trade Log page reads and undoes the same store.',
+      'Refusals are honest: a trade with no live quote or no amount is refused rather than logged with a made-up price.',
+      'Copy now tells the truth about where you are: Solo mode says "no accounts here, your data stays in this browser" instead of asking you to sign in to accounts that do not exist, and the AI settings say plainly that Solo has no hosted key - bring your own to turn AI on.',
+      'The welcome page states the Solo promise up front: no account, no cloud, AI on your own key.',
+    ],
+  },
+  {
     version: '0.71.0',
     date: '2026-07-20',
     title: 'Support and Terms pages, reachable without signing in',

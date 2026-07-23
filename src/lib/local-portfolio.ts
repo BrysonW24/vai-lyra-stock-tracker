@@ -76,3 +76,9 @@ export function addLocalHolding(holding: LocalHolding): void {
   next.push({ ...holding, symbol });
   persist(next);
 }
+
+/** Remove a single holding by symbol (local undo path). */
+export function removeLocalHolding(symbol: string): void {
+  const upper = String(symbol).toUpperCase().trim();
+  persist(loadLocalHoldings().filter((h) => h.symbol !== upper));
+}

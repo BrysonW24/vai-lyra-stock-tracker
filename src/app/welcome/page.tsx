@@ -129,6 +129,12 @@ export default function WelcomePage() {
             <p className="mt-4 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
               <ShieldCheck size={12} /> Research only - not financial advice. {BRAND_NAME} never trades for you.
             </p>
+            {!supabaseConfigured && (
+              // Solo deployment: say the quiet part out loud - it is the whole point of this build.
+              <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
+                <ShieldCheck size={12} /> Solo build - no account, no cloud. Everything you save stays in this browser, and AI runs on your own key.
+              </p>
+            )}
           </div>
 
           {/* Glass-perspective brand hero - matches the Vivacity.ai brand-image style */}

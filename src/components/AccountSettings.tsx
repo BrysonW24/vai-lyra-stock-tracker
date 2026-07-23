@@ -503,7 +503,12 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
 
               <p className="text-[9.5px] leading-snug text-[#6f7d8a]">
                 {PROVIDER_META[ai.provider].group === 'hosted'
-                  ? `Hosted beta uses Lyra's server-side OpenAI key when available. Add your own key here only if you want to override it; browser keys are never stored on Lyra's servers.`
+                  ? isSupabaseConfigured()
+                    ? `Hosted beta uses Lyra's server-side OpenAI key when available. Add your own key here only if you want to override it; browser keys are never stored on Lyra's servers.`
+                    : // Solo deployments hold no server keys and have no signed-in users, so the
+                      // hosted fallback can never activate - without this branch the copy promises
+                      // a key that will never arrive.
+                      `Solo mode has no hosted key - paste your own OpenAI key to turn AI on. It stays in this browser, only ever sent to the provider.`
                   : PROVIDER_META[ai.provider].group === 'free'
                     ? `Free open model - grab a free key from ${PROVIDER_META[ai.provider].keyHost} (no card needed). It stays in this browser, only ever sent to the provider.`
                     : `Your key stays in this browser and is only used for ${PROVIDER_META[ai.provider].label} requests - never committed or stored by Lyra.`}

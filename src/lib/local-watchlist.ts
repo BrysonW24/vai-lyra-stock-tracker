@@ -39,6 +39,20 @@ export function loadLocalWatchlist(): LocalWatchItem[] {
   }
 }
 
+/** Add or replace a single item by symbol (used by the watch-rule form, chat, and quick actions). */
+export function addLocalWatchItem(item: LocalWatchItem): void {
+  const symbol = String(item.symbol).toUpperCase().trim();
+  if (!symbol) return;
+  const rest = loadLocalWatchlist().filter((w) => w.symbol !== symbol);
+  saveLocalWatchlist([...rest, { ...item, symbol }]);
+}
+
+/** Remove a single item by symbol (local undo path). */
+export function removeLocalWatchItem(symbol: string): void {
+  const upper = String(symbol).toUpperCase().trim();
+  saveLocalWatchlist(loadLocalWatchlist().filter((w) => w.symbol !== upper));
+}
+
 /** Replace the whole local watchlist (used by onboarding finish). Deduped by symbol. */
 export function saveLocalWatchlist(items: LocalWatchItem[]): void {
   if (typeof window === 'undefined') return;

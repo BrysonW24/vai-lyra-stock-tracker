@@ -3,6 +3,7 @@ import { ArrowUpRight, BellPlus } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { StatusBadge } from '@/components/StatusBadge';
 import { AddWatchRuleForm } from '@/components/watchlist/AddWatchRuleForm';
+import { LocalWatchRules } from '@/components/watchlist/LocalWatchRules';
 import { TickerLogo } from '@/components/TickerLogo';
 import { getDashboardData } from '@/lib/data';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass } from '@/lib/format';
@@ -134,6 +135,10 @@ export default async function WatchlistPage() {
                 <AddWatchRuleForm />
               </div>
             </section>
+
+            {/* Solo/demo only (renders null when Supabase is configured): the browser-local
+                rules the form above saves - without this the demo-mode save was invisible. */}
+            <LocalWatchRules />
 
             {/* xl-only: on mobile this re-listed the ENTIRE watchlist directly under the
                 card list - the user scrolled every name twice. The cards already carry

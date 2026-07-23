@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Zap, Check, Loader2, Undo2, ArrowUpRight, AlertTriangle, TrendingUp, Plus, RotateCcw } from 'lucide-react';
 import { loadOnboardingSummary } from '@/lib/onboarding-summary';
+import { addLocalWatchItem, removeLocalWatchItem } from '@/lib/local-watchlist';
 import { computeNextBestActions, type NextAction, type NbaProfile, type NbaSignal, type NbaHolding, type NbaWatch } from '@/lib/next-best-actions';
 
 interface Props {
@@ -49,8 +50,14 @@ export function NextBestActions({ signals, portfolio, watchlist }: Props) {
       if (d.ok) {
         setActed((x) => ({ ...x, [a.id]: 'done' }));
         if (d.data?.id) setUndoIds((u) => ({ ...u, [a.id]: d.data!.id as string }));
-      } else if (d.demo || res.status === 401) {
-        // demo (Supabase not configured) OR signed-out both resolve to "sign in to save".
+      } else if (d.demo) {
+        // Solo/demo deployment - no server store exists, so save to the browser-local
+        // watchlist instead of pointing at accounts that cannot be created here.
+        addLocalWatchItem({ symbol: a.symbol });
+        setActed((x) => ({ ...x, [a.id]: 'done' }));
+        setUndoIds((u) => ({ ...u, [a.id]: `local-${a.symbol}` }));
+      } else if (res.status === 401) {
+        // Configured deploy, signed out: accounts exist, "sign in to save" is right.
         setActed((x) => ({ ...x, [a.id]: 'demo' }));
       } else {
         setActed((x) => ({ ...x, [a.id]: 'failed' }));
@@ -63,6 +70,12 @@ export function NextBestActions({ signals, portfolio, watchlist }: Props) {
   async function undo(a: NextAction) {
     const id = undoIds[a.id];
     if (!id) return;
+    // Local- ids were saved to the browser-local watchlist (Solo/demo) - undo there.
+    if (id.startsWith('local-') && a.symbol) {
+      removeLocalWatchItem(a.symbol);
+      setActed((x) => ({ ...x, [a.id]: 'undone' }));
+      return;
+    }
     setActed((x) => ({ ...x, [a.id]: 'running' }));
     try {
       await fetch('/api/watchlist', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) });

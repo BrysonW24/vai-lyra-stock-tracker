@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { formatCurrency } from '@/lib/format';
+import {
+  loadLocalTradeLogs,
+  undoLocalTradeLog,
+  LOCAL_TRADE_ID_PREFIX,
+  TRADES_CHANGED_EVENT,
+} from '@/lib/local-trades';
 
 interface TradeLog {
   id: string;
@@ -35,8 +41,10 @@ export function TradeLogView() {
       const res = await fetch('/api/trades');
       const data = await res.json();
       if (data.demo) {
+        // Solo/demo deployment - the log lives in this browser (local-trades.ts), so read
+        // it back instead of rendering a dead-end banner over an empty table.
         setDemo(true);
-        setLogs([]);
+        setLogs(loadLocalTradeLogs());
         return;
       }
       if (!res.ok || !data.ok) {
@@ -53,6 +61,9 @@ export function TradeLogView() {
 
   useEffect(() => {
     load();
+    // Chat logs trades into the same local store - re-read when it changes.
+    window.addEventListener(TRADES_CHANGED_EVENT, load);
+    return () => window.removeEventListener(TRADES_CHANGED_EVENT, load);
   }, [load]);
 
   const undo = useCallback(
@@ -60,6 +71,13 @@ export function TradeLogView() {
       setBusyId(id);
       setError(null);
       try {
+        // Local rows undo locally - there is no server row to soft-delete.
+        if (id.startsWith(LOCAL_TRADE_ID_PREFIX)) {
+          const result = undoLocalTradeLog(id);
+          if (!result.ok) setError(result.error || 'Undo failed.');
+          setLogs(loadLocalTradeLogs());
+          return;
+        }
         const res = await fetch('/api/trades', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
@@ -89,11 +107,11 @@ export function TradeLogView() {
 
       {demo && (
         <div className="rounded border border-amber-400/30 bg-amber-400/10 px-2.5 py-1.5 text-[11px] text-amber-200">
-          Demo mode - sign in with a live workspace to log and review real trades.
+          Solo mode - trades you log stay on this device. No account, nothing leaves this browser.
         </div>
       )}
 
-      {!demo && logs.length === 0 && (
+      {logs.length === 0 && (
         <p className="text-[11px] text-white/40">
           No trades logged yet. Tell Lyra in chat, e.g. &ldquo;I bought $5,000 of NVDA&rdquo;, and it appears here with an undo.
         </p>
