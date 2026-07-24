@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.73.0',
+    date: '2026-07-24',
+    title: 'Solo first-run, install and BYOK grounding now tell one consistent truth',
+    highlights: [
+      'Solo now has one clear front door: Enter my console, no sign-in action, an explicit SOLO status in the app, and account-free Home Screen instructions.',
+      'Installability is fixed for first-time visitors: the web manifest and service worker bypass the onboarding gate and return as real PWA assets instead of redirecting to the welcome page.',
+      'Bring-your-own-key chat now receives a validated, transient snapshot of the holdings, watchlist and operating context stored on this device, so sample portfolio data can no longer impersonate the Solo user. Anonymous questions are excluded from raw question-signal capture; AI audit metadata remains hash-only.',
+      'Solo portfolio and trade-log behavior is truthful at the edges: an empty local book stays empty instead of restoring sample holdings, and fractional shares are displayed instead of rounding a real position down to zero.',
+    ],
+  },
+  {
     version: '0.72.0',
     date: '2026-07-20',
     title: 'Lyra Solo - the no-account, bring-your-own-key mode is now first-class',
