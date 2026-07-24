@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { ArrowRight, BellRing, Gauge, Newspaper, ShieldCheck, Wallet } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { VersionBadge } from '@/components/VersionBadge';
@@ -12,6 +13,7 @@ import { ExchangeStrip } from '@/components/ExchangeStrip';
 import { UltimateGoals } from '@/components/landing/UltimateGoals';
 import { StackSection } from '@/components/landing/StackSection';
 import { BRAND_NAME } from '@/lib/brand';
+import { getWelcomeEntry } from '@/lib/welcome-entry';
 
 export const metadata: Metadata = {
   // absolute: the landing page opts out of the root "%s · Lyra" template (no double brand).
@@ -22,15 +24,14 @@ export const metadata: Metadata = {
 // Light premium "Vivacity.ai" brand surface - the calm front door before the dark command
 // centre. See onboarding-aesthetic-prompt.md. Palette grounded in the classic Vivacity mark:
 // cream #F7F6F2 · navy #0E1E3A · electric blue #1E63FF · icy cyan #5BC8FF.
-export default function WelcomePage() {
+export default async function WelcomePage() {
   // When Supabase auth is configured, account creation is the start of setup (sign up -> confirm ->
   // onboard), and middleware gates /onboarding behind a signed-in user. In demo mode there's no auth,
   // so the CTA goes straight to onboarding (which the demo middleware allows). Picking the right
   // target here is what makes "Set up my console" actually work instead of bouncing to /welcome.
   const supabaseConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  const setupHref = supabaseConfigured ? '/auth/signup' : '/onboarding';
-  // With auth on, the entry action is creating an account (console setup is the post-login step).
-  const setupLabel = supabaseConfigured ? 'Create account' : 'Enter my console';
+  const soloOnboarded = !supabaseConfigured && (await cookies()).get('lyra_onboarded')?.value === '1';
+  const { href: setupHref, label: setupLabel } = getWelcomeEntry(supabaseConfigured, soloOnboarded);
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#F7F6F2] text-[#0E1E3A]">
       {/* Ambient brand glow + light geometric texture - premium, never busy */}

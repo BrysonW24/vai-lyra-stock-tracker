@@ -132,6 +132,11 @@ export const loadAi = (): AiSettings => {
 };
 export const saveAi = (value: AiSettings) => save(KEYS.ai, value);
 
+/** Return the same AI configuration with its browser-held credential removed. */
+export function withoutAiKey(value: AiSettings): AiSettings {
+  return { ...value, apiKey: '' };
+}
+
 export const loadLock = () => load<LockSettings>(KEYS.lock, DEFAULT_LOCK);
 export const saveLock = (value: LockSettings) => save(KEYS.lock, value);
 

@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.73.1] - 2026-07-24
+
+Solo BYOK credentials can be removed without wiping the console.
+
+### Changed
+
+- AI Settings now has a dedicated Remove key action whenever a browser-held provider key exists, so a Solo user can revoke that credential without deleting their watchlist, portfolio, trade log or other device settings.
+- Returning Solo users who revisit the welcome page now see Open my console and go straight to their existing console instead of accidentally restarting the first-run setup.
+
 ## [0.73.0] - 2026-07-24
 
 Solo first-run, install and BYOK grounding now tell one consistent truth.
@@ -1092,7 +1101,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.1...HEAD
+[0.73.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.0...v0.73.1
 [0.73.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.72.0...v0.73.0
 [0.72.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.71.0...v0.72.0
 [0.71.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.70.2...v0.71.0

@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.73.1',
+    date: '2026-07-24',
+    title: 'Solo BYOK credentials can be removed without wiping the console',
+    highlights: [
+      'AI Settings now has a dedicated Remove key action whenever a browser-held provider key exists, so a Solo user can revoke that credential without deleting their watchlist, portfolio, trade log or other device settings.',
+      'Returning Solo users who revisit the welcome page now see Open my console and go straight to their existing console instead of accidentally restarting the first-run setup.',
+    ],
+  },
+  {
     version: '0.73.0',
     date: '2026-07-24',
     title: 'Solo first-run, install and BYOK grounding now tell one consistent truth',

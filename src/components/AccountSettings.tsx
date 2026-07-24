@@ -21,6 +21,7 @@ import {
   saveAgent,
   saveLock,
   saveProfile,
+  withoutAiKey,
 } from '@/lib/account';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { syncAccountProfile } from '@/lib/sync-onboarding';
@@ -497,6 +498,15 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                   >
                     <ClipboardPaste size={13} /> Paste
                   </button>
+                  {ai.apiKey && (
+                    <button
+                      type="button"
+                      onClick={() => commitAi(withoutAiKey(ai))}
+                      className="inline-flex shrink-0 items-center gap-1 rounded border border-[#ff6b6b]/35 bg-[#251113] px-2.5 text-[11px] font-semibold text-[#ff8c8c] transition hover:bg-[#331619]"
+                    >
+                      <Trash2 size={13} /> Remove key
+                    </button>
+                  )}
                 </div>
               </div>
 
