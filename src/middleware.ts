@@ -21,7 +21,9 @@ import { createServerClient } from '@supabase/ssr';
  * policy URL, and a reviewer opens both without an account. A legal page behind a login is
  * the same as no legal page.
  */
-const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/welcome', '/privacy', '/support', '/terms'];
+// /whats-new is public on purpose: the changelog and the no-account community Ideas board
+// live there - walling them behind sign-in would contradict "post and vote without an account".
+const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/welcome', '/privacy', '/support', '/terms', '/whats-new'];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

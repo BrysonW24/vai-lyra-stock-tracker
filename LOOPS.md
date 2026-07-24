@@ -17,7 +17,7 @@ Companions: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (structure - what exists),
 | 2 | Outcome learning | nightly 22:05 UTC | `signal_outcomes`, `component_efficacy` | track record, `/signal-quality` retune | efficacy saturation ERROR |
 | 3 | Digest + reviews | nightly / period-end | notification events | you, on your phone | worker tests |
 | 4 | Notification delivery | every event + nightly sweep | `notification_deliveries`, `notification_engagements` | sweep, relevance tuning | `/notification-health` chain |
-| 5 | Scout (notice-create-learn) | nightly 22:05 UTC | `scout_items`, `scout_runs`, ideas, source scores, stoplist | ideas board, next night's clustering | zero-writes guards, saturation flags |
+| 5 | Scout (notice-create-learn) | nightly 22:05 UTC | `scout_items`, `scout_runs`, ideas, source scores, stoplist | Scout-tab proposals, next night's clustering | zero-writes guards, saturation flags |
 | 6 | Macro + calendar | hourly snap + seasonal crons | `market_context_snapshots`, calendar events | dashboard strips, loop 3 baselines | RBA no-number degradation |
 | 7 | Horizon-2 workers | nightly 22:05 UTC | events, IPOs, fundamentals, news, hype | calendar, radar, detail pages | worker-failures reporter |
 | 8 | AI copilot | user chat | `chat_turns`, `ai_runs` | twin memory, gap-miner, `/ai-ops` | budgets, injection fence, `/ai-quality` |
@@ -202,7 +202,8 @@ NOTICE (every night)
   v
   14-day unmapped window (5,000 cap, saturation-loud)
   -> cluster: >=3 items from >=2 sources, stoplist-aware  cluster.py
-  -> ideas board cards (dedupe_key upsert) + drumbeats
+  -> scout proposal cards (community_ideas origin='scout', dedupe_key upsert,
+     shown on the Scout tab - never the Ideas tab) + drumbeats
      ("2/3 items - needs one more source")
   -> scout_runs ledger row (feeds the Scout tab)
   |

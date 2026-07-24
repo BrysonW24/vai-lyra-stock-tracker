@@ -10,8 +10,11 @@ with `/feedback-loop` (board UI + `src/app/api/community/`, including the ground
 route `src/app/api/community/ideas/brief/`).
 
 Doctrine: **the scout notices, humans decide.** The scout only files evidence-linked
-cards (origin='scout') on the community ideas board - it NEVER mutates the vertical map,
-and 'accepted' status transitions are maintainer-only (RLS-enforced, migration 043).
+cards (origin='scout') into the community_ideas table - surfaced as "Scout proposals"
+on the SCOUT tab, never on the Ideas tab (the Ideas tab is purely human feature
+requests; external signals stay on Scout - see ScoutProposals.tsx). It NEVER mutates
+the vertical map, and 'accepted' status transitions are maintainer-only
+(RLS-enforced, migration 043).
 Confidence is breadth math (items x sources), never a model opinion.
 
 ## What already exists (build WITH it)

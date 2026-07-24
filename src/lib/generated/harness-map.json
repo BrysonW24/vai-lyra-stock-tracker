@@ -210,6 +210,7 @@
         "src/lib/install-platform.ts",
         "src/lib/local-watchlist.ts",
         "src/lib/local-portfolio.ts",
+        "src/lib/local-trades.ts",
         "src/lib/activation/"
       ],
       "chains": [
@@ -362,11 +363,11 @@
       ]
     },
     {
-      "section": "Scout feed surface (what the scout saw)",
+      "section": "Scout feed surface (what the scout saw + its proposal cards)",
       "paths": [
         "src/app/api/scout/",
         "src/components/community/ScoutFeed.tsx",
-        "src/components/community/ScoutBridge.tsx"
+        "src/components/community/ScoutProposals.tsx"
       ],
       "chains": [
         "scout-intel"
@@ -404,9 +405,12 @@
       ]
     },
     {
-      "section": "Feedback intake",
+      "section": "Feedback intake + community board",
       "paths": [
         "src/lib/feedback.ts",
+        "src/lib/community.ts",
+        "src/lib/community-contract.ts",
+        "src/lib/community-key.ts",
         "src/app/api/feedback/",
         "src/app/api/community/"
       ],

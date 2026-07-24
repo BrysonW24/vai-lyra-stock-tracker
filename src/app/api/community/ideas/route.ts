@@ -1,17 +1,29 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { rateLimitShared } from '@/lib/ratelimit';
 import { clientIp } from '@/lib/api/ai-guard';
+import { corsJson, corsPreflight } from '@/lib/api/cors';
+import { readJsonCapped } from '@/lib/api/body';
+import { IDEA_DESCRIPTION_MAX, IDEA_TITLE_MAX, IDEA_TITLE_MIN } from '@/lib/community-contract';
+import { verifyCommunityKey } from '@/lib/community-key';
 
 /**
- * Community Ideas board API.
- *   GET  - list every idea, most-voted first, with the current user's "voted" state.
- *   POST - submit a new idea (signed-in only, rate-limited).
+ * Community Ideas board API - the ONE global board every Lyra surface shares.
+ *   GET  - list ideas, most-voted first. `?origin=human` (default) is the community board:
+ *          what people want built inside Lyra. `?origin=scout` is the AI scout's proposal
+ *          list, surfaced on the Scout tab - external build signals NEVER mix into the
+ *          community list. `?vk=<device key>` resolves the anonymous caller's voted state.
+ *   POST - submit a community idea. Signed-in users post as themselves; everyone else posts
+ *          anonymously with a device key (service-role write; RLS stays strict). Rate-limited.
  *
- * Degrades on purpose: with no Supabase configured (demo) it serves a few sample ideas so the
- * board still renders; if migration 038 has not been applied yet it returns an empty board with
- * `pendingMigration: true` rather than a 500. Author identity is never returned - only the
- * date/title/description/votes the board shows.
+ * CORS is deliberately open (see lib/api/cors.ts): Lyra Solo has no Supabase of its own and
+ * joins this board cross-origin as an anonymous caller.
+ *
+ * Degrades on purpose: with no Supabase configured it serves the two standing example ideas
+ * so the board still renders; if a migration has not been applied it returns an empty board
+ * with `pendingMigration: true` (or all-human rows pre-043) rather than a 500. Author
+ * identity is never returned - only the date/title/description/votes the board shows.
  */
 
 export interface IdeaEvidence {
@@ -29,7 +41,7 @@ export interface CommunityIdea {
   voteCount: number;
   createdAt: string;
   voted: boolean;
-  /** 'human' (default) or 'scout' - the AI scout files onto the same board. */
+  /** 'human' (default) or 'scout' - the AI scout files onto the same table, different surface. */
   origin: string;
   /** feature | vertical | content-gap | frontend | backend. */
   kind: string;
@@ -39,9 +51,28 @@ export interface CommunityIdea {
   confidence: number | null;
 }
 
-/** Sample ideas shown only in demo mode (no Supabase) so the board demonstrates its shape. */
+/**
+ * Served only when no Supabase is configured. Mirrors the migration-053 seeds - the two
+ * standing "things we may never build" examples - so an unconfigured board demonstrates
+ * exactly what the real one opens with.
+ */
 const DEMO_IDEAS: CommunityIdea[] = [
-  { id: 'demo-1', title: 'Price-target alerts per holding', description: 'Let me set a target price on each position and get pinged when it is hit.', status: 'open', voteCount: 12, createdAt: '2026-07-10T00:00:00.000Z', voted: false, origin: 'human', kind: 'feature', evidence: [], confidence: null },
+  {
+    id: 'a0000000-0000-4000-8000-000000000002',
+    title: 'Lyra rings your phone like an old-school broker',
+    description: 'Example idea - probably never, but who knows: when a strong setup fires, Lyra calls you and talks through the score in plain English. This is the kind of thing to post here - what do you want Lyra to do?',
+    status: 'open', voteCount: 9, createdAt: '2026-07-15T00:00:00.000Z', voted: false, origin: 'human', kind: 'feature', evidence: [], confidence: null,
+  },
+  {
+    id: 'a0000000-0000-4000-8000-000000000001',
+    title: 'Let Lyra place the trades for me',
+    description: 'Example idea - and one we may never build: Lyra is research-only by design, it never touches your broker. Posted here to show how the board works: add what you want built, vote on what you agree with.',
+    status: 'declined', voteCount: 4, createdAt: '2026-07-10T00:00:00.000Z', voted: false, origin: 'human', kind: 'feature', evidence: [], confidence: null,
+  },
+];
+
+/** Demo scout proposal (unconfigured deployments only) so the Scout tab demonstrates its shape. */
+const DEMO_SCOUT_IDEAS: CommunityIdea[] = [
   {
     id: 'demo-scout-1',
     title: 'Emerging signal: Commercial Fusion',
@@ -53,8 +84,6 @@ const DEMO_IDEAS: CommunityIdea[] = [
       { title: 'Second fusion startup signs utility power purchase agreement', url: 'https://example.com/fusion-ppa', sourceId: 'rss-spacenews' },
     ],
   },
-  { id: 'demo-2', title: 'A lighter daytime theme', description: 'A high-contrast light theme for using Lyra at a bright desk.', status: 'planned', voteCount: 7, createdAt: '2026-07-12T00:00:00.000Z', voted: false, origin: 'human', kind: 'feature', evidence: [], confidence: null },
-  { id: 'demo-3', title: 'Export my watchlist to CSV', description: 'One tap to export the watchlist with each name and its current score.', status: 'open', voteCount: 4, createdAt: '2026-07-14T00:00:00.000Z', voted: false, origin: 'human', kind: 'feature', evidence: [], confidence: null },
 ];
 
 function isMissingTable(error: { code?: string; message?: string } | null): boolean {
@@ -62,29 +91,51 @@ function isMissingTable(error: { code?: string; message?: string } | null): bool
   return error.code === '42P01' || /does not exist/i.test(error.message || '');
 }
 
-export async function GET() {
+function isMissingColumn(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  return error.code === '42703' || /column .* does not exist/i.test(error.message || '');
+}
+
+/** Header-level half of the two-layer size gate; the text-level half is readJsonCapped. */
+const MAX_BODY_BYTES = 16_384;
+function bodyTooLarge(request: NextRequest): boolean {
+  return Number(request.headers.get('content-length') || 0) > MAX_BODY_BYTES;
+}
+
+export function OPTIONS() {
+  return corsPreflight();
+}
+
+export async function GET(request: NextRequest) {
+  const originFilter = request.nextUrl.searchParams.get('origin') === 'scout' ? 'scout' : 'human';
+
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
-    return NextResponse.json({ ok: true, demo: true, signedIn: false, ideas: DEMO_IDEAS });
+    return corsJson({ ok: true, demo: true, signedIn: false, ideas: originFilter === 'scout' ? DEMO_SCOUT_IDEAS : DEMO_IDEAS });
   }
 
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
 
   // Scout columns arrive with migration 043 - fall back to the 038 shape when the
-  // columns are missing so the board never 400s on an unapplied migration.
+  // columns are missing so the board never 400s on an unapplied migration. Pre-043
+  // every row is human, so a scout listing is just empty there.
   let scoutColumns = true;
   const first = await supabase
     .from('community_ideas')
     .select('id, title, description, status, vote_count, created_at, origin, kind, evidence, confidence')
+    .eq('origin', originFilter)
     .order('vote_count', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(200);
 
   let data: Record<string, unknown>[] | null = first.data;
   let error = first.error;
-  if (error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''))) {
+  if (error && isMissingColumn(error)) {
     scoutColumns = false;
+    if (originFilter === 'scout') {
+      return corsJson({ ok: true, signedIn: Boolean(user), ideas: [] });
+    }
     const second = await supabase
       .from('community_ideas')
       .select('id, title, description, status, vote_count, created_at')
@@ -98,9 +149,9 @@ export async function GET() {
   if (error) {
     if (isMissingTable(error)) {
       // Migration 038 not applied yet - render the board empty instead of failing.
-      return NextResponse.json({ ok: true, pendingMigration: true, signedIn: Boolean(user), ideas: [] });
+      return corsJson({ ok: true, pendingMigration: true, signedIn: Boolean(user), ideas: [] });
     }
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    return corsJson({ ok: false, error: error.message }, { status: 400 });
   }
 
   // Maintainer flag drives the status controls in the UI; RLS is the real authority.
@@ -111,9 +162,20 @@ export async function GET() {
   }
 
   let votedIds = new Set<string>();
-  if (user && data && data.length) {
-    const { data: votes } = await supabase.from('community_idea_votes').select('idea_id').eq('user_id', user.id);
-    votedIds = new Set((votes || []).map((v) => v.idea_id as string));
+  if (data && data.length) {
+    if (user) {
+      const { data: votes } = await supabase.from('community_idea_votes').select('idea_id').eq('user_id', user.id);
+      votedIds = new Set((votes || []).map((v) => v.idea_id as string));
+    } else {
+      // Anonymous voted-state comes from the signed participant key. Service-role read (RLS
+      // has no anon-vote policy on purpose); tolerate the column missing until 053 is applied.
+      const voterId = verifyCommunityKey(request.nextUrl.searchParams.get('vk'));
+      const admin = voterId ? createSupabaseAdminClient() : null;
+      if (admin && voterId) {
+        const { data: votes, error: voteErr } = await admin.from('community_idea_votes').select('idea_id').eq('voter_key', voterId);
+        if (!voteErr) votedIds = new Set((votes || []).map((v) => v.idea_id as string));
+      }
+    }
   }
 
   const ideas: CommunityIdea[] = (data || []).map((row) => ({
@@ -130,52 +192,81 @@ export async function GET() {
     confidence: scoutColumns && typeof row.confidence === 'number' ? row.confidence : null,
   }));
 
-  return NextResponse.json({ ok: true, signedIn: Boolean(user), maintainer, ideas });
+  return corsJson({ ok: true, signedIn: Boolean(user), maintainer, ideas });
 }
 
 export async function POST(request: NextRequest) {
-  // Each submission can spam the board - dampen drive-by posting.
-  const rl = await rateLimitShared(`ip:${clientIp(request)}`, { scope: 'community_idea', capacity: 5, windowMs: 60_000 });
-  if (!rl.allowed) {
-    return NextResponse.json({ ok: false, error: 'Too many submissions - wait a minute and try again.' }, { status: 429 });
+  if (bodyTooLarge(request)) {
+    return corsJson({ ok: false, error: 'Request too large.' }, { status: 413 });
   }
+
+  // Each submission can spam the board - dampen drive-by posting (burst + daily budget).
+  const ip = clientIp(request);
+  const rl = await rateLimitShared(`ip:${ip}`, { scope: 'community_idea', capacity: 5, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return corsJson({ ok: false, error: 'Too many submissions - wait a minute and try again.' }, { status: 429 });
+  }
+  const daily = await rateLimitShared(`ip:${ip}`, { scope: 'community_idea_day', capacity: 20, windowMs: 86_400_000 });
+  if (!daily.allowed) {
+    return corsJson({ ok: false, error: 'Daily submission limit reached - come back tomorrow.' }, { status: 429 });
+  }
+
+  // Parse (under the size cap) before any backend branch: the text-level half of the size
+  // gate must run even when Content-Length was absent (chunked transfer).
+  const parsed = await readJsonCapped<{ title?: string; description?: string; vk?: string }>(request, MAX_BODY_BYTES);
+  if (parsed.tooLarge) return corsJson({ ok: false, error: 'Request too large.' }, { status: 413 });
+  if (parsed.invalid || !parsed.body) return corsJson({ ok: false, error: 'Invalid request.' }, { status: 400 });
+  const body = parsed.body;
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
-    return NextResponse.json({ ok: false, demo: true, error: 'Sign in to post an idea (not available in the demo).' }, { status: 200 });
-  }
-
-  const { data: userData } = await supabase.auth.getUser();
-  const user = userData.user;
-  if (!user) return NextResponse.json({ ok: false, error: 'Sign in to post an idea.' }, { status: 401 });
-
-  let body: { title?: string; description?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Invalid request.' }, { status: 400 });
+    return corsJson({ ok: false, demo: true, error: 'This deployment has no board of its own - ideas post to the shared board.' }, { status: 200 });
   }
 
   const title = (body.title ?? '').trim();
   const description = (body.description ?? '').trim();
-  if (title.length < 3) return NextResponse.json({ ok: false, error: 'Give your idea a short title (at least 3 characters).' }, { status: 400 });
-  if (title.length > 120) return NextResponse.json({ ok: false, error: 'Title is too long (max 120 characters).' }, { status: 400 });
-  if (description.length > 2000) return NextResponse.json({ ok: false, error: 'Description is too long (max 2000 characters).' }, { status: 400 });
+  if (title.length < IDEA_TITLE_MIN) return corsJson({ ok: false, error: 'Give your idea a short title (at least 3 characters).' }, { status: 400 });
+  if (title.length > IDEA_TITLE_MAX) return corsJson({ ok: false, error: 'Title is too long (max 120 characters).' }, { status: 400 });
+  if (description.length > IDEA_DESCRIPTION_MAX) return corsJson({ ok: false, error: 'Description is too long (max 2000 characters).' }, { status: 400 });
 
-  const { data, error } = await supabase
-    .from('community_ideas')
-    .insert({ user_id: user.id, title, description })
-    .select('id, title, description, status, vote_count, created_at')
-    .single();
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData.user;
 
-  if (error) {
-    if (isMissingTable(error)) {
-      return NextResponse.json({ ok: false, error: 'The ideas board is not set up yet - check back soon.' }, { status: 503 });
-    }
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+  let data: { id: string; title: string; description: string | null; status: string | null; vote_count: number | null; created_at: string } | null = null;
+  let error: { code?: string; message: string } | null = null;
+
+  if (user) {
+    const result = await supabase
+      .from('community_ideas')
+      .insert({ user_id: user.id, title, description })
+      .select('id, title, description, status, vote_count, created_at')
+      .single();
+    data = result.data;
+    error = result.error;
+  } else {
+    // Anonymous posting: a server-issued signed key + the service role. RLS never opens to
+    // anon clients - this route (with its IP rate limits and length caps) is the gate.
+    const voterId = verifyCommunityKey(body.vk);
+    if (!voterId) return corsJson({ ok: false, error: 'Could not post from this device - refresh and try again.', badKey: true }, { status: 400 });
+    const admin = createSupabaseAdminClient();
+    if (!admin) return corsJson({ ok: false, error: 'Posting is not available on this deployment.' }, { status: 503 });
+    const result = await admin
+      .from('community_ideas')
+      .insert({ title, description })
+      .select('id, title, description, status, vote_count, created_at')
+      .single();
+    data = result.data;
+    error = result.error;
   }
 
-  return NextResponse.json({
+  if (error || !data) {
+    if (isMissingTable(error)) {
+      return corsJson({ ok: false, error: 'The ideas board is not set up yet - check back soon.' }, { status: 503 });
+    }
+    return corsJson({ ok: false, error: error?.message ?? 'Could not post your idea.' }, { status: 400 });
+  }
+
+  return corsJson({
     ok: true,
     idea: {
       id: data.id,

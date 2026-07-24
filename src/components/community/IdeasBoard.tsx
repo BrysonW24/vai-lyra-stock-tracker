@@ -1,18 +1,17 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Bot, ChevronUp, ExternalLink, Lightbulb, Loader2, Plus, Sparkles, X } from 'lucide-react';
-import { loadAi } from '@/lib/account';
+import { ChevronUp, Lightbulb, Loader2, Plus, X } from 'lucide-react';
+import { communityApiBase, communityParticipantKey, communityStoredKey, forgetCommunityKey } from '@/lib/community';
 
-interface IdeaEvidence {
-  itemId?: string;
-  title: string;
-  url: string | null;
-  sourceId?: string;
-  /** Human source name, enriched at filing time (falls back to sourceId for old cards). */
-  sourceName?: string;
-  publishedAt?: string | null;
-}
+/**
+ * The community Ideas board - purely what people want built INSIDE Lyra. External build
+ * signals (news, funding rounds, world events) never appear here: those are the AI scout's
+ * business and live on the Scout tab. One global board for every surface: deployments
+ * without their own Supabase (Lyra Solo) read and write the canonical prod board
+ * cross-origin, and nobody needs an account to post or vote - a per-device key keeps
+ * votes honest.
+ */
 
 interface Idea {
   id: string;
@@ -22,10 +21,6 @@ interface Idea {
   voteCount: number;
   createdAt: string;
   voted: boolean;
-  origin: string;
-  kind: string;
-  evidence: IdeaEvidence[];
-  confidence: number | null;
 }
 
 interface IdeasResponse {
@@ -55,19 +50,10 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
 
 const ALL_STATUSES = ['open', 'planned', 'in_progress', 'shipped', 'declined'];
 
-/** Non-default idea kinds get a chip so scout cards say what they propose. */
-const KIND_LABEL: Record<string, string> = {
-  vertical: 'New vertical',
-  'content-gap': 'Content gap',
-  frontend: 'Frontend',
-  backend: 'Backend',
-};
-
 export function IdeasBoard() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [signedIn, setSignedIn] = useState(false);
   const [maintainer, setMaintainer] = useState(false);
-  const [demo, setDemo] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,56 +63,18 @@ export function IdeasBoard() {
   const [submitting, setSubmitting] = useState(false);
   const [formNote, setFormNote] = useState<string | null>(null);
   const [voteNote, setVoteNote] = useState<string | null>(null);
-  const [expandedEvidence, setExpandedEvidence] = useState<Set<string>>(new Set());
-  // AI reads per scout card: undefined = not asked, 'loading', or the grounded text.
-  const [briefs, setBriefs] = useState<Record<string, 'loading' | string>>({});
-  const [aiAvailable, setAiAvailable] = useState(false);
-
-  useEffect(() => {
-    // Same availability check the daily brief uses: BYOK wins, OpenAI/Google may be
-    // server-backed - the route decides without exposing key presence to the bundle.
-    const ai = loadAi();
-    setAiAvailable(Boolean(ai.apiKey?.trim()) || ai.provider === 'openai' || ai.provider === 'google');
-  }, []);
-
-  async function loadBrief(idea: Idea) {
-    if (briefs[idea.id] !== undefined) return;
-    setBriefs((prev) => ({ ...prev, [idea.id]: 'loading' }));
-    try {
-      const res = await fetch('/api/community/ideas/brief', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ideaId: idea.id, ai: loadAi() }),
-      });
-      const data = (await res.json()) as { ok?: boolean; text?: string };
-      setBriefs((prev) => {
-        const next = { ...prev };
-        if (data.ok && data.text) next[idea.id] = data.text;
-        else delete next[idea.id]; // fall back to the template description silently
-        return next;
-      });
-      if (!data.ok || !data.text) {
-        setVoteNote('AI read unavailable right now - the card text above is the deterministic summary.');
-        setTimeout(() => setVoteNote(null), 2600);
-      }
-    } catch {
-      setBriefs((prev) => {
-        const next = { ...prev };
-        delete next[idea.id];
-        return next;
-      });
-    }
-  }
 
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch('/api/community/ideas', { cache: 'no-store' });
+      const base = communityApiBase();
+      // Peek only - a visitor who never votes should never cost a key issuance.
+      const vk = communityStoredKey();
+      const res = await fetch(`${base}/api/community/ideas${vk ? `?vk=${encodeURIComponent(vk)}` : ''}`, { cache: 'no-store' });
       const data = (await res.json()) as IdeasResponse;
       setIdeas(data.ideas ?? []);
       setSignedIn(Boolean(data.signedIn));
       setMaintainer(Boolean(data.maintainer));
-      setDemo(Boolean(data.demo));
       if (!data.ok) setError(data.error ?? 'Could not load ideas.');
     } catch {
       setError('Could not reach the ideas board.');
@@ -145,26 +93,29 @@ export function IdeasBoard() {
   );
 
   async function toggleVote(idea: Idea) {
-    if (demo) {
-      setVoteNote('Voting is disabled in the demo - sign in to vote.');
-      setTimeout(() => setVoteNote(null), 2600);
-      return;
-    }
     // Optimistic flip; revert on failure.
     const nextVoted = !idea.voted;
     setIdeas((prev) =>
       prev.map((i) => (i.id === idea.id ? { ...i, voted: nextVoted, voteCount: i.voteCount + (nextVoted ? 1 : -1) } : i)),
     );
     try {
-      const res = await fetch('/api/community/vote', {
+      const vk = await communityParticipantKey();
+      if (!vk) {
+        setIdeas((prev) => prev.map((i) => (i.id === idea.id ? idea : i)));
+        setVoteNote('Could not reach the board - check your connection and try again.');
+        setTimeout(() => setVoteNote(null), 2600);
+        return;
+      }
+      const res = await fetch(`${communityApiBase()}/api/community/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ideaId: idea.id }),
+        body: JSON.stringify({ ideaId: idea.id, vk }),
       });
-      const data = (await res.json()) as { ok?: boolean; voted?: boolean; voteCount?: number; error?: string };
+      const data = (await res.json()) as { ok?: boolean; voted?: boolean; voteCount?: number; error?: string; badKey?: boolean };
       if (!res.ok || !data.ok) {
+        if (data.badKey) forgetCommunityKey(); // stale key (e.g. secret rotation) - next tap re-issues
         setIdeas((prev) => prev.map((i) => (i.id === idea.id ? idea : i))); // revert
-        setVoteNote(data.error ?? (res.status === 401 ? 'Sign in to vote.' : 'Could not save your vote.'));
+        setVoteNote(data.error ?? 'Could not save your vote.');
         setTimeout(() => setVoteNote(null), 2600);
         return;
       }
@@ -208,14 +159,20 @@ export function IdeasBoard() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch('/api/community/ideas', {
+      const vk = await communityParticipantKey();
+      if (!vk) {
+        setFormNote('Could not reach the board - check your connection and try again.');
+        return;
+      }
+      const res = await fetch(`${communityApiBase()}/api/community/ideas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: t, description: description.trim() }),
+        body: JSON.stringify({ title: t, description: description.trim(), vk }),
       });
-      const data = (await res.json()) as { ok?: boolean; idea?: Idea; error?: string };
+      const data = (await res.json()) as { ok?: boolean; idea?: Idea; error?: string; badKey?: boolean };
       if (!res.ok || !data.ok || !data.idea) {
-        setFormNote(data.error ?? (res.status === 401 ? 'Sign in to post an idea.' : 'Could not post your idea.'));
+        if (data.badKey) forgetCommunityKey();
+        setFormNote(data.error ?? 'Could not post your idea.');
         return;
       }
       setIdeas((prev) => [data.idea!, ...prev]);
@@ -274,7 +231,7 @@ export function IdeasBoard() {
             className="glass-well w-full resize-y rounded-md px-2.5 py-2 text-[13px] leading-relaxed text-[#dbe5ee] outline-none transition focus:border-[#9a6a1f]/60 focus:ring-1 focus:ring-[#f3a33a]/25"
           />
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] text-[#6f7d8a]">{demo ? 'Demo preview - posting needs a signed-in account.' : signedIn ? 'Posts to the public board.' : 'You need to be signed in to post.'}</span>
+            <span className="text-[10px] text-[#6f7d8a]">{signedIn ? 'Posts to the public board.' : 'Posts to the public board - no account needed.'}</span>
             <button
               type="button"
               onClick={submitIdea}
@@ -308,92 +265,12 @@ export function IdeasBoard() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#5d6b79]">{fmtDate(idea.createdAt)}</span>
-                    {idea.origin === 'scout' && (
-                      <span
-                        className="inline-flex items-center gap-1 rounded-full border border-[#2a4a7a] bg-[#0f1a2c] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#7fb0ff]"
-                        title="Raised automatically by the AI scout from recurring unmapped news signal. Nothing changes unless a human accepts it."
-                      >
-                        <Bot size={9} /> Scout{typeof idea.confidence === 'number' ? ` ${idea.confidence}` : ''}
-                      </span>
-                    )}
-                    {KIND_LABEL[idea.kind] && (
-                      <span className="rounded-full border border-[#3a4754] bg-[#141b23] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#a8b5c2]">
-                        {KIND_LABEL[idea.kind]}
-                      </span>
-                    )}
                     {status && (
                       <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] ${status.cls}`}>{status.label}</span>
                     )}
                   </div>
                   <p className="mt-1 text-[13px] font-semibold leading-snug text-[#eef3f8]">{idea.title}</p>
                   {idea.description && <p className="mt-0.5 text-[12px] leading-relaxed text-[#98a6b4]">{idea.description}</p>}
-                  {idea.origin === 'scout' && idea.kind === 'vertical' && (idea.status === 'planned' || idea.status === 'in_progress') && (
-                    <p className="mt-1 text-[10px] leading-snug text-[#7fb0ff]">
-                      {idea.status === 'planned'
-                        ? 'Queued for drafting - the next agent session builds this vertical as a reviewable PR (/draft-vertical).'
-                        : 'Being drafted - a vertical PR is in flight for this card.'}
-                    </p>
-                  )}
-                  {typeof briefs[idea.id] === 'string' && briefs[idea.id] !== 'loading' && (
-                    <div className="mt-1.5 border-l-2 border-[#9a6a1f]/60 bg-[#13100a]/60 py-1 pl-2 pr-1">
-                      <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#f3a33a]"><Sparkles size={10} /> Lyra&apos;s read - grounded in the evidence below</p>
-                      <p className="mt-0.5 text-[12px] leading-relaxed text-[#dbe5ee]">{briefs[idea.id]}</p>
-                    </div>
-                  )}
-                  {idea.origin === 'scout' && idea.evidence.length > 0 && aiAvailable && !demo && briefs[idea.id] === undefined && (
-                    <button
-                      type="button"
-                      onClick={() => loadBrief(idea)}
-                      className="mt-1.5 inline-flex min-h-[44px] items-center gap-1 rounded border border-[#9a6a1f]/50 bg-[#23180b]/60 px-2 text-[10px] font-medium text-[#f3a33a] transition hover:border-[#9a6a1f] hover:bg-[#2a1f0f] sm:min-h-[32px]"
-                    >
-                      <Sparkles size={11} /> AI read of this signal
-                    </button>
-                  )}
-                  {briefs[idea.id] === 'loading' && (
-                    <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#8190a0]"><Loader2 size={11} className="animate-spin" /> Reading the evidence...</p>
-                  )}
-                  {idea.evidence.length > 0 && (
-                    <ul className="mt-1.5 space-y-0.5">
-                      {(expandedEvidence.has(idea.id) ? idea.evidence : idea.evidence.slice(0, 4)).map((ev, i) => (
-                        <li key={`${idea.id}-ev-${i}`} className="flex items-start gap-1 text-[11px] leading-snug text-[#8190a0]">
-                          <ExternalLink size={10} className="mt-0.5 shrink-0 text-[#5d6b79]" />
-                          <span className="min-w-0">
-                            {ev.url ? (
-                              <a href={ev.url} target="_blank" rel="noopener noreferrer" className="underline decoration-[#3a4754] underline-offset-2 transition hover:text-[#c8d3de]">
-                                {ev.title}
-                              </a>
-                            ) : (
-                              <span>{ev.title}</span>
-                            )}
-                            {(ev.sourceName || ev.sourceId || ev.publishedAt) && (
-                              <span className="text-[#5d6b79]">
-                                {' '}- {ev.sourceName || ev.sourceId}
-                                {ev.publishedAt && <> · {fmtDate(ev.publishedAt)}</>}
-                              </span>
-                            )}
-                          </span>
-                        </li>
-                      ))}
-                      {idea.evidence.length > 4 && (
-                        <li>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setExpandedEvidence((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(idea.id)) next.delete(idea.id);
-                                else next.add(idea.id);
-                                return next;
-                              })
-                            }
-                            className="min-h-[44px] text-[10px] font-medium text-[#5d6b79] underline decoration-[#3a4754] underline-offset-2 transition hover:text-[#c8d3de] sm:min-h-[32px]"
-                          >
-                            {expandedEvidence.has(idea.id) ? 'Show fewer evidence links' : `+ ${idea.evidence.length - 4} more evidence links`}
-                          </button>
-                        </li>
-                      )}
-                    </ul>
-                  )}
                   {maintainer && (
                     <div className="mt-1.5 flex flex-wrap items-center gap-1">
                       {ALL_STATUSES.map((s) => (

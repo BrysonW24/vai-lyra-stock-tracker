@@ -46,15 +46,24 @@ export interface AiGuardBlocked {
 }
 
 /**
- * Best-effort caller identity for anonymous rate limiting. The first x-forwarded-for hop is
- * client-influenced on some hosts, so treat this as abuse damping, not authentication - the
- * per-user budget (session id) and hosted-key auth gate carry the real weight. Exported for
- * the other open routes (feedback, ticker-lookup) so they share one definition.
+ * Best-effort caller identity for anonymous rate limiting. Prefer x-real-ip: the platform
+ * (Vercel, and the traefik/nginx front of a self-host) SETS it from the actual connection,
+ * so the caller cannot choose it. The LEFTMOST x-forwarded-for hop, by contrast, is fully
+ * caller-controlled (proxies append the real IP on the RIGHT) - keying limits on it let an
+ * abuser mint a fresh rate-limit bucket per request with a spoofed header, which defeated
+ * every throttle on the open community routes. When only XFF exists we take the RIGHTMOST
+ * hop (the nearest, platform-appended one). Still abuse damping, not authentication.
+ * Exported for the other open routes (feedback, ticker-lookup) so they share one definition.
  */
 export function clientIp(request: NextRequest): string {
+  const real = request.headers.get('x-real-ip')?.trim();
+  if (real) return real;
   const fwd = request.headers.get('x-forwarded-for');
-  if (fwd) return fwd.split(',')[0]!.trim();
-  return request.headers.get('x-real-ip')?.trim() || 'anon';
+  if (fwd) {
+    const hops = fwd.split(',');
+    return hops[hops.length - 1]!.trim() || 'anon';
+  }
+  return 'anon';
 }
 
 export async function guardAiRoute<T>(

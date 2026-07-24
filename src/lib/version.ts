@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.73.0',
+    date: '2026-07-24',
+    title: 'The Ideas board belongs to you - and nobody needs an account to use it',
+    highlights: [
+      'The Ideas tab is now purely community ideas: what you want built inside Lyra. The AI scout\'s external signals (news themes, funding drumbeats) moved to the Scout tab as "Scout proposals" - the two questions never mix again.',
+      'Post and vote without an account: ideas and votes work signed-out and in Lyra Solo, keyed to your device. One shared board for everyone - a Solo user sees and votes on the same list as a signed-in one.',
+      'Two standing example ideas seed the board - deliberately things we may never build - so you can see what an idea looks like before adding your own.',
+      'Scout proposals keep everything they had: evidence links, AI reads, confidence, votes, and the maintainer promotion flow - just on the tab where perception belongs.',
+    ],
+  },
+  {
     version: '0.72.0',
     date: '2026-07-20',
     title: 'Lyra Solo - the no-account, bring-your-own-key mode is now first-class',

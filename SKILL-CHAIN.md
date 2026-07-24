@@ -78,10 +78,10 @@ multiple owning chains per row are allowed; a parent path claims everything unde
 | Track record (measured outcomes) | `src/app/track-record/` `src/app/api/track-record/` | signal-quality |
 | Ingest workers (horizon 2) | `workers/events_worker/` `workers/fundamentals_worker/` `workers/intelligence_worker/` | data-integrity |
 | Scout worker (broad signal -> ideas board) | `workers/scout/` | scout-intel |
-| Scout feed surface (what the scout saw) | `src/app/api/scout/` `src/components/community/ScoutFeed.tsx` `src/components/community/ScoutBridge.tsx` | scout-intel |
+| Scout feed surface (what the scout saw + its proposal cards) | `src/app/api/scout/` `src/components/community/ScoutFeed.tsx` `src/components/community/ScoutProposals.tsx` | scout-intel |
 | Auth, env, abuse, account | `src/lib/auth/` `src/lib/env.ts` `src/lib/ratelimit.ts` `src/lib/account.ts` `src/app/api/account/` `SECURITY.md` `PRIVACY.md` `docs/security/` | security-sweep |
 | Findings + GenUI | `src/lib/findings/` `src/lib/next-best-actions.ts` `src/lib/goal.ts` `src/lib/portfolio-actions.ts` `src/lib/orientation.ts` `src/app/findings/` `src/app/api/findings/` | logs-to-genui |
-| Feedback intake | `src/lib/feedback.ts` `src/app/api/feedback/` `src/app/api/community/` | feedback-loop |
+| Feedback intake + community board | `src/lib/feedback.ts` `src/lib/community.ts` `src/lib/community-contract.ts` `src/lib/community-key.ts` `src/app/api/feedback/` `src/app/api/community/` | feedback-loop |
 | Release + health plumbing | `src/lib/version.ts` `src/app/whats-new/` `src/app/api/health/` `scripts/` `tests/` `src/lib/__tests__/` `.githooks/` `.github/` `CHANGELOG.md` | production-keeper |
 | Harness self-maintenance | `.claude/commands/` `SKILL-CHAIN.md` `HARNESS.md` `CLAUDE.md` | production-keeper |
 | Feature pages | `src/app/account/` `src/app/awards/` `src/app/calculators/` `src/app/calendar/` `src/app/charts/` `src/app/commodities/` `src/app/comparison/` `src/app/education/` `src/app/filings/` `src/app/flows/` `src/app/fundamentals/` `src/app/graph/` `src/app/intelligence/` `src/app/investors/` `src/app/ipos/` `src/app/paper/` `src/app/paper-bot/` `src/app/plan/` `src/app/portfolio/` `src/app/privacy/` `src/app/radar/` `src/app/saved/` `src/app/settings/` `src/app/simulation/` `src/app/small-caps/` `src/app/smart-money/` `src/app/strategy-lab/` `src/app/supply-chain/` `src/app/support/` `src/app/terms/` `src/app/themes/` `src/app/tickers/` `src/app/trades/` `src/app/trading/` `src/app/twin/` `src/app/usage/` `src/app/watchlist/` `src/app/wire/` | ux-surface |

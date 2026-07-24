@@ -5,8 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { Lightbulb, Radar, Sparkles } from 'lucide-react';
 import { ProductUpdatesTimeline } from '@/components/ProductUpdatesTimeline';
 import { IdeasBoard } from '@/components/community/IdeasBoard';
-import { ScoutBridge } from '@/components/community/ScoutBridge';
 import { ScoutFeed } from '@/components/community/ScoutFeed';
+import { ScoutProposals } from '@/components/community/ScoutProposals';
 import { APP_VERSION } from '@/lib/version';
 
 type Tab = 'updates' | 'ideas' | 'scout';
@@ -14,11 +14,11 @@ type Tab = 'updates' | 'ideas' | 'scout';
 /**
  * The /whats-new surface: one glass hero carrying the title, the live version, and a sliding
  * switch across three surfaces - Product Updates (the one true changelog, generated from
- * RELEASES), Ideas (the community voting board, where scout cards land as proposals), and
- * Scout (the perception stream: what the AI scout read, per-theme counts, and the drumbeats
- * building toward promotion). Perception and proposals are deliberately separate tabs with a
- * one-line bridge on Ideas - NOT one stacked column - so human ideas stay above the fold and
- * the feed has room to grow. Deep-linkable via ?tab=ideas / ?tab=scout.
+ * RELEASES), Ideas (PURELY the community board: what people want built inside Lyra, votable
+ * without an account), and Scout (everything external: the AI scout's proposal cards plus the
+ * perception stream of what it read). The split is doctrine, not layout: an external news
+ * signal must never appear on the Ideas tab - community wishes and world signals are
+ * different questions. Deep-linkable via ?tab=ideas / ?tab=scout.
  *
  * The hero and the switch are deliberately ONE panel: they were three stacked bordered boxes
  * (header / blurb / toggle) which read as clumped chrome and cost three blur passes on mobile.
@@ -84,13 +84,13 @@ export function WhatsNewClient() {
       </section>
 
       {tab === 'updates' && <ProductUpdatesTimeline />}
-      {tab === 'ideas' && (
+      {tab === 'ideas' && <IdeasBoard />}
+      {tab === 'scout' && (
         <div className="space-y-3">
-          <ScoutBridge onOpen={() => setTab('scout')} />
-          <IdeasBoard />
+          <ScoutProposals />
+          <ScoutFeed />
         </div>
       )}
-      {tab === 'scout' && <ScoutFeed />}
     </div>
   );
 }

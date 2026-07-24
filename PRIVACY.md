@@ -22,6 +22,11 @@ page at `/privacy`.
   number. This is where alerts are sent and is visible only to you.
 - **Anonymous, aggregate usage analytics** (via Vercel Web Analytics): page views and
   interaction counts. No cookies, and no profiling of individuals.
+- **Community board participation, if you use it:** ideas you post are public by design
+  (title and description only - never your identity). Voting without an account stores a
+  random participant key (issued by the server, kept in your browser) purely to count
+  each device's vote once; it is not linked to your name, email, account, or anything
+  else, and clearing site data forgets it.
 
 ## What we never collect
 

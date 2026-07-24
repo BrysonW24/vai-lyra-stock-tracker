@@ -7,6 +7,7 @@ import { guardProse } from '@/lib/ai/guardrails/prose';
 import { chargeHostedBudget } from '@/lib/ai/budget-tracker';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
 import { guardAiRoute } from '@/lib/api/ai-guard';
+import { PUBLIC_CORS_HEADERS, corsPreflight } from '@/lib/api/cors';
 import { cacheGet, cacheSet } from '@/lib/cache';
 
 /**
@@ -49,7 +50,22 @@ function evidenceKey(rows: EvidenceRow[]): string {
   return (h >>> 0).toString(36);
 }
 
+export function OPTIONS() {
+  return corsPreflight();
+}
+
+/**
+ * CORS wrapper: Lyra Solo renders the shared board's scout cards and asks THIS origin (the
+ * one holding the evidence rows) for the AI read, so every response - including the guard's
+ * 413/429 - must carry the open-CORS headers or the cross-origin caller cannot read it.
+ */
 export async function POST(request: NextRequest) {
+  const response = await handlePost(request);
+  for (const [header, value] of Object.entries(PUBLIC_CORS_HEADERS)) response.headers.set(header, value);
+  return response;
+}
+
+async function handlePost(request: NextRequest) {
   try {
     const guard = await guardAiRoute<ScoutBriefRequest>(request, { scope: 'scout_brief', capacity: 6 });
     if (!guard.ok) return guard.response;

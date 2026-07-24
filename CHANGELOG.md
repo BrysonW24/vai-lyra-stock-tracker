@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.73.0] - 2026-07-24
+
+The Ideas board belongs to you - and nobody needs an account to use it.
+
+### Changed
+
+- The Ideas tab is now purely community ideas: what you want built inside Lyra. The AI scout's external signals (news themes, funding drumbeats) moved to the Scout tab as "Scout proposals" - the two questions never mix again.
+- Post and vote without an account: ideas and votes work signed-out and in Lyra Solo, keyed to your device. One shared board for everyone - a Solo user sees and votes on the same list as a signed-in one.
+- Two standing example ideas seed the board - deliberately things we may never build - so you can see what an idea looks like before adding your own.
+- Scout proposals keep everything they had: evidence links, AI reads, confidence, votes, and the maintainer promotion flow - just on the tab where perception belongs.
+
 ## [0.72.0] - 2026-07-20
 
 Lyra Solo - the no-account, bring-your-own-key mode is now first-class.
@@ -1081,7 +1092,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.72.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.0...HEAD
+[0.73.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.72.0...v0.73.0
 [0.72.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.71.0...v0.72.0
 [0.71.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.70.2...v0.71.0
 [0.70.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.70.1...v0.70.2
