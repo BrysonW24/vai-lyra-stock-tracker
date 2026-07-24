@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Sparkles, KeyRound, ShieldCheck, ExternalLink, ClipboardPaste } from 'lucide-react';
 import { DEFAULT_AI, loadAi, saveAi, type AiProvider } from '@/lib/account';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 interface AiInsightStepProps {
   onNext: () => void;
@@ -64,6 +65,7 @@ const PROVIDERS: {
  * still supported and override the server key. Writes straight to browser-local AI settings.
  */
 export function AiInsightStep({ onNext }: AiInsightStepProps) {
+  const soloMode = !isSupabaseConfigured();
   const [choice, setChoice] = useState<Choice>('openai');
   const [apiKey, setApiKey] = useState('');
 
@@ -75,6 +77,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
   }, []);
 
   const selected = PROVIDERS.find((p) => p.id === choice);
+  const selectedHosted = Boolean(selected?.hosted && !soloMode);
 
   const pasteKey = async () => {
     try {
@@ -89,10 +92,18 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
     const current = loadAi();
     if (choice === 'skip' || choice === 'openai') {
       const key = choice === 'openai' ? apiKey.trim() : '';
-      saveAi({ ...DEFAULT_AI, ...current, mode: key ? 'byo' : 'hosted', provider: 'openai', apiKey: key, model: choice === 'openai' ? current.model : '' });
+      saveAi({
+        ...DEFAULT_AI,
+        ...current,
+        mode: key ? 'byo' : soloMode ? 'off' : 'hosted',
+        provider: 'openai',
+        apiKey: key,
+        model: choice === 'openai' ? current.model : '',
+      });
     } else {
       const group: 'free' | 'byo' = choice === 'google' || choice === 'openrouter' ? 'free' : 'byo';
-      saveAi({ ...current, provider: choice, apiKey: apiKey.trim(), mode: group });
+      const key = apiKey.trim();
+      saveAi({ ...current, provider: choice, apiKey: key, mode: key ? group : 'off' });
     }
     onNext();
   };
@@ -102,7 +113,9 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
       <p className="flex items-start gap-1.5 text-[11px] leading-snug text-[#a8b5c2]">
         <Sparkles className="mt-px shrink-0 text-[#8aa2ff]" size={14} />
         <span>
-          Ask Lyra anything about your dashboard - your book, the signals, catalysts - in plain English. Hosted OpenAI is on by default for the beta; bring your own key only if you want to override it. You can change this anytime in Settings.
+          {soloMode
+            ? 'Ask Lyra anything about your dashboard in plain English. Solo has no shared AI key: paste your own provider key to enable it, or continue without AI. Your key stays in this browser.'
+            : 'Ask Lyra anything about your dashboard in plain English. Hosted OpenAI is on by default for the beta; bring your own key only if you want to override it. You can change this anytime in Settings.'}
         </span>
       </p>
 
@@ -121,7 +134,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
             >
               <div className="flex items-center justify-between gap-2">
                 <span className={`text-sm font-semibold ${sel ? 'text-[#8aa2ff]' : 'text-[#eef3f8]'}`}>{p.label}</span>
-                {p.tag && (
+                {(p.id !== 'openai' || !soloMode) && p.tag && (
                   <span className="shrink-0 rounded-full border border-[#1d7f55] bg-[#0d251b] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-[#43d18b]">
                     {p.tag}
                   </span>
@@ -137,7 +150,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
         <div className="space-y-2 rounded-lg border border-[#8aa2ff]/25 bg-[#0b1016] p-3">
           <div className="flex items-center justify-between">
             <label htmlFor="onboard-ai-key" className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">
-              <KeyRound size={12} /> {selected.label} key{selected.hosted ? ' (optional)' : ''}
+              <KeyRound size={12} /> {selected.label} key{selectedHosted ? ' (optional)' : ''}
             </label>
             <a
               href={selected.keyUrl}
@@ -145,7 +158,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#8aa2ff] transition hover:text-[#aab8ff]"
             >
-              {selected.hosted ? 'Use your own key from' : 'Get a key from'} {selected.keyHost} <ExternalLink size={10} />
+              {selectedHosted ? 'Use your own key from' : 'Get a key from'} {selected.keyHost} <ExternalLink size={10} />
             </a>
           </div>
           <div className="flex gap-1.5">
@@ -168,7 +181,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
           </div>
           <p className="flex items-center gap-1 text-[10px] leading-relaxed text-[#6f7d8a]">
             <ShieldCheck size={11} className="shrink-0 text-[#43d18b]" />
-            {selected.hosted
+            {selectedHosted
               ? "Leave blank to use Lyra's hosted beta key. A pasted key stays in this browser and overrides the hosted key."
               : `Stays in this browser, only ever used for ${selected.label} requests. Paste it later in Settings if you prefer.`}
           </p>
@@ -182,7 +195,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
           choice === 'skip' ? 'border-[#8aa2ff] bg-[#101a2e] text-[#8aa2ff]' : 'border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:border-[#3a4754]'
         }`}
       >
-        Not now - use the hosted beta model.
+        {soloMode ? 'Not now - continue without AI.' : 'Not now - use the hosted beta model.'}
       </button>
 
       <button
@@ -190,7 +203,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
         type="button"
         className="w-full rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
       >
-        {choice === 'skip' || !apiKey.trim() ? 'Next: Finish setup' : 'Save key & finish setup'}
+        {choice === 'skip' || !apiKey.trim() ? 'Finish setup' : 'Save key & finish setup'}
       </button>
     </div>
   );

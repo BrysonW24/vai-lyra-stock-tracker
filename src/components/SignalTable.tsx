@@ -10,6 +10,14 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { TickerLogo } from '@/components/TickerLogo';
 import { SignalDrawer } from '@/components/SignalDrawer';
 import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
+import {
+  loadLocalHoldings,
+  PORTFOLIO_CHANGED_EVENT,
+} from '@/lib/local-portfolio';
+import {
+  loadLocalWatchlist,
+  WATCHLIST_CHANGED_EVENT,
+} from '@/lib/local-watchlist';
 
 // Per-column plain-English help + the academy module it deep-links to. Native title=
 // tooltips read this on hover; the header "?" drawer renders the same set so the two
@@ -54,6 +62,8 @@ interface SignalTableProps {
   portfolioSymbols?: string[];
   watchlistSymbols?: string[];
   title?: string;
+  /** In Solo, layer device-local ownership markers over the shared market scan. */
+  soloPersonalize?: boolean;
 }
 
 const filterLabels: Array<{ value: FilterMode; label: string }> = [
@@ -75,6 +85,7 @@ export function SignalTable({
   portfolioSymbols = [],
   watchlistSymbols = [],
   title = 'Signal Radar',
+  soloPersonalize = false,
 }: SignalTableProps) {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') ?? '');
@@ -85,6 +96,30 @@ export function SignalTable({
   // Mobile card list is capped so 80 signals never become one endless thumb-scroll;
   // "Show more" extends in pages. Desktop table is unaffected.
   const [mobileVisible, setMobileVisible] = useState(12);
+  const [activePortfolioSymbols, setActivePortfolioSymbols] =
+    useState(portfolioSymbols);
+  const [activeWatchlistSymbols, setActiveWatchlistSymbols] =
+    useState(watchlistSymbols);
+
+  useEffect(() => {
+    if (!soloPersonalize) {
+      setActivePortfolioSymbols(portfolioSymbols);
+      setActiveWatchlistSymbols(watchlistSymbols);
+      return;
+    }
+    const refreshPortfolio = () =>
+      setActivePortfolioSymbols(loadLocalHoldings().map((item) => item.symbol));
+    const refreshWatchlist = () =>
+      setActiveWatchlistSymbols(loadLocalWatchlist().map((item) => item.symbol));
+    refreshPortfolio();
+    refreshWatchlist();
+    window.addEventListener(PORTFOLIO_CHANGED_EVENT, refreshPortfolio);
+    window.addEventListener(WATCHLIST_CHANGED_EVENT, refreshWatchlist);
+    return () => {
+      window.removeEventListener(PORTFOLIO_CHANGED_EVENT, refreshPortfolio);
+      window.removeEventListener(WATCHLIST_CHANGED_EVENT, refreshWatchlist);
+    };
+  }, [portfolioSymbols, soloPersonalize, watchlistSymbols]);
 
   // The drawer is URL-routed (?signal=SYM) so an open explainer survives refresh and
   // can be shared/deep-linked ("look at NVDA's setup"). history.replaceState keeps it
@@ -114,8 +149,14 @@ export function SignalTable({
     if (match) setSelected(match);
   }, [searchParams, signals]);
 
-  const portfolioSet = useMemo(() => new Set(portfolioSymbols), [portfolioSymbols]);
-  const watchlistSet = useMemo(() => new Set(watchlistSymbols), [watchlistSymbols]);
+  const portfolioSet = useMemo(
+    () => new Set(activePortfolioSymbols),
+    [activePortfolioSymbols],
+  );
+  const watchlistSet = useMemo(
+    () => new Set(activeWatchlistSymbols),
+    [activeWatchlistSymbols],
+  );
 
   const rows = useMemo(() => {
     const searchValue = search.trim().toLowerCase();

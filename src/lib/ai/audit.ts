@@ -161,6 +161,28 @@ function resolveWriter(): AiRunWriter {
 }
 
 /**
+ * Reduce internal refusal detail to a bounded operations code. The raw reason remains in the
+ * protected audit record, while console logs get enough signal for alerting without provider
+ * response text, prompts, keys, or free-form validation content.
+ */
+function safeFailureCode(record: AiRunRecord): string | null {
+  if (record.status === 'ok') return null;
+  const providerReason = record.refusalReason?.match(
+    /^provider:(invalid_key|invalid_model|provider_rate_limited|provider_unavailable|empty_response|error)$/,
+  )?.[1];
+  if (providerReason) return providerReason;
+  if (
+    record.refusalReason === 'empty_response' ||
+    record.validationErrors.includes('empty_response')
+  ) {
+    return 'empty_response';
+  }
+  if (record.status === 'refused') return 'guardrail_block';
+  if (record.status === 'validation_failed') return 'validation_failed';
+  return 'error';
+}
+
+/**
  * Record one AI run through the active writer. Fills id and createdAt when the
  * caller does not supply them, and returns the complete record.
  */
@@ -170,7 +192,55 @@ export async function recordAiRun(input: AiRunInput): Promise<AiRunRecord> {
     id: input.id ?? randomUUID(),
     createdAt: input.createdAt ?? new Date().toISOString(),
   };
-  await resolveWriter().write(record);
+  const writer = resolveWriter();
+  const safeModel = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,95}$/.test(record.model)
+    ? record.model
+    : '[invalid-model-id]';
+  let writeOk = true;
+  try {
+    await writer.write(record);
+  } catch {
+    writeOk = false;
+    // Deliberately omit the thrown message: a custom writer could accidentally include a
+    // credential or provider payload in it. The run id joins this to the safe event below.
+    console.error(
+      JSON.stringify({
+        event: 'lyra.ai_audit_write_failed',
+        schemaVersion: 1,
+        runId: record.id,
+      }),
+    );
+  }
+
+  // Serverless-safe operational telemetry. This is emitted synchronously after the durable write
+  // is awaited, so Solo (which intentionally has no Supabase) still has a complete Vercel log
+  // trail. No prompt, response, API key or raw identity is present.
+  console.info(
+    JSON.stringify({
+      event: 'lyra.ai_run',
+      schemaVersion: 1,
+      runId: record.id,
+      identityHash: createHash('sha256').update(record.userId, 'utf8').digest('hex').slice(0, 16),
+      agent: record.agentName,
+      provider: record.provider,
+      model: safeModel,
+      status: record.status,
+      failureCode: safeFailureCode(record),
+      inputHash: record.inputHash.slice(0, 16),
+      outputHash: record.outputHash?.slice(0, 16) ?? null,
+      toolCount: record.toolsUsed.length,
+      injectionFlagCount: record.injectionFlags.length,
+      validationErrorCount: record.validationErrors.length,
+      citationCount: record.citationCount,
+      latencyMs: record.latencyMs,
+      inputTokens: record.inputTokens ?? null,
+      outputTokens: record.outputTokens ?? null,
+      costUsd: record.costUsd ?? null,
+      storage: writer === supabaseAiRunStore ? 'supabase' : 'memory',
+      writeOk,
+      createdAt: record.createdAt,
+    }),
+  );
   return record;
 }
 

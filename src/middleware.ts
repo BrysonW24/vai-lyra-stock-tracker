@@ -49,6 +49,16 @@ export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const isPublic = isPublicPath(pathname);
     const onboarded = request.cookies.get('lyra_onboarded')?.value === '1';
+    const explicitReplay =
+      request.nextUrl.searchParams.has('beat') ||
+      request.nextUrl.searchParams.get('replay') === '1';
+    if (
+      onboarded &&
+      pathname.startsWith('/onboarding') &&
+      !explicitReplay
+    ) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
     if (!onboarded && !isPublic && !pathname.startsWith('/onboarding')) {
       return NextResponse.redirect(new URL('/welcome', request.url));
     }

@@ -16,11 +16,13 @@ export async function GET() {
   const hostedAvailable = status.hostedOpenAi || status.sharedGoogle;
 
   const supabase = await createSupabaseServerClient();
-  if (supabase) {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) {
-      return NextResponse.json({ hostedAvailable, authenticated: false });
-    }
+  if (!supabase) {
+    return NextResponse.json({ hostedAvailable, authenticated: false });
+  }
+
+  const { data } = await supabase.auth.getUser();
+  if (!data.user) {
+    return NextResponse.json({ hostedAvailable, authenticated: false });
   }
 
   return NextResponse.json({ ...status, hostedAvailable, authenticated: true, breakers: providerBreakerStatus() });

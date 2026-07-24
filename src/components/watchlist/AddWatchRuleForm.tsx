@@ -66,11 +66,18 @@ export function AddWatchRuleForm() {
       // watchlist instead of being silently dropped (the onboarding flow already did this;
       // this form was the surface that forgot - items entered here evaporated).
       if (!result.ok && result.demo) {
-        addLocalWatchItem({
+        const saved = addLocalWatchItem({
           symbol: formData.symbol,
           targetBuyPrice: Number(formData.targetPrice) || undefined,
           notes: formData.notes || undefined,
         });
+        if (!saved) {
+          setStatus({
+            type: 'error',
+            message: 'Could not save on this device. Check browser storage permissions and try again.',
+          });
+          return;
+        }
         setStatus({
           type: 'success',
           message: `Watching ${formData.symbol} - saved on this device`,

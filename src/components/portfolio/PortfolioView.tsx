@@ -6,47 +6,12 @@ import { ArrowUpRight, Plus } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { AddHoldingForm } from '@/components/portfolio/AddHoldingForm';
 import { TickerLogo } from '@/components/TickerLogo';
-import type { ActionState, DashboardData, PortfolioHolding, SignalRow, SignalStatus } from '@/types/scanner';
+import type { DashboardData, PortfolioHolding } from '@/types/scanner';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass } from '@/lib/format';
 import { cgtBadgeClass, cgtStatusFor } from '@/lib/cgt';
-import { loadLocalHoldings, PORTFOLIO_CHANGED_EVENT, type LocalHolding } from '@/lib/local-portfolio';
+import { loadLocalHoldings, PORTFOLIO_CHANGED_EVENT } from '@/lib/local-portfolio';
+import { buildLocalPortfolioHoldings } from '@/lib/local-dashboard';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
-
-/** Build display holdings from the user's local book, pricing each off the live signal set. */
-function buildFromLocal(local: LocalHolding[], signals: SignalRow[]): PortfolioHolding[] {
-  const sig = new Map(signals.map((s) => [s.symbol, s]));
-  const rows = local.map((h) => {
-    const s = sig.get(h.symbol);
-    const currentPrice = s && s.close > 0 ? s.close : h.averageBuyPrice;
-    const cost = h.averageBuyPrice * h.quantity;
-    const marketValue = currentPrice * h.quantity;
-    const unrealisedPnl = marketValue - cost;
-    const unrealisedPnlPercent = cost > 0 ? (unrealisedPnl / cost) * 100 : 0;
-    return { h, s, currentPrice, marketValue, unrealisedPnl, unrealisedPnlPercent };
-  });
-  const totalValue = rows.reduce((sum, r) => sum + r.marketValue, 0);
-  return rows.map(({ h, s, currentPrice, marketValue, unrealisedPnl, unrealisedPnlPercent }) => ({
-    symbol: h.symbol,
-    quantity: h.quantity,
-    averagePrice: h.averageBuyPrice,
-    currentPrice,
-    marketValue,
-    unrealisedPnl,
-    unrealisedPnlPercent,
-    portfolioWeight: totalValue > 0 ? (marketValue / totalValue) * 100 : 0,
-    signalScore: s?.score ?? 0,
-    scoreDelta: s?.scoreDelta ?? 0,
-    signalStatus: (s?.status ?? 'no_signal') as SignalStatus,
-    actionState: (s?.actionState ?? 'hold') as ActionState,
-    rsi: s?.rsi ?? 0,
-    macdState: s?.macdState ?? 'Tracked',
-    riskState: 'neutral' as PortfolioHolding['riskState'],
-    suggestedAction: 'Hold',
-    explanation: { action: (s?.actionState ?? 'hold') as ActionState, triggeredBecause: [], missingConfirmation: [], riskNotes: [] },
-    purchaseDate: h.purchaseDate,
-    notes: h.notes,
-  }));
-}
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 /** Format an ISO YYYY-MM-DD purchase date as a short "5 Jun" label. */
@@ -84,9 +49,9 @@ export function PortfolioView({ data }: { data: DashboardData }) {
       // portfolio after a user removes/undoes their final holding makes fictitious positions
       // reappear and then leak into the AI's answer.
       const activeHoldings = soloMode
-        ? buildFromLocal(local, data.signals)
+        ? buildLocalPortfolioHoldings(local, data.signals)
         : demo && local.length > 0
-          ? buildFromLocal(local, data.signals)
+          ? buildLocalPortfolioHoldings(local, data.signals)
           : data.portfolio;
       setHoldings(activeHoldings);
       const dates = activeHoldings.map((h) => h.purchaseDate).filter((d): d is string => Boolean(d)).sort();

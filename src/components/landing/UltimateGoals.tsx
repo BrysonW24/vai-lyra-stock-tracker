@@ -98,6 +98,24 @@ function AlertsViz() {
   );
 }
 
+function SoloAlertsViz() {
+  return (
+    <div className="ug-flowbox">
+      <div className="ug-notifs">
+        <div className="ug-notif">
+          <span aria-hidden>◉</span>
+          <span>Signal change · visible in console</span>
+        </div>
+        <div className="ug-notif" style={{ marginLeft: 24 }}>
+          <span aria-hidden>⌁</span>
+          <span>Watchlist · stored on device</span>
+        </div>
+      </div>
+      <p className="ug-cap">NO BACKGROUND DELIVERY · NO DESTINATION DATA</p>
+    </div>
+  );
+}
+
 function PaperViz() {
   return (
     <svg className="ug-fill" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -148,7 +166,7 @@ const CARDS: GoalCard[] = [
     badge: 'opt', status: 'live in the app · BYOK', viz: <ByokViz />,
   },
   {
-    title: 'Alerts where you live',
+    title: 'Signals where you are',
     lede: 'Telegram, Slack and web push - urgency comes to you.',
     back: 'One dispatch layer, your channels: Telegram live today, Slack into your own webhook, web push with zero accounts - and WhatsApp scaffolded honestly, not oversold.',
     badge: 'opt', status: 'telegram + slack + push live', viz: <AlertsViz />,
@@ -167,8 +185,21 @@ const CARDS: GoalCard[] = [
   },
 ];
 
-export function UltimateGoals() {
-  const [flipped, setFlipped] = useState<boolean[]>(() => CARDS.map(() => false));
+export function UltimateGoals({ soloMode = false }: { soloMode?: boolean }) {
+  const cards = soloMode
+    ? CARDS.map((card, index) =>
+        index === 3
+          ? {
+              ...card,
+              lede: 'See changes when you open Solo; no background delivery is promised.',
+              back: 'Solo has no account-backed notification destination. Push, Telegram, Slack, WhatsApp, and scheduled digests belong to the Community build.',
+              status: 'in-console only',
+              viz: <SoloAlertsViz />,
+            }
+          : card,
+      )
+    : CARDS;
+  const [flipped, setFlipped] = useState<boolean[]>(() => cards.map(() => false));
   const toggle = (i: number) =>
     setFlipped((prev) => prev.map((v, j) => (j === i ? !v : v)));
 
@@ -181,7 +212,7 @@ export function UltimateGoals() {
       <p className="mt-2 text-sm text-[#8290a0]">Tap any card for the detail.</p>
 
       <div className="ug-goals mt-6">
-        {CARDS.map((c, i) => (
+        {cards.map((c, i) => (
           <div
             key={c.title}
             className={`ug-goal${c.future ? ' ug-future' : ''}${flipped[i] ? ' ug-flip' : ''}`}

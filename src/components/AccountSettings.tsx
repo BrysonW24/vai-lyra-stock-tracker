@@ -103,6 +103,18 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
           title: 'AI Settings',
           subtitle: 'Solo has no hosted model. Choose a provider and add your own key; it stays in this browser.',
         }
+      : section === 'account' && soloMode
+        ? {
+            title: 'Solo settings',
+            subtitle:
+              'Your device profile, local lock, and browser-held data. There is no account or cloud sync in Solo.',
+          }
+        : section === 'notifications' && soloMode
+          ? {
+              title: 'Notification limits',
+              subtitle:
+                'Solo shows signal changes only while the console is open. Background delivery belongs to Community.',
+            }
       : SECTION_HEADERS[section];
   const [profile, setProfile] = useState<AccountProfile>(DEFAULT_PROFILE);
   const [ai, setAi] = useState<AiSettings>(DEFAULT_AI);
@@ -110,6 +122,8 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
 
   const [profileSaved, setProfileSaved] = useState(false);
   const [aiSaved, setAiSaved] = useState(false);
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [aiSaveError, setAiSaveError] = useState<string | null>(null);
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   const [pinError, setPinError] = useState<string | null>(null);
@@ -131,7 +145,12 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
   function toggleBotInterest(checked: boolean) {
     setBotInterest(checked);
     saveInterest({ tradingBot: checked });
-    if (checked) void registerInterest('Trading bot (paper trading)', loadProfile().email);
+    if (checked && !soloMode) {
+      void registerInterest(
+        'Trading bot (paper trading)',
+        loadProfile().email,
+      );
+    }
   }
 
   function toggleAgentActions(checked: boolean) {
@@ -173,7 +192,11 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
   }
 
   function commitProfile() {
-    saveProfile(profile);
+    setProfileSaveError(null);
+    if (!saveProfile(profile)) {
+      setProfileSaveError('Could not save on this device. Check browser storage permissions and try again.');
+      return;
+    }
     // Also sync to backend if Supabase is configured (non-blocking, resilient to errors).
     if (isSupabaseConfigured()) {
       syncAccountProfile({
@@ -190,8 +213,12 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
   }
 
   function commitAi(next: AiSettings) {
+    setAiSaveError(null);
+    if (!saveAi(next)) {
+      setAiSaveError('Could not save the AI settings on this device. The key was not stored.');
+      return;
+    }
     setAi(next);
-    saveAi(next);
     setAiSaved(true);
     setTimeout(() => setAiSaved(false), 1800);
   }
@@ -217,8 +244,11 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
     }
     const pinHash = await hashPin(pin);
     const next: LockSettings = { enabled: true, pinHash };
+    if (!saveLock(next)) {
+      setPinError('Could not save the PIN on this device. Check browser storage permissions.');
+      return;
+    }
     setLock(next);
-    saveLock(next);
     setPin('');
     setPinConfirm('');
     setLockNote('Local lock enabled. You will be asked for this PIN when Lyra opens on this device.');
@@ -227,8 +257,11 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
 
   function disablePin() {
     const next: LockSettings = { enabled: false, pinHash: null };
+    if (!saveLock(next)) {
+      setPinError('Could not update the local lock. Check browser storage permissions.');
+      return;
+    }
     setLock(next);
-    saveLock(next);
     setPin('');
     setPinConfirm('');
     setPinError(null);
@@ -353,6 +386,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
               <button type="button" className={buttonPrimary} onClick={commitProfile}>Save profile</button>
               <SavedTick show={profileSaved} />
             </div>
+            {profileSaveError && <p role="alert" className="text-xs text-[#ff8a8a]">{profileSaveError}</p>}
           </div>
         </Panel>
         )}
@@ -524,6 +558,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                   </a>
                 </div>
               </div>
+              {aiSaveError && <p role="alert" className="text-xs text-[#ff8a8a]">{aiSaveError}</p>}
 
               <p className="text-[9.5px] leading-snug text-[#6f7d8a]">
                 {PROVIDER_META[ai.provider].group === 'hosted'
@@ -551,7 +586,9 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                     <span className="rounded-full border border-[#8aa2ff]/30 bg-[#101a2e] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-[#8aa2ff]">Coming soon</span>
                   </span>
                   <span className="mt-0.5 block text-[10px] leading-snug text-[#8190a0]">
-                    Let Lyra paper-trade your portfolio behind an approval gate - never live. Tick to register interest and join the beta.
+                    {soloMode
+                      ? 'Remember this preference on this device. Solo does not submit it or enrol an account in a beta.'
+                      : 'Let Lyra paper-trade your portfolio behind an approval gate - never live. Tick to register interest and join the beta.'}
                   </span>
                 </span>
               </label>
@@ -577,8 +614,31 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
 
         {section === 'notifications' && (
         <div id="notifications" className="scroll-mt-4">
-          <Panel icon={Send} title="Notifications" subtitle="Get signal alerts on Telegram or WhatsApp. Stored to your account only.">
-            <NotificationsSetup />
+          <Panel
+            icon={Send}
+            title="Notifications"
+            subtitle={
+              isSupabaseConfigured()
+                ? 'Get signal alerts on Telegram or WhatsApp. Stored to your account only.'
+                : 'Solo shows signal changes in the console; it does not send background notifications.'
+            }
+          >
+            {isSupabaseConfigured() ? (
+              <NotificationsSetup />
+            ) : (
+              <div className="rounded-lg border border-[#263241] bg-[#0d141c] p-4">
+                <p className="text-sm font-semibold text-[#eef3f8]">
+                  No notification delivery in Solo
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-[#a8b5c2]">
+                  Solo has no account or server-side destination, so it cannot
+                  deliver push, Telegram, WhatsApp, or scheduled digests. Your
+                  watchlist and signal changes remain available when you open
+                  this console. Use the Community build if you want
+                  account-backed delivery across devices.
+                </p>
+              </div>
+            )}
           </Panel>
         </div>
         )}
@@ -587,7 +647,9 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
         <Panel icon={Trash2} title="Data &amp; privacy" subtitle="See it, keep it, or delete it - your call.">
           <div className="space-y-3">
             <p className="text-xs leading-relaxed text-[#a8b5c2]">
-              On this device, Lyra keeps your profile, preferences, board layout and any AI key in local storage. When you are signed in, your profile, settings, watchlist and paper-trade history are also saved to your private Lyra account so they follow you across devices - visible only to you, never sold. Behavioural &ldquo;twin&rdquo; capture stays off until you opt in.
+              {soloMode
+                ? 'Solo keeps your profile, preferences, board layout, watchlist, portfolio, trade log and any AI key in this browser. It has no account or cloud copy. Behavioural “twin” capture is off.'
+                : 'On this device, Lyra keeps your profile, preferences, board layout and any AI key in local storage. When you are signed in, your profile, settings, watchlist and paper-trade history are also saved to your private Lyra account so they follow you across devices - visible only to you, never sold. Behavioural “twin” capture stays off until you opt in.'}
             </p>
             <div className="flex flex-wrap gap-2">
               <button

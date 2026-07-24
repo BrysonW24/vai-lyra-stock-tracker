@@ -338,7 +338,7 @@ export function AppShell({ data, children }: AppShellProps) {
               <span
                 title={
                   soloMode
-                    ? 'Solo mode - device-local book and settings; market signals are illustrative samples'
+                    ? 'Solo mode - device-local book and settings; market scores refresh from public prices when available'
                     : 'Demo data - illustrative sample signals, not a live market scan'
                 }
                 className="hidden items-center gap-1.5 rounded-md border border-[#5a4a1a] bg-[#231a08] px-2 py-1.5 font-mono text-[11px] text-[#f3a33a] sm:flex"
@@ -433,7 +433,7 @@ export function AppShell({ data, children }: AppShellProps) {
             <span className="inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-[#f3a33a]" />
             <span>
               {soloMode
-                ? 'Solo mode - your book, watchlist and trade log stay on this device. Market signals shown here are sample data unless a live source is connected.'
+                ? 'Solo mode - your book, watchlist and trade log stay on this device. Market scores refresh from public prices when available; seeded context panels are labelled Sample.'
                 : 'Demo data - signals shown are illustrative samples, not a live market scan. Connect a live data source to go live.'}
             </span>
           </div>

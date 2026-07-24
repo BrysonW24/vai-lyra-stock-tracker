@@ -3,6 +3,7 @@
 import { Loader2 } from 'lucide-react';
 
 import { OnboardingState, calculateSetupCompleteness } from '@/lib/onboarding';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 interface SetupSummaryCardProps {
   state: OnboardingState;
@@ -11,6 +12,7 @@ interface SetupSummaryCardProps {
 }
 
 export function SetupSummaryCard({ state, onFinish, isSaving }: SetupSummaryCardProps) {
+  const soloMode = !isSupabaseConfigured();
   const completeness = calculateSetupCompleteness(state);
   const profile = state.profile;
   const beginnerLearningLabel = {
@@ -49,7 +51,10 @@ export function SetupSummaryCard({ state, onFinish, isSaving }: SetupSummaryCard
         ? `${state.portfolio.length} holding${state.portfolio.length === 1 ? '' : 's'}${enriched ? ` · ${enriched} priced` : ''}`
         : 'none yet',
     },
-    { label: 'Alerts', value: `${alertsOn} of 3 on` },
+    {
+      label: soloMode ? 'Signals' : 'Alerts',
+      value: soloMode ? 'in-console only' : `${alertsOn} of 3 on`,
+    },
   ];
 
   return (
@@ -74,7 +79,9 @@ export function SetupSummaryCard({ state, onFinish, isSaving }: SetupSummaryCard
           <div className="h-full bg-gradient-to-r from-[#f3a33a] to-[#f8c46b]" style={{ width: `${completeness.percentage}%` }} />
         </div>
         <p className="mt-2 text-[11px] leading-snug text-[#a8b5c2]">
-          Ready to scan. You can add holdings, trade snapshots and tune alerts anytime from the dashboard.
+          {soloMode
+            ? 'Ready to scan. You can add holdings and trade snapshots anytime; Solo shows signal changes when you open the console.'
+            : 'Ready to scan. You can add holdings, trade snapshots and tune alerts anytime from the dashboard.'}
         </p>
       </div>
 

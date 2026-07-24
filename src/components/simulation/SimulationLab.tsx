@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import type { PortfolioHolding } from '@/types/scanner';
+import { useEffect, useState, useMemo } from 'react';
+import type { PortfolioHolding, SignalRow } from '@/types/scanner';
 import {
   calculateScenarioOutcomes,
   calculateCompoundingProjection,
@@ -10,12 +10,25 @@ import {
   type TradeInputs,
 } from '@/lib/simulation';
 import { formatCurrency, formatNumber, formatPercent, formatSignedPercent, toneClass } from '@/lib/format';
+import { buildLocalPortfolioHoldings } from '@/lib/local-dashboard';
+import {
+  loadLocalHoldings,
+  PORTFOLIO_CHANGED_EVENT,
+} from '@/lib/local-portfolio';
+import {
+  loadOnboardingSummary,
+  ONBOARDING_SUMMARY_CHANGED_EVENT,
+} from '@/lib/onboarding-summary';
 
 interface SimulationLabProps {
   portfolio: PortfolioHolding[];
+  signals: SignalRow[];
+  soloMode?: boolean;
 }
 
-export function SimulationLab({ portfolio }: SimulationLabProps) {
+export function SimulationLab({ portfolio, signals, soloMode = false }: SimulationLabProps) {
+  const [activePortfolio, setActivePortfolio] = useState(portfolio);
+  const [activeCurrency, setActiveCurrency] = useState('USD');
   // Input state
   const [availableCash, setAvailableCash] = useState(5000);
   const [ticker, setTicker] = useState('AMD');
@@ -34,6 +47,62 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
   const [bullMovePercent, setBullMovePercent] = useState(20);
   const [bearMovePercent, setBearMovePercent] = useState(-15);
 
+  useEffect(() => {
+    if (!soloMode) return;
+    const refresh = () => {
+      const local = loadLocalHoldings();
+      setActivePortfolio(buildLocalPortfolioHoldings(local, signals));
+    };
+    refresh();
+    const refreshCash = () => {
+      const capital = loadOnboardingSummary()?.capital;
+      const savedCash = capital?.cashAvailable;
+      if (typeof savedCash === 'number' && savedCash >= 0) {
+        setAvailableCash(savedCash);
+      }
+      if (capital?.baseCurrency) {
+        setActiveCurrency(capital.baseCurrency.toUpperCase());
+      }
+    };
+    refreshCash();
+    const first = loadLocalHoldings()[0];
+    const accountCurrency =
+      loadOnboardingSummary()?.capital?.baseCurrency?.toUpperCase() ?? 'USD';
+    const firstSignal = first
+      ? signals.find((signal) => signal.symbol === first.symbol)
+      : undefined;
+    if (first) {
+      setTicker(first.symbol);
+      const quoteCurrency = first.symbol.endsWith('.AX') ? 'AUD' : 'USD';
+      setEntryPrice(
+        quoteCurrency === accountCurrency
+          ? firstSignal?.close || first.averageBuyPrice
+          : 0,
+      );
+    } else {
+      // Do not seed an AUD account with an unexplained USD AMD example. Solo has no
+      // authoritative FX feed here, so a blank scenario is more honest than mixed currencies.
+      setTicker('');
+      setEntryPrice(0);
+    }
+    window.addEventListener(PORTFOLIO_CHANGED_EVENT, refresh);
+    window.addEventListener(
+      ONBOARDING_SUMMARY_CHANGED_EVENT,
+      refreshCash,
+    );
+    return () => {
+      window.removeEventListener(PORTFOLIO_CHANGED_EVENT, refresh);
+      window.removeEventListener(
+        ONBOARDING_SUMMARY_CHANGED_EVENT,
+        refreshCash,
+      );
+    };
+  }, [signals, soloMode]);
+  const cur = (value: number) =>
+    Number.isFinite(value) ? formatCurrency(value, activeCurrency) : '—';
+  const scenarioReady =
+    ticker.trim().length > 0 && entryPrice > 0 && tradeAmount > 0;
+
   // Full analysis (recomputed on every input change)
   const analysis = useMemo(() => {
     const inputs: TradeInputs = {
@@ -46,8 +115,8 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
       holdingPeriodDays,
     };
 
-    return fullSimulationAnalysis(inputs, portfolio);
-  }, [availableCash, ticker, tradeAmount, entryPrice, stopPercent, targetPercent, holdingPeriodDays, portfolio]);
+    return fullSimulationAnalysis(inputs, activePortfolio);
+  }, [availableCash, ticker, tradeAmount, entryPrice, stopPercent, targetPercent, holdingPeriodDays, activePortfolio]);
 
   // Scenarios with custom bull/bear moves
   const scenarios = useMemo(() => {
@@ -73,13 +142,20 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
 
   return (
     <div className="space-y-3 pb-20 md:pb-0">
+      {soloMode && (
+        <p className="rounded border border-[#25405c] bg-[#14202a] px-3 py-2 text-xs text-[#7fb0ff]">
+          Solo treats every amount below as {activeCurrency} and does not convert
+          currencies. Enter a same-currency price, or an FX-adjusted price you
+          calculated yourself.
+        </p>
+      )}
       {/* Header */}
       <section className="grid grid-cols-2 gap-1.5 md:grid-cols-4">
         {[
-          ['Available capital', formatCurrency(availableCash), 'text-[#eef3f8]'],
-          ['Trade amount', formatCurrency(tradeAmount), 'text-[#f3a33a]'],
-          ['Entry price', formatCurrency(entryPrice), 'text-[#dbe5ee]'],
-          ['Portfolio size', portfolio.length.toString(), 'text-[#60a5fa]'],
+          ['Available capital', cur(availableCash), 'text-[#eef3f8]'],
+          ['Trade amount', cur(tradeAmount), 'text-[#f3a33a]'],
+          ['Entry price', cur(entryPrice), 'text-[#dbe5ee]'],
+          ['Portfolio size', activePortfolio.length.toString(), 'text-[#60a5fa]'],
         ].map(([label, value, tone]) => (
           <div className="terminal-panel rounded-md p-2" key={label}>
             <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
@@ -115,7 +191,7 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
                 />
               </label>
               <label className="grid gap-1">
-                <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Trade amount ($)</span>
+                <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Trade amount ({activeCurrency})</span>
                 <input
                   type="number"
                   value={tradeAmount}
@@ -124,7 +200,7 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
                 />
               </label>
               <label className="grid gap-1">
-                <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Entry price ($)</span>
+                <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Entry price ({activeCurrency})</span>
                 <input
                   type="number"
                   value={entryPrice}
@@ -233,14 +309,26 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
 
         {/* OUTPUTS PANELS */}
         <div className="space-y-3">
+          {!scenarioReady ? (
+            <div className="terminal-panel rounded-md p-6 text-center">
+              <p className="text-sm font-semibold text-[#dbe5ee]">
+                Enter a ticker and a positive {activeCurrency} entry price
+              </p>
+              <p className="mt-1 text-xs text-[#8190a0]">
+                Position sizing, risk, and scenario outcomes appear only after
+                the inputs are complete.
+              </p>
+            </div>
+          ) : (
+            <>
           {/* Position Sizing */}
           <div className="terminal-panel rounded-md p-3">
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Position sizing</h2>
             <div className="mt-3 grid grid-cols-3 gap-1.5 md:grid-cols-3">
               {[
                 ['Shares', formatNumber(analysis.sizing.shares, 2), 'text-[#dbe5ee]'],
-                ['Stop price', formatCurrency(analysis.sizing.stopPrice), 'text-[#ff6b6b]'],
-                ['Target price', formatCurrency(analysis.sizing.targetPrice), 'text-[#43d18b]'],
+                ['Stop price', cur(analysis.sizing.stopPrice), 'text-[#ff6b6b]'],
+                ['Target price', cur(analysis.sizing.targetPrice), 'text-[#43d18b]'],
               ].map(([label, value, tone]) => (
                 <div key={label}>
                   <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
@@ -255,8 +343,8 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Risk & reward</h2>
             <div className="mt-3 grid grid-cols-2 gap-1.5 md:grid-cols-4">
               {[
-                ['Risk ($)', formatCurrency(analysis.riskReward.riskDollar), toneClass(-1)],
-                ['Reward ($)', formatCurrency(analysis.riskReward.rewardDollar), toneClass(1)],
+                [`Risk (${activeCurrency})`, cur(analysis.riskReward.riskDollar), toneClass(-1)],
+                [`Reward (${activeCurrency})`, cur(analysis.riskReward.rewardDollar), toneClass(1)],
                 ['R:R ratio', formatNumber(analysis.riskReward.riskRewardRatio, 2), 'text-[#dbe5ee]'],
                 ['Risk % capital', formatPercent(analysis.riskReward.riskPercent), toneClass(-1)],
               ].map(([label, value, tone]) => (
@@ -297,7 +385,7 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
                     <th className="px-3 py-2">Scenario</th>
                     <th className="px-3 py-2">Price move</th>
                     <th className="px-3 py-2">Result price</th>
-                    <th className="px-3 py-2">P&L ($)</th>
+                    <th className="px-3 py-2">P&amp;L ({activeCurrency})</th>
                     <th className="px-3 py-2">P&L (%)</th>
                     <th className="px-3 py-2">Status</th>
                   </tr>
@@ -307,8 +395,8 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
                     <tr className="font-mono text-[#dbe5ee]" key={s.label}>
                       <td className="px-3 py-2">{s.label}</td>
                       <td className="px-3 py-2">{formatSignedPercent(s.priceMove, 1)}</td>
-                      <td className="px-3 py-2">{formatCurrency(s.resultPrice)}</td>
-                      <td className={`px-3 py-2 ${toneClass(s.pnlDollar)}`}>{formatCurrency(s.pnlDollar)}</td>
+                      <td className="px-3 py-2">{cur(s.resultPrice)}</td>
+                      <td className={`px-3 py-2 ${toneClass(s.pnlDollar)}`}>{cur(s.pnlDollar)}</td>
                       <td className={`px-3 py-2 ${toneClass(s.pnlPercent)}`}>{formatSignedPercent(s.pnlPercent, 1)}</td>
                       <td className="px-3 py-2">
                         <span
@@ -336,10 +424,10 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Win rate analysis</h2>
             <div className="mt-3 grid grid-cols-2 gap-1.5 md:grid-cols-4">
               {[
-                ['Avg win ($)', formatCurrency(winRateAnalysis.avgWinDollar), toneClass(1)],
-                ['Avg loss ($)', formatCurrency(winRateAnalysis.avgLossDollar), toneClass(-1)],
+                [`Avg win (${activeCurrency})`, cur(winRateAnalysis.avgWinDollar), toneClass(1)],
+                [`Avg loss (${activeCurrency})`, cur(winRateAnalysis.avgLossDollar), toneClass(-1)],
                 ['Breakeven win %', formatPercent(winRateAnalysis.requiredWinRatePercent, 1), 'text-[#dbe5ee]'],
-                ['EV per trade ($)', formatCurrency(winRateAnalysis.expectedValuePerTrade), toneClass(winRateAnalysis.expectedValuePerTrade)],
+                [`EV per trade (${activeCurrency})`, cur(winRateAnalysis.expectedValuePerTrade), toneClass(winRateAnalysis.expectedValuePerTrade)],
               ].map(([label, value, tone]) => (
                 <div key={label}>
                   <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
@@ -350,14 +438,20 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
             <p className="mt-3 text-xs leading-5 text-[#a8b5c2]">
               If win rate assumption is {formatPercent(winRateAssumption, 0)}, expected value per trade is{' '}
               <span className={toneClass((winRateAnalysis.avgWinDollar * winRateAssumption) / 100 - (winRateAnalysis.avgLossDollar * (1 - winRateAssumption / 100)))}>
-                {formatCurrency((winRateAnalysis.avgWinDollar * winRateAssumption) / 100 - (winRateAnalysis.avgLossDollar * (1 - winRateAssumption / 100)))}
+                {cur((winRateAnalysis.avgWinDollar * winRateAssumption) / 100 - (winRateAnalysis.avgLossDollar * (1 - winRateAssumption / 100)))}
               </span>
               .
             </p>
           </div>
+            </>
+          )}
 
           {/* Compounding Projection Chart */}
-          <CompoundingProjectionChart data={compoundingData} initialCapital={availableCash} />
+          <CompoundingProjectionChart
+            data={compoundingData}
+            initialCapital={availableCash}
+            currency={activeCurrency}
+          />
         </div>
       </section>
     </div>
@@ -371,9 +465,11 @@ export function SimulationLab({ portfolio }: SimulationLabProps) {
 function CompoundingProjectionChart({
   data,
   initialCapital,
+  currency,
 }: {
   data: Array<{ month: number; endBalance: number }>;
   initialCapital: number;
+  currency: string;
 }) {
   const balances = data.map((d) => d.endBalance);
   const minBalance = Math.min(...balances, initialCapital);
@@ -403,10 +499,10 @@ function CompoundingProjectionChart({
       <div className="flex items-center justify-between border-b border-[#1b2530] px-4 py-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Compounding projection</p>
-          <p className="mt-1 text-xs text-[#a8b5c2]">Growth to {formatCurrency(finalBalance)} over {data.length - 1} months.</p>
+          <p className="mt-1 text-xs text-[#a8b5c2]">Growth to {formatCurrency(finalBalance, currency)} over {data.length - 1} months.</p>
         </div>
         <div className="text-right">
-          <p className={`numeric font-mono text-sm font-semibold ${toneClass(totalGain)}`}>{formatCurrency(totalGain)}</p>
+          <p className={`numeric font-mono text-sm font-semibold ${toneClass(totalGain)}`}>{formatCurrency(totalGain, currency)}</p>
           <p className={`numeric font-mono text-xs ${toneClass(totalGain)}`}>{formatSignedPercent(totalGainPercent, 1)}</p>
         </div>
       </div>

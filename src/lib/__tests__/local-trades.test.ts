@@ -13,6 +13,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { addLocalTradeLog, loadLocalTradeLogs, undoLocalTradeLog } from '@/lib/local-trades';
 import { loadLocalHoldings } from '@/lib/local-portfolio';
+import {
+  loadOnboardingSummary,
+  saveOnboardingSummary,
+} from '@/lib/onboarding-summary';
 
 function makeWindowWithStorage() {
   const store = new Map<string, string>();
@@ -70,6 +74,53 @@ describe('addLocalTradeLog', () => {
     const holding = loadLocalHoldings().find((h) => h.symbol === 'NVDA');
     expect(holding?.quantity).toBeCloseTo(25);
     expect(holding?.averageBuyPrice).toBeCloseTo(200);
+  });
+
+  it('atomically debits and restores the saved Solo cash balance', async () => {
+    stubQuote(50);
+    expect(
+      saveOnboardingSummary({
+        onboarded: true,
+        tradedBefore: 'yes',
+        portfolioCount: 0,
+        watchlistCount: 0,
+        capital: { baseCurrency: 'AUD', cashAvailable: 10_000 },
+      }),
+    ).toBe(true);
+
+    const log = await addLocalTradeLog({
+      side: 'buy',
+      symbol: 'BHP.AX',
+      notional: 1_000,
+    });
+    expect(log).not.toBeNull();
+    expect(loadOnboardingSummary()?.capital?.cashAvailable).toBe(9_000);
+
+    expect(undoLocalTradeLog(log!.id).ok).toBe(true);
+    expect(loadOnboardingSummary()?.capital?.cashAvailable).toBe(10_000);
+    expect(loadLocalHoldings()).toEqual([]);
+  });
+
+  it('refuses the whole local trade when it would overdraw saved cash', async () => {
+    stubQuote(50);
+    saveOnboardingSummary({
+      onboarded: true,
+      tradedBefore: 'yes',
+      portfolioCount: 0,
+      watchlistCount: 0,
+      capital: { baseCurrency: 'AUD', cashAvailable: 500 },
+    });
+
+    expect(
+      await addLocalTradeLog({
+        side: 'buy',
+        symbol: 'BHP.AX',
+        notional: 1_000,
+      }),
+    ).toBeNull();
+    expect(loadOnboardingSummary()?.capital?.cashAvailable).toBe(500);
+    expect(loadLocalHoldings()).toEqual([]);
+    expect(loadLocalTradeLogs()).toEqual([]);
   });
 
   it('a second buy at a higher price moves the average exactly', async () => {

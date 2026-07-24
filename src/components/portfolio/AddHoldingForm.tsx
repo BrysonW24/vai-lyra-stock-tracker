@@ -59,13 +59,20 @@ export function AddHoldingForm() {
       if (!result.ok) {
         if (result.demo) {
           // Demo mode (no Supabase): persist locally so the holding shows in the book.
-          addLocalHolding({
+          const saved = addLocalHolding({
             symbol: formData.symbol,
             quantity: parseFloat(formData.quantity) || 1,
             averageBuyPrice: parseFloat(formData.averageBuyPrice) || 0,
             purchaseDate: formData.purchaseDate || undefined,
             notes: formData.notes || undefined,
           });
+          if (!saved) {
+            setStatus({
+              type: 'error',
+              message: 'Could not save on this device. Check browser storage permissions and try again.',
+            });
+            return;
+          }
         } else {
           setStatus({
             type: 'error',

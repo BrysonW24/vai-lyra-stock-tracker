@@ -13,6 +13,11 @@ import { loadOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadSavedPrompts, toggleSavedPrompt } from '@/lib/saved-prompts';
 import type { ChatProfile } from '@/lib/ai/chat-context';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
+import {
+  aiFailureMessage,
+  normaliseAiFailureReason,
+  type AiFailureReason,
+} from '@/lib/ai/failures';
 
 interface ProposedAction {
   type: 'add_watchlist' | 'add_portfolio' | 'log_trade';
@@ -164,6 +169,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const [category, setCategory] = useState<string>(CATEGORIES[0].label);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<Status>('idle');
+  const [errorReason, setErrorReason] = useState<AiFailureReason | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
@@ -173,6 +179,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     setSuggestions([]);
     setInput('');
     setStatus('idle');
+    setErrorReason(null);
   };
 
   const toggleSave = (q: string) => setSaved(toggleSavedPrompt(q));
@@ -240,7 +247,9 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   }, [open, onClose]);
 
   // Still waiting for the /api/ai/status response (fetch in-flight).
+  const soloMode = !isSupabaseConfigured();
   const checkingRuntime =
+    !soloMode &&
     ai != null &&
     !ai.apiKey?.trim() &&
     runtime == null &&
@@ -253,8 +262,14 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const connected =
     ai != null &&
     (!!ai.apiKey?.trim() ||
-      (ai.provider === 'openai' && (runtime?.hostedOpenAi || runtime === null)) ||
-      (ai.provider === 'google' && (runtime?.sharedGoogle || runtime === null || process.env.NEXT_PUBLIC_LYRA_FREE_AI === '1')));
+      (!soloMode &&
+        ai.provider === 'openai' &&
+        (runtime?.hostedOpenAi || runtime === null)) ||
+      (!soloMode &&
+        ai.provider === 'google' &&
+        (runtime?.sharedGoogle ||
+          runtime === null ||
+          process.env.NEXT_PUBLIC_LYRA_FREE_AI === '1')));
 
   const send = async (text: string) => {
     const trimmed = text.trim();
@@ -264,6 +279,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     setInput('');
     setSuggestions([]);
     setStatus('sending');
+    setErrorReason(null);
     try {
       const agentActions = loadAgent().actionsEnabled;
       // Solo's own book/watchlist live in localStorage, while the server dataset is an
@@ -300,9 +316,11 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
         setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 3) : []);
         setStatus('idle');
       } else {
+        setErrorReason(normaliseAiFailureReason(data.reason));
         setStatus('error');
       }
     } catch {
+      setErrorReason('provider_unavailable');
       setStatus('error');
     }
   };
@@ -331,11 +349,13 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
         // point at accounts that do not exist. Save to the browser-local twins instead; the
         // local- undo ids route undoAction to the same stores.
         if (type === 'add_watchlist') {
-          addLocalWatchItem({ symbol });
-          outcome = { actionStatus: 'done', undoId: `${LOCAL_TRADE_ID_PREFIX}${symbol}` };
+          outcome = addLocalWatchItem({ symbol })
+            ? { actionStatus: 'done', undoId: `${LOCAL_TRADE_ID_PREFIX}${symbol}` }
+            : { actionStatus: 'failed' };
         } else if (type === 'add_portfolio') {
-          addLocalHolding({ symbol, quantity: msg.qty ?? 10, averageBuyPrice: msg.price ?? 0 });
-          outcome = { actionStatus: 'done', undoId: `${LOCAL_TRADE_ID_PREFIX}${symbol}` };
+          outcome = addLocalHolding({ symbol, quantity: msg.qty ?? 10, averageBuyPrice: msg.price ?? 0 })
+            ? { actionStatus: 'done', undoId: `${LOCAL_TRADE_ID_PREFIX}${symbol}` }
+            : { actionStatus: 'failed' };
         } else {
           const log = await addLocalTradeLog({ side: msg.action.side ?? 'buy', symbol, notional: msg.action.notional ?? 0, source: 'chat' });
           // null = no notional or no live quote - refusing beats logging a made-up fill.
@@ -429,8 +449,10 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
             <p className="max-w-xs text-[12px] leading-relaxed text-[#a8b5c2]">
               {checkingRuntime
                 ? 'Lyra is checking whether the hosted beta key is available for this deployment.'
-                : ai?.provider === 'openai'
-                  ? 'Hosted OpenAI is not configured for this deployment yet. Add your own OpenAI key, or set OPENAI_API_KEY server-side and redeploy.'
+                : soloMode
+                  ? 'Solo has no hosted model. Add your own provider key in Settings; it stays in this browser and is sent only with your requests.'
+                  : ai?.provider === 'openai'
+                    ? 'Hosted OpenAI is not configured for this deployment yet. Add your own OpenAI key, or set OPENAI_API_KEY server-side and redeploy.'
                   : 'Lyra runs on a model you choose. Add a free key or your own provider key in Settings. Browser keys stay on this device.'}
             </p>
             <Link
@@ -598,7 +620,9 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 </div>
               )}
               {status === 'error' && (
-                <p className="text-center text-[11px] text-[#ff8a8a]">That didn&apos;t go through - check your key in settings and try again.</p>
+                <p className="text-center text-[11px] text-[#ff8a8a]">
+                  {aiFailureMessage(errorReason ?? 'error')}
+                </p>
               )}
 
               {status === 'idle' && messages.length > 0 && suggestions.length > 0 && (

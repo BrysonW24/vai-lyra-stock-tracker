@@ -24,7 +24,16 @@ export interface LocalTradeLog {
   undone_at: string | null;
 }
 
-import { addLocalHolding, loadLocalHoldings, removeLocalHolding } from './local-portfolio';
+import {
+  addLocalHolding,
+  loadLocalHoldings,
+  removeLocalHolding,
+  saveLocalHoldings,
+} from './local-portfolio';
+import {
+  loadOnboardingSummary,
+  saveOnboardingSummary,
+} from './onboarding-summary';
 
 const KEY = 'lyra.trades.logs';
 
@@ -57,13 +66,14 @@ export function loadLocalTradeLogs(): LocalTradeLog[] {
   }
 }
 
-function persist(logs: LocalTradeLog[]): void {
-  if (typeof window === 'undefined') return;
+function persist(logs: LocalTradeLog[]): boolean {
+  if (typeof window === 'undefined') return false;
   try {
     window.localStorage.setItem(KEY, JSON.stringify(logs));
     notify();
+    return true;
   } catch {
-    /* storage unavailable - ignore */
+    return false;
   }
 }
 
@@ -74,15 +84,14 @@ function persist(logs: LocalTradeLog[]): void {
  * row keeps the original notional). Without this, the chat's "holdings updated"
  * confirmation would be untrue in Solo mode.
  */
-function applyTradeToLocalHoldings(log: LocalTradeLog, direction: 1 | -1): void {
+function applyTradeToLocalHoldings(log: LocalTradeLog, direction: 1 | -1): boolean {
   const existing = loadLocalHoldings().find((h) => h.symbol === log.symbol);
   const q0 = existing?.quantity ?? 0;
   const a0 = existing?.averageBuyPrice ?? 0;
   const q1 = q0 + log.quantity_delta * direction;
   if (q1 <= 1e-9) {
     // Sold (or reversed) down to nothing - clamp rather than hold a negative position.
-    removeLocalHolding(log.symbol);
-    return;
+    return removeLocalHolding(log.symbol);
   }
   let a1 = a0;
   if (log.side === 'buy') {
@@ -90,7 +99,30 @@ function applyTradeToLocalHoldings(log: LocalTradeLog, direction: 1 | -1): void 
     a1 = (q0 * a0 + log.notional_value * direction) / q1;
     if (!Number.isFinite(a1) || a1 < 0) a1 = log.fill_price;
   }
-  addLocalHolding({ symbol: log.symbol, quantity: q1, averageBuyPrice: a1, notes: existing?.notes });
+  return addLocalHolding({ symbol: log.symbol, quantity: q1, averageBuyPrice: a1, notes: existing?.notes });
+}
+
+/**
+ * Keep Solo's optional onboarding cash balance coherent with the trade log. When the user never
+ * supplied cash, there is no ledger to mutate. When they did, a buy cannot take it negative and
+ * both apply/undo persist through the same fail-closed storage path as holdings.
+ */
+function applyTradeToLocalCash(
+  log: LocalTradeLog,
+  direction: 1 | -1,
+): boolean {
+  const summary = loadOnboardingSummary();
+  const current = summary?.capital?.cashAvailable;
+  if (!summary || typeof current !== 'number') return true;
+  const next = Math.round((current + log.cash_delta * direction) * 100) / 100;
+  if (!Number.isFinite(next) || next < 0) return false;
+  return saveOnboardingSummary({
+    ...summary,
+    capital: {
+      ...summary.capital,
+      cashAvailable: next,
+    },
+  });
 }
 
 /**
@@ -136,8 +168,22 @@ export async function addLocalTradeLog(input: {
     created_at: now,
     undone_at: null,
   };
-  persist([log, ...loadLocalTradeLogs()]);
-  applyTradeToLocalHoldings(log, 1);
+  const previousLogs = loadLocalTradeLogs();
+  const previousHoldings = loadLocalHoldings();
+  if (!persist([log, ...previousLogs])) return null;
+  if (!applyTradeToLocalHoldings(log, 1)) {
+    // Keep the two local stores coherent. Rolling back to a smaller payload should succeed even
+    // after a quota failure; either way, never report a successful trade with stale holdings.
+    persist(previousLogs);
+    return null;
+  }
+  if (!applyTradeToLocalCash(log, 1)) {
+    // All three stores are one user-visible transaction. If cash cannot move, restore the
+    // holdings and log too so no surface can claim a partially-applied trade.
+    saveLocalHoldings(previousHoldings);
+    persist(previousLogs);
+    return null;
+  }
   return log;
 }
 
@@ -154,9 +200,19 @@ export function undoLocalTradeLog(id: string): { ok: boolean; error?: string } {
   if (newestApplied && newestApplied.id !== id) {
     return { ok: false, error: `Undo ${target.symbol} trades in reverse order - newest first.` };
   }
-  persist(
-    logs.map((t) => (t.id === id ? { ...t, status: 'undone' as const, undone_at: new Date().toISOString() } : t)),
+  const nextLogs = logs.map((t) =>
+    t.id === id ? { ...t, status: 'undone' as const, undone_at: new Date().toISOString() } : t,
   );
-  applyTradeToLocalHoldings(target, -1);
+  const previousHoldings = loadLocalHoldings();
+  if (!persist(nextLogs)) return { ok: false, error: 'Could not save the undo on this device.' };
+  if (!applyTradeToLocalHoldings(target, -1)) {
+    persist(logs);
+    return { ok: false, error: 'Could not update holdings on this device.' };
+  }
+  if (!applyTradeToLocalCash(target, -1)) {
+    saveLocalHoldings(previousHoldings);
+    persist(logs);
+    return { ok: false, error: 'Could not update cash on this device.' };
+  }
   return { ok: true };
 }

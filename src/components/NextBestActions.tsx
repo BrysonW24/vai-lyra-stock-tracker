@@ -53,9 +53,12 @@ export function NextBestActions({ signals, portfolio, watchlist }: Props) {
       } else if (d.demo) {
         // Solo/demo deployment - no server store exists, so save to the browser-local
         // watchlist instead of pointing at accounts that cannot be created here.
-        addLocalWatchItem({ symbol: a.symbol });
-        setActed((x) => ({ ...x, [a.id]: 'done' }));
-        setUndoIds((u) => ({ ...u, [a.id]: `local-${a.symbol}` }));
+        if (addLocalWatchItem({ symbol: a.symbol })) {
+          setActed((x) => ({ ...x, [a.id]: 'done' }));
+          setUndoIds((u) => ({ ...u, [a.id]: `local-${a.symbol}` }));
+        } else {
+          setActed((x) => ({ ...x, [a.id]: 'failed' }));
+        }
       } else if (res.status === 401) {
         // Configured deploy, signed out: accounts exist, "sign in to save" is right.
         setActed((x) => ({ ...x, [a.id]: 'demo' }));

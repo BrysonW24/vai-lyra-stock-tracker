@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Sparkles, X, ArrowRight } from 'lucide-react';
 import { AiInsightStep } from '@/components/onboarding/AiInsightStep';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 const DISMISS_KEY = 'lyra.aiOffer.dismissed';
 
@@ -12,6 +13,7 @@ const DISMISS_KEY = 'lyra.aiOffer.dismissed';
  * used (AiInsightStep) in a modal. Dismissible + one-time: hidden after they set it up or dismiss it.
  */
 export function AiOfferCard() {
+  const soloMode = !isSupabaseConfigured();
   const [dismissed, setDismissed] = useState(true); // hidden until mount resolves localStorage (no SSR flash)
   const [open, setOpen] = useState(false);
 
@@ -58,7 +60,9 @@ export function AiOfferCard() {
           <div className="min-w-0">
             <h2 className="text-[13px] font-semibold text-[#eef3f8]">Turn on your AI copilot</h2>
             <p className="mt-0.5 text-[11px] leading-relaxed text-[#8190a0]">
-              Ask Lyra to explain any setup in plain English, grounded in your data. Runs on a free model out of the box, or bring your own key for more power. Optional - you can do this anytime.
+              {soloMode
+                ? 'Ask Lyra to explain any setup in plain English, grounded in your device-local data. Solo is bring-your-own-key only; your key stays in this browser. Optional - you can do this anytime.'
+                : 'Ask Lyra to explain any setup in plain English, grounded in your data. Use the hosted beta model, or bring your own key. Optional - you can do this anytime.'}
             </p>
             <button
               type="button"

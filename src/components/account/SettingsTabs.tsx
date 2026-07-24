@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BellRing, BrainCircuit, UserRound } from 'lucide-react';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 /** The three settings families, each now its own page instead of one long scroll. */
 const TABS = [
@@ -13,6 +14,7 @@ const TABS = [
 
 export function SettingsTabs() {
   const pathname = usePathname();
+  const soloMode = !isSupabaseConfigured();
   return (
     <nav className="grid grid-cols-3 gap-1 rounded-lg border border-[#1b2530] bg-[#0b1016] p-1">
       {TABS.map(({ href, label, icon: Icon }) => {
@@ -29,7 +31,9 @@ export function SettingsTabs() {
             }`}
           >
             <Icon size={14} className="shrink-0" />
-            <span className="truncate">{label}</span>
+            <span className="truncate">
+              {soloMode && href === '/account' ? 'Settings' : label}
+            </span>
           </Link>
         );
       })}

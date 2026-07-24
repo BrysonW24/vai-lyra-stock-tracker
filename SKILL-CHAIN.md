@@ -67,7 +67,7 @@ multiple owning chains per row are allowed; a parent path claims everything unde
 | AI routes + founder ops surface | `src/app/api/ai/` `src/app/ai-ops/` | ai-quality |
 | Notification spine + channels | `src/lib/notifications/` `src/lib/push/` `src/lib/alert-prefs.ts` `contracts/` | notification-health |
 | Notification routes | `src/app/api/notifications/` `src/app/api/push/` `src/app/api/webhooks/` | notification-health |
-| Onboarding + activation libs | `src/lib/onboarding.ts` `src/lib/onboarding-progress.ts` `src/lib/onboarding-summary.ts` `src/lib/sync-onboarding.ts` `src/lib/setup-status.ts` `src/lib/install-platform.ts` `src/lib/local-watchlist.ts` `src/lib/local-portfolio.ts` `src/lib/local-trades.ts` `src/lib/activation/` | onboarding-funnel |
+| Onboarding + activation libs | `src/lib/onboarding.ts` `src/lib/onboarding-progress.ts` `src/lib/onboarding-summary.ts` `src/lib/sync-onboarding.ts` `src/lib/setup-status.ts` `src/lib/install-platform.ts` `src/lib/welcome-entry.ts` `src/lib/product-tour.ts` `src/lib/local-dashboard.ts` `src/lib/local-watchlist.ts` `src/lib/local-portfolio.ts` `src/lib/local-trades.ts` `src/lib/activation/` | onboarding-funnel |
 | Funnel pages + routes | `src/app/welcome/` `src/app/onboarding/` `src/app/auth/` `src/app/api/activation/` `src/app/api/onboarding/` `src/app/api/demo/` `src/middleware.ts` | onboarding-funnel |
 | Onboarding docs + companion | `docs/walkthroughs/` `docs/onboarding/` `ONBOARDING.md` `AGENT-ONBOARDING.md` `QUICKSTART.md` `public/setup-companion.html` | onboarding-parity, setup |
 | Schema + SQL | `supabase/` `sql/` | data-integrity |

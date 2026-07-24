@@ -6,6 +6,7 @@ import { Check, Compass, GraduationCap, X } from 'lucide-react';
 import { loadOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadLocalHoldings } from '@/lib/local-portfolio';
 import { loadProfile, loadAi, loadNotifications } from '@/lib/account';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 interface Step {
   label: string;
@@ -21,6 +22,7 @@ interface Step {
  * signed-in users get the server-backed SetupChecklist instead.
  */
 export function GettingStartedBanner() {
+  const soloMode = !isSupabaseConfigured();
   const [ready, setReady] = useState(false);
   const [show, setShow] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -63,6 +65,11 @@ export function GettingStartedBanner() {
   }
 
   if (!ready || !show) return null;
+
+  // Completing Solo onboarding is the whole required setup. Optional AI, paper
+  // trading, and Community-only notification delivery must not become a permanent
+  // incomplete checklist for a returning Solo user.
+  if (soloMode && onboarded && !neverTraded) return null;
 
   const dismissButton = (
     <button

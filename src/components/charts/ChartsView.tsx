@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import type { DashboardData, SignalRow } from '@/types/scanner';
 import { MiniSparkline } from '@/components/ChartPrimitives';
 import { TickerLogo } from '@/components/TickerLogo';
@@ -6,6 +9,20 @@ import { PortfolioDonut } from '@/components/charts/PortfolioDonut';
 import { ChartsTabs } from '@/components/charts/ChartsTabs';
 import { buildScoreHistory } from '@/lib/score-history';
 import { formatCurrency, formatSignedPercent } from '@/lib/format';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
+import {
+  loadLocalHoldings,
+  PORTFOLIO_CHANGED_EVENT,
+} from '@/lib/local-portfolio';
+import {
+  loadLocalWatchlist,
+  WATCHLIST_CHANGED_EVENT,
+  type LocalWatchItem,
+} from '@/lib/local-watchlist';
+import {
+  buildLocalPortfolioHoldings,
+  buildLocalWatchlistRows,
+} from '@/lib/local-dashboard';
 
 function scoreSeries(signal: SignalRow): number[] {
   return buildScoreHistory({
@@ -44,26 +61,65 @@ function SparkCard({ signal }: { signal: SignalRow }) {
  * the Portfolio tab from real data and hands the rest to ChartsTabs. Research only.
  */
 export function ChartsView({ data }: { data: DashboardData }) {
-  const sigBySymbol = new Map(data.signals.map((s) => [s.symbol, s]));
+  const soloMode = !isSupabaseConfigured();
+  const [personalData, setPersonalData] = useState(data);
+  const [localWatchlist, setLocalWatchlist] = useState<LocalWatchItem[]>([]);
 
-  const bookValue = data.portfolio.reduce((sum, h) => sum + h.marketValue, 0);
-  const bookPnl = data.portfolio.reduce((sum, h) => sum + h.unrealisedPnl, 0);
-  const bookPnlPct = data.portfolio.reduce((sum, h) => sum + h.unrealisedPnlPercent * (h.portfolioWeight / 100), 0);
+  useEffect(() => {
+    if (!soloMode) return;
+    const refresh = () => {
+      const localWatchItems = loadLocalWatchlist();
+      setLocalWatchlist(localWatchItems);
+      setPersonalData({
+        ...data,
+        portfolio: buildLocalPortfolioHoldings(
+          loadLocalHoldings(),
+          data.signals,
+        ),
+        watchlist: buildLocalWatchlistRows(
+          localWatchItems,
+          data.signals,
+        ),
+      });
+    };
+    refresh();
+    window.addEventListener(PORTFOLIO_CHANGED_EVENT, refresh);
+    window.addEventListener(WATCHLIST_CHANGED_EVENT, refresh);
+    return () => {
+      window.removeEventListener(PORTFOLIO_CHANGED_EVENT, refresh);
+      window.removeEventListener(WATCHLIST_CHANGED_EVENT, refresh);
+    };
+  }, [data, soloMode]);
+
+  const activeData = soloMode ? personalData : data;
+  const sigBySymbol = useMemo(
+    () => new Map(activeData.signals.map((s) => [s.symbol, s])),
+    [activeData.signals],
+  );
+
+  const bookValue = activeData.portfolio.reduce((sum, h) => sum + h.marketValue, 0);
+  const bookPnl = activeData.portfolio.reduce((sum, h) => sum + h.unrealisedPnl, 0);
+  const bookPnlPct = activeData.portfolio.reduce((sum, h) => sum + h.unrealisedPnlPercent * (h.portfolioWeight / 100), 0);
   const pnlTone = bookPnl >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]';
 
-  const donutSlices = data.portfolio.map((h) => ({ label: h.symbol, value: h.marketValue }));
+  const donutSlices = activeData.portfolio.map((h) => ({ label: h.symbol, value: h.marketValue }));
 
-  const sectorOf = new Map(data.tickers.map((t) => [t.symbol, t.sector]));
+  const sectorOf = new Map(activeData.tickers.map((t) => [t.symbol, t.sector]));
   const sectorTotals = new Map<string, number>();
-  for (const h of data.portfolio) {
+  for (const h of activeData.portfolio) {
     const sector = sectorOf.get(h.symbol) ?? 'Other';
     sectorTotals.set(sector, (sectorTotals.get(sector) ?? 0) + h.marketValue);
   }
   const sectors = [...sectorTotals.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
   const sectorTotal = sectors.reduce((sum, s) => sum + s.value, 0) || 1;
 
-  const holdingSignals = data.portfolio.map((h) => sigBySymbol.get(h.symbol)).filter((s): s is SignalRow => Boolean(s));
-  const watchSignals = data.watchlist.map((w) => sigBySymbol.get(w.symbol)).filter((s): s is SignalRow => Boolean(s));
+  const holdingSignals = activeData.portfolio.map((h) => sigBySymbol.get(h.symbol)).filter((s): s is SignalRow => Boolean(s));
+  const watchSignals = (soloMode ? localWatchlist : activeData.watchlist)
+    .map((w) => sigBySymbol.get(w.symbol))
+    .filter((s): s is SignalRow => Boolean(s));
+  const watchedCount = soloMode
+    ? localWatchlist.length
+    : activeData.watchlist.length;
 
   const portfolio = (
     <div className="space-y-3">
@@ -72,7 +128,7 @@ export function ChartsView({ data }: { data: DashboardData }) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Your picture</p>
           <p className="font-mono text-[11px] text-[#8190a0]">
             Book <span className="text-[#eef3f8]">{formatCurrency(bookValue)}</span> ·{' '}
-            <span className={pnlTone}>{formatCurrency(bookPnl)} {formatSignedPercent(bookPnlPct)}</span> · {data.portfolio.length} holdings · {data.watchlist.length} watched
+            <span className={pnlTone}>{formatCurrency(bookPnl)} {formatSignedPercent(bookPnlPct)}</span> · {activeData.portfolio.length} holdings · {watchedCount} watched
           </p>
         </div>
 

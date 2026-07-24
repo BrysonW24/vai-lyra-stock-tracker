@@ -7,6 +7,7 @@ import { BellRing, Smartphone } from 'lucide-react';
 import { faviconUrl } from '@/lib/ticker-logos';
 import { getPushSupportStatus, subscribeToPush } from '@/lib/push/client';
 import { useIsNativeShell } from '@/lib/native/platform';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 interface AlertPreferencePanelProps {
   alerts: AlertPreferences;
@@ -61,6 +62,7 @@ function ChannelCard({ logo, name, status, on }: { logo: ReactNode; name: string
 }
 
 export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferencePanelProps) {
+  const soloMode = !isSupabaseConfigured();
   const nativeShell = useIsNativeShell();
   const [pushBusy, setPushBusy] = useState(false);
   const [pushNote, setPushNote] = useState<string | null>(null);
@@ -134,6 +136,40 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
     }
     onChange({ ...alerts, [key]: value });
   };
+
+  if (soloMode) {
+    return (
+      <div className="space-y-3">
+        <section className="rounded-lg border border-[#1d4f3a] bg-[#0d251b] p-4">
+          <div className="flex items-start gap-2.5">
+            <BellRing size={18} className="mt-0.5 shrink-0 text-[#43d18b]" />
+            <div>
+              <h3 className="text-sm font-semibold text-[#eef3f8]">
+                Solo keeps notifications honest
+              </h3>
+              <p className="mt-1 text-[12px] leading-relaxed text-[#a8b5c2]">
+                This accountless build does not send background push, Telegram,
+                WhatsApp, or scheduled digests. Signal changes remain visible
+                inside the console when you open it. The Community build adds
+                account-backed delivery.
+              </p>
+              <p className="mt-2 text-[10px] text-[#6f7d8a]">
+                No notification destination or personal identifier is collected
+                in Solo.
+              </p>
+            </div>
+          </div>
+        </section>
+        <button
+          type="button"
+          onClick={onNext}
+          className="w-full rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
+        >
+          Continue without notifications
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">

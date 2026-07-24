@@ -174,7 +174,10 @@ export function TradeLogView() {
       )}
 
       <p className="text-[10px] text-white/30">
-        Undo restores cash and your position. Trades must be undone in reverse order per symbol. Research and tracking only - not a brokerage.
+        {demo
+          ? 'Undo restores the device-local holdings change and any saved Solo cash balance.'
+          : 'Undo restores cash and your position.'}{' '}
+        Trades must be undone in reverse order per symbol. Research and tracking only - not a brokerage.
       </p>
     </div>
   );

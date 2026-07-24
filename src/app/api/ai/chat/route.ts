@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { complete, type AiProvider } from '@/lib/ai/gateway';
+import { complete, resolveModel, type AiProvider } from '@/lib/ai/gateway';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { guardProse } from '@/lib/ai/guardrails/prose';
 import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
@@ -17,6 +17,7 @@ import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_CHAT_FORMAT, composeSystem, toneFo
 import { recordAiRun, hashInput } from '@/lib/ai/audit';
 import { recordQuestionSignal } from '@/lib/ai/question-signals';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { classifyAiFailure } from '@/lib/ai/failures';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 import { parseTradeLogIntent, detectSellLogIntent } from '@/lib/trading/trade-intent';
 import { lookupMarketQuote } from '@/lib/market/quote';
@@ -158,7 +159,7 @@ export async function POST(request: NextRequest) {
     const screenedTurns = messages.slice(-HISTORY_TURNS);
     const injectionInHistory = screenedTurns.some((m) => detectInjectionAttempt(m.content));
     if (injectionInHistory || (last?.role === 'user' && detectInjectionAttempt(last.content))) {
-      void recordAiRun({
+      await recordAiRun({
         userId: guard.identity,
         agentName: 'portfolio_assistant',
         provider: creds.provider,
@@ -172,7 +173,7 @@ export async function POST(request: NextRequest) {
         status: 'refused',
         refusalReason: 'injection_attempt',
         latencyMs: null,
-      }).catch(() => {});
+      });
       return NextResponse.json({
         ok: true,
         text: "I can only answer research questions grounded in your dashboard - I won't act on instructions hidden in messages or data. Ask me about your holdings, watchlist, the signals, prime setups, catalysts or the macro picture.",
@@ -299,17 +300,59 @@ export async function POST(request: NextRequest) {
     const prompt = `${history}\nLyra:`;
 
     const startedAt = Date.now();
-    const { text, model: usedModel, usage, costUsd } = await complete({
-      provider: creds.provider,
-      apiKey: creds.apiKey,
-      model: creds.model,
-      system,
-      prompt,
-      maxTokens: 600,
-      retryOn429: creds.source === 'user',
-    });
+    let completion: Awaited<ReturnType<typeof complete>>;
+    try {
+      completion = await complete({
+        provider: creds.provider,
+        apiKey: creds.apiKey,
+        model: creds.model,
+        system,
+        prompt,
+        maxTokens: 600,
+        retryOn429: creds.source === 'user',
+      });
+    } catch (error) {
+      const reason = classifyAiFailure(error);
+      await recordAiRun({
+        userId: guard.identity,
+        agentName: 'portfolio_assistant',
+        provider: creds.provider,
+        model: resolveModel(creds.provider, creds.model),
+        inputHash,
+        outputHash: null,
+        toolsUsed: [],
+        injectionFlags: [],
+        validationErrors: [],
+        citationCount: 0,
+        status: 'error',
+        refusalReason: `provider:${reason}`,
+        latencyMs: Date.now() - startedAt,
+      });
+      return NextResponse.json({ ok: false, reason });
+    }
+    const { text, model: usedModel, usage, costUsd } = completion;
     const latencyMs = Date.now() - startedAt;
-    if (!text) return NextResponse.json({ ok: false, reason: 'empty' });
+    if (!text) {
+      await recordAiRun({
+        userId: guard.identity,
+        agentName: 'portfolio_assistant',
+        provider: creds.provider,
+        model: usedModel,
+        inputHash,
+        outputHash: null,
+        toolsUsed: [],
+        injectionFlags: [],
+        validationErrors: ['empty_response'],
+        citationCount: 0,
+        status: 'validation_failed',
+        refusalReason: 'empty_response',
+        latencyMs,
+        inputTokens: usage?.inputTokens ?? null,
+        outputTokens: usage?.outputTokens ?? null,
+        costUsd,
+      });
+      return NextResponse.json({ ok: false, reason: 'empty_response' });
+    }
     // Strip an echoed "Lyra:" turn label, then split off the FOLLOW_UPS line into suggestion chips.
     let cleaned = text.replace(/^\s*(?:Lyra|Assistant)\s*:\s*/i, '').trim();
 
@@ -352,7 +395,7 @@ export async function POST(request: NextRequest) {
     // Suggestion chips are user-voice questions, not factual claims - they stay unguarded.
     const guarded = guardProse(answer || cleaned, [system, history]);
     if (!guarded.ok) {
-      void recordAiRun({
+      await recordAiRun({
         userId: guard.identity,
         agentName: 'portfolio_assistant',
         provider: creds.provider,
@@ -366,7 +409,7 @@ export async function POST(request: NextRequest) {
         status: 'refused',
         refusalReason: `guardrail_block: ${guarded.verdict.blockedReasons.join('; ') || 'empty after strip'}`,
         latencyMs,
-      }).catch(() => {});
+      });
       return NextResponse.json({
         ok: true,
         text: 'I drafted an answer that tripped Lyra\'s research-only guardrails (an ungrounded figure or advice-style wording), so I stopped it. Ask me to explain the data behind your question and I\'ll ground every number in the latest scan.',
@@ -376,7 +419,7 @@ export async function POST(request: NextRequest) {
     const finalText = guarded.text;
 
     // Durable-by-design audit (hash-only) + the Listening layer (captures the question on purpose).
-    void recordAiRun({
+    await recordAiRun({
       userId: guard.identity,
       agentName: 'portfolio_assistant',
       provider: creds.provider,
@@ -393,7 +436,7 @@ export async function POST(request: NextRequest) {
       inputTokens: usage?.inputTokens ?? null,
       outputTokens: usage?.outputTokens ?? null,
       costUsd,
-    }).catch(() => {});
+    });
     if (authenticated && last?.role === 'user') recordQuestionSignal(last.content);
 
     // Persist this exchange for cross-session recall (opt-in + RLS enforced inside; best-effort).
@@ -405,7 +448,14 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, text: finalText, suggestions, action });
-  } catch {
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'lyra.ai_chat_unhandled',
+        schemaVersion: 1,
+        errorType: error instanceof Error ? error.name : 'UnknownError',
+      }),
+    );
     return NextResponse.json({ ok: false, reason: 'error' });
   }
 }

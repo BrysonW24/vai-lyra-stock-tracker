@@ -1,6 +1,7 @@
 'use client';
 
 import { Radar, Star, BriefcaseBusiness, Sparkles, ShieldCheck, type LucideIcon } from 'lucide-react';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 type PathId = 'quick_start' | 'watchlist_first' | 'portfolio_first' | 'full_setup';
 
@@ -18,15 +19,34 @@ const FEATURES: { title: string; description: string; icon: LucideIcon }[] = [
 ];
 
 export function WelcomeHero({ onChoosePath }: WelcomeHeroProps) {
+  const soloMode = !isSupabaseConfigured();
+  const features = FEATURES.map((feature) => {
+    if (!soloMode) return feature;
+    if (feature.title === 'Build a watchlist') {
+      return {
+        ...feature,
+        description: 'Track names on this device and review their latest market snapshot.',
+      };
+    }
+    if (feature.title === 'Full setup') {
+      return {
+        ...feature,
+        description: 'Watchlist, portfolio, goals and preferences in one guided flow.',
+      };
+    }
+    return feature;
+  });
+
   return (
     <div className="space-y-3">
       <p className="text-[13px] leading-snug text-[#a8b5c2]">
-        Track major US tech companies, your holdings and watchlists - momentum signals and alerts the moment
-        something meaningful shifts, in one console.
+        {soloMode
+          ? 'Track major US tech companies, your holdings and watchlist - with momentum changes visible whenever you open the console.'
+          : 'Track major US tech companies, your holdings and watchlists - with momentum signals and account-backed alerts in one console.'}
       </p>
 
       <div className="grid grid-cols-2 gap-2.5">
-        {FEATURES.map((feature, i) => (
+        {features.map((feature, i) => (
           <div key={feature.title} className="relative">
             {/* Pulsing colour glow behind each box. */}
             <span
@@ -51,7 +71,9 @@ export function WelcomeHero({ onChoosePath }: WelcomeHeroProps) {
       <div className="flex items-center gap-2 rounded-lg border border-[#1d4f3a] bg-[#0d251b] px-3 py-2">
         <ShieldCheck size={14} className="shrink-0 text-[#43d18b]" />
         <p className="text-[11px] leading-snug text-[#43d18b]">
-          Your data stays private - used only to personalise your signals, risk states and alerts.
+          {soloMode
+            ? 'Solo saves your setup on this device only - no account or cloud profile.'
+            : 'Your data stays private - used only to personalise your signals, risk states and alerts.'}
         </p>
       </div>
 

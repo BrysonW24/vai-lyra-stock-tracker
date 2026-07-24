@@ -109,12 +109,13 @@ function load<T>(key: string, fallback: T): T {
   }
 }
 
-function save<T>(key: string, value: T): void {
-  if (typeof window === 'undefined') return;
+function save<T>(key: string, value: T): boolean {
+  if (typeof window === 'undefined') return false;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
+    return true;
   } catch {
-    /* storage unavailable - ignore */
+    return false;
   }
 }
 

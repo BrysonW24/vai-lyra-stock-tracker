@@ -14,7 +14,7 @@ export default async function TradesPage() {
           <div className="border-b border-[#1b2530] px-3 py-3">
             <h1 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Trade Log</h1>
             <p className="mt-1 text-[11px] leading-relaxed text-[#8190a0]">
-              Every buy you have logged through Lyra, newest first. Undo restores your cash and position (reverse order per symbol). Tracking and research only - not a brokerage.
+              Every buy you have logged through Lyra, newest first. Undo reverses the latest logged change for that symbol. Tracking and research only - not a brokerage.
             </p>
           </div>
           <div className="p-3">

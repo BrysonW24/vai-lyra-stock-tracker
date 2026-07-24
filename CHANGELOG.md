@@ -6,6 +6,19 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.73.2] - 2026-07-24
+
+Solo now behaves like one truthful device-local product from first run onward.
+
+### Changed
+
+- A completed Solo setup is now a one-time journey: returning users enter their console directly, and even a stray onboarding URL redirects home unless an explicit replay was requested.
+- Every personal board now uses only this browser’s saved watchlist, holdings and cash. Seeded demo portfolios, alerts and overlay counts can no longer impersonate the user on charts, radar, simulation or planning surfaces.
+- Solo trade logging is now one atomic local transaction across the trade log, holdings and saved cash balance. A failed write rolls the whole action back, and Undo restores all three.
+- The Solo/Community boundary is explicit throughout setup and settings: no sign-in, hosted AI or background-delivery claims in Solo; BYOK remains optional and device-held.
+- AI provider failures now produce actionable user messages plus bounded, secret-free operations codes. Successful and failed runs emit hash-only structured telemetry with provider, model, latency, usage and cost.
+- Alert worker deduplication no longer stores skipped attempts as sent alerts, preventing false cooldowns and unbounded alert-table growth.
+
 ## [0.73.1] - 2026-07-24
 
 Solo BYOK credentials can be removed without wiping the console.
@@ -1101,7 +1114,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.2...HEAD
+[0.73.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.1...v0.73.2
 [0.73.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.0...v0.73.1
 [0.73.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.72.0...v0.73.0
 [0.72.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.71.0...v0.72.0

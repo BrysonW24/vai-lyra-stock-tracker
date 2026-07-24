@@ -19,6 +19,10 @@ const humanizeTheme = (slug: string) => slug.replace(/-/g, ' ');
  */
 export default async function PlanPage() {
   const data = await getDashboardData();
+  const soloMode = !(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
   const constraints = await getUserConstraints().catch(() => null);
   const companies = getThemeCompanies();
 
@@ -77,6 +81,7 @@ export default async function PlanPage() {
         crossCurrencyDefault={baseCurrency.toUpperCase() !== 'USD'}
         hasCapitalOnFile={hasCapitalOnFile}
         openPositionsValue={openPositions.length > 0 ? openPositionsValue : undefined}
+        soloMode={soloMode}
       />
     </AppShell>
   );

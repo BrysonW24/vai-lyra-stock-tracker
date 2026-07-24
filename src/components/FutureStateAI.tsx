@@ -17,18 +17,21 @@ const CAPS = [
   { icon: Target, label: 'Ranks the trades' },
 ];
 
-export function FutureStateAI() {
+export function FutureStateAI({ soloMode = false }: { soloMode?: boolean }) {
   return (
     <div>
       {/* Intro header - same style as Why Lyra, before the graphic */}
       <div className="mb-7 min-w-0">
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#1E63FF]">Future state · Coming soon</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#1E63FF]">
+          {soloMode ? 'Optional · Bring your own key' : 'Future state · Coming soon'}
+        </p>
         <h2 className="mt-1.5 text-2xl font-semibold tracking-tight text-[#0E1E3A] md:text-3xl">
           Meet your <span className="text-[#1E63FF]">AI co-pilot</span>.
         </h2>
         <p className="mt-2 max-w-md text-sm leading-relaxed text-[#5A6B82]">
-          An LLM intelligence layer over the deterministic engine - it reads the market, explains every setup, and
-          surfaces what&apos;s worth acting on, in plain English.
+          {soloMode
+            ? 'Connect your own provider key for grounded explanations of the deterministic engine. The key stays in this browser and every response appears in the console.'
+            : 'An LLM intelligence layer over the deterministic engine - it reads the market, explains every setup, and surfaces what is worth acting on, in plain English.'}
         </p>
       </div>
 
@@ -134,6 +137,18 @@ export function FutureStateAI() {
       </div>
 
       {/* Delivery - the real Telegram + Slack + WhatsApp integration (live today) */}
+      {soloMode ? (
+        <div className="mt-5 flex flex-col items-center gap-1.5 text-center">
+          <span className="text-[11px] font-semibold text-[#0E1E3A]">
+            Solo AI replies here, on demand
+          </span>
+          <span className="max-w-md text-[10px] leading-relaxed text-[#5A6B82]">
+            No hosted key, no background agent, and no Telegram, Slack, or WhatsApp
+            delivery. Add an OpenAI, Anthropic, Gemini, or OpenRouter key only when
+            you want AI.
+          </span>
+        </div>
+      ) : (
       <div className="mt-5 flex flex-col items-center gap-2">
         <span className="text-[11px] font-medium text-[#5A6B82]">Alerts, where you live -</span>
         <div className="flex flex-wrap items-center justify-center gap-2.5">
@@ -162,6 +177,7 @@ export function FutureStateAI() {
           </span>
         </div>
       </div>
+      )}
 
       <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-[#8290a0]">
         <ShieldCheck size={12} /> The AI explains; the deterministic engine decides. Research, never advice.

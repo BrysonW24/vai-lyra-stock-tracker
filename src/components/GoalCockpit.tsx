@@ -76,7 +76,9 @@ export function GoalCockpit({ goal, actions, orientation, baseCurrency = 'USD', 
       <div className="border-b border-[#1b2530] px-3 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <Target size={16} className="text-[#f3a33a]" />
-          <h2 className="text-sm font-semibold text-[#eef3f8]">Your goal</h2>
+          <h2 className="text-sm font-semibold text-[#eef3f8]">
+            {goal.targetIsMilestone ? 'Your capital' : 'Your goal'}
+          </h2>
           <span className={`ml-auto rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] ${pace.cls}`}>{pace.label}</span>
         </div>
 
@@ -188,8 +190,8 @@ export function GoalCockpit({ goal, actions, orientation, baseCurrency = 'USD', 
         )}
 
         <p className="mt-2 border-t border-[#1b2530] pt-2 text-[10px] leading-snug text-[#5a6b7d]">
-          Deterministic reads on your own positions and goal - research and risk framing, not financial advice. Any trade
-          is your decision, placed at your broker.
+          Deterministic reads on your own positions and capital context - research and risk framing, not financial advice.
+          Any trade is your decision, placed at your broker.
         </p>
       </div>
     </section>

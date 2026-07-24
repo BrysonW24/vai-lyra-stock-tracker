@@ -76,7 +76,8 @@ export function AccountMenu() {
     setOpen(false);
   }
 
-  const label = name.trim() || 'Your account';
+  const soloMode = !isSupabaseConfigured();
+  const label = name.trim() || (soloMode ? 'Your console' : 'Your account');
 
   return (
     <div className="relative" ref={ref}>
@@ -99,11 +100,12 @@ export function AccountMenu() {
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-[#eef3f8]">{label}</p>
-              <p className="text-[11px] text-[#8190a0]">{isSupabaseConfigured() ? 'Signed in' : 'Demo mode'}</p>
+              <p className="text-[11px] text-[#8190a0]">{soloMode ? 'Solo · this device' : 'Signed in'}</p>
             </div>
           </div>
 
           {/* Alert mode - colour-coded, lives here so it is actually discovered */}
+          {!soloMode && (
           <div className="border-b border-[#1b2530] px-3 py-2.5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Alert mode</p>
             <div className="mt-1.5 grid grid-cols-2 gap-1">
@@ -183,6 +185,7 @@ export function AccountMenu() {
               </div>
             )}
           </div>
+          )}
 
           <Link
             href="/account"
@@ -190,7 +193,7 @@ export function AccountMenu() {
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 px-3 py-2.5 text-sm text-[#cdd8e3] transition hover:bg-[#101720]"
           >
-            <Settings size={15} className="text-[#8190a0]" /> Account
+            <Settings size={15} className="text-[#8190a0]" /> {soloMode ? 'Settings' : 'Account'}
           </Link>
           <Link
             href="/account/notifications"
@@ -198,7 +201,7 @@ export function AccountMenu() {
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 border-t border-[#1b2530] px-3 py-2.5 text-sm text-[#cdd8e3] transition hover:bg-[#101720]"
           >
-            <BellRing size={15} className="text-[#8190a0]" /> Notifications
+            <BellRing size={15} className="text-[#8190a0]" /> {soloMode ? 'Notification limits' : 'Notifications'}
           </Link>
           <Link
             href="/account/ai"

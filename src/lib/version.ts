@@ -23,6 +23,19 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.73.2',
+    date: '2026-07-24',
+    title: 'Solo now behaves like one truthful device-local product from first run onward',
+    highlights: [
+      'A completed Solo setup is now a one-time journey: returning users enter their console directly, and even a stray onboarding URL redirects home unless an explicit replay was requested.',
+      'Every personal board now uses only this browser’s saved watchlist, holdings and cash. Seeded demo portfolios, alerts and overlay counts can no longer impersonate the user on charts, radar, simulation or planning surfaces.',
+      'Solo trade logging is now one atomic local transaction across the trade log, holdings and saved cash balance. A failed write rolls the whole action back, and Undo restores all three.',
+      'The Solo/Community boundary is explicit throughout setup and settings: no sign-in, hosted AI or background-delivery claims in Solo; BYOK remains optional and device-held.',
+      'AI provider failures now produce actionable user messages plus bounded, secret-free operations codes. Successful and failed runs emit hash-only structured telemetry with provider, model, latency, usage and cost.',
+      'Alert worker deduplication no longer stores skipped attempts as sent alerts, preventing false cooldowns and unbounded alert-table growth.',
+    ],
+  },
+  {
     version: '0.73.1',
     date: '2026-07-24',
     title: 'Solo BYOK credentials can be removed without wiping the console',

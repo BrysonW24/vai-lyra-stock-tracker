@@ -8,9 +8,10 @@ import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 /**
  * "Put Lyra on your Home Screen" - the final onboarding beat before the console. Functional,
- * not cosmetic: on iPhone, alert push notifications ONLY work once Lyra is installed to the
- * Home Screen, so the alerts the questionnaire just configured depend on this step. iOS gets
- * a real screenshot walkthrough (privacy-cropped), Android gets the Chrome steps. An
+ * not cosmetic: on iPhone, account-backed push notifications only work once Lyra is installed
+ * to the Home Screen. Solo still benefits from one-tap, full-screen access but does not claim
+ * background delivery. iOS gets a real screenshot walkthrough (privacy-cropped), Android gets
+ * the Chrome steps. An
  * already-installed app gets a short "you're already set" confirmation - NEVER a silent skip:
  * an invisible beat makes the journey feel like it lost a step (founder-reported).
  */
@@ -51,7 +52,7 @@ const IOS_STEPS: Array<{ caption: React.ReactNode; src: string; width: number; h
   {
     caption: (
       <>That&apos;s it - <span className="font-semibold text-[#eef3f8]">Lyra lives on your Home Screen</span>, one tap
-      away, with alerts that can reach you.</>
+      away in a full-screen app window.</>
     ),
     src: '/onboarding/a2hs-4-installed.png',
     width: 560,
@@ -103,7 +104,9 @@ export function AddToHomeScreenStep({ onDone }: { onDone: () => void }) {
           </span>
           <h1 className="mt-4 text-[22px] font-semibold tracking-tight">Already on your Home Screen</h1>
           <p className="mt-2 text-[13px] leading-relaxed text-[#a8b5c2]">
-            You&apos;re running Lyra as an installed app - one tap away, full screen, and alerts can reach this phone.
+            {soloMode
+              ? 'You’re running Solo as an installed app - one tap away, full screen, with this device’s local console.'
+              : 'You’re running Lyra as an installed app - one tap away, full screen, and alerts can reach this phone.'}
           </p>
           <Image
             src="/onboarding/a2hs-4-installed.png"
@@ -138,7 +141,11 @@ export function AddToHomeScreenStep({ onDone }: { onDone: () => void }) {
           </p>
           <p className="mt-2 inline-flex items-start gap-1.5 rounded-lg border border-[#5a4a1a] bg-[#231a08] px-3 py-2 text-left text-[11px] leading-snug text-[#f3a33a]">
             <BellRing size={13} className="mt-0.5 shrink-0" />
-            <span>On iPhone, the alerts you just set up can only reach your phone once Lyra is on your Home Screen.</span>
+            <span>
+              {soloMode
+                ? 'Solo does not send background alerts. Installing it gives you faster access to the in-console signals stored on this device.'
+                : 'On iPhone, the alerts you just set up can only reach your phone once Lyra is on your Home Screen.'}
+            </span>
           </p>
           <p className="mt-2 text-[11px] leading-snug text-[#6f7d8a]">
             {soloMode
@@ -194,7 +201,10 @@ export function AddToHomeScreenStep({ onDone }: { onDone: () => void }) {
             <Share size={15} className="mt-0.5 shrink-0 text-[#8aa2ff]" />
             <p className="text-[13px] leading-relaxed text-[#a8b5c2]">
               You&apos;re on a computer. Open <span className="font-mono text-[12px] text-[#eef3f8]">{typeof window !== 'undefined' ? window.location.host : 'Lyra'}</span>{' '}
-              on your phone and this step will walk you through it there - that&apos;s where the alerts land.
+              on your phone and this step will walk you through it there
+              {soloMode
+                ? ' - each browser or installed app keeps its own local Solo data.'
+                : ' - that’s where the alerts land.'}
             </p>
           </div>
         )}

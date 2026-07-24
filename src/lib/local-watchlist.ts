@@ -15,6 +15,7 @@ export interface LocalWatchItem {
 }
 
 const KEY = 'lyra.watchlist.items';
+const SYMBOL_RE = /^[A-Z0-9.-]{1,12}$/;
 
 /** Fire after any local-watchlist mutation so mounted views re-read without a reload. */
 export const WATCHLIST_CHANGED_EVENT = 'lyra:watchlist-changed';
@@ -26,48 +27,56 @@ export function loadLocalWatchlist(): LocalWatchItem[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((item): item is LocalWatchItem => !!item && typeof (item as LocalWatchItem).symbol === 'string')
-      .map((item) => ({
-        symbol: String(item.symbol).toUpperCase().trim(),
-        targetBuyPrice: item.targetBuyPrice !== undefined ? Number(item.targetBuyPrice) || undefined : undefined,
-        notes: item.notes,
-      }))
-      .filter((item) => item.symbol.length > 0);
+    return parsed.map(normaliseWatchItem).filter((item): item is LocalWatchItem => item !== null);
   } catch {
     return [];
   }
 }
 
+function normaliseWatchItem(input: unknown): LocalWatchItem | null {
+  if (!input || typeof input !== 'object') return null;
+  const raw = input as Partial<LocalWatchItem>;
+  const symbol = String(raw.symbol ?? '').toUpperCase().trim();
+  if (!SYMBOL_RE.test(symbol)) return null;
+  const target = raw.targetBuyPrice === undefined ? undefined : Number(raw.targetBuyPrice);
+  return {
+    symbol,
+    ...(target !== undefined && Number.isFinite(target) && target > 0 ? { targetBuyPrice: target } : {}),
+    ...(typeof raw.notes === 'string' ? { notes: raw.notes.slice(0, 500) } : {}),
+  };
+}
+
 /** Add or replace a single item by symbol (used by the watch-rule form, chat, and quick actions). */
-export function addLocalWatchItem(item: LocalWatchItem): void {
-  const symbol = String(item.symbol).toUpperCase().trim();
-  if (!symbol) return;
-  const rest = loadLocalWatchlist().filter((w) => w.symbol !== symbol);
-  saveLocalWatchlist([...rest, { ...item, symbol }]);
+export function addLocalWatchItem(item: LocalWatchItem): boolean {
+  const cleaned = normaliseWatchItem(item);
+  if (!cleaned) return false;
+  const rest = loadLocalWatchlist().filter((w) => w.symbol !== cleaned.symbol);
+  return saveLocalWatchlist([...rest, cleaned]);
 }
 
 /** Remove a single item by symbol (local undo path). */
-export function removeLocalWatchItem(symbol: string): void {
+export function removeLocalWatchItem(symbol: string): boolean {
   const upper = String(symbol).toUpperCase().trim();
-  saveLocalWatchlist(loadLocalWatchlist().filter((w) => w.symbol !== upper));
+  return saveLocalWatchlist(loadLocalWatchlist().filter((w) => w.symbol !== upper));
 }
 
 /** Replace the whole local watchlist (used by onboarding finish). Deduped by symbol. */
-export function saveLocalWatchlist(items: LocalWatchItem[]): void {
-  if (typeof window === 'undefined') return;
+export function saveLocalWatchlist(items: LocalWatchItem[]): boolean {
+  if (typeof window === 'undefined') return false;
   const seen = new Set<string>();
   const cleaned = items
-    .map((item) => ({ ...item, symbol: String(item.symbol).toUpperCase().trim() }))
+    .map(normaliseWatchItem)
+    .filter((item): item is LocalWatchItem => item !== null)
     .filter((item) => {
-      if (!item.symbol || seen.has(item.symbol)) return false;
+      if (seen.has(item.symbol)) return false;
       seen.add(item.symbol);
       return true;
     });
   try {
     window.localStorage.setItem(KEY, JSON.stringify(cleaned));
     window.dispatchEvent(new Event(WATCHLIST_CHANGED_EVENT));
+    return true;
   } catch {
-    /* storage unavailable - ignore */
+    return false;
   }
 }
