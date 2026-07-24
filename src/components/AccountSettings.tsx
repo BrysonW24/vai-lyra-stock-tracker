@@ -95,6 +95,14 @@ const SECTION_HEADERS: Record<SettingsSection, { title: string; subtitle: string
 };
 
 export function AccountSettings({ section }: { section: SettingsSection }) {
+  const soloMode = !isSupabaseConfigured();
+  const sectionHeader =
+    section === 'ai' && soloMode
+      ? {
+          title: 'AI Settings',
+          subtitle: 'Solo has no hosted model. Choose a provider and add your own key; it stays in this browser.',
+        }
+      : SECTION_HEADERS[section];
   const [profile, setProfile] = useState<AccountProfile>(DEFAULT_PROFILE);
   const [ai, setAi] = useState<AiSettings>(DEFAULT_AI);
   const [lock, setLock] = useState<LockSettings>(DEFAULT_LOCK);
@@ -264,8 +272,8 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
   return (
     <div className="space-y-2.5">
       <div className="terminal-panel rounded-md px-3 py-2.5">
-        <h1 className={pageTitleClass}>{SECTION_HEADERS[section].title}</h1>
-        <p className="mt-0.5 text-[11px] leading-snug text-[#8190a0]">{SECTION_HEADERS[section].subtitle}</p>
+        <h1 className={pageTitleClass}>{sectionHeader.title}</h1>
+        <p className="mt-0.5 text-[11px] leading-snug text-[#8190a0]">{sectionHeader.subtitle}</p>
       </div>
 
       <div className={section === 'account' ? 'grid gap-2.5 lg:grid-cols-2' : 'space-y-2.5'}>
@@ -410,7 +418,11 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
 
         {section === 'ai' && (
         <div id="ai-settings" className="scroll-mt-4">
-          <Panel icon={BrainCircuit} title="AI assistance" subtitle="Hosted OpenAI beta by default. Optional BYOK when you want control.">
+          <Panel
+            icon={BrainCircuit}
+            title="AI assistance"
+            subtitle={soloMode ? 'Bring your own provider key. Lyra stores it only on this device.' : 'Hosted OpenAI beta by default. Optional BYOK when you want control.'}
+          >
             <div className="space-y-2.5">
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -431,8 +443,10 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                       });
                     }}
                   >
-                    <optgroup label="Hosted beta">
-                      <option value="openai" className="bg-[#0d141c]">OpenAI GPT-5.5</option>
+                    <optgroup label={soloMode ? 'Your own key' : 'Hosted beta'}>
+                      <option value="openai" className="bg-[#0d141c]">
+                        {soloMode ? 'OpenAI GPT-5.5 (BYOK)' : 'OpenAI GPT-5.5'}
+                      </option>
                     </optgroup>
                     <optgroup label="Free / open">
                       <option value="google" className="bg-[#0d141c]">Google Gemini (free)</option>

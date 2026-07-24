@@ -143,6 +143,85 @@ export function deriveTone(profile?: ChatProfile): string {
   return 'TONE: clear, calm and balanced.';
 }
 
+export interface SoloDeviceContext {
+  holdings: Array<{ symbol: string; quantity: number; averageBuyPrice: number }>;
+  watchlist: Array<{ symbol: string; targetBuyPrice?: number }>;
+  capital?: {
+    baseCurrency?: string;
+    cashAvailable?: number;
+    monthlyContribution?: number;
+    maxPositionSizePct?: number;
+    primaryOutcome?: string;
+  };
+}
+
+/**
+ * Browser-local Solo state, forwarded only for this BYOK request. The hosted demo dataset is still
+ * useful for signal maths, catalysts and macro, but it must not impersonate the user's own book.
+ * This block is appended after scan grounding so its precedence is explicit to the model.
+ */
+export function buildSoloDeviceGrounding(context: SoloDeviceContext, data: DashboardData): string {
+  const sigBy = new Map(data.signals.map((signal) => [signal.symbol, signal]));
+  const lines = [
+    'SOLO DEVICE DATA (authoritative for this user; ignore sample HOLDINGS, WATCHLIST and cash above when they conflict; transient request context, never a server-side account record):',
+  ];
+
+  if (context.holdings.length === 0) {
+    lines.push('HOLDINGS: none added on this device.');
+  } else {
+    const rows = context.holdings.map((holding) => {
+      const signal = sigBy.get(holding.symbol);
+      const price = signal && signal.close > 0 ? signal.close : holding.averageBuyPrice;
+      return { holding, signal, price, marketValue: price * holding.quantity };
+    });
+    const total = rows.reduce((sum, row) => sum + row.marketValue, 0);
+    lines.push(`HOLDINGS (device-local book ${formatCurrency(total)}):`);
+    for (const { holding, signal, price, marketValue } of rows.slice(0, 30)) {
+      const weight = total > 0 ? (marketValue / total) * 100 : 0;
+      lines.push(
+        `- ${holding.symbol}: ${holding.quantity.toLocaleString('en-US', { maximumFractionDigits: 4 })} shares, ` +
+          `average ${formatCurrency(holding.averageBuyPrice)}, current ${formatCurrency(price)}, value ${formatCurrency(marketValue)}, ` +
+          `weight ${Math.round(weight)}%${signal ? `, score ${signal.score} ${formatSignedNumber(signal.scoreDelta, 0)}, ${signal.status}` : ', no scan signal available'}.`,
+      );
+    }
+  }
+
+  if (context.watchlist.length === 0) {
+    lines.push('WATCHLIST: none added on this device.');
+  } else {
+    lines.push('WATCHLIST (device-local):');
+    for (const item of context.watchlist.slice(0, 30)) {
+      const signal = sigBy.get(item.symbol);
+      const target =
+        typeof item.targetBuyPrice === 'number' && item.targetBuyPrice > 0
+          ? `, target ${formatCurrency(item.targetBuyPrice)}`
+          : '';
+      lines.push(
+        `- ${item.symbol}${target}${signal ? `, score ${signal.score} ${formatSignedNumber(signal.scoreDelta, 0)}, RSI ${Math.round(signal.rsi)}, ${signal.status}` : ', no scan signal available'}.`,
+      );
+    }
+  }
+
+  if (context.capital) {
+    const currency = context.capital.baseCurrency || 'USD';
+    const details = [
+      typeof context.capital.cashAvailable === 'number'
+        ? `cash ${formatCurrency(context.capital.cashAvailable, currency)}`
+        : null,
+      typeof context.capital.monthlyContribution === 'number'
+        ? `monthly contribution ${formatCurrency(context.capital.monthlyContribution, currency)}`
+        : null,
+      typeof context.capital.maxPositionSizePct === 'number'
+        ? `max position ${context.capital.maxPositionSizePct}%`
+        : null,
+      context.capital.primaryOutcome ? `outcome ${context.capital.primaryOutcome}` : null,
+    ].filter(Boolean);
+    if (details.length) lines.push(`OPERATING CONTEXT (device-local): ${details.join(', ')}.`);
+  }
+
+  return lines.join('\n');
+}
+
 /** Compact, structured snapshot of the user's world for grounding. Numbers come from the scan. */
 export function buildGrounding(data: DashboardData, now: Date, market?: MarketContextSnapshot): string {
   const sigBy = new Map(data.signals.map((s) => [s.symbol, s]));

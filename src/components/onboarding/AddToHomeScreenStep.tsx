@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Smartphone, Share, SquarePlus, BellRing, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { detectInstallPlatformFromBrowser } from '@/lib/install-platform';
 import { isNativeShell } from '@/lib/native/platform';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 /**
  * "Put Lyra on your Home Screen" - the final onboarding beat before the console. Functional,
@@ -61,6 +62,7 @@ const IOS_STEPS: Array<{ caption: React.ReactNode; src: string; width: number; h
 
 export function AddToHomeScreenStep({ onDone }: { onDone: () => void }) {
   const platform = detectInstallPlatformFromBrowser();
+  const soloMode = !isSupabaseConfigured();
 
   // Inside the native iOS shell there is nothing to install - teaching "Add to Home Screen"
   // would be nonsense. Same beat count as every other journey (never a silent skip), with a
@@ -139,8 +141,9 @@ export function AddToHomeScreenStep({ onDone }: { onDone: () => void }) {
             <span>On iPhone, the alerts you just set up can only reach your phone once Lyra is on your Home Screen.</span>
           </p>
           <p className="mt-2 text-[11px] leading-snug text-[#6f7d8a]">
-            Heads-up: the Home Screen app runs its own fresh session. Create your account here first - then sign in
-            from the installed app and everything you just set up carries over.
+            {soloMode
+              ? 'Solo has no account or cloud sync. If the installed app opens with fresh storage, repeat the short setup there and add your AI key on that device.'
+              : 'Heads-up: the Home Screen app runs its own fresh session. Create your account here first - then sign in from the installed app and everything you just set up carries over.'}
           </p>
         </div>
 

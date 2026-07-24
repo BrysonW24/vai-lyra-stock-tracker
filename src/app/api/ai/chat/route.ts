@@ -5,7 +5,12 @@ import { guardProse } from '@/lib/ai/guardrails/prose';
 import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { getDashboardData } from '@/lib/data';
 import { getMarketContextLive } from '@/lib/market-context-live';
-import { buildGrounding, type ChatProfile } from '@/lib/ai/chat-context';
+import {
+  buildGrounding,
+  buildSoloDeviceGrounding,
+  type ChatProfile,
+  type SoloDeviceContext,
+} from '@/lib/ai/chat-context';
 import { buildHybridKnowledgeBlock } from '@/lib/knowledge/hybrid';
 import { getUserConstraints, buildConstraintsBlock } from '@/lib/ai/user-context';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_CHAT_FORMAT, composeSystem, toneFor } from '@/lib/ai/system-prompt';
@@ -27,6 +32,7 @@ interface ChatRequest {
   ai: { mode: 'free' | 'byo' | 'off' | 'hosted'; provider: AiProvider; apiKey: string; model?: string };
   profile?: ChatProfile;
   agentActions?: boolean;
+  soloContext?: unknown;
 }
 
 interface ProposedAction {
@@ -51,6 +57,69 @@ const money = (n: number, currency = 'USD') =>
     ? `$${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
     : n.toLocaleString('en-US', { style: 'currency', currency, maximumFractionDigits: 2 });
 
+const SYMBOL_RE = /^[A-Z0-9.-]{1,12}$/;
+const SOLO_CURRENCIES = new Set(['AUD', 'USD', 'GBP', 'EUR', 'CAD', 'NZD']);
+
+function boundedNumber(value: unknown, min: number, max: number): number | undefined {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= min && number <= max ? number : undefined;
+}
+
+/** Treat browser-local context as hostile request input: whitelist fields, cap rows and ranges. */
+function sanitiseSoloContext(input: unknown): SoloDeviceContext | null {
+  if (!input || typeof input !== 'object') return null;
+  const raw = input as Record<string, unknown>;
+  const holdings = Array.isArray(raw.holdings)
+    ? raw.holdings
+        .slice(0, 30)
+        .map((item) => {
+          if (!item || typeof item !== 'object') return null;
+          const row = item as Record<string, unknown>;
+          const symbol = String(row.symbol ?? '').toUpperCase().trim();
+          const quantity = boundedNumber(row.quantity, 0.000001, 1_000_000_000);
+          const averageBuyPrice = boundedNumber(row.averageBuyPrice, 0, 100_000_000);
+          return SYMBOL_RE.test(symbol) && quantity !== undefined && averageBuyPrice !== undefined
+            ? { symbol, quantity, averageBuyPrice }
+            : null;
+        })
+        .filter((item): item is SoloDeviceContext['holdings'][number] => item !== null)
+    : [];
+  const watchlist = Array.isArray(raw.watchlist)
+    ? raw.watchlist
+        .slice(0, 30)
+        .map((item) => {
+          if (!item || typeof item !== 'object') return null;
+          const row = item as Record<string, unknown>;
+          const symbol = String(row.symbol ?? '').toUpperCase().trim();
+          const targetBuyPrice = boundedNumber(row.targetBuyPrice, 0.000001, 100_000_000);
+          return SYMBOL_RE.test(symbol) ? { symbol, ...(targetBuyPrice ? { targetBuyPrice } : {}) } : null;
+        })
+        .filter((item): item is SoloDeviceContext['watchlist'][number] => item !== null)
+    : [];
+
+  let capital: SoloDeviceContext['capital'];
+  if (raw.capital && typeof raw.capital === 'object') {
+    const source = raw.capital as Record<string, unknown>;
+    const currency = String(source.baseCurrency ?? '').toUpperCase().trim();
+    const primaryOutcome = String(source.primaryOutcome ?? '').trim().slice(0, 80);
+    capital = {
+      ...(SOLO_CURRENCIES.has(currency) ? { baseCurrency: currency } : {}),
+      ...(boundedNumber(source.cashAvailable, 0, 1_000_000_000_000) !== undefined
+        ? { cashAvailable: boundedNumber(source.cashAvailable, 0, 1_000_000_000_000) }
+        : {}),
+      ...(boundedNumber(source.monthlyContribution, 0, 1_000_000_000) !== undefined
+        ? { monthlyContribution: boundedNumber(source.monthlyContribution, 0, 1_000_000_000) }
+        : {}),
+      ...(boundedNumber(source.maxPositionSizePct, 0, 100) !== undefined
+        ? { maxPositionSizePct: boundedNumber(source.maxPositionSizePct, 0, 100) }
+        : {}),
+      ...(primaryOutcome ? { primaryOutcome } : {}),
+    };
+  }
+
+  return { holdings, watchlist, ...(capital ? { capital } : {}) };
+}
+
 /**
  * Grounded chat. Mirrors /api/ai/brief: BYOK key forwarded from the browser, never logged or
  * persisted; provider dispatch in the gateway. The user's question is injection-screened, the
@@ -67,6 +136,7 @@ export async function POST(request: NextRequest) {
     if (!guard.ok) return guard.response;
     const { body, authenticated } = guard;
     const { messages, ai, profile, agentActions } = body;
+    const soloContext = sanitiseSoloContext(body.soloContext);
 
     if (!ai) return NextResponse.json({ ok: false, reason: 'disabled' });
     if (!Array.isArray(messages) || messages.length === 0) return NextResponse.json({ ok: false, reason: 'empty' });
@@ -81,7 +151,7 @@ export async function POST(request: NextRequest) {
     }
 
     const last = messages[messages.length - 1];
-    const inputHash = hashInput({ messages, profile });
+    const inputHash = hashInput({ messages, profile, soloContext });
     // Screen EVERY turn that will enter the prompt, not just the final message - an attacker
     // can otherwise bury injected instructions in an earlier or forged 'assistant' turn (only
     // the user's own text is trusted; assistant turns are model output being replayed).
@@ -115,7 +185,8 @@ export async function POST(request: NextRequest) {
     // through to a generic LLM answer (research questions like "should I sell NVDA?" are NOT caught
     // here and still reach the AI normally).
     if (!explicitTrade && last?.role === 'user' && detectSellLogIntent(last.content)) {
-      recordQuestionSignal(last.content);
+      // Raw question signals are an account product-learning feature, never Solo telemetry.
+      if (authenticated) recordQuestionSignal(last.content);
       return NextResponse.json({
         ok: true,
         text: "I can't log a sell yet - right now I only log buys. You can adjust or remove the holding directly in your Portfolio and I'll keep tracking it. (Sell logging is on the roadmap.)",
@@ -124,14 +195,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (explicitTrade) {
-      recordQuestionSignal(last.content);
+      if (authenticated) recordQuestionSignal(last.content);
       // Preview the live quote + remaining cash so the confirm card shows exactly what is being
       // approved (shares, fill price, cash left), not a blind dollar amount. Best-effort: the server
       // re-prices on confirm regardless, so a failed preview just falls back to the plain proposal.
       const quote = await lookupMarketQuote(explicitTrade.symbol).catch(() => null);
       const userConstraints = await getUserConstraints().catch(() => null);
-      const cash = userConstraints?.cashAvailable ?? null;
-      const baseCurrency = (userConstraints?.baseCurrency || 'USD').toUpperCase();
+      const cash = userConstraints?.cashAvailable ?? soloContext?.capital?.cashAvailable ?? null;
+      const baseCurrency = (
+        userConstraints?.baseCurrency ||
+        soloContext?.capital?.baseCurrency ||
+        'USD'
+      ).toUpperCase();
       const tradeCurrency = (quote?.currency || 'USD').toUpperCase();
       const price = quote && quote.valid && quote.price && quote.price > 0 ? quote.price : null;
 
@@ -191,6 +266,7 @@ export async function POST(request: NextRequest) {
     // citable. Deterministic HYBRID retrieval (lexical gate + char-trigram cosine rerank);
     // '' for ordinary market/portfolio questions.
     const knowledgeBlock = last?.role === 'user' ? buildHybridKnowledgeBlock(last.content) : '';
+    const soloGrounding = soloContext ? buildSoloDeviceGrounding(soloContext, data) : '';
     const system = composeSystem([
       LYRA_IDENTITY,
       'The user is chatting with you. Answer their question directly.',
@@ -207,7 +283,7 @@ export async function POST(request: NextRequest) {
         ? 'PERSONALISATION: Read everything against YOUR PROFILE & CONSTRAINTS below and tie what you say to the stated goal, horizon and risk comfort. CHECK ideas against the constraints - flag when a name sits outside their risk comfort, when a setup would breach the max position size, or when something does not fit the available cash - but do NOT prescribe a trade: never state how many shares to buy or a dollar amount to put in, and never tell them to buy, sell, hold or size a position (that is the NOT ADVICE rule, and it wins). Describe the fit and let them decide.'
         : false,
       constraintsBlock || false,
-      `CONTEXT (deterministic, from the latest scan):\n${buildGrounding(data, new Date(), market)}`,
+      `CONTEXT (deterministic, from the latest scan):\n${buildGrounding(data, new Date(), market)}${soloGrounding ? `\n\n${soloGrounding}` : ''}`,
       knowledgeBlock || false,
     ]);
     // Cross-session memory: on a fresh session (short in-session history) seed context from the user's
@@ -318,7 +394,7 @@ export async function POST(request: NextRequest) {
       outputTokens: usage?.outputTokens ?? null,
       costUsd,
     }).catch(() => {});
-    if (last?.role === 'user') recordQuestionSignal(last.content);
+    if (authenticated && last?.role === 'user') recordQuestionSignal(last.content);
 
     // Persist this exchange for cross-session recall (opt-in + RLS enforced inside; best-effort).
     if (authenticated && last?.role === 'user') {

@@ -13,9 +13,24 @@ interface SetupSummaryCardProps {
 export function SetupSummaryCard({ state, onFinish, isSaving }: SetupSummaryCardProps) {
   const completeness = calculateSetupCompleteness(state);
   const profile = state.profile;
-  const profileStr = profile?.experienceLevel
-    ? [profile.experienceLevel, profile.investingStyle, profile.preferredTimeframe].filter(Boolean).join(' · ')
-    : 'New to investing';
+  const beginnerLearningLabel = {
+    plain_english: 'plain English',
+    real_examples: 'real examples',
+    step_by_step: 'step by step',
+    just_signal: 'brief signals',
+  }[profile?.beginnerLearningStyle ?? 'plain_english'];
+  const beginnerHorizonLabel = {
+    few_months: 'short horizon',
+    year_or_two: '1-2 years',
+    many_years: 'long term',
+    unsure: 'horizon undecided',
+  }[profile?.beginnerHorizon ?? 'unsure'];
+  const profileStr =
+    profile?.tradedBefore === 'no'
+      ? ['new investor', beginnerLearningLabel, beginnerHorizonLabel].join(' · ')
+      : profile?.experienceLevel
+        ? [profile.experienceLevel, profile.investingStyle, profile.preferredTimeframe].filter(Boolean).join(' · ')
+        : 'New to investing';
   const enriched = state.portfolio.filter((h) => h.quantity && h.averageBuyPrice).length;
   const alertsOn = [state.alerts?.strongSetupAlerts, state.alerts?.portfolioRiskAlerts, state.alerts?.dailyDigest].filter(
     Boolean,

@@ -5,13 +5,14 @@ import { bumpAiUsage } from '@/lib/usage-store';
 import Link from 'next/link';
 import { X, Send, Loader2, Sparkles, ShieldCheck, KeyRound, SquarePen, ArrowUpRight, Star, Plus, Check, Undo2, RotateCcw } from 'lucide-react';
 import { loadAi, loadProfile, loadAgent, type AiSettings } from '@/lib/account';
-import { addLocalWatchItem, removeLocalWatchItem } from '@/lib/local-watchlist';
-import { addLocalHolding, removeLocalHolding } from '@/lib/local-portfolio';
+import { addLocalWatchItem, loadLocalWatchlist, removeLocalWatchItem } from '@/lib/local-watchlist';
+import { addLocalHolding, loadLocalHoldings, removeLocalHolding } from '@/lib/local-portfolio';
 import { addLocalTradeLog, undoLocalTradeLog, LOCAL_TRADE_ID_PREFIX } from '@/lib/local-trades';
 import { containFocus, registerDialog } from '@/lib/focus-trap';
 import { loadOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadSavedPrompts, toggleSavedPrompt } from '@/lib/saved-prompts';
 import type { ChatProfile } from '@/lib/ai/chat-context';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 interface ProposedAction {
   type: 'add_watchlist' | 'add_portfolio' | 'log_trade';
@@ -265,11 +266,29 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     setStatus('sending');
     try {
       const agentActions = loadAgent().actionsEnabled;
+      // Solo's own book/watchlist live in localStorage, while the server dataset is an
+      // illustrative scan. Forward a minimal transient snapshot so BYOK answers ground on what
+      // this user actually entered. The route validates it and audit logs only its hash.
+      const summary = loadOnboardingSummary();
+      const soloContext = !isSupabaseConfigured()
+        ? {
+            holdings: loadLocalHoldings().map(({ symbol, quantity, averageBuyPrice }) => ({
+              symbol,
+              quantity,
+              averageBuyPrice,
+            })),
+            watchlist: loadLocalWatchlist().map(({ symbol, targetBuyPrice }) => ({
+              symbol,
+              targetBuyPrice,
+            })),
+            capital: summary?.capital,
+          }
+        : undefined;
       bumpAiUsage();
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next, ai, profile, agentActions }),
+        body: JSON.stringify({ messages: next, ai, profile, agentActions, soloContext }),
       });
       const data = (await res.json()) as { ok?: boolean; text?: string; reason?: string; suggestions?: string[]; action?: ProposedAction | null };
       if (data.ok && data.text) {

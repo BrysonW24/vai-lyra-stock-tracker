@@ -30,7 +30,7 @@ export default function WelcomePage() {
   const supabaseConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const setupHref = supabaseConfigured ? '/auth/signup' : '/onboarding';
   // With auth on, the entry action is creating an account (console setup is the post-login step).
-  const setupLabel = supabaseConfigured ? 'Create account' : 'Set up my console';
+  const setupLabel = supabaseConfigured ? 'Create account' : 'Enter my console';
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#F7F6F2] text-[#0E1E3A]">
       {/* Ambient brand glow + light geometric texture - premium, never busy */}
@@ -111,9 +111,11 @@ export default function WelcomePage() {
               <Link href={setupHref} className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_12px_30px_-10px_rgba(67,209,139,0.6)] transition hover:brightness-110">
                 {setupLabel} <ArrowRight size={16} />
               </Link>
-              <Link href="/auth/login" className="inline-flex items-center gap-2 rounded-md border border-[#0E1E3A]/10 bg-white/70 px-5 py-3 text-sm font-medium text-[#0E1E3A] backdrop-blur transition hover:border-[#1E63FF]/30">
-                Sign in
-              </Link>
+              {supabaseConfigured && (
+                <Link href="/auth/login" className="inline-flex items-center gap-2 rounded-md border border-[#0E1E3A]/10 bg-white/70 px-5 py-3 text-sm font-medium text-[#0E1E3A] backdrop-blur transition hover:border-[#1E63FF]/30">
+                  Sign in
+                </Link>
+              )}
               {supabaseConfigured && (
                 // See-before-signup doctrine: a cold visitor can walk the real console read-only
                 // (via the lyra_demo cookie the middleware honours) before creating an account.
@@ -131,9 +133,14 @@ export default function WelcomePage() {
             </p>
             {!supabaseConfigured && (
               // Solo deployment: say the quiet part out loud - it is the whole point of this build.
-              <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
-                <ShieldCheck size={12} /> Solo build - no account, no cloud. Everything you save stays in this browser, and AI runs on your own key.
-              </p>
+              <>
+                <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
+                  <ShieldCheck size={12} /> Solo build - no sign-in. First visit starts a short setup; after that, you enter your console directly.
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
+                  <ShieldCheck size={12} /> Your book and trade log stay in this browser. AI uses the provider key you add.
+                </p>
+              </>
             )}
           </div>
 

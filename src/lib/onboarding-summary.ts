@@ -3,6 +3,7 @@
  * centre can personalise itself instead of nagging "New here?" forever. Browser-local;
  * demo-mode only (Supabase users get the server-backed SetupChecklist).
  */
+import type { CapitalContext } from '@/lib/onboarding';
 
 export interface OnboardingSummary {
   onboarded: boolean;
@@ -12,6 +13,8 @@ export interface OnboardingSummary {
   experienceLevel?: 'beginner' | 'intermediate' | 'advanced' | 'professional';
   /** Risk appetite from the operator profile - drives the copilot's tone. */
   riskComfort?: 'conservative' | 'balanced' | 'aggressive' | 'experimental';
+  /** Solo-only operating constraints sent transiently with BYOK requests; never server-persisted. */
+  capital?: CapitalContext;
 }
 
 const KEY = 'lyra.onboarding.summary';

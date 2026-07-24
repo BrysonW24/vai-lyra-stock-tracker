@@ -383,6 +383,7 @@ export default function OnboardingPage() {
         watchlistCount: state.watchlist.length,
         experienceLevel: state.profile?.experienceLevel,
         riskComfort: state.profile?.riskComfort,
+        capital: state.capital,
       });
 
       // Onboarding done - drop the resumable checkpoint so a re-visit starts clean. (The

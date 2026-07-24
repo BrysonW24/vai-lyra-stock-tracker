@@ -60,6 +60,7 @@ import { AccountMenu } from '@/components/AccountMenu';
 import { captureInteraction } from '@/lib/twin/capture';
 import { NavCustomizer } from '@/components/NavCustomizer';
 import { getPrimaryHrefs, setPrimaryHrefs, clearPrimaryHrefs } from '@/lib/nav-prefs';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 // The full section map, grouped BY JOB (what you're trying to do), not by data type. A slim set of
 // daily-drivers (`primary`) stays permanently on the rail / bottom bar; everything else lives one
@@ -173,6 +174,7 @@ function scanFreshness(finishedAt: string): { stale: boolean; hoursAgo: number }
 
 export function AppShell({ data, children }: AppShellProps) {
   const pathname = usePathname();
+  const soloMode = !isSupabaseConfigured();
   // Boundary-aware: /paper-bot must not also light up /paper (startsWith without the '/' boundary).
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/'));
   const navScrollRef = useRef<HTMLDivElement>(null);
@@ -334,11 +336,15 @@ export function AppShell({ data, children }: AppShellProps) {
                 dead cron never keeps a confident green badge. */}
             {data.generatedFrom === 'demo' ? (
               <span
-                title="Demo data - illustrative sample signals, not a live market scan"
+                title={
+                  soloMode
+                    ? 'Solo mode - device-local book and settings; market signals are illustrative samples'
+                    : 'Demo data - illustrative sample signals, not a live market scan'
+                }
                 className="hidden items-center gap-1.5 rounded-md border border-[#5a4a1a] bg-[#231a08] px-2 py-1.5 font-mono text-[11px] text-[#f3a33a] sm:flex"
               >
                 <span className="inline-flex h-2 w-2 rounded-full bg-[#f3a33a]" />
-                DEMO
+                {soloMode ? 'SOLO' : 'DEMO'}
               </span>
             ) : (() => {
               const runFailed = data.latestRun.status === 'failed' || data.latestRun.status === 'skipped';
@@ -425,7 +431,11 @@ export function AppShell({ data, children }: AppShellProps) {
         {data.generatedFrom === 'demo' && (
           <div className="flex items-center justify-center gap-1.5 border-b border-[#5a4a1a]/50 bg-[#1a1407] px-3 py-1.5 text-center text-[11px] text-[#f3a33a] md:px-5">
             <span className="inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-[#f3a33a]" />
-            <span>Demo data - signals shown are illustrative samples, not a live market scan. Connect a live data source to go live.</span>
+            <span>
+              {soloMode
+                ? 'Solo mode - your book, watchlist and trade log stay on this device. Market signals shown here are sample data unless a live source is connected.'
+                : 'Demo data - signals shown are illustrative samples, not a live market scan. Connect a live data source to go live.'}
+            </span>
           </div>
         )}
 

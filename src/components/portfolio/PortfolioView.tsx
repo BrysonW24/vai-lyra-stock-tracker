@@ -10,6 +10,7 @@ import type { ActionState, DashboardData, PortfolioHolding, SignalRow, SignalSta
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass } from '@/lib/format';
 import { cgtBadgeClass, cgtStatusFor } from '@/lib/cgt';
 import { loadLocalHoldings, PORTFOLIO_CHANGED_EVENT, type LocalHolding } from '@/lib/local-portfolio';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 /** Build display holdings from the user's local book, pricing each off the live signal set. */
 function buildFromLocal(local: LocalHolding[], signals: SignalRow[]): PortfolioHolding[] {
@@ -55,6 +56,11 @@ function formatShortDate(iso: string): string {
   return `${Number(d)} ${MONTHS[Number(m) - 1] ?? m}`;
 }
 
+/** Fractional shares are valid; never round a real position down to the visually-false "0". */
+function formatQuantity(value: number): string {
+  return value.toLocaleString('en-US', { maximumFractionDigits: 4 });
+}
+
 /**
  * Client portfolio view. In demo mode it overlays the user's locally-saved holdings
  * (from onboarding / Add-holding) on top of the static demo book so what they entered
@@ -62,6 +68,7 @@ function formatShortDate(iso: string): string {
  */
 export function PortfolioView({ data }: { data: DashboardData }) {
   const demo = data.generatedFrom !== 'supabase';
+  const soloMode = !isSupabaseConfigured();
   const [holdings, setHoldings] = useState<PortfolioHolding[]>(data.portfolio);
   const [lastTrade, setLastTrade] = useState('-');
   // Client-side clock for CGT badges; set after mount to keep SSR/CSR markup identical.
@@ -73,7 +80,14 @@ export function PortfolioView({ data }: { data: DashboardData }) {
   useEffect(() => {
     function sync() {
       const local = loadLocalHoldings();
-      const activeHoldings = demo && local.length > 0 ? buildFromLocal(local, data.signals) : data.portfolio;
+      // Solo's local book is authoritative even when it is empty. Falling back to the sample
+      // portfolio after a user removes/undoes their final holding makes fictitious positions
+      // reappear and then leak into the AI's answer.
+      const activeHoldings = soloMode
+        ? buildFromLocal(local, data.signals)
+        : demo && local.length > 0
+          ? buildFromLocal(local, data.signals)
+          : data.portfolio;
       setHoldings(activeHoldings);
       const dates = activeHoldings.map((h) => h.purchaseDate).filter((d): d is string => Boolean(d)).sort();
       setLastTrade(dates.length ? formatShortDate(dates[dates.length - 1]) : '-');
@@ -81,7 +95,7 @@ export function PortfolioView({ data }: { data: DashboardData }) {
     sync();
     window.addEventListener(PORTFOLIO_CHANGED_EVENT, sync);
     return () => window.removeEventListener(PORTFOLIO_CHANGED_EVENT, sync);
-  }, [demo, data.portfolio, data.signals]);
+  }, [demo, soloMode, data.portfolio, data.signals]);
 
   const totalValue = holdings.reduce((sum, h) => sum + h.marketValue, 0);
   const totalPnl = holdings.reduce((sum, h) => sum + h.unrealisedPnl, 0);
@@ -165,7 +179,7 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                             {holding.symbol} <ArrowUpRight size={11} />
                           </Link>
                         </td>
-                        <td className="px-3 py-2">{formatNumber(holding.quantity, 0)}</td>
+                        <td className="px-3 py-2">{formatQuantity(holding.quantity)}</td>
                         <td className="px-3 py-2">{formatCurrency(holding.averagePrice)}</td>
                         <td className="px-3 py-2">{formatCurrency(holding.currentPrice)}</td>
                         <td className="px-3 py-2">{formatCurrency(holding.marketValue)}</td>
