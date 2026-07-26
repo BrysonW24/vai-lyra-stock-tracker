@@ -365,6 +365,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.75.0   2026-07-26  A Solo-to-account upgrade path, built behind a control and held dark
 0.74.1   2026-07-26  A features-per-build table in the README, generated so it can never drift
 0.74.0   2026-07-26  One codebase again - the Ideas board reaches Solo, and Solo's device-local polish reaches everyone
 0.73.2   2026-07-24  Solo now behaves like one truthful device-local product from first run onward
@@ -454,7 +455,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(88 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(89 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

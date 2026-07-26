@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.75.0',
+    date: '2026-07-26',
+    title: 'A Solo-to-account upgrade path, built behind a control and held dark',
+    highlights: [
+      'Groundwork for the Solo upgrade path: at the moment a Solo user goes looking for notifications - which Solo cannot deliver on its own - a one-tap prompt can offer a free Community account (push, Telegram, WhatsApp, scheduled digests, plus cloud sync across devices), deep-linking to signup on the accounted deployment.',
+      'It ships behind a control (NEXT_PUBLIC_SOLO_UPGRADE_CTA) that is OFF by default, so nothing is visible yet - the prompt is built and tested, ready to switch on per-deployment when we choose to.',
+      'Honest by construction: the prompt only ever appears on Solo, only for the capabilities that genuinely need an account (never for AI, which Solo already runs on your own key), and the accounted build never shows it.',
+    ],
+  },
+  {
     version: '0.74.1',
     date: '2026-07-26',
     title: 'A features-per-build table in the README, generated so it can never drift',

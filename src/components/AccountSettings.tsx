@@ -27,6 +27,7 @@ import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { syncAccountProfile } from '@/lib/sync-onboarding';
 import { loadInterest, saveInterest, registerInterest } from '@/lib/interest';
 import { NotificationsSetup } from '@/components/NotificationsSetup';
+import { SoloUpgradeCta } from '@/components/SoloUpgradeCta';
 import { pageTitleClass } from '@/lib/ui';
 
 function Panel({ icon: Icon, title, subtitle, children }: { icon: typeof UserRound; title: string; subtitle: string; children: React.ReactNode }) {
@@ -637,6 +638,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                   this console. Use the Community build if you want
                   account-backed delivery across devices.
                 </p>
+                <SoloUpgradeCta />
               </div>
             )}
           </Panel>

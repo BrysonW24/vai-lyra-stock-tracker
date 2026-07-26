@@ -16,6 +16,15 @@ import { isSupabaseConfigured } from '@/lib/supabase/client';
 /** Canonical home of the shared community board (same origin as the live product). */
 export const COMMUNITY_HOME_ORIGIN = 'https://lyra.vivacityai.com.au';
 
+/**
+ * Absolute deep-link to account signup on the canonical Community deployment. Cross-origin by
+ * design: Solo has no auth of its own, so account creation happens on prod. `from` is a harmless
+ * attribution hint the signup page may ignore.
+ */
+export function communitySignupHref(from = 'solo'): string {
+  return `${COMMUNITY_HOME_ORIGIN}/auth/signup?from=${encodeURIComponent(from)}`;
+}
+
 const KEY_STORAGE = 'lyra:community-key';
 
 /** Fallback when localStorage is unavailable (private-mode edge cases, locked-down webviews):

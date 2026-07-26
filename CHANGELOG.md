@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.75.0] - 2026-07-26
+
+A Solo-to-account upgrade path, built behind a control and held dark.
+
+### Changed
+
+- Groundwork for the Solo upgrade path: at the moment a Solo user goes looking for notifications - which Solo cannot deliver on its own - a one-tap prompt can offer a free Community account (push, Telegram, WhatsApp, scheduled digests, plus cloud sync across devices), deep-linking to signup on the accounted deployment.
+- It ships behind a control (NEXT_PUBLIC_SOLO_UPGRADE_CTA) that is OFF by default, so nothing is visible yet - the prompt is built and tested, ready to switch on per-deployment when we choose to.
+- Honest by construction: the prompt only ever appears on Solo, only for the capabilities that genuinely need an account (never for AI, which Solo already runs on your own key), and the accounted build never shows it.
+
 ## [0.74.1] - 2026-07-26
 
 A features-per-build table in the README, generated so it can never drift.
@@ -1134,7 +1144,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.74.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.75.0...HEAD
+[0.75.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.74.1...v0.75.0
 [0.74.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.74.0...v0.74.1
 [0.74.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.2...v0.74.0
 [0.73.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.1...v0.73.2

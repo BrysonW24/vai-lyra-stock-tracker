@@ -99,3 +99,12 @@ describe('communityApiBase', () => {
     expect(COMMUNITY_HOME_ORIGIN).toBe('https://lyra.vivacityai.com.au');
   });
 });
+
+describe('communitySignupHref', () => {
+  it('deep-links to signup on the canonical prod deployment, cross-origin', async () => {
+    const { communitySignupHref, COMMUNITY_HOME_ORIGIN } = await import('@/lib/community');
+    // Absolute prod URL so it works from Solo (which has no auth of its own).
+    expect(communitySignupHref()).toBe(`${COMMUNITY_HOME_ORIGIN}/auth/signup?from=solo`);
+    expect(communitySignupHref('notifications')).toBe(`${COMMUNITY_HOME_ORIGIN}/auth/signup?from=notifications`);
+  });
+});
