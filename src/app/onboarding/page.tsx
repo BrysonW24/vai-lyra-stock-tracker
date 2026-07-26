@@ -37,6 +37,8 @@ import { LyraReveal } from '@/components/activation/LyraReveal';
 import { SceneSlider } from '@/components/activation/SceneSlider';
 import { SetupCompleteBeat } from '@/components/activation/SetupCompleteBeat';
 import { AddToHomeScreenStep } from '@/components/onboarding/AddToHomeScreenStep';
+import { DemoCarryoverConfirm } from '@/components/onboarding/DemoCarryoverConfirm';
+import { saveDemoCarryover, loadDemoCarryover, clearDemoCarryover } from '@/lib/demo-carryover';
 
 /** Fire-and-forget activation beacon (closed slug set; server no-ops in demo/anon). */
 function logActivation(event: string, detail: { step?: number; path?: string } = {}): void {
@@ -56,7 +58,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [state, setState] = useState<OnboardingState | null>(null);
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [phase, setPhase] = useState<'reveal' | 'primer' | 'questionnaire' | 'homescreen' | 'complete'>('reveal');
+  const [phase, setPhase] = useState<'reveal' | 'primer' | 'questionnaire' | 'homescreen' | 'complete' | 'carryover'>('reveal');
   const [isSaving, setIsSaving] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -81,16 +83,23 @@ export default function OnboardingPage() {
       return;
     }
     const saved = loadOnboardingProgress();
+    const carried = isSupabaseConfigured() ? loadDemoCarryover() : null;
     if (saved) {
       setState(saved.state);
       setCurrentStep(saved.currentStep);
       setPhase(saved.phase);
+    } else if (carried) {
+      // Post-signup demo carryover: the visitor built a FULL setup in the read-only demo tour.
+      // Rehydrate all of it and fast-path - skip the reveal + primer they already saw and land on
+      // a one-tap "save your demo setup to your account" confirmation, instead of replaying the
+      // whole questionnaire from scratch.
+      setState(carried);
+      setPhase('carryover');
+      logActivation('demo_carryover_resumed');
     } else {
       const fresh = createInitialOnboardingState('full_setup');
-      // Demo-to-account migration: a user who explored demo mode arrives here (post sign-up)
-      // with a local book and watchlist in this browser. Prefill setup with them so finishing
-      // onboarding uploads the demo data to the account instead of forcing a from-scratch
-      // re-entry - previously everything they built in demo was simply lost.
+      // Legacy fallback: an older demo visitor may carry local holdings/watchlist but no full
+      // carryover snapshot. Prefill those two so finishing still uploads them to the account.
       if (isSupabaseConfigured()) {
         const localHoldings = loadLocalHoldings();
         if (localHoldings.length > 0) {
@@ -117,9 +126,12 @@ export default function OnboardingPage() {
     setHydrated(true);
   }, []);
 
-  // Checkpoint progress on every change so it's resumable; cleared on completion.
+  // Checkpoint progress on every change so it's resumable; cleared on completion. The 'carryover'
+  // fast-path is deliberately NOT checkpointed - its source of truth is the demo-carryover snapshot
+  // (which drives the branch on mount), so persisting it to the resume checkpoint would be redundant
+  // and could resurrect the confirm screen after the user has moved into the questionnaire.
   useEffect(() => {
-    if (hydrated && state && phase !== 'complete') {
+    if (hydrated && state && phase !== 'complete' && phase !== 'carryover') {
       saveOnboardingProgress({ state, currentStep, phase, savedAt: new Date().toISOString() });
     }
   }, [hydrated, state, currentStep, phase]);
@@ -419,11 +431,22 @@ export default function OnboardingPage() {
         // mode/quota failure would bypass onboarding on the next visit while silently losing data.
         document.cookie = 'lyra_onboarded=1; path=/; max-age=31536000; samesite=lax';
         document.cookie = 'lyra_demo_toured=1; path=/; max-age=31536000; samesite=lax';
+        // Demo tour on a CONFIGURED deploy: snapshot the FULL setup (profile, strategy, universe,
+        // watchlist, portfolio, capital, alerts) so signing up later rehydrates everything in one
+        // tap - not just holdings/watchlist - instead of replaying the whole questionnaire.
+        if (demoTour && isSupabaseConfigured()) {
+          saveDemoCarryover(state, new Date().toISOString());
+        }
       }
 
       // Onboarding done - drop the resumable checkpoint so a re-visit starts clean. (The
       // homescreen beat re-checkpoints itself so a closed tab resumes there; its onDone clears.)
       clearOnboardingProgress();
+      // A real account save (live mode, not the session-less demo tour) has consumed any demo
+      // carryover snapshot - drop it so it cannot rehydrate a future fresh onboarding on this device.
+      if (isSupabaseConfigured() && !demoTour) {
+        clearDemoCarryover();
+      }
       logActivation('onboarding_finished', { path: state.path });
 
       // Saves done - one last beat teaches Add-to-Home-Screen (alerts on iPhone depend on it),
@@ -433,6 +456,25 @@ export default function OnboardingPage() {
       setIsSaving(false);
     }
   };
+
+  // Fast-path for a post-signup demo visitor: one tap saves the setup they built in the demo to
+  // their new account, no questionnaire replay. Rendered here (after handleFinish is defined)
+  // because it wires straight into it; "Review & edit" drops into the normal prefilled flow.
+  if (phase === 'carryover') {
+    return (
+      <DemoCarryoverConfirm
+        state={state}
+        saving={isSaving}
+        error={saveError}
+        onSave={handleFinish}
+        onReview={() => {
+          const steps = SETUP_PATHS[state.path].steps;
+          setCurrentStep(steps[1] ?? steps[0]);
+          setPhase('questionnaire');
+        }}
+      />
+    );
+  }
 
   const renderStep = () => {
     switch (currentStep) {

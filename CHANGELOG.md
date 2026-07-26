@@ -6,6 +6,25 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.81.0] - 2026-07-26
+
+Explore the demo, then keep it - your whole setup now follows you into an account.
+
+### Changed
+
+- If you try Lyra from the read-only demo and then create an account, the ENTIRE setup you built - strategy, watchlist, holdings, capital and alert preferences - now comes with you. You land on a one-tap "Welcome back, save your setup" screen instead of replaying the whole questionnaire. Previously only holdings and the watchlist carried across; everything else had to be re-entered.
+- Fixed a trap in that handoff: the demo-tour cookie is set for a week and used to linger after sign-up, which could make a brand-new account look like a demo session - skipping every cloud save and looping you back into onboarding. Signing in now clears it immediately, so your first save always lands.
+- You can still change anything before saving - "Review & edit" drops you into the normal setup steps, fully pre-filled.
+
+## [0.80.1] - 2026-07-26
+
+A one-image "How Lyra Works" explainer, for sharing at a glance.
+
+### Changed
+
+- Added a single-image explainer (assets/how-lyra-works.png) that puts Solo and Full account side by side - what each one is, how each one gets its data, and what they share - so you can send one picture instead of a paragraph.
+- Linked from SHARE.md and the top of the README so the graphic travels with the two-link share kit.
+
 ## [0.80.0] - 2026-07-26
 
 Two ways to try Lyra, made official - Solo now points you to a Full account when you need one.
@@ -1194,7 +1213,9 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.80.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.81.0...HEAD
+[0.81.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.80.1...v0.81.0
+[0.80.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.80.0...v0.80.1
 [0.80.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.79.0...v0.80.0
 [0.79.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.78.0...v0.79.0
 [0.78.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.77.0...v0.78.0

@@ -112,6 +112,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(landingUrl);
   }
 
+  // A now-authenticated user must shed the read-only demo-tour cookie. /api/demo sets it for 7
+  // days and nothing else ever clears it, so without this a freshly-signed-up user still looks
+  // like a demo visitor to the client - onboarding's handleFinish would treat the session as the
+  // tour, SKIP every cloud save, and never set the onboarded flag, trapping them in an infinite
+  // re-onboarding loop with a book that only ever saved locally. Clearing it here (on every
+  // authenticated request, regardless of how they signed in) makes the demo -> account handoff
+  // clean. The local carryover snapshot is separate (localStorage), so this does not lose setup.
+  if (user && request.cookies.get('lyra_demo')?.value === '1') {
+    response.cookies.set('lyra_demo', '', { path: '/', maxAge: 0 });
+  }
+
   // Mandatory onboarding: a signed-in user who hasn't finished onboarding is funnelled
   // into it and cannot reach the rest of the app until done. The flag lives on the
   // user's metadata (set when onboarding completes) and is read from the session here,

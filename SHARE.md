@@ -9,6 +9,14 @@ no em dashes, matching the repo convention.
 How each side actually gets its numbers is documented, with a file-and-line citation behind
 every step, in [`DATA-FLOW.md`](./DATA-FLOW.md).
 
+## The one-image explainer (send this first)
+
+![How Lyra Works - Solo vs Full account, both powered by the same research engine](./assets/how-lyra-works.png)
+
+One picture that lays Solo and Full account side by side: what each is, how each gets its
+data, and what they share. Send it before the links when you want someone to get the
+difference at a glance.
+
 ---
 
 ## The two-link message (detailed - the one to send)

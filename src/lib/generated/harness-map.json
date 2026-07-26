@@ -214,6 +214,7 @@
         "src/lib/local-watchlist.ts",
         "src/lib/local-portfolio.ts",
         "src/lib/local-trades.ts",
+        "src/lib/demo-carryover.ts",
         "src/lib/activation/"
       ],
       "chains": [

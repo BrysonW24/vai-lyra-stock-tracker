@@ -33,6 +33,10 @@ This repo is built to be **shared as a link and replicated end to end**. Four th
 
 Where each side's numbers actually come from is documented, with a file-and-line citation behind every step, in [`DATA-FLOW.md`](./DATA-FLOW.md). A ready-to-send two-link blurb lives in [`SHARE.md`](./SHARE.md).
 
+<p align="center">
+  <img src="assets/how-lyra-works.png" width="80%" alt="How Lyra Works - Solo vs Full account, both powered by the same research engine" />
+</p>
+
 **The best way to share Lyra depends on who you are sharing with - and it is almost never "clone it".**
 
 - **Anyone you want to _show_** (friends, prospects, "look what I built") - send the live link: **[vai-lyra-stock-tracker.vercel.app](https://vai-lyra-stock-tracker.vercel.app)** and tap **Explore the demo first** for the read-only tour, no account needed. (This link used to land straight in an open console; production now runs with accounts, so the tour is the honest no-signup path.) On mobile they can Add to Home Screen (below) for an app-like icon.
@@ -372,6 +376,8 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.81.0   2026-07-26  Explore the demo, then keep it - your whole setup now follows you into an account
+0.80.1   2026-07-26  A one-image "How Lyra Works" explainer, for sharing at a glance
 0.80.0   2026-07-26  Two ways to try Lyra, made official - Solo now points you to a Full account when you need one
 0.79.0   2026-07-26  AI is now free for your first two weeks, then it is your own key - and the whole app works either way
 0.78.0   2026-07-26  A "How Lyra Works" page in Settings - see the decision process for yourself
@@ -467,7 +473,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(94 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(96 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

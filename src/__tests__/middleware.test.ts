@@ -114,4 +114,35 @@ describe('middleware fail-safe (never 500 the whole app)', () => {
     );
     expect(res.status).toBe(200);
   });
+
+  // Demo -> account handoff: /api/demo sets lyra_demo for 7 days and nothing else clears it. A
+  // freshly-signed-up user still carrying it would look like a demo tour to the client, so
+  // onboarding would skip cloud saves and never mark the account onboarded (infinite loop). The
+  // middleware must shed the cookie the moment the request is authenticated.
+  it('clears the demo cookie for an AUTHENTICATED user (fixes the never-saves loop)', async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = ENV.url;
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = ENV.key;
+    hoisted.getUser = async () => ({ data: { user: { user_metadata: { onboarded: true } } } });
+    const res = await middleware(req('/portfolio', { lyra_demo: '1' }));
+    expect(res.status).toBe(200);
+    expect(res.cookies.get('lyra_demo')?.value).toBe(''); // deleted (max-age 0)
+  });
+
+  it('clears the demo cookie on the /onboarding page a not-yet-onboarded new user lands on', async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = ENV.url;
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = ENV.key;
+    hoisted.getUser = async () => ({ data: { user: { user_metadata: {} } } }); // not onboarded
+    const res = await middleware(req('/onboarding', { lyra_demo: '1' }));
+    expect(res.status).toBe(200); // /onboarding is where they belong, so it is served (not redirected)
+    expect(res.cookies.get('lyra_demo')?.value).toBe('');
+  });
+
+  it('does NOT touch the demo cookie for an UNAUTHENTICATED tour visitor (read-only tour intact)', async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = ENV.url;
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = ENV.key;
+    hoisted.getUser = async () => ({ data: { user: null } });
+    const res = await middleware(req('/portfolio', { lyra_demo: '1' }));
+    expect(res.status).toBe(200); // the tour is allowed through
+    expect(res.cookies.get('lyra_demo')).toBeUndefined(); // untouched
+  });
 });

@@ -23,6 +23,25 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.81.0',
+    date: '2026-07-26',
+    title: 'Explore the demo, then keep it - your whole setup now follows you into an account',
+    highlights: [
+      'If you try Lyra from the read-only demo and then create an account, the ENTIRE setup you built - strategy, watchlist, holdings, capital and alert preferences - now comes with you. You land on a one-tap "Welcome back, save your setup" screen instead of replaying the whole questionnaire. Previously only holdings and the watchlist carried across; everything else had to be re-entered.',
+      'Fixed a trap in that handoff: the demo-tour cookie is set for a week and used to linger after sign-up, which could make a brand-new account look like a demo session - skipping every cloud save and looping you back into onboarding. Signing in now clears it immediately, so your first save always lands.',
+      'You can still change anything before saving - "Review & edit" drops you into the normal setup steps, fully pre-filled.',
+    ],
+  },
+  {
+    version: '0.80.1',
+    date: '2026-07-26',
+    title: 'A one-image "How Lyra Works" explainer, for sharing at a glance',
+    highlights: [
+      'Added a single-image explainer (assets/how-lyra-works.png) that puts Solo and Full account side by side - what each one is, how each one gets its data, and what they share - so you can send one picture instead of a paragraph.',
+      'Linked from SHARE.md and the top of the README so the graphic travels with the two-link share kit.',
+    ],
+  },
+  {
     version: '0.80.0',
     date: '2026-07-26',
     title: 'Two ways to try Lyra, made official - Solo now points you to a Full account when you need one',
