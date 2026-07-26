@@ -23,6 +23,14 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.74.1',
+    date: '2026-07-26',
+    title: 'A features-per-build table in the README, generated so it can never drift',
+    highlights: [
+      'The README now carries a "features per build" table - every shipped build and its headline theme, newest first - generated straight from this version log on every build, so it can never fall out of step with what actually shipped. The full per-build highlights still live in CHANGELOG.md and in-app at /whats-new.',
+    ],
+  },
+  {
     version: '0.74.0',
     date: '2026-07-26',
     title: 'One codebase again - the Ideas board reaches Solo, and Solo\'s device-local polish reaches everyone',

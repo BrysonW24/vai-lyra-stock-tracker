@@ -357,6 +357,109 @@ It stays strictly inside Lyra's contract: the twin is a **preference and attenti
 
 ---
 
+## 🗂️ Build history - features per build
+
+Every shipped build and its headline feature, newest first. This table is **generated straight from [`src/lib/version.ts`](src/lib/version.ts)** (the single version source of truth) on every build, so it can never drift from what actually shipped. The full highlights for each build live in [`CHANGELOG.md`](CHANGELOG.md) and in-app at `/whats-new`.
+
+<!-- BUILD-HISTORY:START (generated from src/lib/version.ts by scripts/build-content.mjs - do not edit by hand) -->
+```text
+BUILD    DATE        FEATURE THEME
+-------  ----------  ----------------------------------------------------------------------
+0.74.1   2026-07-26  A features-per-build table in the README, generated so it can never drift
+0.74.0   2026-07-26  One codebase again - the Ideas board reaches Solo, and Solo's device-local polish reaches everyone
+0.73.2   2026-07-24  Solo now behaves like one truthful device-local product from first run onward
+0.73.1   2026-07-24  Solo BYOK credentials can be removed without wiping the console
+0.73.0   2026-07-24  Solo first-run, install and BYOK grounding now tell one consistent truth
+0.72.0   2026-07-20  Lyra Solo - the no-account, bring-your-own-key mode is now first-class
+0.71.0   2026-07-20  Support and Terms pages, reachable without signing in
+0.70.2   2026-07-18  Notch fix, without double-padding the ears
+0.70.1   2026-07-18  Welcome screen clears the notch
+0.70.0   2026-07-18  First-class inside the iOS app
+0.69.1   2026-07-18  Home-Screen walkthrough polish
+0.69.0   2026-07-18  Your phone stops buzzing: a real rate cap, and Quiet mode that means it
+0.68.1   2026-07-18  A replay switch for the onboarding journey
+0.68.0   2026-07-18  Onboarding now teaches you to put Lyra on your Home Screen
+0.67.1   2026-07-18  Demo journey unblocked for everyone who tried the demo before
+0.67.0   2026-07-18  The demo now takes you through the full onboarding journey
+0.66.0   2026-07-18  Paper Bot page rebuilt from panels - same surface, half the moving parts
+0.65.0   2026-07-18  The motion map - every loop, mapped and measured
+0.64.0   2026-07-18  Thumb-sized tap targets everywhere, and the alert API contract is pinned
+0.63.0   2026-07-18  Mute genuinely mutes, alerts never double-send, and reviews read right on WhatsApp
+0.62.0   2026-07-18  Every AI call now shows its token cost
+0.61.0   2026-07-18  Paper-bot approvals are tamper-proof, and your bot feed is private
+0.60.0   2026-07-18  Retrieval quality: the right doc wins again
+0.59.0   2026-07-18  The accumulator wave: five loops that store learnings and compound
+0.58.0   2026-07-18  Prompt-injection fence on live news, resilient middleware pinned, honest copy
+0.57.0   2026-07-18  The copilot can finally answer the macro questions it suggests
+0.56.0   2026-07-18  Fabricated demo data can no longer masquerade as real
+0.55.0   2026-07-17  The middleware can no longer take down the whole site
+0.54.0   2026-07-17  The news intelligence layer can finally save, and the macro tapes stop showing frozen numbers
+0.53.0   2026-07-17  AI spend controls that actually hold on serverless
+0.52.0   2026-07-17  The scout loop closes: accepted cards queue a build, and your verdicts teach the machine
+0.51.0   2026-07-17  Track Record: the real numbers, and one score that cannot silently drift
+0.50.0   2026-07-17  Scout gets its own tab - perception and proposals, cleanly separated
+0.49.0   2026-07-17  One doctrine for the copilot: research that checks your fit, never a trade to place
+0.48.0   2026-07-17  See what the scout sees - the live feed, self-verifying evidence, and an AI read
+0.47.0   2026-07-17  Honesty hardening: workers that store nothing now go red, and two privacy holes closed
+0.46.0   2026-07-17  The macro fleet: RBA decisions in your channels, a live calendar, CGT radar, and your return in AUD
+0.45.0   2026-07-17  The harness learns from its own gaps
+0.44.1   2026-07-17  Scout demo-mode fix, proven by its first production run
+0.44.0   2026-07-17  Your reviews now actually arrive - monthly, quarterly and yearly, with your real return
+0.43.0   2026-07-17  Deploys verify themselves now - and a fresh clone is proven to build, on every push
+0.42.0   2026-07-17  A background job that stores nothing now says so, instead of reporting success
+0.41.0   2026-07-17  The calendar and fundamentals are storing real data for the first time
+0.40.0   2026-07-17  The new reviews could never have been delivered - the API was rejecting them
+0.39.0   2026-07-17  The AI scout: Lyra now reads the wide world nightly and files evidence-linked ideas on the board
+0.38.0   2026-07-17  Weekly, monthly, quarterly and yearly reviews - see how you are actually doing
+0.37.0   2026-07-17  Telegram alerts are readable now: colour-coded relevance, real formatting, no more wall of text
+0.36.0   2026-07-17  The Ideas board can actually save your ideas now - four migrations had never reached production
+0.35.0   2026-07-17  The chain explorer: every vertical traced end to end, and the chains are finally deep
+0.34.0   2026-07-17  The nightly jobs were failing silently every night - your digest, calendar and fundamentals are fixed
+0.33.0   2026-07-17  Product updates and Ideas get the premium glass treatment
+0.32.0   2026-07-17  Settings split into three focused pages instead of one long scroll
+0.31.0   2026-07-17  Lyra listens to your onboarding: the copilot now tailors itself to how YOU answered
+0.30.0   2026-07-17  The floating button gently nudges Feedback into view now and then
+0.29.0   2026-07-17  Product Updates gets an Ideas board: suggest features and upvote what we build next
+0.28.0   2026-07-17  Clearer notifications: an honest per-device push badge, real Telegram and WhatsApp logos, and sharper alert copy
+0.27.0   2026-07-17  Make it yours: a customisable bottom bar, a colourful Explore, cleaner type - and an honest goal bar
+0.26.0   2026-07-17  Error monitoring verified live in production - and the setup scaffolding is removed
+0.25.0   2026-07-17  Error monitoring: Sentry now catches crashes and server errors in production - optional and off by default
+0.24.0   2026-07-17  Your Activity: a private, on-device dashboard of how you use Lyra - time, sessions, AI questions, and a surface heatmap
+0.23.0   2026-07-17  Global rate limits: the abuse guard now counts across every serverless instance, not per-instance
+0.22.0   2026-07-17  One clean rail and an Explore drawer: the daily-drivers up front, the deep research one tap away
+0.21.0   2026-07-17  True orientation: both sides of every name you hold and watch, and a goal target that is your own number
+0.20.0   2026-07-17  The goal cockpit: your target, your progress, and the exact moves your money needs - exits first
+0.19.1   2026-07-17  Landing polish: the alert-channel pills get their own line
+0.19.0   2026-07-17  Quantified upside and honest freshness: the high-upside shortlist finally puts a number on the payoff, the live scanner covers the small caps, and stale boards say so
+0.18.0   2026-07-17  Portfolio-aware, honest about capital: no more fantasy $100k account, real small-account costs, and win rates that never masquerade as a track record
+0.17.0   2026-07-17  Honest edge and a real trade plan: sizing to your own capital, netting costs against the signal, and never dressing up a guess as history
+0.16.0   2026-07-16  The calendar tells the truth and every dialog behaves: live events, a real clock, and one shared focus system
+0.15.0   2026-07-16  On the move: fresh IPO data, live-refreshing drawers, and a console that respects your thumb
+0.14.0   2026-07-16  Signature onboarding: a branded terminal splash, gate micro-delight, a private commissioning card, and a live nervous-system map
+0.13.0   2026-07-16  Your digital trading twin: Lyra now learns your interests, habits, and risk posture - and reflects them back
+0.12.0   2026-07-16  The agent harness: every section of the codebase now has an owning maintenance chain, enforced in CI
+0.11.2   2026-07-16  Onboarding stays honest: a parity gate + skill chain across the human, in-app, and agent surfaces
+0.11.1   2026-07-16  The loop closes: measured outcomes, real digests, follow-up coaching + a console that cannot silently fail
+0.11.0   2026-07-16  Security hardening: SSRF fences, tenant isolation, founder-gating
+0.10.0   2026-07-16  AI you can measure: quality evals, a learned recovery model, hybrid retrieval, AI-ops
+0.9.1    2026-07-16  Review hardening: honest copy, fresh fill prices, smarter doc answers
+0.9.0    2026-07-16  Continuous intelligence + a robust agent harness
+0.8.0    2026-07-16  Setup Companion, agent onboarding, Redis cache + a knowledge layer
+0.7.0    2026-07-16  Replicate it: walkthroughs, /setup agent, Docker/Coolify, full costs
+0.6.0    2026-06-27  TradingView Copilot + Pine strategy export
+0.5.1    2026-06-20  Brand + UI polish, Find/Graph fixes
+0.5.0    2026-06-20  Dogfooding gap-closers
+0.4.0    2026-06-18  Currency-safe trades + the Investigation System
+0.3.0    2026-06-18  Dogfooding-readiness pass
+0.2.0    2026-06-12  Thematic intelligence + research platform
+0.1.0    2026-06-08  Initial release
+
+(88 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+```
+<!-- BUILD-HISTORY:END -->
+
+---
+
 ## ⚠️ Disclaimer
 
 Lyra is **research software, not financial advice**. It surfaces and explains technical signals; it does not tell you what to buy or sell. Markets are risky - do your own research and never invest more than you can afford to lose.

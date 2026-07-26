@@ -75,3 +75,41 @@ await import('./build-knowledge.mjs');
 // generated from SKILL-CHAIN.md + HARNESS.md on the same hook, so the rails view can never
 // drift from the rails themselves.
 await import('./build-harness-map.mjs');
+
+// The "features per build" table in README.md is generated from the SAME source of truth as
+// the version badge and CHANGELOG (src/lib/version.ts RELEASES), between BUILD-HISTORY markers.
+// A hand-pasted list would rot on the next release; this cannot - it refreshes on every
+// predev / prebuild / pretype-check alongside the changelog it summarises.
+{
+  const verSrc = readFileSync(join(root, 'src', 'lib', 'version.ts'), 'utf8');
+  const rels = [...verSrc.matchAll(/version:\s*'([^']+)',\s*\n\s*date:\s*'([^']+)',\s*\n\s*title:\s*'((?:[^'\\]|\\.)*)'/g)]
+    .map(([, v, d, t]) => ({ v, d, t: t.replace(/\\'/g, "'") }));
+  const rows = [
+    'BUILD    DATE        FEATURE THEME',
+    '-------  ----------  ' + '-'.repeat(70),
+    ...rels.map((r) => `${r.v.padEnd(7)}  ${r.d}  ${r.t}`),
+    '',
+    `(${rels.length} builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)`,
+  ];
+  const block = [
+    '<!-- BUILD-HISTORY:START (generated from src/lib/version.ts by scripts/build-content.mjs - do not edit by hand) -->',
+    '```text',
+    ...rows,
+    '```',
+    '<!-- BUILD-HISTORY:END -->',
+  ].join('\n');
+  const readmePath = join(root, 'README.md');
+  const readme = readFileSync(readmePath, 'utf8');
+  const re = /<!-- BUILD-HISTORY:START[\s\S]*?<!-- BUILD-HISTORY:END -->/;
+  if (!re.test(readme)) {
+    console.log('build-history: BUILD-HISTORY markers not found in README.md - skipped');
+  } else {
+    const next = readme.replace(re, block);
+    if (next !== readme) {
+      writeFileSync(readmePath, next);
+      console.log(`build-history: README.md updated (${rels.length} builds)`);
+    } else {
+      console.log('build-history: README.md already in sync');
+    }
+  }
+}

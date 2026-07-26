@@ -6,6 +6,14 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.74.1] - 2026-07-26
+
+A features-per-build table in the README, generated so it can never drift.
+
+### Changed
+
+- The README now carries a "features per build" table - every shipped build and its headline theme, newest first - generated straight from this version log on every build, so it can never fall out of step with what actually shipped. The full per-build highlights still live in CHANGELOG.md and in-app at /whats-new.
+
 ## [0.74.0] - 2026-07-26
 
 One codebase again - the Ideas board reaches Solo, and Solo's device-local polish reaches everyone.
@@ -1126,7 +1134,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.74.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.74.1...HEAD
+[0.74.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.74.0...v0.74.1
 [0.74.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.2...v0.74.0
 [0.73.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.1...v0.73.2
 [0.73.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.0...v0.73.1
