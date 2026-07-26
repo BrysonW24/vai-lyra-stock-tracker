@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.78.0',
+    date: '2026-07-26',
+    title: 'A "How Lyra Works" page in Settings - see the decision process for yourself',
+    highlights: [
+      'New Settings tab, How it works: a plain-English walk through exactly how Lyra decides - how a stock is scored 0-100 from five indicator blocks, how alerts are ranked by relevance (with your own holdings weighted highest), why the ranking is auditable (every number is measured against its real forward outcome), and precisely where AI is allowed (explaining) and forbidden (scoring, ranking, orders, notifications).',
+      'It is grounded in the code, not a pitch: a companion root document HOW-LYRA-WORKS.md carries the same explanation with a file-and-line citation behind every claim, plus Mermaid diagrams of all nine subsystems, so anything stated can be traced to source.',
+      'Also sketches the roadmap: telling Lyra your goal in plain words to reshape what it surfaces - the AI authoring a ranking policy the deterministic engine then runs for free on every brief.',
+    ],
+  },
+  {
     version: '0.77.0',
     date: '2026-07-26',
     title: 'The Ideas board now records where each idea came from - Solo or Community',

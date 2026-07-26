@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.78.0] - 2026-07-26
+
+A "How Lyra Works" page in Settings - see the decision process for yourself.
+
+### Changed
+
+- New Settings tab, How it works: a plain-English walk through exactly how Lyra decides - how a stock is scored 0-100 from five indicator blocks, how alerts are ranked by relevance (with your own holdings weighted highest), why the ranking is auditable (every number is measured against its real forward outcome), and precisely where AI is allowed (explaining) and forbidden (scoring, ranking, orders, notifications).
+- It is grounded in the code, not a pitch: a companion root document HOW-LYRA-WORKS.md carries the same explanation with a file-and-line citation behind every claim, plus Mermaid diagrams of all nine subsystems, so anything stated can be traced to source.
+- Also sketches the roadmap: telling Lyra your goal in plain words to reshape what it surfaces - the AI authoring a ranking policy the deterministic engine then runs for free on every brief.
+
 ## [0.77.0] - 2026-07-26
 
 The Ideas board now records where each idea came from - Solo or Community.
@@ -1164,7 +1174,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.77.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.78.0...HEAD
+[0.78.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.77.0...v0.78.0
 [0.77.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.76.0...v0.77.0
 [0.76.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.75.0...v0.76.0
 [0.75.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.74.1...v0.75.0

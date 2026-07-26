@@ -2,21 +2,22 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BellRing, BrainCircuit, UserRound } from 'lucide-react';
+import { BellRing, BookOpen, BrainCircuit, UserRound } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 
-/** The three settings families, each now its own page instead of one long scroll. */
+/** The settings families, each its own page instead of one long scroll. */
 const TABS = [
   { href: '/account', label: 'Account', icon: UserRound },
   { href: '/account/ai', label: 'AI Settings', icon: BrainCircuit },
   { href: '/account/notifications', label: 'Notifications', icon: BellRing },
+  { href: '/account/how-it-works', label: 'How it works', icon: BookOpen },
 ] as const;
 
 export function SettingsTabs() {
   const pathname = usePathname();
   const soloMode = !isSupabaseConfigured();
   return (
-    <nav className="grid grid-cols-3 gap-1 rounded-lg border border-[#1b2530] bg-[#0b1016] p-1">
+    <nav className="grid grid-cols-2 gap-1 rounded-lg border border-[#1b2530] bg-[#0b1016] p-1 sm:grid-cols-4">
       {TABS.map(({ href, label, icon: Icon }) => {
         const active = pathname === href;
         return (
