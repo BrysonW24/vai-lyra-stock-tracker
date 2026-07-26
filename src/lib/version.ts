@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.80.0',
+    date: '2026-07-26',
+    title: 'Two ways to try Lyra, made official - Solo now points you to a Full account when you need one',
+    highlights: [
+      'Solo (the no-account build) now offers a one-tap path to create a Full account at the exact moments it has to say "not here" - background notifications and hosted AI. It only ever shows on the accountless build; the full app, which already has accounts, never sees it.',
+      'New share kit. SHARE.md carries the ready-to-send two-link blurb (Solo vs Full account), and DATA-FLOW.md explains, with a file-and-line citation behind every step, exactly where each side gets its numbers: Solo recomputes signals live from Yahoo on the spot for a curated list, while the Full account reads an hourly-scanned, stored universe with a live overlay and your own portfolio and watchlist layered on top.',
+      'The README now leads with the two live links and what each one is for, so sharing Lyra is a copy-paste, not an explanation.',
+    ],
+  },
+  {
     version: '0.79.0',
     date: '2026-07-26',
     title: 'AI is now free for your first two weeks, then it is your own key - and the whole app works either way',

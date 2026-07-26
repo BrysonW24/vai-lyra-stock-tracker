@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.80.0] - 2026-07-26
+
+Two ways to try Lyra, made official - Solo now points you to a Full account when you need one.
+
+### Changed
+
+- Solo (the no-account build) now offers a one-tap path to create a Full account at the exact moments it has to say "not here" - background notifications and hosted AI. It only ever shows on the accountless build; the full app, which already has accounts, never sees it.
+- New share kit. SHARE.md carries the ready-to-send two-link blurb (Solo vs Full account), and DATA-FLOW.md explains, with a file-and-line citation behind every step, exactly where each side gets its numbers: Solo recomputes signals live from Yahoo on the spot for a curated list, while the Full account reads an hourly-scanned, stored universe with a live overlay and your own portfolio and watchlist layered on top.
+- The README now leads with the two live links and what each one is for, so sharing Lyra is a copy-paste, not an explanation.
+
 ## [0.79.0] - 2026-07-26
 
 AI is now free for your first two weeks, then it is your own key - and the whole app works either way.
@@ -1184,7 +1194,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.79.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.80.0...HEAD
+[0.80.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.79.0...v0.80.0
 [0.79.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.78.0...v0.79.0
 [0.78.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.77.0...v0.78.0
 [0.77.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.76.0...v0.77.0

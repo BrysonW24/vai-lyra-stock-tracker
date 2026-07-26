@@ -12,7 +12,8 @@
 > is added).
 
 Companion docs: `ARCHITECTURE.md` (structure) - `HARNESS.md` (enforcement) - `LOOPS.md`
-(motion). This file is the **decision/reasoning** explainer.
+(motion) - `DATA-FLOW.md` (where Solo vs Full each get their numbers). This file is the
+**decision/reasoning** explainer.
 
 ---
 

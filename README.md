@@ -26,6 +26,13 @@ This repo is built to be **shared as a link and replicated end to end**. Four th
 
 ## 0 - How to Access Lyra
 
+**Two live links, depending on whether you want an account:**
+
+- **Solo** - [solo.lyra.vivacityai.com.au](https://solo.lyra.vivacityai.com.au) - no sign-up, everything on your device, live signals recomputed on the spot for a curated list, bring-your-own AI key. Nothing is stored on our servers. When Solo hits something it cannot do without an account (background notifications, hosted AI) it offers a one-tap path to create a Full account.
+- **Full account** - [lyra.vivacityai.com.au](https://lyra.vivacityai.com.au) - the full hourly-scanned universe, portfolio and watchlist saved and synced across devices, notifications (push, Telegram, Slack), and hosted AI free for your first 2 weeks then bring-your-own-key. Everything except the AI chat works forever regardless.
+
+Where each side's numbers actually come from is documented, with a file-and-line citation behind every step, in [`DATA-FLOW.md`](./DATA-FLOW.md). A ready-to-send two-link blurb lives in [`SHARE.md`](./SHARE.md).
+
 **The best way to share Lyra depends on who you are sharing with - and it is almost never "clone it".**
 
 - **Anyone you want to _show_** (friends, prospects, "look what I built") - send the live link: **[vai-lyra-stock-tracker.vercel.app](https://vai-lyra-stock-tracker.vercel.app)** and tap **Explore the demo first** for the read-only tour, no account needed. (This link used to land straight in an open console; production now runs with accounts, so the tour is the honest no-signup path.) On mobile they can Add to Home Screen (below) for an app-like icon.
@@ -365,6 +372,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.80.0   2026-07-26  Two ways to try Lyra, made official - Solo now points you to a Full account when you need one
 0.79.0   2026-07-26  AI is now free for your first two weeks, then it is your own key - and the whole app works either way
 0.78.0   2026-07-26  A "How Lyra Works" page in Settings - see the decision process for yourself
 0.77.0   2026-07-26  The Ideas board now records where each idea came from - Solo or Community
@@ -459,7 +467,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(93 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(94 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 
