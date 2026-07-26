@@ -108,3 +108,16 @@ describe('communitySignupHref', () => {
     expect(communitySignupHref('notifications')).toBe(`${COMMUNITY_HOME_ORIGIN}/auth/signup?from=notifications`);
   });
 });
+
+describe('classifySurface (idea provenance)', () => {
+  it('maps the request Origin to the deployment it came from', async () => {
+    const { classifySurface, SOLO_ORIGIN, PROD_ORIGIN } = await import('@/lib/community-contract');
+    expect(classifySurface(SOLO_ORIGIN)).toBe('solo');
+    expect(classifySurface(PROD_ORIGIN)).toBe('community');
+    // Unknown / self-host / absent is never guessed as solo or community.
+    expect(classifySurface('https://someones-fork.vercel.app')).toBe('other');
+    expect(classifySurface(null)).toBe('other');
+    expect(classifySurface(undefined)).toBe('other');
+    expect(classifySurface('')).toBe('other');
+  });
+});

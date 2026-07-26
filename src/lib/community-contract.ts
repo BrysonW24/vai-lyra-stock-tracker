@@ -19,3 +19,20 @@ export const EXAMPLE_IDEA_IDS = [
   'a0000000-0000-4000-8000-000000000001',
   'a0000000-0000-4000-8000-000000000002',
 ] as const;
+
+/**
+ * Where a submission came from. The board lives on production; Solo (and any other deployment)
+ * reaches it cross-origin, so the request's Origin header tells us the source surface -
+ * browser-set and reliable for real clients. A raw curl can spoof it, which is fine: this is a
+ * provenance/analytics signal, never a security control.
+ */
+export const PROD_ORIGIN = 'https://lyra.vivacityai.com.au';
+export const SOLO_ORIGIN = 'https://solo.lyra.vivacityai.com.au';
+export type CommunitySurface = 'community' | 'solo' | 'other';
+
+/** Classify a request Origin into the deployment it came from. Unknown/absent -> 'other'. */
+export function classifySurface(origin: string | null | undefined): CommunitySurface {
+  if (origin === SOLO_ORIGIN) return 'solo';
+  if (origin === PROD_ORIGIN) return 'community';
+  return 'other';
+}

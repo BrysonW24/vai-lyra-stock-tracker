@@ -5,7 +5,7 @@ import { rateLimitShared } from '@/lib/ratelimit';
 import { clientIp } from '@/lib/api/ai-guard';
 import { corsJson, corsPreflight } from '@/lib/api/cors';
 import { readJsonCapped } from '@/lib/api/body';
-import { IDEA_DESCRIPTION_MAX, IDEA_TITLE_MAX, IDEA_TITLE_MIN } from '@/lib/community-contract';
+import { IDEA_DESCRIPTION_MAX, IDEA_TITLE_MAX, IDEA_TITLE_MIN, classifySurface } from '@/lib/community-contract';
 import { verifyCommunityKey } from '@/lib/community-key';
 
 /**
@@ -231,6 +231,8 @@ export async function POST(request: NextRequest) {
 
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
+  // Provenance: which deployment posted this (Solo reaches prod cross-origin). Analytics only.
+  const surface = classifySurface(request.headers.get('origin'));
 
   let data: { id: string; title: string; description: string | null; status: string | null; vote_count: number | null; created_at: string } | null = null;
   let error: { code?: string; message: string } | null = null;
@@ -238,11 +240,21 @@ export async function POST(request: NextRequest) {
   if (user) {
     const result = await supabase
       .from('community_ideas')
-      .insert({ user_id: user.id, title, description })
+      .insert({ user_id: user.id, title, description, surface })
       .select('id, title, description, status, vote_count, created_at')
       .single();
     data = result.data;
     error = result.error;
+    if (error && isMissingColumn(error)) {
+      // Migration 054 (surface column) not applied yet - post unlabelled rather than fail.
+      const retry = await supabase
+        .from('community_ideas')
+        .insert({ user_id: user.id, title, description })
+        .select('id, title, description, status, vote_count, created_at')
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
   } else {
     // Anonymous posting: a server-issued signed key + the service role. RLS never opens to
     // anon clients - this route (with its IP rate limits and length caps) is the gate.
@@ -252,11 +264,20 @@ export async function POST(request: NextRequest) {
     if (!admin) return corsJson({ ok: false, error: 'Posting is not available on this deployment.' }, { status: 503 });
     const result = await admin
       .from('community_ideas')
-      .insert({ title, description })
+      .insert({ title, description, surface })
       .select('id, title, description, status, vote_count, created_at')
       .single();
     data = result.data;
     error = result.error;
+    if (error && isMissingColumn(error)) {
+      const retry = await admin
+        .from('community_ideas')
+        .insert({ title, description })
+        .select('id, title, description, status, vote_count, created_at')
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
   }
 
   if (error || !data) {

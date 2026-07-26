@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.77.0',
+    date: '2026-07-26',
+    title: 'The Ideas board now records where each idea came from - Solo or Community',
+    highlights: [
+      'Every new idea is tagged with the deployment it was posted from - Solo (the accountless build), Community (production), or other (a self-host) - so we can see how much of the board is driven by free Solo users versus signed-in ones.',
+      'It reads the request origin server-side, which cleanly tells Solo (cross-origin) from Community (same-origin); it is provenance for us, never shown on the public board and never tied to a person.',
+      'Safe either way: the tag writes best-effort, so an idea still posts fine whether or not the new column has been applied yet. Existing ideas stay honestly unlabelled rather than back-guessed.',
+    ],
+  },
+  {
     version: '0.76.0',
     date: '2026-07-26',
     title: 'AI Settings tell the truth about hosted vs your-own-key on every deployment',

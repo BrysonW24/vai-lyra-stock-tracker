@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.77.0] - 2026-07-26
+
+The Ideas board now records where each idea came from - Solo or Community.
+
+### Changed
+
+- Every new idea is tagged with the deployment it was posted from - Solo (the accountless build), Community (production), or other (a self-host) - so we can see how much of the board is driven by free Solo users versus signed-in ones.
+- It reads the request origin server-side, which cleanly tells Solo (cross-origin) from Community (same-origin); it is provenance for us, never shown on the public board and never tied to a person.
+- Safe either way: the tag writes best-effort, so an idea still posts fine whether or not the new column has been applied yet. Existing ideas stay honestly unlabelled rather than back-guessed.
+
 ## [0.76.0] - 2026-07-26
 
 AI Settings tell the truth about hosted vs your-own-key on every deployment.
@@ -1154,7 +1164,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.76.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.77.0...HEAD
+[0.77.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.76.0...v0.77.0
 [0.76.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.75.0...v0.76.0
 [0.75.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.74.1...v0.75.0
 [0.74.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.74.0...v0.74.1

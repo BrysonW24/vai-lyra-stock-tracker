@@ -1,4 +1,5 @@
 import { isSupabaseConfigured } from '@/lib/supabase/client';
+import { PROD_ORIGIN } from '@/lib/community-contract';
 
 /**
  * Community board plumbing. The Ideas board is ONE global board for every Lyra surface:
@@ -14,7 +15,7 @@ import { isSupabaseConfigured } from '@/lib/supabase/client';
  */
 
 /** Canonical home of the shared community board (same origin as the live product). */
-export const COMMUNITY_HOME_ORIGIN = 'https://lyra.vivacityai.com.au';
+export const COMMUNITY_HOME_ORIGIN = PROD_ORIGIN;
 
 /**
  * Absolute deep-link to account signup on the canonical Community deployment. Cross-origin by

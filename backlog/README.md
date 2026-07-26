@@ -35,3 +35,16 @@ from the corresponding file verbatim. Lanes are file-disjoint and safe to run co
 - Phase 2: APNs push per docs/product/native-app.md (founder-gated APNs key).
 - Resolved 2026-07-18: the stray `Lyra/` blank Xcode template at repo root was verified
   pure boilerplate and deleted (the real app is `ios/App/App.xcodeproj`).
+
+## Parked work items - Solo / Community (2026-07-26)
+
+- **Arm the Solo -> account upgrade CTA** (founder action, no code needed). The CTA is built
+  and shipped DARK in v0.75.0. To make it visible: set `NEXT_PUBLIC_SOLO_UPGRADE_CTA=1` on the
+  **solo** Vercel deployment and redeploy. It only shows on Solo, only in the Notifications
+  settings tab, and deep-links to signup on production. Preview first, then arm.
+- **Extend idea provenance to votes** (small follow-up to v0.77.0). v0.77.0 added a `surface`
+  column to `community_ideas` (solo / community / other, classified from the request Origin)
+  so the board shows where each idea came from. Votes (`community_idea_votes`) are the heavier
+  engagement signal and are NOT yet tagged - same pattern would apply: add `surface` to the
+  votes table + stamp it in the vote route (best-effort, column-missing fallback like the ideas
+  route). Do when a "who's engaging, Solo vs Community" read needs vote-level granularity.
