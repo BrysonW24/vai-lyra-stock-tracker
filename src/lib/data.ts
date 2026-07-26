@@ -1,5 +1,6 @@
 import { demoDashboardData } from '@/lib/demo-data';
 import { applyLiveSignals } from '@/lib/live-signals';
+import { buildSoloMarketDashboard } from '@/lib/local-dashboard';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import type {
   ActionState,
@@ -396,9 +397,11 @@ export async function getDashboardData(): Promise<DashboardData> {
   // Supabase isn't configured we stay in demo mode.
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
-    // Demo mode: still compute the real signal brain from live prices so the signal
-    // panels agree with the live chart. Falls back to demo per-symbol on any failure.
-    return { ...demoDashboardData, signals: await applyLiveSignals(demoDashboardData.signals) };
+    // Solo mode still uses the public market snapshot, but it must never inherit the
+    // sample user's private-looking portfolio, watchlist, alert history, or overlay
+    // counts. Client surfaces layer this device's real local data over these signals.
+    const signals = await applyLiveSignals(demoDashboardData.signals);
+    return buildSoloMarketDashboard(demoDashboardData, signals);
   }
 
   try {

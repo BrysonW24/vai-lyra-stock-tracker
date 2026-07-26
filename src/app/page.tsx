@@ -40,10 +40,15 @@ import { loadTwinAffinity } from '@/lib/twin/repo';
 import { applyAffinityTiebreak, affinityFor } from '@/lib/twin/ranking';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass, trendArrow } from '@/lib/format';
 import { PaperBotStrip } from '@/components/paper-bot/PaperBotStrip';
+import { SoloCommandLayout } from '@/components/SoloCommandLayout';
 
 export const metadata = { title: 'Command' };
 
 export default async function OverviewPage() {
+  const soloMode = !(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
   // These four are independent - fetch them concurrently instead of one-after-another
   // so the server render waits on the slowest, not the sum.
   const [data, marketContext, macroContext, setupStatus, paperAccount, twinAffinity, constraints, calendar] = await Promise.all([
@@ -295,7 +300,16 @@ export default async function OverviewPage() {
 
         {setupStatus.signedIn ? <SetupChecklist status={setupStatus} /> : <GettingStartedBanner />}
 
-        <CommandLayout sections={sections} leading={<LocalContextBar />} />
+        {soloMode ? (
+          <SoloCommandLayout
+            sourceData={data}
+            market={marketContext}
+            sections={sections}
+            leading={<LocalContextBar />}
+          />
+        ) : (
+          <CommandLayout sections={sections} leading={<LocalContextBar />} />
+        )}
       </div>
     </AppShell>
   );

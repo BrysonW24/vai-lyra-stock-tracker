@@ -335,7 +335,7 @@ export const ONBOARDING_STEPS = [
   {
     id: 8,
     name: 'Alerts',
-    title: 'Choose how you want to be alerted.',
+    title: 'Review your notification options.',
     skipAvailable: true,
   },
   {

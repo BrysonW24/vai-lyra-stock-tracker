@@ -1,6 +1,6 @@
 {
   "name": "vai-lyra-stock-tracker",
-  "version": "0.73.0",
+  "version": "0.74.0",
   "private": true,
   "license": "MIT",
   "description": "Hourly tech stock momentum scanner dashboard and Python worker.",
@@ -42,13 +42,13 @@
     "@capacitor/ios": "^8.4.2",
     "@capacitor/push-notifications": "^8.1.2",
     "@sentry/nextjs": "^10.66.0",
-    "@supabase/ssr": "^0.10.3",
+    "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.49.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.475.0",
-    "next": "^15.1.7",
+    "next": "^15.5.21",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "web-push": "^3.6.7",
@@ -67,6 +67,13 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3",
     "vitest": "^4.1.8"
+  },
+  "overrides": {
+    "fast-uri": "3.1.4",
+    "next": {
+      "postcss": "8.5.22",
+      "sharp": "0.35.3"
+    }
   },
   "engines": {
     "node": ">=20.0.0",

@@ -116,7 +116,7 @@ export function computeNextBestActions(
         title: `${w.symbol} is ${triggered ? 'at' : 'approaching'} its target buy zone`,
         detail: triggered
           ? 'This is the trigger you set - review the entry.'
-          : `Distance ${w.distanceToTarget != null ? round1(Math.abs(w.distanceToTarget) * 100) + '%' : 'closing'} - the setup you were waiting for is near.`,
+          : `Distance ${w.distanceToTarget != null ? round1(Math.abs(w.distanceToTarget)) + '%' : 'closing'} - the setup you were waiting for is near.`,
         cta: { label: 'Open', href: `/tickers/${w.symbol}` },
       });
     }

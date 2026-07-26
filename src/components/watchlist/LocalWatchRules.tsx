@@ -12,6 +12,8 @@ import {
 } from '@/lib/local-watchlist';
 import { formatCurrency } from '@/lib/format';
 import { TickerLogo } from '@/components/TickerLogo';
+import { buildLocalWatchlistRows } from '@/lib/local-dashboard';
+import type { SignalRow } from '@/types/scanner';
 
 /**
  * Solo/demo-mode watchlist visibility. The local-watchlist store existed but nothing on
@@ -21,7 +23,7 @@ import { TickerLogo } from '@/components/TickerLogo';
  * overlay state, and pretending otherwise would put made-up numbers next to real ones.
  * In live (Supabase) mode this renders nothing - the DB-backed table is the truth.
  */
-export function LocalWatchRules() {
+export function LocalWatchRules({ showEmpty = false }: { showEmpty?: boolean }) {
   const [items, setItems] = useState<LocalWatchItem[]>([]);
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export function LocalWatchRules() {
     return () => window.removeEventListener(WATCHLIST_CHANGED_EVENT, sync);
   }, []);
 
-  if (items.length === 0) return null;
+  if (items.length === 0 && !showEmpty) return null;
 
   return (
     <section className="terminal-panel rounded-md p-3">
@@ -40,6 +42,11 @@ export function LocalWatchRules() {
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#eef3f8]">Your watch rules</h2>
         <span className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">on this device</span>
       </div>
+      {items.length === 0 ? (
+        <p className="mt-3 rounded border border-[#263241] bg-[#0d141c] px-3 py-4 text-center text-xs text-[#8190a0]">
+          No tickers on this device yet. Add one with the watch rule form.
+        </p>
+      ) : (
       <ul className="mt-2 divide-y divide-[#1b2530]">
         {items.map((item) => (
           <li className="flex items-center gap-2 py-1.5" key={item.symbol}>
@@ -63,10 +70,57 @@ export function LocalWatchRules() {
           </li>
         ))}
       </ul>
+      )}
       <p className="mt-2 text-[10px] leading-relaxed text-[#5e6b78]">
-        Stored in this browser only. Hourly trigger states come from the hosted scanner, so these
-        rules show here without live trigger tracking.
+        Stored in this browser only. Target proximity is computed from the latest
+        available market snapshot; Solo does not send background trigger alerts.
       </p>
+    </section>
+  );
+}
+
+export function SoloWatchlistMetrics({ signals }: { signals: SignalRow[] }) {
+  const [items, setItems] = useState<LocalWatchItem[]>([]);
+
+  useEffect(() => {
+    const sync = () => setItems(loadLocalWatchlist());
+    sync();
+    window.addEventListener(WATCHLIST_CHANGED_EVENT, sync);
+    return () => window.removeEventListener(WATCHLIST_CHANGED_EVENT, sync);
+  }, []);
+
+  const rows = buildLocalWatchlistRows(items, signals);
+  const approaching = rows.filter(
+    (row) => row.triggerState === 'approaching',
+  ).length;
+  const triggered = rows.filter(
+    (row) => row.triggerState === 'triggered',
+  ).length;
+  const withTargets = items.filter(
+    (item) => typeof item.targetBuyPrice === 'number',
+  ).length;
+
+  const metrics = [
+    ['Watching', String(items.length), 'text-[#eef3f8]'],
+    ['With targets', String(withTargets), 'text-[#f3a33a]'],
+    ['Approaching', String(approaching), 'text-[#f3a33a]'],
+    ['Triggered', String(triggered), triggered ? 'text-[#43d18b]' : 'text-[#8190a0]'],
+    ['Storage', 'Device', 'text-[#7fb0ff]'],
+    ['Delivery', 'Off', 'text-[#8190a0]'],
+  ];
+
+  return (
+    <section className="grid grid-cols-3 gap-1.5 md:grid-cols-4 xl:grid-cols-6">
+      {metrics.map(([label, value, tone]) => (
+        <div className="terminal-panel rounded-md p-2" key={label}>
+          <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">
+            {label}
+          </p>
+          <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>
+            {value}
+          </p>
+        </div>
+      ))}
     </section>
   );
 }

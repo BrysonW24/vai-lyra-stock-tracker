@@ -4,11 +4,16 @@ import { SignalTable } from '@/components/SignalTable';
 import { getDashboardData } from '@/lib/data';
 import { formatNumber } from '@/lib/format';
 import { pageTitleClass } from '@/lib/ui';
+import { SoloWatchCount } from '@/components/radar/SoloWatchCount';
 
 export const metadata = { title: 'Signal Radar' };
 
 export default async function RadarPage() {
   const data = await getDashboardData();
+  const soloMode = !(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
   const strong = data.signals.filter((signal) => signal.status === 'strong_setup').length;
   const weakening = data.signals.filter((signal) => signal.status === 'weakening' || signal.status === 'invalidated' || signal.status === 'overextended').length;
 
@@ -25,7 +30,11 @@ export default async function RadarPage() {
             </div>
             <div className="grid grid-cols-3 gap-2 font-mono text-xs">
               <span className="rounded border border-[#1d7f55] bg-[#0d251b] px-2 py-1 text-[#43d18b]">Strong {strong}</span>
-              <span className="rounded border border-[#9a6a1f] bg-[#2a1f0f] px-2 py-1 text-[#f3a33a]">Watch {data.watchlist.length}</span>
+              {soloMode ? (
+                <SoloWatchCount />
+              ) : (
+                <span className="rounded border border-[#9a6a1f] bg-[#2a1f0f] px-2 py-1 text-[#f3a33a]">Watch {data.watchlist.length}</span>
+              )}
               <span className="rounded border border-[#7f1d1d] bg-[#2b1214] px-2 py-1 text-[#ff6b6b]">Risk {weakening}</span>
             </div>
           </div>
@@ -36,6 +45,7 @@ export default async function RadarPage() {
             signals={data.signals}
             portfolioSymbols={data.portfolio.map((holding) => holding.symbol)}
             watchlistSymbols={data.watchlist.map((item) => item.symbol)}
+            soloPersonalize={soloMode}
           />
         </Suspense>
       </div>

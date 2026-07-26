@@ -75,7 +75,7 @@ export function BriefTile() {
   );
 }
 
-export function AlertTile() {
+export function AlertTile({ soloMode = false }: { soloMode?: boolean }) {
   return (
     <div className={CARD}>
       <div className={SHEEN} />
@@ -92,7 +92,11 @@ export function AlertTile() {
           <p className="text-[10px] text-[#5A6B82]">RSI recovering · volume confirming</p>
         </div>
       </div>
-      <p className="mt-2 font-mono text-[9px] uppercase tracking-wider text-[#5A6B82]">Telegram · Slack · WhatsApp · quiet hours</p>
+      <p className="mt-2 font-mono text-[9px] uppercase tracking-wider text-[#5A6B82]">
+        {soloMode
+          ? 'In-console only · no background delivery'
+          : 'Telegram · Slack · WhatsApp · quiet hours'}
+      </p>
     </div>
   );
 }

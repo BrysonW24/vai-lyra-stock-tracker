@@ -318,6 +318,10 @@ class SupabaseRepository:
             .select("id")
             .eq("symbol", symbol)
             .eq("alert_type", alert_type)
+            # Only a delivery that actually reached the notification router should start the
+            # cooldown. Counting failed/gated/skipped attempts made one failure suppress retries;
+            # logging a skipped duplicate also slid the window forward forever.
+            .eq("sent_status", "sent")
             .gte("created_at", since.isoformat())
         )
         if user_id is not None:

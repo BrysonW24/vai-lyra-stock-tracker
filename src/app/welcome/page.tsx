@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { ArrowRight, BellRing, Gauge, Newspaper, ShieldCheck, Wallet } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { VersionBadge } from '@/components/VersionBadge';
@@ -12,25 +13,25 @@ import { ExchangeStrip } from '@/components/ExchangeStrip';
 import { UltimateGoals } from '@/components/landing/UltimateGoals';
 import { StackSection } from '@/components/landing/StackSection';
 import { BRAND_NAME } from '@/lib/brand';
+import { getWelcomeEntry } from '@/lib/welcome-entry';
 
 export const metadata: Metadata = {
   // absolute: the landing page opts out of the root "%s · Lyra" template (no double brand).
   title: { absolute: `${BRAND_NAME} - see the setup first` },
-  description: 'US tech signals - scored, explained, overlaid on your book. Alerts hit your phone before the crowd catches on.',
+  description: 'US tech signals - scored, explained, and overlaid on your book.',
 };
 
 // Light premium "Vivacity.ai" brand surface - the calm front door before the dark command
 // centre. See onboarding-aesthetic-prompt.md. Palette grounded in the classic Vivacity mark:
 // cream #F7F6F2 · navy #0E1E3A · electric blue #1E63FF · icy cyan #5BC8FF.
-export default function WelcomePage() {
+export default async function WelcomePage() {
   // When Supabase auth is configured, account creation is the start of setup (sign up -> confirm ->
   // onboard), and middleware gates /onboarding behind a signed-in user. In demo mode there's no auth,
   // so the CTA goes straight to onboarding (which the demo middleware allows). Picking the right
   // target here is what makes "Set up my console" actually work instead of bouncing to /welcome.
   const supabaseConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  const setupHref = supabaseConfigured ? '/auth/signup' : '/onboarding';
-  // With auth on, the entry action is creating an account (console setup is the post-login step).
-  const setupLabel = supabaseConfigured ? 'Create account' : 'Set up my console';
+  const soloOnboarded = !supabaseConfigured && (await cookies()).get('lyra_onboarded')?.value === '1';
+  const { href: setupHref, label: setupLabel } = getWelcomeEntry(supabaseConfigured, soloOnboarded);
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#F7F6F2] text-[#0E1E3A]">
       {/* Ambient brand glow + light geometric texture - premium, never busy */}
@@ -92,7 +93,13 @@ export default function WelcomePage() {
                   { icon: Gauge, lead: <>The <span className="text-[#1E63FF]">maths</span> makes the call</>, body: 'every setup scored on RSI, MACD, trend & volume.' },
                   { icon: Wallet, lead: <>Your <span className="text-[#1E63FF]">book</span>, in context</>, body: 'your holdings and watchlist overlaid on every signal.' },
                   { icon: Newspaper, lead: <><span className="text-[#1E63FF]">Clarity</span>, every morning</>, body: "what's setting up, why it matters, what to watch." },
-                  { icon: BellRing, lead: <><span className="text-[#1E63FF]">Alerts</span> that earn the buzz</>, body: 'strong setups and risk flags - straight to your phone.' },
+                  {
+                    icon: BellRing,
+                    lead: <><span className="text-[#1E63FF]">{supabaseConfigured ? 'Alerts' : 'Changes'}</span> worth your attention</>,
+                    body: supabaseConfigured
+                      ? 'strong setups and risk flags - delivered to your chosen channel.'
+                      : 'strong setups and risk flags - visible when you open the console.',
+                  },
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#1E63FF] to-[#5BC8FF] text-white shadow-[0_8px_18px_-6px_rgba(30,99,255,0.65)] ring-1 ring-white/40">
@@ -111,9 +118,11 @@ export default function WelcomePage() {
               <Link href={setupHref} className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_12px_30px_-10px_rgba(67,209,139,0.6)] transition hover:brightness-110">
                 {setupLabel} <ArrowRight size={16} />
               </Link>
-              <Link href="/auth/login" className="inline-flex items-center gap-2 rounded-md border border-[#0E1E3A]/10 bg-white/70 px-5 py-3 text-sm font-medium text-[#0E1E3A] backdrop-blur transition hover:border-[#1E63FF]/30">
-                Sign in
-              </Link>
+              {supabaseConfigured && (
+                <Link href="/auth/login" className="inline-flex items-center gap-2 rounded-md border border-[#0E1E3A]/10 bg-white/70 px-5 py-3 text-sm font-medium text-[#0E1E3A] backdrop-blur transition hover:border-[#1E63FF]/30">
+                  Sign in
+                </Link>
+              )}
               {supabaseConfigured && (
                 // See-before-signup doctrine: a cold visitor can walk the real console read-only
                 // (via the lyra_demo cookie the middleware honours) before creating an account.
@@ -131,9 +140,32 @@ export default function WelcomePage() {
             </p>
             {!supabaseConfigured && (
               // Solo deployment: say the quiet part out loud - it is the whole point of this build.
-              <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
-                <ShieldCheck size={12} /> Solo build - no account, no cloud. Everything you save stays in this browser, and AI runs on your own key.
-              </p>
+              <>
+                <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
+                  <ShieldCheck size={12} /> Solo build - no sign-in. First visit starts guided setup; after that, you enter your console directly.
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
+                  <ShieldCheck size={12} /> Your book and trade log stay in this browser. AI uses the provider key you add.
+                </p>
+                <div className="mt-3 max-w-md rounded-xl border border-[#1E63FF]/15 bg-white/55 p-3 text-[11px] leading-relaxed text-[#5A6B82]">
+                  <p>
+                    <span className="font-semibold text-[#0E1E3A]">Solo:</span>{' '}
+                    device-local data, no account, BYOK AI, and no background
+                    notification delivery.
+                  </p>
+                  <p className="mt-1">
+                    <span className="font-semibold text-[#0E1E3A]">Community:</span>{' '}
+                    sign-in, private cloud sync, and account-backed notification
+                    channels.{' '}
+                    <a
+                      href="https://lyra.vivacityai.com.au"
+                      className="font-semibold text-[#1E63FF] hover:underline"
+                    >
+                      Open Community
+                    </a>
+                  </p>
+                </div>
+              </>
             )}
           </div>
 
@@ -156,24 +188,24 @@ export default function WelcomePage() {
             <div id="lyra-tiles" className="grid scroll-mt-6 content-between gap-4">
               <PortfolioTile />
               <BriefTile />
-              <AlertTile />
+              <AlertTile soloMode={!supabaseConfigured} />
             </div>
           </div>
         </section>
 
         {/* Future state - AI / LLM intelligence layer */}
         <section id="future" className="scroll-mt-6 pb-12">
-          <FutureStateAI />
+          <FutureStateAI soloMode={!supabaseConfigured} />
         </section>
 
         {/* The ultimate goal - six flip cards, honest statuses (ported from the Setup Companion) */}
         <section id="goal" className="scroll-mt-6 pb-12">
-          <UltimateGoals />
+          <UltimateGoals soloMode={!supabaseConfigured} />
         </section>
 
         {/* The stack - every technology with an honest cost badge */}
         <section id="stack" className="scroll-mt-6 pb-12">
-          <StackSection />
+          <StackSection soloMode={!supabaseConfigured} />
         </section>
 
         {/* Footer */}

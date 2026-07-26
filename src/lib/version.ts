@@ -23,14 +23,48 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
-    version: '0.73.0',
-    date: '2026-07-24',
-    title: 'The Ideas board belongs to you - and nobody needs an account to use it',
+    version: '0.74.0',
+    date: '2026-07-26',
+    title: 'One codebase again - the Ideas board reaches Solo, and Solo\'s device-local polish reaches everyone',
     highlights: [
       'The Ideas tab is now purely community ideas: what you want built inside Lyra. The AI scout\'s external signals (news themes, funding drumbeats) moved to the Scout tab as "Scout proposals" - the two questions never mix again.',
       'Post and vote without an account: ideas and votes work signed-out and in Lyra Solo, keyed to your device. One shared board for everyone - a Solo user sees and votes on the same list as a signed-in one.',
       'Two standing example ideas seed the board - deliberately things we may never build - so you can see what an idea looks like before adding your own.',
       'Scout proposals keep everything they had: evidence links, AI reads, confidence, votes, and the maintainer promotion flow - just on the tab where perception belongs.',
+      'Solo and the accounted app are now one branch and one codebase again, switched only by deployment env - so every fix ships to both.',
+    ],
+  },
+  {
+    version: '0.73.2',
+    date: '2026-07-24',
+    title: 'Solo now behaves like one truthful device-local product from first run onward',
+    highlights: [
+      'A completed Solo setup is now a one-time journey: returning users enter their console directly, and even a stray onboarding URL redirects home unless an explicit replay was requested.',
+      'Every personal board now uses only this browser’s saved watchlist, holdings and cash. Seeded demo portfolios, alerts and overlay counts can no longer impersonate the user on charts, radar, simulation or planning surfaces.',
+      'Solo trade logging is now one atomic local transaction across the trade log, holdings and saved cash balance. A failed write rolls the whole action back, and Undo restores all three.',
+      'The Solo/Community boundary is explicit throughout setup and settings: no sign-in, hosted AI or background-delivery claims in Solo; BYOK remains optional and device-held.',
+      'AI provider failures now produce actionable user messages plus bounded, secret-free operations codes. Successful and failed runs emit hash-only structured telemetry with provider, model, latency, usage and cost.',
+      'Alert worker deduplication no longer stores skipped attempts as sent alerts, preventing false cooldowns and unbounded alert-table growth.',
+    ],
+  },
+  {
+    version: '0.73.1',
+    date: '2026-07-24',
+    title: 'Solo BYOK credentials can be removed without wiping the console',
+    highlights: [
+      'AI Settings now has a dedicated Remove key action whenever a browser-held provider key exists, so a Solo user can revoke that credential without deleting their watchlist, portfolio, trade log or other device settings.',
+      'Returning Solo users who revisit the welcome page now see Open my console and go straight to their existing console instead of accidentally restarting the first-run setup.',
+    ],
+  },
+  {
+    version: '0.73.0',
+    date: '2026-07-24',
+    title: 'Solo first-run, install and BYOK grounding now tell one consistent truth',
+    highlights: [
+      'Solo now has one clear front door: Enter my console, no sign-in action, an explicit SOLO status in the app, and account-free Home Screen instructions.',
+      'Installability is fixed for first-time visitors: the web manifest and service worker bypass the onboarding gate and return as real PWA assets instead of redirecting to the welcome page.',
+      'Bring-your-own-key chat now receives a validated, transient snapshot of the holdings, watchlist and operating context stored on this device, so sample portfolio data can no longer impersonate the Solo user. Anonymous questions are excluded from raw question-signal capture; AI audit metadata remains hash-only.',
+      'Solo portfolio and trade-log behavior is truthful at the edges: an empty local book stays empty instead of restoring sample holdings, and fractional shares are displayed instead of rounding a real position down to zero.',
     ],
   },
   {

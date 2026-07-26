@@ -9,6 +9,7 @@ import { formatCompactCurrency, formatCurrency, formatNumber, formatSignedNumber
 
 interface MetricStripProps {
   data: DashboardData;
+  soloMode?: boolean;
 }
 
 interface Face {
@@ -51,7 +52,7 @@ function FaceBlock({ face, icon: Icon }: { face: Face; icon: LucideIcon }) {
  * to lift it, then drag to reorder; the order persists per device. Failure mode is benign:
  * if a long-press never activates, the tiles just render and rotate as normal.
  */
-export function MetricStrip({ data }: MetricStripProps) {
+export function MetricStrip({ data, soloMode = false }: MetricStripProps) {
   const { activeMode, statusLabel } = useAlertPrefs();
   const modeMeta = ALERT_MODES.find((m) => m.value === activeMode) ?? ALERT_MODES[0];
 
@@ -157,11 +158,17 @@ export function MetricStrip({ data }: MetricStripProps) {
     {
       key: 'alerts',
       icon: BellRing,
-      faces: [
-        { label: 'Alerts', value: formatNumber(data.latestRun.alertsSent, 0), detail: `Overlay ${data.latestRun.portfolioOverlaysCreated}/${data.latestRun.watchlistOverlaysCreated}`, tone: 'text-[#60a5fa]' },
-        { label: 'Mode', value: statusLabel, detail: 'Tap avatar', tone: modeMeta.tone.split(' ').find((c) => c.startsWith('text-')) ?? 'text-[#a8b5c2]' },
-        { label: 'Delivery', value: 'Telegram', detail: 'Backend bot', tone: 'text-[#a8b5c2]' },
-      ],
+      faces: soloMode
+        ? [
+            { label: 'Alerts', value: 'In-console', detail: 'No background delivery', tone: 'text-[#a8b5c2]' },
+            { label: 'Storage', value: 'Device', detail: 'No destinations collected', tone: 'text-[#7fb0ff]' },
+            { label: 'Cloud', value: 'Off', detail: 'Solo accountless mode', tone: 'text-[#8190a0]' },
+          ]
+        : [
+            { label: 'Alerts', value: formatNumber(data.latestRun.alertsSent, 0), detail: `Overlay ${data.latestRun.portfolioOverlaysCreated}/${data.latestRun.watchlistOverlaysCreated}`, tone: 'text-[#60a5fa]' },
+            { label: 'Mode', value: statusLabel, detail: 'Tap avatar', tone: modeMeta.tone.split(' ').find((c) => c.startsWith('text-')) ?? 'text-[#a8b5c2]' },
+            { label: 'Delivery', value: 'Telegram', detail: 'Backend bot', tone: 'text-[#a8b5c2]' },
+          ],
     },
   ];
 

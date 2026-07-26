@@ -75,14 +75,16 @@ export function loadAlertPrefs(): AlertPrefs {
  * previously onboarding alert choices went nowhere in demo mode). Read-modify-write against
  * storage so other listeners see the committed value; returns the committed prefs.
  */
-export function saveAlertPrefs(patch: Partial<AlertPrefs>): AlertPrefs {
+function commitAlertPrefs(patch: Partial<AlertPrefs>): { prefs: AlertPrefs; storageOk: boolean } {
   const next = { ...loadAlertPrefs(), ...patch };
+  let storageOk = false;
   try {
     window.localStorage.setItem(KEY, JSON.stringify(next));
+    storageOk = true;
   } catch {
-    /* ignore */
+    /* reported to callers that need a verified local commit */
   }
-  window.dispatchEvent(new Event(EVENT));
+  if (storageOk) window.dispatchEvent(new Event(EVENT));
   // Server sync for the mute half - the part the dispatch router actually enforces. Only fires
   // when the patch touches mute state; fire-and-forget (a 401 in demo/signed-out is expected).
   if ('mode' in patch || 'mutedUntil' in patch) {
@@ -104,7 +106,16 @@ export function saveAlertPrefs(patch: Partial<AlertPrefs>): AlertPrefs {
       /* never let a sync failure break the local save */
     }
   }
-  return next;
+  return { prefs: next, storageOk };
+}
+
+export function saveAlertPrefs(patch: Partial<AlertPrefs>): AlertPrefs {
+  return commitAlertPrefs(patch).prefs;
+}
+
+/** Onboarding uses this stricter variant so Solo never claims completion after a rejected write. */
+export function saveAlertPrefsWithStatus(patch: Partial<AlertPrefs>): boolean {
+  return commitAlertPrefs(patch).storageOk;
 }
 
 /** Shared alert-prefs state: read, update, and the derived status used by the header badge. */

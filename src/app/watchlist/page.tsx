@@ -3,7 +3,10 @@ import { ArrowUpRight, BellPlus } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
 import { StatusBadge } from '@/components/StatusBadge';
 import { AddWatchRuleForm } from '@/components/watchlist/AddWatchRuleForm';
-import { LocalWatchRules } from '@/components/watchlist/LocalWatchRules';
+import {
+  LocalWatchRules,
+  SoloWatchlistMetrics,
+} from '@/components/watchlist/LocalWatchRules';
 import { TickerLogo } from '@/components/TickerLogo';
 import { getDashboardData } from '@/lib/data';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass } from '@/lib/format';
@@ -13,16 +16,26 @@ export const metadata = { title: 'Watchlist' };
 
 export default async function WatchlistPage() {
   const data = await getDashboardData();
-  const approaching = data.watchlist.filter((item) => item.triggerState === 'approaching').length;
-  const triggered = data.watchlist.filter((item) => item.triggerState === 'triggered').length;
-  const bestScore = Math.max(...data.watchlist.map((item) => item.signalScore), 0);
+  const soloMode = !(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+  // Static demo watchlist rows are a market showcase, not this Solo user's
+  // watchlist. Never present them as personal data in the accountless build.
+  const watchlist = soloMode ? [] : data.watchlist;
+  const approaching = watchlist.filter((item) => item.triggerState === 'approaching').length;
+  const triggered = watchlist.filter((item) => item.triggerState === 'triggered').length;
+  const bestScore = Math.max(...watchlist.map((item) => item.signalScore), 0);
 
   return (
     <AppShell data={data}>
       <div className="space-y-3 pb-28 xl:pb-6">
+        {soloMode ? (
+          <SoloWatchlistMetrics signals={data.signals} />
+        ) : (
         <section className="grid grid-cols-3 gap-1.5 md:grid-cols-4 xl:grid-cols-6">
           {[
-            ['Watching', data.watchlist.length.toString(), 'text-[#eef3f8]'],
+            ['Watching', watchlist.length.toString(), 'text-[#eef3f8]'],
             ['Approaching', approaching.toString(), 'text-[#f3a33a]'],
             ['Triggered', triggered.toString(), triggered > 0 ? 'text-[#43d18b]' : 'text-[#8190a0]'],
             ['Best setup', bestScore.toString(), 'text-[#eef3f8]'],
@@ -37,6 +50,9 @@ export default async function WatchlistPage() {
             </div>
           ))}
         </section>
+        )}
+
+        {soloMode && <LocalWatchRules showEmpty />}
 
         <section className="grid gap-3 xl:grid-cols-[1fr_360px]">
           <div className="terminal-panel overflow-hidden rounded-md">
@@ -74,7 +90,7 @@ export default async function WatchlistPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1b2530]">
-                  {data.watchlist.map((item) => (
+                  {watchlist.map((item) => (
                     <tr className="font-mono text-[#dbe5ee] hover:bg-[#101720]" key={item.symbol}>
                       <td className="px-3 py-2 font-semibold text-[#eef3f8]">
                         <Link href={`/tickers/${item.symbol}`} className="inline-flex items-center gap-1.5">
@@ -101,7 +117,7 @@ export default async function WatchlistPage() {
             </div>
 
             <div className="divide-y divide-[#1b2530] md:hidden">
-              {data.watchlist.map((item) => (
+              {watchlist.map((item) => (
                 <Link href={`/tickers/${item.symbol}`} className="block px-3 py-3" key={item.symbol}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -138,7 +154,7 @@ export default async function WatchlistPage() {
 
             {/* Solo/demo only (renders null when Supabase is configured): the browser-local
                 rules the form above saves - without this the demo-mode save was invisible. */}
-            <LocalWatchRules />
+            {!soloMode && <LocalWatchRules />}
 
             {/* xl-only: on mobile this re-listed the ENTIRE watchlist directly under the
                 card list - the user scrolled every name twice. The cards already carry
@@ -146,7 +162,7 @@ export default async function WatchlistPage() {
             <section className="terminal-panel hidden rounded-md p-3 xl:block">
               <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Trigger explanations</h2>
               <div className="mt-3 space-y-3">
-                {data.watchlist.map((item) => (
+                {watchlist.map((item) => (
                   <div className="border-b border-[#1b2530] pb-3 last:border-b-0 last:pb-0" key={item.symbol}>
                     <div className="flex justify-between font-mono text-xs">
                       <span className="font-semibold text-[#eef3f8]">{item.symbol}</span>

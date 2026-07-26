@@ -82,4 +82,36 @@ describe('middleware fail-safe (never 500 the whole app)', () => {
     const res = await middleware(req('/portfolio', { lyra_demo: '1' }));
     expect(res.status).toBe(200);
   });
+
+  it.each(['/manifest.webmanifest', '/sw.js'])(
+    'lets the PWA asset %s through before Solo onboarding',
+    async (path) => {
+      delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+      delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      const res = await middleware(req(path));
+      expect(res.status).toBe(200);
+      expect(res.headers.get('location')).toBeNull();
+    },
+  );
+
+  it('keeps a returning Solo user out of onboarding unless replay was explicit', async () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    const res = await middleware(
+      req('/onboarding', { lyra_onboarded: '1' }),
+    );
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe('https://app.test/');
+  });
+
+  it('allows an explicit Solo onboarding replay for review', async () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    const res = await middleware(
+      req('/onboarding?replay=1', { lyra_onboarded: '1' }),
+    );
+    expect(res.status).toBe(200);
+  });
 });

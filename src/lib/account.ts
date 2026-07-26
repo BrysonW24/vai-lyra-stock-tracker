@@ -109,12 +109,13 @@ function load<T>(key: string, fallback: T): T {
   }
 }
 
-function save<T>(key: string, value: T): void {
-  if (typeof window === 'undefined') return;
+function save<T>(key: string, value: T): boolean {
+  if (typeof window === 'undefined') return false;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
+    return true;
   } catch {
-    /* storage unavailable - ignore */
+    return false;
   }
 }
 
@@ -131,6 +132,11 @@ export const loadAi = (): AiSettings => {
   return ai;
 };
 export const saveAi = (value: AiSettings) => save(KEYS.ai, value);
+
+/** Return the same AI configuration with its browser-held credential removed. */
+export function withoutAiKey(value: AiSettings): AiSettings {
+  return { ...value, apiKey: '' };
+}
 
 export const loadLock = () => load<LockSettings>(KEYS.lock, DEFAULT_LOCK);
 export const saveLock = (value: LockSettings) => save(KEYS.lock, value);

@@ -9,6 +9,7 @@ import { NotificationEngagementBeacon } from '@/components/NotificationEngagemen
 import ExternalLinkBoundary from '@/components/native/ExternalLinkBoundary';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://lyra.vivacityai.com.au'),
   // Template so every page can set a one-word title and still carry the brand -
   // 40 tabs all reading the identical brand string made history/bookmarks useless.
   title: {

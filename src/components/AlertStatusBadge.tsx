@@ -1,6 +1,7 @@
 'use client';
 
 import { ALERT_MODES, useAlertPrefs } from '@/lib/alert-prefs';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 /** Fired when the badge is tapped, so the account (gecko) menu opens to the controls. */
 export const OPEN_ACCOUNT_MENU_EVENT = 'lyra:account-menu-open';
@@ -11,8 +12,25 @@ export const OPEN_ACCOUNT_MENU_EVENT = 'lyra:account-menu-open';
  * opens the account (gecko) menu, where the mode controls live.
  */
 export function AlertStatusBadge() {
+  const soloMode = !isSupabaseConfigured();
   const { activeMode, statusLabel, isMuted } = useAlertPrefs();
   const meta = ALERT_MODES.find((m) => m.value === activeMode) ?? ALERT_MODES[0];
+
+  if (soloMode) {
+    return (
+      <button
+        type="button"
+        onClick={() =>
+          window.dispatchEvent(new Event(OPEN_ACCOUNT_MENU_EVENT))
+        }
+        title="Solo: in-console signals only; no background notification delivery"
+        className="flex shrink-0 items-center gap-1.5 rounded-md border border-[#263241] bg-[#0d141c] px-2 py-1.5 font-mono text-[11px] text-[#a8b5c2] transition hover:brightness-110"
+      >
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#8190a0]" />
+        Solo
+      </button>
+    );
+  }
 
   return (
     <button

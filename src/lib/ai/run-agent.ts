@@ -124,7 +124,7 @@ async function runStructured(opts: {
     outputTokens = r.usage?.outputTokens ?? null;
     costUsd = r.costUsd;
   } catch (err) {
-    void recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: null, toolsUsed, injectionFlags: [], validationErrors: [], citationCount: 0, status: 'error', refusalReason: null, latencyMs: Date.now() - started }).catch(() => {});
+    await recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: null, toolsUsed, injectionFlags: [], validationErrors: [], citationCount: 0, status: 'error', refusalReason: null, latencyMs: Date.now() - started });
     return { ok: false, agent, error: err instanceof Error ? err.message : 'model_error', evidenceIds, toolsUsed };
   }
   const latencyMs = Date.now() - started;
@@ -166,7 +166,7 @@ async function runStructured(opts: {
   const citationCount = Array.isArray(citations) ? citations.length : 0;
   const blocked = guardrailBlock.length > 0;
   const status = blocked || !validation.ok ? (refusalReason ? 'refused' : 'validation_failed') : 'ok';
-  void recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: hashInput(text), toolsUsed, injectionFlags: [...guardrailBlock, ...guardrailWarnings], validationErrors: validation.errors, citationCount, status, refusalReason: blocked || !validation.ok ? refusalReason : null, latencyMs, inputTokens, outputTokens, costUsd }).catch(() => {});
+  await recordAiRun({ userId: 'local', agentName: agent, provider: creds.provider, model, inputHash, outputHash: hashInput(text), toolsUsed, injectionFlags: [...guardrailBlock, ...guardrailWarnings], validationErrors: validation.errors, citationCount, status, refusalReason: blocked || !validation.ok ? refusalReason : null, latencyMs, inputTokens, outputTokens, costUsd });
   if (blocked) return { ok: false, agent, error: refusalReason ?? 'guardrail_block', evidenceIds, toolsUsed };
   if (!validation.ok) return { ok: false, agent, error: refusalReason ?? validation.errors.join('; '), evidenceIds, toolsUsed };
   return { ok: true, agent, result: parsed, evidenceIds, toolsUsed };

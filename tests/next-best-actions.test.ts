@@ -51,6 +51,24 @@ describe('computeNextBestActions', () => {
     expect(tsla?.title).toMatch(/at its target/);
   });
 
+  it('renders watchlist distance in percentage points without multiplying it twice', () => {
+    const out = computeNextBestActions({
+      signals: [],
+      portfolio: [{ symbol: 'X', unrealisedPnl: 0, marketValue: 1000 }],
+      watchlist: [
+        {
+          symbol: 'TSLA',
+          triggerState: 'approaching',
+          distanceToTarget: 4.8,
+        },
+      ],
+      profile: { portfolioCount: 1, watchlistCount: 1 },
+    });
+    const tsla = out.find((action) => action.symbol === 'TSLA');
+    expect(tsla?.detail).toContain('Distance 4.8%');
+    expect(tsla?.detail).not.toContain('480%');
+  });
+
   it('conservative comfort flags risk sooner than balanced', () => {
     const port = [{ symbol: 'AMD', unrealisedPnl: -120, marketValue: 1880 }]; // cost 2000 -> -6%
     const balanced = computeNextBestActions({ signals: [], portfolio: port, watchlist: [], profile: { riskComfort: 'balanced', portfolioCount: 1, watchlistCount: 1 } });

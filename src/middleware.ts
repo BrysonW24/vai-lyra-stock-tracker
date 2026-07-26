@@ -24,6 +24,18 @@ import { createServerClient } from '@supabase/ssr';
 // /whats-new is public on purpose: the changelog and the no-account community Ideas board
 // live there - walling them behind sign-in would contradict "post and vote without an account".
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/welcome', '/privacy', '/support', '/terms', '/whats-new'];
+// Browser-install assets must never be caught by the first-run gate. A redirect here makes the
+// manifest invalid and prevents service-worker registration for the exact fresh visitor who needs
+// the install flow.
+const PUBLIC_FILES = new Set(['/manifest.webmanifest', '/sw.js']);
+
+function isPublicPath(pathname: string): boolean {
+  return (
+    PUBLIC_FILES.has(pathname) ||
+    PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
+    pathname.startsWith('/api')
+  );
+}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -37,10 +49,18 @@ export async function middleware(request: NextRequest) {
     // mandatory before the app proper unlocks - completion is persisted in a
     // cookie the onboarding flow sets (demo has no Supabase metadata).
     const { pathname } = request.nextUrl;
-    const isPublic =
-      PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
-      pathname.startsWith('/api');
+    const isPublic = isPublicPath(pathname);
     const onboarded = request.cookies.get('lyra_onboarded')?.value === '1';
+    const explicitReplay =
+      request.nextUrl.searchParams.has('beat') ||
+      request.nextUrl.searchParams.get('replay') === '1';
+    if (
+      onboarded &&
+      pathname.startsWith('/onboarding') &&
+      !explicitReplay
+    ) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
     if (!onboarded && !isPublic && !pathname.startsWith('/onboarding')) {
       return NextResponse.redirect(new URL('/welcome', request.url));
     }
@@ -48,9 +68,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
-  const isPublic =
-    PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
-    pathname.startsWith('/api'); // API routes enforce their own auth (401)
+  const isPublic = isPublicPath(pathname); // API routes enforce their own auth (401)
 
   // Resolve the session, but NEVER let a Supabase/edge hiccup crash the middleware. Before this
   // guard, `getUser()` throwing (auth service blip, edge fetch failure, malformed env at the edge)
@@ -107,5 +125,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };

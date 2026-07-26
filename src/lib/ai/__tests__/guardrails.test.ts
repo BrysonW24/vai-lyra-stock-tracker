@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import {
   AI_NEVER,
   AI_MAY,
@@ -205,6 +205,11 @@ describe('schema guardrails', () => {
 });
 
 describe('ai audit', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setAiRunWriter(null);
+  });
+
   const baseRun: AiRunInput = {
     userId: 'user-1',
     agentName: 'research_analyst',
@@ -228,6 +233,7 @@ describe('ai audit', () => {
   });
 
   it('recordAiRun writes through the active writer and fills id and createdAt', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {});
     inMemoryAiRunStore.clear();
     const record = await recordAiRun(baseRun);
     expect(record.id.length).toBeGreaterThan(0);
@@ -241,6 +247,50 @@ describe('ai audit', () => {
     expect(captured.length).toBe(1);
     expect(captured[0]?.status).toBe('validation_failed');
     expect(inMemoryAiRunStore.list().length).toBe(1);
-    setAiRunWriter(null);
+  });
+
+  it('emits a structured, secret-free operations event even when durable storage fails', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setAiRunWriter({
+      write: () => {
+        throw new Error('writer accidentally included sk-live-do-not-log');
+      },
+    });
+
+    const record = await recordAiRun({
+      ...baseRun,
+      userId: 'ip:203.0.113.8',
+      model: 'claude-haiku-4-5\nforged-log-line',
+    });
+
+    expect(record.status).toBe('ok');
+    expect(error).toHaveBeenCalledOnce();
+    const combined = [...info.mock.calls, ...error.mock.calls].flat().join('\n');
+    expect(combined).not.toContain('203.0.113.8');
+    expect(combined).not.toContain('sk-live-do-not-log');
+    expect(combined).not.toContain('forged-log-line');
+
+    const event = JSON.parse(String(info.mock.calls[0]?.[0])) as Record<string, unknown>;
+    expect(event.event).toBe('lyra.ai_run');
+    expect(event.status).toBe('ok');
+    expect(event.writeOk).toBe(false);
+    expect(event.identityHash).toMatch(/^[0-9a-f]{16}$/);
+  });
+
+  it('emits only a bounded failure code for provider errors', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    await recordAiRun({
+      ...baseRun,
+      status: 'error',
+      refusalReason: 'provider:invalid_key',
+    });
+
+    const event = JSON.parse(String(info.mock.calls[0]?.[0])) as Record<
+      string,
+      unknown
+    >;
+    expect(event.failureCode).toBe('invalid_key');
+    expect(String(info.mock.calls[0]?.[0])).not.toContain('API key');
   });
 });

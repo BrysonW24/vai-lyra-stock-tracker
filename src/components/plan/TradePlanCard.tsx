@@ -1,9 +1,17 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { buildTradePlan, renderTradePlanText, type TradePlanFlag } from '@/lib/edge/trade-plan';
 import type { ExpectancyInput } from '@/lib/edge/expectancy';
 import { formatCurrency } from '@/lib/format';
+import {
+  loadLocalHoldings,
+  PORTFOLIO_CHANGED_EVENT,
+} from '@/lib/local-portfolio';
+import {
+  loadOnboardingSummary,
+  ONBOARDING_SUMMARY_CHANGED_EVENT,
+} from '@/lib/onboarding-summary';
 
 /**
  * The trade plan surface - the decision-moment version of the position-size calculator, sized
@@ -37,6 +45,7 @@ interface Props {
   hasCapitalOnFile: boolean;
   /** Total value already deployed in open positions - enables the portfolio-heat guard. Undefined when unknown. */
   openPositionsValue?: number;
+  soloMode?: boolean;
 }
 
 const FLAG_META: Record<TradePlanFlag, { label: string; tone: 'danger' | 'warn' | 'info' }> = {
@@ -63,7 +72,7 @@ const toneClass: Record<'danger' | 'warn' | 'info', string> = {
 const labelCls = 'text-[11px] uppercase tracking-[0.14em] text-[#8190a0]';
 const inputCls = 'mt-1 w-full rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-sm text-[#eef3f8] focus:border-[#3a4c60] focus:outline-none';
 
-export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defaultMaxPositionPct, crossCurrencyDefault, hasCapitalOnFile, openPositionsValue }: Props) {
+export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defaultMaxPositionPct, crossCurrencyDefault, hasCapitalOnFile, openPositionsValue, soloMode = false }: Props) {
   const sorted = useMemo(() => [...symbols].sort((a, b) => a.symbol.localeCompare(b.symbol)), [symbols]);
   const [symbol, setSymbol] = useState(sorted[0]?.symbol ?? '');
   const ctx = useMemo(() => sorted.find((s) => s.symbol === symbol), [sorted, symbol]);
@@ -77,12 +86,72 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
   const [wholeShares, setWholeShares] = useState(true);
   const [crossCurrency, setCrossCurrency] = useState(crossCurrencyDefault);
   const [copied, setCopied] = useState(false);
+  const [activeCurrency, setActiveCurrency] = useState(baseCurrency);
+  const [capitalOnFile, setCapitalOnFile] = useState(hasCapitalOnFile);
+  const [activeOpenPositionsValue, setActiveOpenPositionsValue] = useState(openPositionsValue);
+
+  useEffect(() => {
+    if (!soloMode) return;
+    const refreshCapital = () => {
+      const capital = loadOnboardingSummary()?.capital;
+      if (
+        typeof capital?.cashAvailable === 'number' &&
+        capital.cashAvailable >= 0
+      ) {
+        setAccountSize(capital.cashAvailable);
+        setCapitalOnFile(true);
+      }
+      if (
+        typeof capital?.maxPositionSizePct === 'number' &&
+        capital.maxPositionSizePct > 0
+      ) {
+        setMaxPositionPct(capital.maxPositionSizePct);
+      }
+      const currency = capital?.baseCurrency?.toUpperCase();
+      if (currency) {
+        setActiveCurrency(currency);
+        setCrossCurrency(currency !== 'USD');
+        if (currency !== 'USD') setEntryPrice(0);
+      }
+    };
+    const refreshExposure = () => {
+      const priceBySymbol = new Map(
+        symbols.map((item) => [item.symbol, item.close]),
+      );
+      const localExposure = loadLocalHoldings().reduce(
+        (sum, holding) =>
+          sum +
+          holding.quantity *
+            (priceBySymbol.get(holding.symbol) || holding.averageBuyPrice),
+        0,
+      );
+      setActiveOpenPositionsValue(
+        localExposure > 0 ? localExposure : undefined,
+      );
+    };
+    refreshCapital();
+    refreshExposure();
+    window.addEventListener(
+      ONBOARDING_SUMMARY_CHANGED_EVENT,
+      refreshCapital,
+    );
+    window.addEventListener(PORTFOLIO_CHANGED_EVENT, refreshExposure);
+    return () => {
+      window.removeEventListener(
+        ONBOARDING_SUMMARY_CHANGED_EVENT,
+        refreshCapital,
+      );
+      window.removeEventListener(PORTFOLIO_CHANGED_EVENT, refreshExposure);
+    };
+  }, [soloMode, symbols]);
 
   const onPickSymbol = (next: string) => {
     setSymbol(next);
     const nextCtx = sorted.find((s) => s.symbol === next);
     if (nextCtx?.close) {
-      setEntryPrice(nextCtx.close);
+      setEntryPrice(
+        soloMode && activeCurrency !== 'USD' ? 0 : nextCtx.close,
+      );
       setStopPrice('');
       setTargetPrice('');
     }
@@ -104,14 +173,15 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
         lifecycleStage: ctx?.lifecycleStage,
         outcome: ctx?.outcome ?? null,
         provenance: ctx?.provenance,
-        openPositionsValue,
+        openPositionsValue: activeOpenPositionsValue,
         sameThemeValue: ctx?.sameThemeValue,
         themeLabel: ctx?.themeLabel,
       }),
-    [symbol, entryPrice, stopPrice, targetPrice, accountSize, riskPct, maxPositionPct, wholeShares, crossCurrency, ctx, openPositionsValue],
+    [symbol, entryPrice, stopPrice, targetPrice, accountSize, riskPct, maxPositionPct, wholeShares, crossCurrency, ctx, activeOpenPositionsValue],
   );
 
-  const cur = (n: number | null) => (n === null ? '-' : formatCurrency(n, baseCurrency));
+  const cur = (n: number | null) => (n === null ? '-' : formatCurrency(n, activeCurrency));
+  const planReady = Number(entryPrice) > 0;
 
   const copyTicket = async () => {
     try {
@@ -133,9 +203,17 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
         </p>
       </div>
 
-      {!hasCapitalOnFile && (
+      {soloMode && activeCurrency !== 'USD' && (
         <div className="rounded border border-[#25405c] bg-[#14202a] px-3 py-2 text-xs text-[#7fb0ff]">
-          No account capital is on file, so this starts from a {formatCurrency(defaultAccountSize, baseCurrency)} example.
+          These radar names are USD-quoted. Enter an {activeCurrency}-converted
+          entry price before sizing. Lyra includes estimated FX friction but
+          does not fetch or assume an exchange rate.
+        </div>
+      )}
+
+      {!capitalOnFile && (
+        <div className="rounded border border-[#25405c] bg-[#14202a] px-3 py-2 text-xs text-[#7fb0ff]">
+          No account capital is on file, so this starts from a {formatCurrency(defaultAccountSize, activeCurrency)} example.
           Set your available cash in settings and the plan will size against your real balance.
         </div>
       )}
@@ -158,7 +236,9 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className={labelCls}>Entry</label>
+                <label className={labelCls}>
+                  Entry{soloMode ? ` (${activeCurrency})` : ''}
+                </label>
                 <input type="number" className={inputCls} value={entryPrice} onChange={(e) => setEntryPrice(Number(e.target.value))} />
               </div>
               <div>
@@ -205,7 +285,8 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
               {copied ? 'Copied' : 'Copy ticket'}
             </button>
           </div>
-          <div className="space-y-2 px-3 py-3 font-mono text-sm text-[#eef3f8]">
+          {planReady ? (
+            <div className="space-y-2 px-3 py-3 font-mono text-sm text-[#eef3f8]">
             <Row label="Size" value={plan.shares > 0 ? `${plan.shares} sh = ${cur(plan.positionValue)} (${plan.positionPctOfAccount}%)` : 'below one whole share'} />
             <Row label="Risk budget" value={`${cur(plan.riskDollars)} (${plan.riskPercentPerTrade}%)`} />
             <Row label="Worst case (stop hit)" value={cur(plan.worstCaseLossDollars)} tone={plan.worstCaseLossDollars !== null ? 'danger' : undefined} />
@@ -230,11 +311,22 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
                 />
               </>
             )}
-          </div>
+            </div>
+          ) : (
+            <div className="px-3 py-6 text-center">
+              <p className="text-sm font-semibold text-[#dbe5ee]">
+                Enter a positive {activeCurrency} entry price
+              </p>
+              <p className="mt-1 text-xs text-[#8190a0]">
+                Lyra will calculate the size, costs, and risk only after the
+                currency-adjusted input is complete.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {plan.flags.length > 0 && (
+      {planReady && plan.flags.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {plan.flags.map((f) => (
             <span key={f} className={`rounded border px-2 py-1 text-[11px] font-medium ${toneClass[FLAG_META[f].tone]}`}>
@@ -244,7 +336,7 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
         </div>
       )}
 
-      {plan.notes.length > 0 && (
+      {planReady && plan.notes.length > 0 && (
         <ul className="space-y-1 rounded border border-[#1b2530] bg-[#0d141c] px-3 py-3 text-xs text-[#c3ccd6]">
           {plan.notes.map((n, i) => (
             <li key={i} className="flex gap-2">

@@ -41,17 +41,10 @@ def _send_and_log_alert(
     chat_id: str | None = None,
 ) -> int:
     if repository.recently_alerted(decision_symbol, alert_type, cooldown_hours, user_id=user_id):
-        repository.save_alert(
-            signal_id=signal_id,
-            symbol=decision_symbol,
-            alert_type=alert_type,
-            channel="telegram",
-            message=message,
-            sent_status="skipped",
-            error_message="Skipped by duplicate cooldown",
-            payload={**payload, "skip_reason": "duplicate_cooldown"},
-            user_id=user_id,
-        )
+        # The earlier implementation inserted a new "skipped" row every scan. That both bloated
+        # stock_alerts and refreshed the cooldown timestamp indefinitely. A duplicate is already
+        # evidenced by the original sent row; keep the worker log, not another DB row.
+        LOGGER.info("Alert deduped by cooldown: %s %s", decision_symbol, alert_type)
         return 0
 
     result = send_telegram_message(message, settings, chat_id=chat_id)
@@ -123,6 +116,15 @@ def _route_signal_alert(repository, settings, signal_id, ticker, signal, decisio
     user_id = settings.default_user_id or None
     rich_payload = {"reason": decision.reason, **decision.payload, "signal_score": getattr(signal, "signal_score", None)}
 
+    if repository.recently_alerted(
+        decision.symbol,
+        decision.alert_type,
+        decision.cooldown_hours,
+        user_id=user_id,
+    ):
+        LOGGER.info("Signal alert deduped by cooldown: %s %s", decision.symbol, decision.alert_type)
+        return 0
+
     if user_id and settings.notification_dispatch_enabled:
         # Respect per-type toggles before dispatching, but NOT quiet hours: the JS router
         # applies quiet hours with minute precision and HOLDS the event for release when the
@@ -133,11 +135,6 @@ def _route_signal_alert(repository, settings, signal_id, ticker, signal, decisio
         )
         if not can_send:
             LOGGER.info("Signal alert gated for %s on %s: %s", user_id, decision.symbol, gate_reason)
-            repository.save_alert(
-                signal_id=signal_id, symbol=decision.symbol, alert_type=decision.alert_type,
-                channel="multi_channel", message=message, sent_status="gated",
-                error_message=gate_reason, payload=rich_payload, user_id=user_id,
-            )
             return 0
         dispatch_result = dispatch_notification(
             settings,
@@ -150,14 +147,17 @@ def _route_signal_alert(repository, settings, signal_id, ticker, signal, decisio
             payload=rich_payload,
             relevance_score=float(getattr(signal, "signal_score", 0) or 0),
         )
-        repository.save_alert(
-            signal_id=signal_id, symbol=decision.symbol, alert_type=decision.alert_type,
-            channel="multi_channel", message=message,
-            sent_status="sent" if dispatch_result.ok else "failed",
-            error_message=dispatch_result.error_message,
-            payload={**rich_payload, "dispatch_response": dispatch_result.response, "deduped": dispatch_result.deduped},
-            user_id=user_id,
-        )
+        # The router's durable notification_events row already proves a dedupe. Saving another
+        # stock_alerts row on every hourly attempt produced 8k+ duplicate rows in one week.
+        if not dispatch_result.deduped:
+            repository.save_alert(
+                signal_id=signal_id, symbol=decision.symbol, alert_type=decision.alert_type,
+                channel="multi_channel", message=message,
+                sent_status="sent" if dispatch_result.ok else "failed",
+                error_message=dispatch_result.error_message,
+                payload={**rich_payload, "dispatch_response": dispatch_result.response, "deduped": False},
+                user_id=user_id,
+            )
         if dispatch_result.ok:
             return 0 if dispatch_result.deduped else 1
         return 0
@@ -308,6 +308,15 @@ def main() -> None:
             if not decision.should_send:
                 continue
 
+            if repository.recently_alerted(
+                decision.symbol,
+                decision.alert_type,
+                decision.cooldown_hours,
+                user_id=decision.user_id,
+            ):
+                LOGGER.info("User alert deduped by cooldown: %s %s", decision.symbol, decision.alert_type)
+                continue
+
             # For multi-user, check per-user alert preferences before sending. When the JS
             # router will handle delivery, skip the quiet-hours gate here - the router holds
             # and releases; gating here would silently drop the alert (see alert_engine).
@@ -322,16 +331,6 @@ def main() -> None:
                 )
                 if not can_send:
                     LOGGER.info("Alert gated for user %s on %s: %s", decision.user_id, decision.symbol, gate_reason)
-                    repository.save_alert(
-                        signal_id=None,
-                        symbol=decision.symbol,
-                        alert_type=decision.alert_type,
-                        channel="telegram",
-                        message="",
-                        sent_status="gated",
-                        error_message=gate_reason,
-                        user_id=decision.user_id,
-                    )
                     continue
 
                 # Get user's notification channel (Telegram chat_id)
@@ -359,22 +358,23 @@ def main() -> None:
                     payload={"reason": decision.reason, **decision.payload},
                     relevance_score=_overlay_relevance(decision),
                 )
-                repository.save_alert(
-                    signal_id=signal_id,
-                    symbol=decision.symbol,
-                    alert_type=decision.alert_type,
-                    channel="multi_channel",
-                    message=message,
-                    sent_status="sent" if dispatch_result.ok else "failed",
-                    error_message=dispatch_result.error_message,
-                    payload={
-                        "reason": decision.reason,
-                        **decision.payload,
-                        "dispatch_response": dispatch_result.response,
-                        "deduped": dispatch_result.deduped,
-                    },
-                    user_id=decision.user_id,
-                )
+                if not dispatch_result.deduped:
+                    repository.save_alert(
+                        signal_id=signal_id,
+                        symbol=decision.symbol,
+                        alert_type=decision.alert_type,
+                        channel="multi_channel",
+                        message=message,
+                        sent_status="sent" if dispatch_result.ok else "failed",
+                        error_message=dispatch_result.error_message,
+                        payload={
+                            "reason": decision.reason,
+                            **decision.payload,
+                            "dispatch_response": dispatch_result.response,
+                            "deduped": False,
+                        },
+                        user_id=decision.user_id,
+                    )
                 if dispatch_result.ok:
                     alerts_sent += 0 if dispatch_result.deduped else 1
                     continue

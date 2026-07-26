@@ -13,7 +13,7 @@ import {
 import { syncOperatorProfile } from '@/lib/sync-onboarding';
 import { saveLocalHoldings, loadLocalHoldings } from '@/lib/local-portfolio';
 import { saveLocalWatchlist, loadLocalWatchlist } from '@/lib/local-watchlist';
-import { saveAlertPrefs, type AlertMode } from '@/lib/alert-prefs';
+import { saveAlertPrefsWithStatus, type AlertMode } from '@/lib/alert-prefs';
 import { saveOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadOnboardingProgress, saveOnboardingProgress, clearOnboardingProgress } from '@/lib/onboarding-progress';
 import { isSupabaseConfigured, createSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -203,6 +203,7 @@ export default function OnboardingPage() {
     // and completes like the unconfigured demo does. A signed-in user never carries this cookie
     // through onboarding, so live saves are unaffected.
     const demoTour = typeof document !== 'undefined' && /(?:^|;\s*)lyra_demo=1(?:;|$)/.test(document.cookie);
+    const localMode = !isSupabaseConfigured() || demoTour;
 
     // Collect REAL (non-demo) save failures. A 401 (server-side cookie not valid) or a 5xx must
     // NOT be swallowed - if any real failure lands we keep the resumable checkpoint and let the
@@ -258,18 +259,19 @@ export default function OnboardingPage() {
       if (isSupabaseConfigured() && !demoTour) {
         try {
           const supabase = createSupabaseBrowserClient();
-          await supabase?.auth.updateUser({ data: { onboarded: true } });
+          if (!supabase) {
+            realFailures.push('your onboarding status');
+          } else {
+            const { error } = await supabase.auth.updateUser({ data: { onboarded: true } });
+            if (error) {
+              console.warn('Failed to mark account onboarded:', error.message);
+              realFailures.push('your onboarding status');
+            }
+          }
         } catch (error) {
           console.warn('Failed to mark account onboarded:', error);
+          realFailures.push('your onboarding status');
         }
-      } else {
-        // Demo (unconfigured OR session-less demo tour) has no account to stamp - persist the
-        // onboarded flag in a cookie the middleware reads so the gate releases, plus the
-        // toured marker /api/demo keys on so a returning "Explore the demo" tap goes straight
-        // to the console. Two cookies because pre-v0.67 demo entries stamped lyra_onboarded
-        // WITHOUT the journey - only completion may ever set lyra_demo_toured.
-        document.cookie = 'lyra_onboarded=1; path=/; max-age=31536000; samesite=lax';
-        document.cookie = 'lyra_demo_toured=1; path=/; max-age=31536000; samesite=lax';
       }
 
       // Submit watchlist items, capturing each HTTP result so a 401 is not swallowed.
@@ -331,38 +333,55 @@ export default function OnboardingPage() {
 
       // Demo mode has no DB, so /api/portfolio above no-ops. Persist the entered holdings
       // locally so the command centre surfaces the user's real book, not the demo one.
-      saveLocalHoldings(
-        state.portfolio.map((holding) => ({
-          symbol: holding.symbol,
-          quantity: holding.quantity || 1,
-          averageBuyPrice: holding.averageBuyPrice || 0,
-          purchaseDate: holding.purchaseDate,
-          notes: holding.notes,
-        })),
-      );
+      if (
+        localMode &&
+        !saveLocalHoldings(
+          state.portfolio.map((holding) => ({
+            symbol: holding.symbol,
+            quantity: holding.quantity || 1,
+            averageBuyPrice: holding.averageBuyPrice || 0,
+            purchaseDate: holding.purchaseDate,
+            notes: holding.notes,
+          })),
+        )
+      ) {
+        realFailures.push('your portfolio on this device');
+      }
 
       // Same demo fallback for the watchlist (including typed universe tickers) - without
       // this, /api/watchlist answered {demo:true} and DROPPED every item while the banner
       // showed "Watchlist done". Live mode ignores it: the DB rows above are the truth.
-      saveLocalWatchlist([
-        ...state.watchlist.map((item) => ({
-          symbol: item.symbol,
-          targetBuyPrice: item.targetBuyPrice,
-          notes: item.notes,
-        })),
-        ...dedupedCustomTickers.map((symbol) => ({ symbol })),
-      ]);
+      if (
+        localMode &&
+        !saveLocalWatchlist([
+          ...state.watchlist.map((item) => ({
+            symbol: item.symbol,
+            targetBuyPrice: item.targetBuyPrice,
+            notes: item.notes,
+          })),
+          ...dedupedCustomTickers.map((symbol) => ({ symbol })),
+        ])
+      ) {
+        realFailures.push('your watchlist on this device');
+      }
 
       // Seed the in-app alert controls from the onboarding alert choices - previously the
       // panel choices went nowhere in demo mode and the alert badge ignored them entirely.
       if (state.alerts) {
         const anyInstant =
           state.alerts.strongSetupAlerts || state.alerts.watchlistTriggerAlerts || state.alerts.portfolioRiskAlerts;
-        const mode: AlertMode = anyInstant ? 'live' : state.alerts.dailyDigest ? 'quiet' : 'muted';
-        saveAlertPrefs({
+        const mode: AlertMode = localMode
+          ? 'muted'
+          : anyInstant
+            ? 'live'
+            : state.alerts.dailyDigest
+              ? 'quiet'
+              : 'muted';
+        const alertPrefsSaved = saveAlertPrefsWithStatus({
           mode,
           frequency: state.alerts.hourlyDigest ? '1h' : state.alerts.dailyDigest && !anyInstant ? 'digest' : '1h',
         });
+        if (localMode && !alertPrefsSaved) realFailures.push('your alert preferences on this device');
       }
 
       // Any real save failure: do NOT advance to the success beat and do NOT clear the resumable
@@ -376,14 +395,31 @@ export default function OnboardingPage() {
       }
 
       // Snapshot the choices so the command centre personalises (no perpetual "New here?").
-      saveOnboardingSummary({
+      const summarySaved = saveOnboardingSummary({
         onboarded: true,
         tradedBefore: state.profile?.tradedBefore === 'no' ? 'no' : 'yes',
         portfolioCount: state.portfolio.length,
-        watchlistCount: state.watchlist.length,
+        watchlistCount: new Set([
+          ...state.watchlist.map((item) => item.symbol.toUpperCase().trim()),
+          ...dedupedCustomTickers,
+        ]).size,
         experienceLevel: state.profile?.experienceLevel,
         riskComfort: state.profile?.riskComfort,
+        capital: state.capital,
       });
+      if (localMode && !summarySaved) {
+        setSaveError(
+          'We could not save your setup summary on this device. Your entries are kept - check browser storage permissions and tap Finish to retry.',
+        );
+        return;
+      }
+
+      if (localMode) {
+        // Only stamp completion after every required browser write succeeds. Otherwise a private-
+        // mode/quota failure would bypass onboarding on the next visit while silently losing data.
+        document.cookie = 'lyra_onboarded=1; path=/; max-age=31536000; samesite=lax';
+        document.cookie = 'lyra_demo_toured=1; path=/; max-age=31536000; samesite=lax';
+      }
 
       // Onboarding done - drop the resumable checkpoint so a re-visit starts clean. (The
       // homescreen beat re-checkpoints itself so a closed tab resumes there; its onDone clears.)

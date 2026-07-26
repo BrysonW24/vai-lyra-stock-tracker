@@ -38,16 +38,28 @@ const TILES: Tile[] = [
   { name: 'Web Push (VAPID)', role: 'Browser-native alerts. No vendor account.', glyph: '🔔', badge: 'free', cost: '$0 standard' },
 ];
 
-export function StackSection() {
+export function StackSection({ soloMode = false }: { soloMode?: boolean }) {
+  const tiles = soloMode
+    ? TILES.filter(
+        (tile) =>
+          ![
+            'Supabase',
+            'GitHub Actions',
+            'Telegram Bot',
+            'Slack',
+            'Web Push (VAPID)',
+          ].includes(tile.name),
+      )
+    : TILES;
   return (
     <div>
-      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#1E63FF]">The stack</p>
+      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#1E63FF]">{soloMode ? 'The Solo stack' : 'The stack'}</p>
       <h2 className="mt-1.5 text-2xl font-semibold tracking-tight text-[#0E1E3A] md:text-3xl">
         Every technology in the build - <span className="text-[#1E63FF]">and what it costs you</span>.
       </h2>
 
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {TILES.map((t) => (
+        {tiles.map((t) => (
           <div
             key={t.name}
             className="flex flex-col gap-1.5 rounded-2xl border border-[#0E1E3A]/10 bg-white/70 p-3.5 shadow-[0_8px_24px_rgba(14,30,58,0.05)] backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-[0_16px_38px_rgba(14,30,58,0.10)]"
@@ -81,7 +93,9 @@ export function StackSection() {
         >
           COSTS.md
         </a>
-        . Demo mode is $0 forever; a fully live, always-on setup runs on free tiers.
+        . {soloMode
+          ? 'Solo stays accountless and uses browser-local storage; provider AI is optional BYOK.'
+          : 'Demo mode is $0 forever; a fully live, always-on setup runs on free tiers.'}
       </p>
     </div>
   );

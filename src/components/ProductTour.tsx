@@ -14,6 +14,8 @@ import {
   Star,
   X,
 } from 'lucide-react';
+import { loadOnboardingSummary } from '@/lib/onboarding-summary';
+import { shouldAutoOpenProductTour } from '@/lib/product-tour';
 
 /**
  * First-run product tour - a sequence of modern glass flashcards that walk a new user
@@ -40,7 +42,7 @@ const STEPS: TourStep[] = [
   { icon: BarChart3, title: 'Ticker detail', body: 'Click any ticker for the full picture: candles, the momentum chart, the score breakdown, and exactly why it is flagged - plus what would invalidate it.' },
   { icon: BriefcaseBusiness, title: 'Your portfolio', body: 'Add what you own and the signals get personal: what to review, what is cooling, your momentum board front and centre.', href: '/portfolio', hrefLabel: 'Add holdings' },
   { icon: Star, title: 'Your watchlist', body: 'Track the setups you want to catch. Set a target and Lyra tells you when one is getting close.', href: '/watchlist', hrefLabel: 'Build a watchlist' },
-  { icon: Bell, title: 'Alerts', body: 'Get strong setups and risk flags delivered to Telegram or WhatsApp, with quiet hours and per-ticker control. Set it up in Account.', href: '/account/notifications', hrefLabel: 'Set up alerts' },
+  { icon: Bell, title: 'Alerts', body: 'Signal changes stay visible in the console. Account-backed Community builds can also deliver push, Telegram, or WhatsApp alerts.', href: '/account/notifications', hrefLabel: 'See alert options' },
   { icon: GraduationCap, title: 'Learn as you go', body: 'New to this? Education explains every metric in plain English. No jargon, no pressure - and your settings live in Account.', href: '/education', hrefLabel: 'Open Education' },
 ];
 
@@ -50,7 +52,14 @@ export function ProductTour() {
 
   useEffect(() => {
     try {
-      if (window.localStorage.getItem(SEEN_KEY) !== 'true') setOpen(true);
+      const seen = window.localStorage.getItem(SEEN_KEY) === 'true';
+      const onboardingComplete = loadOnboardingSummary()?.onboarded === true;
+      if (onboardingComplete) {
+        // The full setup already explained the product. Do not immediately force a
+        // second eight-card tour; it remains available from the Help menu.
+        window.localStorage.setItem(SEEN_KEY, 'true');
+      }
+      if (shouldAutoOpenProductTour(seen, onboardingComplete)) setOpen(true);
     } catch {
       /* ignore */
     }
