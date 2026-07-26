@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.81.1] - 2026-07-26
+
+An always-there way back: keep your demo setup with a free account.
+
+### Changed
+
+- While you explore the demo, the command centre now carries a persistent "keep what you build" prompt - so if you wander deep into the console you always have the one-tap path to create a free account in front of you, instead of having to find your way back to sign-up.
+- It shows only during the accountless demo and disappears the moment you have an account, and because your whole setup carries over on sign-up, keeping it costs you nothing.
+
 ## [0.81.0] - 2026-07-26
 
 Explore the demo, then keep it - your whole setup now follows you into an account.
@@ -1213,7 +1222,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.81.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.81.1...HEAD
+[0.81.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.81.0...v0.81.1
 [0.81.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.80.1...v0.81.0
 [0.80.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.80.0...v0.80.1
 [0.80.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.79.0...v0.80.0

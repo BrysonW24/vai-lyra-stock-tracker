@@ -376,6 +376,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.81.1   2026-07-26  An always-there way back: keep your demo setup with a free account
 0.81.0   2026-07-26  Explore the demo, then keep it - your whole setup now follows you into an account
 0.80.1   2026-07-26  A one-image "How Lyra Works" explainer, for sharing at a glance
 0.80.0   2026-07-26  Two ways to try Lyra, made official - Solo now points you to a Full account when you need one
@@ -473,7 +474,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(96 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(97 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

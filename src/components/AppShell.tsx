@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { DualLauncher } from '@/components/DualLauncher';
 import { RatingPrompt } from '@/components/RatingPrompt';
+import { DemoConversionCta } from '@/components/DemoConversionCta';
 import {
   ArrowLeftRight,
   BarChart3,
@@ -439,7 +440,10 @@ export function AppShell({ data, children }: AppShellProps) {
           </div>
         )}
 
-        <main className="px-3 py-2.5 md:px-5 md:py-4">{children}</main>
+        <main className="px-3 py-2.5 md:px-5 md:py-4">
+          <DemoConversionCta />
+          {children}
+        </main>
 
         <footer className="border-t border-[#1b2530] px-3 py-2 text-[10px] text-[#6f7d8a] md:px-5">
           Research only - not financial advice. Lyra never trades for you.

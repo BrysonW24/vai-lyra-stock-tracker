@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.81.1',
+    date: '2026-07-26',
+    title: 'An always-there way back: keep your demo setup with a free account',
+    highlights: [
+      'While you explore the demo, the command centre now carries a persistent "keep what you build" prompt - so if you wander deep into the console you always have the one-tap path to create a free account in front of you, instead of having to find your way back to sign-up.',
+      'It shows only during the accountless demo and disappears the moment you have an account, and because your whole setup carries over on sign-up, keeping it costs you nothing.',
+    ],
+  },
+  {
     version: '0.81.0',
     date: '2026-07-26',
     title: 'Explore the demo, then keep it - your whole setup now follows you into an account',
