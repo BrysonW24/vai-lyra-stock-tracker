@@ -16,6 +16,12 @@ export interface ResolveOptions {
    * (the financial-DoS hole the audit flagged). A user's OWN key (BYOK) is always honoured.
    */
   authenticated: boolean;
+  /**
+   * Whether THIS user is entitled to Lyra's hosted key (inside their free trial, or granted) -
+   * see lib/ai/entitlement.ts. Only an authenticated AND included user gets the house key; an
+   * authenticated-but-not-included user falls through to BYOK. A user's OWN key is unaffected.
+   */
+  aiIncluded: boolean;
 }
 
 export interface ResolvedAiCredentials {
@@ -59,8 +65,9 @@ export function resolveAiCredentials(
     return { provider, apiKey: userKey, model: clean(input?.model) || undefined, source: 'user' };
   }
 
-  // Server-key fallback requires an authenticated session.
-  if (!opts.authenticated) {
+  // Server-key fallback requires an authenticated session AND an AI-included entitlement
+  // (trial or granted). A signed-in user past their trial is BYOK-only, exactly like Solo.
+  if (!opts.authenticated || !opts.aiIncluded) {
     return { provider, apiKey: '', model: undefined, source: 'none' };
   }
 

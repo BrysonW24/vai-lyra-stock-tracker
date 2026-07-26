@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, reason: 'disabled' });
     }
 
-    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated });
+    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded });
     if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
     // Hosted/shared key rides the house budget; BYOK spends the user's own quota untouched.

@@ -103,6 +103,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
   // the real hosted signal, not off Supabase presence. Assume today's behaviour until
   // /api/ai/status resolves (no flicker for the common cases), then correct.
   const [hostedAvailable, setHostedAvailable] = useState<boolean | null>(null);
+  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
   const effectiveHosted = hostedAvailable ?? !soloMode;
   const aiHosting = aiHostingCopy(effectiveHosted);
   const sectionHeader =
@@ -154,7 +155,9 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
     fetch('/api/ai/status')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (alive && d && typeof d.hostedAvailable === 'boolean') setHostedAvailable(d.hostedAvailable);
+        if (!alive || !d) return;
+        if (typeof d.hostedAvailable === 'boolean') setHostedAvailable(d.hostedAvailable);
+        if (typeof d.trialDaysLeft === 'number') setTrialDaysLeft(d.trialDaysLeft);
       })
       .catch(() => {});
     return () => {
@@ -479,6 +482,13 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
             subtitle={aiHosting.panelSubtitle}
           >
             <div className="space-y-2.5">
+              {trialDaysLeft > 0 && (
+                <div className="rounded-md border border-[#1f5c3a]/40 bg-[#0c1a12] p-2.5 text-[11px] leading-relaxed text-[#9fd8b6]">
+                  AI is included free for {trialDaysLeft} more {trialDaysLeft === 1 ? 'day' : 'days'}. After that,
+                  add your own provider key below to keep AI on - your watchlist, portfolio and alerts are
+                  unaffected either way.
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className={labelClass} htmlFor="acct-provider">Model</label>

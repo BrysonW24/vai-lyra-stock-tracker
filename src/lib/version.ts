@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.79.0',
+    date: '2026-07-26',
+    title: 'AI is now free for your first two weeks, then it is your own key - and the whole app works either way',
+    highlights: [
+      'New accounts get Lyra\'s hosted AI included free for 14 days. After the trial, AI switches to bring-your-own-key - you add a provider key in AI Settings and nothing else changes. The countdown shows in AI Settings so it is never a surprise.',
+      'This is now a per-user decision, not a whole-deployment one: the hosted key is handed only to users inside their trial (or a standing grant), so we never pay for AI for someone who is past their trial. The scanner, portfolio and notifications never use AI, so a lapsed trial costs you nothing but the chat.',
+      'Under the hood it is enforced at the one credential chokepoint every AI route already passes through, pinned by tests: an anonymous caller, and now a signed-in-but-lapsed caller, can never reach the house key.',
+    ],
+  },
+  {
     version: '0.78.0',
     date: '2026-07-26',
     title: 'A "How Lyra Works" page in Settings - see the decision process for yourself',

@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (!ai || !symbol) return NextResponse.json({ ok: false, reason: 'bad_request' });
-      const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated });
+      const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded });
       if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
       const run = await proposeBotRun({ symbol, quantity: quantity && quantity > 0 ? quantity : 10, creds: { provider: creds.provider, apiKey: creds.apiKey, model: creds.model }, owner: flagOwner });
       await dispatchPaperBotNotification({ action: 'propose', symbol, run });

@@ -99,7 +99,7 @@ async function handlePost(request: NextRequest) {
     const cachedText = await cacheGet<string>(cacheKey);
     if (cachedText) return NextResponse.json({ ok: true, text: cachedText, cached: true });
 
-    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated });
+    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded });
     if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
     if (creds.source !== 'user') {
       const budget = chargeHostedBudget(creds.source, 200);

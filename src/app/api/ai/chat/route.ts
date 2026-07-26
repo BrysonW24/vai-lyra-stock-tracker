@@ -135,14 +135,14 @@ export async function POST(request: NextRequest) {
   try {
     const guard = await guardAiRoute<ChatRequest>(request);
     if (!guard.ok) return guard.response;
-    const { body, authenticated } = guard;
+    const { body, authenticated, aiIncluded } = guard;
     const { messages, ai, profile, agentActions } = body;
     const soloContext = sanitiseSoloContext(body.soloContext);
 
     if (!ai) return NextResponse.json({ ok: false, reason: 'disabled' });
     if (!Array.isArray(messages) || messages.length === 0) return NextResponse.json({ ok: false, reason: 'empty' });
 
-    const creds = resolveAiCredentials(ai, { authenticated });
+    const creds = resolveAiCredentials(ai, { authenticated, aiIncluded });
     if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
     // Hosted/shared key rides the house budget; BYOK spends the user's own quota untouched.

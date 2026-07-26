@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   const line = typeof guard.body.line === 'string' ? guard.body.line : '';
   // Resolve the AI key the same way every AI route does; the server key only when authenticated.
-  const resolved = resolveAiCredentials(guard.body.ai, { authenticated: guard.authenticated });
+  const resolved = resolveAiCredentials(guard.body.ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded });
 
   // Hosted/shared key rides the house budget (the AI 'propose' command was uncapped here);
   // BYOK spends the user's own quota. A block short-circuits before the model call.

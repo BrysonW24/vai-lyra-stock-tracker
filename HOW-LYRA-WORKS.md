@@ -62,6 +62,16 @@ There is no "mode" flag. The presence of two env vars decides everything
 callers**; a user's own BYOK key always works, even signed-out. An anonymous visitor can never
 burn Lyra's key - a financial-DoS fence (`src/lib/ai/credentials.ts:56-91`).
 
+**Per-user AI entitlement (the trial).** Within a Community deployment that has a hosted key, the
+house key is not handed to *everyone* signed in - only to users who are **AI-included**: inside
+their **14-day free trial** (from account `created_at`) or holding a standing grant
+(`profiles.ai_included`, for the founder / a future paid tier). A signed-in user past their trial
+is **BYOK-only**, exactly like Solo - they keep the entire product (scan, portfolio, notifications)
+and just add their own key for chat. So "who Lyra pays for" is a per-user decision, not a
+deployment-wide one (`src/lib/ai/entitlement.ts`, gated in `resolveAiCredentials` via
+`guardAiRoute`). The scanner and notifications never need an AI key, so a lapsed trial costs the
+user nothing but the chat.
+
 ```mermaid
 flowchart TD
   Req["Incoming request"] --> Env{"NEXT_PUBLIC_SUPABASE_URL AND ANON_KEY set?"}

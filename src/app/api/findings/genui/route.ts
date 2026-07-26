@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     const fallback = buildDefaultGenUIView(finding);
 
-    const creds = resolveAiCredentials(body.ai, { authenticated: guard.authenticated });
+    const creds = resolveAiCredentials(body.ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded });
     if (!creds.apiKey) {
       return NextResponse.json({ ok: true, view: fallback, reason: 'no_key' });
     }

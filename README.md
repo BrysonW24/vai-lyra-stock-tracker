@@ -365,6 +365,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.79.0   2026-07-26  AI is now free for your first two weeks, then it is your own key - and the whole app works either way
 0.78.0   2026-07-26  A "How Lyra Works" page in Settings - see the decision process for yourself
 0.77.0   2026-07-26  The Ideas board now records where each idea came from - Solo or Community
 0.76.0   2026-07-26  AI Settings tell the truth about hosted vs your-own-key on every deployment
@@ -458,7 +459,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(92 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(93 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

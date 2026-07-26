@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.79.0] - 2026-07-26
+
+AI is now free for your first two weeks, then it is your own key - and the whole app works either way.
+
+### Changed
+
+- New accounts get Lyra's hosted AI included free for 14 days. After the trial, AI switches to bring-your-own-key - you add a provider key in AI Settings and nothing else changes. The countdown shows in AI Settings so it is never a surprise.
+- This is now a per-user decision, not a whole-deployment one: the hosted key is handed only to users inside their trial (or a standing grant), so we never pay for AI for someone who is past their trial. The scanner, portfolio and notifications never use AI, so a lapsed trial costs you nothing but the chat.
+- Under the hood it is enforced at the one credential chokepoint every AI route already passes through, pinned by tests: an anonymous caller, and now a signed-in-but-lapsed caller, can never reach the house key.
+
 ## [0.78.0] - 2026-07-26
 
 A "How Lyra Works" page in Settings - see the decision process for yourself.
@@ -1174,7 +1184,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.78.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.79.0...HEAD
+[0.79.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.78.0...v0.79.0
 [0.78.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.77.0...v0.78.0
 [0.77.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.76.0...v0.77.0
 [0.76.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.75.0...v0.76.0
