@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.76.0] - 2026-07-26
+
+AI Settings tell the truth about hosted vs your-own-key on every deployment.
+
+### Changed
+
+- The AI copy now keys off whether a hosted key actually exists on this deployment - not off whether you have an account. So a build with full accounts, cloud sync and notifications but no hosted AI key correctly says "add your own key to switch AI on" instead of promising a hosted model that is not there.
+- This makes a clean third shape first-class: the whole product (accounts, database, notifications) with AI as bring-your-own-key only - run your own Lyra without anyone footing your AI bill.
+- The setting page, the model picker labels and the "Turn on your AI copilot" card all read from the same honest signal the chat already uses (GET /api/ai/status). BYOK keys stay in your browser, never server-side.
+
 ## [0.75.0] - 2026-07-26
 
 A Solo-to-account upgrade path, built behind a control and held dark.
@@ -1144,7 +1154,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.75.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.76.0...HEAD
+[0.76.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.75.0...v0.76.0
 [0.75.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.74.1...v0.75.0
 [0.74.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.74.0...v0.74.1
 [0.74.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.73.2...v0.74.0

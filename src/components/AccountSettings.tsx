@@ -28,6 +28,7 @@ import { syncAccountProfile } from '@/lib/sync-onboarding';
 import { loadInterest, saveInterest, registerInterest } from '@/lib/interest';
 import { NotificationsSetup } from '@/components/NotificationsSetup';
 import { SoloUpgradeCta } from '@/components/SoloUpgradeCta';
+import { aiHostingCopy } from '@/lib/ai/hosted-copy';
 import { pageTitleClass } from '@/lib/ui';
 
 function Panel({ icon: Icon, title, subtitle, children }: { icon: typeof UserRound; title: string; subtitle: string; children: React.ReactNode }) {
@@ -98,12 +99,15 @@ const SECTION_HEADERS: Record<SettingsSection, { title: string; subtitle: string
 
 export function AccountSettings({ section }: { section: SettingsSection }) {
   const soloMode = !isSupabaseConfigured();
+  // A deployment can have accounts (Supabase) but NO hosted AI key (BYOK-only). Drive AI copy off
+  // the real hosted signal, not off Supabase presence. Assume today's behaviour until
+  // /api/ai/status resolves (no flicker for the common cases), then correct.
+  const [hostedAvailable, setHostedAvailable] = useState<boolean | null>(null);
+  const effectiveHosted = hostedAvailable ?? !soloMode;
+  const aiHosting = aiHostingCopy(effectiveHosted);
   const sectionHeader =
-    section === 'ai' && soloMode
-      ? {
-          title: 'AI Settings',
-          subtitle: 'Solo has no hosted model. Choose a provider and add your own key; it stays in this browser.',
-        }
+    section === 'ai'
+      ? { title: 'AI Settings', subtitle: aiHosting.headerSubtitle }
       : section === 'account' && soloMode
         ? {
             title: 'Solo settings',
@@ -141,6 +145,21 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
     setLock(loadLock());
     setBotInterest(loadInterest().tradingBot);
     setAgentActions(loadAgent().actionsEnabled);
+  }, []);
+
+  // Ask the server whether a hosted AI key actually exists (same signal the chat uses). This is
+  // the ONLY honest source: Supabase can be configured while no hosted key is - a BYOK-only build.
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/ai/status')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d && typeof d.hostedAvailable === 'boolean') setHostedAvailable(d.hostedAvailable);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
   }, []);
 
   function toggleBotInterest(checked: boolean) {
@@ -457,7 +476,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
           <Panel
             icon={BrainCircuit}
             title="AI assistance"
-            subtitle={soloMode ? 'Bring your own provider key. Lyra stores it only on this device.' : 'Hosted OpenAI beta by default. Optional BYOK when you want control.'}
+            subtitle={aiHosting.panelSubtitle}
           >
             <div className="space-y-2.5">
               <div className="grid grid-cols-2 gap-2">
@@ -479,9 +498,9 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                       });
                     }}
                   >
-                    <optgroup label={soloMode ? 'Your own key' : 'Hosted beta'}>
+                    <optgroup label={aiHosting.openaiOptgroupLabel}>
                       <option value="openai" className="bg-[#0d141c]">
-                        {soloMode ? 'OpenAI GPT-5.5 (BYOK)' : 'OpenAI GPT-5.5'}
+                        {aiHosting.openaiOptionLabel}
                       </option>
                     </optgroup>
                     <optgroup label="Free / open">

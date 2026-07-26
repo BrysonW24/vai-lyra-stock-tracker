@@ -16,6 +16,9 @@ export function AiOfferCard() {
   const soloMode = !isSupabaseConfigured();
   const [dismissed, setDismissed] = useState(true); // hidden until mount resolves localStorage (no SSR flash)
   const [open, setOpen] = useState(false);
+  // Whether a hosted AI key actually exists here (a Supabase-configured build can still be BYOK-only).
+  const [hostedAvailable, setHostedAvailable] = useState<boolean | null>(null);
+  const effectiveHosted = hostedAvailable ?? !soloMode;
 
   useEffect(() => {
     try {
@@ -23,6 +26,19 @@ export function AiOfferCard() {
     } catch {
       setDismissed(false);
     }
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/ai/status')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d && typeof d.hostedAvailable === 'boolean') setHostedAvailable(d.hostedAvailable);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
   }, []);
 
   function dismiss() {
@@ -60,9 +76,11 @@ export function AiOfferCard() {
           <div className="min-w-0">
             <h2 className="text-[13px] font-semibold text-[#eef3f8]">Turn on your AI copilot</h2>
             <p className="mt-0.5 text-[11px] leading-relaxed text-[#8190a0]">
-              {soloMode
-                ? 'Ask Lyra to explain any setup in plain English, grounded in your device-local data. Solo is bring-your-own-key only; your key stays in this browser. Optional - you can do this anytime.'
-                : 'Ask Lyra to explain any setup in plain English, grounded in your data. Use the hosted beta model, or bring your own key. Optional - you can do this anytime.'}
+              {`Ask Lyra to explain any setup in plain English, grounded in ${soloMode ? 'your device-local data' : 'your data'}. ${
+                effectiveHosted
+                  ? 'Use the hosted beta model, or bring your own key.'
+                  : 'This deployment has no hosted key - bring your own to switch AI on; it stays in this browser.'
+              } Optional - you can do this anytime.`}
             </p>
             <button
               type="button"

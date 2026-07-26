@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.76.0',
+    date: '2026-07-26',
+    title: 'AI Settings tell the truth about hosted vs your-own-key on every deployment',
+    highlights: [
+      'The AI copy now keys off whether a hosted key actually exists on this deployment - not off whether you have an account. So a build with full accounts, cloud sync and notifications but no hosted AI key correctly says "add your own key to switch AI on" instead of promising a hosted model that is not there.',
+      'This makes a clean third shape first-class: the whole product (accounts, database, notifications) with AI as bring-your-own-key only - run your own Lyra without anyone footing your AI bill.',
+      'The setting page, the model picker labels and the "Turn on your AI copilot" card all read from the same honest signal the chat already uses (GET /api/ai/status). BYOK keys stay in your browser, never server-side.',
+    ],
+  },
+  {
     version: '0.75.0',
     date: '2026-07-26',
     title: 'A Solo-to-account upgrade path, built behind a control and held dark',
