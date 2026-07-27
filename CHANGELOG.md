@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.82.0] - 2026-07-27
+
+A clear heads-up when you land: your first 2 weeks of AI are on us.
+
+### Changed
+
+- New accounts now get a one-time welcome in the command centre that spells out the deal up front: Lyra's AI is free for your first 2 weeks, then it switches to your own key (bring-your-own-key). It shows exactly how many days are left, so there are no surprises.
+- When the trial ends, a one-time nudge points you to add your key - and reassures you that the scanner, portfolio, watchlist and notifications keep working regardless. Only the AI chat needs a key.
+- Shown once each and never nags. Accounts granted hosted AI, and the Solo build, never see it.
+
 ## [0.81.1] - 2026-07-26
 
 An always-there way back: keep your demo setup with a free account.
@@ -1222,7 +1232,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.81.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.82.0...HEAD
+[0.82.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.81.1...v0.82.0
 [0.81.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.81.0...v0.81.1
 [0.81.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.80.1...v0.81.0
 [0.80.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.80.0...v0.80.1

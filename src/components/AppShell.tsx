@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { DualLauncher } from '@/components/DualLauncher';
 import { RatingPrompt } from '@/components/RatingPrompt';
 import { DemoConversionCta } from '@/components/DemoConversionCta';
+import { AiTrialSplash } from '@/components/AiTrialSplash';
 import {
   ArrowLeftRight,
   BarChart3,
@@ -593,6 +594,7 @@ export function AppShell({ data, children }: AppShellProps) {
 
       <DualLauncher />
       <RatingPrompt />
+      <AiTrialSplash />
     </div>
   );
 }

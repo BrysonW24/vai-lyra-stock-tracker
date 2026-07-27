@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.82.0',
+    date: '2026-07-27',
+    title: 'A clear heads-up when you land: your first 2 weeks of AI are on us',
+    highlights: [
+      'New accounts now get a one-time welcome in the command centre that spells out the deal up front: Lyra\'s AI is free for your first 2 weeks, then it switches to your own key (bring-your-own-key). It shows exactly how many days are left, so there are no surprises.',
+      'When the trial ends, a one-time nudge points you to add your key - and reassures you that the scanner, portfolio, watchlist and notifications keep working regardless. Only the AI chat needs a key.',
+      'Shown once each and never nags. Accounts granted hosted AI, and the Solo build, never see it.',
+    ],
+  },
+  {
     version: '0.81.1',
     date: '2026-07-26',
     title: 'An always-there way back: keep your demo setup with a free account',
