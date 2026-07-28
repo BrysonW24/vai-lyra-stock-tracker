@@ -62,7 +62,7 @@ import { AccountMenu } from '@/components/AccountMenu';
 import { TickerQuickSearch } from '@/components/TickerQuickSearch';
 import { captureInteraction } from '@/lib/twin/capture';
 import { NavCustomizer } from '@/components/NavCustomizer';
-import { getPrimaryHrefs, setPrimaryHrefs, clearPrimaryHrefs } from '@/lib/nav-prefs';
+import { getPrimaryHrefs, setPrimaryHrefs, clearPrimaryHrefs, sanitizePrimaries } from '@/lib/nav-prefs';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 // The full section map, grouped BY JOB (what you're trying to do), not by data type. A slim set of
@@ -134,19 +134,10 @@ const NAV_BY_HREF = new Map(navItems.map((item) => [item.href, item]));
 const DEFAULT_PRIMARY_HREFS = navItems.filter((item) => item.primary).map((item) => item.href);
 const MIN_PRIMARIES = 1;
 const MAX_PRIMARIES = 5;
-
-/** Validate a stored/edited primary list against the live section map, dedupe, and clamp to the cap. */
-function sanitizePrimaries(hrefs: string[]): string[] {
-  const seen = new Set<string>();
-  const valid: string[] = [];
-  for (const href of hrefs) {
-    if (NAV_BY_HREF.has(href) && !seen.has(href)) {
-      seen.add(href);
-      valid.push(href);
-    }
-  }
-  return valid.slice(0, MAX_PRIMARIES);
-}
+// The set of hrefs the primary bar may contain - the live section map keys. Bound once so the pure
+// sanitizePrimaries (in nav-prefs, unit-tested) can validate/dedupe/clamp a stored bar.
+const VALID_PRIMARY_HREFS: ReadonlySet<string> = new Set(NAV_BY_HREF.keys());
+const sanitizePrimaryHrefs = (hrefs: string[]) => sanitizePrimaries(hrefs, VALID_PRIMARY_HREFS, MAX_PRIMARIES);
 
 // Lyra colour ramp - nav icons ascend through the brand palette and descend back
 // (ping-pong), so the rail reads as one continuous Lyra gradient wave.
@@ -185,7 +176,7 @@ export function AppShell({ data, children }: AppShellProps) {
   useEffect(() => {
     const saved = getPrimaryHrefs();
     if (saved) {
-      const clean = sanitizePrimaries(saved);
+      const clean = sanitizePrimaryHrefs(saved);
       if (clean.length >= MIN_PRIMARIES) setCustomPrimaries(clean);
     }
   }, []);
@@ -196,7 +187,7 @@ export function AppShell({ data, children }: AppShellProps) {
   // Persist an edited bar. Landing exactly on the defaults clears the override, so a future change to the
   // defaults still reaches the user; any other layout is saved as their explicit choice.
   const applyPrimaries = (hrefs: string[]) => {
-    const clean = sanitizePrimaries(hrefs);
+    const clean = sanitizePrimaryHrefs(hrefs);
     if (clean.length < MIN_PRIMARIES) return;
     const isDefault =
       clean.length === DEFAULT_PRIMARY_HREFS.length && clean.every((h, i) => h === DEFAULT_PRIMARY_HREFS[i]);
@@ -380,7 +371,7 @@ export function AppShell({ data, children }: AppShellProps) {
               href="/wire"
               title="Live Wire - the live signal feed"
               aria-label="Live Wire"
-              className="relative grid h-9 w-9 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:border-[#1d4f3a] hover:text-[#43d18b]"
+              className="relative grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:border-[#1d4f3a] hover:text-[#43d18b] sm:h-9 sm:w-9"
             >
               <Bell size={16} />
               <span className="absolute right-1.5 top-1.5 flex h-1.5 w-1.5">
@@ -394,7 +385,7 @@ export function AppShell({ data, children }: AppShellProps) {
               href="/whats-new"
               title="What's new"
               aria-label="What's new"
-              className="relative grid h-9 w-9 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+              className="relative grid h-11 w-11 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8] sm:h-9 sm:w-9"
             >
               <Megaphone size={16} />
               {hasUnseenRelease && (

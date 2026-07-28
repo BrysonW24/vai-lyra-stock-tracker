@@ -376,6 +376,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.84.0   2026-07-28  Second remediation wave: more truthful defaults, hardened layout, deeper test coverage
 0.83.0   2026-07-28  Honesty + polish pass: real search, truthful data labels, and controls that actually work
 0.82.0   2026-07-27  A clear heads-up when you land: your first 2 weeks of AI are on us
 0.81.1   2026-07-26  An always-there way back: keep your demo setup with a free account
@@ -476,7 +477,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(99 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(100 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

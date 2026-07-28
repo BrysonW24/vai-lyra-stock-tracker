@@ -42,3 +42,21 @@ export function clearPrimaryHrefs(): void {
     /* ignore */
   }
 }
+
+/**
+ * Validate a stored/edited primary list against the live section map, dedupe, and clamp to the cap.
+ * Pure (the caller supplies the valid-href set + cap) so the shell decision seam is testable (audit
+ * V3): a corrupted or over-long saved bar can never render an unknown link, a duplicate, or overflow
+ * the rail. Order is preserved for the user's choices.
+ */
+export function sanitizePrimaries(hrefs: string[], validHrefs: ReadonlySet<string>, max: number): string[] {
+  const seen = new Set<string>();
+  const valid: string[] = [];
+  for (const href of hrefs) {
+    if (validHrefs.has(href) && !seen.has(href)) {
+      seen.add(href);
+      valid.push(href);
+    }
+  }
+  return valid.slice(0, Math.max(0, max));
+}

@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.85.0',
+    date: '2026-07-28',
+    title: 'Bigger tap targets on mobile + a hardened, tested nav bar',
+    highlights: [
+      'The Live Wire and What\'s New buttons in the top bar are now a full-size 44px tap target on phones (they were a cramped 36px), so they are easier to hit without a mis-tap - unchanged on desktop.',
+      'Your customised bottom nav bar is now hardened and tested: a corrupted or over-long saved bar can never render an unknown link, repeat a shortcut, or overflow the rail. Under-the-hood robustness, no change to your setup.',
+    ],
+  },
+  {
     version: '0.84.0',
     date: '2026-07-28',
     title: 'Second remediation wave: more truthful defaults, hardened layout, deeper test coverage',

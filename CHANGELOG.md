@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.85.0] - 2026-07-28
+
+Bigger tap targets on mobile + a hardened, tested nav bar.
+
+### Changed
+
+- The Live Wire and What's New buttons in the top bar are now a full-size 44px tap target on phones (they were a cramped 36px), so they are easier to hit without a mis-tap - unchanged on desktop.
+- Your customised bottom nav bar is now hardened and tested: a corrupted or over-long saved bar can never render an unknown link, repeat a shortcut, or overflow the rail. Under-the-hood robustness, no change to your setup.
+
 ## [0.84.0] - 2026-07-28
 
 Second remediation wave: more truthful defaults, hardened layout, deeper test coverage.
@@ -1257,7 +1266,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.84.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.85.0...HEAD
+[0.85.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.84.0...v0.85.0
 [0.84.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.83.0...v0.84.0
 [0.83.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.82.0...v0.83.0
 [0.82.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.81.1...v0.82.0
