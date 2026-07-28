@@ -575,9 +575,9 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                             {m.action.type === 'add_portfolio' && (
                               <div className="mt-1.5 flex items-center gap-1.5">
                                 <label className="text-[9px] uppercase tracking-wide text-[#6f7d8a]">Qty</label>
-                                <input type="number" min={1} defaultValue={m.qty ?? 10} onChange={(e) => { const v = Math.max(1, Number(e.target.value) || 1); setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, qty: v } : x))); }} className="w-16 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[11px] text-[#dbe5ee] outline-none" />
+                                <input type="number" min={1} defaultValue={m.qty ?? 10} onChange={(e) => { const v = Math.max(1, Number(e.target.value) || 1); setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, qty: v } : x))); }} className="min-h-[44px] w-16 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-2 font-mono text-[11px] text-[#dbe5ee] outline-none" />
                                 <label className="text-[9px] uppercase tracking-wide text-[#6f7d8a]">Buy $</label>
-                                <input type="number" min={0} step="0.01" placeholder="price" onChange={(e) => { const v = Number(e.target.value) || 0; setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, price: v } : x))); }} className="w-20 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[11px] text-[#dbe5ee] outline-none" />
+                                <input type="number" min={0} step="0.01" placeholder="price" onChange={(e) => { const v = Number(e.target.value) || 0; setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, price: v } : x))); }} className="min-h-[44px] w-20 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-2 font-mono text-[11px] text-[#dbe5ee] outline-none" />
                               </div>
                             )}
                             <p className="mt-1 text-[9px] leading-snug text-[#6f7d8a]">You confirm; Lyra never acts on its own. Reversible - you can undo it.</p>
@@ -666,14 +666,14 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                   }}
                   rows={1}
                   placeholder="Ask about your book, signals, catalysts…"
-                  className="max-h-28 min-h-[38px] flex-1 resize-none rounded-xl border border-[#263241] bg-[#0d141c] px-3 py-2 text-[13px] leading-snug text-[#dbe5ee] placeholder:text-[#5d6b79] outline-none focus:border-[#8aa2ff]/50"
+                  className="max-h-28 min-h-[44px] flex-1 resize-none rounded-xl border border-[#263241] bg-[#0d141c] px-3 py-2 text-[13px] leading-snug text-[#dbe5ee] placeholder:text-[#5d6b79] outline-none focus:border-[#8aa2ff]/50"
                 />
                 <button
                   type="button"
                   onClick={() => send(input)}
                   disabled={!input.trim() || status === 'sending'}
                   aria-label="Send"
-                  className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-xl border border-[#8aa2ff]/40 bg-[#101a2e] text-[#8aa2ff] transition hover:bg-[#13203a] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#8aa2ff]/40 bg-[#101a2e] text-[#8aa2ff] transition hover:bg-[#13203a] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {status === 'sending' ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                 </button>

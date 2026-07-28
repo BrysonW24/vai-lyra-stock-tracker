@@ -445,15 +445,28 @@ export async function getDashboardData(): Promise<DashboardData> {
     try {
       // RLS already scopes private rows to the signed-in user; the explicit user_id
       // filter is belt-and-braces and also correct if RLS is ever disabled.
+      const portfolioOverlayQuery = supabase
+        .from('portfolio_signal_overlay')
+        .select('*')
+        .order('candle_time', { ascending: false })
+        .limit(200);
+      const watchlistOverlayQuery = supabase
+        .from('watchlist_signal_overlay')
+        .select('*')
+        .order('candle_time', { ascending: false })
+        .limit(200);
       const [positionsResult, portfolioOverlayResult, watchlistItemsResult, watchlistOverlayResult] = await Promise.all([
         userId
           ? supabase.from('portfolio_positions').select('*').eq('is_active', true).eq('user_id', userId)
           : supabase.from('portfolio_positions').select('*').eq('is_active', true),
-        supabase.from('portfolio_signal_overlay').select('*').order('candle_time', { ascending: false }).limit(200),
+        // Belt-and-braces user_id scope on the overlay reads too, matching the positions/items reads
+        // above - so an unscoped .limit(200) can never surface another user's overlay rows if RLS is
+        // ever disabled (audit V2: the overlay reads previously relied on RLS alone).
+        userId ? portfolioOverlayQuery.eq('user_id', userId) : portfolioOverlayQuery,
         userId
           ? supabase.from('watchlist_items').select('*').eq('is_active', true).eq('user_id', userId)
           : supabase.from('watchlist_items').select('*').eq('is_active', true),
-        supabase.from('watchlist_signal_overlay').select('*').order('candle_time', { ascending: false }).limit(200),
+        userId ? watchlistOverlayQuery.eq('user_id', userId) : watchlistOverlayQuery,
       ]);
 
       if (!positionsResult.error) {
@@ -482,6 +495,7 @@ export async function getDashboardData(): Promise<DashboardData> {
 
     return {
       generatedFrom: 'supabase',
+      mode: 'supabase',
       latestRun,
       signals: liveSignals,
       alerts,

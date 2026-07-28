@@ -4,7 +4,7 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 28,
+    "sections": 29,
     "chains": 14,
     "gates": 9,
     "layers": 5
@@ -448,6 +448,17 @@
         "SKILL-CHAIN.md",
         "HARNESS.md",
         "CLAUDE.md"
+      ],
+      "chains": [
+        "production-keeper"
+      ]
+    },
+    {
+      "section": "iOS native shell",
+      "paths": [
+        "ios/",
+        "native/",
+        "capacitor.config.ts"
       ],
       "chains": [
         "production-keeper"

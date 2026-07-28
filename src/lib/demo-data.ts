@@ -21,6 +21,7 @@ function breakdown(rsiScore: number, macdScore: number, priceLocationScore: numb
 
 export const demoDashboardData: DashboardData = {
   generatedFrom: 'demo',
+  mode: 'demo',
   latestRun: {
     jobName: 'hourly_stock_scanner',
     timeframe: '1h',

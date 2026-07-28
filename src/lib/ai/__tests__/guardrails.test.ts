@@ -192,7 +192,8 @@ describe('schema guardrails', () => {
     const output = 'RSI is 71.2 and the model projects 18.6% upside by Friday.';
     const result = assertNoFabricatedNumbers(output, ['71.2']);
     expect(result.ok).toBe(false);
-    expect(result.fabricated).toContain('18.6');
+    // The guard now reports the token as written (audit V5 unit-awareness): "18.6%", not bare "18.6".
+    expect(result.fabricated).toContain('18.6%');
     expect(result.fabricated).not.toContain('71.2');
   });
 

@@ -15,6 +15,29 @@ export function numeralsIn(text: string): string[] {
   return text.match(/\d[\d,]*(?:\.\d+)?/g) ?? [];
 }
 
+/**
+ * Unit-aware numeral tokens for a grounding allow-set (audit V5). For every numeral it emits the
+ * bare value AND - when the numeral carries a magnitude unit the grounding always writes explicitly
+ * (a % suffix, an x multiple, or a $ prefix) - the unit-qualified token too. Feeding this to
+ * assertNoFabricatedNumbers lets the guard hold a percentage/multiple claim to its own unit: a bare
+ * score of 82 in the grounding no longer licenses "up 82%" in the output (the value-set collision
+ * the audit flagged), while a genuinely grounded "12%" or "1.5x" still passes. Bare numerals keep
+ * value-based grounding so plain restated numbers are never over-stripped.
+ */
+export function groundedNumberTokens(text: string): string[] {
+  const re = /(\$)?(\d[\d,]*(?:\.\d+)?)(%|[xX](?![a-zA-Z]))?/g;
+  const out: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const [, dollar, value, suffix] = m;
+    out.push(value);
+    if (suffix === '%') out.push(`${value}%`);
+    else if (suffix) out.push(`${value}x`);
+    if (dollar) out.push(`$${value}`);
+  }
+  return out;
+}
+
 /** Split text into sentences on terminal punctuation, keeping each sentence's own text. */
 export function splitSentences(text: string): string[] {
   return text.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 0);
@@ -75,7 +98,8 @@ export interface GuardedProse {
  * injection-echo / empty-after-strip still block.
  */
 export function guardProse(text: string, groundingTexts: string[]): GuardedProse {
-  const allowedNumbers = numeralsIn(groundingTexts.join('\n'));
+  // Unit-aware allow-set (audit V5): holds "82%" to a grounded 82%, not to a bare score of 82.
+  const allowedNumbers = groundedNumberTokens(groundingTexts.join('\n'));
 
   const stripped = stripFabricatedSentences(text, allowedNumbers);
   const candidate = stripped.text.trim();

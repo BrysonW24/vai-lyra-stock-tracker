@@ -40,6 +40,10 @@ create schema if not exists auth;
 create table if not exists auth.users (
   id uuid primary key default gen_random_uuid(),
   email text,
+  -- Supabase's auth.users carries this jsonb; the on_auth_user_created -> handle_new_user
+  -- trigger (018_gekko_member.sql) reads new.raw_user_meta_data, so the shim must expose it
+  -- or any insert into auth.users errors. Empty default keeps the trigger's coalesce paths honest.
+  raw_user_meta_data jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 -- Stable stand-in for Supabase's request-scoped auth.uid(); RLS policies only need it
@@ -48,6 +52,9 @@ create or replace function auth.uid() returns uuid
 language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 
 grant usage on schema public to anon, authenticated, service_role;
+-- Supabase grants authenticated/anon USAGE on the auth schema so RLS policies (and our fence
+-- test) can call auth.uid(); without it a non-owner role gets "permission denied for schema auth".
+grant usage on schema auth to anon, authenticated, service_role;
 SQL
 
 count=0
@@ -60,6 +67,9 @@ done
 echo "migrate-from-zero: applying sql/_apply_all_scanner_schema.sql (worker-column reconcile)"
 $PSQL -f sql/_apply_all_scanner_schema.sql
 
+echo "migrate-from-zero: asserting the RLS tenant fence (scripts/rls-tenant-fence.sql)"
+$PSQL -f scripts/rls-tenant-fence.sql
+
 tables=$($PSQL -t -A -c "select count(*) from information_schema.tables where table_schema = 'public'")
 echo ""
-echo "migrate-from-zero OK - $count migrations + reconcile applied cleanly; $tables public tables built from zero"
+echo "migrate-from-zero OK - $count migrations + reconcile applied cleanly; RLS fence proven; $tables public tables built from zero"

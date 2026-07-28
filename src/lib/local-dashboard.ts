@@ -20,6 +20,9 @@ export function buildSoloMarketDashboard(
 ): DashboardData {
   return {
     ...source,
+    // Solo is a distinct mode from demo: Supabase is absent but the user's own holdings/watchlist
+    // live in this browser. Stamping it here stops surfaces re-deriving Solo from isSupabaseConfigured().
+    mode: 'solo',
     signals,
     portfolio: [],
     watchlist: [],

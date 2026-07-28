@@ -20,13 +20,30 @@
       .bolt { font-size: 3rem; }
       h1 { font-size: 1.25rem; margin: 0.75rem 0 0.25rem; }
       p { font-size: 0.875rem; color: #a1a1aa; margin: 0; }
+      button {
+        margin-top: 1.25rem;
+        min-height: 44px;
+        padding: 0 1.5rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: #e4e4e7;
+        background: #1e63ff;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button:active { opacity: 0.85; }
     </style>
   </head>
   <body>
     <div class="card">
       <div class="bolt">&#9889;</div>
       <h1>Lyra is offline</h1>
-      <p>Market intelligence needs a connection. Reconnect and reopen the app.</p>
+      <p>Market intelligence needs a connection. Reconnect, then tap Retry.</p>
+      <!-- Audit V14: a Retry affordance so a transient offline cold-start recovers without a
+           force-quit. Navigates straight back to prod - the remote shell reloads from there. -->
+      <button type="button" onclick="location.assign('https://lyra.vivacityai.com.au')">Retry</button>
     </div>
   </body>
 </html>

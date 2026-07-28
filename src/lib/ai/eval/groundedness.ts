@@ -15,7 +15,7 @@
  */
 import { assertNoFabricatedNumbers } from '@/lib/ai/guardrails/schema';
 import { evaluateGuardrails } from '@/lib/ai/guardrails/engine';
-import { numeralsIn } from '@/lib/ai/guardrails/prose';
+import { groundedNumberTokens, numeralsIn } from '@/lib/ai/guardrails/prose';
 
 export interface AnswerUnderTest {
   /** The answer's free text (for a structured agent, all string fields concatenated). */
@@ -102,7 +102,7 @@ export function scoreAnswerQuality(answer: AnswerUnderTest, ctx: GroundingContex
   }
 
   // --- groundedness: no numeral outside the grounding --------------------------
-  const allowed = numeralsIn(ctx.groundingText);
+  const allowed = groundedNumberTokens(ctx.groundingText);
   const numerals = numeralsIn(answer.text);
   const fab = assertNoFabricatedNumbers(answer.text, allowed);
   const groundedness = numerals.length === 0 ? 1 : clamp01(1 - fab.fabricated.length / numerals.length);

@@ -168,6 +168,13 @@ export interface SignalChange {
 
 export interface DashboardData {
   generatedFrom: 'supabase' | 'demo';
+  /**
+   * Explicit render mode so surfaces stop re-deriving Solo from isSupabaseConfigured() alone
+   * (audit V2): 'demo' = no keys / sample book, 'solo' = device-local (Supabase absent, user's own
+   * data lives in the browser), 'supabase' = signed-in account. A configured-but-erroring deploy
+   * falls back to generatedFrom:'demo' so it renders sample data honestly rather than as a real book.
+   */
+  mode: 'demo' | 'solo' | 'supabase';
   latestRun: ScannerRun;
   signals: SignalRow[];
   alerts: AlertRow[];

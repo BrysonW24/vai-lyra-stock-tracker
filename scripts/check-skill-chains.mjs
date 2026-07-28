@@ -98,6 +98,9 @@ const sections = [
   ...listChildren('workers', { dirsOnly: true }),
   'scripts', 'tests', 'contracts', 'supabase', 'sql', 'docs', 'public', 'content',
   '.githooks', '.github', '.claude/commands',
+  // The iOS remote-shell surface (audit V14): the declarative native config + offline fallback are
+  // now owned code, so a repointed server.url / dropped errorPath is caught by check:chains.
+  'ios', 'native', 'capacitor.config.ts',
 ].filter((s) => exists(s));
 
 const unowned = sections.filter((s) => !covered(s));

@@ -60,6 +60,14 @@ describe('Solo local dashboard projection', () => {
     expect(solo.latestRun.watchlistOverlaysCreated).toBe(0);
     expect(solo.latestRun.alertsSent).toBe(0);
   });
+
+  it('stamps mode=solo so surfaces stop re-deriving Solo from isSupabaseConfigured (audit V2)', () => {
+    // demo source carries mode 'demo'; the Solo projection must upgrade it to 'solo' so a signed-out
+    // Solo user is never re-derived as demo (which could leak the seeded sample book on an error).
+    expect(demoDashboardData.mode).toBe('demo');
+    const solo = buildSoloMarketDashboard(demoDashboardData, demoDashboardData.signals);
+    expect(solo.mode).toBe('solo');
+  });
 });
 
 /**

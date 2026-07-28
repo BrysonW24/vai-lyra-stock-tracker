@@ -30,6 +30,7 @@ describe('buildDailyBrief', () => {
 
   const mockDashboardData: DashboardData = {
     generatedFrom: 'demo',
+    mode: 'demo',
     latestRun: {
       jobName: 'test',
       timeframe: '1h',

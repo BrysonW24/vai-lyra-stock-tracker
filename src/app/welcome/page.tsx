@@ -135,16 +135,16 @@ export default async function WelcomePage() {
                 </Link>
               )}
             </div>
-            <p className="mt-4 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
+            <p className="mt-4 flex items-center gap-1.5 text-[11px] text-[#5A6B82]">
               <ShieldCheck size={12} /> Research only - not financial advice. {BRAND_NAME} never trades for you.
             </p>
             {!supabaseConfigured && (
               // Solo deployment: say the quiet part out loud - it is the whole point of this build.
               <>
-                <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
+                <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#5A6B82]">
                   <ShieldCheck size={12} /> Solo build - no sign-in. First visit starts guided setup; after that, you enter your console directly.
                 </p>
-                <p className="mt-1 flex items-center gap-1.5 text-[11px] text-[#8290a0]">
+                <p className="mt-1 flex items-center gap-1.5 text-[11px] text-[#5A6B82]">
                   <ShieldCheck size={12} /> Your book and trade log stay in this browser. AI uses the provider key you add.
                 </p>
                 <div className="mt-3 max-w-md rounded-xl border border-[#1E63FF]/15 bg-white/55 p-3 text-[11px] leading-relaxed text-[#5A6B82]">
@@ -209,10 +209,10 @@ export default async function WelcomePage() {
         </section>
 
         {/* Footer */}
-        <footer className="mt-auto flex flex-col items-center gap-3 border-t border-[#0E1E3A]/10 pt-5 text-center text-[11px] text-[#8290a0]">
-          <div className="flex items-center gap-4">
-            <Link href="/privacy" className="transition hover:text-[#0E1E3A]">Privacy</Link>
-            <Link href={setupHref} className="transition hover:text-[#0E1E3A]">{setupLabel}</Link>
+        <footer className="mt-auto flex flex-col items-center gap-3 border-t border-[#0E1E3A]/10 pt-5 text-center text-[11px] text-[#5A6B82]">
+          <div className="flex items-center gap-2">
+            <Link href="/privacy" className="inline-flex min-h-[44px] items-center px-3 transition hover:text-[#0E1E3A]">Privacy</Link>
+            <Link href={setupHref} className="inline-flex min-h-[44px] items-center px-3 transition hover:text-[#0E1E3A]">{setupLabel}</Link>
           </div>
           <p>© {new Date().getFullYear()} {BRAND_NAME}. Research software, not a broker.</p>
           <div className="flex items-center gap-2">

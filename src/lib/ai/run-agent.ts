@@ -19,7 +19,7 @@ import type { EvidenceItem } from './tools';
 // Shared with the free-text prose guard (chat/brief). Kept digit-only here on purpose:
 // agent output is schema-validated JSON where prose.ts's spelled-figure stripping ("double",
 // "percent") would mangle legitimate field text; the structured path relies on numerals.
-import { numeralsIn, splitSentences } from '@/lib/ai/guardrails/prose';
+import { groundedNumberTokens, splitSentences } from '@/lib/ai/guardrails/prose';
 
 /**
  * Strip every sentence that contains a fabricated numeral (one absent from the grounding the
@@ -133,7 +133,7 @@ async function runStructured(opts: {
   // allowed are exactly those present in the grounding the agent was given. On a violation we
   // strip the offending sentence(s) from the model's free-text fields. If that empties the
   // output (the whole answer hinged on an invented number), we refuse rather than ship it.
-  const allowedNumbers = numeralsIn(groundingText);
+  const allowedNumbers = groundedNumberTokens(groundingText);
   let parsed = extractJson(text);
   let refusalReason: string | null = null;
   if (parsed && typeof parsed === 'object') {

@@ -35,7 +35,11 @@ function formatQuantity(value: number): string {
 export function PortfolioView({ data }: { data: DashboardData }) {
   const router = useRouter();
   const demo = data.generatedFrom !== 'supabase';
-  const soloMode = !isSupabaseConfigured();
+  // Prefer the explicit mode (audit V2) over re-deriving Solo from isSupabaseConfigured(): 'solo'
+  // and 'supabase' are authoritative. Only the demo fallback (a no-keys or configured-but-erroring
+  // deploy) still consults isSupabaseConfigured(), preserving existing behavior for that case.
+  const soloMode =
+    data.mode === 'solo' ? true : data.mode === 'supabase' ? false : !isSupabaseConfigured();
   const [holdings, setHoldings] = useState<PortfolioHolding[]>(data.portfolio);
   const [lastTrade, setLastTrade] = useState('-');
   const [removing, setRemoving] = useState<string | null>(null);

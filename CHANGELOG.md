@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.86.0] - 2026-07-28
+
+Audit remediation wave 4: your data fence is now provably closed, and the AI can't dress a score up as a return.
+
+### Changed
+
+- The privacy fence that keeps your portfolio, watchlist and paper trades visible only to you is now proven by an automated test on every build: it seeds two users and confirms one can never read the other's rows, so the leak class we fixed before can never quietly come back.
+- The AI copilot's number guard got sharper: a made-up figure like "up 82%" is no longer waved through just because 82 happens to appear elsewhere as a score - a percentage or multiple now has to be genuinely in the evidence, closing a subtle way an invented number could slip past.
+- The iOS app's offline screen now has a Retry button, so a brief drop-out recovers with one tap instead of a force-quit - and the app's shell config is now guarded by a test so it can't silently ship pointed at the wrong place.
+- The landing page fine print now meets accessibility contrast, its footer links are a full tap target, and the chat composer, send button and quick add-holding inputs are all a comfortable 44px.
+
 ## [0.85.0] - 2026-07-28
 
 Bigger tap targets on mobile + a hardened, tested nav bar.
@@ -1266,7 +1277,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.85.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.86.0...HEAD
+[0.86.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.85.0...v0.86.0
 [0.85.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.84.0...v0.85.0
 [0.84.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.83.0...v0.84.0
 [0.83.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.82.0...v0.83.0

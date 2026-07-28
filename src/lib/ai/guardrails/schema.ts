@@ -62,14 +62,25 @@ export function enforceCitations(payload: unknown, minCitations = 1): Validation
   return { ok: true, errors: [] };
 }
 
-/** Matches integers and decimals, with optional thousands separators. */
-const NUMERAL_SOURCE = '\\d[\\d,]*(?:\\.\\d+)?';
-
 /** Normalise a numeral string to a canonical numeric form ("1,200.50" -> "1200.5"). */
 function normaliseNumeral(raw: string): string {
   const stripped = raw.replace(/,/g, '');
   const value = Number(stripped);
   return Number.isFinite(value) ? String(value) : stripped;
+}
+
+/**
+ * Match a numeral with its magnitude unit, if any: an optional $ prefix and an optional % suffix or
+ * x multiple (a standalone x, not the leading letter of a word). The unit is what makes a numeral a
+ * FIELD-SPECIFIC claim - "82%" is a different assertion from a bare score of 82 - and the grounding
+ * always writes percentages with % and multiples with x, so the unit is safe to hold the output to.
+ */
+const UNIT_NUMERAL_RE = /(\$)?(\d[\d,]*(?:\.\d+)?)(%|[xX](?![a-zA-Z]))?/g;
+
+/** True if any allow-set entry carries a magnitude unit (a % or x suffix). */
+function setHasUnitTokens(allowed: Set<string>): boolean {
+  for (const a of allowed) if (a.endsWith('%') || a.endsWith('x')) return true;
+  return false;
 }
 
 export interface FabricationCheckResult {
@@ -79,19 +90,39 @@ export interface FabricationCheckResult {
 }
 
 /**
- * Flag every numeral in outputText that is not present in the allowed evidence
- * set. Comparison is value-based after normalisation, so "1,200.50" in evidence
- * covers "1200.5" in output. Pure - exported for direct unit testing.
+ * Flag every numeral in outputText that is not present in the allowed evidence set.
+ *
+ * Bare numerals are value-based after normalisation, so "1,200.50" in evidence covers "1200.5" in
+ * output (and a $-prefixed figure is checked on its value, since currency rounding is legitimate).
+ *
+ * Numerals carrying a magnitude unit (% or x) are held to that unit (audit V5): "up 82%" is grounded
+ * only if "82%" itself is in the evidence, so a bare score of 82 elsewhere no longer licenses a
+ * fabricated 82% return claim - the exact value-set collision the audit flagged. To stay safe for
+ * bare-only callers (a grounding block with no unit tokens at all), unit checking falls back to the
+ * value-based rule when the allow-set contains no unit tokens, so no legitimate figure is over-stripped.
+ *
+ * The allow-set should be built with groundedNumberTokens (prose.ts), which emits both the bare and
+ * the unit-qualified form of each grounding numeral. Pure - exported for direct unit testing.
  */
 export function assertNoFabricatedNumbers(outputText: string, allowedNumbers: string[]): FabricationCheckResult {
   const allowed = new Set(allowedNumbers.map(normaliseNumeral));
-  const found = outputText.match(new RegExp(NUMERAL_SOURCE, 'g')) ?? [];
+  const hasUnits = setHasUnitTokens(allowed);
 
   const fabricated: string[] = [];
-  for (const raw of found) {
-    if (!allowed.has(normaliseNumeral(raw)) && !fabricated.includes(raw)) {
-      fabricated.push(raw);
+  const re = new RegExp(UNIT_NUMERAL_RE);
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(outputText)) !== null) {
+    const [raw, , value, suffix] = m;
+    let grounded: boolean;
+    if (suffix === '%' || (suffix && (suffix === 'x' || suffix === 'X'))) {
+      const unit = suffix === '%' ? '%' : 'x';
+      const unitKey = normaliseNumeral(`${value}${unit}`);
+      // Strict unit match when the grounding actually carries units; otherwise fall back to value.
+      grounded = allowed.has(unitKey) || (!hasUnits && allowed.has(normaliseNumeral(value)));
+    } else {
+      grounded = allowed.has(normaliseNumeral(value));
     }
+    if (!grounded && !fabricated.includes(raw)) fabricated.push(raw);
   }
   return { ok: fabricated.length === 0, fabricated };
 }
