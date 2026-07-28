@@ -9,11 +9,12 @@ import {
   SetupPath,
   WatchlistItem,
   calculateSetupCompleteness,
+  effectiveStepsFor,
 } from '@/lib/onboarding';
 import { syncOperatorProfile } from '@/lib/sync-onboarding';
 import { saveLocalHoldings, loadLocalHoldings } from '@/lib/local-portfolio';
 import { saveLocalWatchlist, loadLocalWatchlist } from '@/lib/local-watchlist';
-import { saveAlertPrefsWithStatus, type AlertMode } from '@/lib/alert-prefs';
+import { saveAlertPrefsWithStatus, resolveOnboardingAlertMode, type AlertMode } from '@/lib/alert-prefs';
 import { saveOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadOnboardingProgress, saveOnboardingProgress, clearOnboardingProgress } from '@/lib/onboarding-progress';
 import { isSupabaseConfigured, createSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -73,8 +74,9 @@ export default function OnboardingPage() {
       clearOnboardingProgress();
     }
     // ?beat=homescreen deep-links straight to the Add-to-Home-Screen beat - for reviewing,
-    // demos and screenshots without replaying the questionnaire. Preview-only convenience:
-    // its onDone still runs the normal completion path.
+    // demos and screenshots without replaying the questionnaire. Preview-only: its onDone just
+    // advances homescreen -> complete and clears the checkpoint; it does NOT run handleFinish, so
+    // no cloud save or onboarded metadata is written (a configured deploy re-gates back to /onboarding).
     if (params?.get('beat') === 'homescreen') {
       setState(createInitialOnboardingState('full_setup'));
       setPhase('homescreen');
@@ -165,9 +167,7 @@ export default function OnboardingPage() {
   // Disqualifier: a user who has never traded skips the portfolio (5) and
   // trade-snapshot (6) steps, since they have no holdings to enter.
   const neverTraded = state.profile?.tradedBefore === 'no';
-  const effectiveSteps = neverTraded
-    ? SETUP_PATHS[state.path].steps.filter((s) => s !== 5 && s !== 6)
-    : SETUP_PATHS[state.path].steps;
+  const effectiveSteps = effectiveStepsFor(state.path, neverTraded);
 
   const stepIndex = effectiveSteps.indexOf(currentStep);
   const totalStepsInPath = effectiveSteps.length;
@@ -379,15 +379,13 @@ export default function OnboardingPage() {
       // Seed the in-app alert controls from the onboarding alert choices - previously the
       // panel choices went nowhere in demo mode and the alert badge ignored them entirely.
       if (state.alerts) {
-        const anyInstant =
-          state.alerts.strongSetupAlerts || state.alerts.watchlistTriggerAlerts || state.alerts.portfolioRiskAlerts;
-        const mode: AlertMode = localMode
-          ? 'muted'
-          : anyInstant
-            ? 'live'
-            : state.alerts.dailyDigest
-              ? 'quiet'
-              : 'muted';
+        const mode: AlertMode = resolveOnboardingAlertMode({
+          localMode,
+          strongSetupAlerts: state.alerts.strongSetupAlerts,
+          watchlistTriggerAlerts: state.alerts.watchlistTriggerAlerts,
+          portfolioRiskAlerts: state.alerts.portfolioRiskAlerts,
+          dailyDigest: state.alerts.dailyDigest,
+        });
         // Only the mode is a real, enforced preference now (the dead frequency/scope fields were
         // removed in the 2026-07-27 audit V6 fix). Onboarding's digest choices already drive the
         // server digest prefs separately; the alert mode is what the dispatch router reads.

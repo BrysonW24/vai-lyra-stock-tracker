@@ -17,6 +17,13 @@ on:
       - 'next.config.js'
       - 'vercel.json'
       - 'supabase/**'
+      # Audit V15: these are shippable per check-version-bump but previously got no post-deploy smoke.
+      # content/ compiles into src/lib/generated at build; workers/, sql/ and contracts/ change runtime
+      # behavior. A change touching only these bumps the version and passes CI - it must be smoked too.
+      - 'workers/**'
+      - 'content/**'
+      - 'sql/**'
+      - 'contracts/**'
   workflow_dispatch:
 
 concurrency:

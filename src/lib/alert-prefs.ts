@@ -21,6 +21,26 @@ import { useEffect, useState } from 'react';
 
 export type AlertMode = 'live' | 'quiet' | 'muted' | 'custom';
 
+/**
+ * Map the onboarding alert choices to the enforced AlertMode (audit V7: this decision lived inline in
+ * the onboarding page's handleFinish with no test). Any instant alert -> 'live'; digest-only -> 'quiet';
+ * nothing chosen -> 'muted'. In Solo/demo (localMode) the device has no background delivery, so the
+ * mode is 'muted' regardless - the choices still seed the in-app controls, they just cannot push.
+ */
+export function resolveOnboardingAlertMode(opts: {
+  localMode: boolean;
+  strongSetupAlerts?: boolean;
+  watchlistTriggerAlerts?: boolean;
+  portfolioRiskAlerts?: boolean;
+  dailyDigest?: boolean;
+}): AlertMode {
+  if (opts.localMode) return 'muted';
+  const anyInstant = Boolean(opts.strongSetupAlerts || opts.watchlistTriggerAlerts || opts.portfolioRiskAlerts);
+  if (anyInstant) return 'live';
+  if (opts.dailyDigest) return 'quiet';
+  return 'muted';
+}
+
 export interface AlertPrefs {
   mode: AlertMode;
   quietHoursEnabled: boolean;

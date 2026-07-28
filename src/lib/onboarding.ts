@@ -368,6 +368,17 @@ export function calculateCompletion(state: OnboardingState): number {
 }
 
 /**
+ * The steps actually shown for a path. A user who answers "never traded" skips the Holdings (5) and
+ * Snapshots (6) beats - they have no portfolio to enter - so the flow never asks for data that cannot
+ * exist. Pure and exported (audit V7): the never-traded disqualifier was inline in the onboarding page
+ * with no test, so a regression that stopped dropping 5/6 (or dropped the wrong steps) would ship green.
+ */
+export function effectiveStepsFor(path: SetupPath, neverTraded: boolean): number[] {
+  const steps = SETUP_PATHS[path].steps;
+  return neverTraded ? steps.filter((s) => s !== 5 && s !== 6) : [...steps];
+}
+
+/**
  * Get the next step in the path.
  */
 export function getNextStep(state: OnboardingState): number | null {

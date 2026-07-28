@@ -26,6 +26,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// createTableColumns is the gate's core SQL parser; sharing it with the self-tests
+// (scripts/lib/gate-logic.mjs) means a regex regression that stops matching is caught in CI.
+import { createTableColumns } from './lib/gate-logic.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const jsonMode = process.argv.includes('--json');
@@ -130,39 +133,3 @@ if (jsonMode) {
   console.error('\nThese fail SILENTLY in production (a skipped migration or a no-op create). Fix the file named above, then re-run `npm run check:migrations`.');
 }
 process.exit(problems.length === 0 ? 0 : 1);
-
-// ================================================================================================
-
-/** Parse `create table [if not exists] [public.]<name> ( ... )` -> [name, [columns]]. */
-function createTableColumns(sql) {
-  const out = [];
-  const re = /create table(?:\s+if not exists)?\s+(?:public\.)?(\w+)\s*\(/gi;
-  let m;
-  while ((m = re.exec(sql))) {
-    const body = balancedParens(sql, re.lastIndex - 1);
-    if (body === null) continue;
-    const cols = [];
-    for (const line of body.split('\n')) {
-      const t = line.trim();
-      if (!t || t.startsWith('--')) continue;
-      if (/^(unique|primary|foreign|constraint|check|references|exclude)\b/i.test(t)) continue;
-      const cm = t.match(/^([a-z_][a-z0-9_]*)\s+/i);
-      if (cm) cols.push(cm[1].toLowerCase());
-    }
-    out.push([m[1].toLowerCase(), cols]);
-  }
-  return out;
-}
-
-/** Substring inside the parens opening at index `open`. */
-function balancedParens(s, open) {
-  let depth = 0;
-  for (let i = open; i < s.length; i++) {
-    if (s[i] === '(') depth++;
-    else if (s[i] === ')') {
-      depth--;
-      if (depth === 0) return s.slice(open + 1, i);
-    }
-  }
-  return null;
-}

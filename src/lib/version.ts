@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.88.0',
+    date: '2026-07-28',
+    title: 'Audit remediation wave 6: the onboarding flow logic is pinned, and the quality gates now guard themselves',
+    highlights: [
+      'The onboarding navigation and completeness logic - which beats you see, the never-traded skip, the 0-to-100% progress math, and how your alert choices map to a mode - is now covered by tests, so a regression that dropped a step or swallowed your preferences would be caught before it shipped.',
+      'The quality gates that keep the app honest now have their own tests: they prove the version guard catches an unversioned or backwards release, and the migration guard catches a duplicate version or a table redefined with clashing columns - so a gate can never quietly rot into always-passing.',
+      'The schema-drift check got two new eyes: it now catches a column the migrations require to be filled but the live database left optional (the exact bug that silently broke an hourly job), and it now guards user-owned tables whose owner column is not literally named user_id.',
+      'Post-deploy smoke checks now also run when a change touches only the workers, content, database setup or notification contracts - shippable areas that previously deployed with no live verification.',
+    ],
+  },
+  {
     version: '0.87.0',
     date: '2026-07-28',
     title: 'Audit remediation wave 5: the radar is honest about its timeframe, and the numbers behind it are finally pinned',

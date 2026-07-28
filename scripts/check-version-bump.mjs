@@ -19,6 +19,7 @@
  */
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
+import { versionFrom, semverCmp, shippableChanges } from './lib/gate-logic.mjs';
 
 if (process.env.VD_SKIP_VERSION === '1') {
   console.log('[version-guard] skipped (VD_SKIP_VERSION=1)');
@@ -41,19 +42,8 @@ const fail = (lines) => {
   process.exit(1);
 };
 
-// First version: '...' that appears after `export const RELEASES` = RELEASES[0].version.
-const versionFrom = (src) => src.match(/export const RELEASES[\s\S]*?\bversion:\s*'([^']+)'/)?.[1] ?? null;
-
-// Numeric semver compare: negative if a < b, 0 if equal, positive if a > b.
-const semverCmp = (a, b) => {
-  const pa = a.split('.').map(Number);
-  const pb = b.split('.').map(Number);
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
-    if (d !== 0) return d;
-  }
-  return 0;
-};
+// versionFrom / semverCmp / shippableChanges are the pure detection rules, shared with the gate
+// self-tests (scripts/lib/gate-logic.mjs) so a regression that stops detecting is caught in CI.
 
 const localSrc = fs.readFileSync('src/lib/version.ts', 'utf8');
 const localVersion = versionFrom(localSrc);
@@ -81,21 +71,9 @@ if (remoteSrc && changed !== null) {
   const headSrc = trySh('git show HEAD:src/lib/version.ts');
   const pushedVersion = (headSrc && versionFrom(headSrc)) || localVersion;
 
-  const shippable = changed
-    .split('\n')
-    .filter(Boolean)
-    // content/ compiles into src/lib/generated at build time, sql/ is live setup material,
-    // contracts/ is the notification wire contract, and the root config files change runtime
-    // behavior - all of these previously shipped gate-free through the src-only regex.
-    .filter(
-      (f) =>
-        /^(src|supabase|workers|public|content|sql|contracts)\//.test(f) ||
-        /^(next\.config\.js|Dockerfile|vercel\.json)$/.test(f),
-    )
-    // Tests are NOT shippable: they never reach a user, so they cannot warrant a user-facing
-    // changelog entry. Forcing a version bump for a test-only fix produces either a meaningless
-    // release note or a VD_SKIP_VERSION bypass - both worse than simply not gating them.
-    .filter((f) => !/(^|\/)(__tests__|tests)\//.test(f) && !/\.(test|spec)\.[cm]?[jt]sx?$/.test(f));
+  // Shippable = product code (src/supabase/workers/public/content/sql/contracts + root config),
+  // minus test files (they never reach a user). See shippableChanges in scripts/lib/gate-logic.mjs.
+  const shippable = shippableChanges(changed.split('\n'));
 
   if (shippable.length > 0 && remoteVersion && pushedVersion === remoteVersion) {
     fail([

@@ -73,12 +73,22 @@ function resolveDbUrl() {
 // 2. What SHOULD exist, per the migrations.
 function expectedObjects() {
   const tables = new Map(); // table -> Set(columns)
+  const notNull = new Map(); // table -> Set(columns declared NOT NULL) - audit V15
+  // `create table if not exists` makes a SECOND create for a table a silent no-op, so only the FIRST
+  // create's NOT NULL declarations actually apply. Tracking this avoids a false NOT-NULL drift on a
+  // KNOWN table-shape collision (e.g. company_events, defined by 014 and again by 036 - 014 wins).
+  const created = new Set();
   const files = fs.readdirSync(MIGRATIONS).filter((f) => f.endsWith('.sql')).sort();
+  const addNotNull = (table, col) => {
+    if (!notNull.has(table)) notNull.set(table, new Set());
+    notNull.get(table).add(col);
+  };
+  const dropNotNull = (table, col) => notNull.get(table)?.delete(col);
 
   for (const file of files) {
     const sql = stripComments(fs.readFileSync(path.join(MIGRATIONS, file), 'utf8'));
 
-    // create table [if not exists] [public.]name ( col type, ... )
+    // create table [if not exists] [public.]name ( col type [not null], ... )
     const re = /create table(?:\s+if not exists)?\s+(?:public\.)?(\w+)\s*\(/gi;
     let m;
     while ((m = re.exec(sql))) {
@@ -87,25 +97,46 @@ function expectedObjects() {
       const body = balanced(sql, re.lastIndex - 1);
       if (body === null) continue;
       if (!tables.has(table)) tables.set(table, new Set());
+      const firstCreate = !created.has(table);
+      created.add(table);
       for (const line of body.split('\n')) {
         const t = line.trim();
         if (!t || /^(unique|primary|foreign|constraint|check|references|exclude)\b/i.test(t)) continue;
         const cm = t.match(/^([a-z_][a-z0-9_]*)\s+/i);
-        if (cm) tables.get(table).add(cm[1].toLowerCase());
+        if (!cm) continue;
+        const col = cm[1].toLowerCase();
+        tables.get(table).add(col);
+        // A column is NOT NULL when its definition carries `not null` (a primary key is implicitly
+        // NOT NULL too). `set null` in a REFERENCES clause is not a nullability declaration. Only the
+        // first create for a table applies its NOT NULL - a later `if not exists` create is a no-op.
+        if (firstCreate && (/\bnot\s+null\b/i.test(t) || /\bprimary\s+key\b/i.test(t))) addNotNull(table, col);
       }
     }
 
-    // alter table [public.]name add column [if not exists] col
+    // alter table [public.]name add column [if not exists] col type [not null]
     for (const a of sql.matchAll(
-      /alter table\s+(?:public\.)?(\w+)\s+add column(?:\s+if not exists)?\s+([a-z_][a-z0-9_]*)/gi,
+      /alter table\s+(?:public\.)?(\w+)\s+add column(?:\s+if not exists)?\s+([a-z_][a-z0-9_]*)([^;,]*)/gi,
     )) {
       const table = a[1].toLowerCase();
       if (IGNORE_TABLES.has(table)) continue;
       if (!tables.has(table)) tables.set(table, new Set());
-      tables.get(table).add(a[2].toLowerCase());
+      const col = a[2].toLowerCase();
+      tables.get(table).add(col);
+      if (/\bnot\s+null\b/i.test(a[3] ?? '')) addNotNull(table, col);
+    }
+
+    // alter table X alter column Y set/drop not null - applied in file order so the last state wins.
+    for (const a of sql.matchAll(
+      /alter table\s+(?:public\.)?(\w+)\s+alter column\s+([a-z_][a-z0-9_]*)\s+(set|drop)\s+not\s+null/gi,
+    )) {
+      const table = a[1].toLowerCase();
+      if (IGNORE_TABLES.has(table)) continue;
+      const col = a[2].toLowerCase();
+      if (a[3].toLowerCase() === 'set') addNotNull(table, col);
+      else dropNotNull(table, col);
     }
   }
-  return tables;
+  return { tables, notNull };
 }
 
 function stripComments(sql) {
@@ -144,9 +175,13 @@ const INTENTIONAL_PUBLIC_READ = new Map([
 function liveRlsViolations(dbUrl) {
   const sql = `
     with user_tables as (
+      -- Audit V15: the leak invariant used to guard only tables with a literal user_id column, so a
+      -- user-keyed table whose owner column is named owner_id / profile_id / created_by was invisible
+      -- to the cross-user-read check. Broaden the owner-column detection to catch those too.
       select distinct table_name
       from information_schema.columns
-      where table_schema = 'public' and column_name = 'user_id'
+      where table_schema = 'public'
+        and column_name in ('user_id', 'owner_id', 'profile_id', 'created_by')
     )
     select ut.table_name,
            coalesce(bool_or(cls.relrowsecurity), false) as rls_enabled,
@@ -204,6 +239,29 @@ function liveObjects(dbUrl) {
   return tables;
 }
 
+// The set of live columns that are NULLABLE (is_nullable = 'YES'), keyed "table.column" - audit V15.
+// A column a migration declares NOT NULL but the live DB left nullable is exactly the 0.46.0 class
+// (an hourly-snapshot insert that never supplied a NOT NULL column) that this gate previously missed.
+function liveNullableColumns(dbUrl) {
+  const out = execFileSync(
+    'psql',
+    [
+      dbUrl,
+      '-v', 'ON_ERROR_STOP=1',
+      '-qAt',
+      '-c',
+      "select table_name || '.' || column_name from information_schema.columns where table_schema='public' and is_nullable='YES';",
+    ],
+    { encoding: 'utf8', env: { ...process.env, PGCONNECT_TIMEOUT: '20' }, stdio: ['ignore', 'pipe', 'pipe'] },
+  );
+  const nullable = new Set();
+  for (const row of out.split('\n')) {
+    const line = row.trim();
+    if (line) nullable.add(line);
+  }
+  return nullable;
+}
+
 // ---------------------------------------------------------------------------------------------
 const dbUrl = resolveDbUrl();
 if (!dbUrl) {
@@ -227,7 +285,7 @@ try {
   process.exit(1);
 }
 
-const expected = expectedObjects();
+const { tables: expected, notNull: expectedNotNull } = expectedObjects();
 const missingTables = [];
 const missingColumns = [];
 
@@ -242,6 +300,23 @@ for (const [table, columns] of expected) {
   }
 }
 
+// NOT NULL drift (audit V15): a column the migrations declare NOT NULL that the live DB left nullable.
+let nullableDrift = [];
+try {
+  const liveNullable = liveNullableColumns(dbUrl);
+  for (const [table, cols] of expectedNotNull) {
+    if (!live.has(table)) continue; // already reported as a missing table
+    const liveCols = live.get(table);
+    for (const col of cols) {
+      if (liveCols.has(col) && liveNullable.has(`${table}.${col}`)) nullableDrift.push(`${table}.${col}`);
+    }
+  }
+} catch (err) {
+  const detail = String(err.stderr || err.message || err).replace(/postgres(ql)?:\/\/\S+/g, 'postgresql://***');
+  console.error(`\x1b[31m[schema-drift] FAIL - could not read column nullability.\x1b[0m\n  ${detail.trim().split('\n')[0]}`);
+  process.exit(1);
+}
+
 let rlsViolations = [];
 try {
   rlsViolations = liveRlsViolations(dbUrl);
@@ -251,10 +326,14 @@ try {
   process.exit(1);
 }
 
-const ok = missingTables.length === 0 && missingColumns.length === 0 && rlsViolations.length === 0;
+const ok =
+  missingTables.length === 0 &&
+  missingColumns.length === 0 &&
+  nullableDrift.length === 0 &&
+  rlsViolations.length === 0;
 
 if (jsonMode) {
-  console.log(JSON.stringify({ ok, missingTables, missingColumns, rlsViolations, tablesChecked: expected.size }, null, 2));
+  console.log(JSON.stringify({ ok, missingTables, missingColumns, nullableDrift, rlsViolations, tablesChecked: expected.size }, null, 2));
 } else if (ok) {
   console.log(`[schema-drift] ok - live database matches the migrations (${expected.size} tables checked, RLS invariant holds).`);
 } else {
@@ -266,6 +345,10 @@ if (jsonMode) {
   if (missingColumns.length) {
     console.error(`\n  MISSING COLUMNS (${missingColumns.length}) - present in a migration, absent in the database:`);
     for (const c of missingColumns.sort()) console.error(`    - ${c}`);
+  }
+  if (nullableDrift.length) {
+    console.error(`\n  NULLABILITY DRIFT (${nullableDrift.length}) - a migration declares NOT NULL but the live column is nullable (the 0.46.0 class):`);
+    for (const c of nullableDrift.sort()) console.error(`    - ${c}`);
   }
   if (rlsViolations.length) {
     console.error(`\n  RLS VIOLATIONS (${rlsViolations.length}) - a user-keyed table is exposed. This is the cross-user leak class:`);
