@@ -15,6 +15,7 @@ import { syncOperatorProfile } from '@/lib/sync-onboarding';
 import { saveLocalHoldings, loadLocalHoldings } from '@/lib/local-portfolio';
 import { saveLocalWatchlist, loadLocalWatchlist } from '@/lib/local-watchlist';
 import { saveAlertPrefsWithStatus, resolveOnboardingAlertMode, type AlertMode } from '@/lib/alert-prefs';
+import { classifySaveResponse, shouldBlockCompletion } from '@/lib/onboarding-save';
 import { saveOnboardingSummary } from '@/lib/onboarding-summary';
 import { loadOnboardingProgress, saveOnboardingProgress, clearOnboardingProgress } from '@/lib/onboarding-progress';
 import { isSupabaseConfigured, createSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -239,12 +240,11 @@ export default function OnboardingPage() {
           }),
         });
         const body = await res.json().catch(() => ({}));
-        if (body?.demo) return 'demo';
-        // Treat a "already in your watchlist" duplicate as a soft success - the symbol is saved.
-        if (typeof body?.error === 'string' && /already in your watchlist/i.test(body.error)) return 'ok';
-        if (res.ok && body?.ok) return 'ok';
-        console.error(`Failed to add ${item.symbol} to watchlist:`, body?.error || `HTTP ${res.status}`);
-        return 'failed';
+        const outcome = classifySaveResponse({ ok: res.ok, body, duplicatePattern: /already in your watchlist/i });
+        if (outcome === 'failed') {
+          console.error(`Failed to add ${item.symbol} to watchlist:`, body?.error || `HTTP ${res.status}`);
+        }
+        return outcome;
       } catch (error) {
         console.error(`Failed to add ${item.symbol} to watchlist:`, error);
         return 'failed';
@@ -332,7 +332,7 @@ export default function OnboardingPage() {
             }),
           });
           const body = await res.json().catch(() => ({}));
-          if (!body?.demo && !(res.ok && body?.ok)) {
+          if (classifySaveResponse({ ok: res.ok, body }) === 'failed') {
             console.error('Failed to replace portfolio:', body?.error || `HTTP ${res.status}`);
             realFailures.push('your portfolio holdings');
           }
@@ -396,7 +396,7 @@ export default function OnboardingPage() {
       // Any real save failure: do NOT advance to the success beat and do NOT clear the resumable
       // checkpoint. Surface an inline retry message so the user can press Finish again - their
       // entered data is still in state and still checkpointed.
-      if (realFailures.length > 0) {
+      if (shouldBlockCompletion(realFailures)) {
         setSaveError(
           `We could not save ${realFailures.join(', ')}. Your entries are kept - check your connection and tap Finish to retry.`,
         );

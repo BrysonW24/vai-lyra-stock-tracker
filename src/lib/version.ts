@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.89.0',
+    date: '2026-07-28',
+    title: 'Audit remediation wave 7: the last three verticals cleared - save safety, gate self-checks, and a fully accessible landing',
+    highlights: [
+      'The onboarding "Finish" step is now proven to never fake success: the exact rule that decides a save really landed (a 401 or server error must keep your entries and let you retry, never show "You\'re all set" on a dropped book) is pinned by tests, alongside the flow-navigation logic.',
+      'The database schema-drift check now catches a column whose live TYPE has diverged from the migration (on top of the missing-column and NOT-NULL checks), and its own new detection logic is now self-tested - conservatively, so it never false-alarms on a custom type.',
+      'The landing page fine print now clears accessibility contrast everywhere (a few sibling captions were missed last pass), and the stack section is now covered by a render test that proves the account-only tools are correctly hidden in the no-account Solo build.',
+      'Under the hood: the shared quality-gate logic gained tests for its version, migration, and schema parsers, so a gate can never silently rot into always-passing.',
+    ],
+  },
+  {
     version: '0.88.0',
     date: '2026-07-28',
     title: 'Audit remediation wave 6: the onboarding flow logic is pinned, and the quality gates now guard themselves',

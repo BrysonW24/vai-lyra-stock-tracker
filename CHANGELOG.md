@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.89.0] - 2026-07-28
+
+Audit remediation wave 7: the last three verticals cleared - save safety, gate self-checks, and a fully accessible landing.
+
+### Changed
+
+- The onboarding "Finish" step is now proven to never fake success: the exact rule that decides a save really landed (a 401 or server error must keep your entries and let you retry, never show "You're all set" on a dropped book) is pinned by tests, alongside the flow-navigation logic.
+- The database schema-drift check now catches a column whose live TYPE has diverged from the migration (on top of the missing-column and NOT-NULL checks), and its own new detection logic is now self-tested - conservatively, so it never false-alarms on a custom type.
+- The landing page fine print now clears accessibility contrast everywhere (a few sibling captions were missed last pass), and the stack section is now covered by a render test that proves the account-only tools are correctly hidden in the no-account Solo build.
+- Under the hood: the shared quality-gate logic gained tests for its version, migration, and schema parsers, so a gate can never silently rot into always-passing.
+
 ## [0.88.0] - 2026-07-28
 
 Audit remediation wave 6: the onboarding flow logic is pinned, and the quality gates now guard themselves.
@@ -1299,7 +1310,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.88.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.89.0...HEAD
+[0.89.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.88.0...v0.89.0
 [0.88.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.87.0...v0.88.0
 [0.87.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.86.0...v0.87.0
 [0.86.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.85.0...v0.86.0

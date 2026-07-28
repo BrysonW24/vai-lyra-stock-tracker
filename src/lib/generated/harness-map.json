@@ -203,6 +203,7 @@
       "section": "Onboarding + activation libs",
       "paths": [
         "src/lib/onboarding.ts",
+        "src/lib/onboarding-save.ts",
         "src/lib/onboarding-progress.ts",
         "src/lib/onboarding-summary.ts",
         "src/lib/sync-onboarding.ts",

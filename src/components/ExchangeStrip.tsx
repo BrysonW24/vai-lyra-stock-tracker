@@ -15,7 +15,7 @@ const EXCHANGES = [
 export function ExchangeStrip() {
   return (
     <div className="mb-6">
-      <p className="mb-3 text-center text-[10px] font-medium uppercase tracking-[0.18em] text-[#8290a0]">
+      <p className="mb-3 text-center text-[10px] font-medium uppercase tracking-[0.18em] text-[#5A6B82]">
         Built on data from the world&apos;s major exchanges
       </p>
       <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">

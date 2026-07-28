@@ -41,6 +41,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { parseMigrationSchema } from './lib/gate-logic.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const jsonMode = process.argv.includes('--json');
@@ -72,87 +73,18 @@ function resolveDbUrl() {
 // ---------------------------------------------------------------------------------------------
 // 2. What SHOULD exist, per the migrations.
 function expectedObjects() {
-  const tables = new Map(); // table -> Set(columns)
-  const notNull = new Map(); // table -> Set(columns declared NOT NULL) - audit V15
-  // `create table if not exists` makes a SECOND create for a table a silent no-op, so only the FIRST
-  // create's NOT NULL declarations actually apply. Tracking this avoids a false NOT-NULL drift on a
-  // KNOWN table-shape collision (e.g. company_events, defined by 014 and again by 036 - 014 wins).
-  const created = new Set();
+  // Read every migration in order and hand the concatenated SQL to the shared, self-tested parser
+  // (scripts/lib/gate-logic.mjs parseMigrationSchema) - so the NOT-NULL / first-create-wins logic has
+  // a committed red/green self-test instead of living untested inline (audit V15).
   const files = fs.readdirSync(MIGRATIONS).filter((f) => f.endsWith('.sql')).sort();
-  const addNotNull = (table, col) => {
-    if (!notNull.has(table)) notNull.set(table, new Set());
-    notNull.get(table).add(col);
-  };
-  const dropNotNull = (table, col) => notNull.get(table)?.delete(col);
-
-  for (const file of files) {
-    const sql = stripComments(fs.readFileSync(path.join(MIGRATIONS, file), 'utf8'));
-
-    // create table [if not exists] [public.]name ( col type [not null], ... )
-    const re = /create table(?:\s+if not exists)?\s+(?:public\.)?(\w+)\s*\(/gi;
-    let m;
-    while ((m = re.exec(sql))) {
-      const table = m[1].toLowerCase();
-      if (IGNORE_TABLES.has(table)) continue;
-      const body = balanced(sql, re.lastIndex - 1);
-      if (body === null) continue;
-      if (!tables.has(table)) tables.set(table, new Set());
-      const firstCreate = !created.has(table);
-      created.add(table);
-      for (const line of body.split('\n')) {
-        const t = line.trim();
-        if (!t || /^(unique|primary|foreign|constraint|check|references|exclude)\b/i.test(t)) continue;
-        const cm = t.match(/^([a-z_][a-z0-9_]*)\s+/i);
-        if (!cm) continue;
-        const col = cm[1].toLowerCase();
-        tables.get(table).add(col);
-        // A column is NOT NULL when its definition carries `not null` (a primary key is implicitly
-        // NOT NULL too). `set null` in a REFERENCES clause is not a nullability declaration. Only the
-        // first create for a table applies its NOT NULL - a later `if not exists` create is a no-op.
-        if (firstCreate && (/\bnot\s+null\b/i.test(t) || /\bprimary\s+key\b/i.test(t))) addNotNull(table, col);
-      }
-    }
-
-    // alter table [public.]name add column [if not exists] col type [not null]
-    for (const a of sql.matchAll(
-      /alter table\s+(?:public\.)?(\w+)\s+add column(?:\s+if not exists)?\s+([a-z_][a-z0-9_]*)([^;,]*)/gi,
-    )) {
-      const table = a[1].toLowerCase();
-      if (IGNORE_TABLES.has(table)) continue;
-      if (!tables.has(table)) tables.set(table, new Set());
-      const col = a[2].toLowerCase();
-      tables.get(table).add(col);
-      if (/\bnot\s+null\b/i.test(a[3] ?? '')) addNotNull(table, col);
-    }
-
-    // alter table X alter column Y set/drop not null - applied in file order so the last state wins.
-    for (const a of sql.matchAll(
-      /alter table\s+(?:public\.)?(\w+)\s+alter column\s+([a-z_][a-z0-9_]*)\s+(set|drop)\s+not\s+null/gi,
-    )) {
-      const table = a[1].toLowerCase();
-      if (IGNORE_TABLES.has(table)) continue;
-      const col = a[2].toLowerCase();
-      if (a[3].toLowerCase() === 'set') addNotNull(table, col);
-      else dropNotNull(table, col);
-    }
+  const concatenated = files.map((f) => fs.readFileSync(path.join(MIGRATIONS, f), 'utf8')).join('\n');
+  const { tables, notNull, types } = parseMigrationSchema(concatenated);
+  for (const t of IGNORE_TABLES) {
+    tables.delete(t);
+    notNull.delete(t);
+    types.delete(t);
   }
-  return { tables, notNull };
-}
-
-function stripComments(sql) {
-  return sql.replace(/--[^\n]*/g, '');
-}
-
-function balanced(s, open) {
-  let depth = 0;
-  for (let i = open; i < s.length; i++) {
-    if (s[i] === '(') depth++;
-    else if (s[i] === ')') {
-      depth--;
-      if (depth === 0) return s.slice(open + 1, i);
-    }
-  }
-  return null;
+  return { tables, notNull, types };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -262,6 +194,31 @@ function liveNullableColumns(dbUrl) {
   return nullable;
 }
 
+// Live column base types keyed "table.column" -> data_type (audit V15). Compared only against the
+// well-known types parseMigrationSchema is confident about, so an enum/serial/user-defined column is
+// never a false type-drift.
+function liveColumnTypes(dbUrl) {
+  const out = execFileSync(
+    'psql',
+    [
+      dbUrl,
+      '-v', 'ON_ERROR_STOP=1',
+      '-qAt', '-F', '|',
+      '-c',
+      "select table_name || '.' || column_name, data_type from information_schema.columns where table_schema='public';",
+    ],
+    { encoding: 'utf8', env: { ...process.env, PGCONNECT_TIMEOUT: '20' }, stdio: ['ignore', 'pipe', 'pipe'] },
+  );
+  const map = new Map();
+  for (const row of out.split('\n')) {
+    const line = row.trim();
+    if (!line) continue;
+    const [key, type] = line.split('|');
+    if (key && type) map.set(key, type.trim().toLowerCase());
+  }
+  return map;
+}
+
 // ---------------------------------------------------------------------------------------------
 const dbUrl = resolveDbUrl();
 if (!dbUrl) {
@@ -285,7 +242,7 @@ try {
   process.exit(1);
 }
 
-const { tables: expected, notNull: expectedNotNull } = expectedObjects();
+const { tables: expected, notNull: expectedNotNull, types: expectedTypes } = expectedObjects();
 const missingTables = [];
 const missingColumns = [];
 
@@ -317,6 +274,27 @@ try {
   process.exit(1);
 }
 
+// TYPE drift (audit V15): a column whose live base type differs from the type the migration declares.
+// Only the well-known types parseMigrationSchema is confident about are compared (enums/serial/
+// user-defined were skipped at parse time), so this cannot false-positive on an exotic column.
+let typeDrift = [];
+try {
+  const liveTypes = liveColumnTypes(dbUrl);
+  for (const [table, cols] of expectedTypes) {
+    if (!live.has(table)) continue;
+    const liveCols = live.get(table);
+    for (const [col, expectedType] of cols) {
+      if (!liveCols.has(col)) continue; // already reported as a missing column
+      const actual = liveTypes.get(`${table}.${col}`);
+      if (actual && actual !== expectedType) typeDrift.push(`${table}.${col} (migration ${expectedType}, live ${actual})`);
+    }
+  }
+} catch (err) {
+  const detail = String(err.stderr || err.message || err).replace(/postgres(ql)?:\/\/\S+/g, 'postgresql://***');
+  console.error(`\x1b[31m[schema-drift] FAIL - could not read column types.\x1b[0m\n  ${detail.trim().split('\n')[0]}`);
+  process.exit(1);
+}
+
 let rlsViolations = [];
 try {
   rlsViolations = liveRlsViolations(dbUrl);
@@ -330,10 +308,11 @@ const ok =
   missingTables.length === 0 &&
   missingColumns.length === 0 &&
   nullableDrift.length === 0 &&
+  typeDrift.length === 0 &&
   rlsViolations.length === 0;
 
 if (jsonMode) {
-  console.log(JSON.stringify({ ok, missingTables, missingColumns, nullableDrift, rlsViolations, tablesChecked: expected.size }, null, 2));
+  console.log(JSON.stringify({ ok, missingTables, missingColumns, nullableDrift, typeDrift, rlsViolations, tablesChecked: expected.size }, null, 2));
 } else if (ok) {
   console.log(`[schema-drift] ok - live database matches the migrations (${expected.size} tables checked, RLS invariant holds).`);
 } else {
@@ -349,6 +328,10 @@ if (jsonMode) {
   if (nullableDrift.length) {
     console.error(`\n  NULLABILITY DRIFT (${nullableDrift.length}) - a migration declares NOT NULL but the live column is nullable (the 0.46.0 class):`);
     for (const c of nullableDrift.sort()) console.error(`    - ${c}`);
+  }
+  if (typeDrift.length) {
+    console.error(`\n  TYPE DRIFT (${typeDrift.length}) - a live column's type differs from the migration that declares it:`);
+    for (const c of typeDrift.sort()) console.error(`    - ${c}`);
   }
   if (rlsViolations.length) {
     console.error(`\n  RLS VIOLATIONS (${rlsViolations.length}) - a user-keyed table is exposed. This is the cross-user leak class:`);

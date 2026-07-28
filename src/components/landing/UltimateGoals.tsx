@@ -209,7 +209,7 @@ export function UltimateGoals({ soloMode = false }: { soloMode?: boolean }) {
       <h2 className="mt-1.5 text-2xl font-semibold tracking-tight text-[#0E1E3A] md:text-3xl">
         From signal to <span className="text-[#1E63FF]">self-driving research</span>.
       </h2>
-      <p className="mt-2 text-sm text-[#8290a0]">Tap any card for the detail.</p>
+      <p className="mt-2 text-sm text-[#5A6B82]">Tap any card for the detail.</p>
 
       <div className="ug-goals mt-6">
         {cards.map((c, i) => (

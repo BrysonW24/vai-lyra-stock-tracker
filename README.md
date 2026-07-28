@@ -376,6 +376,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.88.0   2026-07-28  Audit remediation wave 6: the onboarding flow logic is pinned, and the quality gates now guard themselves
 0.87.0   2026-07-28  Audit remediation wave 5: the radar is honest about its timeframe, and the numbers behind it are finally pinned
 0.86.0   2026-07-28  Audit remediation wave 4: your data fence is now provably closed, and the AI can't dress a score up as a return
 0.85.0   2026-07-28  Bigger tap targets on mobile + a hardened, tested nav bar
@@ -480,7 +481,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(103 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(104 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

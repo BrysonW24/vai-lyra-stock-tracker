@@ -7,6 +7,8 @@ import {
   versionPrefix,
   duplicateVersionPrefixes,
   createTableColumns,
+  parseMigrationSchema,
+  normalizePgType,
 } from '../gate-logic.mjs';
 
 /**
@@ -94,5 +96,62 @@ describe('check-migrations: table-shape-collision detection (the SQL parser)', (
     const onlyA = [...a].filter((c) => !b.has(c));
     const onlyB = [...b].filter((c) => !a.has(c));
     expect(onlyA.length + onlyB.length).toBe(0);
+  });
+});
+
+describe('check-schema-drift: NOT-NULL parser (parseMigrationSchema)', () => {
+  it('marks a column declared NOT NULL (and a primary key) but not a plain column', () => {
+    const { tables, notNull } = parseMigrationSchema(
+      'create table foo (\n id uuid primary key,\n user_id uuid not null,\n note text\n);',
+    );
+    expect([...tables.get('foo')]).toEqual(['id', 'user_id', 'note']);
+    expect(notNull.get('foo').has('id')).toBe(true); // primary key is implicitly NOT NULL
+    expect(notNull.get('foo').has('user_id')).toBe(true);
+    expect(notNull.get('foo').has('note')).toBe(false);
+  });
+
+  it('honors add column NOT NULL and set/drop not null in order', () => {
+    const { notNull } = parseMigrationSchema(
+      'create table foo (id uuid);\n' +
+        'alter table foo add column amount numeric not null;\n' +
+        'alter table foo alter column id set not null;\n' +
+        'alter table foo alter column amount drop not null;',
+    );
+    expect(notNull.get('foo').has('id')).toBe(true); // set not null applied
+    expect(notNull.get('foo').has('amount')).toBe(false); // added NOT NULL, then dropped
+  });
+
+  it('first-create-wins: a second `if not exists` create does NOT add NOT NULL (the collision guard)', () => {
+    // company_events class: 014 wins, 036 is a no-op - 036's NOT NULL must not create false drift.
+    const { notNull } = parseMigrationSchema(
+      'create table company_events (symbol text, event_time timestamptz);\n' +
+        'create table if not exists company_events (event_id uuid not null, event_date date not null);',
+    );
+    expect(notNull.has('company_events')).toBe(false); // no column from the winning create was NOT NULL
+  });
+
+  it('does not misread a REFERENCES ... set null clause as a NOT NULL declaration', () => {
+    const { notNull } = parseMigrationSchema(
+      'create table foo (id uuid, parent uuid references bar(id) on delete set null);',
+    );
+    expect(notNull.has('foo')).toBe(false);
+  });
+});
+
+describe('check-schema-drift: normalizePgType (type-drift base-type mapping)', () => {
+  it('maps common migration types to their information_schema data_type spelling', () => {
+    expect(normalizePgType('uuid not null')).toBe('uuid');
+    expect(normalizePgType('timestamptz default now()')).toBe('timestamp with time zone');
+    expect(normalizePgType('numeric(10,2) default 0')).toBe('numeric');
+    expect(normalizePgType('varchar(255)')).toBe('character varying');
+    expect(normalizePgType('int8')).toBe('bigint');
+    expect(normalizePgType('boolean default false')).toBe('boolean');
+  });
+
+  it('returns null (SKIP) for serial, arrays, and unknown / user-defined types so they never false-positive', () => {
+    expect(normalizePgType('bigserial primary key')).toBeNull();
+    expect(normalizePgType('text[]')).toBeNull();
+    expect(normalizePgType('my_custom_enum not null')).toBeNull();
+    expect(normalizePgType('')).toBeNull();
   });
 });

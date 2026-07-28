@@ -83,7 +83,7 @@ export function StackSection({ soloMode = false }: { soloMode?: boolean }) {
         ))}
       </div>
 
-      <p className="mt-4 text-[12px] text-[#8290a0]">
+      <p className="mt-4 text-[12px] text-[#5A6B82]">
         Full pricing with free-tier limits and gotchas:{' '}
         <a
           href="https://github.com/BrysonW24/vai-lyra-stock-tracker/blob/main/COSTS.md"

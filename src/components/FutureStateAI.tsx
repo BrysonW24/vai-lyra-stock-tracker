@@ -181,7 +181,7 @@ export function FutureStateAI({ soloMode = false }: { soloMode?: boolean }) {
       </div>
       )}
 
-      <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-[#8290a0]">
+      <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-[#5A6B82]">
         <ShieldCheck size={12} /> The AI explains; the deterministic engine decides. Research, never advice.
       </p>
     </div>
