@@ -30,7 +30,10 @@ describe('findingFromEvent', () => {
 
   it('takes every score from the event/payload - never invents one', () => {
     expect(f.scores.total).toBe(76); // payload.signal_score
-    expect(f.scores.volume).toBe(2.1); // payload.volume_ratio
+    // volume_ratio (a ratio) no longer fills the 0-100 'Vol' breakdown chip - it meant a different
+    // thing in live vs demo mode (2026-07-27 audit V10 chip-semantics fix). Absent a real 0-100
+    // volume score, the chip is undefined rather than a mislabelled ratio.
+    expect(f.scores.volume).toBeUndefined();
     expect(f.scores.themeFit).toBe(80); // payload.theme_fit
     expect(f.scores.confidence).toBe(88); // relevance_score
   });

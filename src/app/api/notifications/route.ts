@@ -245,7 +245,9 @@ export async function PATCH(request: NextRequest) {
     if (hasOwn(preferences, 'quietStart')) patch.quiet_start = preferences.quietStart || DEFAULT_NOTIFICATION_PREFERENCES.quietStart;
     if (hasOwn(preferences, 'quietEnd')) patch.quiet_end = preferences.quietEnd || DEFAULT_NOTIFICATION_PREFERENCES.quietEnd;
     if (hasOwn(preferences, 'minRelevanceScore')) {
-      patch.min_signal_score = Math.min(Math.max(Number(preferences.minRelevanceScore ?? 75), 0), 100);
+      // Fall back to the schema default (40), not a stray 75 - the literal divergence the audit
+      // flagged (V6): a PATCH that clears the field used to write a different value than the default.
+      patch.min_signal_score = Math.min(Math.max(Number(preferences.minRelevanceScore ?? DEFAULT_NOTIFICATION_PREFERENCES.minRelevanceScore), 0), 100);
     }
     if (hasOwn(preferences, 'paperTradeAlerts')) patch.paper_bot_alerts = Boolean(preferences.paperTradeAlerts);
     if (hasOwn(preferences, 'orderApprovalAlerts')) patch.order_approval_alerts = Boolean(preferences.orderApprovalAlerts);

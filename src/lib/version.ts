@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.84.0',
+    date: '2026-07-28',
+    title: 'Second remediation wave: more truthful defaults, hardened layout, deeper test coverage',
+    highlights: [
+      'A watch rule you add with just a ticker is now proven at the engine level to wait for a real strong setup, not fire on every scan - the safeguard is pinned by tests so it cannot silently regress.',
+      'Your saved command-centre layout is now hardened: a corrupted or duplicated saved order can never render the same card twice or lose a newly-added one.',
+      'A notification-relevance setting now falls back to the correct default (40) instead of a stray 75 when cleared, so what you set is what you get.',
+      'Added another batch of behavioural tests covering the live news mapping, the layout engine, the watch-rule floor, and the AI "add your key / allowance used up" messages, and corrected a stale scanner-schedule comment. Under-the-hood quality, no change to how the app looks.',
+    ],
+  },
+  {
     version: '0.83.0',
     date: '2026-07-28',
     title: 'Honesty + polish pass: real search, truthful data labels, and controls that actually work',

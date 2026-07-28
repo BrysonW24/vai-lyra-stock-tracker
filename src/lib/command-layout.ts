@@ -37,8 +37,15 @@ export const DEFAULT_HIDDEN = ['compact-feed', 'strongest'];
 export function resolveOrder(saved: string[] | null | undefined, known: string[]): string[] {
   if (!saved || saved.length === 0) return [...known];
   const knownSet = new Set(known);
-  const ordered = saved.filter((id) => knownSet.has(id));
-  const seen = new Set(ordered);
+  // Dedupe as we go so a corrupted saved layout with a repeated id can never render a card twice.
+  const ordered: string[] = [];
+  const seen = new Set<string>();
+  for (const id of saved) {
+    if (knownSet.has(id) && !seen.has(id)) {
+      ordered.push(id);
+      seen.add(id);
+    }
+  }
   for (const id of known) if (!seen.has(id)) ordered.push(id);
   return ordered;
 }

@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.84.0] - 2026-07-28
+
+Second remediation wave: more truthful defaults, hardened layout, deeper test coverage.
+
+### Changed
+
+- A watch rule you add with just a ticker is now proven at the engine level to wait for a real strong setup, not fire on every scan - the safeguard is pinned by tests so it cannot silently regress.
+- Your saved command-centre layout is now hardened: a corrupted or duplicated saved order can never render the same card twice or lose a newly-added one.
+- A notification-relevance setting now falls back to the correct default (40) instead of a stray 75 when cleared, so what you set is what you get.
+- Added another batch of behavioural tests covering the live news mapping, the layout engine, the watch-rule floor, and the AI "add your key / allowance used up" messages, and corrected a stale scanner-schedule comment. Under-the-hood quality, no change to how the app looks.
+
 ## [0.83.0] - 2026-07-28
 
 Honesty + polish pass: real search, truthful data labels, and controls that actually work.
@@ -1246,7 +1257,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.83.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.84.0...HEAD
+[0.84.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.83.0...v0.84.0
 [0.83.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.82.0...v0.83.0
 [0.82.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.81.1...v0.82.0
 [0.81.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.81.0...v0.81.1

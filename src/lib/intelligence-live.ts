@@ -46,21 +46,24 @@ const SENTIMENTS: ReadonlySet<string> = new Set<Sentiment>(['positive', 'neutral
 const RELEVANCES: ReadonlySet<string> = new Set<Relevance>(['high', 'medium', 'low']);
 const HYPE_TRENDS: ReadonlySet<string> = new Set<HypeImpact>(['rising', 'steady', 'cooling']);
 
-function asCategory(raw: unknown): IntelligenceCategory {
+// Exported for direct behavioral coverage of the DB-row -> IntelligenceItem mapping (audit V9:
+// the live-read module carrying the fabrication fix had no tests). Each validator defaults an
+// unknown/absent value to a safe member rather than trusting raw DB text.
+export function asCategory(raw: unknown): IntelligenceCategory {
   return typeof raw === 'string' && CATEGORIES.has(raw) ? (raw as IntelligenceCategory) : 'Macro';
 }
-function asSentiment(raw: unknown): Sentiment {
+export function asSentiment(raw: unknown): Sentiment {
   return typeof raw === 'string' && SENTIMENTS.has(raw) ? (raw as Sentiment) : 'neutral';
 }
-function asRelevance(raw: unknown): Relevance {
+export function asRelevance(raw: unknown): Relevance {
   return typeof raw === 'string' && RELEVANCES.has(raw) ? (raw as Relevance) : 'medium';
 }
-function asTrend(raw: unknown): HypeImpact {
+export function asTrend(raw: unknown): HypeImpact {
   return typeof raw === 'string' && HYPE_TRENDS.has(raw) ? (raw as HypeImpact) : 'steady';
 }
 
 /** Derive a source type from the stored category (the worker does not store one). */
-function sourceTypeFor(category: IntelligenceCategory): IntelligenceItem['sourceType'] {
+export function sourceTypeFor(category: IntelligenceCategory): IntelligenceItem['sourceType'] {
   switch (category) {
     case 'Earnings':
     case 'Guidance':
@@ -108,7 +111,7 @@ interface HypeRow {
   computed_at?: string | null;
 }
 
-function slugId(headline: string, source: string): string {
+export function slugId(headline: string, source: string): string {
   return `live-${(source + '-' + headline).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 80)}`;
 }
 
