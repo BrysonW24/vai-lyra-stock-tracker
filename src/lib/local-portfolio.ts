@@ -12,6 +12,9 @@ export interface LocalHolding {
   symbol: string;
   quantity: number;
   averageBuyPrice: number;
+  /** Brokerage / fees paid, folded into cost basis so Solo P/L matches the worker's
+   *  fee-inclusive cost base (audit V4 fix). Optional; older stored books omit it. */
+  brokerageFee?: number;
   purchaseDate?: string;
   notes?: string;
 }
@@ -50,10 +53,12 @@ function normaliseHolding(input: unknown): LocalHolding | null {
   ) {
     return null;
   }
+  const brokerageFee = Number(raw.brokerageFee);
   return {
     symbol,
     quantity,
     averageBuyPrice,
+    ...(Number.isFinite(brokerageFee) && brokerageFee > 0 ? { brokerageFee } : {}),
     ...(typeof raw.purchaseDate === 'string' ? { purchaseDate: raw.purchaseDate.slice(0, 32) } : {}),
     ...(typeof raw.notes === 'string' ? { notes: raw.notes.slice(0, 500) } : {}),
   };

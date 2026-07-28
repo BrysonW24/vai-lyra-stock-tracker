@@ -90,8 +90,10 @@ const VALID_KINDS = new Set(['metric_grid', 'bullets', 'timeline', 'risk_list', 
  * back to the deterministic default view - a false positive only costs us the AI-composed layout,
  * never correctness, so we err strict.
  */
+// Magnitudes are plural-tolerant (hundreds/thousands/millions/...) so "up hundreds of percent" cannot
+// slip past the singular-only match (2026-07-27 audit V11 plural-bypass fix).
 const BANNED_PROSE_RE =
-  /\b(buy|sell|accumulate|load(?:ing)? up|price target|target price|guaranteed|moon|all in|hodl|dump)\b|\bshort (?:this|it|the)\b|\bgo long\b|\b(ten|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|trillion|double|doubles|doubling|triple|triples|tripling|quadruple|percent)\b/i;
+  /\b(buy|sell|accumulate|load(?:ing)? up|price target|target price|guaranteed|moon|all in|hodl|dump)\b|\bshort (?:this|it|the)\b|\bgo long\b|\b(ten|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundreds?|thousands?|millions?|billions?|trillions?|double|doubles|doubling|triple|triples|tripling|quadruple|percent)\b/i;
 
 /**
  * Sanitise an AI-proposed view against the finding: drop metric keys Lyra did not compute, drop prose

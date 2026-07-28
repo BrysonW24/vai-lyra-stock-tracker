@@ -23,7 +23,10 @@ import { createServerClient } from '@supabase/ssr';
  */
 // /whats-new is public on purpose: the changelog and the no-account community Ideas board
 // live there - walling them behind sign-in would contradict "post and vote without an account".
-const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/welcome', '/privacy', '/support', '/terms', '/whats-new'];
+// /transparency is public on purpose: it is Lyra's AI System Card - a governance/transparency
+// readout of what the AI may/never do, its guardrails, and live eval results. A transparency page
+// behind a login defeats its purpose (2026-07-27 audit V11 - the card was API-only with no surface).
+const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/welcome', '/privacy', '/support', '/terms', '/transparency', '/whats-new'];
 // Browser-install assets must never be caught by the first-run gate. A redirect here makes the
 // manifest invalid and prevents service-worker registration for the exact fresh visitor who needs
 // the install flow.
@@ -125,8 +128,9 @@ export async function middleware(request: NextRequest) {
 
   // Mandatory onboarding: a signed-in user who hasn't finished onboarding is funnelled
   // into it and cannot reach the rest of the app until done. The flag lives on the
-  // user's metadata (set when onboarding completes) and is read from the session here,
-  // so there is no extra DB query per request.
+  // user's metadata (set when onboarding completes). The metadata read itself is free - it
+  // rides on the auth.getUser() call already made above; that getUser() IS a network
+  // round-trip to the Supabase Auth server per gated navigation, but this check adds none.
   const onboarded = Boolean(user?.user_metadata?.onboarded);
   if (user && !onboarded && !isPublic && !pathname.startsWith('/onboarding')) {
     return NextResponse.redirect(new URL('/onboarding', request.url));

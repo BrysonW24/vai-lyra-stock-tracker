@@ -50,6 +50,15 @@ def run_fundamentals_worker(settings: Settings, repo: SupabaseRepository) -> dic
         # Create fundamentals provider (Finnhub or Demo)
         provider = create_fundamentals_provider()
 
+        # Persist to Supabase ONLY when the source is live (mirror events_worker). The demo
+        # provider (used when FINNHUB_API_KEY is unset) returns FABRICATED snapshots;
+        # persisting those to the live fundamental_snapshots / valuation_metrics tables would
+        # surface invented company financials on /fundamentals as if real. The demo run still
+        # fetches + computes for shape, but writes nothing.
+        persist_live = provider.is_live
+        if not persist_live and repo.enabled:
+            logger.info("demo fundamentals provider (no FINNHUB_API_KEY) - fetched for shape, NOT persisted to live tables")
+
         # Fetch and persist for each ticker
         snapshot_date = datetime.now(timezone.utc)
         fundamentals_fetched = 0
@@ -64,6 +73,9 @@ def run_fundamentals_worker(settings: Settings, repo: SupabaseRepository) -> dic
                     continue
 
                 fundamentals_fetched += 1
+
+                if not persist_live:
+                    continue
 
                 # Persist snapshot to Supabase
                 snap_count = _persist_snapshot(repo, fundamentals, snapshot_date)
@@ -92,8 +104,9 @@ def run_fundamentals_worker(settings: Settings, repo: SupabaseRepository) -> dic
         # individual write "handled" its own error. This is the exact shape of the bug that hid for
         # months: every upsert was rejected (42P10 - the ON CONFLICT target was a partial index),
         # _persist_snapshot logged a warning and returned 0, and this function still reported
-        # "success" to a green workflow step while the table sat at zero rows.
-        if fundamentals_fetched > 0 and snapshots_persisted == 0:
+        # "success" to a green workflow step while the table sat at zero rows. Only holds for a
+        # LIVE provider: a demo run deliberately persists nothing (see persist_live above).
+        if persist_live and fundamentals_fetched > 0 and snapshots_persisted == 0:
             summary["status"] = "failed"
             summary["error"] = (
                 f"fetched {fundamentals_fetched} fundamentals but persisted 0 snapshots - "

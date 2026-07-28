@@ -24,6 +24,7 @@ interface ReplacePortfolioRequest {
     symbol: string;
     quantity: number | string;
     averageBuyPrice: number | string;
+    brokerageFee?: number | string;
     purchaseDate?: string;
     notes?: string;
   }>;
@@ -146,6 +147,16 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Missing required field: holdings (array)' }, { status: 400 });
     }
 
+    // Step 0: remember which rows are active NOW, so a failed re-insert can be rolled back rather
+    // than leaving the user with an empty book (audit V4 fix: the replace is not a real DB
+    // transaction, so we snapshot + best-effort restore instead).
+    const { data: activeRows } = await supabase
+      .from('portfolio_positions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('is_active', true);
+    const previouslyActiveIds = (activeRows ?? []).map((r) => r.id as string);
+
     // Step 1: deactivate all existing active positions for this user.
     const { error: deactivateError } = await supabase
       .from('portfolio_positions')
@@ -190,12 +201,13 @@ export async function PUT(request: NextRequest) {
           if (symbol && !skipped.includes(symbol)) skipped.push(symbol);
           return null;
         }
+        const brokerageFee = h.brokerageFee !== undefined ? parseFloat(String(h.brokerageFee)) : 0;
         return {
           user_id: user.id,
           symbol,
           quantity,
           average_buy_price: averageBuyPrice,
-          brokerage_fee: 0,
+          brokerage_fee: Number.isFinite(brokerageFee) && brokerageFee > 0 ? brokerageFee : 0,
           purchase_date: h.purchaseDate || null,
           notes: h.notes || null,
           is_active: true,
@@ -211,9 +223,29 @@ export async function PUT(request: NextRequest) {
     const { data, error: insertError } = await supabase.from('portfolio_positions').insert(rows).select();
 
     if (insertError) {
+      // Roll back the deactivation so a transient insert failure does not leave an empty book.
+      // Best-effort: if the restore itself fails we say so, but we never silently drop the user's
+      // holdings on a retryable error.
+      let restored = false;
+      if (previouslyActiveIds.length > 0) {
+        const { error: restoreError } = await supabase
+          .from('portfolio_positions')
+          .update({ is_active: true })
+          .in('id', previouslyActiveIds)
+          .eq('user_id', user.id);
+        restored = !restoreError;
+      } else {
+        restored = true; // nothing was active to restore
+      }
       return NextResponse.json(
-        { ok: false, error: `Portfolio cleared but re-insert failed: ${insertError.message}` },
-        { status: 400 },
+        {
+          ok: false,
+          restored,
+          error: restored
+            ? `Could not save the new holdings (${insertError.message}). Your previous portfolio was restored - please try again.`
+            : `Could not save the new holdings and the previous portfolio could not be restored (${insertError.message}). Reload and check your positions.`,
+        },
+        { status: restored ? 400 : 500 },
       );
     }
 

@@ -82,7 +82,7 @@ export default async function WelcomePage() {
               See the setup<br /><span className="bg-gradient-to-r from-[#1E63FF] to-[#5BC8FF] bg-clip-text text-transparent">before everyone else.</span>
             </h1>
             <p className="mt-4 max-w-md text-base leading-relaxed text-[#5A6B82]">
-              A deterministic momentum console for US tech - scored, explained, and <span className="font-medium text-[#1E63FF]">personal to your book</span>.
+              A deterministic console for US tech that finds <span className="font-medium text-[#1E63FF]">beaten-down names turning up</span> - not breakouts - scored, explained, and personal to your book.
             </p>
 
             {/* Glassmorphic value props on light - frosted white */}

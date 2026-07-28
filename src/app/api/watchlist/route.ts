@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ensureTickerExists } from '@/lib/supabase/ticker';
 import { stateAtAdd } from '@/lib/twin/state-at-add';
+import { resolveTargetSignalScore } from '@/lib/watchlist-rule';
 
 /**
  * Watchlist write API. Uses the cookie-aware (RLS-enforced) Supabase client and the
@@ -61,7 +62,6 @@ export async function POST(request: NextRequest) {
     }
 
     const targetPrice = body.targetPrice ? parseFloat(String(body.targetPrice)) : null;
-    const targetSignalScore = body.targetSignalScore !== undefined ? parseFloat(String(body.targetSignalScore)) : 0;
     const rsiMin = body.rsiMin !== undefined ? parseFloat(String(body.rsiMin)) : 0;
     const rsiMax = body.rsiMax !== undefined ? parseFloat(String(body.rsiMax)) : 100;
     const requireVolumeRatio = body.requireVolumeRatio !== undefined ? parseFloat(String(body.requireVolumeRatio)) : 0.0;
@@ -73,9 +73,11 @@ export async function POST(request: NextRequest) {
     if (targetPrice !== null && (isNaN(targetPrice) || targetPrice <= 0)) {
       return NextResponse.json({ ok: false, error: 'targetPrice must be a positive number' }, { status: 400 });
     }
-    if (isNaN(targetSignalScore) || targetSignalScore < 0 || targetSignalScore > 100) {
-      return NextResponse.json({ ok: false, error: 'targetSignalScore must be between 0 and 100' }, { status: 400 });
+    const resolvedScore = resolveTargetSignalScore(body.targetSignalScore);
+    if ('error' in resolvedScore) {
+      return NextResponse.json({ ok: false, error: resolvedScore.error }, { status: 400 });
     }
+    const targetSignalScore = resolvedScore.value;
     if (isNaN(rsiMin) || rsiMin < 0 || rsiMin > 100) {
       return NextResponse.json({ ok: false, error: 'rsiMin must be between 0 and 100' }, { status: 400 });
     }

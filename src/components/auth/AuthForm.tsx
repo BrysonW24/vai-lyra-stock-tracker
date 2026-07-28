@@ -75,7 +75,7 @@ export function AuthForm({ mode, initialError = null }: { mode: 'login' | 'signu
 
   return (
     <div className="w-full max-w-sm rounded-xl border border-[#263241] bg-[#0d1117] p-6 shadow-2xl">
-      <Link href="/welcome" className="mb-4 inline-flex items-center gap-1 text-xs text-[#8190a0] transition hover:text-[#eef3f8]">
+      <Link href="/welcome" className="mb-2 -ml-2 inline-flex min-h-[44px] items-center gap-1 px-2 text-xs text-[#8190a0] transition hover:text-[#eef3f8]">
         ← Back
       </Link>
       <div className="mb-5 flex flex-col items-center gap-2 text-center">

@@ -5,13 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BellRing, BrainCircuit, LogOut, Settings } from 'lucide-react';
 import { loadProfile } from '@/lib/account';
-import {
-  ALERT_FREQ,
-  ALERT_MODES,
-  useAlertPrefs,
-  type AlertFrequency,
-  type AlertScope,
-} from '@/lib/alert-prefs';
+import { ALERT_MODES, useAlertPrefs } from '@/lib/alert-prefs';
 import { OPEN_ACCOUNT_MENU_EVENT } from '@/components/AlertStatusBadge';
 import { createSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { APP_VERSION, APP_VERSION_DATE, formatVersionDate } from '@/lib/version';
@@ -150,27 +144,12 @@ export function AccountMenu() {
               )}
             </div>
 
-            {/* Advanced controls appear only for Custom, matching its hint */}
+            {/* Custom reveals quiet hours - the one advanced control the dispatch router actually
+                enforces (quiet_start/quiet_end sync to the server via useAlertPrefs.update). The old
+                frequency + scope dropdowns were removed: the router has no concept of either, so
+                they were dead controls (2026-07-27 audit V6). */}
             {prefs.mode === 'custom' && (
               <div className="mt-2 space-y-1.5">
-                <select
-                  value={prefs.frequency}
-                  onChange={(e) => update({ frequency: e.target.value as AlertFrequency })}
-                  className="w-full rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-[11px] text-[#dbe5ee] outline-none"
-                >
-                  {ALERT_FREQ.map((f) => (
-                    <option key={f.value} value={f.value}>{f.label}</option>
-                  ))}
-                </select>
-                <select
-                  value={prefs.scope}
-                  onChange={(e) => update({ scope: e.target.value as AlertScope })}
-                  className="w-full rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-[11px] text-[#dbe5ee] outline-none"
-                >
-                  <option value="all">All signals</option>
-                  <option value="portfolio">Portfolio only</option>
-                  <option value="watchlist">Watchlist only</option>
-                </select>
                 <label className="flex items-center justify-between rounded border border-[#263241] bg-[#0d141c] px-2 py-1 text-[11px] text-[#a8b5c2]">
                   Quiet hours
                   <input type="checkbox" checked={prefs.quietHoursEnabled} onChange={(e) => update({ quietHoursEnabled: e.target.checked })} />
@@ -182,6 +161,9 @@ export function AccountMenu() {
                     <input type="time" value={prefs.quietEnd} onChange={(e) => update({ quietEnd: e.target.value })} className="flex-1 rounded border border-[#263241] bg-[#080a0d] px-1.5 py-0.5 outline-none" />
                   </div>
                 )}
+                <p className="text-[10px] leading-snug text-[#6f7d8a]">
+                  Quiet hours pause non-urgent alerts on your account; they release after the window.
+                </p>
               </div>
             )}
           </div>

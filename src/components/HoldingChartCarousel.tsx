@@ -59,6 +59,7 @@ export function HoldingChartCarousel({ candles, points }: { candles: Candle[]; p
           points={points}
           title="Momentum (MACD)"
           subtitle="Zero-centred - bars below the line are bearish, shrinking toward zero = pressure easing."
+          reconstructed
         />
       )}
     </div>

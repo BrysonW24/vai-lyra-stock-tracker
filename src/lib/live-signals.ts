@@ -213,7 +213,7 @@ function scoreSnap(s: Snap, prev: Snap | null): ScoreBreakdown & { final: number
   };
 }
 
-function statusFor(score: number, prev: number | null): SignalStatus {
+export function statusFor(score: number, prev: number | null): SignalStatus {
   if (score >= ALERT_THRESHOLD) return 'strong_setup';
   if (score >= WATCHLIST_THRESHOLD) return 'watchlist_setup';
   if (prev != null && prev >= ALERT_THRESHOLD && score < WATCHLIST_THRESHOLD) return 'invalidated';
@@ -221,7 +221,7 @@ function statusFor(score: number, prev: number | null): SignalStatus {
   return 'no_signal';
 }
 
-function actionFor(status: SignalStatus): ActionState {
+export function actionFor(status: SignalStatus): ActionState {
   if (status === 'strong_setup') return 'buy_review';
   if (status === 'watchlist_setup') return 'watch';
   if (status === 'weakening') return 'do_not_add';
@@ -229,7 +229,7 @@ function actionFor(status: SignalStatus): ActionState {
   return 'hold';
 }
 
-function lifecycleFor(status: SignalStatus, prevStatus: SignalStatus | null, scoreDelta: number): LifecycleState {
+export function lifecycleFor(status: SignalStatus, prevStatus: SignalStatus | null, scoreDelta: number): LifecycleState {
   // Mirrors signal_engine.py lifecycle_state_for, including the previous_status is None branch.
   if (prevStatus === null) {
     return status === 'strong_setup' || status === 'watchlist_setup' ? 'new_signal' : 'unchanged';

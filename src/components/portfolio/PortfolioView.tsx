@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowUpRight, Plus } from 'lucide-react';
+import { ArrowUpRight, Plus, Trash2 } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { AddHoldingForm } from '@/components/portfolio/AddHoldingForm';
 import { TickerLogo } from '@/components/TickerLogo';
 import type { DashboardData, PortfolioHolding } from '@/types/scanner';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass } from '@/lib/format';
 import { cgtBadgeClass, cgtStatusFor } from '@/lib/cgt';
-import { loadLocalHoldings, PORTFOLIO_CHANGED_EVENT } from '@/lib/local-portfolio';
+import { loadLocalHoldings, removeLocalHolding, PORTFOLIO_CHANGED_EVENT } from '@/lib/local-portfolio';
 import { buildLocalPortfolioHoldings } from '@/lib/local-dashboard';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 
@@ -32,10 +33,13 @@ function formatQuantity(value: number): string {
  * actually shows up. In Supabase mode it just renders the server-provided holdings.
  */
 export function PortfolioView({ data }: { data: DashboardData }) {
+  const router = useRouter();
   const demo = data.generatedFrom !== 'supabase';
   const soloMode = !isSupabaseConfigured();
   const [holdings, setHoldings] = useState<PortfolioHolding[]>(data.portfolio);
   const [lastTrade, setLastTrade] = useState('-');
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   // Client-side clock for CGT badges; set after mount to keep SSR/CSR markup identical.
   const [todayIso, setTodayIso] = useState('');
   useEffect(() => {
@@ -61,6 +65,43 @@ export function PortfolioView({ data }: { data: DashboardData }) {
     window.addEventListener(PORTFOLIO_CHANGED_EVENT, sync);
     return () => window.removeEventListener(PORTFOLIO_CHANGED_EVENT, sync);
   }, [demo, soloMode, data.portfolio, data.signals]);
+
+  // Per-row remove (audit V4 fix - the page used to have no remove/edit affordance, so a Supabase
+  // user who fat-fingered a holding could not correct it here). A row with a DB id is an
+  // account-backed holding -> DELETE /api/portfolio by id; otherwise it is a browser-local Solo/demo
+  // row -> removeLocalHolding(symbol), which fires PORTFOLIO_CHANGED_EVENT and the sync effect re-reads.
+  async function handleRemove(holding: PortfolioHolding) {
+    setRemoveError(null);
+    setRemoving(holding.symbol);
+    try {
+      if (holding.id) {
+        const res = await fetch('/api/portfolio', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: holding.id }),
+        });
+        const result = (await res.json()) as { ok: boolean; error?: string };
+        if (!result.ok) {
+          setRemoveError(result.error || `Could not remove ${holding.symbol}. Try again.`);
+          return;
+        }
+        setHoldings((prev) => prev.filter((h) => h.id !== holding.id));
+        router.refresh();
+      } else {
+        const ok = removeLocalHolding(holding.symbol);
+        if (!ok) {
+          setRemoveError(`Could not remove ${holding.symbol} on this device.`);
+          return;
+        }
+        // The change event triggers sync(); reflect it immediately too so the row disappears at once.
+        setHoldings((prev) => prev.filter((h) => h.symbol !== holding.symbol));
+      }
+    } catch (err) {
+      setRemoveError(err instanceof Error ? err.message : `Could not remove ${holding.symbol}.`);
+    } finally {
+      setRemoving(null);
+    }
+  }
 
   const totalValue = holdings.reduce((sum, h) => sum + h.marketValue, 0);
   const totalPnl = holdings.reduce((sum, h) => sum + h.unrealisedPnl, 0);
@@ -110,6 +151,12 @@ export function PortfolioView({ data }: { data: DashboardData }) {
             <p className="mt-1 font-mono text-xs text-[#8190a0]">Values, risk states, and action states are middleware overlay outputs.</p>
           </div>
 
+          {removeError && (
+            <p className="border-b border-[#5a1f1f] bg-[#2b0f0f] px-3 py-2 font-mono text-[11px] text-[#ff6b6b]">
+              {removeError}
+            </p>
+          )}
+
           {holdings.length === 0 ? (
             <p className="px-3 py-6 text-center font-mono text-xs text-[#8190a0]">
               No holdings yet. Add one on the right to populate your book.
@@ -133,6 +180,7 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                       <th className="px-3 py-2">MACD</th>
                       <th className="px-3 py-2">Risk</th>
                       <th className="px-3 py-2">Action</th>
+                      <th className="px-3 py-2 text-right"><span className="sr-only">Remove</span></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1b2530]">
@@ -176,6 +224,18 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                         <td className="px-3 py-2">{holding.macdState}</td>
                         <td className="px-3 py-2">{holding.riskState.replaceAll('_', ' ')}</td>
                         <td className="px-3 py-2 text-[#f3a33a]">{holding.actionState.replaceAll('_', ' ')}</td>
+                        <td className="px-2 py-2 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleRemove(holding)}
+                            disabled={removing === holding.symbol}
+                            title={`Remove ${holding.symbol} from your book`}
+                            aria-label={`Remove ${holding.symbol}`}
+                            className="inline-grid h-8 w-8 place-items-center rounded text-[#6f7d8a] transition hover:bg-[#2b0f0f] hover:text-[#ff6b6b] disabled:opacity-40"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -184,31 +244,42 @@ export function PortfolioView({ data }: { data: DashboardData }) {
 
               <div className="divide-y divide-[#1b2530] md:hidden">
                 {holdings.map((holding) => (
-                  <Link href={`/tickers/${holding.symbol}`} className="block px-3 py-2.5" key={holding.symbol}>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <TickerLogo symbol={holding.symbol} size={20} />
-                        <div className="min-w-0">
-                          <p className="font-mono text-sm font-semibold">{holding.symbol}</p>
-                          <p className="truncate font-mono text-[10px] text-[#8190a0]">{formatCurrency(holding.marketValue)} | {formatPercent(holding.portfolioWeight)}</p>
+                  <div className="relative" key={holding.symbol}>
+                    <Link href={`/tickers/${holding.symbol}`} className="block px-3 py-2.5 pr-12">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <TickerLogo symbol={holding.symbol} size={20} />
+                          <div className="min-w-0">
+                            <p className="font-mono text-sm font-semibold">{holding.symbol}</p>
+                            <p className="truncate font-mono text-[10px] text-[#8190a0]">{formatCurrency(holding.marketValue)} | {formatPercent(holding.portfolioWeight)}</p>
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right font-mono">
+                          <p className={`text-sm ${toneClass(holding.unrealisedPnl)}`}>{formatPercent(holding.unrealisedPnlPercent)}</p>
+                          <p className="text-[10px] text-[#f3a33a]">{holding.actionState.replaceAll('_', ' ')}</p>
+                          {(() => {
+                            const cgt = cgtStatusFor(holding.purchaseDate, todayIso);
+                            // Mobile keeps only the states worth a glance - quiet while building.
+                            if (!cgt || cgt.state === 'building') return null;
+                            return (
+                              <p className={`mt-0.5 inline-block rounded border px-1 py-px text-[9px] uppercase tracking-[0.08em] ${cgtBadgeClass(cgt.state)}`}>
+                                {cgt.label}
+                              </p>
+                            );
+                          })()}
                         </div>
                       </div>
-                      <div className="shrink-0 text-right font-mono">
-                        <p className={`text-sm ${toneClass(holding.unrealisedPnl)}`}>{formatPercent(holding.unrealisedPnlPercent)}</p>
-                        <p className="text-[10px] text-[#f3a33a]">{holding.actionState.replaceAll('_', ' ')}</p>
-                        {(() => {
-                          const cgt = cgtStatusFor(holding.purchaseDate, todayIso);
-                          // Mobile keeps only the states worth a glance - quiet while building.
-                          if (!cgt || cgt.state === 'building') return null;
-                          return (
-                            <p className={`mt-0.5 inline-block rounded border px-1 py-px text-[9px] uppercase tracking-[0.08em] ${cgtBadgeClass(cgt.state)}`}>
-                              {cgt.label}
-                            </p>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </Link>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(holding)}
+                      disabled={removing === holding.symbol}
+                      aria-label={`Remove ${holding.symbol}`}
+                      className="absolute right-1 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded text-[#6f7d8a] transition hover:bg-[#2b0f0f] hover:text-[#ff6b6b] disabled:opacity-40"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 ))}
               </div>
             </>

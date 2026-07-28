@@ -40,6 +40,13 @@ interface AiRuntimeStatus {
   hostedOpenAi: boolean;
   hostedOpenAiModel: string;
   sharedGoogle: boolean;
+  // Per-user entitlement from /api/ai/status (2026-07-27 audit V5 fix). hostedAvailable = the
+  // deployment has a hosted key AND this user is entitled (inside trial or granted). Gating the chat
+  // on this instead of the deployment-level hostedOpenAi stops a lapsed-trial user seeing a
+  // working-looking chat that only errors on send. Optional: the anonymous status shape omits them.
+  hostedAvailable?: boolean;
+  hostedKeyOnDeployment?: boolean;
+  aiIncluded?: boolean;
 }
 
 const ACTION_LABEL: Record<ProposedAction['type'], string> = {
@@ -255,19 +262,21 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     runtime == null &&
     (ai.provider === 'openai' || ai.provider === 'google');
 
-  // Connected when the user has a browser key, or the selected provider is backed by a server
-  // key (confirmed by the status endpoint). While still checking (runtime === null) treat
-  // openai/google as optimistically connected so the chat UI renders immediately rather than
-  // flashing the "Connect a model" dead-state - the spinner handles the loading UX instead.
+  // Connected when the user has a browser key, or the selected provider is backed by a server key
+  // AND this user is entitled to it. We gate on the PER-USER hostedAvailable (deployment key +
+  // trial/grant), not the deployment-level hostedOpenAi/sharedGoogle: a lapsed-trial user on a paid
+  // deployment must fall to the "connect a model" state, not a working-looking chat that errors on
+  // send (2026-07-27 audit V5 fix). While still checking (runtime === null) treat openai/google as
+  // optimistically connected so the UI renders immediately - the spinner handles the loading UX.
   const connected =
     ai != null &&
     (!!ai.apiKey?.trim() ||
       (!soloMode &&
         ai.provider === 'openai' &&
-        (runtime?.hostedOpenAi || runtime === null)) ||
+        (runtime?.hostedAvailable || runtime === null)) ||
       (!soloMode &&
         ai.provider === 'google' &&
-        (runtime?.sharedGoogle ||
+        (runtime?.hostedAvailable ||
           runtime === null ||
           process.env.NEXT_PUBLIC_LYRA_FREE_AI === '1')));
 

@@ -8,6 +8,11 @@ export type AiFailureReason =
   | 'provider_rate_limited'
   | 'provider_unavailable'
   | 'empty_response'
+  // no_key: creds resolved to source:'none' (lapsed trial / no BYOK). budget: the hosted-key day
+  // ceiling was hit. Both are returned by the AI routes and want their own 'add your key' / 'come
+  // back tomorrow' copy rather than the generic 'error' fallback (2026-07-27 audit V5 fix).
+  | 'no_key'
+  | 'budget'
   | 'error';
 
 const AI_FAILURE_REASONS = new Set<AiFailureReason>([
@@ -16,6 +21,8 @@ const AI_FAILURE_REASONS = new Set<AiFailureReason>([
   'provider_rate_limited',
   'provider_unavailable',
   'empty_response',
+  'no_key',
+  'budget',
   'error',
 ]);
 
@@ -52,6 +59,10 @@ export function aiFailureMessage(reason: AiFailureReason): string {
       return 'The model provider is temporarily unavailable. Your local data is safe; try again shortly.';
     case 'empty_response':
       return 'The model returned an empty response. Try once more or choose another model.';
+    case 'no_key':
+      return 'AI is not connected on this account. Add your own model key in AI settings to turn it on.';
+    case 'budget':
+      return "The shared AI allowance for today is used up. Add your own model key in AI settings for unlimited use, or try again tomorrow.";
     default:
       return 'That did not go through. Try again; if it repeats, check your AI settings.';
   }

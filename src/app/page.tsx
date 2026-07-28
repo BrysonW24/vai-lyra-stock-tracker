@@ -174,31 +174,41 @@ export default async function OverviewPage() {
               Portfolio <ArrowUpRight size={12} />
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-px bg-[#1b2530] md:grid-cols-2 xl:grid-cols-4">
-            {portfolioRows.map((holding) => (
-              <div className="bg-[#0d1117] p-2" key={holding.symbol}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-mono text-sm font-semibold text-[#eef3f8]">{holding.symbol}</p>
-                    <p className="font-mono text-[10px] text-[#8190a0]">Weight {formatPercent(holding.portfolioWeight)}</p>
+          {portfolioRows.length === 0 ? (
+            // A signed-in user with no holdings used to see a header over an empty bordered grid
+            // (2026-07-27 audit V3 fix) - give the live path the same honest empty state the Solo path has.
+            <p className="px-3 py-6 text-center font-mono text-xs text-[#8190a0]">
+              No holdings yet.{' '}
+              <Link href="/portfolio" className="text-[#8aa2ff] transition hover:text-[#c9d6ff]">Add one</Link>{' '}
+              to see your exposure, weights and per-position risk here.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-px bg-[#1b2530] md:grid-cols-2 xl:grid-cols-4">
+              {portfolioRows.map((holding) => (
+                <div className="bg-[#0d1117] p-2" key={holding.symbol}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-sm font-semibold text-[#eef3f8]">{holding.symbol}</p>
+                      <p className="font-mono text-[10px] text-[#8190a0]">Weight {formatPercent(holding.portfolioWeight)}</p>
+                    </div>
+                    <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[10px] text-[#f3a33a]">
+                      {holding.actionState.replaceAll('_', ' ')}
+                    </span>
                   </div>
-                  <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[10px] text-[#f3a33a]">
-                    {holding.actionState.replaceAll('_', ' ')}
-                  </span>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5 font-mono text-[11px]">
+                    <span className="text-[#8190a0]">Value</span>
+                    <span className="text-right text-[#dbe5ee]">{formatCurrency(holding.marketValue)}</span>
+                    <span className="text-[#8190a0]">P/L</span>
+                    <span className={`text-right ${toneClass(holding.unrealisedPnl)}`}>{formatCurrency(holding.unrealisedPnl)}</span>
+                    <span className="text-[#8190a0]">Signal</span>
+                    <span className="text-right text-[#dbe5ee]">{holding.signalScore} {formatSignedNumber(holding.scoreDelta, 0)}</span>
+                    <span className="text-[#8190a0]">Risk</span>
+                    <span className="text-right text-[#dbe5ee]">{holding.riskState.replaceAll('_', ' ')}</span>
+                  </div>
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-1.5 font-mono text-[11px]">
-                  <span className="text-[#8190a0]">Value</span>
-                  <span className="text-right text-[#dbe5ee]">{formatCurrency(holding.marketValue)}</span>
-                  <span className="text-[#8190a0]">P/L</span>
-                  <span className={`text-right ${toneClass(holding.unrealisedPnl)}`}>{formatCurrency(holding.unrealisedPnl)}</span>
-                  <span className="text-[#8190a0]">Signal</span>
-                  <span className="text-right text-[#dbe5ee]">{holding.signalScore} {formatSignedNumber(holding.scoreDelta, 0)}</span>
-                  <span className="text-[#8190a0]">Risk</span>
-                  <span className="text-right text-[#dbe5ee]">{holding.riskState.replaceAll('_', ' ')}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       ),
     },

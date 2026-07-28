@@ -46,6 +46,11 @@ class Fundamentals:
 class FundamentalsProvider(Protocol):
     """Protocol for fundamentals providers."""
 
+    # True only for a real upstream feed. The worker persists to the live fundamentals
+    # tables ONLY when this is True (mirror events_worker) so fabricated demo snapshots
+    # can never be surfaced on /fundamentals as real company financials.
+    is_live: bool
+
     def fetch_fundamentals(self, symbol: str) -> Fundamentals | None:
         """Fetch fundamentals for a symbol. Returns None on failure."""
         ...
@@ -53,6 +58,8 @@ class FundamentalsProvider(Protocol):
 
 class FinnhubFundamentalsProvider:
     """Live Finnhub fundamentals provider. Requires FINNHUB_API_KEY."""
+
+    is_live = True
 
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
@@ -120,6 +127,8 @@ class FinnhubFundamentalsProvider:
 
 class DemoFundamentalsProvider:
     """Demo fundamentals provider. No API key required."""
+
+    is_live = False
 
     def __init__(self) -> None:
         self.demo_data = self._build_demo_fundamentals()

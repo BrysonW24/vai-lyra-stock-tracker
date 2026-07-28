@@ -28,6 +28,7 @@ import { syncAccountProfile } from '@/lib/sync-onboarding';
 import { loadInterest, saveInterest, registerInterest } from '@/lib/interest';
 import { NotificationsSetup } from '@/components/NotificationsSetup';
 import { SoloUpgradeCta } from '@/components/SoloUpgradeCta';
+import { communitySignupHref } from '@/lib/community';
 import { aiHostingCopy } from '@/lib/ai/hosted-copy';
 import { pageTitleClass } from '@/lib/ui';
 
@@ -664,8 +665,17 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                   Solo has no account or server-side destination, so it cannot
                   deliver push, Telegram, WhatsApp, or scheduled digests. Your
                   watchlist and signal changes remain available when you open
-                  this console. Use the Community build if you want
-                  account-backed delivery across devices.
+                  this console.{' '}
+                  {/* Real link even when the richer SoloUpgradeCta card is dark (its env flag is
+                      off by default) - the upgrade journey must never dead-end as plain text
+                      (2026-07-27 audit V12 fix). */}
+                  <a
+                    href={communitySignupHref('solo-settings')}
+                    className="font-medium text-[#a9c7ff] underline decoration-[#1E63FF]/40 underline-offset-2 transition hover:text-[#cfe0ff]"
+                  >
+                    Create a free Community account
+                  </a>{' '}
+                  for account-backed delivery across devices.
                 </p>
                 <SoloUpgradeCta />
               </div>

@@ -94,11 +94,11 @@ export function TickerDetail({ signal, scoreHistory }: TickerDetailProps) {
 
       <div className="grid gap-3 xl:grid-cols-[1.3fr_0.7fr]">
         <TickerInsightsPanel signal={signal} />
-        <ScoreHeatBars points={scoreHistory} />
+        <ScoreHeatBars points={scoreHistory} reconstructed />
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[0.85fr_1.15fr]">
-        <MacdHistogramChart points={scoreHistory} />
+        <MacdHistogramChart points={scoreHistory} reconstructed />
 
         <section className="terminal-panel rounded-md p-4">
           <div className="grid gap-4 md:grid-cols-2">

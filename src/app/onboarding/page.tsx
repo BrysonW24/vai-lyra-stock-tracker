@@ -31,7 +31,6 @@ import { MomentumPulse } from '@/components/onboarding/MomentumPulse';
 import { TickerConstellation } from '@/components/onboarding/TickerConstellation';
 import { GlassPortfolioStack } from '@/components/onboarding/GlassPortfolioStack';
 import { StrategyPicker, type StrategyValue } from '@/components/onboarding/StrategyPicker';
-import { AiInsightStep } from '@/components/onboarding/AiInsightStep';
 import { ActivationSequence } from '@/components/activation/ActivationSequence';
 import { LyraReveal } from '@/components/activation/LyraReveal';
 import { SceneSlider } from '@/components/activation/SceneSlider';
@@ -389,10 +388,10 @@ export default function OnboardingPage() {
             : state.alerts.dailyDigest
               ? 'quiet'
               : 'muted';
-        const alertPrefsSaved = saveAlertPrefsWithStatus({
-          mode,
-          frequency: state.alerts.hourlyDigest ? '1h' : state.alerts.dailyDigest && !anyInstant ? 'digest' : '1h',
-        });
+        // Only the mode is a real, enforced preference now (the dead frequency/scope fields were
+        // removed in the 2026-07-27 audit V6 fix). Onboarding's digest choices already drive the
+        // server digest prefs separately; the alert mode is what the dispatch router reads.
+        const alertPrefsSaved = saveAlertPrefsWithStatus({ mode });
         if (localMode && !alertPrefsSaved) realFailures.push('your alert preferences on this device');
       }
 
@@ -548,9 +547,6 @@ export default function OnboardingPage() {
             onNext={handleNext}
           />
         );
-
-      case 11: // AI insights (optional)
-        return <AiInsightStep onNext={handleNext} />;
 
       case 9: // Summary / Ready
         return (

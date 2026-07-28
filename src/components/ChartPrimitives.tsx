@@ -420,10 +420,12 @@ export function MacdHistogramChart({
   points,
   title = 'Momentum shift',
   subtitle = 'MACD histogram, zero-centred. Bars above the line are bullish momentum; bars below are bearish. Bright = extending, faded = receding toward zero.',
+  reconstructed = false,
 }: {
   points: ScorePoint[];
   title?: string;
   subtitle?: string;
+  reconstructed?: boolean;
 }) {
   // SVG plot geometry. preserveAspectRatio="none" lets it fill the panel width;
   // text/labels live in HTML overlays so they never distort.
@@ -543,11 +545,12 @@ export function MacdHistogramChart({
           <span key={point.label} className="truncate">{point.label}</span>
         ))}
       </div>
+      {reconstructed && <ReconstructedNote />}
     </section>
   );
 }
 
-export function ScoreHeatBars({ points }: { points: ScorePoint[] }) {
+export function ScoreHeatBars({ points, reconstructed = false }: { points: ScorePoint[]; reconstructed?: boolean }) {
   return (
     <section className="terminal-panel overflow-hidden rounded-md">
       <div className="flex items-center justify-between border-b border-[#1b2530] px-4 py-3">
@@ -572,6 +575,22 @@ export function ScoreHeatBars({ points }: { points: ScorePoint[] }) {
           </div>
         ))}
       </div>
+      {reconstructed && <ReconstructedNote />}
     </section>
+  );
+}
+
+/**
+ * Honesty footnote for any chart drawn from buildScoreHistory: only the final "Now" bar is a
+ * measured value. The lead-in is a deterministic reconstruction that eases into that truth so the
+ * shape reads in the right direction - it is NOT recorded tick history (the 2026-07-27 audit V3
+ * fix). Rendered only when the caller passes reconstructed data.
+ */
+function ReconstructedNote() {
+  return (
+    <p className="border-t border-[#1b2530] px-4 py-2 text-[10px] leading-snug text-[#6f7d8a]">
+      Illustrative lead-in: only <span className="text-[#8190a0]">Now</span> is a measured value. The earlier
+      bars are reconstructed to ease into it in the right direction - not recorded intraday history.
+    </p>
   );
 }

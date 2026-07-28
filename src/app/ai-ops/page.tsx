@@ -172,7 +172,11 @@ export default async function AiOpsPage() {
 
       <p className="text-[9px] text-[#6b7684]">
         Research tooling telemetry. No secrets or prompts are stored - the audit trail holds hashes only. Metrics reflect this
-        server process; durable cross-instance history is in the ai_runs table.
+        server process; durable cross-instance history is in the ai_runs table.{' '}
+        <a href="/transparency" className="text-[#7fb0ff] underline underline-offset-2 hover:text-[#a9c7ff]">
+          Public AI System Card
+        </a>
+        .
       </p>
     </main>
   );

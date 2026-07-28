@@ -5,8 +5,7 @@ import { buildPaperOrderIntent } from '@/lib/trading/order-intent-builder';
 import { simulatePaperFill, requiresApproval } from '@/lib/trading/paper-bot';
 import { runPreTradeChecks } from '@/lib/trading/risk-engine';
 import { DEFAULT_TRADING_SETTINGS, type PreTradeContext, type TradingSettings } from '@/lib/trading/types';
-import { PAPER_SLIPPAGE_RATE } from '@/lib/paper-trading';
-import { commissionFor } from '@/lib/edge/costs';
+import { commissionFor, PAPER_SLIPPAGE_RATE } from '@/lib/edge/costs';
 
 const paperSettings = (): TradingSettings => ({
   ...DEFAULT_TRADING_SETTINGS,

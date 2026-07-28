@@ -1,8 +1,10 @@
 /**
  * The names Lyra actively scans (its universe). Used to power type-ahead in the
  * ticker lookup: as the user types, we suggest matches from this list so the
- * common picks are one tap. Anything NOT here can still be added - the user types
- * the exact ticker and the on-demand API fetches it live.
+ * common picks are one tap. A symbol NOT in the latest scan resolves to the ticker
+ * page's honest "not scanned yet" state - Lyra scans a focused universe and does not
+ * fabricate a score for a name it did not measure (there is no on-demand single-ticker
+ * fetch; coverage comes from the scheduled scan of this set).
  */
 export interface UniverseTicker {
   symbol: string;

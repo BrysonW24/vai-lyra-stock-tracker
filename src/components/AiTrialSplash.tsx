@@ -99,7 +99,7 @@ export function AiTrialSplash() {
           type="button"
           onClick={retire}
           aria-label="Close"
-          className="absolute right-3 top-3 rounded p-1 text-[#5d6b79] transition hover:text-[#a8b5c2]"
+          className="absolute right-1.5 top-1.5 grid h-11 w-11 place-items-center rounded text-[#5d6b79] transition hover:text-[#a8b5c2]"
         >
           <X size={16} />
         </button>

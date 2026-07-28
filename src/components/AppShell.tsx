@@ -36,7 +36,6 @@ import {
   Rocket,
   Rss,
   ScrollText,
-  Search,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
@@ -55,10 +54,12 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { DashboardData } from '@/types/scanner';
 import { relativeTime } from '@/lib/format';
+import { scanFreshness, STALE_AFTER_HOURS } from '@/lib/scan-freshness';
 import { APP_VERSION } from '@/lib/version';
 import { BrandLogo } from '@/components/BrandLogo';
 import { AlertStatusBadge } from '@/components/AlertStatusBadge';
 import { AccountMenu } from '@/components/AccountMenu';
+import { TickerQuickSearch } from '@/components/TickerQuickSearch';
 import { captureInteraction } from '@/lib/twin/capture';
 import { NavCustomizer } from '@/components/NavCustomizer';
 import { getPrimaryHrefs, setPrimaryHrefs, clearPrimaryHrefs } from '@/lib/nav-prefs';
@@ -159,19 +160,6 @@ function rampColor(index: number): string {
 interface AppShellProps {
   data: DashboardData;
   children: ReactNode;
-}
-
-// Hourly cadence; treat anything older than ~2x cadence as stale so a dead cron
-// stops wearing a confident green "Live" badge. Returns hours-since-scan so the
-// label can say exactly how old the data is. Kept local to AppShell on purpose -
-// format.ts is owned by another process.
-const STALE_AFTER_HOURS = 2;
-
-function scanFreshness(finishedAt: string): { stale: boolean; hoursAgo: number } {
-  const finished = new Date(finishedAt).getTime();
-  if (!Number.isFinite(finished)) return { stale: true, hoursAgo: 0 };
-  const hoursAgo = (Date.now() - finished) / 3_600_000;
-  return { stale: hoursAgo > STALE_AFTER_HOURS, hoursAgo };
 }
 
 export function AppShell({ data, children }: AppShellProps) {
@@ -327,10 +315,7 @@ export function AppShell({ data, children }: AppShellProps) {
             <Link href="/" aria-label="Lyra home" className="flex shrink-0 items-center md:hidden">
               <BrandLogo size={24} />
             </Link>
-            <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 lg:max-w-[380px]">
-              <Search size={14} className="shrink-0 text-[#8190a0]" />
-              <span className="truncate text-xs text-[#8190a0]">Search: NVDA</span>
-            </div>
+            <TickerQuickSearch />
 
             {/* Market status: honest about demo vs live vs stale. Green pulse when the scan is
                 live and fresh; amber static DEMO chip on sample data; amber/red "Stale" chip

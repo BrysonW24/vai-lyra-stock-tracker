@@ -38,6 +38,14 @@ export const DEFAULT_COST_MODEL: CostModel = {
  */
 export const DEFAULT_PAPER_STARTING_CASH = 5000;
 
+/**
+ * Flat per-fill slippage the paper-bot fill simulator applies to the reference price (0.1%). Lives
+ * here in the cost model (its former home, paper-trading.ts, was ~90% dead code and was removed in
+ * the 2026-07-27 audit V13 cleanup). The liquidity-scaled `effectiveSlippagePct` above is the
+ * richer estimate; this flat rate is what the bot's deterministic fill uses.
+ */
+export const PAPER_SLIPPAGE_RATE = 0.001;
+
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const round4 = (n: number) => Math.round(n * 10000) / 10000;
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));

@@ -5,11 +5,15 @@ import { ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
 import type { IntelligenceItem, IntelligenceCategory, Sentiment, Relevance, TickerHype } from '@/lib/intelligence';
 import { filterIntelligenceFeed, sortIntelligenceFeed } from '@/lib/intelligence';
 import { SourceFavicon } from '@/components/SourceFavicon';
+import { DataSourceBanner } from '@/components/DataSourceBanner';
 import { relativeTime, trendArrow } from '@/lib/format';
 
 interface IntelligenceFeedProps {
   feed: IntelligenceItem[];
   hypeMap: Record<string, TickerHype>;
+  /** 'live' = worker rows; 'sample' = bundled illustrative feed. Drives the honesty banner. */
+  source?: 'live' | 'sample';
+  updatedAt?: string | null;
 }
 
 type FilterKey = 'ticker' | 'category' | 'sentiment' | 'relevance';
@@ -17,7 +21,7 @@ type FilterKey = 'ticker' | 'category' | 'sentiment' | 'relevance';
 /**
  * IntelligenceFeed - dense client-side filterable market intelligence feed.
  */
-export function IntelligenceFeed({ feed, hypeMap }: IntelligenceFeedProps) {
+export function IntelligenceFeed({ feed, hypeMap, source = 'sample', updatedAt = null }: IntelligenceFeedProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   // Mobile: the four filter groups folded a full screen of chips above the feed -
   // collapsed by default behind a "Filters (n)" toggle; sm+ always shows them.
@@ -80,13 +84,23 @@ export function IntelligenceFeed({ feed, hypeMap }: IntelligenceFeedProps) {
 
   return (
     <div className="space-y-3 pb-20 md:pb-0">
+      <DataSourceBanner
+        source={source}
+        updatedAt={updatedAt}
+        sampleLabel="the headlines, sources, and hype scores below are representative examples of the feed's shape."
+        liveLabel="ticker-tagged market and company news from the nightly intelligence sync."
+      />
+
       {/* Hype meter panel */}
       <section className="terminal-panel rounded-md p-3">
         <div className="flex items-center gap-2">
           <TrendingUp className="text-[#f3a33a]" size={16} />
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Hype meter</h2>
         </div>
-        <p className="mt-1 text-xs text-[#8190a0]">Hype sits beside technical score, never replaces it.</p>
+        <p className="mt-1 text-xs text-[#8190a0]">
+          Hype sits beside technical score, never replaces it.
+          {source === 'sample' ? ' Sample values shown - not a live measurement.' : ' Buzz intensity from the nightly news sync.'}
+        </p>
         <div className="mt-3 space-y-2">
           {topHypeTickers.map((ticker) => (
             <div className="flex items-center justify-between gap-2 border-b border-[#1b2530] pb-2 last:border-b-0 last:pb-0" key={ticker.ticker}>

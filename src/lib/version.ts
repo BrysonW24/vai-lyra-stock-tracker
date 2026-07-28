@@ -23,6 +23,20 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.83.0',
+    date: '2026-07-28',
+    title: 'Honesty + polish pass: real search, truthful data labels, and controls that actually work',
+    highlights: [
+      'The header search is now a real ticker search - type a name and jump straight to it. A ticker Lyra has not scanned lands on an honest "not in the current scan" page with the names it does cover, instead of a dead end.',
+      'Market data is now clearly labelled live vs sample everywhere. The news feed, hype meter, fundamentals and government-awards pages tell you when you are looking at illustrative samples versus a real feed, and the awards page now surfaces live federal-contract data when available.',
+      'Watchlist rules no longer show a false "triggered": a rule you add with just a ticker now waits for a genuine strong setup (score 60+) instead of firing on every scan.',
+      'Portfolio: you can now remove a holding straight from the portfolio page, Solo profit/loss includes your brokerage fee to match the real cost basis, and Solo positions now surface the same protect-capital exit prompts the account-backed view does.',
+      'Notifications: the Custom quiet-hours you set now actually apply to delivery (they used to save only on your device), and dead frequency/scope dropdowns that did nothing were removed.',
+      'New public AI transparency page (the System Card) - a plain readout of what Lyra\'s AI may and may never do, its guardrails, and live evaluation results.',
+      'Dozens of smaller honesty fixes: the momentum lead-in chart is now labelled as an illustrative reconstruction, the landing page states plainly that Lyra finds beaten-down names turning up (not breakouts), and the paper-bot tour uses a realistic $5k balance instead of a $100k fantasy.',
+    ],
+  },
+  {
     version: '0.82.0',
     date: '2026-07-27',
     title: 'A clear heads-up when you land: your first 2 weeks of AI are on us',

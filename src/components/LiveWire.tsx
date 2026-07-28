@@ -29,7 +29,14 @@ const FILTERS: Array<{ key: 'all' | FeedKind; label: string }> = [
  * Live Wire feed - dense rolling stream of every signal change + market/policy headlines,
  * newest first, with small minimal kind filters.
  */
-export function LiveWire({ items }: { items: FeedItem[] }) {
+export function LiveWire({
+  items,
+  intelligenceIsSample = true,
+}: {
+  items: FeedItem[];
+  /** True when the ticker-news stream is the bundled illustrative sample (no live worker rows). */
+  intelligenceIsSample?: boolean;
+}) {
   const [filter, setFilter] = useState<'all' | FeedKind>('all');
   const shown = filter === 'all' ? items : items.filter((i) => i.kind === filter);
 
@@ -91,7 +98,9 @@ export function LiveWire({ items }: { items: FeedItem[] }) {
       </div>
 
       <p className="border-t border-[#1b2530] px-3 py-1.5 font-mono text-[10px] text-[#5e6b78]">
-        Signals + intelligence are real-shaped; the macro/policy wire is sample until live newsflow (Finnhub + AI) lands.
+        {intelligenceIsSample
+          ? 'Signal changes are live from the engine. The news + macro/policy wire is an illustrative sample until live newsflow (Finnhub + AI) lands - sample items are tagged "· sample".'
+          : 'Signal changes and ticker news are live; the macro/policy wire is a sample until it wires in - sample items are tagged "· sample".'}
       </p>
     </section>
   );

@@ -22,6 +22,22 @@ function read(item: WatchlistRow): string {
   const dist = Math.abs(item.distanceToTarget);
   const scoreGap = item.targetSignalScore - item.signalScore;
   const momentum = item.scoreDelta > 0 ? 'building' : item.scoreDelta < 0 ? 'fading' : 'flat';
+  const momentumTail = item.scoreDelta === 0 ? '' : ` and ${momentum}`;
+  // No explicit price target => this rule watches on signal score alone. Never describe the
+  // current price as "your buy zone" (the 2026-07-27 audit V4 fix); phrase around the score.
+  if (item.targetBuyZone === null) {
+    switch (item.triggerState) {
+      case 'triggered':
+        return `Strong setup - the signal has confirmed at ${item.signalScore} (your ${item.targetSignalScore} target). Your move.`;
+      case 'approaching':
+        return `Warming up - signal at ${item.signalScore}${momentumTail}, ${scoreGap > 0 ? `${scoreGap} short of your ${item.targetSignalScore} target` : `holding your ${item.targetSignalScore} target`}.`;
+      case 'invalidated':
+        return `Thesis weakening - the signal rolled over (${item.signalScore}, ${formatSignedNumber(item.scoreDelta, 0)}) below your ${item.targetSignalScore} target.`;
+      case 'not_ready':
+      default:
+        return `On the bench - watching on signal only; still soft at ${item.signalScore} of a ${item.targetSignalScore} target. Add a buy price to also gate on price.`;
+    }
+  }
   const zone = formatCurrency(item.targetBuyZone);
   switch (item.triggerState) {
     case 'triggered':
@@ -89,8 +105,8 @@ export function WatchlistTriggerBoard({ rows }: { rows: WatchlistRow[] }) {
                   <Gate
                     label="Price into zone"
                     current={formatCurrency(item.currentPrice)}
-                    target={formatCurrency(item.targetBuyZone)}
-                    pct={priceProgress}
+                    target={item.targetBuyZone === null ? 'any' : formatCurrency(item.targetBuyZone)}
+                    pct={item.targetBuyZone === null ? 100 : priceProgress}
                     tone="bg-[#7fb0ff]"
                   />
                   <Gate

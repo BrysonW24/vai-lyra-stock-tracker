@@ -427,8 +427,11 @@ export const demoIntelligenceFeed: IntelligenceItem[] = [
 ];
 
 /**
- * Hype scores for tickers - derived from demo feed.
- * Computed: number of high-relevance items × sentiment signal + recency boost.
+ * ILLUSTRATIVE sample hype scores for the demo feed - authored, hand-picked literals, NOT
+ * a live measurement. The live worker (workers/intelligence_worker/hype_engine.py) computes
+ * the real number as high-relevance item count x sentiment x recency and persists it to the
+ * hype_scores table; intelligence-live.ts reads that. These demo values only appear behind
+ * the "illustrative sample" banner so they are never presented as a computed signal.
  */
 export const demoTickerHypeMap: Record<string, TickerHype> = {
   NVDA: { ticker: 'NVDA', hypeScore: 92, recentCount: 3, trend: 'rising' },

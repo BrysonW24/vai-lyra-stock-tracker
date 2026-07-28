@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { FundamentalsReport } from '@/lib/fundamentals';
 import { TickerLogo } from '@/components/TickerLogo';
+import { DataSourceBanner } from '@/components/DataSourceBanner';
 import {
   formatNumber,
   formatPercent,
@@ -14,12 +15,15 @@ import { pageTitleClass } from '@/lib/ui';
 
 interface FundamentalsViewProps {
   reports: FundamentalsReport[];
+  /** 'live' = worker snapshots; 'sample' = bundled demo. Drives the honesty banner. */
+  source?: 'live' | 'sample';
+  updatedAt?: string | null;
 }
 
 type SortField = keyof FundamentalsReport;
 type SortDirection = 'asc' | 'desc';
 
-export function FundamentalsView({ reports }: FundamentalsViewProps) {
+export function FundamentalsView({ reports, source = 'sample', updatedAt = null }: FundamentalsViewProps) {
   const [sortField, setSortField] = useState<SortField>('qualityScore');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
@@ -86,6 +90,12 @@ export function FundamentalsView({ reports }: FundamentalsViewProps) {
 
   return (
     <div className="space-y-3 pb-20 md:pb-0">
+      <DataSourceBanner
+        source={source}
+        updatedAt={updatedAt}
+        sampleLabel="the company financials below are representative example figures for these tickers."
+        liveLabel="company financials from the nightly fundamentals sync."
+      />
       <section className="grid gap-3 xl:grid-cols-[1fr_360px]">
         {/* Main table */}
         <div className="terminal-panel overflow-hidden rounded-md">

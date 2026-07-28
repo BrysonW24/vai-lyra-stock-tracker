@@ -3,40 +3,37 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Alert preferences - the operator-facing alert mode + frequency + quiet hours + scope.
+ * Alert preferences - the operator-facing alert mode + quiet hours.
  * Persisted to localStorage (demo-safe) and shared across the header status badge and the
  * account-menu controls via a same-tab custom event, so changing the mode in one place
  * updates the other instantly.
  *
- * Mutes are ENFORCED SERVER-SIDE: any change to mode / mutedUntil also PATCHes
- * /api/notifications (user_alert_preferences.mute_all / muted_until), which the dispatch
- * router reads before any channel sends. localStorage remains the optimistic cache; for a
- * signed-out/demo session the PATCH 401s harmlessly and the badge is the whole story.
- * Before this sync existed the "Muted" badge was localStorage-only and every channel kept
- * sending - a visible control that silently did nothing.
+ * The parts the dispatch router ACTUALLY enforces sync SERVER-SIDE: any change to
+ * mode / mutedUntil PATCHes user_alert_preferences.mute_all / alert_mode / muted_until, and any
+ * change to the quiet-hours fields PATCHes quiet_hours_enabled / quiet_start / quiet_end - the
+ * SAME columns the router reads before any channel sends (dispatch.ts). localStorage remains the
+ * optimistic cache; for a signed-out/demo session the PATCH 401s harmlessly and the badge is the
+ * whole story. (2026-07-27 audit V6 fix: quiet hours used to write localStorage only, so the
+ * control silently did nothing server-side - the "split-brain" with the notifications page. The
+ * old Custom "frequency" and "scope" dropdowns were removed at the same time: the router has no
+ * concept of either, so they were dead controls that looked interactive.)
  */
 
 export type AlertMode = 'live' | 'quiet' | 'muted' | 'custom';
-export type AlertFrequency = '30m' | '1h' | '2h' | '4h' | 'digest';
-export type AlertScope = 'all' | 'portfolio' | 'watchlist';
 
 export interface AlertPrefs {
   mode: AlertMode;
-  frequency: AlertFrequency;
   quietHoursEnabled: boolean;
   quietStart: string;
   quietEnd: string;
-  scope: AlertScope;
   mutedUntil: number | null;
 }
 
 export const ALERT_DEFAULTS: AlertPrefs = {
   mode: 'live',
-  frequency: '1h',
   quietHoursEnabled: true,
   quietStart: '22:00',
   quietEnd: '07:00',
-  scope: 'all',
   mutedUntil: null,
 };
 
@@ -45,15 +42,7 @@ export const ALERT_MODES: { value: AlertMode; label: string; hint: string; dot: 
   { value: 'live', label: 'Live', hint: 'Alert as setups change (respecting cooldown)', dot: '#43d18b', tone: 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]' },
   { value: 'quiet', label: 'Quiet', hint: 'Only portfolio risk & strong setups', dot: '#60a5fa', tone: 'border-[#2a4a7a] bg-[#0f1a2c] text-[#7fb0ff]' },
   { value: 'muted', label: 'Muted', hint: 'No alerts until you turn them back on', dot: '#f0758a', tone: 'border-[#7a2630] bg-[#260f12] text-[#f0758a]' },
-  { value: 'custom', label: 'Custom', hint: 'Use the frequency, hours & scope below', dot: '#a78bfa', tone: 'border-[#4c3a7a] bg-[#170f29] text-[#a78bfa]' },
-];
-
-export const ALERT_FREQ: { value: AlertFrequency; label: string }[] = [
-  { value: '30m', label: 'Every 30 min' },
-  { value: '1h', label: 'Every 1 hour' },
-  { value: '2h', label: 'Every 2 hours' },
-  { value: '4h', label: 'Every 4 hours' },
-  { value: 'digest', label: 'Daily digest only' },
+  { value: 'custom', label: 'Custom', hint: 'Set your quiet hours below', dot: '#a78bfa', tone: 'border-[#4c3a7a] bg-[#170f29] text-[#a78bfa]' },
 ];
 
 const KEY = 'lyra.alertPrefs';
@@ -85,22 +74,32 @@ function commitAlertPrefs(patch: Partial<AlertPrefs>): { prefs: AlertPrefs; stor
     /* reported to callers that need a verified local commit */
   }
   if (storageOk) window.dispatchEvent(new Event(EVENT));
-  // Server sync for the mute half - the part the dispatch router actually enforces. Only fires
-  // when the patch touches mute state; fire-and-forget (a 401 in demo/signed-out is expected).
-  if ('mode' in patch || 'mutedUntil' in patch) {
+  // Server sync for the parts the dispatch router actually enforces: mute state (mute_all /
+  // alert_mode / muted_until) and quiet hours (quiet_hours_enabled / quiet_start / quiet_end). Only
+  // sends the fields the patch touched; fire-and-forget (a 401 in demo/signed-out is expected).
+  const touchesMute = 'mode' in patch || 'mutedUntil' in patch;
+  const touchesQuiet = 'quietHoursEnabled' in patch || 'quietStart' in patch || 'quietEnd' in patch;
+  if (touchesMute || touchesQuiet) {
+    const preferences: Record<string, unknown> = {};
+    if (touchesMute) {
+      preferences.muteAll = next.mode === 'muted';
+      // The router enforces quiet/muted server-side (alert_mode column) - Live/Custom
+      // change nothing there, but syncing the mode keeps the account's truth current.
+      preferences.alertMode = next.mode;
+      preferences.mutedUntil = next.mutedUntil !== null ? new Date(next.mutedUntil).toISOString() : null;
+    }
+    if (touchesQuiet) {
+      // Same columns the notifications page writes and the router reads - the AccountMenu quiet
+      // hours are now real, not a localStorage-only ghost (audit V6 split-brain fix).
+      preferences.quietHoursEnabled = next.quietHoursEnabled;
+      preferences.quietStart = next.quietStart;
+      preferences.quietEnd = next.quietEnd;
+    }
     try {
       void fetch('/api/notifications', {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          preferences: {
-            muteAll: next.mode === 'muted',
-            // The router enforces quiet/muted server-side (alert_mode column) - Live/Custom
-            // change nothing there, but syncing the mode keeps the account's truth current.
-            alertMode: next.mode,
-            mutedUntil: next.mutedUntil !== null ? new Date(next.mutedUntil).toISOString() : null,
-          },
-        }),
+        body: JSON.stringify({ preferences }),
       }).catch(() => {});
     } catch {
       /* never let a sync failure break the local save */

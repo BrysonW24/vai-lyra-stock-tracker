@@ -33,6 +33,11 @@ class NewsItem:
 class NewsProvider(Protocol):
     """Protocol for news providers."""
 
+    # True only for a real upstream feed. The worker persists to the live news tables
+    # ONLY when this is True (mirror events_worker) so fabricated demo items can never be
+    # surfaced on /intelligence as real market news.
+    is_live: bool
+
     def fetch_company_news(self, symbol: str, days: int = 7) -> list[NewsItem]:
         """Fetch recent news for a symbol. Returns empty list on failure."""
         ...
@@ -40,6 +45,8 @@ class NewsProvider(Protocol):
 
 class FinnhubNewsProvider:
     """Live Finnhub news provider. Requires FINNHUB_API_KEY."""
+
+    is_live = True
 
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
@@ -99,6 +106,8 @@ class FinnhubNewsProvider:
 
 class DemoNewsProvider:
     """Demo news provider returning ~25 deterministic items. No API key required."""
+
+    is_live = False
 
     def __init__(self) -> None:
         self.demo_items = self._build_demo_feed()

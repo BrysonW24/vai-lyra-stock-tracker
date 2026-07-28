@@ -59,10 +59,12 @@ export function AddHoldingForm() {
       if (!result.ok) {
         if (result.demo) {
           // Demo mode (no Supabase): persist locally so the holding shows in the book.
+          const feeInput = parseFloat(formData.brokerageFee);
           const saved = addLocalHolding({
             symbol: formData.symbol,
             quantity: parseFloat(formData.quantity) || 1,
             averageBuyPrice: parseFloat(formData.averageBuyPrice) || 0,
+            brokerageFee: Number.isFinite(feeInput) && feeInput > 0 ? feeInput : undefined,
             purchaseDate: formData.purchaseDate || undefined,
             notes: formData.notes || undefined,
           });

@@ -1,7 +1,9 @@
 import { Award, FileText, Landmark, type LucideIcon } from 'lucide-react';
 import { TickerLogo } from '@/components/TickerLogo';
 import { SourceFavicon } from '@/components/SourceFavicon';
-import { GOV_AWARDS_SAMPLE, listAwards, type AwardRegion, type GovAward } from '@/lib/gov-awards';
+import { listAwards, type GovAward } from '@/lib/gov-awards';
+import type { GovAwardsProvenance } from '@/lib/ingestion/usaspending';
+import { relativeTime } from '@/lib/format';
 
 const KIND_ICON: Record<GovAward['kind'], LucideIcon> = { contract: FileText, grant: Award };
 
@@ -48,8 +50,7 @@ function AwardCard({ award }: { award: GovAward }) {
   );
 }
 
-function RegionSection({ title, flag, region }: { title: string; flag: string; region: AwardRegion }) {
-  const awards = listAwards(region);
+function RegionSection({ title, flag, awards }: { title: string; flag: string; awards: GovAward[] }) {
   return (
     <div>
       <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">
@@ -64,13 +65,54 @@ function RegionSection({ title, flag, region }: { title: string; flag: string; r
   );
 }
 
+/** Provenance disclosure - live USAspending merged over the curated sample, or the sample alone. */
+function ProvenanceBadge({ source, fetchedAt, liveAwardCount }: { source: GovAwardsProvenance; fetchedAt: string; liveAwardCount: number }) {
+  if (source === 'sample') {
+    return (
+      <p className="border-t border-[#1b2530] pt-1.5 font-mono text-[10px] leading-snug text-[#5e6b78]">
+        Illustrative sample - no live federal awards matched Lyra&apos;s watchlist in the latest USAspending pull. AusTender / GrantConnect wire in next. Research context, never advice.
+      </p>
+    );
+  }
+  const label = source === 'live' ? 'Live' : 'Live + sample';
+  return (
+    <p className="flex flex-wrap items-center gap-1.5 border-t border-[#1b2530] pt-1.5 font-mono text-[10px] leading-snug text-[#8190a0]">
+      <span className="inline-flex items-center gap-1 rounded border border-[#1d4f3a] bg-[#0d251b] px-1.5 py-0.5 text-[#43d18b]">
+        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#43d18b]" />
+        {label} · USAspending
+      </span>
+      <span>{liveAwardCount} live federal award{liveAwardCount === 1 ? '' : 's'} · synced {relativeTime(fetchedAt)}.</span>
+      {source === 'mixed' && <span className="text-[#5e6b78]">Australian awards remain curated until AusTender / GrantConnect wire in.</span>}
+      <span className="text-[#5e6b78]">Research context, never advice.</span>
+    </p>
+  );
+}
+
 /**
  * Government awards - official contracts + grants tied to tickers and themes, Australian
  * sources first-class (AusTender / GrantConnect / ARENA / data.gov.au) alongside US
  * (USAspending / SAM.gov / Grants.gov). Official spend that can move the outlook before
- * consensus adjusts. Curated sample for now; live feeds wire in next. Research only.
+ * consensus adjusts. The US section is now LIVE USAspending data merged over the curated sample
+ * (2026-07-27 audit V10 fix - the cron-warmed live feed used to reach no user); provenance is
+ * disclosed (live | mixed | sample). Research only.
  */
-export function GovAwardsView() {
+export function GovAwardsView({
+  awards,
+  source = 'sample',
+  fetchedAt = '',
+  liveAwardCount = 0,
+}: {
+  awards?: GovAward[];
+  source?: GovAwardsProvenance;
+  fetchedAt?: string;
+  liveAwardCount?: number;
+}) {
+  // Degrade to the static sample if the page did not pass resolved awards (never throws upstream).
+  const all = awards && awards.length > 0 ? awards : listAwards();
+  const byDate = (a: GovAward, b: GovAward) => b.date.localeCompare(a.date);
+  const au = all.filter((a) => a.region === 'AU').sort(byDate);
+  const us = all.filter((a) => a.region === 'US').sort(byDate);
+
   return (
     <section className="terminal-panel space-y-3 rounded-md p-3">
       <div className="flex items-center gap-2">
@@ -85,14 +127,10 @@ export function GovAwardsView() {
         </div>
       </div>
 
-      <RegionSection title="Australia" flag="🇦🇺" region="AU" />
-      <RegionSection title="United States" flag="🇺🇸" region="US" />
+      <RegionSection title="Australia" flag="🇦🇺" awards={au} />
+      <RegionSection title="United States" flag="🇺🇸" awards={us} />
 
-      {GOV_AWARDS_SAMPLE && (
-        <p className="border-t border-[#1b2530] pt-1.5 font-mono text-[10px] leading-snug text-[#5e6b78]">
-          Illustrative sample until live AusTender / GrantConnect / USAspending feeds wire in. Research context, never advice.
-        </p>
-      )}
+      <ProvenanceBadge source={source} fetchedAt={fetchedAt} liveAwardCount={liveAwardCount} />
     </section>
   );
 }

@@ -303,6 +303,7 @@ function mapPortfolio(
       const unrealisedPnlPercent = overlay?.unrealised_pl_pct ?? (cost > 0 ? (unrealisedPnl / cost) * 100 : 0);
 
       return {
+        id: position.id,
         symbol: position.symbol,
         quantity: position.quantity,
         averagePrice: position.average_buy_price,
@@ -356,7 +357,7 @@ function mapWatchlist(
         symbol: item.symbol,
         companyName: ticker?.companyName ?? signal?.companyName ?? item.symbol,
         category: ticker?.category ?? ticker?.sector ?? 'Tracked',
-        targetBuyZone: item.target_price ?? overlay?.current_price ?? 0,
+        targetBuyZone: item.target_price ?? null,
         currentPrice: overlay?.current_price ?? signal?.close ?? 0,
         distanceToTarget: overlay?.distance_to_target_price_pct ?? 0,
         signalScore: Math.round(overlay?.signal_score ?? signal?.score ?? 0),

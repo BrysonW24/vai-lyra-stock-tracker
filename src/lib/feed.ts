@@ -45,6 +45,12 @@ export function buildLiveWire(
   signalChanges: SignalChange[],
   intelligence: IntelligenceItem[],
   events: CalendarEvent[],
+  /**
+   * True when the intelligence feed is the bundled illustrative sample (no live worker
+   * rows on this deployment). Flags every intelligence item `sample` so the wire never
+   * shows demo headlines as real market news - the /wire half of the 2026-07-27 audit fix.
+   */
+  intelligenceIsSample = true,
 ): FeedItem[] {
   const items: FeedItem[] = [];
 
@@ -69,6 +75,7 @@ export function buildLiveWire(
       text: n.headline,
       tone: newsTone(n.sentiment),
       source: n.sourceName,
+      sample: intelligenceIsSample,
     });
   });
 

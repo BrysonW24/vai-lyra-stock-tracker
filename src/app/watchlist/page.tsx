@@ -100,7 +100,7 @@ export default async function WatchlistPage() {
                       </td>
                       <td className="px-3 py-2">{item.companyName}</td>
                       <td className="px-3 py-2">{item.category}</td>
-                      <td className="px-3 py-2">{formatCurrency(item.targetBuyZone)}</td>
+                      <td className="px-3 py-2">{item.targetBuyZone === null ? `score ≥${item.targetSignalScore}` : formatCurrency(item.targetBuyZone)}</td>
                       <td className="px-3 py-2">{formatCurrency(item.currentPrice)}</td>
                       <td className="px-3 py-2">{formatPercent(item.distanceToTarget)}</td>
                       <td className="px-3 py-2">{item.signalScore} <span className={toneClass(item.scoreDelta)}>{formatSignedNumber(item.scoreDelta, 0)}</span></td>
@@ -124,7 +124,7 @@ export default async function WatchlistPage() {
                       <TickerLogo symbol={item.symbol} companyName={item.companyName} size={22} />
                       <div>
                         <p className="font-mono text-lg font-semibold">{item.symbol}</p>
-                        <p className="font-mono text-xs text-[#8190a0]">{formatCurrency(item.currentPrice)} | target {formatCurrency(item.targetBuyZone)}</p>
+                        <p className="font-mono text-xs text-[#8190a0]">{formatCurrency(item.currentPrice)} | target {item.targetBuyZone === null ? `score ≥${item.targetSignalScore}` : formatCurrency(item.targetBuyZone)}</p>
                       </div>
                     </div>
                     <div className="text-right font-mono">

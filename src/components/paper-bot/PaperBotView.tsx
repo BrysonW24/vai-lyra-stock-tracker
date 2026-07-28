@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bot, ShieldCheck, Loader2, CheckCircle2, XCircle, AlertTriangle, ArrowRight } from 'lucide-react';
 import { loadAi } from '@/lib/account';
+import { DEFAULT_PAPER_STARTING_CASH } from '@/lib/edge/costs';
 import { SaaSTooltip } from './SaaSTooltip';
 import { PaperTickerInput } from './PaperTickerInput';
 import { PaperBotQuotes } from './PaperBotQuotes';
@@ -182,10 +183,12 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
     if (r.intent) setIntent(r.intent);
     if (r.status === 'paper_executed') {
       if ((isTour || intent.reasonCode === 'tour_mode') && r.fill) {
-        // Force the UI to immediately show the "track it live" layout by mocking the account
+        // Force the UI to immediately show the "track it live" layout by mocking the account.
+        // Equity is the real small-account default (DEFAULT_PAPER_STARTING_CASH), not the old
+        // $100k fantasy balance that contradicted the app's $5k default (2026-07-27 audit V13 fix).
         setAccount({
           positions: [{ symbol: r.fill.symbol, quantity: r.fill.quantity, avgEntryPrice: r.fill.fillPrice, currentPrice: r.fill.fillPrice, marketValue: r.fill.notional, unrealisedPnl: 0, unrealisedPnlPct: 0 }],
-          totalInvested: r.fill.notional, marketValue: r.fill.notional, unrealisedPnl: 0, unrealisedPnlPct: 0, openPositions: 1, fillCount: 1, startingEquity: 100000, equity: 100000, equityCurve: [100000, 100000], realisedPnl: 0, closedTrades: 0, winRate: 0, avgWin: 0, avgLoss: 0, expectancy: 0, dataSource: 'demo'
+          totalInvested: r.fill.notional, marketValue: r.fill.notional, unrealisedPnl: 0, unrealisedPnlPct: 0, openPositions: 1, fillCount: 1, startingEquity: DEFAULT_PAPER_STARTING_CASH, equity: DEFAULT_PAPER_STARTING_CASH, equityCurve: [DEFAULT_PAPER_STARTING_CASH, DEFAULT_PAPER_STARTING_CASH], realisedPnl: 0, closedTrades: 0, winRate: 0, avgWin: 0, avgLoss: 0, expectancy: 0, dataSource: 'demo'
         });
       } else {
         await loadAccount();

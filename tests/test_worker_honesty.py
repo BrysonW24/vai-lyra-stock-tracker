@@ -17,9 +17,12 @@ Do not weaken the assertions to make it pass.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest
+
+from workers.intelligence_worker.news_provider import NewsItem
 
 from workers.events_worker.main import run_events_worker
 from workers.fundamentals_worker.main import run_fundamentals_worker
@@ -117,8 +120,36 @@ class TestEventsWorkerHonesty:
             mod.main()  # must not raise
 
 
+class _LiveNewsProvider:
+    """A LIVE-flagged news provider returning demo-shaped items, so persistence is
+    attempted (the real demo provider is is_live=False and is intentionally NOT
+    persisted). Headline mentions NVDA so map_news_to_tickers yields a match."""
+
+    is_live = True
+
+    def fetch_company_news(self, symbol, days=7):
+        return [
+            NewsItem(
+                symbol=symbol,
+                headline=f"{symbol} raised to conviction buy on datacentre demand",
+                summary=f"{symbol} orders at capacity through Q4.",
+                source="Reuters",
+                source_domain="reuters.com",
+                category="Analyst upgrade",
+                published_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+                url="https://reuters.com/x",
+            )
+        ]
+
+
 class TestIntelligenceWorkerHonesty:
-    def test_fetched_but_persisted_zero_fails_the_run(self):
+    def test_fetched_but_persisted_zero_fails_the_run(self, monkeypatch):
+        import workers.intelligence_worker.main as mod
+
+        # A GENUINE live source so persistence is actually attempted and the rejecting client
+        # makes it fail. On a demo night the worker correctly persists nothing (fabricated data
+        # must not reach live tables), so it would NOT fail here - see TestDemoDataNeverPersists.
+        monkeypatch.setattr(mod, "create_news_provider", lambda: _LiveNewsProvider())
         summary = run_intelligence_worker(None, FakeRepo(RejectingClient()))
         assert summary["status"] == "failed"
         assert "persisted 0" in (summary.get("error") or "")
@@ -203,6 +234,45 @@ class TestDemoDataNeverPersists:
         summary = run_scout_worker(None, FakeRepo(client))
         assert summary["status"] == "ok"
         assert client.upserts == []  # no scout_items, no community_ideas
+
+    def test_intelligence_demo_provider_is_not_persisted(self, monkeypatch):
+        import workers.intelligence_worker.main as mod
+
+        class _DemoNews:
+            is_live = False
+            def fetch_company_news(self, symbol, days=7):
+                return [
+                    NewsItem(
+                        symbol=symbol,
+                        headline=f"{symbol} raised to conviction buy",
+                        summary=f"{symbol} demand strong.",
+                        source="Reuters",
+                        source_domain="reuters.com",
+                        category="Analyst upgrade",
+                        published_at=datetime(2026, 7, 20, tzinfo=timezone.utc),
+                        url="https://reuters.com/x",
+                    )
+                ]
+
+        monkeypatch.setattr(mod, "create_news_provider", lambda: _DemoNews())
+        client = RecordingClient()
+        summary = run_intelligence_worker(None, FakeRepo(client))
+        assert summary["status"] == "success"  # demo run is a clean no-persist
+        assert client.upserts == []  # NOTHING written to news_items / ticker_news_map / hype_scores
+
+    def test_fundamentals_demo_provider_is_not_persisted(self, monkeypatch):
+        import workers.fundamentals_worker.main as mod
+
+        class _DemoFundamentals:
+            is_live = False
+            def fetch_fundamentals(self, symbol):
+                return SimpleNamespace(symbol=symbol)  # non-None so it counts as fetched
+
+        monkeypatch.setattr(mod, "create_fundamentals_provider", lambda: _DemoFundamentals())
+        client = RecordingClient()
+        summary = run_fundamentals_worker(None, FakeRepo(client))
+        assert summary["status"] == "success"  # demo run is a clean no-persist
+        assert client.upserts == []  # NOTHING written to fundamental_snapshots / valuation_metrics
 
 
 class TestScoutWorkerHonesty:

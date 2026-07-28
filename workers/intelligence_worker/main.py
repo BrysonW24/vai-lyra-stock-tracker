@@ -70,19 +70,27 @@ def run_intelligence_worker(settings: Settings, repo: SupabaseRepository) -> dic
         # Score sentiment and relevance
         scored_items = _score_news_items(all_news)
 
-        # Persist to Supabase
-        persisted_count = _persist_news_to_supabase(repo, scored_items)
+        # Persist to Supabase ONLY when the source is live (mirror events_worker). The demo
+        # provider (used when FINNHUB_API_KEY is unset) returns FABRICATED items; persisting
+        # those to the live news_items / hype_scores tables would surface invented analyst
+        # calls and price targets on /intelligence as if real. The demo run still fetches +
+        # scores for shape, but writes nothing.
+        persisted_count = 0
+        hype_count = 0
+        if provider.is_live:
+            persisted_count = _persist_news_to_supabase(repo, scored_items)
+            hype_count = _compute_and_persist_hype(repo, all_news)
+        elif repo.enabled:
+            logger.info("demo news provider (no FINNHUB_API_KEY) - fetched for shape, NOT persisted to live tables")
         summary["news_items_persisted"] = persisted_count
-
-        # Compute and persist hype scores
-        hype_count = _compute_and_persist_hype(repo, all_news)
         summary["hype_scores_computed"] = hype_count
 
         # A run that fetched news and stored NONE of it has failed, however cleanly the
         # persist helper "handled" its own error. Same guard as the fundamentals worker
         # (v0.42.0): this worker kept the pre-fix shape - persist helpers swallow, status
-        # goes success - and could report a green night while writing zero rows.
-        if repo.enabled and len(scored_items) > 0 and persisted_count == 0:
+        # goes success - and could report a green night while writing zero rows. Only holds
+        # for a LIVE provider: a demo run deliberately persists nothing (see above).
+        if repo.enabled and provider.is_live and len(scored_items) > 0 and persisted_count == 0:
             summary["status"] = "failed"
             summary["error"] = (
                 f"fetched {len(all_news)} news items but persisted 0 - every write was "

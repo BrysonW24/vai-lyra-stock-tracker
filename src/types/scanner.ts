@@ -111,6 +111,9 @@ export interface ScorePoint {
 }
 
 export interface PortfolioHolding {
+  /** DB row id for account-backed holdings (enables per-row delete); null for Solo/demo rows,
+   *  which are removed by symbol from browser-local storage instead. */
+  id?: string | null;
   symbol: string;
   quantity: number;
   averagePrice: number;
@@ -137,7 +140,9 @@ export interface WatchlistRow {
   symbol: string;
   companyName: string;
   category: string;
-  targetBuyZone: number;
+  /** Explicit buy-price target, or null when the rule watches on signal score only (never
+   *  the current price masquerading as a target - the 2026-07-27 audit V4 fix). */
+  targetBuyZone: number | null;
   currentPrice: number;
   distanceToTarget: number;
   signalScore: number;

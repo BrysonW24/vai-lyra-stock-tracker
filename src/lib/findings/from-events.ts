@@ -112,7 +112,11 @@ export function findingFromEvent(ev: NotificationEventRow): Finding {
   const scores = {
     total: Math.round(total),
     technical: num(payload.technical) ?? num(payload.signal_score),
-    volume: num(payload.volume_ratio) !== undefined ? Math.round((num(payload.volume_ratio) as number) * 10) / 10 : num(payload.volume),
+    // The 'Vol' breakdown chip is a 0-100 score everywhere it renders (demo findings + the other
+    // chips). volume_ratio (e.g. 2.1x) is a DIFFERENT unit, so coercing it here made the same chip
+    // mean a ratio in live mode and a 0-100 score in demo mode (2026-07-27 audit V10 chip-semantics
+    // fix). Only a real 0-100 volume score fills the chip now; the ratio stays in the evidence payload.
+    volume: num(payload.volume),
     themeFit: num(payload.theme_fit) ?? num(payload.theme_score),
     confidence: num(ev.relevance_score),
   };

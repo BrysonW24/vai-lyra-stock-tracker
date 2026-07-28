@@ -12,7 +12,9 @@ export function AddWatchRuleForm() {
   const [formData, setFormData] = useState({
     symbol: '',
     targetPrice: '',
-    targetSignalScore: '0',
+    // 60 = a genuine strong setup. A bare rule fires on the score, not on every scan; the
+    // user can raise it or add a target price below. (0 used to mean "trigger always".)
+    targetSignalScore: '60',
     rsiMin: '0',
     rsiMax: '100',
     requireMacdHistogramRising: false,
@@ -185,6 +187,36 @@ export function AddWatchRuleForm() {
           onChange={handleChange}
         />
       </label>
+
+      {/* Trigger thresholds - what turns this rule from 'watching' into 'triggered'. Both
+          optional: leave them and the rule fires when the score reaches 60 (a strong setup). */}
+      <div className="grid grid-cols-2 gap-2">
+        <label className="grid gap-1">
+          <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Buy under ($)</span>
+          <input
+            className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2.5 font-mono text-sm text-[#dbe5ee] outline-none focus:border-[#f3a33a]/50 focus:ring-1 focus:ring-[#f3a33a]/30 transition-all"
+            placeholder="optional"
+            name="targetPrice"
+            inputMode="decimal"
+            value={formData.targetPrice}
+            onChange={handleChange}
+          />
+        </label>
+        <label className="grid gap-1">
+          <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Signal score ≥</span>
+          <input
+            className="h-9 rounded border border-[#263241] bg-[#0d141c] px-2.5 font-mono text-sm text-[#dbe5ee] outline-none focus:border-[#f3a33a]/50 focus:ring-1 focus:ring-[#f3a33a]/30 transition-all"
+            placeholder="60"
+            name="targetSignalScore"
+            inputMode="numeric"
+            value={formData.targetSignalScore}
+            onChange={handleChange}
+          />
+        </label>
+      </div>
+      <p className="text-[10px] leading-relaxed text-[#5e6b78]">
+        Triggers when the signal score reaches your threshold{formData.targetPrice ? ' and price is at/under your buy level' : ''}. Leave as-is to fire on a strong setup (60+).
+      </p>
 
       <button
         className="mt-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#f3a33a] hover:bg-[#101720] disabled:opacity-50"

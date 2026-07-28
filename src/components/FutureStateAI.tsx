@@ -170,7 +170,9 @@ export function FutureStateAI({ soloMode = false }: { soloMode?: boolean }) {
               {/* eslint-disable-next-line @next/next/no-img-element -- favicon CDN, not a bundled asset */}
               <img src={faviconUrl('whatsapp.com', 14)} alt="WhatsApp" width={14} height={14} />
             </span>
-            <span className="text-[11px] font-semibold text-[#0E1E3A]">WhatsApp</span>
+            {/* Qualified 'Meta template': WhatsApp ships template-gated (not configured by default),
+                so it does not belong bare in the 'Live now' cluster (2026-07-27 audit V16 fix). */}
+            <span className="text-[11px] font-semibold text-[#0E1E3A]">WhatsApp <span className="font-normal text-[#5A6B82]">(Meta template)</span></span>
           </span>
           <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1FA971]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#1FA971]" /> Live now

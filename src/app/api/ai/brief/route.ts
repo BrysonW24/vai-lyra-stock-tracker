@@ -4,7 +4,7 @@ import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_BRIEF_FORMAT, composeSystem } from '@/lib/ai/system-prompt';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { guardProse } from '@/lib/ai/guardrails/prose';
-import { chargeHostedBudget } from '@/lib/ai/budget-tracker';
+import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 
@@ -74,9 +74,11 @@ export async function POST(request: NextRequest) {
     const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded });
     if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
 
-    // Hosted/shared key rides the house budget; BYOK spends the user's own quota untouched.
+    // Hosted/shared key rides the house budget; BYOK spends the user's own quota untouched. Shared
+    // (Upstash) so the day ceiling holds cross-instance on Vercel, matching chat/agent (audit V5 fix -
+    // this route used the per-lambda in-memory counter, decorative on serverless).
     if (creds.source !== 'user') {
-      const budget = chargeHostedBudget(creds.source, 220);
+      const budget = await chargeHostedBudgetShared(creds.source, 220);
       if (budget.decision === 'block') return NextResponse.json({ ok: false, reason: 'budget' });
     }
 
