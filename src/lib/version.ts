@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.87.0',
+    date: '2026-07-28',
+    title: 'Audit remediation wave 5: the radar is honest about its timeframe, and the numbers behind it are finally pinned',
+    highlights: [
+      'The Signal Radar now says plainly that its scores are computed on daily bars - so if you get an intraday alert and open the radar to a slightly different number, you know why, instead of seeing two figures that seem to disagree.',
+      'The math that produces every number on the shipped scanner (RSI, moving averages, distance-from-low) is now covered by tests that pin it to its definitions, so a silent bug in the display path would turn the board red instead of shipping wrong figures.',
+      'The paper-trading benchmark chart no longer implies a head-to-head return: your live session line and the 30-day market lines share a shape, not a calendar, and the caption now says so.',
+      'The full paper-trade path - propose, approve, fill - is now driven end to end by a test through the real deterministic engine, and the Explain, Approve, Submit and tour controls are all a comfortable 44px.',
+    ],
+  },
+  {
     version: '0.86.0',
     date: '2026-07-28',
     title: 'Audit remediation wave 4: your data fence is now provably closed, and the AI can\'t dress a score up as a return',

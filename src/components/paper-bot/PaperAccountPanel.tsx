@@ -108,7 +108,7 @@ export function PaperAccountPanel({
                       <button
                         type="button"
                         onClick={() => onChartTypeChange('line')}
-                        className={`rounded px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider transition-colors ${
+                        className={`min-h-[44px] rounded px-2 py-0.5 text-[8px] font-medium uppercase tracking-wider transition-colors ${
                           chartType === 'line'
                             ? 'bg-[#1e2d3d] text-[#eef3f8]'
                             : 'text-[#5e6b78] hover:text-[#8190a0]'
@@ -119,7 +119,7 @@ export function PaperAccountPanel({
                       <button
                         type="button"
                         onClick={() => onChartTypeChange('candle')}
-                        className={`rounded px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider transition-colors ${
+                        className={`min-h-[44px] rounded px-2 py-0.5 text-[8px] font-medium uppercase tracking-wider transition-colors ${
                           chartType === 'candle'
                             ? 'bg-[#1e2d3d] text-[#eef3f8]'
                             : 'text-[#5e6b78] hover:text-[#8190a0]'

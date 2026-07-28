@@ -25,8 +25,15 @@ export default async function RadarPage() {
             <div>
               <h1 className={pageTitleClass}>Signal Radar</h1>
               <p className="mt-1 font-mono text-xs text-[#8190a0]">
-                {formatNumber(data.signals.length, 0)} symbols | {strong} strong | {weakening} risk | frontend renders middleware signal truth
+                {formatNumber(data.signals.length, 0)} symbols | {strong} strong | {weakening} risk | scored on daily bars
               </p>
+              {!soloMode && (
+                // Audit V1 timeframe disclosure: in full mode the worker stores/alerts on hourly bars
+                // while this radar recomputes the score on daily bars, so the two can legitimately differ.
+                <p className="mt-0.5 font-mono text-[11px] text-[#68737f]">
+                  This is a daily view - an intraday alert can show a different score for the same name.
+                </p>
+              )}
             </div>
             <div className="grid grid-cols-3 gap-2 font-mono text-xs">
               <span className="rounded border border-[#1d7f55] bg-[#0d251b] px-2 py-1 text-[#43d18b]">Strong {strong}</span>

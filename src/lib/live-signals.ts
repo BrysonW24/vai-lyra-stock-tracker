@@ -96,7 +96,7 @@ async function fetchOhlcv(symbol: string): Promise<Ohlcv | null> {
 
 // ---- Indicator math (ports of indicators.py) -------------------------------
 
-function ema(values: number[], period: number): number[] {
+export function ema(values: number[], period: number): number[] {
   const k = 2 / (period + 1);
   const out = new Array<number>(values.length);
   out[0] = values[0];
@@ -105,7 +105,7 @@ function ema(values: number[], period: number): number[] {
 }
 
 /** Wilder's RSI (RMA smoothing) - matches TradingView + the `ta` library. */
-function wilderRsi(close: number[], period = 14): number[] {
+export function wilderRsi(close: number[], period = 14): number[] {
   const out = new Array<number>(close.length).fill(NaN);
   if (close.length <= period) return out;
   let gain = 0;
@@ -127,21 +127,21 @@ function wilderRsi(close: number[], period = 14): number[] {
   return out;
 }
 
-function smaAt(values: number[], period: number, i: number): number | null {
+export function smaAt(values: number[], period: number, i: number): number | null {
   if (i + 1 < period) return null;
   let s = 0;
   for (let k = i - period + 1; k <= i; k++) s += values[k];
   return s / period;
 }
 
-function minLowAt(low: number[], period: number, i: number): number | null {
+export function minLowAt(low: number[], period: number, i: number): number | null {
   if (i + 1 < period) return null;
   let m = Infinity;
   for (let k = i - period + 1; k <= i; k++) m = Math.min(m, low[k]);
   return m;
 }
 
-function pctRatio(value: number, base: number | null): number | null {
+export function pctRatio(value: number, base: number | null): number | null {
   if (base == null || base === 0) return null;
   return ((value - base) / base) * 100;
 }

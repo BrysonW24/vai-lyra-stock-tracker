@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.87.0] - 2026-07-28
+
+Audit remediation wave 5: the radar is honest about its timeframe, and the numbers behind it are finally pinned.
+
+### Changed
+
+- The Signal Radar now says plainly that its scores are computed on daily bars - so if you get an intraday alert and open the radar to a slightly different number, you know why, instead of seeing two figures that seem to disagree.
+- The math that produces every number on the shipped scanner (RSI, moving averages, distance-from-low) is now covered by tests that pin it to its definitions, so a silent bug in the display path would turn the board red instead of shipping wrong figures.
+- The paper-trading benchmark chart no longer implies a head-to-head return: your live session line and the 30-day market lines share a shape, not a calendar, and the caption now says so.
+- The full paper-trade path - propose, approve, fill - is now driven end to end by a test through the real deterministic engine, and the Explain, Approve, Submit and tour controls are all a comfortable 44px.
+
 ## [0.86.0] - 2026-07-28
 
 Audit remediation wave 4: your data fence is now provably closed, and the AI can't dress a score up as a return.
@@ -1277,7 +1288,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.86.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.87.0...HEAD
+[0.87.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.86.0...v0.87.0
 [0.86.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.85.0...v0.86.0
 [0.85.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.84.0...v0.85.0
 [0.84.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.83.0...v0.84.0

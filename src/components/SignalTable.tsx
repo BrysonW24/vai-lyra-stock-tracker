@@ -347,7 +347,7 @@ export function SignalTable({
                     onClick={() => openSignal(signal)}
                     aria-label={`Explain ${signal.symbol} signal`}
                     title="Explain this signal"
-                    className="grid h-6 w-6 place-items-center rounded border border-[#263241] bg-[#0d141c] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
+                    className="grid h-11 w-11 place-items-center rounded border border-[#263241] bg-[#0d141c] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
                   >
                     <Info size={13} />
                   </button>

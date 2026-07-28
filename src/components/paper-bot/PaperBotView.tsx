@@ -228,7 +228,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
                 localStorage.setItem('lyra.paperTourDismissed', 'false');
                 setTourStep(0);
               }}
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[#263241] bg-[#0d141c] font-mono text-[11px] font-bold text-[#8190a0] transition hover:border-[#8aa2ff]/40 hover:bg-[#101a2e] hover:text-[#8aa2ff]"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[#263241] bg-[#0d141c] font-mono text-[11px] font-bold text-[#8190a0] transition hover:border-[#8aa2ff]/40 hover:bg-[#101a2e] hover:text-[#8aa2ff]"
               title="Restart Tour"
             >
               ?
@@ -442,7 +442,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
                           align="left"
                         />
                       )}
-                      <button type="button" onClick={approve} disabled={busy !== null} className="inline-flex items-center gap-1.5 rounded-md border border-[#9a6a1f] bg-[#2a1f0f] px-3 py-1.5 text-xs font-semibold text-[#f3a33a] transition hover:bg-[#332615] disabled:opacity-50">
+                      <button type="button" onClick={approve} disabled={busy !== null} className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md border border-[#9a6a1f] bg-[#2a1f0f] px-3 py-1.5 text-xs font-semibold text-[#f3a33a] transition hover:bg-[#332615] disabled:opacity-50">
                         {busy === 'approve' ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} Approve for paper
                       </button>
                     </div>
@@ -457,7 +457,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
                           align="left"
                         />
                       )}
-                      <button type="button" onClick={execute} disabled={busy !== null} className="inline-flex items-center gap-1.5 rounded-md border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 text-xs font-semibold text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-50">
+                      <button type="button" onClick={execute} disabled={busy !== null} className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 text-xs font-semibold text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-50">
                          {busy === 'execute' ? <Loader2 size={13} className="animate-spin" /> : <ArrowRight size={13} />} Submit to paper
                       </button>
                     </div>

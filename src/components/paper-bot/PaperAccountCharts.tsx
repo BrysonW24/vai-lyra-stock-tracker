@@ -203,7 +203,7 @@ function BenchmarkChart({
     : [];
 
   const allSeries = [
-    ...(portfolioIndexed.length >= 2 ? [{ label: 'Portfolio', points: portfolioIndexed, color: BENCHMARK_COLORS.Portfolio }] : []),
+    ...(portfolioIndexed.length >= 2 ? [{ label: 'Session', points: portfolioIndexed, color: BENCHMARK_COLORS.Portfolio }] : []),
     ...benchmarks.map(b => ({ label: b.label, points: b.points, color: BENCHMARK_COLORS[b.label] ?? '#8190a0' })),
   ];
 
@@ -330,7 +330,9 @@ function BenchmarkChart({
       </div>
 
       <p className="mt-2 text-[9px] text-[#3a4a5a]">
-        All series indexed to 100 at start - shows relative % return. Portfolio = your paper account. NASDAQ + ASX 200 = live market data from Yahoo Finance.
+        All series indexed to 100 at start. NASDAQ + ASX 200 are the last 30 days of live Yahoo Finance
+        data; Session is your live paper run, which spans a different (usually shorter) window - so the
+        lines share an index, not a calendar. Compare the shapes, not a head-to-head % return.
       </p>
     </div>
   );
