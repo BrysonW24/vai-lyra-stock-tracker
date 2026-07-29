@@ -40,6 +40,14 @@ It runs in three modes: **demo** (no keys, built-in sample data), **live** (Supa
 - `LOOPS.md` - the motion map: every loop in the system end to end (scan, outcome learning, digest/review, notifications, scout, macro, horizon-2 workers, AI copilot, paper bot, data economics, release, agent learning) with ASCII diagrams, what closes each loop, and the known open half-loops. **If you add a table or a scheduled job, add its loop here** - a ledger nobody reads back is the smell this file exists to catch. ARCHITECTURE.md = structure, HARNESS.md = enforcement, LOOPS.md = motion.
 - `ONBOARDING.md` - the ledger of every onboarding asset/spec/experience (Setup Companion, `/setup`, walkthroughs, landing goal/stack sections). Update it whenever an onboarding surface changes. `AGENT-ONBOARDING.md` is the agent-facing front door for fresh clones. Parity across the human/html/agent surfaces is gated by `npm run check:onboarding` (CI) and restored by the `/onboarding-parity` skill chain - run it after any change to the stack, costs, routes, env vars, walkthroughs, or version.
 
+### Operating domains (`lyra-*`) and technical folders
+
+Founder-facing operating work has a permanent **home** per domain, using the `lyra-<domain>` convention (generalised from Podium's proven `podium-<domain>` system and the `vd-mobile-apps/_template` scaffold). The authoritative map + per-folder purpose is [`lyra-folder-convention.md`](lyra-folder-convention.md). Read it before creating any new top-level folder - new founder-facing domains MUST use `lyra-*`, and each domain is a home to fill, not a mandate.
+
+- **Operating domains:** `lyra-ai`, `lyra-architecture`, `lyra-audits` (seeded: readiness audits + `AUDIT-LOG.md`), `lyra-back-office`, `lyra-bugs`, `lyra-competitors`, `lyra-content`, `lyra-cyber`, `lyra-design`, `lyra-evals`, `lyra-forecasting`, `lyra-marketing`, `lyra-metrics`, `lyra-modelling` (Lyra-specific scoring research), `lyra-operations`, `lyra-reporting`, `lyra-research`, `lyra-strategy`, `lyra-testing`.
+- **Stable technical folders (do NOT rename):** `assets`, `backlog`, `content`, `contracts`, `docs`, `growth`, `ios`, `native`, `public`, `scripts`, `sql`, `src`, `status` (operating-state yaml), `store-assets`, `supabase`, `testflight`, `tests`, `workers`.
+- **Known deviation:** `testflight/` currently fills the `lyra-testflight` role; rename is deferred to a dedicated migration (a co-worker lane has pending changes there) - see the convention doc.
+
 ## Key Commands
 
 - `npm run dev` - run the dashboard locally.
