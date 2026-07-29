@@ -1,5 +1,7 @@
 # lyra-design
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 > Design system, responsive, accessibility, and experience quality.
 
 Founder-facing operating domain in Lyra's `lyra-<domain>` structure - see

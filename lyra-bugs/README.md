@@ -1,5 +1,7 @@
 # lyra-bugs
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 > Reproducible defect evidence (screenshots + repro notes) and the bug ledger.
 
 Founder-facing operating domain in Lyra's `lyra-<domain>` structure - see

@@ -1,5 +1,7 @@
 # lyra-cyber
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 > Threat models, privacy controls, security evidence, incidents, and release gates.
 
 Founder-facing operating domain in Lyra's `lyra-<domain>` structure - see

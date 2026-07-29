@@ -1,5 +1,7 @@
 # lyra-reporting
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 > Source authority, privacy-safe aggregation, founder reports, and decision receipts.
 
 Founder-facing operating domain in Lyra's `lyra-<domain>` structure - see

@@ -1,5 +1,7 @@
 # lyra-testing
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 > Benchmark registries, test suites, AI eval lanes, browser and phone QA, and evidence.
 
 Founder-facing operating domain in Lyra's `lyra-<domain>` structure - see

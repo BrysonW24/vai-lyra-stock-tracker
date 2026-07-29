@@ -1,5 +1,7 @@
 # lyra-back-office
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 > Legal, billing, invoices, taxes, subscriptions, support, vendors, compliance.
 
 Founder-facing operating domain in Lyra's `lyra-<domain>` structure - see

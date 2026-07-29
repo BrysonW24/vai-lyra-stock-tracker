@@ -1,5 +1,7 @@
 # store-assets/ - Lyra App Store listing assets
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 App Store / TestFlight listing collateral: screenshots, preview video, description, keywords, and
 review notes. A stable technical folder (not a `lyra-*` operating domain) - see
 [`../lyra-folder-convention.md`](../lyra-folder-convention.md).

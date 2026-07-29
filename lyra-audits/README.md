@@ -1,5 +1,7 @@
 # lyra-audits
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 Recurring user-readiness audits of the Lyra codebase, modelled on Podium's `podium-audits`.
 Each audit scores every product vertical out of 100 against the fixed rubric below, so scores
 are comparable release over release. One dated report per audit run lives in this folder.

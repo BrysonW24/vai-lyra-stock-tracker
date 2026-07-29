@@ -1,5 +1,7 @@
 # status/ - Lyra operating state
 
+> **Current state:** [`lyra-today-snapshot.md`](lyra-today-snapshot.md) - Lyra as it is today (shared grounded facts) (2026-07-29).
+
 Machine-readable operating state for the app: the yaml files a founder (or an agent) reads to know
 what Lyra is, what it promises, what runs, and what is decided. Mirrors the
 `vd-mobile-apps/_template/status/` set. This folder is a stable technical folder (not a `lyra-*`

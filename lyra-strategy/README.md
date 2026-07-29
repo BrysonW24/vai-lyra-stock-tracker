@@ -1,5 +1,7 @@
 # lyra-strategy
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 > Customer, product, commercial, packaging, and bet decisions.
 
 Founder-facing operating domain in Lyra's `lyra-<domain>` structure - see

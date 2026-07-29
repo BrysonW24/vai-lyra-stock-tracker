@@ -1,5 +1,7 @@
 # lyra-ai
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 > AI surfaces, model policy, prompts, guardrails, memory, and fallbacks.
 
 Founder-facing operating domain in Lyra's `lyra-<domain>` structure - see

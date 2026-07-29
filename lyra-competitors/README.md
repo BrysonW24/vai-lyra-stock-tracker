@@ -1,5 +1,7 @@
 # lyra-competitors
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 > Feature watch, product teardowns, positioning, and response decisions.
 
 Founder-facing operating domain in Lyra's `lyra-<domain>` structure - see

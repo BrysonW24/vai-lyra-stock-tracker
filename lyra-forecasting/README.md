@@ -1,5 +1,7 @@
 # lyra-forecasting
 
+> **Current state:** [`STATE-AUDIT.md`](STATE-AUDIT.md) - how this part of Lyra works today (2026-07-29).
+
 > Demand, retention, revenue, economics, capacity, reliability, and scenarios.
 
 Founder-facing operating domain in Lyra's `lyra-<domain>` structure - see
