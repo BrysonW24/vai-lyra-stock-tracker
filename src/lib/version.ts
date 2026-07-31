@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.94.0',
+    date: '2026-07-31',
+    title: 'The Emerging Winner model gets honest: leak-proof validation, per-cohort scoring, a floor gate, and a truthful headline',
+    highlights: [
+      'The training validation is now leak-proof: a purged and embargoed walk-forward means a name\'s 12-month outcome window can never bleed across the train/test boundary and flatter the score - the canonical financial-ML fix (Lopez de Prado, AFML Ch. 7). On the reproducible bootstrap this correctly changes nothing (its rows have no timeline, so there is nothing to purge); on real point-in-time ledger data it will.',
+      'It now reports the numbers that actually decide whether to trust a pick: average precision (PR-AUC) as the primary metric instead of a flattering ROC-AUC, precision among the top picks measured per quarter with the worst quarter surfaced (not a pooled average that hides a bad regime), and an adaptive equal-mass calibration error that does not understate error at a rare base rate.',
+      'A bad retrain can no longer ship silently: a pre-publish floor gate refuses to overwrite the deployed champion unless the new model clears a floor and does not regress against the current one - a deliberate override stays possible, but never accidental.',
+      'The drift guard is hardened with engineered boundary fixtures (all-missing, all-floor, all-ceiling, coverage-transition corners) on top of the random ones, so the frozen model and the served model are proven identical (to 1e-8) at the edges where a future tree-based model would be most likely to diverge.',
+      'The headline is honest: the bootstrap result is labelled a machinery proof - it draws its labels from a logistic and recovers them with a logistic - and explicitly not evidence about real winners. The model stays shadow-live until real matured outcomes and live calibration earn surfacing (founder-gated). Full research + runbook in lyra-modelling/TRAINING-PIPELINE.md and MODEL-BUILD-TRAIN-HOST.md.',
+    ],
+  },
+  {
     version: '0.93.0',
     date: '2026-07-31',
     title: 'The Emerging Winner model earns its way: a full training + deployment + monitoring lifecycle',

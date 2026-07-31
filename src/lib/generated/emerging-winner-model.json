@@ -57,77 +57,132 @@
   ],
   "bias": -2.90169795,
   "metrics": {
+    "oos_pr_auc": 0.3546,
     "oos_auc": 0.828,
     "oos_brier": 0.0721,
     "baseline_brier": 0.0857,
+    "ece": 0.0127,
     "base_rate": 0.0946,
     "precision_at_k": 0.4583,
     "lift_at_k": 4.846,
+    "precision_at_k_by_cohort": {
+      "n_cohorts": 4,
+      "mean": 0.4667,
+      "median": 0.4584,
+      "worst": 0.4,
+      "worst_cohort": "fold3",
+      "per_cohort": [
+        {
+          "cohort": "fold1",
+          "precision_at_k": 0.5167,
+          "k": 60,
+          "n": 1200,
+          "base_rate": 0.1
+        },
+        {
+          "cohort": "fold2",
+          "precision_at_k": 0.55,
+          "k": 60,
+          "n": 1200,
+          "base_rate": 0.1042
+        },
+        {
+          "cohort": "fold3",
+          "precision_at_k": 0.4,
+          "k": 60,
+          "n": 1200,
+          "base_rate": 0.0892
+        },
+        {
+          "cohort": "fold4",
+          "precision_at_k": 0.4,
+          "k": 60,
+          "n": 1200,
+          "base_rate": 0.085
+        }
+      ]
+    },
     "k_frac": 0.05,
     "k": 240,
     "calibration": [
       {
         "bin": 0.05,
-        "predicted": 0.0369,
-        "actual": 0.0292,
-        "n": 3283
+        "predicted": 0.0051,
+        "actual": 0.0042,
+        "n": 480
       },
       {
         "bin": 0.15,
-        "predicted": 0.1438,
-        "actual": 0.1581,
-        "n": 816
+        "predicted": 0.0127,
+        "actual": 0.0083,
+        "n": 480
       },
       {
         "bin": 0.25,
-        "predicted": 0.2431,
-        "actual": 0.2449,
-        "n": 343
+        "predicted": 0.0217,
+        "actual": 0.0146,
+        "n": 480
       },
       {
         "bin": 0.35,
-        "predicted": 0.3446,
-        "actual": 0.3081,
-        "n": 172
+        "predicted": 0.032,
+        "actual": 0.0354,
+        "n": 480
       },
       {
         "bin": 0.45,
-        "predicted": 0.4372,
-        "actual": 0.4024,
-        "n": 82
+        "predicted": 0.0454,
+        "actual": 0.0312,
+        "n": 480
       },
       {
         "bin": 0.55,
-        "predicted": 0.5419,
-        "actual": 0.537,
-        "n": 54
+        "predicted": 0.0629,
+        "actual": 0.05,
+        "n": 480
       },
       {
         "bin": 0.65,
-        "predicted": 0.6499,
-        "actual": 0.6897,
-        "n": 29
+        "predicted": 0.0895,
+        "actual": 0.0708,
+        "n": 480
       },
       {
         "bin": 0.75,
-        "predicted": 0.7386,
-        "actual": 0.3333,
-        "n": 15
+        "predicted": 0.1315,
+        "actual": 0.1437,
+        "n": 480
       },
       {
         "bin": 0.85,
-        "predicted": 0.8232,
-        "actual": 0.8,
-        "n": 5
+        "predicted": 0.1994,
+        "actual": 0.2188,
+        "n": 480
       },
       {
         "bin": 0.95,
-        "predicted": 0.9082,
-        "actual": 1.0,
-        "n": 1
+        "predicted": 0.4025,
+        "actual": 0.3688,
+        "n": 480
       }
     ],
+    "purge": {
+      "applied": false,
+      "n_dropped": 0,
+      "horizon": 252,
+      "embargo": 10
+    },
     "n_oos": 4800
+  },
+  "floor": {
+    "passed": true,
+    "min_auc": 0.55,
+    "min_lift": 1.5,
+    "max_ece": null,
+    "regression_tol": 0.05,
+    "checked_against_champion": true,
+    "forced": false,
+    "reasons": []
   },
   "dataset": {
     "source": "bootstrap-synthetic",
@@ -140,7 +195,7 @@
     "folds": 5
   },
   "champion": true,
-  "provenance": "Trained via the emerging-winner lifecycle on the 'bootstrap-synthetic' dataset. Mirrors recovery_model.py (stdlib logistic, walk-forward, frozen JSON, drift fixtures). The deck's CatBoost/LightGBM ordinal classifier is a drop-in that keeps this exact export + inference contract. Research only - informs a resemblance probability, never decides an action.",
+  "provenance": "Trained via the emerging-winner lifecycle on the 'bootstrap-synthetic' dataset. Mirrors recovery_model.py (stdlib logistic, purged+embargoed walk-forward, frozen JSON, drift fixtures). The deck's CatBoost/LightGBM ordinal classifier is a drop-in that keeps this exact export + inference contract. Research only - informs a resemblance probability, never decides.",
   "fixtures": [
     {
       "scores": [
@@ -156,7 +211,8 @@
         null
       ],
       "completeness": 0.6,
-      "probability": 0.0047024
+      "probability": 0.0047024,
+      "kind": "random"
     },
     {
       "scores": [
@@ -172,7 +228,8 @@
         68.2
       ],
       "completeness": 0.8,
-      "probability": 0.02817125
+      "probability": 0.02817125,
+      "kind": "random"
     },
     {
       "scores": [
@@ -188,7 +245,8 @@
         8.8
       ],
       "completeness": 0.6,
-      "probability": 0.00179594
+      "probability": 0.00179594,
+      "kind": "random"
     },
     {
       "scores": [
@@ -204,7 +262,8 @@
         83.8
       ],
       "completeness": 0.7,
-      "probability": 0.09044238
+      "probability": 0.09044238,
+      "kind": "random"
     },
     {
       "scores": [
@@ -220,7 +279,8 @@
         11.1
       ],
       "completeness": 0.7,
-      "probability": 0.04418233
+      "probability": 0.04418233,
+      "kind": "random"
     },
     {
       "scores": [
@@ -236,7 +296,8 @@
         44.8
       ],
       "completeness": 0.4,
-      "probability": 0.04013578
+      "probability": 0.04013578,
+      "kind": "random"
     },
     {
       "scores": [
@@ -252,7 +313,8 @@
         null
       ],
       "completeness": 0.6,
-      "probability": 0.00534355
+      "probability": 0.00534355,
+      "kind": "random"
     },
     {
       "scores": [
@@ -268,7 +330,8 @@
         null
       ],
       "completeness": 0.6,
-      "probability": 0.01776371
+      "probability": 0.01776371,
+      "kind": "random"
     },
     {
       "scores": [
@@ -284,7 +347,8 @@
         null
       ],
       "completeness": 0.8,
-      "probability": 0.06375068
+      "probability": 0.06375068,
+      "kind": "random"
     },
     {
       "scores": [
@@ -300,7 +364,127 @@
         93.4
       ],
       "completeness": 0.8,
-      "probability": 0.43676253
+      "probability": 0.43676253,
+      "kind": "random"
+    },
+    {
+      "scores": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "completeness": 0.0,
+      "probability": 0.05959361,
+      "kind": "boundary"
+    },
+    {
+      "scores": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "completeness": 1.0,
+      "probability": 1.035e-05,
+      "kind": "boundary"
+    },
+    {
+      "scores": [
+        50.0,
+        50.0,
+        50.0,
+        50.0,
+        50.0,
+        50.0,
+        50.0,
+        50.0,
+        50.0,
+        50.0
+      ],
+      "completeness": 1.0,
+      "probability": 0.05103232,
+      "kind": "boundary"
+    },
+    {
+      "scores": [
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0
+      ],
+      "completeness": 1.0,
+      "probability": 0.99643218,
+      "kind": "boundary"
+    },
+    {
+      "scores": [
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "completeness": 0.5,
+      "probability": 0.83095981,
+      "kind": "boundary"
+    },
+    {
+      "scores": [
+        100.0,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "completeness": 0.1,
+      "probability": 0.13054709,
+      "kind": "boundary"
+    },
+    {
+      "scores": [
+        0.0,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "completeness": 0.1,
+      "probability": 0.02522853,
+      "kind": "boundary"
     }
   ]
 }

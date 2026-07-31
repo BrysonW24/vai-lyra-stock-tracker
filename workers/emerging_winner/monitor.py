@@ -26,7 +26,7 @@ import os
 from typing import Optional
 
 from .dataset import FEATURE_ORDER, label_from_barrier
-from .train import calibration_bins, precision_at_k
+from .train import average_precision, calibration_bins, expected_calibration_error, precision_at_k
 
 logger = logging.getLogger("emerging_winner.monitor")
 
@@ -113,8 +113,10 @@ def model_health(predictions: list[dict], outcomes: list[dict], k_frac: float = 
             "base_rate": round(base, 4),
             "precision_at_k": round(prec, 4),
             "lift_at_k": round(prec / base, 3) if base > 0 else None,
+            "pr_auc": round(average_precision(y, p), 4),      # PRIMARY discrimination under imbalance
+            "ece": round(expected_calibration_error(y, p), 4),  # adaptive (equal-mass) ECE
             "k": k,
-            "calibration": calibration_bins(y, p),
+            "calibration": calibration_bins(y, p),  # equal-mass reliability bins
         }
         report["verdict"] = _verdict(report["live"])
     else:

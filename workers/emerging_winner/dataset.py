@@ -28,6 +28,7 @@ Research only - it informs a resemblance score, it never decides an action.
 """
 from __future__ import annotations
 
+import datetime
 import random
 from dataclasses import dataclass
 from typing import Optional
@@ -103,6 +104,25 @@ def first_touch_barrier(
 def label_from_barrier(barrier: str) -> int:
     """Binary winner label for the classifier: only a first-touch +100% is a winner."""
     return 1 if barrier == "up_100" else 0
+
+
+# --- point-in-time timestamp helpers (feed the purged walk-forward + per-cohort metrics) ------------
+
+def predicted_at_ordinal(predicted_at: str) -> Optional[float]:
+    """`predicted_at` -> an ordinal day number for time-ordering + purge/embargo. None if unparseable."""
+    try:
+        return float(datetime.date.fromisoformat(str(predicted_at)[:10]).toordinal())
+    except (ValueError, TypeError):
+        return None
+
+
+def predicted_at_quarter(predicted_at: str) -> Optional[str]:
+    """`predicted_at` -> a scoring-cohort key ('2026Q1') so precision@k is measured per quarter, not pooled."""
+    try:
+        d = datetime.date.fromisoformat(str(predicted_at)[:10])
+        return f"{d.year}Q{(d.month - 1) // 3 + 1}"
+    except (ValueError, TypeError):
+        return None
 
 
 # --- 3. real point-in-time assembly (ledger predictions x matured outcomes) ------------------------
@@ -223,10 +243,18 @@ def load_training_dataset(
     if predictions is not None and outcomes is not None:
         rows = assemble_training_rows(predictions, outcomes)
         if len(rows) >= min_matured:
+            times = [predicted_at_ordinal(r.predicted_at) for r in rows]
+            cohorts = [predicted_at_quarter(r.predicted_at) for r in rows]
+            # Purge/embargo needs a reliable timeline; if any timestamp is unparseable, fall back to
+            # index-order (times=None) rather than purge on a partial/wrong clock.
+            if any(t is None for t in times):
+                times = None
             return {
                 "X": [r.features for r in rows],
                 "y": [r.label for r in rows],
                 "completeness": [r.completeness for r in rows],
+                "times": times,
+                "cohorts": cohorts,
                 "source": "point-in-time-ledger",
                 "n": len(rows),
                 "provenance": (
@@ -240,6 +268,10 @@ def load_training_dataset(
         "X": X,
         "y": y,
         "completeness": comps,
+        # i.i.d. bootstrap draws have no timeline, so no label windows overlap: purge is correctly a no-op
+        # and the walk-forward runs index-ordered. Real ledger rows above carry a genuine timeline.
+        "times": None,
+        "cohorts": None,
         "source": "bootstrap-synthetic",
         "n": len(X),
         "provenance": (

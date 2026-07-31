@@ -10,11 +10,18 @@
 >   immutable predictions@T to matured first-touch outcomes); `first_touch_barrier` is the labeler;
 >   `make_bootstrap_dataset` is the reproducible reference set so training runs today. `load_training_dataset`
 >   auto-upgrades bootstrap -> real ledger rows once >= 200 outcomes mature.
-> - **Train** `train.py` - stdlib logistic over 10 domain scores + completeness, walk-forward by fold,
->   rare-positive metrics (precision@k, lift, calibration, AUC/Brier), freeze to
->   `src/lib/generated/emerging-winner-model.json` + drift fixtures. Mirrors `recovery_model.py` and reuses
->   its machinery. Latest bootstrap run: **OOS AUC 0.83, precision@k 0.46 vs 9.5% base = 4.85x lift.**
->   `npm run worker:emerging-winner-train`.
+> - **Train** `train.py` - stdlib logistic over 10 domain scores + completeness, **purged + embargoed**
+>   walk-forward (a 12-month label window can never leak across a fold boundary), rare-positive metrics
+>   (**PR-AUC primary**, **per-cohort precision@k** with a worst-cohort read, lift, **adaptive/equal-mass
+>   ECE**; ROC-AUC/Brier as reference), a **pre-publish floor gate** that refuses to overwrite a champion
+>   which fails a floor or regresses, then freeze to `src/lib/generated/emerging-winner-model.json` +
+>   random **and boundary** drift fixtures. Mirrors `recovery_model.py`.
+>   **Machinery verified** on the reproducible bootstrap (recovery: ROC-AUC ~0.83, ~4.8x lift over base) -
+>   this proves the standardisation, walk-forward split, metric and export code are wired correctly, and
+>   **nothing about whether the winner hypothesis is learnable**: the bootstrap draws its labels from a
+>   logistic and fits a logistic to recover them, so a high number is near-tautological (and purge is a
+>   correct no-op on i.i.d. bootstrap rows, so it doesn't move that number). No evidence yet about real
+>   winners - that waits on matured ledger outcomes. `npm run worker:emerging-winner-train`.
 > - **Deploy** `classifier.py::load_champion_model` - `classify()` serves the frozen champion when present
 >   (env-overridable path), else the transparent reference model; provenance stamps which + the dataset.
 > - **Monitor** `monitor.py` - drift guard (frozen fixtures == deployed inference, proven <1e-6) + live
