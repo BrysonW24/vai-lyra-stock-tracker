@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.97.0',
+    date: '2026-07-31',
+    title: 'The signal detail view now has the chart in it - inspect a setup without leaving the drawer',
+    highlights: [
+      'Tap into a setup and the chart is right there: the signal detail drawer now embeds the full setup chart (candles with Bollinger Bands, RSI and MACD - the same studies the full-setup view opens with), so you can inspect the price action that drives the read without navigating away.',
+      'The quick actions (Full setup chart, Open ticker) now sit at the TOP of the drawer as well as beside the embedded chart at the bottom, so a strong setup opens straight into what you want to look at first.',
+    ],
+  },
+  {
     version: '0.96.0',
     date: '2026-07-31',
     title: 'AI-written answers are now labelled as AI-generated, everywhere the AI writes',

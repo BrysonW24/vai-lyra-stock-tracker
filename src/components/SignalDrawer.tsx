@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { ArrowUpRight, LineChart } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
 import { AiGeneratedLabel } from '@/components/AiGeneratedLabel';
+import { TradingViewChart } from '@/components/TradingViewChart';
 import { DetailDrawer } from '@/components/DetailDrawer';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TickerLogo } from '@/components/TickerLogo';
@@ -118,6 +119,25 @@ export function SignalDrawer({ signal: snapshot, onClose }: { signal: SignalRow 
   const signal: SignalRow = fresh?.signal ? { ...snapshot, ...fresh.signal } : snapshot;
   const b = signal.scoreBreakdown;
 
+  // Quick actions - the full interactive chart + the ticker page. Rendered both at the top (so a
+  // strong setup opens straight to "see the chart") and beside the embedded chart at the bottom.
+  const actionLinks = (
+    <div className="flex flex-wrap gap-2">
+      <Link
+        href={`/tickers/${signal.symbol}?view=setup`}
+        className="inline-flex items-center gap-1.5 rounded border border-[#3b5bdb] bg-[#0d1530] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#8aa2ff] transition hover:bg-[#11193a]"
+      >
+        <LineChart size={13} /> Full setup chart
+      </Link>
+      <Link
+        href={`/tickers/${signal.symbol}`}
+        className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+      >
+        Open {signal.symbol} <ArrowUpRight size={12} />
+      </Link>
+    </div>
+  );
+
   return (
     <DetailDrawer
       open={!!signal}
@@ -139,6 +159,9 @@ export function SignalDrawer({ signal: snapshot, onClose }: { signal: SignalRow 
           ? `Refreshed ${new Date(fresh.asOf).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - live engine numbers`
           : 'As of last page load - refreshing live numbers…'}
       </p>
+
+      {/* Quick actions up top so a strong setup opens straight into the chart / ticker page. */}
+      {actionLinks}
 
       {/* Score component breakdown - point contribution per factor (value / max),
           shared with the ticker page via buildScoreBreakdown so they never drift.
@@ -224,20 +247,22 @@ export function SignalDrawer({ signal: snapshot, onClose }: { signal: SignalRow 
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        <Link
-          href={`/tickers/${signal.symbol}?view=setup`}
-          className="inline-flex items-center gap-1.5 rounded border border-[#3b5bdb] bg-[#0d1530] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#8aa2ff] transition hover:bg-[#11193a]"
-        >
-          <LineChart size={13} /> Full setup chart
-        </Link>
-        <Link
-          href={`/tickers/${signal.symbol}`}
-          className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a8b5c2] transition hover:text-[#eef3f8]"
-        >
-          Open {signal.symbol} <ArrowUpRight size={12} />
-        </Link>
+      {/* The chart itself, embedded - the essentials (candles + BB / RSI / MACD), the same
+          full-setup studies the ?view=setup page opens with. So you can inspect the setup
+          without leaving the drawer; the links open the full interactive version. */}
+      <div>
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Setup chart</p>
+        <div className="overflow-hidden rounded-md border border-[#263241]">
+          <TradingViewChart
+            symbol={signal.symbol}
+            companyName={signal.companyName}
+            compact
+            indicators={{ bb: true, rsi: true, macd: true }}
+          />
+        </div>
       </div>
+
+      {actionLinks}
     </DetailDrawer>
   );
 }

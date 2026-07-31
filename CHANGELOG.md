@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.97.0] - 2026-07-31
+
+The signal detail view now has the chart in it - inspect a setup without leaving the drawer.
+
+### Changed
+
+- Tap into a setup and the chart is right there: the signal detail drawer now embeds the full setup chart (candles with Bollinger Bands, RSI and MACD - the same studies the full-setup view opens with), so you can inspect the price action that drives the read without navigating away.
+- The quick actions (Full setup chart, Open ticker) now sit at the TOP of the drawer as well as beside the embedded chart at the bottom, so a strong setup opens straight into what you want to look at first.
+
 ## [0.96.0] - 2026-07-31
 
 AI-written answers are now labelled as AI-generated, everywhere the AI writes.
@@ -1388,7 +1397,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.96.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.97.0...HEAD
+[0.97.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.96.0...v0.97.0
 [0.96.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.95.0...v0.96.0
 [0.95.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.94.0...v0.95.0
 [0.94.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.93.0...v0.94.0
