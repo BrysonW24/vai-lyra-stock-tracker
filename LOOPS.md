@@ -25,7 +25,7 @@ Companions: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (structure - what exists),
 | 10 | Data economics | nightly 22:05 UTC | the gate report itself | founder (ratifies pruning) | `check:data-economics` tripwires |
 | 11 | Release | every push | `version.ts` RELEASES, CHANGELOG | `/whats-new`, deploy smoke, announce | version-guard + monotonicity + CI + smoke |
 | 12 | Agent learning | every incident / verifier kill | `harness-incidents.jsonl`, `.claude/content-rules.jsonl` | next session, next draft workflow | `check:ledgers` |
-| 13 | Emerging Winner (shadow-live) | nightly 22:05 UTC | `emerging_winner_runs`, `emerging_winner_predictions`, `emerging_winner_outcomes` | Emerging Winners surface, future calibration + promotion | worker-failures reporter, append-only ledger trigger, `check:data-economics` |
+| 13 | Emerging Winner model lifecycle (shadow-live) | nightly 22:05 UTC (score + monitor); manual/periodic retrain | `emerging_winner_runs`, `emerging_winner_predictions`, `emerging_winner_outcomes`, frozen `emerging-winner-model.json` | `classify()` inference, `monitor.py` (drift-guard + live calibration), `assemble_training_rows` retrain, Emerging Winners surface | worker-failures reporter, append-only ledger trigger, drift guard (frozen == served), shadow gate, `check:data-economics` |
 
 Loops 1-2-3-4 are one circle (scan -> label -> coach -> deliver -> engage). Loop 5 is its own
 circle. Loops 10-11-12 are the meta-circle that keeps the first nine honest.
@@ -388,6 +388,47 @@ What closes it: the ledgers are versioned WITH the code (they survive database r
 travel in every clone), and the chains are the documented owners a fresh agent inherits -
 [`SKILL-CHAIN.md`](./SKILL-CHAIN.md) is the registry, [`HARNESS.md`](./HARNESS.md) the
 enforcement map.
+
+---
+
+## 13. The emerging-winner model loop - train, deploy, monitor, mature, retrain
+
+The Emerging Winner Engine is not just a scorer; it is a full model lifecycle that earns its
+surfacing slowly and honestly. All in `workers/emerging_winner/` (stdlib, CI-portable).
+
+```
+  dataset.py            train.py                 classifier.py           engine.py -> repo.py
+  ----------            --------                 -------------           ----------------------
+  bootstrap  --train--> logistic + walk-forward  --freeze--> champion    classify() serves the
+  OR real PIT           precision@k / lift /      emerging-winner-        champion (reference
+  (ledger join)         calibration               model.json  --deploy--> fallback if absent)
+       ^                                                                          |
+       |                                                                          v  score -> ledger (056)
+       |                              monitor.py (nightly)                 emerging_winner_predictions
+       |                              -----------                          (immutable, features@T)
+       |                              drift guard (frozen == served)              |
+       |                              + live calibration / precision@k           | 12mo
+       +---- outcomes mature (first-touch +100%/12mo) <---- emerging_winner_outcomes <--+
+             assemble_training_rows -> retrain -> new champion
+```
+
+- **Trigger:** the engine scores nightly (`worker:emerging-winner`, loop 13 row); the monitor runs
+  right after (`worker:emerging-winner-monitor`); retraining is manual/periodic today
+  (`worker:emerging-winner-train`) and becomes automatic once real outcomes mature.
+- **What it writes:** the immutable `emerging_winner_predictions` ledger stores features@T (point-in-time,
+  no look-ahead); `emerging_winner_outcomes` stores the matured first-touch barrier; the frozen champion
+  `src/lib/generated/emerging-winner-model.json` is the deployed model artifact + its drift fixtures.
+- **Who reads it back:** `classify()` reads the champion for inference; `monitor.py` reads the ledger for
+  drift-guard + live calibration/precision/lift; `dataset.assemble_training_rows` reads predictions x
+  outcomes to build the next training set.
+- **What closes it:** the drift guard proves the frozen artifact and the served model never diverge
+  (<1e-6); the shadow gate keeps predictions unsurfaced until walk-forward passes AND live calibration
+  holds; when outcomes mature the loop retrains on real point-in-time rows and refreshes the champion.
+- **Known open half-loop (on purpose):** the real point-in-time FEATURE pipelines (SEC EDGAR fundamentals
+  / Form 4 / 13F, USAspending) are not built yet, so training runs on the reproducible bootstrap dataset
+  and `emerging_winner_outcomes` has no matured rows yet - the loop is complete in shape and upgrades
+  itself (bootstrap -> real ledger rows) the moment those pipelines and 12 months of outcomes exist. This
+  is the same honesty as the recovery-model refit half-loop (loop 1).
 
 ---
 

@@ -1,23 +1,30 @@
 """
 Model 2 - the Emerging Winner Classifier (ordinal winner-stage + calibrated similarity).
 
-The deck's core supervised model is a CatBoost/LightGBM ordinal classifier trained on historical
-winners vs non-winners (point-in-time). That model needs a real point-in-time labelled dataset that
-does not exist yet (Phase 1). Until it does, this ships a HONEST REFERENCE classifier: a transparent
-calibrated logistic over the 10 domain scores that produces the same output contract the trained model
-will - winner-similarity (0-100), an ordinal stage (0 weak -> 4 breakout-archetype), class probabilities,
-per-domain SHAP-like contributions, and a coverage-aware confidence. When the labelled dataset lands,
-`train_classifier` refits the coefficients (frozen-JSON, walk-forward, drift-guarded, exactly like
-workers/stock_scanner/ml/recovery_model.py) and NOTHING downstream changes.
+Two-path inference, one output contract:
+  - TRAINED path (champion): if the frozen artifact `src/lib/generated/emerging-winner-model.json` exists,
+    inference uses its learned logistic over the 10 domain scores + completeness. This is the deployed
+    model; it is produced by the lifecycle in `train.py` (dataset -> walk-forward -> freeze) and stamped
+    with its dataset provenance (bootstrap-synthetic until real ledger outcomes mature, then point-in-time).
+  - REFERENCE path (fallback): if no artifact is present, a transparent hand-designed calibrated logistic
+    over the 10 domain scores (DOMAIN_WEIGHTS + _BIAS) - so the surface always renders honestly.
 
-Provenance is stated on every result: this is `reference-v1` (shadow-live), not trained on real winners.
+Either way the output is identical (winner-similarity 0-100, ordinal stage 0-3, class probabilities,
+per-domain SHAP-like contributions, coverage-aware confidence) and `provenance` states exactly which
+path + dataset produced it. The deck's CatBoost/LightGBM ordinal classifier is a drop-in that keeps this
+contract - only the frozen artifact's estimator changes.
+
 Research only - it informs a resemblance score, it never decides an action.
 """
 from __future__ import annotations
 
+import json
 import math
-from dataclasses import dataclass, field
+import os
+from dataclasses import dataclass
+from typing import Optional
 
+from .dataset import FEATURE_ORDER
 from .domains import DOMAIN_WEIGHTS, DomainResult
 
 MODEL_VERSION = "emerging-winner-classifier-reference-v1"
@@ -30,9 +37,13 @@ STAGE_LABELS = {
     3: "breakout archetype",
 }
 
-# Reference coefficients: the structural traits that most separated winners from also-rans carry the
-# most weight. Fit on real labels via train_classifier() when the point-in-time dataset exists.
+# Reference coefficients (fallback path): the structural traits that most separated winners from also-rans
+# carry the most weight. Superseded by the trained artifact when it exists.
 _BIAS = -0.35
+
+_ARTIFACT_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "..", "src", "lib", "generated", "emerging-winner-model.json"
+)
 
 
 @dataclass
@@ -83,34 +94,148 @@ def _sigmoid(z: float) -> float:
     return e / (1.0 + e)
 
 
+# --- deployment: load the champion artifact -------------------------------------------------------
+
+@dataclass
+class TrainedModel:
+    mean: list[float]
+    std: list[float]
+    weights: list[float]
+    bias: float
+    feature_order: list[str]
+    model_version: str
+    dataset_source: str
+    provenance: str
+
+
+_CHAMPION: Optional[TrainedModel] = None
+_CHAMPION_LOADED = False
+
+
+def _read_model(path: str) -> Optional[TrainedModel]:
+    """Read a frozen artifact from disk into a TrainedModel, or None if absent/malformed."""
+    try:
+        with open(os.path.abspath(path)) as fh:
+            data = json.load(fh)
+        return TrainedModel(
+            mean=data["mean"], std=data["std"], weights=data["weights"], bias=data["bias"],
+            feature_order=data["featureOrder"], model_version=data.get("modelVersion", "trained"),
+            dataset_source=data.get("dataset", {}).get("source", "unknown"),
+            provenance=data.get("provenance", ""),
+        )
+    except (OSError, KeyError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def load_champion_model(path: Optional[str] = None) -> Optional[TrainedModel]:
+    """The deployed champion artifact, or None (reference fallback) if absent/malformed. An EXPLICIT path
+    loads fresh + uncached (for monitoring a specific artifact or tests); the default champion (module
+    constant or the EMERGING_WINNER_MODEL_PATH env override) is cached for the inference hot path."""
+    global _CHAMPION, _CHAMPION_LOADED
+    if path is not None:
+        return _read_model(path)
+    if _CHAMPION_LOADED:
+        return _CHAMPION
+    _CHAMPION_LOADED = True
+    _CHAMPION = _read_model(os.getenv("EMERGING_WINNER_MODEL_PATH") or _ARTIFACT_PATH)
+    return _CHAMPION
+
+
+def reset_model_cache() -> None:
+    """Test seam: force the next classify() to re-read the artifact from disk."""
+    global _CHAMPION, _CHAMPION_LOADED
+    _CHAMPION, _CHAMPION_LOADED = None, False
+
+
+def _predict_trained(model: TrainedModel, x: list[float]) -> float:
+    xs = [(x[i] - model.mean[i]) / (model.std[i] or 1.0) for i in range(len(x))]
+    return _sigmoid(model.bias + sum(w * xi for w, xi in zip(model.weights, xs)))
+
+
+# --- inference dispatcher -------------------------------------------------------------------------
+
 def classify(domains: list[DomainResult]) -> ClassifierResult:
-    """Map the 10 domain results to a calibrated winner-similarity + ordinal stage.
+    """Map the 10 domain results to a calibrated winner-similarity + ordinal stage, using the trained
+    champion artifact when present, else the transparent reference model. Same contract either way."""
+    model = load_champion_model()
+    if model is not None:
+        return _classify_trained(domains, model)
+    return _classify_reference(domains)
 
-    Only AVAILABLE domains contribute; the linear score is normalised over the weight actually present,
-    so an unbuilt pipeline never drags the probability toward zero (it lowers confidence instead)."""
-    available = [d for d in domains if d.score is not None]
-    completeness = len(available) / len(domains) if domains else 0.0
 
+def _classify_trained(domains: list[DomainResult], model: TrainedModel) -> ClassifierResult:
+    by_key = {d.key: d for d in domains}
+    feats: list[float] = []
+    present = 0
+    labels: list[str] = []
+    for key in FEATURE_ORDER:
+        d = by_key.get(key)
+        labels.append(d.label if d else key)
+        if d is not None and d.score is not None:
+            feats.append((d.score - 50.0) / 50.0)
+            present += 1
+        else:
+            feats.append(0.0)
+    completeness = present / len(FEATURE_ORDER) if FEATURE_ORDER else 0.0
+    x = feats + [completeness - 0.5]
+
+    probability = _predict_trained(model, x)
+    similarity = probability * 100.0
+    baseline = _sigmoid(model.bias) * 100.0
+
+    # SHAP-like per-domain contributions from the standardized feature x learned weight (10 domains only).
+    contributions: list[Contribution] = []
+    for i, key in enumerate(FEATURE_ORDER):
+        d = by_key.get(key)
+        if d is None or d.score is None:
+            continue
+        xs = (x[i] - model.mean[i]) / (model.std[i] or 1.0)
+        contributions.append(Contribution(key, labels[i], model.weights[i] * xs))
+
+    provenance = (
+        f"{model.model_version} (shadow-live, dataset={model.dataset_source}): learned logistic over the "
+        "10 domain scores + completeness. Research only, never advice."
+    )
+    return _assemble_result(probability, completeness, similarity, baseline, contributions,
+                            model.model_version, provenance)
+
+
+def _classify_reference(domains: list[DomainResult]) -> ClassifierResult:
+    """Transparent hand-designed fallback (no artifact). Only AVAILABLE domains contribute; the linear score
+    is normalised over the weight actually present, so an unbuilt pipeline lowers confidence, not probability."""
     num = 0.0
     den = 0.0
     contributions: list[Contribution] = []
+    present = 0
     for d in domains:
         if d.score is None:
             continue
+        present += 1
         w = DOMAIN_WEIGHTS.get(d.key, 1.0)
         centred = (d.score - 50.0) / 50.0  # -1..1
         num += w * centred
         den += w
-        # SHAP-like: signed points of the 0-100 similarity attributable to this domain.
         contributions.append(Contribution(d.key, d.label, w * centred))
+    completeness = present / len(domains) if domains else 0.0
 
-    # Normalise the linear score to a comparable scale regardless of how many domains were present.
     z = _BIAS + (num / den * 3.0 if den else 0.0)
     probability = _sigmoid(z)
     similarity = probability * 100.0
-
-    # Scale contributions so they sum (roughly) to (similarity - baseline) for honest attribution display.
     baseline = _sigmoid(_BIAS) * 100.0
+    return _assemble_result(probability, completeness, similarity, baseline, contributions,
+                            MODEL_VERSION, ClassifierResult.provenance)
+
+
+def _assemble_result(
+    probability: float,
+    completeness: float,
+    similarity: float,
+    baseline: float,
+    contributions: list[Contribution],
+    model_version: str,
+    provenance: str,
+) -> ClassifierResult:
+    """Shared tail: scale contributions for honest attribution, derive stage/confidence/class-probs."""
     total_contrib = sum(c.contribution for c in contributions)
     if total_contrib != 0:
         scale = (similarity - baseline) / total_contrib
@@ -118,7 +243,6 @@ def classify(domains: list[DomainResult]) -> ClassifierResult:
             c.contribution *= scale
     contributions.sort(key=lambda c: abs(c.contribution), reverse=True)
 
-    # Ordinal stage from probability, capped by coverage (can't claim 'strong'+ on a thin read).
     if probability >= 0.70:
         stage = 3
     elif probability >= 0.55:
@@ -130,9 +254,6 @@ def classify(domains: list[DomainResult]) -> ClassifierResult:
     if completeness < 0.5:
         stage = min(stage, 1)
 
-    class_probs = _ordinal_mass(probability)
-
-    # Confidence: coverage AND how far the probability sits from the decision boundary (margin).
     margin = abs(probability - 0.5) * 2.0
     if completeness >= 0.7 and margin >= 0.3:
         confidence = "high"
@@ -146,17 +267,18 @@ def classify(domains: list[DomainResult]) -> ClassifierResult:
         probability=probability,
         ordinal_stage=stage,
         stage_label=STAGE_LABELS[stage],
-        class_probs=class_probs,
+        class_probs=_ordinal_mass(probability),
         contributions=contributions,
         confidence=confidence,
         completeness=completeness,
+        model_version=model_version,
+        provenance=provenance,
     )
 
 
 def _ordinal_mass(p: float) -> dict[str, float]:
     """Spread the single winner probability across the four ordinal stages so the UI can show a
     distribution, not just a point. Deterministic, sums to 1."""
-    # Higher p pushes mass toward the top stages.
     w0 = max(0.0, 1.0 - p * 1.6)
     w1 = max(0.0, 1.0 - abs(p - 0.45) * 3.0)
     w2 = max(0.0, 1.0 - abs(p - 0.65) * 3.0)
@@ -170,13 +292,13 @@ def _ordinal_mass(p: float) -> dict[str, float]:
     }
 
 
-# --- training seam (fills in when a real point-in-time labelled dataset exists) --------------------
+# --- training seam (Phase 2 lifecycle) ------------------------------------------------------------
 
-def train_classifier(*_args, **_kwargs):  # pragma: no cover - Phase 1 seam
-    """Refit the reference coefficients on real (features -> winner label) point-in-time data and freeze
-    to JSON with walk-forward metrics + drift fixtures, mirroring recovery_model.py. Intentionally not
-    implemented until the labelled winner dataset (Phase 1) is wired in - the output contract above does
-    not change when it is."""
-    raise NotImplementedError(
-        "train_classifier requires the Phase-1 point-in-time labelled winner dataset (not yet built)."
-    )
+def train_classifier(**kwargs) -> dict:
+    """Train + freeze the champion artifact via the lifecycle in train.py (real ledger rows if enough
+    outcomes have matured, else the reproducible bootstrap). Returns the export payload. After training,
+    call reset_model_cache() so the next classify() picks up the new champion."""
+    from .train import train_and_export
+    payload = train_and_export(**kwargs)
+    reset_model_cache()
+    return payload

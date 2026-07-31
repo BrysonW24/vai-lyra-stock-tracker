@@ -1,8 +1,30 @@
 # Lyra Emerging Winner Engine - training pipeline + model runbook
 
-> Status: **Phase 0 built + shadow-live** (2026-07-31). Training proper (Phase 2) is gated by the
-> point-in-time dataset (Phase 1), which is not built yet. This doc is the TRAINING view: what model we
-> train with, and how we begin to train it. It ties the vision + the decks + the built code together.
+> Status: **Model lifecycle BUILT + running** (2026-07-31). The full spine - dataset -> train ->
+> deploy -> monitor -> infer - is stood up, tested (35 lifecycle tests, 401 Python tests green), and
+> training on the reproducible bootstrap dataset with real point-in-time seams for when ledger outcomes
+> mature. This doc is the TRAINING view: what model we train with, and how we train it.
+>
+> **Lifecycle at a glance (all in `workers/emerging_winner/`, all stdlib, CI-portable):**
+> - **Dataset** `dataset.py` - the 056 ledger IS the point-in-time store (`assemble_training_rows` joins
+>   immutable predictions@T to matured first-touch outcomes); `first_touch_barrier` is the labeler;
+>   `make_bootstrap_dataset` is the reproducible reference set so training runs today. `load_training_dataset`
+>   auto-upgrades bootstrap -> real ledger rows once >= 200 outcomes mature.
+> - **Train** `train.py` - stdlib logistic over 10 domain scores + completeness, walk-forward by fold,
+>   rare-positive metrics (precision@k, lift, calibration, AUC/Brier), freeze to
+>   `src/lib/generated/emerging-winner-model.json` + drift fixtures. Mirrors `recovery_model.py` and reuses
+>   its machinery. Latest bootstrap run: **OOS AUC 0.83, precision@k 0.46 vs 9.5% base = 4.85x lift.**
+>   `npm run worker:emerging-winner-train`.
+> - **Deploy** `classifier.py::load_champion_model` - `classify()` serves the frozen champion when present
+>   (env-overridable path), else the transparent reference model; provenance stamps which + the dataset.
+> - **Monitor** `monitor.py` - drift guard (frozen fixtures == deployed inference, proven <1e-6) + live
+>   calibration / precision@k / lift from the ledger, with an honest earn-surfacing verdict. Runs nightly.
+>   `npm run worker:emerging-winner-monitor`.
+> - **Infer** `engine.py` -> `classify()` -> the champion, logged to the immutable ledger (shadow-live).
+>
+> The estimator is a stdlib logistic today; the deck's CatBoost/LightGBM ordinal classifier is a drop-in
+> that keeps this exact dataset -> export -> deploy -> monitor -> infer contract (only `fit`/`predict` change).
+> It ties the vision + the decks + the built code together.
 >
 > Companion docs (read for depth, do not duplicate):
 > - `research/2026-07-29-emerging-winner-engine.md` - the planning spec (locked decisions, 10 domains, phases).

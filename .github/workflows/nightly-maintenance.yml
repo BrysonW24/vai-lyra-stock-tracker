@@ -101,6 +101,11 @@ jobs:
       - name: Emerging Winner Engine (shadow-live scoring -> immutable ledger)
         run: python -m workers.emerging_winner.main || echo "emerging_winner" >> "$RUNNER_TEMP/worker-failures"
 
+      # Model monitoring: drift-guard (frozen artifact == deployed inference) + live calibration/precision
+      # from the ledger. Reports the shadow-live model's health; how surfacing gets earned, slowly + honestly.
+      - name: Emerging Winner model monitor (drift guard + live calibration)
+        run: python -m workers.emerging_winner.monitor || echo "emerging_winner_monitor" >> "$RUNNER_TEMP/worker-failures"
+
       - name: Label signal outcomes + send follow-ups
         run: python -m workers.stock_scanner.outcome_job
 

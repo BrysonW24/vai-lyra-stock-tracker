@@ -1,0 +1,306 @@
+{
+  "version": 1,
+  "modelVersion": "emerging-winner-classifier-trained-v1",
+  "trainedAt": "2026-07-31",
+  "algorithm": "logistic-regression (stdlib GD, L2) over 10 domain scores + completeness",
+  "featureOrder": [
+    "technical",
+    "accumulation",
+    "liquidity",
+    "theme",
+    "business_quality",
+    "capital",
+    "government",
+    "adoption",
+    "sponsorship",
+    "narrative",
+    "completeness"
+  ],
+  "mean": [
+    -0.00696362,
+    0.00413844,
+    0.00519614,
+    -0.00257578,
+    -0.00472475,
+    -0.0002775,
+    -0.01274034,
+    0.00504946,
+    0.00195264,
+    -0.00655028,
+    0.249
+  ],
+  "std": [
+    0.50172393,
+    0.49625717,
+    0.50144881,
+    0.49507105,
+    0.50196202,
+    0.50246071,
+    0.49705819,
+    0.49847365,
+    0.50264504,
+    0.49895675,
+    0.13606004
+  ],
+  "weights": [
+    0.44103979,
+    0.40141994,
+    0.2805955,
+    0.65902246,
+    0.42897864,
+    0.40513001,
+    0.48983846,
+    0.33766252,
+    0.44527387,
+    0.38261733,
+    -0.0223345
+  ],
+  "bias": -2.90169795,
+  "metrics": {
+    "oos_auc": 0.828,
+    "oos_brier": 0.0721,
+    "baseline_brier": 0.0857,
+    "base_rate": 0.0946,
+    "precision_at_k": 0.4583,
+    "lift_at_k": 4.846,
+    "k_frac": 0.05,
+    "k": 240,
+    "calibration": [
+      {
+        "bin": 0.05,
+        "predicted": 0.0369,
+        "actual": 0.0292,
+        "n": 3283
+      },
+      {
+        "bin": 0.15,
+        "predicted": 0.1438,
+        "actual": 0.1581,
+        "n": 816
+      },
+      {
+        "bin": 0.25,
+        "predicted": 0.2431,
+        "actual": 0.2449,
+        "n": 343
+      },
+      {
+        "bin": 0.35,
+        "predicted": 0.3446,
+        "actual": 0.3081,
+        "n": 172
+      },
+      {
+        "bin": 0.45,
+        "predicted": 0.4372,
+        "actual": 0.4024,
+        "n": 82
+      },
+      {
+        "bin": 0.55,
+        "predicted": 0.5419,
+        "actual": 0.537,
+        "n": 54
+      },
+      {
+        "bin": 0.65,
+        "predicted": 0.6499,
+        "actual": 0.6897,
+        "n": 29
+      },
+      {
+        "bin": 0.75,
+        "predicted": 0.7386,
+        "actual": 0.3333,
+        "n": 15
+      },
+      {
+        "bin": 0.85,
+        "predicted": 0.8232,
+        "actual": 0.8,
+        "n": 5
+      },
+      {
+        "bin": 0.95,
+        "predicted": 0.9082,
+        "actual": 1.0,
+        "n": 1
+      }
+    ],
+    "n_oos": 4800
+  },
+  "dataset": {
+    "source": "bootstrap-synthetic",
+    "n": 6000,
+    "provenance": "Bootstrap-synthetic (6000 rows, seed 42): a reproducible reference dataset whose data-generating process encodes the winner hypothesis (weights proportional to DOMAIN_WEIGHTS). Proves the learning + walk-forward + calibration machinery and its out-of-sample lift. NOT trained on real winners - retrains automatically once >= 200 real outcomes mature in the ledger."
+  },
+  "training": {
+    "seed": 42,
+    "n_bootstrap": 6000,
+    "folds": 5
+  },
+  "champion": true,
+  "provenance": "Trained via the emerging-winner lifecycle on the 'bootstrap-synthetic' dataset. Mirrors recovery_model.py (stdlib logistic, walk-forward, frozen JSON, drift fixtures). The deck's CatBoost/LightGBM ordinal classifier is a drop-in that keeps this exact export + inference contract. Research only - informs a resemblance probability, never decides an action.",
+  "fixtures": [
+    {
+      "scores": [
+        15.1,
+        7.2,
+        36.6,
+        null,
+        3.7,
+        7.0,
+        null,
+        82.7,
+        null,
+        null
+      ],
+      "completeness": 0.6,
+      "probability": 0.0047024
+    },
+    {
+      "scores": [
+        20.0,
+        null,
+        null,
+        25.1,
+        68.4,
+        93.8,
+        42.2,
+        21.7,
+        37.4,
+        68.2
+      ],
+      "completeness": 0.8,
+      "probability": 0.02817125
+    },
+    {
+      "scores": [
+        null,
+        null,
+        10.8,
+        3.8,
+        33.2,
+        16.0,
+        33.4,
+        null,
+        null,
+        8.8
+      ],
+      "completeness": 0.6,
+      "probability": 0.00179594
+    },
+    {
+      "scores": [
+        null,
+        33.0,
+        92.7,
+        17.0,
+        null,
+        null,
+        49.9,
+        52.1,
+        89.3,
+        83.8
+      ],
+      "completeness": 0.7,
+      "probability": 0.09044238
+    },
+    {
+      "scores": [
+        null,
+        51.2,
+        10.3,
+        null,
+        55.7,
+        54.8,
+        76.8,
+        58.7,
+        null,
+        11.1
+      ],
+      "completeness": 0.7,
+      "probability": 0.04418233
+    },
+    {
+      "scores": [
+        null,
+        null,
+        68.4,
+        null,
+        null,
+        null,
+        14.7,
+        66.2,
+        null,
+        44.8
+      ],
+      "completeness": 0.4,
+      "probability": 0.04013578
+    },
+    {
+      "scores": [
+        null,
+        12.6,
+        8.5,
+        null,
+        20.9,
+        45.9,
+        49.5,
+        null,
+        9.0,
+        null
+      ],
+      "completeness": 0.6,
+      "probability": 0.00534355
+    },
+    {
+      "scores": [
+        null,
+        0.3,
+        null,
+        33.3,
+        10.0,
+        66.8,
+        53.2,
+        null,
+        75.0,
+        null
+      ],
+      "completeness": 0.6,
+      "probability": 0.01776371
+    },
+    {
+      "scores": [
+        55.7,
+        32.1,
+        69.3,
+        35.9,
+        33.0,
+        null,
+        89.4,
+        63.5,
+        43.4,
+        null
+      ],
+      "completeness": 0.8,
+      "probability": 0.06375068
+    },
+    {
+      "scores": [
+        null,
+        36.9,
+        33.6,
+        92.3,
+        62.2,
+        28.9,
+        92.9,
+        88.8,
+        null,
+        93.4
+      ],
+      "completeness": 0.8,
+      "probability": 0.43676253
+    }
+  ]
+}

@@ -48,6 +48,25 @@ and `lyra-modelling/emerging-winner-engine.md`.
 6. **Ship it.** Prepend a `RELEASES` entry in `src/lib/version.ts`, `npm run release`, then
    `npm run test && npm run type-check && npm run build`. Gate: all green. Commit + push; announce after.
 
+## Model lifecycle (M2 training / deployment / monitoring)
+
+The classifier is a full lifecycle, not a static heuristic - all in `workers/emerging_winner/` (stdlib):
+
+- **Dataset** `dataset.py` - `first_touch_barrier` labels forward prices (+100%/12mo first-touch);
+  `assemble_training_rows` joins immutable ledger predictions@T to matured outcomes (the real point-in-time
+  set, no look-ahead); `make_bootstrap_dataset` is the reproducible stand-in. `load_training_dataset`
+  auto-upgrades bootstrap -> real ledger rows at >= 200 matured outcomes.
+- **Train** `npm run worker:emerging-winner-train` -> fit + walk-forward (precision@k / lift / calibration)
+  + freeze `src/lib/generated/emerging-winner-model.json` + drift fixtures. Mirrors `recovery_model.py`.
+- **Deploy** `classifier.load_champion_model()` - `classify()` serves the frozen champion (env-overridable
+  `EMERGING_WINNER_MODEL_PATH`), else the transparent reference; `provenance` stamps which + the dataset.
+- **Monitor** `npm run worker:emerging-winner-monitor` (also nightly) -> drift guard (frozen == served,
+  <1e-6) + live calibration/precision@k/lift from the ledger + an honest earn-surfacing verdict.
+
+When you add the CatBoost/LightGBM estimator, only `fit`/`predict` change - the dataset, export, deploy,
+monitor and inference contracts (and `train_classifier`) stay identical. Never surface a shadow-live number
+as a validated track record until the monitor's calibration + lift earn it (founder-gated).
+
 ## Report (execution, not advice)
 
 State what changed across the six models, the invariants re-proven with the test names, the calibration

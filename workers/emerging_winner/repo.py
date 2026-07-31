@@ -90,3 +90,32 @@ class EmergingWinnerRepo:
             "surfaced_count": surfaced,
             "blocked_count": blocked,
         }).eq("id", run_id).execute()
+
+    # --- reads (monitoring + training-dataset assembly) -------------------------------------------
+
+    def fetch_predictions(self, limit: int = 1000) -> list[dict]:
+        """Most-recent predictions from the immutable ledger (for monitoring + PIT training rows). []
+        in demo mode. Includes id + payload so features@T can be rebuilt."""
+        if not self.client:
+            return []
+        res = (
+            self.client.table("emerging_winner_predictions")
+            .select("id, symbol, predicted_at, probability, winner_similarity, ordinal_stage, "
+                    "stage_label, completeness, payload")
+            .order("predicted_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return list(res.data or [])
+
+    def fetch_outcomes(self, limit: int = 5000) -> list[dict]:
+        """Matured first-touch outcomes (the label side). [] in demo mode."""
+        if not self.client:
+            return []
+        res = (
+            self.client.table("emerging_winner_outcomes")
+            .select("prediction_id, symbol, horizon_days, forward_return_pct, barrier_hit")
+            .limit(limit)
+            .execute()
+        )
+        return list(res.data or [])

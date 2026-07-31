@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.93.0] - 2026-07-31
+
+The Emerging Winner model earns its way: a full training + deployment + monitoring lifecycle.
+
+### Changed
+
+- The Emerging Winner classifier is now a real model lifecycle, not a static heuristic: a training-ready dataset, a trainer that learns and backtests out-of-sample, a frozen deployed model, a nightly monitor, and inference that serves it - all shadow-live, all research-not-advice, no number invented.
+- The dataset is honest by design: the immutable shadow-live ledger IS the point-in-time feature store - each prediction records the exact domain state before its outcome exists - and a first-touch +100%/12-month labeler turns matured price paths into winner labels. Until real outcomes mature it trains on a reproducible reference dataset that encodes the winner hypothesis, and it upgrades itself to real ledger rows automatically.
+- The trained model learns and generalises: walk-forward backtesting (out-of-sample) reports the metrics that matter for a rare winner - precision among the top picks, lift over the base rate, and calibration - not a single vanity number. The current reference training run surfaces winners at nearly 5x the base rate out-of-sample.
+- It cannot silently drift: the frozen model ships drift fixtures the deployed inference must reproduce exactly (proven to 1e-8), and a nightly monitor reports the live model health and keeps every prediction behind the shadow gate until calibration and lift honestly earn surfacing (founder-gated).
+- Built to swap: the estimator is a transparent, dependency-free logistic today; the deck's CatBoost/LightGBM ordinal classifier is a drop-in that keeps the exact dataset, export, deploy, monitor and inference contract. Full runbook in lyra-modelling/TRAINING-PIPELINE.md; the loop is documented in LOOPS.md (loop 13).
+
 ## [0.92.0] - 2026-07-31
 
 The modelling stack steps into the light: intro scene, landing section, README gallery.
@@ -1344,7 +1356,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.92.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.93.0...HEAD
+[0.93.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.92.0...v0.93.0
 [0.92.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.91.0...v0.92.0
 [0.91.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.90.0...v0.91.0
 [0.90.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.89.0...v0.90.0
