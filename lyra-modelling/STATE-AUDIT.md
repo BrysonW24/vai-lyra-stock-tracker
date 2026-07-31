@@ -25,7 +25,13 @@ The founder is actively developing predictive models on the same rails as the de
 - **The one law extends to these:** winner-similarity / probability / percentile are engine-owned numbers
   rendered as metric-grid keys, never AI prose; the models inform, never decide, never advise.
 
-These are pre-code (research + planning); the deterministic score below remains the only shipping model.
+**Build state (2026-07-31):** Phase 0 is now BUILT + shadow-live - `workers/emerging_winner/` runs the
+full stack (domains -> scorecard -> classifier -> analogue -> ranker -> risk_gates -> distribution) into
+an immutable ledger (`supabase/migrations/056_emerging_winner.sql`), with a `reference-v1`
+calibrated-logistic stand-in where the trained CatBoost/LightGBM classifier will sit (`train_classifier`
+is a deliberately stubbed Phase 1 seam). The deterministic score remains the only SHIPPING (user-surfaced)
+model; the winner engine is shadow-live. Full training runbook + what-model-and-how (ASCII pipeline):
+[`TRAINING-PIPELINE.md`](TRAINING-PIPELINE.md).
 
 ## Lyra as it is today
 The score has one canonical author and three faithful mirrors, all pinned to a shared contract.
