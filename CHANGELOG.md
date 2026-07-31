@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.98.0] - 2026-07-31
+
+Emerging Winners is now list-first, plain-English, and honest about what it is.
+
+### Changed
+
+- Every Emerging Winner is now a scannable row you tap to expand - no more one-dense-card-per-screen. Start simple (symbol, resemblance, risk, data completeness), then open it up section by section into drivers, the full 10-domain scorecard, the modelled outlook, resemblances and risks.
+- The jargon is decoded. "P(2x·24m)" now reads "Doubles (2x) within 24 months"; "winner similarity" is a labelled 0-100 resemblance score; "(ref)" is explained as an illustrative reference archetype, not a real company. Every term has a tap-to-explain "?" with the exact plain-English definition one tap away.
+- Provenance is loud, before the score. Each card says what it is at the very top - "Illustrative example" or "Shadow-live", and "not trained on real winners yet" - so you always know where the numbers came from before you read them.
+- A new "What is this model trained on?" panel tells the truth plainly: today the engine scores against a reproducible synthetic reference set, not real historical companies; you can inspect the deterministic driver math yourself; and a real point-in-time dataset (with delisted names and SEC filings) is what would make it real. It cross-links to the model registry so Emerging Winners (the output) and Models (the explainer) are one clear home.
+
 ## [0.97.0] - 2026-07-31
 
 The signal detail view now has the chart in it - inspect a setup without leaving the drawer.
@@ -1397,7 +1408,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.97.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.98.0...HEAD
+[0.98.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.97.0...v0.98.0
 [0.97.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.96.0...v0.97.0
 [0.96.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.95.0...v0.96.0
 [0.95.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.94.0...v0.95.0
