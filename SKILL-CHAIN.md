@@ -42,6 +42,7 @@ Every chain honours the same contract:
 | [/logs-to-genui](.claude/commands/logs-to-genui.md) | Operational question needs a view | Logs/events -> deterministic metrics -> GenUI (AI does layout only) |
 | [/scout-intel](.claude/commands/scout-intel.md) | Scout cards look junky, feeds die, access lands | Registry health -> attachment honesty -> cluster quality -> access expansion |
 | [/draft-vertical](.claude/commands/draft-vertical.md) | A scout card was accepted (`npm run scout:queue` shows it) | Queue -> evidence -> author+verify draft -> vertical PR (human merges) |
+| [/emerging-winner](.claude/commands/emerging-winner.md) | Winner-model change, new domain/gate/analogue, scoring drift, before promoting from shadow-live | Domain scorecard -> classifier -> analogues -> archetype+rank -> risk gates -> immutable ledger; shadow-live + calibrated, engine owns numbers, research never advice |
 
 Sub-skills (invoked by chains, not standalone owners):
 [/sync-human-onboarding](.claude/commands/sync-human-onboarding.md),
@@ -88,6 +89,8 @@ multiple owning chains per row are allowed; a parent path claims everything unde
 | Feature pages | `src/app/account/` `src/app/awards/` `src/app/calculators/` `src/app/calendar/` `src/app/charts/` `src/app/commodities/` `src/app/comparison/` `src/app/education/` `src/app/filings/` `src/app/flows/` `src/app/fundamentals/` `src/app/graph/` `src/app/intelligence/` `src/app/investors/` `src/app/ipos/` `src/app/paper/` `src/app/paper-bot/` `src/app/plan/` `src/app/portfolio/` `src/app/privacy/` `src/app/radar/` `src/app/saved/` `src/app/settings/` `src/app/simulation/` `src/app/small-caps/` `src/app/smart-money/` `src/app/strategy-lab/` `src/app/supply-chain/` `src/app/support/` `src/app/terms/` `src/app/themes/` `src/app/tickers/` `src/app/trades/` `src/app/trading/` `src/app/transparency/` `src/app/twin/` `src/app/usage/` `src/app/watchlist/` `src/app/wire/` | ux-surface |
 | Component estate + shared UI libs | `src/components/` `src/lib/brand.ts` `src/lib/calculators.ts` `src/lib/chart-pack.ts` `src/lib/command-layout.ts` `src/lib/comparison.ts` `src/lib/education.ts` `src/lib/flags.ts` `src/lib/focus-trap.ts` `src/lib/format.ts` `src/lib/gradient.ts` `src/lib/nav-prefs.ts` `src/lib/research-queue.ts` `src/lib/scan-freshness.ts` `src/lib/surfaces.ts` `src/lib/ticker-logos.ts` `src/lib/ui.ts` `src/lib/usage.ts` `src/lib/usage-store.ts` `src/lib/native/` `public/` | ux-surface |
 | Docs estate | `docs/` `README.md` `COSTS.md` | production-keeper |
+| Emerging Winner Engine | `workers/emerging_winner/` `src/lib/emerging-winner/` `src/app/emerging-winners/` `src/app/api/emerging-winners/` | emerging-winner |
+| Models catalogue surface | `src/lib/models/` `src/app/models/` | emerging-winner |
 <!-- chain-coverage:end -->
 
 Shared verticals worth knowing: **coaching** is `/signal-quality` (the follow-up numbers)

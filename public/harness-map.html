@@ -73,8 +73,8 @@
   about the rails, because it is built from them.</p>
 
   <div class="stats">
-    <span class="stat"><b>29</b> mapped sections</span>
-    <span class="stat"><b>14</b> skill chains</span>
+    <span class="stat"><b>31</b> mapped sections</span>
+    <span class="stat"><b>15</b> skill chains</span>
     <span class="stat"><b>9</b> deterministic gates</span>
     <span class="stat"><b>5</b> enforcement layers</span>
     <span class="stat"><b>0</b> orphans <span class="hint">(CI-enforced)</span></span>
@@ -157,6 +157,11 @@
         <span class="cid">/draft-vertical</span>
         <span class="cwhen">A scout card was accepted (npm run scout:queue shows it)</span>
         <span class="cjob">Queue -&gt; evidence -&gt; author+verify draft -&gt; vertical PR (human merges)</span>
+      </button>
+      <button class="chain" data-chain="emerging-winner" type="button" aria-pressed="false">
+        <span class="cid">/emerging-winner</span>
+        <span class="cwhen">Winner-model change, new domain/gate/analogue, scoring drift, before promoting from shadow-live</span>
+        <span class="cjob">Domain scorecard -&gt; classifier -&gt; analogues -&gt; archetype+rank -&gt; risk gates -&gt; immutable ledger; shadow-live + calibrated, engine owns numbers, research never advice</span>
       </button>
   </div>
 
@@ -306,6 +311,16 @@
         <div class="aname">Docs estate</div>
         <div class="apaths"><code>docs/</code> <code>README.md</code> <code>COSTS.md</code></div>
         <div class="aowners"><button class="badge" data-chain="production-keeper" type="button">/production-keeper</button></div>
+      </div>
+      <div class="area" data-chains="emerging-winner" data-text="emerging winner engine workers/emerging_winner/ src/lib/emerging-winner/ src/app/emerging-winners/ src/app/api/emerging-winners/ emerging-winner">
+        <div class="aname">Emerging Winner Engine</div>
+        <div class="apaths"><code>workers/emerging_winner/</code> <code>src/lib/emerging-winner/</code> <code>src/app/emerging-winners/</code> <code>src/app/api/emerging-winners/</code></div>
+        <div class="aowners"><button class="badge" data-chain="emerging-winner" type="button">/emerging-winner</button></div>
+      </div>
+      <div class="area" data-chains="emerging-winner" data-text="models catalogue surface src/lib/models/ src/app/models/ emerging-winner">
+        <div class="aname">Models catalogue surface</div>
+        <div class="apaths"><code>src/lib/models/</code> <code>src/app/models/</code></div>
+        <div class="aowners"><button class="badge" data-chain="emerging-winner" type="button">/emerging-winner</button></div>
       </div>
   </div>
 

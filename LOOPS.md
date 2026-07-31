@@ -25,6 +25,7 @@ Companions: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (structure - what exists),
 | 10 | Data economics | nightly 22:05 UTC | the gate report itself | founder (ratifies pruning) | `check:data-economics` tripwires |
 | 11 | Release | every push | `version.ts` RELEASES, CHANGELOG | `/whats-new`, deploy smoke, announce | version-guard + monotonicity + CI + smoke |
 | 12 | Agent learning | every incident / verifier kill | `harness-incidents.jsonl`, `.claude/content-rules.jsonl` | next session, next draft workflow | `check:ledgers` |
+| 13 | Emerging Winner (shadow-live) | nightly 22:05 UTC | `emerging_winner_runs`, `emerging_winner_predictions`, `emerging_winner_outcomes` | Emerging Winners surface, future calibration + promotion | worker-failures reporter, append-only ledger trigger, `check:data-economics` |
 
 Loops 1-2-3-4 are one circle (scan -> label -> coach -> deliver -> engage). Loop 5 is its own
 circle. Loops 10-11-12 are the meta-circle that keeps the first nine honest.

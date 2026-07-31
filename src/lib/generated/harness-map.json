@@ -4,8 +4,8 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 29,
-    "chains": 14,
+    "sections": 31,
+    "chains": 15,
     "gates": 9,
     "layers": 5
   },
@@ -93,6 +93,12 @@
       "file": ".claude/commands/draft-vertical.md",
       "runWhen": "A scout card was accepted (npm run scout:queue shows it)",
       "job": "Queue -> evidence -> author+verify draft -> vertical PR (human merges)"
+    },
+    {
+      "id": "emerging-winner",
+      "file": ".claude/commands/emerging-winner.md",
+      "runWhen": "Winner-model change, new domain/gate/analogue, scoring drift, before promoting from shadow-live",
+      "job": "Domain scorecard -> classifier -> analogues -> archetype+rank -> risk gates -> immutable ledger; shadow-live + calibrated, engine owns numbers, research never advice"
     }
   ],
   "sections": [
@@ -550,6 +556,28 @@
       ],
       "chains": [
         "production-keeper"
+      ]
+    },
+    {
+      "section": "Emerging Winner Engine",
+      "paths": [
+        "workers/emerging_winner/",
+        "src/lib/emerging-winner/",
+        "src/app/emerging-winners/",
+        "src/app/api/emerging-winners/"
+      ],
+      "chains": [
+        "emerging-winner"
+      ]
+    },
+    {
+      "section": "Models catalogue surface",
+      "paths": [
+        "src/lib/models/",
+        "src/app/models/"
+      ],
+      "chains": [
+        "emerging-winner"
       ]
     }
   ],

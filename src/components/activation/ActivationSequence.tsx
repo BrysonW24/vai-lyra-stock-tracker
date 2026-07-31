@@ -9,8 +9,9 @@ import { ChooseMarketAnimation } from './ChooseMarketAnimation';
 import { MomentumAnimation } from './MomentumAnimation';
 import { CommandCentreAnimation } from './CommandCentreAnimation';
 import { PaperBotAnimation } from './PaperBotAnimation';
+import { ModelsAnimation } from './ModelsAnimation';
 
-type SceneId = 'choose-market' | 'read-momentum' | 'act-console' | 'paper-bot' | 'ready';
+type SceneId = 'choose-market' | 'read-momentum' | 'act-console' | 'paper-bot' | 'models' | 'ready';
 
 interface Scene {
   id: SceneId;
@@ -22,7 +23,8 @@ const SCENES: Scene[] = [
   { id: 'read-momentum', step: 2 },
   { id: 'act-console', step: 3 },
   { id: 'paper-bot', step: 4 },
-  { id: 'ready', step: 5 },
+  { id: 'models', step: 5 },
+  { id: 'ready', step: 6 },
 ];
 
 /**
@@ -120,7 +122,14 @@ export function ActivationSequence({ mode = 'outro', onDone }: { mode?: 'intro' 
           />
         )}
 
-        {/* Scene 5: Ready (Final) */}
+        {/* Scene 5: Models that earn their way */}
+        {currentScene.id === 'models' && (
+          <ModelsAnimation
+            onComplete={reduced ? handleAdvanceScene : undefined}
+          />
+        )}
+
+        {/* Scene 6: Ready (Final) */}
         {currentScene.id === 'ready' && (
           <div className="text-center max-w-2xl mx-auto w-full px-4">
             <h2 className="text-3xl md:text-4xl font-semibold text-[#eef3f8] mb-4">
