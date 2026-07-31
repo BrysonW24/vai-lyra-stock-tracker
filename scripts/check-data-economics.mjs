@@ -95,6 +95,14 @@ const MONITORED = [
   { table: 'component_efficacy', ageColumn: 'updated_at', horizonDays: null, budgetMb: 5, prunedBy: 'nightly full rebuild (bounded)', feeds: 'engine correctness per score component/band/horizon' },
   // Binding reader: yearly review benchmark/AUD baselines (earliest snapshot at/after Jan 1).
   { table: 'market_context_snapshots', ageColumn: 'captured_at', horizonDays: 372, budgetMb: 10, prunedBy: 'none', feeds: 'macro strip latest + yearly/quarterly review benchmark baselines' },
+  // Emerging Winner Engine (shadow-live). predictions is the IMMUTABLE append-only ledger (a trigger
+  // blocks UPDATE/DELETE) - kept by design so the track record can be earned over the 12mo horizon; it
+  // is small (one row per surfaced candidate per nightly run over a bounded universe). Runs = headers;
+  // outcomes = matured 12mo labels that feed future calibration/retraining. Revisit budgets when the
+  // real small-cap universe (Phase 1) expands the candidate count.
+  { table: 'emerging_winner_runs', ageColumn: 'started_at', horizonDays: null, budgetMb: 5, prunedBy: 'keep', feeds: 'run headers for the shadow-live scoring loop' },
+  { table: 'emerging_winner_predictions', ageColumn: 'predicted_at', horizonDays: null, budgetMb: 40, prunedBy: 'keep (immutable append-only ledger)', feeds: 'shadow-live winner predictions -> Emerging Winners surface + future calibration/track record' },
+  { table: 'emerging_winner_outcomes', ageColumn: 'matured_at', horizonDays: null, budgetMb: 5, prunedBy: 'keep', feeds: 'matured 12mo winner labels -> calibration + retraining' },
 ];
 // Not individually monitored (negligible or covered by the whole-DB tripwires): scout_runs
 // (1 row/night), ipos + company_events + event_risks + valuation_metrics + hype_scores (small,

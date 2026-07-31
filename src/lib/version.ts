@@ -23,6 +23,40 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.92.0',
+    date: '2026-07-31',
+    title: 'The modelling stack steps into the light: intro scene, landing section, README gallery',
+    highlights: [
+      'The activation primer before onboarding grew a sixth scene, "Models that earn their way": the six-model pipeline animates in, a real candidate scorecard fills its domain bars, the risk gates pass one name and block a pump, and the shadow-live promise is stated plainly - all using the engine\'s own demo numbers, nothing invented.',
+      'The landing page now shows the modelling stack: six model tiles in the light brand surface, the honest shadow-live framing, and a straight path into the in-app /models catalogue - the landing never promises more than the app states.',
+      'The README gained section 6, The Modelling Stack: the full six-model deck, the five designed event-model families, and both end-to-end architecture posters, with the same research-not-advice framing as everywhere else.',
+      'Under the hood: the primer scene data is now test-pinned (contiguous steps, agreeing totals, the models scene cannot silently fall out) and the landing section render is pinned to all six models and the /models route.',
+      'The copilot\'s knowledge layer learned the modelling stack (the new README section is in its grounded corpus, with a labelled eval case to match) - and this surfaced a real ranking bug, now fixed: the hybrid retriever rounded scores before sorting, so near-ties fell to an alphabetical tiebreak that could demote the genuinely best doc.',
+    ],
+  },
+  {
+    version: '0.91.0',
+    date: '2026-07-30',
+    title: 'A Models page: every model in Lyra, with its honest status, in one place',
+    highlights: [
+      'A new Models surface (Learn & set up drawer) cataloguing the whole modelling stack: the always-on deterministic backbone, the six-model Emerging Winner Engine, and the five designed event-model families - each card stating what the model answers, how far it has actually shipped (Live / Shadow-live / Built / Designed), and exactly where its numbers come from.',
+      'Honesty is the design: the stage chip and the provenance line render together on every card, so a reference heuristic can never pass itself off as a trained model, and models with no surface yet say "no surface yet" rather than pretending. Tests pin the registry - complete fields, resolvable links, and zero advice language.',
+      'The Emerging Winner Engine roadmap (phases 0-6) is shown plainly, including the gate: until the point-in-time winner dataset exists, the learned models stay reference v1.',
+    ],
+  },
+  {
+    version: '0.90.0',
+    date: '2026-07-29',
+    title: 'The Emerging Winner Engine goes shadow-live: a research queue for small caps that resemble past winners',
+    highlights: [
+      'A new Emerging Winners research surface: small caps scored end to end by a six-model pipeline - a 10-domain scorecard, a winner classifier, historical winner/failure analogues, an archetype classifier, a learning-to-rank queue, and a five-gate risk stack - then ranked for research. Research only: it shows a resemblance score and what is missing, never a buy call and never a price target.',
+      'Shadow-live and honest by design: every prediction is logged to a new immutable, append-only ledger (it can never be quietly rewritten), and the surface says plainly that the engine is reference-v1 - not yet trained on a real point-in-time winner dataset - so nothing is presented as truth before it is earned.',
+      'The risk gates do real work: a speculative pump with a tiny float, heavy dilution and thin liquidity is caught and excluded from the queue, with a modelled downside shown honestly rather than smoothed away. A domain with no data is marked "not yet assessed", never counted as a weak trait.',
+      'The sixth model, Timing & Network Intelligence, runs as a strict shadow challenger: it annotates each finding with a timing read (dormant, accumulating, confirming, or crowded) and a network read (insider buying, institutional flows, supply-chain centrality, government links) but by design contributes nothing to the ranking - and when attention runs ahead of evidence, it says plainly that the crowd likely arrived first.',
+      'Under the hood: a new Python worker scores the universe nightly, a new Supabase schema (migration 056) stores the runs, predictions and outcomes, and 41 new tests pin the classifier, analogues, risk gates, timing challenger and the full pipeline.',
+    ],
+  },
+  {
     version: '0.89.0',
     date: '2026-07-28',
     title: 'Audit remediation wave 7: the last three verticals cleared - save safety, gate self-checks, and a fully accessible landing',

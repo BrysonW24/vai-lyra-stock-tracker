@@ -110,6 +110,55 @@ grain: the trigger reason, the symbol, a relevance score, and a link back into L
   <img src="assets/notification-telegram-signal.png" width="30%" alt="Telegram - a signal with a relevance meter and the engine's trigger reason" />
 </p>
 
+## 6 - The Modelling Stack
+
+Lyra's predictive layer: the **Emerging Winner Engine**, a six-model pipeline that scores small caps
+against the structural shape of history's winners - then risk-gates every finding before it reaches
+the research queue. It runs **shadow-live**: all six models execute end to end, every prediction lands
+in an immutable append-only ledger, and a model is promoted only after its track record earns it.
+Research only - the engine never says what to trade, never prints a price target, and what's missing
+is always on the card. The honest catalogue of every model (its stage and where its numbers come from)
+lives in-app at **/models**; the code lives in [`workers/emerging_winner/`](./workers/emerging_winner/)
+and the full design docs in [`lyra-modelling/`](./lyra-modelling/).
+
+### The six-model deck
+
+<p align="center">
+  <img src="lyra-modelling/deck-1of7-emerging-winner-engine-overview.png" width="30%" alt="Emerging Winner Engine overview - data sources, 10-domain summary, core model stack, user output" />
+  <img src="lyra-modelling/deck-2of7-model-1-domain-score-engine.png" width="30%" alt="Model 1 - Domain Score Engine: 10 interpretable company scores from raw inputs" />
+  <img src="lyra-modelling/deck-3of7-model-2-emerging-winner-classifier.png" width="30%" alt="Model 2 - Emerging Winner Classifier: 4-stage conviction ladder with SHAP explainability" />
+</p>
+<p align="center">
+  <img src="lyra-modelling/deck-4of7-model-3-historical-analogue-model.png" width="30%" alt="Model 3 - Historical Analogue Model: closest past winners and failures with similarity scores" />
+  <img src="lyra-modelling/deck-5of7-model-4-archetype-research-queue-ranker.png" width="30%" alt="Model 4 - Archetype and Research Queue Ranker: classify the opportunity type, rank what deserves research first" />
+  <img src="lyra-modelling/deck-6of7-model-5-risk-gate-stack.png" width="30%" alt="Model 5 - Risk Gate Stack: five gates ending in PASS, REVIEW or BLOCK" />
+</p>
+<p align="center">
+  <img src="lyra-modelling/deck-7of7-model-6-timing-network-intelligence.png" width="30%" alt="Model 6 - Timing and Network Intelligence: temporal and graph challengers for when the market starts to recognise the thesis" />
+</p>
+
+### The event-model families (designed)
+
+The candidate architectures for the fast-follow event model - "will this name move +20% within
+21 / 63 / 126 trading days?" Designed, not yet built; the in-app catalogue says so plainly.
+
+<p align="center">
+  <img src="lyra-modelling/families-1of5-gradient-boosted-trees.png" width="30%" alt="Gradient Boosted Trees - the first production champion candidate" />
+  <img src="lyra-modelling/families-2of5-temporal-fusion-transformer.png" width="30%" alt="Temporal Fusion Transformer - multi-horizon sequence intelligence" />
+  <img src="lyra-modelling/families-3of5-tcn-gru-lstm-sequence-models.png" width="30%" alt="TCN / GRU / LSTM - sequence models for pattern buildup" />
+</p>
+<p align="center">
+  <img src="lyra-modelling/families-4of5-dynamic-graph-neural-network.png" width="30%" alt="Dynamic Graph Neural Network - find the second-order winners through supply chains and themes" />
+  <img src="lyra-modelling/families-5of5-stacked-ensemble-uncertainty.png" width="30%" alt="Stacked Ensemble with Uncertainty - the final calibrated decision layer" />
+</p>
+
+### End-to-end architecture
+
+<p align="center">
+  <img src="lyra-modelling/architecture-predictive-modelling-graph-nn.png" width="47%" alt="Lyra predictive modelling architecture - ingestion, graph builder, training lifecycle, serving, app integration, feedback loop" />
+  <img src="lyra-modelling/architecture-model-hosting-inference.png" width="47%" alt="Lyra model hosting and inference architecture - champion/challenger selection, GPU training, hosted serving, monitoring" />
+</p>
+
 ---
 
 ## ✨ What you get
@@ -376,6 +425,10 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.92.0   2026-07-31  The modelling stack steps into the light: intro scene, landing section, README gallery
+0.91.0   2026-07-30  A Models page: every model in Lyra, with its honest status, in one place
+0.90.0   2026-07-29  The Emerging Winner Engine goes shadow-live: a research queue for small caps that resemble past winners
+0.89.0   2026-07-28  Audit remediation wave 7: the last three verticals cleared - save safety, gate self-checks, and a fully accessible landing
 0.88.0   2026-07-28  Audit remediation wave 6: the onboarding flow logic is pinned, and the quality gates now guard themselves
 0.87.0   2026-07-28  Audit remediation wave 5: the radar is honest about its timeframe, and the numbers behind it are finally pinned
 0.86.0   2026-07-28  Audit remediation wave 4: your data fence is now provably closed, and the AI can't dress a score up as a return
@@ -481,7 +534,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(104 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(108 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

@@ -95,6 +95,12 @@ jobs:
       - name: Scout worker (broad signal -> ideas board)
         run: python -m workers.scout.main || echo "scout" >> "$RUNNER_TEMP/worker-failures"
 
+      # Emerging Winner Engine (shadow-live): score the candidate universe end to end and append to the
+      # immutable ledger (migration 056). Best-effort but visible - it fails the run if enabled and it
+      # stored nothing (main.py exits 1), so a broken pipeline can never masquerade as a green tick.
+      - name: Emerging Winner Engine (shadow-live scoring -> immutable ledger)
+        run: python -m workers.emerging_winner.main || echo "emerging_winner" >> "$RUNNER_TEMP/worker-failures"
+
       - name: Label signal outcomes + send follow-ups
         run: python -m workers.stock_scanner.outcome_job
 

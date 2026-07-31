@@ -12,6 +12,7 @@ import { FutureStateAI } from '@/components/FutureStateAI';
 import { ExchangeStrip } from '@/components/ExchangeStrip';
 import { UltimateGoals } from '@/components/landing/UltimateGoals';
 import { StackSection } from '@/components/landing/StackSection';
+import { ModelsShowcase } from '@/components/landing/ModelsShowcase';
 import { BRAND_NAME } from '@/lib/brand';
 import { getWelcomeEntry } from '@/lib/welcome-entry';
 
@@ -196,6 +197,11 @@ export default async function WelcomePage() {
         {/* Future state - AI / LLM intelligence layer */}
         <section id="future" className="scroll-mt-6 pb-12">
           <FutureStateAI soloMode={!supabaseConfigured} />
+        </section>
+
+        {/* The modelling stack - six models, one honest research queue */}
+        <section id="models" className="scroll-mt-6 pb-12">
+          <ModelsShowcase />
         </section>
 
         {/* The ultimate goal - six flip cards, honest statuses (ported from the Setup Companion) */}

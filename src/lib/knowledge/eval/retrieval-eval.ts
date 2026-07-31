@@ -29,6 +29,7 @@ export const RETRIEVAL_CASES: readonly RetrievalCase[] = [
   { query: 'how do I run it myself?', relevantSource: ['02-run-it-yourself'] },
   { query: 'connect my own supabase database', relevantSource: ['03-go-live-supabase'] },
   { query: 'going live with supabase', relevantSource: ['03-go-live-supabase'] },
+  { query: 'what is the emerging winner engine?', relevantSource: ['README.md'] },
   // Precision guards - the retriever must stay silent on market/advice questions.
   { query: 'why did my NVDA position drop today?', relevantSource: [], expectEmpty: true },
   { query: 'should I buy AAPL now?', relevantSource: [], expectEmpty: true },

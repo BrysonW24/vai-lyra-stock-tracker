@@ -53,15 +53,21 @@ export function retrieveHybrid(query: string, k = 3): HybridHit[] {
 
   const qv = vectorizeQuery(query, getVectorIndex());
   const maxLex = Math.max(...candidates.map((c) => c.score)) || 1;
-  const scored: HybridHit[] = candidates.map((c) => {
+  // Sort on the EXACT fused score and round only for display: rounding before the sort collapses
+  // near-ties into equal values and hands the ranking to the alphabetical id tiebreak, which once
+  // demoted the genuinely-best doc by 0.0004 of fused score.
+  const scored: Array<HybridHit & { fusedExact: number }> = candidates.map((c) => {
     const cv = getVectorIndex().vectors.get(c.id);
     const cs = cv ? cosine(qv, cv) : 0;
     const lexNorm = c.score / maxLex;
     const fused = LEX_WEIGHT * lexNorm + COS_WEIGHT * cs;
-    return { ...c, lexScore: c.score, cosine: round2(cs), fused: round2(fused) };
+    return { ...c, lexScore: c.score, cosine: round2(cs), fused: round2(fused), fusedExact: fused };
   });
 
-  return scored.sort((a, b) => b.fused - a.fused || a.id.localeCompare(b.id)).slice(0, k);
+  return scored
+    .sort((a, b) => b.fusedExact - a.fusedExact || a.id.localeCompare(b.id))
+    .slice(0, k)
+    .map(({ fusedExact: _fusedExact, ...hit }) => hit);
 }
 
 const MAX_BLOCK_CHARS = 2400;

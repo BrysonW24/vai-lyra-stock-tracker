@@ -18,6 +18,7 @@ import {
   Calculator,
   Coins,
   Trophy,
+  Award,
   FileText,
   Gem,
   FlaskConical,
@@ -39,6 +40,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  BrainCircuit,
   Star,
   Workflow,
   Wand2,
@@ -83,6 +85,7 @@ const navItems: NavItem[] = [
   // DISCOVER - find the next opportunity
   { href: '/radar', label: 'Signal Radar', short: 'Radar', icon: Radar, bucket: 'discover' },
   { href: '/small-caps', label: 'Small Caps', short: 'SmCaps', icon: Microscope, bucket: 'discover' },
+  { href: '/emerging-winners', label: 'Emerging Winners', short: 'Winners', icon: Award, bucket: 'discover' },
   { href: '/themes', label: 'World Radar', short: 'Themes', icon: Globe, bucket: 'discover' },
   { href: '/smart-money', label: 'Smart Money', short: 'Smart $', icon: Banknote, bucket: 'discover' },
   { href: '/investors', label: 'Investor Radar', short: 'Funds', icon: Landmark, bucket: 'discover' },
@@ -114,6 +117,7 @@ const navItems: NavItem[] = [
   { href: '/saved', label: 'Saved', short: 'Saved', icon: Bookmark, bucket: 'learn' },
   { href: '/usage', label: 'Your Activity', short: 'Activity', icon: Activity, bucket: 'learn' },
   { href: '/whats-new', label: "What's New", short: 'New', icon: Sparkles, bucket: 'learn' },
+  { href: '/models', label: 'Models', short: 'Models', icon: BrainCircuit, bucket: 'learn' },
 ];
 
 // Each job gets a Lyra accent - the drawer reads in colour, not a grey wall, and the colour codes the
