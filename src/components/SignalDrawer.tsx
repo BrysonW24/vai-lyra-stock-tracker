@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { bumpAiUsage } from '@/lib/usage-store';
 import { useEffect, useState } from 'react';
-import { ArrowUpRight, LineChart, Sparkles } from 'lucide-react';
+import { ArrowUpRight, LineChart } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
+import { AiGeneratedLabel } from '@/components/AiGeneratedLabel';
 import { DetailDrawer } from '@/components/DetailDrawer';
 import { StatusBadge } from '@/components/StatusBadge';
 import { TickerLogo } from '@/components/TickerLogo';
@@ -76,9 +77,7 @@ function SignalAiNarration({ symbol }: { symbol: string }) {
 
   return (
     <div className="rounded-md border border-[#3a2f1d] bg-[#141009] p-2.5">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#f3a33a]">
-        <Sparkles size={11} /> Lyra
-      </div>
+      <AiGeneratedLabel size={11} />
       <p className="mt-1 text-[11px] leading-snug text-[#dbe5ee]">{text}</p>
     </div>
   );

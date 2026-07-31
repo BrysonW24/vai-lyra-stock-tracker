@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.96.0] - 2026-07-31
+
+AI-written answers are now labelled as AI-generated, everywhere the AI writes.
+
+### Changed
+
+- Every AI-written narration - the Daily Brief phrasing, the signal explainer, and the Ask Lyra chat - now carries an explicit "AI-generated" label, so it is always clear which words came from an AI model and which are the deterministic engine's own numbers. The engine still owns every number; the AI only phrases them.
+- The Ask Lyra chat identifies itself as an AI copilot and marks its answers as AI-generated research, not financial advice.
+- This makes the AI-transparency disclosure explicit for the EU AI Act Article 50 obligation that takes effect on 2 August 2026. The substance was already there - Lyra explains, it never advises or trades - this makes the labelling unmistakable.
+
 ## [0.95.0] - 2026-07-31
 
 The winner label learns from the evidence: durable-emergence definition, honest domain provenance.
@@ -1378,7 +1388,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.95.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.96.0...HEAD
+[0.96.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.95.0...v0.96.0
 [0.95.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.94.0...v0.95.0
 [0.94.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.93.0...v0.94.0
 [0.93.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.92.0...v0.93.0

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { bumpAiUsage } from '@/lib/usage-store';
-import { Sparkles } from 'lucide-react';
+import { AiGeneratedLabel } from '@/components/AiGeneratedLabel';
 import type { DailyBrief } from '@/lib/daily-brief';
 import { loadAi } from '@/lib/account';
 
@@ -49,9 +49,7 @@ export function BriefAiNarration({ brief }: { brief: DailyBrief }) {
 
   return (
     <div className="border-b border-[#1b2530] bg-[#0b1016] px-4 py-3">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#f3a33a]">
-        <Sparkles size={12} /> Lyra
-      </div>
+      <AiGeneratedLabel size={12} />
       {loading && !text ? (
         <p className="mt-1.5 text-sm text-[#8190a0]">Writing your brief…</p>
       ) : (

@@ -428,7 +428,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
             </span>
             <div className="leading-tight">
               <p className="text-sm font-semibold text-[#eef3f8]">Ask Lyra</p>
-              <p className="text-[10px] text-[#7f8b98]">Grounded in your dashboard</p>
+              <p className="text-[10px] text-[#7f8b98]">AI copilot · grounded in your dashboard</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -679,7 +679,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 </button>
               </div>
               <p className="mt-1.5 flex items-center justify-center gap-1 text-[9.5px] text-[#5e6b78]">
-                <ShieldCheck size={10} /> Research, not financial advice. Lyra answers only from your data.
+                <ShieldCheck size={10} /> AI-generated answers - research, not financial advice. Lyra answers only from your data.
               </p>
             </div>
           </>

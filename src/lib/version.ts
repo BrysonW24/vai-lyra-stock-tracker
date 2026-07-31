@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.96.0',
+    date: '2026-07-31',
+    title: 'AI-written answers are now labelled as AI-generated, everywhere the AI writes',
+    highlights: [
+      'Every AI-written narration - the Daily Brief phrasing, the signal explainer, and the Ask Lyra chat - now carries an explicit "AI-generated" label, so it is always clear which words came from an AI model and which are the deterministic engine\'s own numbers. The engine still owns every number; the AI only phrases them.',
+      'The Ask Lyra chat identifies itself as an AI copilot and marks its answers as AI-generated research, not financial advice.',
+      'This makes the AI-transparency disclosure explicit for the EU AI Act Article 50 obligation that takes effect on 2 August 2026. The substance was already there - Lyra explains, it never advises or trades - this makes the labelling unmistakable.',
+    ],
+  },
+  {
     version: '0.95.0',
     date: '2026-07-31',
     title: 'The winner label learns from the evidence: durable-emergence definition, honest domain provenance',
