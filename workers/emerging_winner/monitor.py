@@ -25,7 +25,7 @@ import logging
 import os
 from typing import Optional
 
-from .dataset import FEATURE_ORDER, label_from_barrier
+from .dataset import FEATURE_ORDER, label_from_outcome
 from .train import average_precision, calibration_bins, expected_calibration_error, precision_at_k
 
 logger = logging.getLogger("emerging_winner.monitor")
@@ -95,7 +95,7 @@ def matured_pairs(predictions: list[dict], outcomes: list[dict]) -> list[tuple[f
         pid = str(o.get("prediction_id"))
         barrier = o.get("barrier_hit")
         if pid in prob_by_pred and barrier:
-            pairs.append((prob_by_pred[pid], label_from_barrier(str(barrier))))
+            pairs.append((prob_by_pred[pid], label_from_outcome(o)))
     return pairs
 
 

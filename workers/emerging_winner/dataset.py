@@ -38,7 +38,9 @@ from .domains import DOMAIN_REGISTRY, DOMAIN_WEIGHTS, score_domains
 # The 10 domains in canonical order - the model's feature order. Kept in lockstep with DOMAIN_REGISTRY.
 FEATURE_ORDER: list[str] = [fn(dict()).key for fn in DOMAIN_REGISTRY]
 
-# Barrier definitions for the multi-bagger, 12-month, first-touch label (spec Decision B option 1).
+# Barrier definitions for the multi-bagger, 12-month, first-touch move. This is the +100% FIRST-TOUCH input
+# (spec Decision B option 1); the LIVE training/health label is `label_from_outcome` (option 4), which adds
+# the survival + liquidity conjuncts on top of this barrier.
 UP_BARRIER_PCT = 100.0     # winner = +100% (multi-bagger)
 DOWN_BARRIER_PCT = -80.0   # ruin = -80% (delisting / destructive dilution proxy)
 HORIZON_TRADING_DAYS = 252  # ~12 months
@@ -102,8 +104,43 @@ def first_touch_barrier(
 
 
 def label_from_barrier(barrier: str) -> int:
-    """Binary winner label for the classifier: only a first-touch +100% is a winner."""
+    """The +100% first-touch barrier as a 0/1 (Decision B option 1). This is one CONJUNCT of the live label -
+    the full training/health label is `label_from_outcome` (option 4), which also requires survival + liquidity."""
     return 1 if barrier == "up_100" else 0
+
+
+def _conjunct_holds(value) -> bool:
+    """A quality conjunct passes UNLESS it is affirmatively false. Missing / None = 'not yet measured' -> passes,
+    so the label degrades cleanly to option 1 until the maturation job populates the field. Only a real False
+    (or a false-y string from a JSON row) excludes a would-be winner."""
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return value.strip().lower() not in {"false", "f", "0", "no", ""}
+    return bool(value)
+
+
+def label_from_outcome(outcome: dict) -> int:
+    """Binary winner label - Decision B **option 4** (composite quality-winner):
+
+        winner = first-touch +100%  AND  still listed at horizon end  AND  dollar-liquidity grew.
+
+    Why option 4 over the naive +100% (MODEL-SELECTION-AND-OSS-STACK.md 3.1): a bare first-touch label rewards
+    pump-and-dumps and dead-cat spikes - exactly the high-MAX lottery population that Bali/Cakici/Whitelaw
+    (JFE 2011) show is subsequently *negatively* priced. The survival + liquidity conjuncts filter that
+    population out, so the model learns durable emergence rather than a transient spike.
+
+    INERT SEAM today: outcome rows do not yet carry `still_listed` / `liquidity_grew` (that needs delisting +
+    dollar-volume history the maturation job adds once the data gate is bought), so both conjuncts default to
+    pass and this is byte-identical to option 1. It tightens automatically the moment those fields are written -
+    no relabel, no retrain. Doing the seam now costs nothing; doing it after the dataset exists costs a relabel."""
+    if label_from_barrier(str(outcome.get("barrier_hit"))) != 1:
+        return 0
+    if not _conjunct_holds(outcome.get("still_listed")):
+        return 0
+    if not _conjunct_holds(outcome.get("liquidity_grew")):
+        return 0
+    return 1
 
 
 # --- point-in-time timestamp helpers (feed the purged walk-forward + per-cohort metrics) ------------
@@ -159,7 +196,7 @@ def assemble_training_rows(predictions: list[dict], outcomes: list[dict]) -> lis
         rows.append(TrainingRow(
             features=feats,
             completeness=completeness,
-            label=label_from_barrier(str(outcome.get("barrier_hit"))),
+            label=label_from_outcome(outcome),
             symbol=str(p.get("symbol", "")),
             predicted_at=str(p.get("predicted_at", "")),
         ))

@@ -20,6 +20,7 @@ from workers.emerging_winner.dataset import (
     assemble_training_rows,
     first_touch_barrier,
     label_from_barrier,
+    label_from_outcome,
     load_training_dataset,
     make_bootstrap_dataset,
 )
@@ -61,6 +62,33 @@ def test_label_from_barrier():
     assert label_from_barrier("up_100") == 1
     assert label_from_barrier("down_80") == 0
     assert label_from_barrier("neither") == 0
+
+
+# --- 1b. option 4 label seam (survival + liquidity conjuncts) -------------------------------------
+
+def test_label_from_outcome_is_option1_when_conjuncts_absent():
+    # INERT SEAM: today's outcome rows carry only barrier_hit, so option 4 == option 1 exactly.
+    assert label_from_outcome({"barrier_hit": "up_100"}) == 1
+    assert label_from_outcome({"barrier_hit": "down_80"}) == 0
+    assert label_from_outcome({"barrier_hit": "neither"}) == 0
+    # None fields are 'not yet measured', not exclusions.
+    assert label_from_outcome({"barrier_hit": "up_100", "still_listed": None, "liquidity_grew": None}) == 1
+
+
+def test_label_from_outcome_excludes_delisted_and_illiquid_winners():
+    # A +100% first-touch that DID NOT survive or whose liquidity shrank is not an option-4 winner.
+    assert label_from_outcome({"barrier_hit": "up_100", "still_listed": False, "liquidity_grew": True}) == 0
+    assert label_from_outcome({"barrier_hit": "up_100", "still_listed": True, "liquidity_grew": False}) == 0
+    # Both conjuncts affirmatively true keeps the winner.
+    assert label_from_outcome({"barrier_hit": "up_100", "still_listed": True, "liquidity_grew": True}) == 1
+    # A non-winner barrier stays 0 no matter how strong the conjuncts.
+    assert label_from_outcome({"barrier_hit": "neither", "still_listed": True, "liquidity_grew": True}) == 0
+
+
+def test_label_from_outcome_reads_falsey_strings_from_json_rows():
+    # JSON/text rows can arrive as strings; a false-y string excludes, a truthy one does not.
+    assert label_from_outcome({"barrier_hit": "up_100", "still_listed": "false"}) == 0
+    assert label_from_outcome({"barrier_hit": "up_100", "still_listed": "true", "liquidity_grew": "yes"}) == 1
 
 
 # --- 2. the bootstrap dataset ---------------------------------------------------------------------

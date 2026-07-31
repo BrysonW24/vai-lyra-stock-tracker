@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.95.0] - 2026-07-31
+
+The winner label learns from the evidence: durable-emergence definition, honest domain provenance.
+
+### Changed
+
+- The training label migrates to its quality-winner definition (Decision B option 4): a winner is now a name that not only doubled but also survived and grew its liquidity - not just any +100% first-touch spike. The published finance research is explicit that bare "biggest move" labels reward pump-and-dumps and lottery-like names that are subsequently priced DOWN (the MAX effect, Bali/Cakici/Whitelaw JFE 2011), so the model should learn durable emergence instead. Doing this now, before real labels exist, costs nothing; doing it later would mean a relabel and retrain.
+- The change is an inert seam today and proven so: the reproducible bootstrap does not use this labeler, and live outcome rows do not yet carry the survival/liquidity fields, so the shipped weights, metrics and drift fixtures are byte-identical (ROC-AUC 0.828 unchanged, drift guard still exact to 1e-8). The label tightens automatically the moment the maturation job writes those fields.
+- The domain weights now carry honest evidence provenance: capital/dilution is flagged as the one weight backed by a robust, internationally-replicated anomaly (and best used as a risk gate), theme is labelled as a deliberate bet on differentiation rather than dressed as established fact, and technical is flagged as a timing signal rather than an archetype trait. Bets read as bets. Full reasoning in lyra-modelling/MODEL-SELECTION-AND-OSS-STACK.md.
+
 ## [0.94.0] - 2026-07-31
 
 The Emerging Winner model gets honest: leak-proof validation, per-cohort scoring, a floor gate, and a truthful headline.
@@ -1368,7 +1378,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.94.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.95.0...HEAD
+[0.95.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.94.0...v0.95.0
 [0.94.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.93.0...v0.94.0
 [0.93.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.92.0...v0.93.0
 [0.92.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.91.0...v0.92.0

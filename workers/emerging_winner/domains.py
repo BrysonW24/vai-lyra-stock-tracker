@@ -322,6 +322,15 @@ DOMAIN_REGISTRY: list[Callable[[dict], DomainResult]] = [
 # Relative importance for the composite (v0 hand-designed; Layer 2 will learn the real weights).
 # Theme, government, sponsorship and business quality carry the most weight - the structural traits that
 # most separated 2025-2026 small-cap winners from also-rans. Normalised over AVAILABLE domains at runtime.
+#
+# Evidence provenance (MODEL-SELECTION-AND-OSS-STACK.md 3.2/3.3), stated honestly so bets read as bets:
+#  - `capital` (net share issuance / dilution) is the ONLY weight backed by a Hou-Xue-Zhang-grade,
+#    internationally-replicated anomaly (Pontiff & Woodgate, JF 2008). It is a NEGATIVE predictor, so its
+#    highest-value use is as a risk GATE (risk_gates.py Gate 1), not just a scoring input.
+#  - `theme` (16.0, top weight) has NO cross-sectional asset-pricing evidence. It is a deliberate bet on
+#    differentiation - kept as the top weight ON PURPOSE, and labelled as a bet rather than dressed as fact.
+#  - `technical` (12.0) predicts *timing*, not archetype (Gu/Kelly/Xiu found technicals help mean-return
+#    prediction, a different task). It is a candidate to DOWN-WEIGHT here and move to Model A's timing job.
 DOMAIN_WEIGHTS: dict[str, float] = {
     "technical": 12.0,
     "accumulation": 10.0,
