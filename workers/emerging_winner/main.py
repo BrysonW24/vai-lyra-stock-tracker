@@ -17,6 +17,7 @@ Demo mode (no Supabase env): prints the ranked queue, persists nothing.
 from __future__ import annotations
 
 import logging
+import os
 import sys
 
 from .engine import ENGINE_VERSION, rank_universe
@@ -62,9 +63,38 @@ ILLUSTRATIVE_CANDIDATES: list[tuple[str, dict]] = [
 ]
 
 
+def load_real_candidates(*, limit: int) -> list[tuple[str, dict]]:
+    """Scan the real, dynamic SEC-listed universe (emergence-first) and assemble live market features per
+    name. Small-caps included; names with unusable/sparse data are skipped rather than faked. Returns []
+    if nothing could be assembled (offline / rate-limited), so the caller falls back honestly."""
+    from ..stock_scanner.market_data import create_provider
+    from .feature_source import assemble_features
+    from .universe_source import load_candidate_symbols, theme_by_symbol
+
+    provider = create_provider("yfinance")
+    themes = theme_by_symbol()
+    symbols = load_candidate_symbols(limit=limit)
+    out: list[tuple[str, dict]] = []
+    for sym in symbols:
+        try:
+            feats = assemble_features(sym, provider=provider, theme=themes.get(sym))
+        except Exception:  # noqa: BLE001 - a single bad symbol never fails the run
+            feats = None
+        if feats:
+            out.append((sym, feats))
+    logger.info("real universe: assembled features for %d of %d scanned symbols", len(out), len(symbols))
+    return out
+
+
 def load_candidates(repo: EmergingWinnerRepo) -> list[tuple[str, dict]]:
-    """Return (symbol, features) candidates. v1 returns the illustrative set; the real point-in-time
-    small-cap feature assembler replaces this without changing anything downstream."""
+    """Candidates for this run. With EW_REAL_UNIVERSE=1 the engine scans the real SEC-listed universe with
+    live market data (the whole landscape, small-caps included, dynamically refreshed). If that is off, or
+    the real scan yields nothing (offline/rate-limited), it falls back to the illustrative set - clearly
+    labelled - so the pipeline never silently pretends an illustrative universe is real."""
+    if os.environ.get("EW_REAL_UNIVERSE") == "1":
+        real = load_real_candidates(limit=int(os.environ.get("EW_UNIVERSE_LIMIT", "300")))
+        if real:
+            return real
     return ILLUSTRATIVE_CANDIDATES
 
 

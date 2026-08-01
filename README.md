@@ -4,6 +4,11 @@
 
 Lyra watches the market on an hourly cadence and scores each stock on momentum recovery: RSI lift, MACD histogram turning up, price location, trend context, and volume participation. A deterministic engine owns every number; an optional AI layer just phrases it for you. Runs on **built-in demo data with zero setup**, and scales up to a live, alerting, AI-explained console when you want it.
 
+> ### 🌐 Real-universe scan (Emerging Winner engine)
+> Beyond the hourly momentum radar, Lyra's **Emerging Winner engine** scans the **real SEC-listed universe** - every US company that files with the SEC (**~10,400 tickers, small-caps included**), fetched **live so new listings are picked up automatically** - using **free public data** (the SEC's `company_tickers.json` + market data via the same provider the scanner uses). It runs the full six-model stack (domain scorecard → classifier → analogue → ranker → risk gates → timing) over that universe.
+>
+> It is **coverage-honest**: it populates the domains real market data can support (technical, liquidity, theme) and marks the deep domains it cannot yet source (SEC filings, insider Form-4/13F flow, government contracts, and **delisted history** - the survivorship-safe training gate) as `unavailable` rather than guessing. Enable a live run with `EW_REAL_UNIVERSE=1` (bound the slice with `EW_UNIVERSE_LIMIT`). Full assessment: [`lyra-audits/2026-08-01-model-analysis-harness-audit.md`](./lyra-audits/2026-08-01-model-analysis-harness-audit.md).
+
 ```bash
 git clone https://github.com/BrysonW24/vai-lyra-stock-tracker.git
 cd vai-lyra-stock-tracker
@@ -425,6 +430,16 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.102.0  2026-08-01  The Emerging Winner engine now scans the real SEC-listed universe with real fundamentals
+0.101.0  2026-08-01  Model Lab made minimal - clean selectors, a collapsed catalogue, and every vertical on
+0.100.0  2026-08-01  The Models page is now Model Lab - choose the question, watch it run, inspect why
+0.99.0   2026-08-01  Run a model - pick an outcome, narrow the market, and rank your tracked universe
+0.98.0   2026-07-31  Emerging Winners is now list-first, plain-English, and honest about what it is
+0.97.0   2026-07-31  The signal detail view now has the chart in it - inspect a setup without leaving the drawer
+0.96.0   2026-07-31  AI-written answers are now labelled as AI-generated, everywhere the AI writes
+0.95.0   2026-07-31  The winner label learns from the evidence: durable-emergence definition, honest domain provenance
+0.94.0   2026-07-31  The Emerging Winner model gets honest: leak-proof validation, per-cohort scoring, a floor gate, and a truthful headline
+0.93.0   2026-07-31  The Emerging Winner model earns its way: a full training + deployment + monitoring lifecycle
 0.92.0   2026-07-31  The modelling stack steps into the light: intro scene, landing section, README gallery
 0.91.0   2026-07-30  A Models page: every model in Lyra, with its honest status, in one place
 0.90.0   2026-07-29  The Emerging Winner Engine goes shadow-live: a research queue for small caps that resemble past winners
@@ -534,7 +549,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(108 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(118 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

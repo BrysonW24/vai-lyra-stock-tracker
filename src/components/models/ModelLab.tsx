@@ -116,6 +116,18 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
         </div>
       </header>
 
+      {/* Real-universe note - honest about capability and current data state. */}
+      <div className="mt-3 rounded-xl border border-sky-400/20 bg-sky-500/[0.06] p-3 text-[12px] leading-relaxed text-sky-200/90">
+        The Emerging Winner engine scans the <span className="font-semibold">real SEC-listed universe</span> - every US
+        company that files with the SEC (~10,400, small-caps included), refreshed dynamically so new listings are picked
+        up automatically - using free public data (SEC + market data).{' '}
+        {ew.demo
+          ? 'This surface currently shows illustrative examples; a live run populates the ledger.'
+          : 'This surface shows the latest logged run.'}{' '}
+        The deep domains (SEC filings, insider flow, government contracts, and delisted history) are the remaining data
+        gate, so those read <span className="font-mono text-[11px]">unavailable</span> rather than a guessed value.
+      </div>
+
       {/* Tabs */}
       <div className="mt-4 flex gap-1 border-b border-white/10">
         {TABS.map((t) => (

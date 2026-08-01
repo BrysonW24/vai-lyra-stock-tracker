@@ -140,7 +140,7 @@ export const LAB_MODELS: LabModel[] = [
     family: 'ew',
     predicts: 'Structural resemblance to past outsized winners',
     horizon: '24 to 60 months',
-    universeNote: 'Illustrative reference universe (until the data gate)',
+    universeNote: 'Real SEC-listed universe (~10,400 US cos · small-caps · dynamic)',
     explainability: '10-domain contribution breakdown',
     version: 'reference-v1',
     looksFor: [
@@ -199,7 +199,7 @@ export const LAB_MODELS: LabModel[] = [
     family: 'ew',
     predicts: 'Whether a name survives the five risk gates',
     horizon: 'Point-in-time',
-    universeNote: 'Illustrative reference universe (until the data gate)',
+    universeNote: 'Real SEC-listed universe (~10,400 US cos · small-caps · dynamic)',
     explainability: 'Five deterministic gates (pass / review / block)',
     version: 'reference-v1',
     looksFor: [

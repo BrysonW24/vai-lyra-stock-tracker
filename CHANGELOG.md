@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.102.0] - 2026-08-01
+
+The Emerging Winner engine now scans the real SEC-listed universe with real fundamentals.
+
+### Changed
+
+- Real universe, dynamically. The Emerging Winner engine scans the real SEC-listed universe - every US company that files with the SEC (~10,400 tickers, small-caps included), fetched live so new listings are picked up automatically - using free public data (the SEC company listing + market data). This replaces the hardcoded illustrative 3-candidate set; the illustrative set remains only as an honest offline fallback.
+- Real fundamentals light up the quality domains. Market cap, float, revenue growth and debt/equity from the market-data provider now feed the liquidity, business-quality and capital domains, so quality companies are rated correctly - a name with 85% revenue growth and near-zero debt scores high on those domains, while the trend/delta fields a single snapshot cannot honestly provide are left unavailable rather than guessed.
+- Coverage-honest by construction. The engine populates the domains real data can support and marks the deep domains it cannot yet source (SEC filings, insider flow, government contracts, delisted history) as unavailable - so it ranks quality directionally on real data today without fabricating conviction it has not earned.
+- Validated + guarded. The pump-blocking and quality-vs-junk separation hold on fully-populated data, and a new property/fuzz behaviour contract plus a real-universe scan eval bring the worker suite to 436 green tests. Enable a live run with EW_REAL_UNIVERSE=1; the Model Lab and README now carry an honest note explaining the scan and the remaining data gate.
+
 ## [0.101.0] - 2026-08-01
 
 Model Lab made minimal - clean selectors, a collapsed catalogue, and every vertical on.
@@ -1442,7 +1453,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.101.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.102.0...HEAD
+[0.102.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.101.0...v0.102.0
 [0.101.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.100.0...v0.101.0
 [0.100.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.99.0...v0.100.0
 [0.99.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.98.0...v0.99.0

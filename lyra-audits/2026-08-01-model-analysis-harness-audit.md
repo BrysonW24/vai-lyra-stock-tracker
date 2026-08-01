@@ -22,7 +22,33 @@ Emerging Winner worker scores a **hardcoded 3-candidate illustrative set**, and 
 names, Form 4/13F, USAspending) is Phase 1 and unbuilt. This is the data gate, and the code says so
 honestly everywhere.
 
-## 1. Landscape coverage - the core gap
+## Update - real-universe scan landed (same day)
+
+The landscape-coverage gap below (gaps #1-#2) is now **addressed in code**. The Emerging Winner worker
+scans the **real, dynamic SEC-listed universe** instead of a hardcoded illustrative set:
+- `workers/emerging_winner/universe_source.py` fetches the SEC `company_tickers.json` live (~10,400
+  US-listed companies, small-caps included), cached ~24h, so new registrants are picked up
+  automatically; emergence-first ordering puts the curated small-cap names the engine targets ahead of
+  the rest of the listing.
+- `workers/emerging_winner/feature_source.py` assembles **real market features** (the scanner's own
+  indicator maths) per name, coverage-honest: it leaves the deep domains ABSENT so they read
+  `unavailable`, never a guessed value.
+- `main.load_candidates` uses it under `EW_REAL_UNIVERSE=1` (bounded by `EW_UNIVERSE_LIMIT`), with an
+  honest fallback to the labelled illustrative set when offline.
+- **Proven:** a live scan of 16 real small-caps (LUNR, RGTI, SERV, BKSY, APLD, POWL, RDW, FLNC, LEU,
+  UUUU, NB, CAMT, ONDS, HSAI) completed end to end in ~9s; every name returned **low resemblance,
+  4/10 domains covered, risk = review** - coverage honesty holding on real data (no deep domains ->
+  no fabricated conviction). Pinned by `tests/test_emerging_winner_real_universe.py` (CI-safe stub).
+
+**What this does and does not close:** the **universe/landscape** gap is closed - the engine now scans
+the real market, small-caps included, dynamically. The **depth** gap remains: with only market-derived
+domains, winner-resemblance output is uniformly low-confidence until the deep domains (SEC filings,
+insider flow, contracts) and a **delisted-inclusive point-in-time history** (the survivorship-safe
+training corpus) are sourced. That is a paid-data buy, not engineering. Enabling the real scan in
+production (`EW_REAL_UNIVERSE=1` on the worker) is a founder/ops decision - the capability is shipped and
+proven; arming it stays gated.
+
+## 1. Landscape coverage - the core gap (original assessment, now addressed - see Update above)
 
 | Model | What it scans today | Real market data? | Evidence |
 |---|---|---|---|
