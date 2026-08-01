@@ -23,9 +23,15 @@ from typing import Optional
 
 from ..stock_scanner.indicators import calculate_indicators
 from ..stock_scanner.market_data import MarketDataProvider, create_provider
+from . import fx
 from .edgar_source import fetch_edgar_features
+from .universe_source import currency_for_symbol
 
 MIN_CANDLES = 30  # below this, indicators (esp. the longer SMAs) are too sparse to be honest
+
+# USD-semantics fields: thresholds downstream (risk gates, cap tiers) read these AS US dollars, so for a
+# non-USD listing they are converted via fx.py - or DROPPED when no rate exists (absent beats wrong).
+_USD_SEMANTICS_KEYS = ("market_cap", "avg_dollar_volume")
 
 
 def _fetch_fundamentals(symbol: str) -> dict:
@@ -41,6 +47,11 @@ def _fetch_fundamentals(symbol: str) -> dict:
         return {}
 
     out: dict = {}
+    # The listing currency the provider itself states for this name (per-name truth; beats any
+    # suffix-implied guess). Consumed by the FX normalisation step, never emitted as a feature.
+    ccy = info.get("currency")
+    if isinstance(ccy, str) and ccy.strip():
+        out["_currency"] = ccy.strip().upper()
     mc = info.get("marketCap")
     if isinstance(mc, (int, float)) and mc > 0:
         out["market_cap"] = float(mc)
@@ -69,6 +80,23 @@ def _fetch_fundamentals(symbol: str) -> dict:
     return out
 
 
+def _normalise_to_usd(feats: dict, currency: Optional[str]) -> None:
+    """Convert the USD-semantics fields (market cap, average dollar volume) from the listing currency to
+    USD in place, so the USD-thresholded gates read comparable numbers across markets. No rate available
+    -> the fields are DROPPED and the domains read partial/unavailable (absent beats wrong)."""
+    ccy = (feats.pop("_currency", None) or currency or "USD").upper()
+    if ccy == "USD" or not any(k in feats for k in _USD_SEMANTICS_KEYS):
+        return
+    rate = fx.usd_rate(ccy)
+    if rate is None:
+        for key in _USD_SEMANTICS_KEYS:
+            feats.pop(key, None)
+        return
+    for key in _USD_SEMANTICS_KEYS:
+        if isinstance(feats.get(key), (int, float)):
+            feats[key] = float(feats[key]) * rate[0]
+
+
 def assemble_features(
     symbol: str,
     *,
@@ -78,8 +106,13 @@ def assemble_features(
     theme: Optional[dict] = None,
     with_fundamentals: bool = True,
     cik: Optional[int] = None,
+    currency: Optional[str] = None,
 ) -> Optional[dict]:
     """Real feature dict for `symbol` from live market data, or None if the series is unusable.
+
+    Works for any market the universe emits (bare US symbols or Yahoo-suffixed ones like `XRO.AX`) - the
+    provider handles the suffix, and the USD-semantics fields are normalised from the listing currency
+    (`currency` param, provider-stated currency winning when present, suffix-implied as the fallback).
 
     Only the market-derived domains are populated; unwired deep domains are left absent on purpose so the
     scorecard marks them `unavailable` (coverage honesty), never a fabricated or defaulted value."""
@@ -138,6 +171,9 @@ def assemble_features(
         if cik:
             for section, vals in fetch_edgar_features(cik).items():
                 feats.setdefault(section, {}).update(vals)
+
+    # Cross-market comparability: cap + dollar-volume to USD (or dropped when no rate exists).
+    _normalise_to_usd(feats, currency or currency_for_symbol(symbol))
 
     # Still deliberately absent (the deep data gate): government contracts, insider/institutional CHANGE,
     # adoption/traction, and the point-in-time delisted-inclusive history. Those domains read `unavailable`

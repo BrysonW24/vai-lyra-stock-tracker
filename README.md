@@ -430,6 +430,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.107.0  2026-08-01  Global ingestion - the dynamic pool goes multi-market, small caps to mega caps, still $0/mo
 0.106.0  2026-08-01  Coverage-honesty fixes from an adversarial audit - a data gap never reads as a low value
 0.105.0  2026-08-01  Real SEC EDGAR fundamentals - the first deep-data domain, built without faking it
 0.104.0  2026-08-01  Model Lab depth - more outcomes, inspectable step logs, a fuller board, and the small-cap universe made real
@@ -553,7 +554,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(122 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(123 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

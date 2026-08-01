@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.107.0] - 2026-08-01
+
+Global ingestion - the dynamic pool goes multi-market, small caps to mega caps, still $0/mo.
+
+### Changed
+
+- The Emerging Winner universe is now multi-market. Alongside the SEC listing (~10k US names), the engine ingests the full ASX listing (~1,700 names, small-first) from the free FinanceDatabase reference data - Yahoo-suffixed symbols, delisted names excluded - with the LSE one flag away (EW_MARKETS). Every source is free and keyless, so the DATA-ECONOMICS cash line stays $0/mo.
+- A rotating scan window replaces the fixed front-of-list slice. Each nightly run scans the curated emergence names first, then a deterministic 300-name window that advances daily through every enabled market's FULL pool - so small caps through mega caps ALL get scanned over a stated cycle (~6 weeks at current settings) instead of the back of the listing being unreachable forever. The worker logs "pool N (us=..., au=...), full-coverage cycle ~Nd" every run: coverage stated, never implied.
+- Cross-market numbers made comparable. A new FX step (Frankfurter/ECB reference rates - free, keyless, cached daily) converts non-USD market caps and dollar volumes to USD before the USD-thresholded liquidity gates read them, with an honest degradation ladder: live rate, then cached, then stale, then a logged approximate pin - and when no rate exists at all the fields are dropped, never mislabelled.
+- A second free price source. A Stooq daily-OHLCV provider implements the existing market-data protocol and chains as "yfinance+stooq", so a Yahoo throttle degrades to a fallback fetch instead of a blind scan. Honestly limited: daily bars only, covered markets only - an unmapped market returns an empty miss, never a guess.
+- Coverage honesty held everywhere: EDGAR stays US-only by nature (suffixed names simply have no CIK), a dark market is logged and skipped rather than failing the run, offline still falls back to the curated real names, and the whole path ships with 29 new no-network worker tests (74 total in the touched suites, all green, TZ-safe).
+
 ## [0.106.0] - 2026-08-01
 
 Coverage-honesty fixes from an adversarial audit - a data gap never reads as a low value.
@@ -1499,7 +1511,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.106.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.107.0...HEAD
+[0.107.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.106.0...v0.107.0
 [0.106.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.105.0...v0.106.0
 [0.105.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.104.0...v0.105.0
 [0.104.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.103.0...v0.104.0
