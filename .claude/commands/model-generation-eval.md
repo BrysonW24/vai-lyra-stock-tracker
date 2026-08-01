@@ -80,7 +80,11 @@ Reads: `lyra-evals/model-metrics-history.jsonl`, `.ew-backtest-cache/reports/*.j
 7. **Log the generation.** Append the newest-first entry to
    `lyra-evals/generations/GENERATION-LOG.md`: what changed, results table, **biggest observed
    effect** (the retro field that powers future tuning), watch-outs, grade movement, evidence links.
-   Update the index table in `lyra-evals/boards/README.md`.
+   Update the index table in `lyra-evals/boards/README.md`. Then add the generation's section to
+   `lyra-modelling/GENERATIONS.md` (founder's visual version history - The question / The verdict /
+   plain-ASCII how-it-worked diagram / what it taught us / grades; each section self-contained for
+   copy-out into infographic tools) and flip the previous generation's "in flight" section to its
+   real results.
 
 8. **Publish + ship.** Republish the standing artifact (same URL - it is the founder's bookmark),
    then commit with a version bump per repo rules (`RELEASES` entry in `src/lib/version.ts`,
