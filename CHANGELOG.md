@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.114.0] - 2026-08-02
+
+The evidence sprint: first estimator bake-off, calibration measured to its edges.
+
+### Changed
+
+- First real-data estimator bake-off, run on the development split only: the depth-2 boosted-trees family beat the linear retrain on the identical purged walk-forward (lift 1.34x vs 1.27x, ROC 0.585 vs 0.548, and no zero-hit quarters where the linear model had them) - but failed the 1.5x absolute floor and never threatened the frozen champion. Estimator sophistication regraded D+ to C- on that evidence; the seat is only winnable at generation 3's fresh one-shot holdout. The attempt logged itself to the new trial ledger, refusal included.
+- Calibration measured to its edges from the archived per-row scores: level is near-perfect (calibration-in-the-large -0.05), the 3%-deployment-base restatement survives a 50-draw prevalence-shift stress test (median ECE 0.006, zero statistical rejections), but the recalibration slope is 0.755 with CI90 from 0.57 to 0.98 - the probability spread is mildly overconfident, a deficiency ECE cannot see. The fix seam shipped inert: artifacts can now carry a logit-linear calibration block (validated at load, monotone by construction so rankings never change, absent means byte-identical legacy behaviour) - whether generation 3 turns it on is a standing-loop decision, not a hot patch.
+- The delisted-data probe settled a roadmap question with evidence: the free price source does NOT serve delisted histories (SVB Financial and First Republic return nothing, and recycled tickers are an identity trap) - so killing survivorship bias, the binding data constraint, requires a paid corpus source or a CIK-anchored EDGAR+OTC assembly. Recorded in the report card so the decision is made deliberately, not discovered mid-build.
+
 ## [0.113.0] - 2026-08-02
 
 Valid statistics for the fight: paired tests, weak calibration, an attempt ledger.
@@ -1570,7 +1580,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.113.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.114.0...HEAD
+[0.114.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.113.0...v0.114.0
 [0.113.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.112.0...v0.113.0
 [0.112.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.111.0...v0.112.0
 [0.111.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.110.0...v0.111.0

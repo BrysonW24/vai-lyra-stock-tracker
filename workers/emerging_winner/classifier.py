@@ -110,6 +110,13 @@ class TrainedModel:
     weights: Optional[list[float]] = None
     bias: float = 0.0
     boost: Optional[dict] = None
+    # Optional post-hoc probability calibration carried BY THE ARTIFACT (absent = identity, all
+    # existing artifacts unchanged). Motivated by the gen-2 weak-calibration finding: recalibration
+    # slope 0.755 CI90 [0.57, 0.98] - the spread is mildly overconfident. A slope correction is a
+    # gen-3 candidate that must EARN its way in through the standing loop; this seam only makes
+    # that evaluation a data decision instead of a code fork. {"slope": s, "intercept": a} applied
+    # as sigmoid(a + s * logit(p_raw)).
+    calibration: Optional[dict] = None
 
 
 _CHAMPION: Optional[TrainedModel] = None
@@ -130,6 +137,14 @@ def _read_model(path: str) -> Optional[TrainedModel]:
             "provenance": data.get("provenance", ""),
             "estimator": estimator,
         }
+        cal = data.get("probabilityCalibration")
+        if cal is not None:
+            if (not isinstance(cal, dict) or cal.get("type") != "logit_linear"
+                    or not isinstance(cal.get("slope"), (int, float))
+                    or not isinstance(cal.get("intercept"), (int, float))
+                    or cal["slope"] <= 0):
+                return None  # a malformed calibration block must never silently serve raw probabilities
+            common["calibration"] = {"slope": float(cal["slope"]), "intercept": float(cal["intercept"])}
         if estimator == "boosted_stumps":
             boost = data["boost"]
             if not isinstance(boost, dict) or "trees" not in boost:
@@ -167,9 +182,25 @@ def _predict_trained(model: TrainedModel, x: list[float]) -> float:
     if model.estimator == "boosted_stumps" and model.boost is not None:
         from .stump_boost import predict_boosted
 
-        return predict_boosted(model.boost, x)
-    xs = [(x[i] - model.mean[i]) / (model.std[i] or 1.0) for i in range(len(x))]
-    return _sigmoid(model.bias + sum(w * xi for w, xi in zip(model.weights, xs)))
+        p = predict_boosted(model.boost, x)
+    else:
+        xs = [(x[i] - model.mean[i]) / (model.std[i] or 1.0) for i in range(len(x))]
+        p = _sigmoid(model.bias + sum(w * xi for w, xi in zip(model.weights, xs)))
+    return _apply_calibration(model, p)
+
+
+def _apply_calibration(model: TrainedModel, p: float) -> float:
+    """Artifact-carried logit-linear recalibration; identity when the artifact carries none.
+    Monotone by construction (slope > 0 is enforced at load), so rankings are untouched - only the
+    probability SPREAD changes, which is exactly what the slope-0.755 finding calls for."""
+    if model.calibration is None:
+        return p
+    import math
+
+    eps = 1e-9
+    p = max(eps, min(1 - eps, p))
+    z = math.log(p / (1 - p))
+    return _sigmoid(model.calibration["intercept"] + model.calibration["slope"] * z)
 
 
 # --- inference dispatcher -------------------------------------------------------------------------

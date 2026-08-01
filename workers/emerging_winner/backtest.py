@@ -969,15 +969,20 @@ EVIDENCE_GRADES = {
                 "(no more zero-hit regimes). Still a survivor-biased optimistic bound - a strong "
                 "research-queue edge, not a tradeable signal."},
         {"dimension": "Calibration", "grade": "A-",
-         "why": "ECE 0.017 on the untouched gen-2 holdout at corpus prevalence; deployment-prevalence "
-                "recalibration is the remaining step."},
+         "why": "ECE 0.017 on the untouched gen-2 holdout; level near-perfect (calibration-in-the-"
+                "large -0.05) and the 3%-base restatement transfers (median ECE 0.006 across 50 "
+                "prevalence-shift draws). Measured gap to A: recalibration slope 0.755 CI90[0.57, "
+                "0.98] - the spread is mildly overconfident; a slope-corrected artifact rides the "
+                "gen-3 standing loop, and live-ledger validation remains."},
         {"dimension": "Process sophistication", "grade": "A",
          "why": "Purged walk-forward, one-shot holdout per corpus generation, symbol-clustered CIs, "
                 "drift fixtures, corpus integrity hashes, audited promotion, the nightly outcome-"
                 "maturation loop-closer, and a scheduled monthly re-eval cadence."},
-        {"dimension": "Estimator sophistication", "grade": "D+",
-         "why": "Deliberately basic 11-feature logistic. The gen-3 challenger (nonlinear, on the "
-                "sponsorship-filled corpus) is the earn-gated upgrade path."},
+        {"dimension": "Estimator sophistication", "grade": "C-",
+         "why": "Two families now run the full honest lifecycle. On gen-2 dev walk-forward the "
+                "depth-2 boosted trees beat the linear retrain (lift 1.34x vs 1.27x, ROC 0.585 vs "
+                "0.548, no zero-hit cohorts) but failed the 1.5x floor and never threatened the "
+                "frozen champion - the seat is unearned until a gen-3 fair fight is won."},
         {"dimension": "Data depth", "grade": "C-",
          "why": "7 of 10 domains now carry real data in the corpus (theme via SEC SIC, market regime, "
                 "quarterly EDGAR fundamentals); Form 4 insider flow is live and its historical fill is "

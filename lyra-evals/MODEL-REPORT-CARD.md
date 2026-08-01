@@ -19,18 +19,23 @@ only moves on evidence.
 | Dimension | Grade | Why |
 |---|---|---|
 | **Accuracy (real, out-of-time)** | **B-** (was C+) | Gen-2 holdout: lift 1.94x CI90[1.55, 2.29] at top-5% (25.97% precision vs 13.4% base), ROC-AUC 0.592, worst quarterly cohort 0.20 - no more zero-hit regimes. The jump from gen-1 (1.72x, worst 0.11) came from DATA: hot-SIC theme membership + the market regime entering the feature set. Still a survivor-biased optimistic bound - a strong research-queue edge, not a tradeable signal. |
-| **Calibration** | **A-** (was B+) | ECE 0.017 on the untouched gen-2 holdout at corpus prevalence. Deployment-prevalence recalibration is the remaining step to a clean A. |
+| **Calibration** | **A-** (was B+) | ECE 0.017 on the untouched gen-2 holdout; calibration-in-the-large -0.05 (level near-perfect); Spiegelhalter p 0.37; the 3%-base restatement transfers under a 50-draw prevalence-shift stress test (median ECE 0.006, zero rejections). Measured gap to A: recalibration slope 0.755 CI90[0.57, 0.98] - the spread is mildly overconfident, invisible to ECE. Path: artifact-carried slope correction (seam shipped, inert, load-validated, monotone) earning its way through the gen-3 loop, plus live-ledger validation. |
 | **Sophistication - process** | **A** (was A-) | Everything from gen-1 (purged walk-forward, one-shot holdout per corpus generation, symbol-clustered CIs, floor gates, drift fixtures, integrity hashes, audited promotion) PLUS the two pieces that closed the loop: the nightly outcome-maturation job (migration 057; live ledger rows now mature into real training + calibration pairs, sharing the corpus's exact label maths) and the scheduled monthly re-eval cadence (model-eval-cadence.yml). Known protocol note: dev-split champion-vs-challenger comparisons are in-sample-flattered once a real-data champion is deployed - the holdout is the only fair fight, and the reports say so. |
-| **Sophistication - estimator** | **D+** | Unchanged: an 11-feature stdlib logistic. The gen-2 cycle showed the frontier is NOT here yet (a retrained challenger with the new features failed floors on dev walk-forward while the incumbent improved on the richer inputs); the earn-gated upgrade is the gen-3 nonlinear challenger on the sponsorship-filled corpus. |
+| **Sophistication - estimator** | **C-** (was D+) | Two estimator families now run the full honest lifecycle. First real-data bake-off (gen-2 dev, identical purged walk-forward): depth-2 boosted trees lift 1.344x / ROC 0.585 / worst cohort 0.055 vs the linear retrain's 1.27x / 0.548 / 0.000 - the nonlinear family wins the family fight but fails the 1.5x absolute floor and does not threaten the frozen champion (in-sample-flattered 1.75x on the same windows). The seat is earned only by winning gen-3's fresh one-shot holdout on the sponsorship-filled corpus. |
 | **Sophistication - data** | **C-** (was D) | 7 of 10 domains now carry real data in the corpus: technical, accumulation, liquidity, business quality (now QUARTERLY EDGAR revenue growth, matching live semantics), capital, theme (SEC SIC, outcome-independent - 80 hot-theme members, 2,316 rows), narrative (benchmark regime, all rows). Sponsorship is live in production (real Form 4 net-buy) with the historical fill running. Still survivor-biased, still no delisted names - the binding constraint stands. |
 | **Honesty of presentation** | **A** | Every caveat travels with every number: provenance in the artifact, survivorship + curation caveats in corpus meta and reports, the in-app Evidence surface renders it all from the generated evidence pack, shadow-live gating intact, surfacing not earned and said so. |
 
 **Overall: B- predictive power on an A process, now capped at C- data.** Gen-2 proved the grade
 thesis empirically: the accuracy jump came entirely from lighting data domains, not from tuning -
 and the gates correctly refused a retrained challenger that did not beat the incumbent on the
-holdout (1.91x vs 1.94x, CIs overlapping). Remaining path to A across the board: sponsorship-filled
-gen-3 corpus, the nonlinear estimator earn-gate, deployment-prevalence recalibration, and the
-delisted-inclusive universe.
+holdout (paired delta-lift -0.02, CI90 [-0.24, +0.28], no detectable difference - the must-beat
+rule keeps the incumbent; the earlier "CIs overlapping" phrasing was the invalid overlap habit,
+retired in v0.113.0 in favour of the paired test). Remaining path to A across the board:
+sponsorship-filled gen-3 corpus, the nonlinear estimator earn-gate (dev evidence now in its
+favour), slope-corrected calibration through the standing loop, live-ledger validation, and the
+delisted-inclusive universe - where the free-source probe was decisive: yfinance does NOT serve
+delisted histories (SIVB and FRC return nothing; recycled tickers like BBBY are an identity trap),
+so killing survivorship requires a paid corpus source or a CIK-anchored EDGAR+OTC assembly.
 
 ### Deterministic reference scorecard (M1 composite / fallback classifier)
 

@@ -71,8 +71,29 @@ needle more than re-fitting.
   behind any confirmed number is auditable. Gen-1 and gen-2 predate the ledger; their attempt
   counts are reconstructed only in the research docs.
 
-**Grades:** Accuracy B- · Calibration A- · Process A · Estimator D+ · Data C- · Honesty A
-(from C+ / B+ / A- / D+ / D / A at gen 1).
+**Weak-calibration measurement (added 2026-08-02, from the archived per-row scores - no model
+re-selection involved):** the champion on the gen-2 holdout has calibration-in-the-large -0.05
+(level essentially perfect), Spiegelhalter z -0.90 / p 0.37 (moderate calibration not rejected),
+but recalibration **slope 0.755, CI90 [0.57, 0.98] by symbol bootstrap - the interval excludes 1**:
+mild overconfidence in the spread that ECE could not see. Prevalence-transfer stress test: after
+odds-rescaling to a 3% deployment base (50 downsampled draws), median ECE 0.006 and 0/50
+Spiegelhalter rejections - the restatement transform transfers at the moderate level. Consequences:
+Calibration stays A- with sharpened requirements for A - (1) slope CI containing 1, or
+slope-corrected serving, at gen-3; (2) live-prevalence validation from the aging ledger. The slope
+shrink (logit scaling by ~0.75) is a candidate gen-3 serving change; it must ride the standing loop
+like any other change, never be hot-patched.
+
+**Estimator bake-off (added 2026-08-02, dev split only - the holdout was not touched):** the
+depth-2 boosted-trees family ran the identical purged walk-forward the logistic retrain ran.
+Result: lift 1.344x / ROC 0.585 / PR-AUC 0.116 / worst cohort 0.055 vs the linear retrain's
+1.27x / 0.548 / 0.106 / 0.000 - the nonlinear family wins the family fight on dev (unpaired;
+per-row WF score archiving is a gen-3 protocol addition) but fails the 1.5x absolute floor and
+does not threaten the frozen champion. Estimator regraded D+ -> C- on this evidence; the seat
+still requires winning gen-3's fresh one-shot holdout. The attempt self-logged to the ledger.
+
+**Grades (regraded 2026-08-02):** Accuracy B- · Calibration A- · Process A · Estimator C- ·
+Data C- · Honesty A (from C+ / B+ / A- / D+ / D / A at gen 1; Estimator moved D+ -> C- on the
+bake-off evidence above).
 
 **Evidence:** `gen-002/` (holdout + dev + compare report snapshots) ·
 `lyra-evals/model-metrics-history.jsonl` record 2 ·
