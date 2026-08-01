@@ -7,9 +7,6 @@ import {
   type ModelStage,
   type PhaseStatus,
 } from '@/lib/models/registry';
-import { RunModelPanel } from '@/components/models/RunModelPanel';
-import type { DashboardData } from '@/types/scanner';
-import type { EmergingWinnerQueue } from '@/lib/emerging-winner/types';
 
 /**
  * The /models surface - Lyra's model catalogue, rendered straight from the registry. Purely
@@ -80,18 +77,16 @@ function ModelCard({ entry }: { entry: ModelEntry }) {
   );
 }
 
-export function ModelsView({ data, ew }: { data: DashboardData; ew: EmergingWinnerQueue }) {
+export function ModelsView() {
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6">
+    <div className="w-full">
       <header>
-        <h1 className="text-xl font-semibold text-white">Models</h1>
+        <h2 className="text-lg font-semibold text-white">Models &amp; methods</h2>
         <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-white/60">
           Every model in Lyra, with its honest status. The deterministic engine decides; models inform.
           Research only - nothing here recommends a trade or prints a price target.
         </p>
       </header>
-
-      <RunModelPanel signals={data.signals} tickers={data.tickers} mode={data.mode} ew={ew} />
 
       <div
         role="note"

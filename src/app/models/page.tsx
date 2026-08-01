@@ -1,5 +1,5 @@
 import { AppShell } from '@/components/AppShell';
-import { ModelsView } from '@/components/models/ModelsView';
+import { ModelLab } from '@/components/models/ModelLab';
 import { getDashboardData } from '@/lib/data';
 import { loadEmergingWinnerQueue } from '@/lib/emerging-winner/load';
 
@@ -15,7 +15,7 @@ export default async function ModelsPage() {
   const [data, ew] = await Promise.all([getDashboardData(), loadEmergingWinnerQueue()]);
   return (
     <AppShell data={data}>
-      <ModelsView data={data} ew={ew} />
+      <ModelLab data={data} ew={ew} />
     </AppShell>
   );
 }

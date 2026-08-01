@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.100.0',
+    date: '2026-08-01',
+    title: 'The Models page is now Model Lab - choose the question, watch it run, inspect why',
+    highlights: [
+      'Model Lab replaces the static model catalogue with a real run experience. Pick a model and outcome, narrow by vertical/sector, universe and an optional ticker, then Run. Three tabs - Run, Previous runs, and Models & methods (where the technical catalogue now lives), so you are no longer asked to read a wall of architecture before you can do anything.',
+      'Watch it work. Pressing Run reveals the real pipeline stage by stage with a live timer and real counts - the six Emerging Winner models (domain scorecard, classifier, historical analogue, archetype ranker, risk gates, timing) or the deterministic score drivers. It never fabricates a universe: counts are what the engine actually produced, and the run states plainly whether it is a live computation or a replay over an illustrative reference set.',
+      'Inspect why each name surfaced. Results are a ranked list plus a finding drawer with the domain breakdown, drivers, modelled outlook, resemblances, risks and provenance. Honest by construction - a Live model returns real numbers, a Shadow-live model is loudly labelled illustrative, and a Planned model can never arm a run.',
+      'Four unambiguous availability states everywhere - Live, Shadow-live, Reference, Planned - and your runs are saved on-device under Previous runs so you can reopen any configuration.',
+    ],
+  },
+  {
     version: '0.99.0',
     date: '2026-08-01',
     title: 'Run a model - pick an outcome, narrow the market, and rank your tracked universe',

@@ -37,8 +37,8 @@ export interface ModelGroup {
 export const STAGE_LABEL: Record<ModelStage, string> = {
   live: 'Live',
   'shadow-live': 'Shadow-live',
-  built: 'Built, not surfaced',
-  designed: 'Designed',
+  built: 'Reference',
+  designed: 'Planned',
 };
 
 export const MODEL_GROUPS: ModelGroup[] = [
