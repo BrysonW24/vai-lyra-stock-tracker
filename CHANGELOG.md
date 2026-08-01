@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.111.0] - 2026-08-01
+
+The estimator seam is real: a nonlinear challenger family joins the lifecycle.
+
+### Changed
+
+- The model lifecycle's long-promised "swap the estimator, keep everything else" seam now actually exists: training, walk-forward evaluation, floor gates, frozen artifacts, drift fixtures and serving all take an estimator choice. The first nonlinear family is boosted depth-2 trees (pure stdlib, deterministic, no new dependencies) - depth chosen deliberately, because depth-1 stumps are mathematically unable to represent interactions, and pairwise interactions (fundamentals with liquidity, dilution with momentum) are exactly what the winner hypothesis needs a nonlinear model FOR. Pinned by a test where the tree model cracks an interaction target that provably defeats the logistic.
+- Every honesty property carries over: byte-deterministic training, per-name explanations (each tree is a two-level if/else; per-domain contributions reconcile exactly with the served probability, pinned to 1e-9), rare-positive guards (Newton steps with L2, capped leaf sizes, minimum samples per leaf), and drift fixtures that pin the frozen model to the serving path. Existing logistic artifacts load unchanged.
+- Nothing is promoted by this release - deliberately. The nonlinear challenger earns a seat only through the standing loop on the generation-3 corpus (insider-flow fill in progress): dev walk-forward, a fresh one-shot holdout, absolute floors, and confidence-interval separation against the deployed real-v1 champion. The seam ships first so the bake-off is a data decision, not a code fork.
+
 ## [0.110.0] - 2026-08-01
 
 Evidence in the product, three dark domains lit, and the live loop finally closes.
@@ -1540,7 +1550,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.110.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.111.0...HEAD
+[0.111.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.110.0...v0.111.0
 [0.110.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.109.0...v0.110.0
 [0.109.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.108.0...v0.109.0
 [0.108.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.107.0...v0.108.0

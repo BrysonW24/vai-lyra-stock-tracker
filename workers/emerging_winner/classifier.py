@@ -98,14 +98,18 @@ def _sigmoid(z: float) -> float:
 
 @dataclass
 class TrainedModel:
-    mean: list[float]
-    std: list[float]
-    weights: list[float]
-    bias: float
     feature_order: list[str]
     model_version: str
     dataset_source: str
     provenance: str
+    # Estimator dispatch (the deck's swap seam, real since 2026-08-01): "logistic" carries
+    # mean/std/weights/bias; "boosted_stumps" carries the frozen tree ensemble in `boost`.
+    estimator: str = "logistic"
+    mean: Optional[list[float]] = None
+    std: Optional[list[float]] = None
+    weights: Optional[list[float]] = None
+    bias: float = 0.0
+    boost: Optional[dict] = None
 
 
 _CHAMPION: Optional[TrainedModel] = None
@@ -113,15 +117,27 @@ _CHAMPION_LOADED = False
 
 
 def _read_model(path: str) -> Optional[TrainedModel]:
-    """Read a frozen artifact from disk into a TrainedModel, or None if absent/malformed."""
+    """Read a frozen artifact from disk into a TrainedModel, or None if absent/malformed. Dispatches
+    on estimatorType (absent = the original logistic schema, fully backwards-compatible)."""
     try:
         with open(os.path.abspath(path)) as fh:
             data = json.load(fh)
+        estimator = data.get("estimatorType", "logistic")
+        common = {
+            "feature_order": data["featureOrder"],
+            "model_version": data.get("modelVersion", "trained"),
+            "dataset_source": data.get("dataset", {}).get("source", "unknown"),
+            "provenance": data.get("provenance", ""),
+            "estimator": estimator,
+        }
+        if estimator == "boosted_stumps":
+            boost = data["boost"]
+            if not isinstance(boost, dict) or "trees" not in boost:
+                return None
+            return TrainedModel(boost=boost, **common)
         return TrainedModel(
             mean=data["mean"], std=data["std"], weights=data["weights"], bias=data["bias"],
-            feature_order=data["featureOrder"], model_version=data.get("modelVersion", "trained"),
-            dataset_source=data.get("dataset", {}).get("source", "unknown"),
-            provenance=data.get("provenance", ""),
+            **common,
         )
     except (OSError, KeyError, ValueError, json.JSONDecodeError):
         return None
@@ -148,6 +164,10 @@ def reset_model_cache() -> None:
 
 
 def _predict_trained(model: TrainedModel, x: list[float]) -> float:
+    if model.estimator == "boosted_stumps" and model.boost is not None:
+        from .stump_boost import predict_boosted
+
+        return predict_boosted(model.boost, x)
     xs = [(x[i] - model.mean[i]) / (model.std[i] or 1.0) for i in range(len(x))]
     return _sigmoid(model.bias + sum(w * xi for w, xi in zip(model.weights, xs)))
 
@@ -183,14 +203,26 @@ def _classify_trained(domains: list[DomainResult], model: TrainedModel) -> Class
     similarity = probability * 100.0
     baseline = _sigmoid(model.bias) * 100.0
 
-    # SHAP-like per-domain contributions from the standardized feature x learned weight (10 domains only).
+    # SHAP-like per-domain contributions (10 domains only): standardized feature x learned weight for
+    # the logistic; summed per-feature tree steps for boosted stumps - every estimator that takes a
+    # seat owes the surface a per-name explanation.
     contributions: list[Contribution] = []
-    for i, key in enumerate(FEATURE_ORDER):
-        d = by_key.get(key)
-        if d is None or d.score is None:
-            continue
-        xs = (x[i] - model.mean[i]) / (model.std[i] or 1.0)
-        contributions.append(Contribution(key, labels[i], model.weights[i] * xs))
+    if model.estimator == "boosted_stumps" and model.boost is not None:
+        from .stump_boost import feature_contributions
+
+        contribs = feature_contributions(model.boost, x)
+        for i, key in enumerate(FEATURE_ORDER):
+            d = by_key.get(key)
+            if d is None or d.score is None:
+                continue
+            contributions.append(Contribution(key, labels[i], contribs[i] if i < len(contribs) else 0.0))
+    else:
+        for i, key in enumerate(FEATURE_ORDER):
+            d = by_key.get(key)
+            if d is None or d.score is None:
+                continue
+            xs = (x[i] - model.mean[i]) / (model.std[i] or 1.0)
+            contributions.append(Contribution(key, labels[i], model.weights[i] * xs))
 
     provenance = (
         f"{model.model_version} (shadow-live, dataset={model.dataset_source}): learned logistic over the "

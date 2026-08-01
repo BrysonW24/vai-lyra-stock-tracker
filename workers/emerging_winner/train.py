@@ -79,6 +79,28 @@ def _predict(mean: list[float], std: list[float], w: list[float], b: float, x: l
     return _sigmoid(b + sum(wi * xi for wi, xi in zip(w, xs)))
 
 
+def fit_estimator(estimator: str, X: list[list[float]], y: list[int]):
+    """The one seam the deck promised: swap the estimator, keep the lifecycle. Returns
+    (params_for_artifact, predict_fn). 'logistic' is the incumbent family; 'boosted_stumps' is the
+    first nonlinear challenger family (pure stdlib gradient boosting over depth-1 trees)."""
+    if estimator == "boosted_stumps":
+        from .stump_boost import fit_boosted_stumps, predict_boosted
+
+        model = fit_boosted_stumps(X, y)
+        return {"estimatorType": "boosted_stumps", "boost": model}, (
+            lambda x, _m=model: predict_boosted(_m, x))
+    mean, std = _standardization(X)
+    w, b = fit_logistic(X, y, mean, std)
+    params = {
+        "estimatorType": "logistic",
+        "mean": [round(m, 8) for m in mean],
+        "std": [round(s, 8) for s in std],
+        "weights": [round(wi, 8) for wi in w],
+        "bias": round(b, 8),
+    }
+    return params, (lambda x, _mn=mean, _sd=std, _w=w, _b=b: _predict(_mn, _sd, _w, _b, x))
+
+
 # --- rare-positive validation metrics (spec §8) ---------------------------------------------------
 
 def precision_at_k(y: list[int], p: list[float], k_frac: float = 0.05) -> tuple[float, int]:
@@ -201,6 +223,7 @@ def walk_forward_metrics(
     cohorts: Optional[list] = None,
     horizon: float = PURGE_HORIZON_CALENDAR_DAYS,
     embargo: float = PURGE_EMBARGO_CALENDAR_DAYS,
+    estimator: str = "logistic",
 ) -> dict:
     """Walk-forward: train on prior folds, test on the next; out-of-sample only. When real timestamps are
     supplied (`times` - CALENDAR ordinals from predicted_at) the split is PURGED + EMBARGOED so a 12-month
@@ -236,11 +259,10 @@ def walk_forward_metrics(
         Xte, yte = Xs[train_end:test_end], ys[train_end:test_end]
         if not Xte or not Xtr or sum(ytr) == 0:
             continue
-        mean, std = _standardization(Xtr)
-        w, b = fit_logistic(Xtr, ytr, mean, std)
+        _params, predict_fn = fit_estimator(estimator, Xtr, ytr)
         base_rate = sum(ytr) / len(ytr)
         for j in range(train_end, test_end):
-            oos_p.append(_predict(mean, std, w, b, Xs[j]))
+            oos_p.append(predict_fn(Xs[j]))
             oos_y.append(ys[j])
             baseline_p.append(base_rate)
             oos_cohort.append(cs[j] if cs is not None else f"fold{f}")
@@ -273,9 +295,10 @@ def _build_model_matrix(ds: dict) -> tuple[list[list[float]], list[int]]:
     return X, ds["y"]
 
 
-def _fixture_from_scores(scores: list, mean: list, std: list, w: list, b: float, kind: str) -> dict:
+def _fixture_from_scores(scores: list, predict_fn, kind: str) -> dict:
     """One drift fixture: raw domain scores (None = unavailable) -> the exact probability the deployed
-    classifier must reproduce. Built through the same impute/completeness/vector path the classifier uses."""
+    classifier must reproduce. Built through the same impute/completeness/vector path the classifier
+    uses; estimator-agnostic (the fixture pins whatever predict_fn the artifact freezes)."""
     feats: list[float] = []
     present = 0
     for s in scores:
@@ -289,23 +312,23 @@ def _fixture_from_scores(scores: list, mean: list, std: list, w: list, b: float,
     return {
         "scores": scores,
         "completeness": round(completeness, 4),
-        "probability": round(_predict(mean, std, w, b, vec), 8),
+        "probability": round(predict_fn(vec), 8),
         "kind": kind,
     }
 
 
-def _random_fixtures(mean: list, std: list, w: list, b: float) -> list[dict]:
+def _random_fixtures(predict_fn) -> list[dict]:
     """Ten seeded random fixtures across the input space (~25% domains missing, matching coverage reality)."""
     import random
     out = []
     for fs in [7, 99, 123, 512, 2026, 31, 8, 404, 61, 777]:
         rng = random.Random(fs)
         scores = [None if rng.random() < 0.25 else round(rng.uniform(0, 100), 1) for _ in FEATURE_ORDER]
-        out.append(_fixture_from_scores(scores, mean, std, w, b, "random"))
+        out.append(_fixture_from_scores(scores, predict_fn, "random"))
     return out
 
 
-def _boundary_fixtures(mean: list, std: list, w: list, b: float) -> list[dict]:
+def _boundary_fixtures(predict_fn) -> list[dict]:
     """Engineered CORNER fixtures - extremes + coverage transitions - not just random rows. Random sampling
     essentially never lands on a boundary, so a guard built only from random rows can pass while a real
     boundary bug ships. This pins the logistic's input corners now; when the estimator becomes a tree
@@ -321,7 +344,7 @@ def _boundary_fixtures(mean: list, std: list, w: list, b: float) -> list[dict]:
         [100.0] + [None] * (d - 1),              # a single strong domain, rest missing (thin read)
         [0.0] + [None] * (d - 1),                # a single weak domain, rest missing
     ]
-    return [_fixture_from_scores(c, mean, std, w, b, "boundary") for c in corners]
+    return [_fixture_from_scores(c, predict_fn, "boundary") for c in corners]
 
 
 def _floor_reasons(
@@ -364,6 +387,7 @@ def train_and_export(
     provenance_note: Optional[str] = None,
     model_version: Optional[str] = None,
     trained_at: Optional[str] = None,
+    estimator: str = "logistic",
 ) -> dict:
     """Train the classifier on the current dataset (real ledger rows if matured, else bootstrap), backtest
     with a PURGED + EMBARGOED walk-forward when timestamps exist, fit the final model on all data, and freeze
@@ -376,11 +400,11 @@ def train_and_export(
     ds = load_training_dataset(predictions, outcomes, n_bootstrap=n_bootstrap, seed=seed,
                                source_label=source_label, provenance_note=provenance_note)
     X, y = _build_model_matrix(ds)
-    metrics = walk_forward_metrics(X, y, folds=folds, times=ds.get("times"), cohorts=ds.get("cohorts"))
+    metrics = walk_forward_metrics(X, y, folds=folds, times=ds.get("times"), cohorts=ds.get("cohorts"),
+                                   estimator=estimator)
 
-    mean, std = _standardization(X)
-    w, b = fit_logistic(X, y, mean, std)
-    fixtures = _random_fixtures(mean, std, w, b) + _boundary_fixtures(mean, std, w, b)
+    est_params, predict_fn = fit_estimator(estimator, X, y)
+    fixtures = _random_fixtures(predict_fn) + _boundary_fixtures(predict_fn)
 
     # Read the incumbent champion (if any) so the gate can block a material regression, not just an absolute
     # floor breach. Any read failure degrades to "no incumbent" - the absolute floor still applies.
@@ -402,16 +426,18 @@ def train_and_export(
         "reasons": reasons,
     }
 
+    algorithm = (
+        "boosted stumps (stdlib Newton gradient boosting, depth-1 trees) over 10 domain scores + completeness"
+        if estimator == "boosted_stumps"
+        else "logistic-regression (stdlib GD, L2) over 10 domain scores + completeness"
+    )
     payload = {
         "version": ARTIFACT_VERSION,
         "modelVersion": model_version or MODEL_VERSION,
         "trainedAt": trained_at or TRAINED_AT,
-        "algorithm": "logistic-regression (stdlib GD, L2) over 10 domain scores + completeness",
+        "algorithm": algorithm,
         "featureOrder": FEATURE_ORDER_MODEL,
-        "mean": [round(m, 8) for m in mean],
-        "std": [round(s, 8) for s in std],
-        "weights": [round(wi, 8) for wi in w],
-        "bias": round(b, 8),
+        **est_params,
         "metrics": metrics,
         "floor": floor,
         "dataset": {"source": ds["source"], "n": ds["n"], "provenance": ds["provenance"]},
