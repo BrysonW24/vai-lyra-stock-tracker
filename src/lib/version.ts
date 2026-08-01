@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.106.0',
+    date: '2026-08-01',
+    title: 'Coverage-honesty fixes from an adversarial audit - a data gap never reads as a low value',
+    highlights: [
+      'An adversarial audit of the new visualisations (each dimension a skeptic reading the code, then verifying its own findings) came back clean on the things that matter most - no fabricated values, no mis-attributed data, no over-claimed feature - and caught two places where a data GAP could visually read as a low VALUE. Both are now fixed.',
+      'The 10-domain radar no longer folds unavailable domains into the filled shape. Previously an unmeasured domain was plotted at the centre (radius 0), so a name with, say, 7 of 10 domains not-yet-sourced collapsed to a small wedge that read as broadly-weak. Now only covered domains form the shape; a gap is drawn as a dashed spoke with a dimmed label - explicitly "not measured", never a zero.',
+      'The opportunity map no longer draws a name whose market cap is not sourced at the smallest-bubble size (which read as "smallest company" against a legend that says bubble = market cap). Unsourced-cap names are now drawn hollow at a neutral size, with a "hollow = cap not sourced" note in the legend.',
+      'Regression tests pin both: the radar plots no value vertex for an unavailable domain, and a null-cap bubble renders hollow. The honesty rule the whole app runs on - an unavailable value is shown as an explicit gap, never a low number - now holds across every chart.',
+    ],
+  },
+  {
     version: '0.105.0',
     date: '2026-08-01',
     title: 'Real SEC EDGAR fundamentals - the first deep-data domain, built without faking it',

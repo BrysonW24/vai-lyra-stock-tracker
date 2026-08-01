@@ -8,7 +8,9 @@ import { riskColor, capRadius, fmtCap } from './scale';
  * (how much the name looks like past winners), Y = risk headroom (100 - risk penalty, so higher = a
  * cleaner risk profile). Bubble size = market cap when sourced (log scale), else data completeness.
  * Colour = the risk-gate verdict. The top-right is the sweet spot: strong resemblance AND clean risk.
- * Everything plotted is a real field from the run - no synthetic axis. Click a bubble to inspect.
+ * Everything plotted is a real field from the run - no synthetic axis. A name whose market cap is not
+ * sourced is drawn HOLLOW at a neutral radius (never the smallest-real-cap size), so a data gap never
+ * reads as "smallest company". Click a bubble to inspect.
  */
 
 const W = 360;
@@ -28,6 +30,7 @@ interface Bubble {
   x: number;
   y: number;
   radius: number;
+  capKnown: boolean;
   color: string;
 }
 
@@ -48,8 +51,12 @@ export function OpportunityMap({
     const w = r.ew!;
     const x = w.winner_similarity;
     const y = Math.max(0, 100 - w.risk.penalty);
-    const radius = anyCap ? capRadius(r.marketCap) : 5 + w.completeness * 9;
-    return { r, x, y, radius, color: riskColor(w.risk.verdict) };
+    const capKnown = r.marketCap != null;
+    // Size = market cap when known. In a run where cap IS sourced for some, a name whose cap is NOT
+    // sourced is drawn hollow at a neutral radius (never the smallest-real-cap radius), so a data gap
+    // never reads as "smallest company". With no caps sourced at all, size falls back to completeness.
+    const radius = anyCap ? (capKnown ? capRadius(r.marketCap) : 8) : 5 + w.completeness * 9;
+    return { r, x, y, radius, capKnown, color: riskColor(w.risk.verdict) };
   });
 
   // Label the strongest few by resemblance to avoid clutter.
@@ -97,10 +104,11 @@ export function OpportunityMap({
                 cx={xPix(b.x)}
                 cy={yPix(b.y)}
                 r={b.radius}
-                fill={b.color}
-                fillOpacity={active ? 0.55 : 0.28}
+                fill={anyCap && !b.capKnown ? 'none' : b.color}
+                fillOpacity={anyCap && !b.capKnown ? 1 : active ? 0.55 : 0.28}
                 stroke={b.color}
                 strokeWidth={active ? 2 : 1}
+                strokeDasharray={anyCap && !b.capKnown ? '3 2' : undefined}
               />
               {labelled.has(b.r.symbol) || active ? (
                 <text x={xPix(b.x)} y={yPix(b.y) - b.radius - 2} textAnchor="middle" fontSize={8} className="fill-white/80" fontWeight={600}>
@@ -127,6 +135,7 @@ export function OpportunityMap({
           · bubble = {anyCap ? 'market cap' : 'data completeness'}
           {anyCap ? ` (${fmtCap(Math.min(...ew.map((r) => r.marketCap ?? Infinity)))} - ${fmtCap(Math.max(...ew.map((r) => r.marketCap ?? 0)))})` : ''}
         </span>
+        {anyCap && ew.some((r) => r.marketCap == null) ? <span className="text-white/35">· hollow = cap not sourced</span> : null}
       </div>
     </div>
   );

@@ -125,6 +125,15 @@ describe('DomainRadar', () => {
     render(<DomainRadar domains={domains()} focus={['theme']} />);
     expect(screen.getByRole('img', { name: /radar/i })).toBeTruthy();
   });
+
+  it('never plots an unavailable domain as a value (gap = dashed spoke, no zero vertex)', () => {
+    // domains() has 2 covered (technical, theme) + 1 unavailable (government).
+    const { container } = render(<DomainRadar domains={domains()} />);
+    // Only covered domains get a value dot - the gap has no vertex on the value axis.
+    expect(container.querySelectorAll('circle').length).toBe(2);
+    // The unavailable domain's spoke is drawn dashed (explicit "not measured").
+    expect(container.querySelector('line[stroke-dasharray]')).toBeTruthy();
+  });
 });
 
 describe('LeaderboardHeatmap', () => {
@@ -141,6 +150,13 @@ describe('OpportunityMap', () => {
     render(<OpportunityMap results={[labResult('AAA', 90, 1e9), labResult('BBB', 30, 2e8)]} />);
     expect(screen.getByRole('img', { name: /opportunity map/i })).toBeTruthy();
     expect(screen.getByText('AAA')).toBeTruthy();
+  });
+
+  it('draws a null-cap bubble hollow, not as the smallest real cap', () => {
+    // Mixed run: AAA has a sourced cap, NC does not - NC must not read as the smallest company.
+    const { container } = render(<OpportunityMap results={[labResult('AAA', 90, 1e9), labResult('NC', 40, null)]} />);
+    const hollow = [...container.querySelectorAll('circle')].some((c) => c.getAttribute('fill') === 'none');
+    expect(hollow).toBe(true);
   });
 });
 
