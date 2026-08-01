@@ -23,6 +23,14 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.115.1',
+    date: '2026-08-02',
+    title: 'Backfill at the ceiling',
+    highlights: [
+      'Founder-approved: the Form 4 insider backfill now paces at the SEC\'s published maximum of 10 requests per second - the 0.1-second floor between requests makes exceeding the ceiling impossible by construction. Remaining backfill time drops to roughly 5-6 hours.',
+    ],
+  },
+  {
     version: '0.115.0',
     date: '2026-08-02',
     title: 'Tuning under discipline: a pre-committed sweep picks the gen-3 challenger config',

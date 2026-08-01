@@ -6,6 +6,14 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.115.1] - 2026-08-02
+
+Backfill at the ceiling.
+
+### Changed
+
+- Founder-approved: the Form 4 insider backfill now paces at the SEC's published maximum of 10 requests per second - the 0.1-second floor between requests makes exceeding the ceiling impossible by construction. Remaining backfill time drops to roughly 5-6 hours.
+
 ## [0.115.0] - 2026-08-02
 
 Tuning under discipline: a pre-committed sweep picks the gen-3 challenger config.
@@ -1590,7 +1598,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.1...HEAD
+[0.115.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.0...v0.115.1
 [0.115.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.114.0...v0.115.0
 [0.114.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.113.0...v0.114.0
 [0.113.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.112.0...v0.113.0
