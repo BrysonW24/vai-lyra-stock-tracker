@@ -140,3 +140,27 @@ The same store serves training and live scoring, killing the train/serve skew cl
 _Grade trajectory this implies: data D -> A over steps 1-4; estimator D+ -> B+ over steps 5-8;
 accuracy C+ -> B target at step 9 (the honest ceiling for 12-month multi-bagger prediction is
 modest lift, well-calibrated, regime-robust - anyone promising more is selling something)._
+
+## Evidence addenda (dated - what the loop has since established)
+
+**2026-08-02 (gen-2 close + evidence sprint):**
+
+- Step 1 is in flight: the Form 4 backfill (~205k filings, 991 names, 2015-06) runs at the SEC's
+  published fair-use pace. **Gen-4 sourcing note:** when the universe widens beyond 991 names,
+  ingest the SEC's bulk **Insider Transactions Data Sets** (quarterly pre-parsed Form 3/4/5
+  tables since 2006) for training history, and keep the raw-XML parser solely for live parity -
+  per-document fetching does not scale to the full ~10k listing.
+- Step 3 scoping is now evidence-based: the free price source does NOT serve delisted histories
+  (SIVB/FRC empty; recycled tickers like BBBY are an identity trap). The delisted universe
+  requires a paid corpus source (Sharadar-class) or a CIK-anchored EDGAR+OTC assembly. Identity
+  must be CIK-anchored, never ticker-anchored.
+- Step 5 has first evidence: depth-2 boosted trees beat the linear retrain on gen-2 dev
+  walk-forward (1.393x tuned vs 1.27x, config pre-committed and frozen for gen-3) but sit below
+  the 1.5x floor - consistent with this document's thesis that data unlocks precede estimator
+  wins.
+- Step 7 sharpened: weak calibration is now measured (champion slope 0.755 CI90[0.57, 0.98],
+  level -0.05, 3%-base restatement transfers). The artifact-carried logit-linear correction seam
+  exists, inert; turning it on is a standing-loop decision at gen-3.
+- Protocol upgrades now standing: paired-difference gate (never CI overlap), attempt ledger
+  (every trial logged, refusals included), per-generation per-row score archiving (enables
+  paired cross-generation tests from gen-2 onward).
