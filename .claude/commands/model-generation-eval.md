@@ -28,6 +28,23 @@ Reads: `lyra-evals/model-metrics-history.jsonl`, `.ew-backtest-cache/reports/*.j
   corrected (gen-2's tier flip) ships flagged, with a stability check queued - never as a claim.
 - **Refused challengers are shown with their numbers.** The system saying "no" is evidence of
   discipline; hiding it would be the dishonest thing.
+- **The difference verdict is the PAIRED test, never CI overlap.** Two marginal CIs can overlap
+  while the paired difference is decisive; overlap-eyeballing will eventually block a genuinely
+  better challenger silently. `compare` and `eval` emit `paired_delta_ci` (paired symbol-clustered
+  bootstrap on identical rows); gate on `lift_at_k.ci_excludes_zero`. On a tie the pre-committed
+  must-beat rule keeps the incumbent.
+- **Archive per-row scores every generation** (`gen-NNN/scores-holdout.jsonl`): without them the
+  next generation cannot run a paired CROSS-generation test and the "improvement came from data"
+  claim stays marginal-only (the gen-1 vs gen-2 lesson).
+- **Every attempt is logged**, not just promotions: retrain / compare / holdout scoring /
+  promote / refuse all append to `lyra-evals/model-attempt-log.jsonl`. Temporal rules cannot see
+  selection bias across the search; the trial count is the cheapest guard that can.
+- **Lead discrimination with average precision (PR-AUC), not ROC-AUC.** At a 13% base rate ROC-AUC
+  is systematically flattering under imbalance; report it, but the headline discrimination stat on
+  boards and cards is PR-AUC against the random-ranker floor (= the base rate).
+- **Report weak calibration, not only ECE.** ECE verifies moderate calibration; the
+  `calibration_weak` block (slope, intercept, Spiegelhalter z) is where prevalence-shift
+  overconfidence shows up. Slope 1 / intercept 0 is the target vocabulary.
 
 ## Stages (each ends at a gate)
 

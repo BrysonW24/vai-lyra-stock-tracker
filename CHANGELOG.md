@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.113.0] - 2026-08-02
+
+Valid statistics for the fight: paired tests, weak calibration, an attempt ledger.
+
+### Changed
+
+- The champion-vs-challenger verdict now rests on a paired symbol-clustered bootstrap of the difference on identical rows, gated on the delta interval excluding zero - replacing the invalid habit of eyeballing two overlapping confidence intervals, which can silently block a genuinely better challenger. Applied retroactively to generation 2: delta-lift -0.02, CI90 from -0.24 to +0.28, no detectable difference - the refusal stands via the pre-committed must-beat rule, now on sound statistics. A pin constructs the exact failure case (marginals overlap, paired test detects) so the invalid comparison can never quietly return.
+- Every metric block now reports weak calibration alongside ECE: recalibration slope and intercept plus Spiegelhalter's z with a p-value - the intercept is the corpus-prevalence-vs-deployment-prevalence problem measured instead of asserted. New behavioral pins test the model itself, not just the pipeline: identity invariance (a ticker can never move a score), batch invariance (no cross-row coupling can sneak into serving), and directional-expectation sweeps that assert sign-consistency with learned weights - with technical and liquidity explicitly excluded from positive expectations because their negative signs are validated findings, not bugs.
+- A selection-bias ledger (lyra-evals/model-attempt-log.jsonl) now records every retrain, comparison, holdout scoring and promotion decision - including refusals - so the trial count behind any confirmed number is auditable. Per-row holdout scores are archived each generation from now on, enabling paired cross-generation tests that generation 1 never made possible.
+
 ## [0.112.0] - 2026-08-02
 
 Model evaluation operationalized: generation vs generation, forever.
@@ -1560,7 +1570,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.112.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.113.0...HEAD
+[0.113.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.112.0...v0.113.0
 [0.112.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.111.0...v0.112.0
 [0.111.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.110.0...v0.111.0
 [0.110.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.109.0...v0.110.0

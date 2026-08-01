@@ -34,8 +34,16 @@ Rules:
 | model | lift@5% | CI90 | ECE | verdict |
 |---|---|---|---|---|
 | champion (real-v1, frozen) | 1.936x | [1.55, 2.29] | 0.017 | confirmed higher; stays champion |
-| gen-2 retrained challenger | 1.912x | [1.59, 2.32] | 0.048 | REFUSED (dev WF 1.27x; did not beat champion) |
+| gen-2 retrained challenger | 1.912x | [1.59, 2.32] | 0.048 | REFUSED (dev WF 1.27x; paired test below) |
 | reference scorecard | 0.678x | [0.49, 0.92] | 0.248 | still refuted as a ranker |
+
+**Paired difference test (added retroactively 2026-08-02, methodology upgrade):** the original
+refusal note compared the two marginal CIs for overlap, which is not a valid test of difference.
+Re-tested with the paired symbol-clustered bootstrap on identical holdout rows:
+delta-lift (challenger minus champion) = -0.02, CI90 [-0.24, +0.28], does not exclude zero -
+NO detectable difference. The refusal stands via the pre-committed must-beat rule (a tie keeps the
+incumbent), now on valid statistics. From gen-3 the difference verdict is always
+`paired_delta_ci.ci_excludes_zero`, produced automatically by `compare` and `eval`.
 
 **Biggest observed effect:** richer inputs to a frozen model moved holdout lift 1.72x -> 1.94x
 (+0.22, within CI overlap - directional). The champion consumes the new domains only through
@@ -51,10 +59,17 @@ needle more than re-fitting.
 - Champion dev-split numbers are in-sample-flattered post-promotion; holdout is the only fair fight.
 - Calibration improved to ECE 0.017 and every one of 7 holdout quarters beat its own chance rate
   (gen-1's weakest quarter had not).
-- Snapshot caveat: `gen-002/champion-vs-challenger.json` carries a stale gen-1-era `note`
-  ("the synthetic champion never saw ANY real row") - its numbers are gen-2 and correct; the code's
-  note was rewritten after this report was generated. Re-auditors should trust the numbers, not
-  that sentence.
+- Snapshot note: `gen-002/champion-vs-challenger.json` was regenerated 2026-08-02 with the
+  corrected in-sample-flattery note and the paired-delta block (numbers unchanged - the run is
+  deterministic). `gen-002/scores-holdout.jsonl` archives per-row frozen-model scores so gen-3 can
+  run a PAIRED cross-generation test on identical windows; gen-1 never archived scores, which is
+  why champion 1.72x (gen-1) vs 1.94x (gen-2) remains a marginal comparison only - the "the jump
+  came from data" claim is supported (same frozen artifact, same windows, richer features) but its
+  size is untested pairwise, and the gen-1 corpus rows were not archived to fix that after the fact.
+- Selection-bias ledger opened (`lyra-evals/model-attempt-log.jsonl`): every retrain / compare /
+  holdout scoring / promotion decision is now logged, not just promotions, so the trial count
+  behind any confirmed number is auditable. Gen-1 and gen-2 predate the ledger; their attempt
+  counts are reconstructed only in the research docs.
 
 **Grades:** Accuracy B- · Calibration A- · Process A · Estimator D+ · Data C- · Honesty A
 (from C+ / B+ / A- / D+ / D / A at gen 1).

@@ -1,5 +1,5 @@
 {
-  "note": "DEV split, curated names excluded. Identical OOS rows: challenger scored only on its purged (calendar-day) walk-forward test windows; the synthetic champion never saw ANY real row, so the same windows are OOS for it too. A fair ranking protocol on this corpus - NOT an estimate of live edge; the one-shot holdout is the confirmation step.",
+  "note": "DEV split, curated names excluded. The challenger is scored only on its purged (calendar-day) walk-forward test windows. CAUTION reading the incumbent's side: since the real-v1 promotion the deployed champion has TRAINED on dev rows, so its dev numbers here are in-sample-flattered - from gen-2 onward the only fair champion-vs-challenger fight is the one-shot HOLDOUT, never this dev view.",
   "n_oos": 17495,
   "champion": {
     "all": {
@@ -286,6 +286,13 @@
           "n": 1750
         }
       ],
+      "calibration_weak": {
+        "n": 17495,
+        "slope": 0.9782,
+        "intercept": -0.4843,
+        "spiegelhalter_z": -16.6424,
+        "spiegelhalter_p": 0.0
+      },
       "ci_90": {
         "precision_at_k": {
           "p05": 0.1319,
@@ -590,7 +597,14 @@
           "actual": 0.1603,
           "n": 499
         }
-      ]
+      ],
+      "calibration_weak": {
+        "n": 4986,
+        "slope": 0.5931,
+        "intercept": -0.9047,
+        "spiegelhalter_z": -3.9961,
+        "spiegelhalter_p": 0.0001
+      }
     },
     "micro": {
       "n": 1968,
@@ -878,7 +892,14 @@
           "actual": 0.2284,
           "n": 197
         }
-      ]
+      ],
+      "calibration_weak": {
+        "n": 1968,
+        "slope": 0.4646,
+        "intercept": -0.5837,
+        "spiegelhalter_z": 5.5575,
+        "spiegelhalter_p": 0.0
+      }
     }
   },
   "challenger": {
@@ -1166,6 +1187,13 @@
           "n": 1750
         }
       ],
+      "calibration_weak": {
+        "n": 17495,
+        "slope": 0.1837,
+        "intercept": -1.8306,
+        "spiegelhalter_z": 6.2795,
+        "spiegelhalter_p": 0.0
+      },
       "ci_90": {
         "precision_at_k": {
           "p05": 0.0984,
@@ -1470,7 +1498,14 @@
           "actual": 0.1283,
           "n": 499
         }
-      ]
+      ],
+      "calibration_weak": {
+        "n": 4986,
+        "slope": 0.0097,
+        "intercept": -1.9356,
+        "spiegelhalter_z": 11.2704,
+        "spiegelhalter_p": 0.0
+      }
     },
     "micro": {
       "n": 1968,
@@ -1758,8 +1793,41 @@
           "actual": 0.1675,
           "n": 197
         }
-      ]
+      ],
+      "calibration_weak": {
+        "n": 1968,
+        "slope": -0.1368,
+        "intercept": -1.645,
+        "spiegelhalter_z": 17.6536,
+        "spiegelhalter_p": 0.0
+      }
     }
+  },
+  "paired_delta_challenger_minus_champion": {
+    "lift_at_k": {
+      "p05": -0.7084,
+      "p50": -0.4516,
+      "p95": -0.134,
+      "n_boot": 300,
+      "ci_excludes_zero": true
+    },
+    "precision_at_k": {
+      "p05": -0.0654,
+      "p50": -0.0421,
+      "p95": -0.0127,
+      "n_boot": 300,
+      "ci_excludes_zero": true
+    },
+    "pr_auc": {
+      "p05": -0.0378,
+      "p50": -0.0307,
+      "p95": -0.0223,
+      "n_boot": 300,
+      "ci_excludes_zero": true
+    },
+    "point_delta_lift_at_k": -0.4807,
+    "direction": "B_minus_A",
+    "note": "Paired symbol-clustered bootstrap on identical rows. The difference verdict is ci_excludes_zero on lift_at_k - never overlap of two marginal CIs."
   },
   "corpus_caveat": "Survivor-biased corpus: universe = the CURRENT SEC listing, so delisted names are absent, the ruin class is censored, and precision here is an optimistic bound. A second selection bias is disclosed and quarantined: the curated emergence names were hand-picked WITH hindsight (they are in the curated set because they later won), so their rows are flagged `curated`, EXCLUDED from all training, and reported as a separate slice - the random-sample slice is the honest headline. Features are point-in-time (causal indicators; EDGAR facts filtered on filed <= entry date); labels are matured 12-month first-touch outcomes.",
   "corpus_sha256": "a297e8adc5e0d1505f7cde4af7ef5946753f01b11ab96a7759204a7a05d78bb4"

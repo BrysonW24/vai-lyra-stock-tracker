@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.113.0',
+    date: '2026-08-02',
+    title: 'Valid statistics for the fight: paired tests, weak calibration, an attempt ledger',
+    highlights: [
+      'The champion-vs-challenger verdict now rests on a paired symbol-clustered bootstrap of the difference on identical rows, gated on the delta interval excluding zero - replacing the invalid habit of eyeballing two overlapping confidence intervals, which can silently block a genuinely better challenger. Applied retroactively to generation 2: delta-lift -0.02, CI90 from -0.24 to +0.28, no detectable difference - the refusal stands via the pre-committed must-beat rule, now on sound statistics. A pin constructs the exact failure case (marginals overlap, paired test detects) so the invalid comparison can never quietly return.',
+      'Every metric block now reports weak calibration alongside ECE: recalibration slope and intercept plus Spiegelhalter\'s z with a p-value - the intercept is the corpus-prevalence-vs-deployment-prevalence problem measured instead of asserted. New behavioral pins test the model itself, not just the pipeline: identity invariance (a ticker can never move a score), batch invariance (no cross-row coupling can sneak into serving), and directional-expectation sweeps that assert sign-consistency with learned weights - with technical and liquidity explicitly excluded from positive expectations because their negative signs are validated findings, not bugs.',
+      'A selection-bias ledger (lyra-evals/model-attempt-log.jsonl) now records every retrain, comparison, holdout scoring and promotion decision - including refusals - so the trial count behind any confirmed number is auditable. Per-row holdout scores are archived each generation from now on, enabling paired cross-generation tests that generation 1 never made possible.',
+    ],
+  },
+  {
     version: '0.112.0',
     date: '2026-08-02',
     title: 'Model evaluation operationalized: generation vs generation, forever',

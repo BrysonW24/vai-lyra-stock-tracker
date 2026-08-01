@@ -499,6 +499,9 @@ def _metric_block(y: list[int], p: list[float], cohorts: list, k_frac: float = 0
         },
         "by_cohort": by_cohort,
         "calibration": calibration_bins(y, p),
+        # ECE above verifies MODERATE calibration only; this block measures WEAK calibration
+        # (slope/intercept) + a p-value, per the Van Calster hierarchy.
+        "calibration_weak": _weak_calibration(y, p),
     }
     if ci and symbols:
         block["ci_90"] = _symbol_bootstrap_ci(y, p, symbols, k_frac)
@@ -539,6 +542,122 @@ def _symbol_bootstrap_ci(y: list[int], p: list[float], symbols: list[str],
     return {name: {"p05": pct(vals, 0.05), "p50": pct(vals, 0.50), "p95": pct(vals, 0.95),
                    "n_boot": len(vals)}
             for name, vals in stats.items()}
+
+
+def paired_delta_ci(y: list[int], p_a: list[float], p_b: list[float], symbols: list[str],
+                    k_frac: float = 0.05, n_boot: int = 300, seed: int = 11) -> dict:
+    """Paired symbol-clustered bootstrap of (model B minus model A) on IDENTICAL rows.
+
+    Comparing two separately-bootstrapped CIs for overlap is NOT a valid test of difference: two
+    intervals can overlap substantially while the paired difference is decisively one-sided (and the
+    overlap test will eventually block a genuinely better challenger, silently). Both models score
+    the same rows here, so the honest test is the paired one: each draw resamples SYMBOLS (the same
+    clustering unit as _symbol_bootstrap_ci), scores BOTH models on that same resampled set, and
+    records the deltas. Gate on ci_90 excluding 0, not on eyeballing two marginal intervals."""
+    by_sym: dict[str, list[int]] = {}
+    for i, s in enumerate(symbols):
+        by_sym.setdefault(s, []).append(i)
+    keys = sorted(by_sym)
+    rng = random.Random(seed)
+    deltas: dict[str, list[float]] = {"lift_at_k": [], "precision_at_k": [], "pr_auc": []}
+    for _ in range(n_boot):
+        idx: list[int] = []
+        for _k in keys:
+            idx.extend(by_sym[keys[rng.randrange(len(keys))]])
+        yb = [y[i] for i in idx]
+        base = sum(yb) / len(yb) if yb else 0.0
+        if base in (0.0, 1.0):
+            continue
+        pa = [p_a[i] for i in idx]
+        pb = [p_b[i] for i in idx]
+        prec_a, _ = precision_at_k(yb, pa, k_frac)
+        prec_b, _ = precision_at_k(yb, pb, k_frac)
+        deltas["precision_at_k"].append(prec_b - prec_a)
+        deltas["lift_at_k"].append((prec_b - prec_a) / base)
+        deltas["pr_auc"].append(average_precision(yb, pb) - average_precision(yb, pa))
+
+    def pct(vals: list[float], q: float) -> Optional[float]:
+        if not vals:
+            return None
+        vs = sorted(vals)
+        return round(vs[min(len(vs) - 1, int(q * len(vs)))], 4)
+
+    prec_a_pt, _ = precision_at_k(y, p_a, k_frac)
+    prec_b_pt, _ = precision_at_k(y, p_b, k_frac)
+    base_pt = sum(y) / len(y) if y else 0.0
+    out = {}
+    for name, vals in deltas.items():
+        lo, mid, hi = pct(vals, 0.05), pct(vals, 0.50), pct(vals, 0.95)
+        out[name] = {"p05": lo, "p50": mid, "p95": hi, "n_boot": len(vals),
+                     "ci_excludes_zero": (lo is not None and hi is not None
+                                          and (lo > 0 or hi < 0))}
+    out["point_delta_lift_at_k"] = round((prec_b_pt - prec_a_pt) / base_pt, 4) if base_pt > 0 else None
+    out["direction"] = "B_minus_A"
+    out["note"] = ("Paired symbol-clustered bootstrap on identical rows. The difference verdict is "
+                   "ci_excludes_zero on lift_at_k - never overlap of two marginal CIs.")
+    return out
+
+
+def _weak_calibration(y: list[int], p: list[float]) -> dict:
+    """Weak-calibration statistics (Van Calster hierarchy): logistic recalibration slope + intercept
+    of y on logit(p), plus Spiegelhalter's z. ECE verifies MODERATE calibration on binned means; it
+    says nothing about weak calibration, and the intercept is exactly the corpus-prevalence-vs-
+    deployment-prevalence problem measured instead of asserted (slope 1, intercept 0 = ideal)."""
+    import math
+
+    eps = 1e-6
+    lo = [math.log(max(eps, min(1 - eps, pi)) / (1 - max(eps, min(1 - eps, pi)))) for pi in p]
+    if not y or sum(y) in (0, len(y)):
+        return {"n": len(y), "slope": None, "intercept": None,
+                "spiegelhalter_z": None, "spiegelhalter_p": None}
+    # 2-parameter Newton fit: y ~ sigmoid(a + b * logit(p)).
+    a, b = 0.0, 1.0
+    for _ in range(40):
+        g_a = g_b = h_aa = h_ab = h_bb = 0.0
+        for xi, yi in zip(lo, y):
+            mu = 1.0 / (1.0 + math.exp(-(a + b * xi)))
+            r = mu - yi
+            wgt = max(mu * (1 - mu), 1e-9)
+            g_a += r
+            g_b += r * xi
+            h_aa += wgt
+            h_ab += wgt * xi
+            h_bb += wgt * xi * xi
+        det = h_aa * h_bb - h_ab * h_ab
+        if abs(det) < 1e-12:
+            break
+        da = (g_a * h_bb - g_b * h_ab) / det
+        db = (g_b * h_aa - g_a * h_ab) / det
+        a -= da
+        b -= db
+        if abs(da) < 1e-10 and abs(db) < 1e-10:
+            break
+    num = sum((yi - pi) * (1 - 2 * pi) for yi, pi in zip(y, p))
+    den = sum(((1 - 2 * pi) ** 2) * pi * (1 - pi) for pi in p)
+    z = num / math.sqrt(den) if den > 0 else None
+    p_val = round(2 * (1 - 0.5 * (1 + math.erf(abs(z) / math.sqrt(2)))), 4) if z is not None else None
+    return {"n": len(y), "slope": round(b, 4), "intercept": round(a, 4),
+            "spiegelhalter_z": round(z, 4) if z is not None else None, "spiegelhalter_p": p_val}
+
+
+ATTEMPT_LOG = os.path.join(
+    os.path.dirname(__file__), "..", "..", "lyra-evals", "model-attempt-log.jsonl"
+)
+
+
+def _log_attempt(event: str, payload: dict) -> None:
+    """Append EVERY modelling attempt (retrain, compare, holdout scoring, promotion decision) to a
+    durable ledger - not just promotions. Guards the selection-bias hole the temporal rules cannot
+    see: without a trial count, nobody can tell one clean confirmation from the best of forty tries.
+    Wall-clock timestamp is deliberate here (this is an audit log, not a model input)."""
+    from datetime import datetime, timezone
+
+    rec = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "event": event, **payload}
+    try:
+        with open(ATTEMPT_LOG, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(rec, sort_keys=True) + "\n")
+    except OSError as exc:  # a failed audit write must be loud, never fatal to the run
+        logger.warning("attempt log write failed: %s", exc)
 
 
 def deployment_restatement(precision: Optional[float], corpus_base: float,
@@ -624,6 +743,23 @@ def run_eval(cache_dir: str, champion_path: str = CHAMPION_ARTIFACT, k_frac: flo
                               "path": os.path.abspath(champion_path)}
     for name in scored["extras_loaded"]:
         report["models"][name] = slices(scored[f"p_{name}"])
+    # Paired difference test on the headline slice whenever champion + a challenger share the rows.
+    # This (ci_excludes_zero on the delta), NOT overlap of two marginal CIs, is the difference verdict.
+    if scored["champion_loaded"]:
+        for name in scored["extras_loaded"]:
+            report.setdefault("paired_vs_champion", {})[name] = paired_delta_ci(
+                [y[i] for i in random_idx],
+                [scored["p_champion"][i] for i in random_idx],
+                [scored[f"p_{name}"][i] for i in random_idx],
+                [symbols[i] for i in random_idx], k_frac)
+    if rows_filter == "holdout":
+        _log_attempt("holdout_scored", {
+            "corpus_sha256": meta.get("corpus_sha256"),
+            "champion_version": scored.get("champion_version"),
+            "models": sorted(report["models"]),
+            "headline_lift": {name: report["models"][name]["random_sample"].get("lift_at_k")
+                              for name in report["models"]},
+        })
     os.makedirs(os.path.join(cache_dir, "reports"), exist_ok=True)
     suffix = f"-{rows_filter}" if rows_filter else ""
     out_path = os.path.join(cache_dir, "reports", f"eval-report{suffix}.json")
@@ -703,6 +839,14 @@ def run_retrain(cache_dir: str, out_path: str = CHALLENGER_ARTIFACT, folds: int 
     if not payload["floor"]["passed"]:
         logger.warning("challenger FAILED absolute floors: %s - artifact written for inspection at %s "
                        "but MUST NOT be promoted", payload["floor"]["reasons"], out_path)
+    _log_attempt("retrain", {
+        "corpus_sha256": meta.get("corpus_sha256"),
+        "estimator": estimator,
+        "out_path": os.path.abspath(out_path),
+        "wf_lift_at_k": m.get("lift_at_k"),
+        "wf_roc_auc": m.get("oos_auc"),
+        "floor_passed": bool(payload["floor"]["passed"]),
+    })
     return payload
 
 
@@ -785,9 +929,21 @@ def run_compare(cache_dir: str, k_frac: float = 0.05) -> dict:
                      "small": tier_block(oos["p_champ"], "small"), "micro": tier_block(oos["p_champ"], "micro")},
         "challenger": {"all": block(oos["p_chall"]),
                        "small": tier_block(oos["p_chall"], "small"), "micro": tier_block(oos["p_chall"], "micro")},
+        # The valid difference test: paired symbol-clustered bootstrap of (challenger - champion)
+        # on these identical rows. Never judge the fight by overlap of the two marginal CIs above.
+        "paired_delta_challenger_minus_champion": paired_delta_ci(
+            oos["y"], oos["p_champ"], oos["p_chall"], oos["symbol"], k_frac),
         "corpus_caveat": meta["caveat"],
         "corpus_sha256": meta.get("corpus_sha256"),
     }
+    _log_attempt("compare", {
+        "corpus_sha256": meta.get("corpus_sha256"),
+        "champion_lift": comparison["champion"]["all"].get("lift_at_k"),
+        "challenger_lift": comparison["challenger"]["all"].get("lift_at_k"),
+        "paired_delta_lift_ci90": {
+            k: comparison["paired_delta_challenger_minus_champion"]["lift_at_k"].get(k)
+            for k in ("p05", "p95", "ci_excludes_zero")},
+    })
     out_path = os.path.join(cache_dir, "reports", "champion-vs-challenger.json")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fh:
@@ -1089,6 +1245,12 @@ def promote_challenger(challenger_path: str = CHALLENGER_ARTIFACT,
             pass
     if not payload.get("floor", {}).get("passed"):
         if not force_reason:
+            _log_attempt("promote_refused", {
+                "challenger_path": os.path.abspath(challenger_path),
+                "model_version": payload.get("modelVersion"),
+                "reason": "failed floors, no force_reason",
+                "floor": payload.get("floor"),
+            })
             raise SystemExit(f"challenger at {challenger_path} did not pass its floors - not promoting "
                              "(pass an explicit force_reason to override with documentation)")
         payload["promotion"] = {
@@ -1104,6 +1266,12 @@ def promote_challenger(challenger_path: str = CHALLENGER_ARTIFACT,
     logger.info("promoted %s -> %s (modelVersion %s, dataset %s)",
                 challenger_path, champion_path, payload.get("modelVersion"),
                 payload.get("dataset", {}).get("source"))
+    _log_attempt("promote", {
+        "challenger_path": os.path.abspath(challenger_path),
+        "model_version": payload.get("modelVersion"),
+        "forced_over_floor": bool(payload.get("promotion", {}).get("forced_over_floor")),
+        "force_reason": force_reason,
+    })
 
 
 # --------------------------------------------------------------------------------------------------
