@@ -5,7 +5,8 @@
 > (out-of-sample holdout lift@k, currently 1.72x, target ≥2.0x with worst-cohort lift ≥1.0).
 
 _Living document. Regraded after every backtest cycle; history in `model-metrics-history.jsonl`.
-Last graded: 2026-08-01 (corpus `ef1b5c52...`, evidence:
+Last graded: 2026-08-01 **gen-2** (corpus `a297e8ad...` - theme via SEC SIC + market regime lit;
+gen-1 evidence:
 [`2026-08-01-real-history-backtest-and-real-v1-champion.md`](../lyra-modelling/research/2026-08-01-real-history-backtest-and-real-v1-champion.md))._
 
 Grades are letter grades against the job each layer claims to do, not against perfection. A grade
@@ -17,16 +18,19 @@ only moves on evidence.
 
 | Dimension | Grade | Why |
 |---|---|---|
-| **Accuracy (real, out-of-time)** | **C+** | Genuine but modest skill: holdout lift 1.72x CI90[1.38, 2.05] at top-5%, ROC-AUC 0.585, on a survivor-biased corpus (optimistic bound). At a realistic 3% deployment base that restates to ~5.6% top-k precision - a real research-queue edge, nowhere near a tradeable signal. Worst quarterly cohort is thin (0.11): entire regimes produce almost nothing. |
-| **Calibration** | **B+** | ECE 0.042 on untouched holdout; probabilities mean what they say at corpus prevalence. Will need recalibration at deployment prevalence. |
-| **Sophistication - process** | **A-** | Purged walk-forward (calendar-unit spans), embargo, one-shot holdout discipline, symbol-clustered bootstrap CIs, floor gates, drift fixtures, immutable point-in-time ledger design, corpus hash + load-time integrity checks, forced-promotion audit trail. This process layer is genuinely rigorous. |
-| **Sophistication - estimator** | **D+** | Deliberately basic: an 11-feature stdlib logistic over aggregated 0-100 domain scores. No interactions, no nonlinearity, no sequence information, ~5 features effectively alive. The deck's CatBoost/LightGBM ordinal upgrade remains unbuilt. Basic is the honest choice at this data size, but it is basic. |
-| **Sophistication - data** | **D** | The binding constraint. Survivor-biased free-data corpus; 5 of 10 domains constant-absent (government, sponsorship, adoption, narrative, theme); fundamentals are annual-only; no delisted names; no dated theme source. The model can only be as good as this layer. |
-| **Honesty of presentation** | **A** | Every caveat travels with every number: provenance in the artifact, survivorship + curation caveats in corpus meta and reports, shadow-live gating intact, surfacing not earned and said so. |
+| **Accuracy (real, out-of-time)** | **B-** (was C+) | Gen-2 holdout: lift 1.94x CI90[1.55, 2.29] at top-5% (25.97% precision vs 13.4% base), ROC-AUC 0.592, worst quarterly cohort 0.20 - no more zero-hit regimes. The jump from gen-1 (1.72x, worst 0.11) came from DATA: hot-SIC theme membership + the market regime entering the feature set. Still a survivor-biased optimistic bound - a strong research-queue edge, not a tradeable signal. |
+| **Calibration** | **A-** (was B+) | ECE 0.017 on the untouched gen-2 holdout at corpus prevalence. Deployment-prevalence recalibration is the remaining step to a clean A. |
+| **Sophistication - process** | **A** (was A-) | Everything from gen-1 (purged walk-forward, one-shot holdout per corpus generation, symbol-clustered CIs, floor gates, drift fixtures, integrity hashes, audited promotion) PLUS the two pieces that closed the loop: the nightly outcome-maturation job (migration 057; live ledger rows now mature into real training + calibration pairs, sharing the corpus's exact label maths) and the scheduled monthly re-eval cadence (model-eval-cadence.yml). Known protocol note: dev-split champion-vs-challenger comparisons are in-sample-flattered once a real-data champion is deployed - the holdout is the only fair fight, and the reports say so. |
+| **Sophistication - estimator** | **D+** | Unchanged: an 11-feature stdlib logistic. The gen-2 cycle showed the frontier is NOT here yet (a retrained challenger with the new features failed floors on dev walk-forward while the incumbent improved on the richer inputs); the earn-gated upgrade is the gen-3 nonlinear challenger on the sponsorship-filled corpus. |
+| **Sophistication - data** | **C-** (was D) | 7 of 10 domains now carry real data in the corpus: technical, accumulation, liquidity, business quality (now QUARTERLY EDGAR revenue growth, matching live semantics), capital, theme (SEC SIC, outcome-independent - 80 hot-theme members, 2,316 rows), narrative (benchmark regime, all rows). Sponsorship is live in production (real Form 4 net-buy) with the historical fill running. Still survivor-biased, still no delisted names - the binding constraint stands. |
+| **Honesty of presentation** | **A** | Every caveat travels with every number: provenance in the artifact, survivorship + curation caveats in corpus meta and reports, the in-app Evidence surface renders it all from the generated evidence pack, shadow-live gating intact, surfacing not earned and said so. |
 
-**Overall: C+ predictive power on an A- process, capped by D data.** The 2026-08-01 cycle proved the
-machinery can learn real signal and refute its own hypotheses; the next grade move must come from
-data, not tuning.
+**Overall: B- predictive power on an A process, now capped at C- data.** Gen-2 proved the grade
+thesis empirically: the accuracy jump came entirely from lighting data domains, not from tuning -
+and the gates correctly refused a retrained challenger that did not beat the incumbent on the
+holdout (1.91x vs 1.94x, CIs overlapping). Remaining path to A across the board: sponsorship-filled
+gen-3 corpus, the nonlinear estimator earn-gate, deployment-prevalence recalibration, and the
+delisted-inclusive universe.
 
 ### Deterministic reference scorecard (M1 composite / fallback classifier)
 

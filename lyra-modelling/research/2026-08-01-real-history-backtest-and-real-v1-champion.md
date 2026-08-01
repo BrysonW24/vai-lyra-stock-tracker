@@ -132,3 +132,38 @@ npm run worker:emerging-winner-backtest -- record      # append to lyra-evals/mo
 
 Grading, the sophistication ladder, and the standing improvement loop live in
 [`lyra-evals/MODEL-REPORT-CARD.md`](../../lyra-evals/MODEL-REPORT-CARD.md).
+
+---
+
+## Addendum - generation 2, same day (corpus `a297e8ad...`)
+
+The improvement loop's first turn, hours after gen-1. Corpus regenerated with two newly-built
+domains: THEME from each issuer's SEC SIC code (deterministic, outcome-independent - the honest
+replacement for the banned curated labels; 80 hot-theme members, 2,316 rows) and NARRATIVE from a
+causal benchmark market regime (SPY trend + drawdown; all 27,420 rows). Because the corpus
+generation changed, a fresh one-shot holdout was legitimate under the standing rules.
+
+**Results:**
+
+| Model | Gen-1 holdout | Gen-2 holdout |
+|---|---|---|
+| Deployed champion (real-v1) | 1.72x CI[1.38, 2.05], worst cohort 0.11, ECE 0.042 | **1.94x CI[1.55, 2.29], worst cohort 0.20, ECE 0.017** |
+| Freshly retrained challenger | - | 1.91x CI[1.59, 2.32] holdout, but 1.27x dev walk-forward - FAILED floors |
+| Reference scorecard | 0.68x | 0.68x (still refuted as a ranker) |
+
+**Decisions and lessons:**
+
+1. **No promotion.** The gen-2 challenger did not beat the incumbent on the holdout (CIs deeply
+   overlapping) and failed its dev floors. The champion trained on gen-1 data stays deployed - and
+   improved anyway, because the richer INPUTS (hot-SIC membership raising completeness, regime
+   lighting narrative) reached it at scoring time. The grade thesis proven empirically: accuracy
+   moves with data, not tuning.
+2. **Protocol correction recorded:** once a real-data champion is deployed, dev-split
+   champion-vs-challenger comparisons are in-sample-flattered for the incumbent. From gen-2 onward
+   the one-shot holdout is the only fair fight; the comparison report says so in its own note.
+3. **The regime feature adds no within-cohort ranking power** (identical value for every name on a
+   date) - its value is calibration across time, which showed up in the champion's ECE halving.
+4. Shipped alongside gen-2: the outcome-maturation job (migration 057) closing the live loop, the
+   monthly re-eval cadence workflow, quarterly EDGAR revenue growth (live-semantics parity), live
+   Form 4 insider flow with the historical fill running, and the in-app Evidence surface rendering
+   the generated evidence pack. Regrade: accuracy B-, calibration A-, process A, data C-.

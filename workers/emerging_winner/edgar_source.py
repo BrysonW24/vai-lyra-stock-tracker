@@ -127,6 +127,55 @@ def _concept_series(facts: dict, taxonomy: str, concept: str, unit: str,
     return annual_points_from_rows(rows, as_of=as_of)
 
 
+def quarterly_points_from_rows(rows: list[dict], *, as_of: Optional[str] = None) -> list[tuple[str, str, float]]:
+    """Validated QUARTERLY flow points as [(end_date, filed, value)], ascending, de-duplicated per
+    quarter (latest filed wins). Accepts 10-Q and 10-K rows whose duration looks like one quarter
+    (75-105 days) - the same end-date-clustering discipline as the annual parser, so restatements
+    and 13/14-week retail quarters are handled. Used to derive the quarter-vs-year-ago-quarter
+    revenue growth that matches the LIVE path's yfinance `revenueGrowth` semantics."""
+    valid: list[tuple[str, str, float]] = []
+    for e in rows or []:
+        if e.get("form") not in ("10-Q", "10-Q/A", "10-K", "10-K/A"):
+            continue
+        val, filed, end, start = e.get("val"), e.get("filed", ""), e.get("end"), e.get("start")
+        if val is None or not end or not start:
+            continue  # quarterly derivation is flows-only: no duration, no quarter
+        if as_of is not None and filed > as_of:
+            continue
+        dur = _days_between(start, end)
+        if dur is None or not 75 <= dur <= 105:
+            continue
+        valid.append((str(end)[:10], str(filed), float(val)))
+    valid.sort()
+    out: list[tuple[str, str, float]] = []
+    for end, filed, val in valid:
+        if out:
+            gap = _days_between(out[-1][0], end)
+            if gap is not None and gap < 60:  # same quarter re-reported: latest filed wins
+                if filed >= out[-1][1]:
+                    out[-1] = (end, filed, val)
+                continue
+        out.append((end, filed, val))
+    return out
+
+
+def latest_quarterly_yoy_pair(series: list[tuple[str, str, float]]) -> Optional[tuple[str, float, str, float]]:
+    """(end0, val0, end1, val1) where end1 is the newest quarter and end0 the quarter one year
+    earlier (330-430 days by end date), else None."""
+    if len(series) < 2:
+        return None
+    e1, _f1, v1 = series[-1]
+    for e0, _f0, v0 in reversed(series[:-1]):
+        gap = _days_between(e0, e1)
+        if gap is None:
+            continue
+        if _ANNUAL_GAP_MIN <= gap <= _ANNUAL_GAP_MAX:
+            return (e0, v0, e1, v1)
+        if gap > _ANNUAL_GAP_MAX:
+            return None
+    return None
+
+
 def latest_annual_pair(series: list[tuple[str, str, float]]) -> Optional[tuple[str, float, str, float]]:
     """(end0, val0, end1, val1) for the newest two points one fiscal year apart (330-430 days by end
     date), else None - a delta across a filing gap is not a YoY and is dropped, not mislabelled."""

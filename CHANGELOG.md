@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.110.0] - 2026-08-01
+
+Evidence in the product, three dark domains lit, and the live loop finally closes.
+
+### Changed
+
+- The Models page now carries an "Evidence behind these numbers" section - the full backtest verdict rendered from a generated evidence pack (regenerated after every eval cycle, hash-bound to its corpus): per-model lift with confidence intervals against the chance line, what the model learned vs the hand-designed hypothesis, how the headline number was earned leak by leak, letter grades per dimension, and every caveat. Anyone reading a projection can now see exactly what stands behind it - and what does not.
+- Three previously-dark data domains are built and flowing. Theme: each issuer's SEC SIC industry code maps deterministically into the hot-theme vocabulary (outcome-independent, so it is honest for history too - the curated map stays banned from training). Narrative: a real market regime (benchmark trend + drawdown, causal maths) reaches every scan and every corpus row. Sponsorship: real Form 4 insider net-buying, CIK-safe, live tonight (LUNR read -$160M of net insider selling on first scan) with the historical fill running.
+
 ## [0.109.0] - 2026-08-01
 
 The models face real history - and the one trained on real outcomes takes the champion seat.
@@ -1531,7 +1540,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.109.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.110.0...HEAD
+[0.110.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.109.0...v0.110.0
 [0.109.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.108.0...v0.109.0
 [0.108.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.107.0...v0.108.0
 [0.107.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.106.0...v0.107.0

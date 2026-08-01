@@ -11,6 +11,7 @@ import {
   type ModelStage,
   type PhaseStatus,
 } from '@/lib/models/registry';
+import { ModelEvidence } from '@/components/models/ModelEvidence';
 
 /**
  * Models & methods - Lyra's model catalogue, now collapsed and visual. Each model is a scannable row
@@ -124,6 +125,9 @@ export function ModelsView() {
           </div>
         </section>
       ))}
+
+      {/* Evidence sits directly under the catalogue (whose Model 2 entry cites these numbers) and above the roadmap. */}
+      <ModelEvidence />
 
       <section aria-labelledby="models-roadmap" className="mt-8">
         <h3 id="models-roadmap" className="text-sm font-semibold uppercase tracking-wide text-white/70">

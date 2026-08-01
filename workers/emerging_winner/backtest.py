@@ -152,11 +152,10 @@ def build_corpus(
     if max_symbols:
         syms = syms[:max_symbols]
     ciks = cik_by_symbol()
-    # NO theme injection in the training corpus - deliberately. Today's curated theme map exists only
-    # for names curated BECAUSE they later won; attaching it historically would let the model learn
-    # "has a theme label -> winner" as a pure selection artifact (leak by construction). The theme
-    # domain reads unavailable for every corpus row until a DATED theme source exists.
-    themes: dict[str, dict] = {}
+    # Theme in the corpus comes ONLY from the SEC SIC classification (submissions_source) - an
+    # administrative identity independent of outcomes, honest for history. The CURATED theme map
+    # stays banned from training forever: those labels exist only for names picked BECAUSE they
+    # later won (leak by construction, found 2026-08-01).
 
     # Pass 1: prices (stooq -> yfinance fallback; auto-switch if stooq starts refusing). Transient
     # source failures ("error") back off exponentially and retry the same symbol; a persistent outage
@@ -215,6 +214,42 @@ def build_corpus(
                 logger.info("edgar: %d bundles fetched", fetched)
     logger.info("edgar done: %d symbols with facts", sum(1 for b in bundles.values() if b))
 
+    # Pass 3: submissions bundles (SIC identity for the theme domain; also the Form 4 index the
+    # sponsorship reads walk). One cached fetch per CIK.
+    from .form4_source import sponsorship_features
+    from .submissions_source import load_submissions_bundle, theme_context_from_sic
+
+    sic_themes: dict[str, Optional[dict]] = {}
+    subs_bundles: dict[str, Optional[dict]] = {}
+    subs_fetched = 0
+    for sym in series:
+        cik = ciks.get(sym.upper())
+        if not cik:
+            sic_themes[sym] = None
+            subs_bundles[sym] = None
+            continue
+        path_exists = os.path.exists(os.path.join(cache_dir, "submissions", f"{int(cik)}.json"))
+        bundle = load_submissions_bundle(cik, cache_dir)
+        subs_bundles[sym] = bundle
+        sic_themes[sym] = theme_context_from_sic(
+            (bundle or {}).get("sic"), (bundle or {}).get("sic_description"))
+        if not path_exists:
+            subs_fetched += 1
+            hs.polite_sleep(0.13)
+            if subs_fetched % 200 == 0:
+                logger.info("submissions: %d bundles fetched", subs_fetched)
+    n_themed = sum(1 for t in sic_themes.values() if t)
+    logger.info("submissions done: %d symbols SIC-themed (hot-theme members only)", n_themed)
+
+    # Pass 4: the benchmark regime series for the narrative domain (causal, so one precomputed
+    # date->regime map serves every score date).
+    from . import regime_source
+
+    bench_bars, bench_src = hs.load_price_history(regime_source.BENCHMARK_SYMBOL, cache_dir,
+                                                  prefer=prefer, min_bars=min_history_bars)
+    regime_map = regime_source.regime_by_date(bench_bars) if bench_bars else {}
+    logger.info("benchmark %s (%s): %d regime days", regime_source.BENCHMARK_SYMBOL, bench_src, len(regime_map))
+
     data_end = max((bars[-1].day for bars in series.values()), default=None)
     if data_end is None:
         raise SystemExit("no price data fetched at all - offline?")
@@ -252,9 +287,18 @@ def build_corpus(
             # let an EDGAR fact filed in the weekend gap enter the features while its price reaction
             # sat inside the outcome window (bounded look-ahead - adversarial-review fix).
             t_entry = bars[idx].day
+            regime = regime_source.regime_for_day(regime_map, t_entry)
+            # Sponsorship from the PRE-FETCHED Form 4 cache only (fill-form4 job): all-or-nothing
+            # per window; before the fill has run this stays None and the domain reads unavailable.
+            sponsorship = sponsorship_features(
+                ciks.get(sym.upper()), subs_bundles.get(sym), cache_dir,
+                as_of=t_entry, cached_only=True,
+            )
             feats = hs.assemble_features_asof(
                 bars, snapshots, idx,
-                edgar_bundle=bundles.get(sym), as_of=t_entry, theme=themes.get(sym.upper()),
+                edgar_bundle=bundles.get(sym), as_of=t_entry, theme=sic_themes.get(sym),
+                market_context={"regime": regime, "source": "benchmark_trend_drawdown"} if regime else None,
+                sponsorship=sponsorship,
             )
             if not feats:
                 skipped["no_features"] += 1
@@ -306,7 +350,14 @@ def build_corpus(
         "base_rate": round(n_winners / len(rows), 4) if rows else None,
         "skipped": skipped,
         "filters": {"min_price": min_price, "min_history_bars": min_history_bars},
-        "theme_injection": False,  # curated theme labels are a selection artifact - never in training
+        # Theme provenance: "sec_sic" = deterministic SIC-code map (outcome-independent, honest for
+        # history). The value False means no theme at all; the CURATED map is banned from training.
+        "theme_injection": "sec_sic",
+        "n_symbols_sic_themed": n_themed,
+        "regime_source": f"{regime_source.BENCHMARK_SYMBOL} trend/drawdown ({len(regime_map)} days)",
+        "n_rows_with_sponsorship": sum(1 for r in rows if "sponsorship" in r["features"]),
+        "n_rows_with_regime": sum(1 for r in rows if "market_context" in r["features"]),
+        "n_rows_with_theme": sum(1 for r in rows if "theme_context" in r["features"]),
         "label": "first-touch +100%/-80%, 252 trading days, option-4 conjuncts "
                  "(still_listed + liquidity_grew) computed from the forward window",
     }
@@ -349,12 +400,22 @@ def load_corpus(cache_dir: str) -> tuple[list[dict], dict]:
                 f"corpus integrity failure: corpus.jsonl sha256 {actual[:12]}... != meta {expected[:12]}... "
                 "- the corpus on disk is not the one the meta describes; rebuild before evaluating."
             )
-    if meta.get("theme_injection") is False:
+    theme_mode = meta.get("theme_injection")
+    if theme_mode is False:
         contaminated = sum(1 for r in rows if "theme_context" in r.get("features", {}))
         if contaminated:
             raise SystemExit(
                 f"corpus integrity failure: {contaminated} rows carry theme_context while meta says "
                 "theme_injection=false - stale-cache corpus from an older builder; rebuild it."
+            )
+    elif theme_mode == "sec_sic":
+        bad = sum(1 for r in rows
+                  if "theme_context" in r.get("features", {})
+                  and r["features"]["theme_context"].get("source") != "sec_sic")
+        if bad:
+            raise SystemExit(
+                f"corpus integrity failure: {bad} theme rows are not SIC-sourced while meta says "
+                "theme_injection=sec_sic - a curated/outcome-derived label leaked in; rebuild it."
             )
     if "curated" not in (rows[0] if rows else {"curated": None}):
         raise SystemExit("corpus integrity failure: rows lack the `curated` provenance flag - rebuild.")
@@ -709,10 +770,11 @@ def run_compare(cache_dir: str, k_frac: float = 0.05) -> dict:
 
     comparison = {
         "note": (
-            "DEV split, curated names excluded. Identical OOS rows: challenger scored only on its "
-            "purged (calendar-day) walk-forward test windows; the synthetic champion never saw ANY "
-            "real row, so the same windows are OOS for it too. A fair ranking protocol on this "
-            "corpus - NOT an estimate of live edge; the one-shot holdout is the confirmation step."
+            "DEV split, curated names excluded. The challenger is scored only on its purged "
+            "(calendar-day) walk-forward test windows. CAUTION reading the incumbent's side: since "
+            "the real-v1 promotion the deployed champion has TRAINED on dev rows, so its dev "
+            "numbers here are in-sample-flattered - from gen-2 onward the only fair "
+            "champion-vs-challenger fight is the one-shot HOLDOUT, never this dev view."
         ),
         "n_oos": len(oos["y"]),
         "champion": {"all": block(oos["p_champ"]),
@@ -740,20 +802,26 @@ MODEL_EVIDENCE = os.path.join(
 # Editorial grades - regraded per cycle alongside lyra-evals/MODEL-REPORT-CARD.md (the prose home).
 # They ride in the evidence export so the product surface and the report card can never disagree.
 EVIDENCE_GRADES = {
-    "graded_at_corpus": "ef1b5c52",
+    "graded_at_corpus": "a297e8ad",  # gen-2 (theme via SEC SIC + market regime lit)
     "dimensions": [
-        {"dimension": "Accuracy (real, out-of-time)", "grade": "C+",
-         "why": "Holdout lift 1.72x CI90[1.38, 2.05] at top-5% on a survivor-biased corpus - a genuine "
-                "research-queue edge, nowhere near a tradeable signal. Worst quarterly cohort is thin."},
-        {"dimension": "Calibration", "grade": "B+",
-         "why": "ECE 0.042 on untouched holdout; needs re-calibration at deployment prevalence."},
-        {"dimension": "Process sophistication", "grade": "A-",
-         "why": "Purged walk-forward, one-shot holdout, symbol-clustered CIs, drift fixtures, corpus "
-                "integrity hashes, audited promotion."},
+        {"dimension": "Accuracy (real, out-of-time)", "grade": "B-",
+         "why": "Gen-2 holdout: lift 1.94x CI90[1.55, 2.29] at top-5%, worst quarterly cohort 0.20 "
+                "(no more zero-hit regimes). Still a survivor-biased optimistic bound - a strong "
+                "research-queue edge, not a tradeable signal."},
+        {"dimension": "Calibration", "grade": "A-",
+         "why": "ECE 0.017 on the untouched gen-2 holdout at corpus prevalence; deployment-prevalence "
+                "recalibration is the remaining step."},
+        {"dimension": "Process sophistication", "grade": "A",
+         "why": "Purged walk-forward, one-shot holdout per corpus generation, symbol-clustered CIs, "
+                "drift fixtures, corpus integrity hashes, audited promotion, the nightly outcome-"
+                "maturation loop-closer, and a scheduled monthly re-eval cadence."},
         {"dimension": "Estimator sophistication", "grade": "D+",
-         "why": "Deliberately basic 11-feature logistic, ~5 features alive. GBDT waits for deeper data."},
-        {"dimension": "Data depth", "grade": "D",
-         "why": "The binding constraint: survivor-biased, 5 of 10 domains dark, annual fundamentals only."},
+         "why": "Deliberately basic 11-feature logistic. The gen-3 challenger (nonlinear, on the "
+                "sponsorship-filled corpus) is the earn-gated upgrade path."},
+        {"dimension": "Data depth", "grade": "C-",
+         "why": "7 of 10 domains now carry real data in the corpus (theme via SEC SIC, market regime, "
+                "quarterly EDGAR fundamentals); Form 4 insider flow is live and its historical fill is "
+                "running. Still survivor-biased with no delisted names - the binding constraint."},
         {"dimension": "Honesty of presentation", "grade": "A",
          "why": "Every caveat travels with every number; surfacing stays gated."},
     ],
@@ -796,29 +864,41 @@ def export_model_evidence(cache_dir: str) -> dict:
             "n": block.get("n"), "worstCohort": (block.get("by_cohort") or {}).get("worst"),
         }
 
-    champ_dev = (comp or {}).get("champion", {}).get("all")
-    chall_dev = (comp or {}).get("challenger", {}).get("all")
-    verdict = [r for r in [
-        verdict_row("real_v1", "real-v1 (trained on real outcomes)", "holdout",
-                    rs(hold, "challenger_real_v1") or rs(hold, "champion"), "promoted"),
-        verdict_row("real_v1", "real-v1 (trained on real outcomes)", "dev_walk_forward",
-                    chall_dev, "promoted"),
-        verdict_row("prior_champion", "prior champion (synthetic-trained)", "holdout",
-                    rs(hold, "champion") if rs(hold, "challenger_real_v1") else None, "refuted"),
-        verdict_row("prior_champion", "prior champion (synthetic-trained)", "dev_oos",
-                    champ_dev, "refuted"),
-        verdict_row("reference_scorecard", "reference scorecard (hand-designed)", "holdout",
-                    rs(hold, "reference_scorecard"), "refuted_as_ranker"),
-        verdict_row("reference_scorecard", "reference scorecard (hand-designed)", "dev",
-                    rs(dev, "reference_scorecard"), "refuted_as_ranker"),
-    ] if r]
-
     champion_art = {}
     try:
         with open(os.path.abspath(CHAMPION_ARTIFACT), encoding="utf-8") as fh:
             champion_art = json.load(fh)
     except (OSError, ValueError):
         pass
+    champ_version = champion_art.get("modelVersion", "champion")
+    champ_is_real = "real" in champ_version or (champion_art.get("dataset", {}).get("source", "")
+                                                .startswith("historical"))
+    challenger_meta: dict = {}
+    try:
+        with open(os.path.abspath(CHALLENGER_ARTIFACT), encoding="utf-8") as fh:
+            challenger_meta = json.load(fh)
+    except (OSError, ValueError):
+        pass
+    chall_status = ("promoted" if challenger_meta.get("promotion")
+                    else ("challenger_not_promoted" if not challenger_meta.get("floor", {}).get("passed")
+                          else "challenger"))
+
+    verdict = [r for r in [
+        # The DEPLOYED champion, judged where the judgement is fair: the untouched holdout. (Its dev
+        # numbers are in-sample once a real-data champion has been promoted - never shown as verdict.)
+        verdict_row("champion", f"deployed champion ({champ_version})", "holdout",
+                    rs(hold, "champion"),
+                    "promoted" if champ_is_real else "refuted"),
+        # The latest retrained challenger (this cycle's), on the same holdout + its honest dev WF.
+        verdict_row("challenger", "latest challenger (this cycle's retrain)", "holdout",
+                    rs(hold, "challenger_real_v1"), chall_status),
+        verdict_row("challenger", "latest challenger (this cycle's retrain)", "dev_walk_forward",
+                    (comp or {}).get("challenger", {}).get("all"), chall_status),
+        verdict_row("reference_scorecard", "reference scorecard (hand-designed)", "holdout",
+                    rs(hold, "reference_scorecard"), "refuted_as_ranker"),
+        verdict_row("reference_scorecard", "reference scorecard (hand-designed)", "dev",
+                    rs(dev, "reference_scorecard"), "refuted_as_ranker"),
+    ] if r]
     baseline_weights = None
     baseline_path = os.path.join(cache_dir, "previous-champion.json")
     if os.path.exists(baseline_path):
@@ -828,8 +908,9 @@ def export_model_evidence(cache_dir: str) -> dict:
         except (OSError, ValueError):
             baseline_weights = None
 
-    hold_rs = rs(hold, "challenger_real_v1") or rs(hold, "champion") or {}
-    prior_hold = rs(hold, "champion") if rs(hold, "challenger_real_v1") else None
+    # The deep-dive blocks (k-scan, calibration, cohorts, restatement) describe the DEPLOYED
+    # champion - the model whose numbers the product actually serves.
+    hold_rs = rs(hold, "champion") or rs(hold, "challenger_real_v1") or {}
     evidence = {
         "generatedFromCorpus": {
             "sha256": meta.get("corpus_sha256"), "dataEnd": meta.get("built_at_data_end"),
@@ -841,11 +922,12 @@ def export_model_evidence(cache_dir: str) -> dict:
         "verdict": verdict,
         "kScan": hold_rs.get("k_scan"),
         "calibration": {
-            "real_v1": hold_rs.get("calibration"),
-            "prior_champion": (prior_hold or {}).get("calibration"),
+            "real_v1": hold_rs.get("calibration"),  # the deployed champion's holdout reliability
+            "prior_champion": None,  # the refuted synthetic incumbent left the reports at gen-2
         },
         "cohorts": {
-            "dev": [c for c in ((chall_dev or {}).get("by_cohort") or {}).get("per_cohort", [])
+            "dev": [c for c in (((comp or {}).get("challenger", {}).get("all") or {})
+                                .get("by_cohort") or {}).get("per_cohort", [])
                     if c.get("k", 0) >= 3],
             "holdout": [c for c in (hold_rs.get("by_cohort") or {}).get("per_cohort", [])
                         if c.get("k", 0) >= 3],
@@ -857,12 +939,15 @@ def export_model_evidence(cache_dir: str) -> dict:
             "note": "Standardised logistic weights. Zeros are domains whose data pipelines are unbuilt - "
                     "honestly dead, never faked.",
         },
+        # The historical record of how the first honest number was earned (gen-1, 2026-08-01).
+        # Deliberately literal - it documents that cycle forever; later cycles append to the
+        # metrics-history ledger instead of rewriting this story.
         "leakage": [
             {"label": "first run", "lift": 2.77, "note": "stale-cache corpus; curated theme labels leaked"},
             {"label": "theme leak removed", "lift": 1.47, "note": "symbol-identity leak stripped"},
             {"label": "curated names quarantined", "lift": 1.35, "note": "14 hindsight picks out of training + headline"},
-            {"label": "purge units fixed", "lift": 1.31, "note": "calendar-day purge spans; honest dev number"},
-            {"label": "one-shot holdout", "lift": hold_rs.get("lift_at_k"), "note": "untouched 2024-2025 confirmation",
+            {"label": "purge units fixed", "lift": 1.31, "note": "calendar-day purge spans; honest gen-1 dev number"},
+            {"label": "one-shot holdout (gen-1)", "lift": 1.72, "note": "untouched 2024-2025 confirmation",
              "confirm": True},
         ],
         "deploymentRestatement": {
@@ -920,6 +1005,60 @@ def record_metrics_history(cache_dir: str, note: str = "") -> dict:
     return entry
 
 
+def fill_form4(cache_dir: str, *, since: str = "2015-06-01", max_docs_total: Optional[int] = None) -> dict:
+    """One-time (resumable) historical fill of the Form 4 document cache for every corpus symbol -
+    the job that turns the sponsorship domain from live-only into a corpus feature. Reads the
+    per-CIK filing indexes already cached by the submissions pass, fetches every Form 4 filed since
+    `since`, parses and caches it forever. Fully resumable: cached documents are never refetched, so
+    an interrupted run just continues. SEC fair-use pacing throughout."""
+    from . import history_source as hs
+    from .form4_source import fetch_form4_parsed
+    from .universe_source import cik_by_symbol
+
+    ciks = cik_by_symbol()
+    subs_dir = os.path.join(cache_dir, "submissions")
+    prices_dir = os.path.join(cache_dir, "prices")
+    symbols = [f[:-5] for f in os.listdir(prices_dir)] if os.path.isdir(prices_dir) else []
+    todo: list[tuple[int, dict]] = []
+    for sym in sorted(symbols):
+        cik = ciks.get(sym.upper())
+        if not cik:
+            continue
+        path = os.path.join(subs_dir, f"{int(cik)}.json")
+        if not os.path.exists(path):
+            continue
+        try:
+            with open(path, encoding="utf-8") as fh:
+                bundle = json.load(fh)
+        except Exception:  # noqa: BLE001
+            continue
+        for entry in bundle.get("form4_index", []):
+            if entry.get("filed", "") >= since:
+                todo.append((cik, entry))
+    already = fetched = failed = 0
+    form4_dir = os.path.join(cache_dir, "form4")
+    os.makedirs(form4_dir, exist_ok=True)
+    for i, (cik, entry) in enumerate(todo):
+        key = entry["accession"].replace("-", "")
+        if os.path.exists(os.path.join(form4_dir, f"{key}.json")):
+            already += 1
+            continue
+        if max_docs_total is not None and fetched >= max_docs_total:
+            break
+        parsed = fetch_form4_parsed(cik, entry["accession"], entry.get("doc", ""), cache_dir)
+        if parsed is None:
+            failed += 1
+        else:
+            fetched += 1
+        hs.polite_sleep(0.18)  # SEC courtesy: ~5 req/s sustained for a long job
+        if (fetched + failed) % 500 == 0 and (fetched + failed):
+            logger.info("form4 fill: %d/%d indexed docs (fetched %d, cached %d, failed %d)",
+                        i + 1, len(todo), fetched, already, failed)
+    summary = {"indexed": len(todo), "fetched": fetched, "already_cached": already, "failed": failed}
+    logger.info("form4 fill done: %s", summary)
+    return summary
+
+
 def promote_challenger(challenger_path: str = CHALLENGER_ARTIFACT,
                        champion_path: str = CHAMPION_ARTIFACT,
                        force_reason: Optional[str] = None) -> None:
@@ -931,6 +1070,19 @@ def promote_challenger(challenger_path: str = CHALLENGER_ARTIFACT,
     auditable, never silent. The old champion survives in git history."""
     with open(challenger_path, encoding="utf-8") as fh:
         payload = json.load(fh)
+    # Archive the displaced champion into the cache so the evidence export can always show the
+    # weight comparison against what was replaced (git history keeps it too; this keeps it handy).
+    champ_abs = os.path.abspath(champion_path)
+    if os.path.exists(champ_abs):
+        try:
+            with open(champ_abs, encoding="utf-8") as fh:
+                displaced = fh.read()
+            prev_path = os.path.join(os.path.abspath(DEFAULT_CACHE_DIR), "previous-champion.json")
+            os.makedirs(os.path.dirname(prev_path), exist_ok=True)
+            with open(prev_path, "w", encoding="utf-8") as fh:
+                fh.write(displaced)
+        except OSError:
+            pass
     if not payload.get("floor", {}).get("passed"):
         if not force_reason:
             raise SystemExit(f"challenger at {challenger_path} did not pass its floors - not promoting "
@@ -970,7 +1122,8 @@ def _print_models(report: dict, slice_name: str = "random_sample") -> None:
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Emerging Winner real-history backtest")
     parser.add_argument("command",
-                        choices=["build", "eval", "retrain", "compare", "holdout", "promote", "record"])
+                        choices=["build", "eval", "retrain", "compare", "holdout", "promote", "record",
+                                 "fill-form4"])
     parser.add_argument("--cache-dir", default=DEFAULT_CACHE_DIR)
     parser.add_argument("--sample", type=int, default=1400)
     parser.add_argument("--seed", type=int, default=7)
@@ -1020,6 +1173,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         evidence = export_model_evidence(cache_dir)
         print(json.dumps(entry, indent=2)[:1200])
         print(f"evidence: {len(evidence['verdict'])} verdict rows -> src/lib/generated/model-evidence.json")
+    elif args.command == "fill-form4":
+        print(json.dumps(fill_form4(cache_dir), indent=2))
     return 0
 
 

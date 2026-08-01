@@ -68,9 +68,20 @@ def load_real_candidates(*, limit: int) -> list[tuple[str, dict]]:
     universe_source) and assemble live market features per name. Small caps through mega caps across
     every enabled market (EW_MARKETS, default "us,au"); names with unusable/sparse data are skipped
     rather than faked. Returns [] if nothing could be assembled (offline / rate-limited), so the caller
-    falls back honestly."""
+    falls back honestly.
+
+    Three domains light up from identity-safe sources (2026-08-01): THEME from the issuer's SEC SIC
+    code (deterministic map, curated labels only as fallback), NARRATIVE from the benchmark market
+    regime (computed once per run), and SPONSORSHIP from real Form 4 insider flow (per-CIK filing
+    index, bounded document reads, EW_FORM4=0 to disable)."""
+    import datetime as _dt
+    import tempfile
+
     from ..stock_scanner.market_data import create_provider
+    from . import regime_source
     from .feature_source import assemble_features
+    from .form4_source import sponsorship_features
+    from .submissions_source import load_submissions_bundle, theme_context_from_sic
     from .universe_source import (
         cik_by_symbol,
         coverage_note,
@@ -88,23 +99,57 @@ def load_real_candidates(*, limit: int) -> list[tuple[str, dict]]:
     pools = load_market_pools()
     symbols = load_candidate_symbols(limit=limit, pools=pools)
     logger.info("universe: %s", coverage_note(pools, limit=limit))
+
+    source_cache = os.path.join(tempfile.gettempdir(), "lyra_ew_sources")
+    market_context = None
+    try:
+        market_context = regime_source.current_regime(provider)
+    except Exception:  # noqa: BLE001 - no benchmark read -> narrative stays honestly unavailable
+        market_context = None
+    if market_context:
+        logger.info("market regime: %s (benchmark %s)", market_context["regime"], market_context["benchmark"])
+    form4_on = os.environ.get("EW_FORM4", "1") != "0"
+    today = _dt.datetime.now(_dt.timezone.utc).date().isoformat()
+
     out: list[tuple[str, dict]] = []
+    themed = with_sponsorship = 0
     for sym in symbols:
         try:
+            cik = ciks.get(sym.upper())
+            bundle = load_submissions_bundle(cik, source_cache) if cik else None
+            # Authoritative SIC theme first; curated label only as the fallback for non-US names.
+            theme = None
+            if bundle:
+                theme = theme_context_from_sic(bundle.get("sic"), bundle.get("sic_description"))
+            if theme is None:
+                theme = themes.get(sym)
+            sponsorship = None
+            if form4_on and cik and bundle:
+                try:
+                    sponsorship = sponsorship_features(cik, bundle, source_cache, as_of=today)
+                except Exception:  # noqa: BLE001 - insider read failure never fails the name
+                    sponsorship = None
             feats = assemble_features(
                 sym,
                 provider=provider,
-                theme=themes.get(sym),
-                cik=ciks.get(sym.upper()),
+                theme=theme,
+                cik=cik,
                 currency=currency_for_symbol(sym),
+                market_context=market_context,
+                sponsorship=sponsorship,
             )
+            if feats:
+                themed += 1 if "theme_context" in feats else 0
+                with_sponsorship += 1 if "sponsorship" in feats else 0
         except Exception:  # noqa: BLE001 - a single bad symbol never fails the run
             feats = None
         if feats:
             out.append((sym, feats))
     logger.info(
-        "real universe: assembled features for %d of %d scanned symbols (%d with a CIK for EDGAR)",
-        len(out), len(symbols), len(ciks),
+        "real universe: assembled features for %d of %d scanned symbols (%d with a CIK for EDGAR; "
+        "%d themed via SIC/curated, %d with insider flow, regime=%s)",
+        len(out), len(symbols), len(ciks), themed, with_sponsorship,
+        market_context["regime"] if market_context else "unavailable",
     )
     return out
 

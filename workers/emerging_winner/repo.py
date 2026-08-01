@@ -91,6 +91,22 @@ class EmergingWinnerRepo:
             "blocked_count": blocked,
         }).eq("id", run_id).execute()
 
+    def save_outcomes(self, rows: list[dict]) -> int:
+        """Upsert matured outcomes (one per prediction x horizon). Returns the count written (0 in
+        demo mode). Upsert on (prediction_id, horizon_days): the maturation job may refine a row as
+        bars accrue (e.g. the liquidity conjunct fills once the window completes) - once every field
+        is final the numbers stop changing forever."""
+        if not self.client or not rows:
+            return 0
+        written = 0
+        for i in range(0, len(rows), 200):
+            chunk = rows[i:i + 200]
+            (self.client.table("emerging_winner_outcomes")
+             .upsert(chunk, on_conflict="prediction_id,horizon_days")
+             .execute())
+            written += len(chunk)
+        return written
+
     # --- reads (monitoring + training-dataset assembly) -------------------------------------------
 
     def fetch_predictions(self, limit: int = 1000) -> list[dict]:

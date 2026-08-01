@@ -118,6 +118,8 @@ def assemble_features(
     with_fundamentals: bool = True,
     cik: Optional[int] = None,
     currency: Optional[str] = None,
+    market_context: Optional[dict] = None,
+    sponsorship: Optional[dict] = None,
 ) -> Optional[dict]:
     """Real feature dict for `symbol` from live market data, or None if the series is unusable.
 
@@ -177,6 +179,17 @@ def assemble_features(
     # Theme domain: only when we actually know the theme for this name (else left unavailable).
     if theme and theme.get("themes"):
         feats["theme_context"] = theme
+
+    # Narrative domain: the market regime, computed ONCE per run by the caller from the benchmark
+    # series (regime_source) and passed in - never fabricated per name.
+    if market_context and market_context.get("regime"):
+        feats["market_context"] = market_context
+
+    # Sponsorship domain: real Form 4 insider flow (form4_source), supplied by the caller when the
+    # per-CIK filing index was readable. A dict with a real 0.0 means "insiders reportably did
+    # nothing" - genuinely different from absent.
+    if sponsorship is not None:
+        feats["sponsorship"] = sponsorship
 
     # Real fundamentals (market cap, float, revenue growth, debt) light up the liquidity, business-quality
     # and capital domains - the quality-discriminating layer. Best-effort: absent for names yfinance has no

@@ -440,11 +440,29 @@ def edgar_features_asof(bundle: Optional[dict], as_of: str) -> dict:
         if fresh(e1):
             out.setdefault("fundamentals", {})["gross_margin_trend"] = round(_clamp(m1 - m0, -1.0, 1.0), 4)
 
-    r_pair = latest_annual_pair(rev_series)
-    if r_pair is not None:
-        _e0, r0, e1, r1 = r_pair
-        if r0 > 0 and fresh(e1):
+    # Revenue growth: QUARTERLY year-over-year preferred (the same semantics the live path's
+    # yfinance `revenueGrowth` carries - most-recent quarter vs its year-ago quarter), derived from
+    # the 10-Q flows already in the cached bundles; annual YoY is the fallback for non-quarterly
+    # filers. Freshness for a quarterly read is tighter: a year-old "latest quarter" is not current.
+    from .edgar_source import latest_quarterly_yoy_pair, quarterly_points_from_rows
+
+    q_pair = None
+    for tax, concept, unit in _REVENUE_CONCEPTS:
+        q_series = quarterly_points_from_rows(_entries(bundle, tax, concept, unit), as_of=as_of)
+        pair_c = latest_quarterly_yoy_pair(q_series)
+        if pair_c is not None and (q_pair is None or pair_c[2] > q_pair[2]):
+            q_pair = pair_c
+    if q_pair is not None:
+        _e0, r0, e1, r1 = q_pair
+        q_fresh = (date.fromisoformat(as_of) - date.fromisoformat(e1)).days <= 200
+        if r0 > 0 and q_fresh:
             out.setdefault("fundamentals", {})["revenue_growth_yoy"] = round((r1 - r0) / r0 * 100.0, 2)
+    if "revenue_growth_yoy" not in out.get("fundamentals", {}):
+        r_pair = latest_annual_pair(rev_series)
+        if r_pair is not None:
+            _e0, r0, e1, r1 = r_pair
+            if r0 > 0 and fresh(e1):
+                out.setdefault("fundamentals", {})["revenue_growth_yoy"] = round((r1 - r0) / r0 * 100.0, 2)
 
     equity = _latest_instant_asof(bundle, _EQUITY_CONCEPTS, as_of)
     if equity is not None and equity > 0:
@@ -487,6 +505,8 @@ def assemble_features_asof(
     edgar_bundle: Optional[dict] = None,
     as_of: Optional[str] = None,
     theme: Optional[dict] = None,
+    market_context: Optional[dict] = None,
+    sponsorship: Optional[dict] = None,
 ) -> Optional[dict]:
     """The live feature dict as it was assemblable at bar `idx` (bars[idx].day). `snapshots` must be
     the indicator snapshots computed over the SAME bars (one per bar, causal maths only) - snapshot i
@@ -530,6 +550,16 @@ def assemble_features_asof(
 
     if theme and theme.get("themes"):
         feats["theme_context"] = theme
+
+    # Narrative domain: the benchmark regime AS OF this bar (regime_source is causal, so the same
+    # maths serves live and history). Supplied by the caller; never computed from the name itself.
+    if market_context and market_context.get("regime"):
+        feats["market_context"] = market_context
+
+    # Sponsorship domain: point-in-time Form 4 insider flow from the pre-fetched document cache
+    # (form4_source with cached_only) - all-or-nothing per window, filed-date disciplined.
+    if sponsorship is not None:
+        feats["sponsorship"] = sponsorship
 
     if edgar_bundle and as_of:
         for section, vals in edgar_features_asof(edgar_bundle, as_of).items():

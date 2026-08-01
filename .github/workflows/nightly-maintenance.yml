@@ -101,6 +101,12 @@ jobs:
       - name: Emerging Winner Engine (shadow-live scoring -> immutable ledger)
         run: python -m workers.emerging_winner.main || echo "emerging_winner" >> "$RUNNER_TEMP/worker-failures"
 
+      # Outcome maturation: the loop-closer. Walks the predictions ledger and writes matured
+      # 12-month first-touch outcomes (with the option-4 conjuncts, migration 057) - every matured
+      # pair is a real live training row and a real calibration point for the surfacing gate.
+      - name: Emerging Winner outcome maturation (ledger -> matured outcomes)
+        run: python -m workers.emerging_winner.outcome_job || echo "emerging_winner_outcomes" >> "$RUNNER_TEMP/worker-failures"
+
       # Model monitoring: drift-guard (frozen artifact == deployed inference) + live calibration/precision
       # from the ledger. Reports the shadow-live model's health; how surfacing gets earned, slowly + honestly.
       - name: Emerging Winner model monitor (drift guard + live calibration)

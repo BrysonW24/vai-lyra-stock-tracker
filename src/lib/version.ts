@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.110.0',
+    date: '2026-08-01',
+    title: 'Evidence in the product, three dark domains lit, and the live loop finally closes',
+    highlights: [
+      'The Models page now carries an "Evidence behind these numbers" section - the full backtest verdict rendered from a generated evidence pack (regenerated after every eval cycle, hash-bound to its corpus): per-model lift with confidence intervals against the chance line, what the model learned vs the hand-designed hypothesis, how the headline number was earned leak by leak, letter grades per dimension, and every caveat. Anyone reading a projection can now see exactly what stands behind it - and what does not.',
+      'Three previously-dark data domains are built and flowing. Theme: each issuer\'s SEC SIC industry code maps deterministically into the hot-theme vocabulary (outcome-independent, so it is honest for history too - the curated map stays banned from training). Narrative: a real market regime (benchmark trend + drawdown, causal maths) reaches every scan and every corpus row. Sponsorship: real Form 4 insider net-buying, CIK-safe, live tonight (LUNR read -$160M of net insider selling on first scan) with the historical fill running.',
+      'Generation-2 backtest on the richer corpus: the deployed champion improved to holdout lift 1.94x CI90[1.55, 2.29] with the worst quarterly cohort at 0.20 (no more zero-hit regimes) and ECE 0.017 - and the gates correctly REFUSED a freshly retrained challenger that failed its floors and did not beat the incumbent on the one-shot holdout. Fundamentals upgraded to quarterly EDGAR revenue growth (matching live semantics).',
+      'The live learning loop closes: a nightly outcome-maturation job (migration 057) walks the predictions ledger and writes matured 12-month first-touch outcomes with the survival + liquidity conjuncts, sharing the exact label maths the backtest corpus uses - so the 20-pair live-calibration gate and the 200-pair live-training gate are finally reachable. A monthly scheduled re-eval workflow keeps the whole grading loop honest without anyone remembering to run it. Report card regraded on gen-2 evidence: accuracy B-, calibration A-, process A, data C-.',
+    ],
+  },
+  {
     version: '0.109.0',
     date: '2026-08-01',
     title: 'The models face real history - and the one trained on real outcomes takes the champion seat',

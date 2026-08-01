@@ -20,55 +20,55 @@
     0.02122536,
     -0.48225647,
     -0.42683904,
-    0.0,
+    -0.02722212,
     -0.2189245,
     0.37199,
     0.0,
     0.0,
     0.0,
-    0.0,
-    -0.0900443
+    0.40885533,
+    0.01856333
   ],
   "std": [
     0.26085558,
     0.3889367,
     0.4798527,
-    1.0,
+    0.0941344,
     0.39980951,
     0.53263114,
     1.0,
     1.0,
     1.0,
-    1.0,
-    0.08760653
+    0.39733451,
+    0.09358907
   ],
   "weights": [
-    -0.27875645,
-    0.03519849,
-    -0.18168781,
-    0.0,
-    0.11724137,
-    -0.0854886,
-    0.0,
-    0.0,
+    -0.26365948,
+    0.04009334,
+    -0.18186487,
+    0.07656967,
+    0.09669518,
+    -0.08281306,
     0.0,
     0.0,
-    0.3902193
+    0.0,
+    -0.18523546,
+    0.3945659
   ],
-  "bias": -2.3974594,
+  "bias": -2.41207772,
   "metrics": {
-    "oos_pr_auc": 0.1135,
-    "oos_auc": 0.5786,
-    "oos_brier": 0.0847,
+    "oos_pr_auc": 0.1058,
+    "oos_auc": 0.5476,
+    "oos_brier": 0.0898,
     "baseline_brier": 0.0851,
-    "ece": 0.026,
+    "ece": 0.0492,
     "base_rate": 0.0928,
-    "precision_at_k": 0.1213,
-    "lift_at_k": 1.307,
+    "precision_at_k": 0.1178,
+    "lift_at_k": 1.27,
     "precision_at_k_by_cohort": {
       "n_cohorts": 23,
-      "mean": 0.1541,
-      "median": 0.122,
+      "mean": 0.1431,
+      "median": 0.1071,
       "worst": 0.0,
       "worst_cohort": "2019Q2",
       "per_cohort": [
@@ -102,7 +102,7 @@
         },
         {
           "cohort": "2018Q3",
-          "precision_at_k": 0.1429,
+          "precision_at_k": 0.1071,
           "k": 28,
           "n": 577,
           "base_rate": 0.0468
@@ -116,7 +116,7 @@
         },
         {
           "cohort": "2019Q1",
-          "precision_at_k": 0.1034,
+          "precision_at_k": 0.069,
           "k": 29,
           "n": 586,
           "base_rate": 0.0802
@@ -130,21 +130,21 @@
         },
         {
           "cohort": "2019Q3",
-          "precision_at_k": 0.2,
+          "precision_at_k": 0.2333,
           "k": 30,
           "n": 610,
           "base_rate": 0.0656
         },
         {
           "cohort": "2019Q4",
-          "precision_at_k": 0.2333,
+          "precision_at_k": 0.1667,
           "k": 30,
           "n": 618,
           "base_rate": 0.1084
         },
         {
           "cohort": "2020Q1",
-          "precision_at_k": 0.3871,
+          "precision_at_k": 0.3226,
           "k": 31,
           "n": 630,
           "base_rate": 0.1302
@@ -165,7 +165,7 @@
         },
         {
           "cohort": "2020Q4",
-          "precision_at_k": 0.1765,
+          "precision_at_k": 0.1618,
           "k": 68,
           "n": 1364,
           "base_rate": 0.1672
@@ -186,7 +186,7 @@
         },
         {
           "cohort": "2021Q4",
-          "precision_at_k": 0.1096,
+          "precision_at_k": 0.0959,
           "k": 73,
           "n": 1475,
           "base_rate": 0.0292
@@ -200,21 +200,21 @@
         },
         {
           "cohort": "2022Q3",
-          "precision_at_k": 0.1772,
+          "precision_at_k": 0.1899,
           "k": 79,
           "n": 1583,
           "base_rate": 0.079
         },
         {
           "cohort": "2022Q4",
-          "precision_at_k": 0.122,
+          "precision_at_k": 0.1951,
           "k": 41,
           "n": 831,
           "base_rate": 0.1047
         },
         {
           "cohort": "2023Q1",
-          "precision_at_k": 0.1905,
+          "precision_at_k": 0.1429,
           "k": 42,
           "n": 843,
           "base_rate": 0.0925
@@ -228,7 +228,7 @@
         },
         {
           "cohort": "2023Q4",
-          "precision_at_k": 0.2143,
+          "precision_at_k": 0.119,
           "k": 42,
           "n": 855,
           "base_rate": 0.1216
@@ -240,62 +240,62 @@
     "calibration": [
       {
         "bin": 0.05,
-        "predicted": 0.0268,
-        "actual": 0.0463,
+        "predicted": 0.0266,
+        "actual": 0.0509,
         "n": 1749
       },
       {
         "bin": 0.15,
-        "predicted": 0.0426,
-        "actual": 0.0634,
+        "predicted": 0.041,
+        "actual": 0.0709,
         "n": 1750
       },
       {
         "bin": 0.25,
-        "predicted": 0.0514,
-        "actual": 0.0738,
+        "predicted": 0.0493,
+        "actual": 0.0823,
         "n": 1749
       },
       {
         "bin": 0.35,
-        "predicted": 0.0589,
-        "actual": 0.0874,
+        "predicted": 0.0566,
+        "actual": 0.0977,
         "n": 1750
       },
       {
         "bin": 0.45,
-        "predicted": 0.066,
-        "actual": 0.0995,
+        "predicted": 0.0641,
+        "actual": 0.1103,
         "n": 1749
       },
       {
         "bin": 0.55,
-        "predicted": 0.0737,
-        "actual": 0.1023,
+        "predicted": 0.0725,
+        "actual": 0.1029,
         "n": 1750
       },
       {
         "bin": 0.65,
-        "predicted": 0.0829,
-        "actual": 0.1023,
+        "predicted": 0.0836,
+        "actual": 0.1041,
         "n": 1749
       },
       {
         "bin": 0.75,
-        "predicted": 0.0951,
-        "actual": 0.1206,
+        "predicted": 0.1022,
+        "actual": 0.1057,
         "n": 1750
       },
       {
         "bin": 0.85,
-        "predicted": 0.1158,
-        "actual": 0.1098,
+        "predicted": 0.1577,
+        "actual": 0.1001,
         "n": 1749
       },
       {
         "bin": 0.95,
-        "predicted": 0.1789,
-        "actual": 0.1229,
+        "predicted": 0.3093,
+        "actual": 0.1034,
         "n": 1750
       }
     ],
@@ -316,8 +316,8 @@
     "checked_against_champion": true,
     "forced": true,
     "reasons": [
-      "lift_at_k 1.307 < floor 1.5",
-      "lift_at_k 1.307 regressed vs champion 2.774 (tol 0.05)"
+      "oos_auc 0.5476 < floor 0.55",
+      "lift_at_k 1.27 < floor 1.5"
     ]
   },
   "dataset": {
@@ -347,7 +347,7 @@
         null
       ],
       "completeness": 0.6,
-      "probability": 0.29194619,
+      "probability": 0.23019202,
       "kind": "random"
     },
     {
@@ -364,7 +364,7 @@
         68.2
       ],
       "completeness": 0.8,
-      "probability": 0.4942472,
+      "probability": 0.26734189,
       "kind": "random"
     },
     {
@@ -381,7 +381,7 @@
         8.8
       ],
       "completeness": 0.6,
-      "probability": 0.22883781,
+      "probability": 0.1321981,
       "kind": "random"
     },
     {
@@ -398,7 +398,7 @@
         83.8
       ],
       "completeness": 0.7,
-      "probability": 0.19293603,
+      "probability": 0.06755064,
       "kind": "random"
     },
     {
@@ -415,7 +415,7 @@
         11.1
       ],
       "completeness": 0.7,
-      "probability": 0.31949473,
+      "probability": 0.32399381,
       "kind": "random"
     },
     {
@@ -432,7 +432,7 @@
         44.8
       ],
       "completeness": 0.4,
-      "probability": 0.0722569,
+      "probability": 0.05896732,
       "kind": "random"
     },
     {
@@ -449,7 +449,7 @@
         null
       ],
       "completeness": 0.6,
-      "probability": 0.19258816,
+      "probability": 0.15105333,
       "kind": "random"
     },
     {
@@ -466,7 +466,7 @@
         null
       ],
       "completeness": 0.6,
-      "probability": 0.13001517,
+      "probability": 0.07902374,
       "kind": "random"
     },
     {
@@ -483,7 +483,7 @@
         null
       ],
       "completeness": 0.8,
-      "probability": 0.2627786,
+      "probability": 0.16760942,
       "kind": "random"
     },
     {
@@ -500,7 +500,7 @@
         93.4
       ],
       "completeness": 0.8,
-      "probability": 0.40329951,
+      "probability": 0.38054968,
       "kind": "random"
     },
     {
@@ -517,7 +517,7 @@
         null
       ],
       "completeness": 0.0,
-      "probability": 0.01484873,
+      "probability": 0.01255028,
       "kind": "boundary"
     },
     {
@@ -534,7 +534,7 @@
         0.0
       ],
       "completeness": 1.0,
-      "probability": 0.81507981,
+      "probability": 0.66899366,
       "kind": "boundary"
     },
     {
@@ -551,7 +551,7 @@
         50.0
       ],
       "completeness": 1.0,
-      "probability": 0.56447539,
+      "probability": 0.46270885,
       "kind": "boundary"
     },
     {
@@ -568,7 +568,7 @@
         100.0
       ],
       "completeness": 1.0,
-      "probability": 0.27594401,
+      "probability": 0.268446,
       "kind": "boundary"
     },
     {
@@ -585,7 +585,7 @@
         null
       ],
       "completeness": 0.5,
-      "probability": 0.04603252,
+      "probability": 0.07664588,
       "kind": "boundary"
     },
     {
@@ -602,7 +602,7 @@
         null
       ],
       "completeness": 0.1,
-      "probability": 0.00801748,
+      "probability": 0.00700197,
       "kind": "boundary"
     },
     {
@@ -619,7 +619,7 @@
         null
       ],
       "completeness": 0.1,
-      "probability": 0.06411379,
+      "probability": 0.05054427,
       "kind": "boundary"
     }
   ]

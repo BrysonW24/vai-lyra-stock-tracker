@@ -1,0 +1,52 @@
+# Model eval cadence - the standing improvement loop on a schedule.
+#
+# Monthly (and on demand) it rebuilds a bounded backtest corpus from free sources, re-evaluates
+# every frozen model on the random-sample headline slice, retrains a challenger through the floor
+# gates, and appends the graded result to lyra-evals/model-metrics-history.jsonl semantics via the
+# uploaded reports - so a regression in model quality is visible the cycle it happens, not when
+# someone remembers to check. Promotion is NEVER automatic: this workflow only measures; a human
+# reads the reports and runs the audited promote step deliberately.
+#
+# Bounded on purpose (sample 250) - a monthly CI signal, not the full research corpus. The full
+# 1,400-symbol cycle stays a workstation job (npm run worker:emerging-winner-backtest).
+name: model-eval-cadence
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 1 * *" # 06:17 UTC on the 1st - monthly, off-peak for the free data sources
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install worker deps
+        run: pip install -r requirements.txt
+      - name: Build bounded corpus (free sources, as-of discipline)
+        run: python -m workers.emerging_winner.backtest build --sample 250 --prefer yfinance
+      - name: Retrain challenger (dev split, floor-gated)
+        run: python -m workers.emerging_winner.backtest retrain || true # a failed floor is a FINDING, not a red run
+      - name: Evaluate all frozen models (dev)
+        run: python -m workers.emerging_winner.backtest eval
+      - name: One-shot holdout scoring
+        run: python -m workers.emerging_winner.backtest holdout
+      - name: Record metrics history + regenerate evidence
+        run: python -m workers.emerging_winner.backtest record
+      - name: Upload eval reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-eval-reports
+          path: |
+            .ew-backtest-cache/reports/
+            .ew-backtest-cache/corpus-meta.json
+            src/lib/generated/model-evidence.json
+          retention-days: 90
