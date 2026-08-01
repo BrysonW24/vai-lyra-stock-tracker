@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, cleanup, screen } from '@testing-library/react';
+import { render, cleanup, screen, fireEvent } from '@testing-library/react';
 import { ModelsView } from '../ModelsView';
 import { MODEL_GROUPS } from '@/lib/models/registry';
 
@@ -40,12 +40,15 @@ describe('ModelsView (Models & methods catalogue)', () => {
     expect(screen.getAllByText('Reference').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('links through to the Emerging Winners surface and renders the roadmap', () => {
+  it('deep-dives to the Emerging Winners surface on expand, and renders the roadmap', () => {
     render(<ModelsView />);
-    const links = screen.getAllByRole('link');
-    expect(links.some((a) => a.getAttribute('href') === '/emerging-winners')).toBe(true);
+    // Roadmap is always visible; the surface link lives one tap down (collapsed accordion).
     expect(screen.getByText('Emerging Winner Engine roadmap')).toBeTruthy();
     expect(screen.getByText('Point-in-time dataset')).toBeTruthy();
+    // Expanding an EW model reveals its Open-surface link.
+    fireEvent.click(screen.getByText('Model 1 - Domain Score Engine'));
+    const links = screen.getAllByRole('link');
+    expect(links.some((a) => a.getAttribute('href') === '/emerging-winners')).toBe(true);
   });
 
   it('keeps the research-not-advice framing on the page', () => {

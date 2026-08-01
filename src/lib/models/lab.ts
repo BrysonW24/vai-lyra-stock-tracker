@@ -226,14 +226,21 @@ export function getModel(key: string): LabModel {
 // Verticals + universes
 // ---------------------------------------------------------------------------
 
-/** EW archetype chips + the keyword each matches inside a result.archetype. */
+/**
+ * The full vertical/archetype taxonomy - every vertical is always available to select (all features
+ * on). Each carries the keyword it matches inside a result.archetype; a vertical with no candidates
+ * in the current universe simply returns 0 (honest), it is never hidden or disabled.
+ */
 export const EW_VERTICALS: { label: string; match: string }[] = [
   { label: 'AI infrastructure', match: 'ai infrastructure' },
+  { label: 'Semiconductors', match: 'semiconductor' },
   { label: 'Robotics', match: 'robotics' },
   { label: 'Quantum', match: 'quantum' },
   { label: 'Space', match: 'space' },
   { label: 'Defence', match: 'defence' },
   { label: 'Government-backed', match: 'government-backed' },
+  { label: 'Energy infrastructure', match: 'energy' },
+  { label: 'Cybersecurity', match: 'cyber' },
   { label: 'Turnaround', match: 'turnaround' },
 ];
 

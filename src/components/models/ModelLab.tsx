@@ -102,7 +102,7 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6">
+    <div className="mx-auto w-full max-w-6xl px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] xl:pb-10">
       {/* Header */}
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>

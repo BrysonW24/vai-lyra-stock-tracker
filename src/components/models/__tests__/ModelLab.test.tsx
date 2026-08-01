@@ -64,21 +64,25 @@ describe('ModelLab', () => {
     expect(screen.getByRole('button', { name: 'Models & methods' })).toBeTruthy();
   });
 
-  it('offers the four runnable models with their true availability', () => {
+  it('offers the four runnable models with their true availability via the Model selector', () => {
     renderLab();
+    // Model is a compact dropdown; open it to reveal all four options.
+    fireEvent.click(screen.getByRole('button', { name: 'Model' }));
     for (const name of ['Oversold Recovery', 'Emerging Winner', 'Historical Analogue', 'Risk Gate Review']) {
-      // getAllByRole: "Emerging Winner" also appears in the Run CTA, so allow more than one match.
-      expect(screen.getAllByRole('button', { name: new RegExp(name) }).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(name).length).toBeGreaterThan(0);
     }
-    // Availability badges are present in the configure panel.
     expect(screen.getAllByText('Shadow-live').length).toBeGreaterThanOrEqual(3);
     expect(screen.getAllByText('Live').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows a Planned outcome but never lets it arm a run', () => {
     renderLab();
-    fireEvent.click(screen.getByRole('button', { name: /Oversold Recovery/ }));
-    const planned = screen.getByRole('button', { name: /\+20% before -10%/ }) as HTMLButtonElement;
+    // Switch to Oversold Recovery via the Model dropdown.
+    fireEvent.click(screen.getByRole('button', { name: 'Model' }));
+    fireEvent.click(screen.getByText('Oversold Recovery'));
+    // Open the Outcome dropdown and find the Planned option.
+    fireEvent.click(screen.getByRole('button', { name: 'Outcome' }));
+    const planned = screen.getByRole('option', { name: /\+20% before -10%/ }) as HTMLButtonElement;
     expect(planned.disabled).toBe(true);
   });
 

@@ -30,3 +30,18 @@ export function aiTrialDaysLeft(opts: { accountCreatedAt?: string | null; now: n
   const msLeft = created + AI_TRIAL_DAYS * DAY_MS - opts.now;
   return msLeft <= 0 ? 0 : Math.ceil(msLeft / DAY_MS);
 }
+
+/**
+ * Standing owner/comp grant via env - `AI_INCLUDED_EMAILS` is a comma-separated allowlist of emails
+ * that always get the hosted key, indefinitely, regardless of trial age. This is the founder/owner
+ * escape hatch: set it in the deployment env and that account never lapses to BYOK. Case-insensitive.
+ * (The DB flag `profiles.ai_included = true` grants the same thing per-row; this is the zero-DB path.)
+ */
+export function isOwnerGranted(email?: string | null): boolean {
+  if (!email) return false;
+  const list = (process.env.AI_INCLUDED_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(email.toLowerCase());
+}

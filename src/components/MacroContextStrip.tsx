@@ -66,7 +66,7 @@ export function MacroContextStrip({ data }: { data: MacroSnapshot }) {
                 : `Seeded reference values as of ${data.asOf} - live RBA/ABS wiring lands next.`
             }
           >
-            {data.liveOverlay?.length ? 'Partly live' : 'Sample'}
+            {data.liveOverlay?.length ? 'Partial' : 'Sample'}
           </span>
         )}
       </div>

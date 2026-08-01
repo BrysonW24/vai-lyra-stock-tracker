@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Info, Check, Minus, CircleDashed, ChevronRight } from 'lucide-react';
+import { Info, Check, Minus, CircleDashed, ChevronRight, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { LabSelect, type LabOption } from '@/components/models/lab/LabSelect';
 import {
   LAB_MODELS,
   UNIVERSES,
@@ -16,18 +17,18 @@ import {
 } from '@/lib/models/lab';
 
 /**
- * State A - Configure. The whole first screen: pick the question (model + outcome), define where to
- * look (verticals + universe + optional ticker), see exactly which data sources feed it and what the
- * model looks for, then run. Controlled by the parent so the run state machine and the recommended
- * first-run default live in one place. Honest by construction: it only offers what the engine can
- * actually produce, every availability badge is true, and a Planned outcome cannot arm the Run CTA.
+ * State A - Configure, minimal. Two clean selectors (Model, Outcome) and one big Run button are all
+ * you see by default; the complexity (verticals, universe, ticker, and the model's own detail +
+ * sources) is one tap away under Refine and About. Every vertical is selectable - nothing greyed -
+ * so all features are available; a vertical with no matches just shows a 0. A Planned outcome stays
+ * visible but cannot arm a run. Controlled by the parent so the run state machine lives in one place.
  */
 
-const AVAIL_PILL: Record<Availability, string> = {
-  live: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30',
-  'shadow-live': 'bg-sky-500/15 text-sky-300 ring-1 ring-sky-400/30',
-  reference: 'bg-amber-400/15 text-amber-300 ring-1 ring-amber-300/40',
-  planned: 'bg-white/10 text-white/60',
+const AVAIL_TONE: Record<Availability, 'live' | 'shadow-live' | 'reference' | 'planned'> = {
+  live: 'live',
+  'shadow-live': 'shadow-live',
+  reference: 'reference',
+  planned: 'planned',
 };
 
 function SourceIcon({ state }: { state: SourceState }) {
@@ -47,12 +48,35 @@ export function ConfigurePanel({
   onChange: (patch: Partial<LabConfig>) => void;
   onRun: () => void;
 }) {
+  const [refineOpen, setRefineOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [tickerInfo, setTickerInfo] = useState(false);
+
   const model = getModel(config.modelKey);
   const outcome = model.outcomes.find((o) => o.key === config.outcomeKey) ?? model.outcomes[0];
   const verticals = verticalOptions(model, data);
   const sources = sourcesForModel(model);
   const canRun = outcome.runnable;
+
+  const modelOptions: LabOption[] = LAB_MODELS.map((m) => ({
+    value: m.key,
+    label: m.name,
+    badge: { text: AVAILABILITY_LABEL[m.availability], tone: AVAIL_TONE[m.availability] },
+  }));
+
+  const outcomeOptions: LabOption[] = model.outcomes.map((o) => ({
+    value: o.key,
+    label: o.label,
+    sub: o.sub,
+    disabled: !o.runnable,
+    badge: o.runnable ? undefined : { text: 'Planned', tone: 'planned' },
+  }));
+
+  const universeOptions: LabOption[] = UNIVERSES.map((u) => ({
+    value: u.key,
+    label: u.label,
+    badge: u.real ? undefined : { text: 'target', tone: 'reference' },
+  }));
 
   function toggleVertical(label: string) {
     const next = config.verticals.includes(label)
@@ -62,183 +86,129 @@ export function ConfigurePanel({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_20rem]">
-      {/* LEFT - configuration */}
-      <div className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur">
-        {/* Model */}
-        <Field label="Model" hint="What kind of question">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {LAB_MODELS.map((m) => {
-              const active = m.key === config.modelKey;
-              return (
-                <button
-                  key={m.key}
-                  type="button"
-                  onClick={() => onChange({ modelKey: m.key })}
-                  aria-pressed={active}
-                  className={`group flex items-center justify-between gap-2 rounded-xl border p-2.5 text-left transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${
-                    active
-                      ? 'border-sky-400/50 bg-sky-500/[0.10] shadow-[0_0_0_1px_rgba(56,189,248,0.15)]'
-                      : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]'
-                  }`}
-                >
-                  <span className="text-[13px] font-medium text-white/90">{m.name}</span>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${AVAIL_PILL[m.availability]}`}>
-                    {AVAILABILITY_LABEL[m.availability]}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Field>
+    <div className="mx-auto max-w-2xl space-y-3">
+      {/* Model */}
+      <Labelled label="Model">
+        <LabSelect value={config.modelKey} options={modelOptions} onChange={(v) => onChange({ modelKey: v })} ariaLabel="Model" />
+      </Labelled>
 
-        {/* Outcome */}
-        <Field label="Outcome" hint="Changes with the model">
-          <div className="flex flex-wrap gap-2">
-            {model.outcomes.map((o) => {
-              const active = o.key === config.outcomeKey;
-              return (
-                <button
-                  key={o.key}
-                  type="button"
-                  disabled={!o.runnable}
-                  onClick={() => o.runnable && onChange({ outcomeKey: o.key })}
-                  aria-pressed={active}
-                  title={o.sub}
-                  className={`rounded-lg border px-2.5 py-1.5 text-[12px] transition-all duration-200 ${
-                    !o.runnable
-                      ? 'cursor-not-allowed border-white/5 bg-white/[0.02] text-white/30'
-                      : active
-                        ? 'border-sky-400/50 bg-sky-500/[0.12] text-white'
-                        : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-white/20 hover:text-white/90'
-                  }`}
-                >
-                  {o.label}
-                  {!o.runnable ? <span className="ml-1.5 text-[9px] uppercase tracking-wide text-white/40">Planned</span> : null}
-                </button>
-              );
-            })}
-          </div>
-          <p className="mt-1.5 text-[11px] text-white/45">{outcome.sub}</p>
-        </Field>
+      {/* Outcome */}
+      <Labelled label="Outcome" hint="changes with the model">
+        <LabSelect value={config.outcomeKey} options={outcomeOptions} onChange={(v) => onChange({ outcomeKey: v })} ariaLabel="Outcome" />
+      </Labelled>
 
-        {/* Verticals */}
-        <Field label={model.family === 'ew' ? 'Verticals / archetypes' : 'Sectors'} hint="Optional - multi-select">
-          {verticals.length === 0 ? (
-            <p className="text-[12px] text-white/40">No segments available in the current universe.</p>
-          ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {verticals.map((v) => {
-                const active = config.verticals.includes(v.label);
-                const empty = v.count === 0;
-                return (
-                  <button
-                    key={v.label}
-                    type="button"
-                    onClick={() => toggleVertical(v.label)}
-                    aria-pressed={active}
-                    className={`rounded-full border px-2.5 py-1 text-[12px] transition-all duration-200 ${
-                      active
-                        ? 'border-sky-400/50 bg-sky-500/[0.15] text-white'
-                        : empty
-                          ? 'border-white/5 bg-white/[0.02] text-white/30 hover:text-white/50'
-                          : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-white/20'
-                    }`}
-                  >
-                    {v.label}
-                    <span className={`ml-1.5 font-mono text-[10px] ${empty ? 'text-white/20' : 'text-white/40'}`}>{v.count}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </Field>
+      {/* Run */}
+      <button
+        type="button"
+        onClick={onRun}
+        disabled={!canRun}
+        className="group mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-[15px] font-semibold text-white shadow-lg shadow-sky-500/20 transition-all duration-200 hover:bg-sky-400 hover:shadow-sky-400/30 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40 disabled:shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+      >
+        {canRun ? model.cta : 'Planned - not yet buildable'}
+        {canRun ? <ChevronRight size={17} className="transition-transform duration-200 group-hover:translate-x-0.5" /> : null}
+      </button>
 
-        {/* Universe */}
-        <Field label="Universe" hint="Where to look">
-          <div className="flex flex-wrap gap-2">
-            {UNIVERSES.map((u) => {
-              const active = u.key === config.universeKey;
-              return (
-                <button
-                  key={u.key}
-                  type="button"
-                  onClick={() => onChange({ universeKey: u.key })}
-                  aria-pressed={active}
-                  className={`rounded-lg border px-2.5 py-1.5 text-[12px] transition-all duration-200 ${
-                    active
-                      ? 'border-sky-400/50 bg-sky-500/[0.12] text-white'
-                      : 'border-white/10 bg-white/[0.03] text-white/70 hover:border-white/20 hover:text-white/90'
-                  }`}
-                >
-                  {u.label}
-                  {!u.real ? <span className="ml-1.5 text-[9px] uppercase tracking-wide text-amber-300/70">target</span> : null}
-                </button>
-              );
-            })}
-          </div>
-          {UNIVERSES.find((u) => u.key === config.universeKey)?.note ? (
-            <p className="mt-1.5 text-[11px] text-amber-300/70">{UNIVERSES.find((u) => u.key === config.universeKey)?.note}</p>
-          ) : null}
-        </Field>
-
-        {/* Optional ticker */}
-        <Field
-          label="Optional ticker"
-          hint={
-            <button
-              type="button"
-              onClick={() => setTickerInfo((v) => !v)}
-              aria-label="What does adding a ticker do?"
-              className="inline-flex items-center gap-1 text-white/40 transition hover:text-sky-300"
-            >
-              <Info size={13} />
-            </button>
-          }
-        >
-          <input
-            value={config.ticker}
-            onChange={(e) => onChange({ ticker: e.target.value })}
-            placeholder="e.g. BKSY - blank scans the whole universe"
-            className="w-full rounded-lg border border-white/10 bg-[#0d141c] px-2.5 py-1.5 text-[13px] text-white/90 placeholder:text-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
-          />
-          {tickerInfo ? (
-            <p className="mt-1.5 rounded-lg bg-sky-500/[0.08] px-2.5 py-2 text-[11px] leading-relaxed text-sky-100/80 ring-1 ring-sky-400/20">
-              Leave this blank to scan the selected universe. Add a ticker to run the selected model against one specific
-              company and get a deeper, company-level explanation.
+      {/* Refine (collapsed) */}
+      <Collapsible
+        open={refineOpen}
+        onToggle={() => setRefineOpen((v) => !v)}
+        icon={<SlidersHorizontal size={14} className="text-white/50" />}
+        title="Refine"
+        subtitle={refineSubtitle(config)}
+      >
+        <div className="space-y-4 pt-1">
+          {/* Verticals - all selectable */}
+          <div>
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-white/50">
+              {model.family === 'ew' ? 'Verticals / archetypes' : 'Sectors'}
             </p>
-          ) : null}
-        </Field>
-
-        {/* CTA */}
-        <button
-          type="button"
-          onClick={onRun}
-          disabled={!canRun}
-          className="group flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-2.5 text-[14px] font-semibold text-white shadow-lg shadow-sky-500/20 transition-all duration-200 hover:bg-sky-400 hover:shadow-sky-400/30 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40 disabled:shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-        >
-          {canRun ? model.cta : 'Pick a runnable outcome'}
-          {canRun ? <ChevronRight size={16} className="transition-transform duration-200 group-hover:translate-x-0.5" /> : null}
-        </button>
-      </div>
-
-      {/* RIGHT - summary + sources */}
-      <div className="space-y-4">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold text-white">{model.name}</h3>
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${AVAIL_PILL[model.availability]}`}>
-              {AVAILABILITY_LABEL[model.availability]}
-            </span>
+            {verticals.length === 0 ? (
+              <p className="text-[12px] text-white/40">No segments in the current universe.</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {verticals.map((v) => {
+                  const active = config.verticals.includes(v.label);
+                  return (
+                    <button
+                      key={v.label}
+                      type="button"
+                      onClick={() => toggleVertical(v.label)}
+                      aria-pressed={active}
+                      className={`rounded-full border px-2.5 py-1 text-[12px] transition-all duration-200 ${
+                        active
+                          ? 'border-sky-400/50 bg-sky-500/[0.15] text-white'
+                          : 'border-white/12 bg-white/[0.03] text-white/70 hover:border-white/25'
+                      }`}
+                    >
+                      {v.label}
+                      <span className="ml-1.5 font-mono text-[10px] text-white/40">{v.count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
-          <dl className="mt-3 space-y-1.5 text-[12px]">
+
+          {/* Universe */}
+          <div>
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-white/50">Universe</p>
+            <LabSelect
+              value={config.universeKey}
+              options={universeOptions}
+              onChange={(v) => onChange({ universeKey: v })}
+              ariaLabel="Universe"
+            />
+            {UNIVERSES.find((u) => u.key === config.universeKey)?.note ? (
+              <p className="mt-1.5 text-[11px] text-amber-300/70">{UNIVERSES.find((u) => u.key === config.universeKey)?.note}</p>
+            ) : null}
+          </div>
+
+          {/* Optional ticker */}
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-white/50">Optional ticker</span>
+              <button
+                type="button"
+                onClick={() => setTickerInfo((v) => !v)}
+                aria-label="What does adding a ticker do?"
+                className="text-white/40 transition hover:text-sky-300"
+              >
+                <Info size={13} />
+              </button>
+            </div>
+            <input
+              value={config.ticker}
+              onChange={(e) => onChange({ ticker: e.target.value })}
+              placeholder="e.g. BKSY - blank scans the whole universe"
+              className="w-full rounded-lg border border-white/12 bg-[#0d141c] px-2.5 py-2 text-[13px] text-white/90 placeholder:text-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
+            />
+            {tickerInfo ? (
+              <p className="mt-1.5 rounded-lg bg-sky-500/[0.08] px-2.5 py-2 text-[11px] leading-relaxed text-sky-100/80 ring-1 ring-sky-400/20">
+                Leave blank to scan the selected universe. Add a ticker to run the model against one specific company and
+                get a deeper, company-level explanation.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </Collapsible>
+
+      {/* About this model (collapsed) */}
+      <Collapsible
+        open={aboutOpen}
+        onToggle={() => setAboutOpen((v) => !v)}
+        icon={<Info size={14} className="text-white/50" />}
+        title="About this model"
+        subtitle={`${AVAILABILITY_LABEL[model.availability]} · ${model.predicts}`}
+      >
+        <div className="space-y-3 pt-1">
+          <dl className="space-y-1.5 text-[12px]">
             <Row k="Predicts" v={model.predicts} />
             <Row k="Horizon" v={model.horizon} />
             <Row k="Universe" v={model.universeNote} />
             <Row k="Explainability" v={model.explainability} />
             <Row k="Version" v={model.family === 'ew' ? data.ew.engine_version || model.version : model.version} />
           </dl>
-          <div className="mt-3 border-t border-white/5 pt-3">
+          <div className="border-t border-white/5 pt-2.5">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">What it looks for</p>
             <ul className="mt-1.5 flex flex-wrap gap-1">
               {model.looksFor.map((l) => (
@@ -248,34 +218,70 @@ export function ConfigurePanel({
               ))}
             </ul>
           </div>
+          <div className="border-t border-white/5 pt-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">Data sources available</p>
+            <ul className="mt-2 space-y-1.5">
+              {sources.map((s) => (
+                <li key={s.key} className="flex items-center gap-2 text-[12px]">
+                  <SourceIcon state={s.state} />
+                  <span className={s.state === 'not-connected' ? 'text-white/35' : 'text-white/70'}>{s.label}</span>
+                  {s.state === 'limited' ? <span className="text-[10px] text-amber-300/70">limited</span> : null}
+                  {s.state === 'not-connected' ? <span className="text-[10px] text-white/30">not connected</span> : null}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">Data sources available</p>
-          <ul className="mt-2 space-y-1.5">
-            {sources.map((s) => (
-              <li key={s.key} className="flex items-center gap-2 text-[12px]">
-                <SourceIcon state={s.state} />
-                <span className={s.state === 'not-connected' ? 'text-white/35' : 'text-white/70'}>{s.label}</span>
-                {s.state === 'limited' ? <span className="text-[10px] text-amber-300/70">limited</span> : null}
-                {s.state === 'not-connected' ? <span className="text-[10px] text-white/30">not connected</span> : null}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      </Collapsible>
     </div>
   );
 }
 
-function Field({ label, hint, children }: { label: string; hint?: React.ReactNode; children: React.ReactNode }) {
+function refineSubtitle(config: LabConfig): string {
+  const parts: string[] = [];
+  if (config.verticals.length) parts.push(`${config.verticals.length} vertical${config.verticals.length === 1 ? '' : 's'}`);
+  const uni = UNIVERSES.find((u) => u.key === config.universeKey);
+  if (uni) parts.push(uni.label.toLowerCase());
+  if (config.ticker.trim()) parts.push(config.ticker.trim().toUpperCase());
+  return parts.join(' · ');
+}
+
+function Labelled({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between">
         <span className="text-[10px] font-semibold uppercase tracking-wide text-white/50">{label}</span>
-        {typeof hint === 'string' ? <span className="text-[10px] text-white/30">{hint}</span> : hint}
+        {hint ? <span className="text-[10px] text-white/30">{hint}</span> : null}
       </div>
       {children}
+    </div>
+  );
+}
+
+function Collapsible({
+  open,
+  onToggle,
+  icon,
+  title,
+  subtitle,
+  children,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03]">
+      <button type="button" onClick={onToggle} className="flex w-full items-center gap-2 px-3 py-2.5 text-left">
+        {icon}
+        <span className="text-[13px] font-medium text-white/85">{title}</span>
+        {subtitle && !open ? <span className="min-w-0 flex-1 truncate text-[11px] text-white/40">{subtitle}</span> : <span className="flex-1" />}
+        <ChevronDown size={15} className={`shrink-0 text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open ? <div className="border-t border-white/5 px-3 pb-3">{children}</div> : null}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSessionUser, createSupabaseServerClient } from '@/lib/supabase/server';
 import { rateLimitShared } from '@/lib/ratelimit';
-import { isAiIncluded } from '@/lib/ai/entitlement';
+import { isAiIncluded, isOwnerGranted } from '@/lib/ai/entitlement';
 
 /**
  * Shared guard for the AI + paper-bot API surface. It exists to close the class of holes the
@@ -52,7 +52,9 @@ export interface AiGuardOk<T> {
  * best-effort - if the column is absent (pre-migration) or the read fails, we fall back to
  * trial-only, so this is safe to ship before or after the migration.
  */
-async function resolveAiIncluded(user: { id: string; created_at?: string }): Promise<boolean> {
+async function resolveAiIncluded(user: { id: string; created_at?: string; email?: string }): Promise<boolean> {
+  // Owner/comp allowlist wins outright - indefinite hosted access, no trial clock, no DB read.
+  if (isOwnerGranted(user.email)) return true;
   let granted = false;
   try {
     const supabase = await createSupabaseServerClient();

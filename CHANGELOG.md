@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.101.0] - 2026-08-01
+
+Model Lab made minimal - clean selectors, a collapsed catalogue, and every vertical on.
+
+### Changed
+
+- The Model Lab configuration is now minimal by default: Model and Outcome are clean dropdown selectors above one big Run button, and the complexity (verticals, universe, optional ticker, plus the model detail and its data sources) tucks into collapsible Refine and About sections. Simplicity of a complex thing.
+- Every vertical and archetype is selectable - nothing is greyed out, so all features are available. A vertical with no matches in the current universe simply shows a 0 rather than being hidden.
+- Models & methods is now a collapsed, scannable accordion. Each model is a one-line row you tap to deep-dive its answer, provenance and surface, instead of a wall of expanded cards.
+- Polish: the last card on the models page now has proper breathing room above the bottom nav, and the AU Macro tape honesty chip is compact ("Partial") - meaning some rows (AUD/USD, ASX 200) are live from the hourly snapshot while the cash rate, CPI and jobs rows stay seeded until their RBA/ABS feeds land.
+- Owner and comp accounts can be granted indefinite hosted AI (via the AI_INCLUDED_EMAILS allowlist or the profiles.ai_included flag), so they never lapse to bring-your-own-key when the 14-day trial ends.
+
 ## [0.100.0] - 2026-08-01
 
 The Models page is now Model Lab - choose the question, watch it run, inspect why.
@@ -1430,7 +1442,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.100.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.101.0...HEAD
+[0.101.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.100.0...v0.101.0
 [0.100.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.99.0...v0.100.0
 [0.99.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.98.0...v0.99.0
 [0.98.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.97.0...v0.98.0

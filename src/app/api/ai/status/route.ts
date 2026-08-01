@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAiRuntimeStatus } from '@/lib/ai/credentials';
 import { providerBreakerStatus } from '@/lib/ai/gateway';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { isAiIncluded, aiTrialDaysLeft } from '@/lib/ai/entitlement';
+import { isAiIncluded, aiTrialDaysLeft, isOwnerGranted } from '@/lib/ai/entitlement';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,10 +32,10 @@ export async function GET() {
 
   // Per-user entitlement (trial or granted). Profile read is best-effort: absent column (pre-055)
   // or a read failure falls back to trial-only, so this is safe before or after the migration.
-  let granted = false;
+  let granted = isOwnerGranted(user.email); // owner/comp allowlist -> indefinite, no trial clock
   try {
     const { data: profile } = await supabase.from('profiles').select('ai_included').eq('id', user.id).maybeSingle();
-    granted = (profile as { ai_included?: boolean } | null)?.ai_included === true;
+    granted = granted || (profile as { ai_included?: boolean } | null)?.ai_included === true;
   } catch {
     // pre-055 -> trial only
   }
