@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.99.0',
+    date: '2026-08-01',
+    title: 'Run a model - pick an outcome, narrow the market, and rank your tracked universe',
+    highlights: [
+      'The Models page now opens with a "Run a model" panel. You pick what you want to predict, optionally narrow by market segment and the tickers you care about, and hit Run - it ranks Lyra\'s tracked universe on the spot. No wall of static cards before you can do anything.',
+      'Every outcome wears its true stage, so you always know how real the answer is. The oversold-recovery score is Live and returns real deterministic numbers with the full five-driver breakdown (RSI, MACD, price location, trend, volume). Emerging-winner resemblance is Shadow-live and ranks the illustrative reference queue, loudly labelled "not trained on real winners yet".',
+      '"Segment of the market" adapts to what you are running: it filters by sector for the oversold-recovery radar, and by winner archetype for the Emerging Winner stack.',
+      'It refuses to fabricate. Pick a model that is only built-on-synthetic-fixtures or designed-not-built, and Run is disabled with a plain explanation of why there is nothing honest to score yet - never an invented number.',
+    ],
+  },
+  {
     version: '0.98.0',
     date: '2026-07-31',
     title: 'Emerging Winners is now list-first, plain-English, and honest about what it is',

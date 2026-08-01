@@ -1,6 +1,7 @@
 import { AppShell } from '@/components/AppShell';
 import { ModelsView } from '@/components/models/ModelsView';
 import { getDashboardData } from '@/lib/data';
+import { loadEmergingWinnerQueue } from '@/lib/emerging-winner/load';
 
 export const metadata = {
   title: 'Models',
@@ -11,10 +12,10 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function ModelsPage() {
-  const data = await getDashboardData();
+  const [data, ew] = await Promise.all([getDashboardData(), loadEmergingWinnerQueue()]);
   return (
     <AppShell data={data}>
-      <ModelsView />
+      <ModelsView data={data} ew={ew} />
     </AppShell>
   );
 }

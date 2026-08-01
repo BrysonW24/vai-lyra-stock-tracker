@@ -7,6 +7,9 @@ import {
   type ModelStage,
   type PhaseStatus,
 } from '@/lib/models/registry';
+import { RunModelPanel } from '@/components/models/RunModelPanel';
+import type { DashboardData } from '@/types/scanner';
+import type { EmergingWinnerQueue } from '@/lib/emerging-winner/types';
 
 /**
  * The /models surface - Lyra's model catalogue, rendered straight from the registry. Purely
@@ -77,7 +80,7 @@ function ModelCard({ entry }: { entry: ModelEntry }) {
   );
 }
 
-export function ModelsView() {
+export function ModelsView({ data, ew }: { data: DashboardData; ew: EmergingWinnerQueue }) {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6">
       <header>
@@ -87,6 +90,8 @@ export function ModelsView() {
           Research only - nothing here recommends a trade or prints a price target.
         </p>
       </header>
+
+      <RunModelPanel signals={data.signals} tickers={data.tickers} mode={data.mode} ew={ew} />
 
       <div
         role="note"

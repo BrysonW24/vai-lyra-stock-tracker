@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.99.0] - 2026-08-01
+
+Run a model - pick an outcome, narrow the market, and rank your tracked universe.
+
+### Changed
+
+- The Models page now opens with a "Run a model" panel. You pick what you want to predict, optionally narrow by market segment and the tickers you care about, and hit Run - it ranks Lyra's tracked universe on the spot. No wall of static cards before you can do anything.
+- Every outcome wears its true stage, so you always know how real the answer is. The oversold-recovery score is Live and returns real deterministic numbers with the full five-driver breakdown (RSI, MACD, price location, trend, volume). Emerging-winner resemblance is Shadow-live and ranks the illustrative reference queue, loudly labelled "not trained on real winners yet".
+- "Segment of the market" adapts to what you are running: it filters by sector for the oversold-recovery radar, and by winner archetype for the Emerging Winner stack.
+- It refuses to fabricate. Pick a model that is only built-on-synthetic-fixtures or designed-not-built, and Run is disabled with a plain explanation of why there is nothing honest to score yet - never an invented number.
+
 ## [0.98.0] - 2026-07-31
 
 Emerging Winners is now list-first, plain-English, and honest about what it is.
@@ -1408,7 +1419,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.98.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.99.0...HEAD
+[0.99.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.98.0...v0.99.0
 [0.98.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.97.0...v0.98.0
 [0.97.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.96.0...v0.97.0
 [0.96.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.95.0...v0.96.0
