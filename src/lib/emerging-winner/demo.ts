@@ -379,6 +379,7 @@ export const DEMO_QUEUE: EmergingWinnerQueue = {
         "provenance": "reference-v1 (shadow-live): cosine match over an illustrative reference seed, not a vector index over real historical snapshots. Case-based context, not advice."
       },
       "outcome_distribution": {
+        "p_2x_12m": 0.208,
         "p_2x_24m": 0.361,
         "p_5x_36m": 0.142,
         "p_10x_60m": 0.051,
@@ -730,6 +731,7 @@ export const DEMO_QUEUE: EmergingWinnerQueue = {
         "provenance": "reference-v1 (shadow-live): cosine match over an illustrative reference seed, not a vector index over real historical snapshots. Case-based context, not advice."
       },
       "outcome_distribution": {
+        "p_2x_12m": 0.167,
         "p_2x_24m": 0.292,
         "p_5x_36m": 0.112,
         "p_10x_60m": 0.039,
@@ -1124,6 +1126,7 @@ export const DEMO_QUEUE: EmergingWinnerQueue = {
         "provenance": "reference-v1 (shadow-live): cosine match over an illustrative reference seed, not a vector index over real historical snapshots. Case-based context, not advice."
       },
       "outcome_distribution": {
+        "p_2x_12m": 0.074,
         "p_2x_24m": 0.14,
         "p_5x_36m": 0.047,
         "p_10x_60m": 0.014,

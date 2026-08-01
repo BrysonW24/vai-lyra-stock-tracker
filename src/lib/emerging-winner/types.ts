@@ -48,6 +48,7 @@ export interface EWAnalogues {
 }
 
 export interface EWDistribution {
+  p_2x_12m: number;
   p_2x_24m: number;
   p_5x_36m: number;
   p_10x_60m: number;

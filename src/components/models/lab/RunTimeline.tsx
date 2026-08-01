@@ -200,7 +200,20 @@ function StageRow({
       {open && revealed ? (
         <div className="border-t border-white/5 px-3 py-2 pl-11">
           <p className="text-[11px] text-white/70 sm:hidden">{stage.output}</p>
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-white/35">Sources used</p>
+          {stage.logs && stage.logs.length ? (
+            <>
+              <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-white/35">What this step did</p>
+              <ul className="mt-1 space-y-0.5">
+                {stage.logs.map((l, i) => (
+                  <li key={i} className="flex gap-1.5 text-[11px] leading-relaxed text-white/60">
+                    <span className="text-white/25">·</span>
+                    <span>{l}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-white/35">Sources used</p>
           <div className="mt-1 flex flex-wrap gap-1">
             {stage.sources.map((src) => (
               <span key={src} className="rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[11px] text-white/55">

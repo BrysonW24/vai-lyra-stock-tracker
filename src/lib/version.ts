@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.104.0',
+    date: '2026-08-01',
+    title: 'Model Lab depth - more outcomes, inspectable step logs, a fuller board, and the small-cap universe made real',
+    highlights: [
+      'Three new outcomes for the Emerging Winner model: Double (2x) within 12 months, Lowest ruin risk, and Fastest to catalyst. The 12-month double is a new horizon threaded through the engine (a nearer horizon is always rarer than the 24-month double by construction, never a looser claim in less time); ruin and catalyst rank by fields the engine already computes. All reference-v1 illustrative, labelled as such.',
+      'Every step is now inspectable. The six-model stack (and the recovery-score drivers) carry high-level logs you can open per step - what each model actually did with the real data, from average domain coverage to which names a risk gate blocked. They show both while the run animates and in the collapsed "How this run was computed" section, so the pipeline is legible without being noisy.',
+      'A fuller, mobile-safe visualisation board. Alongside the conviction funnel, opportunity map and 10-domain heatmap, the board now shows the run\'s average domain profile (its fingerprint across the 10 domains, coverage-aware) and a risk-gate breakdown (how the whole batch cleared each gate, with insufficient-data drawn as its own segment). Every chart scrolls or scales on a phone; the page never scrolls sideways.',
+      'The "Small + micro caps" universe is a real filter now, not a placeholder - it keeps names under $2B on the real market cap the engine carries (unknown-cap names are excluded rather than guessed).',
+      'Honesty held throughout: unavailable domains still draw as explicit gaps, the new outcomes are flagged reference-v1, and the deep-data domains (SEC filings, insider flow, government contracts, delisted history) and non-US markets remain the honest data gate rather than being faked.',
+    ],
+  },
+  {
     version: '0.103.0',
     date: '2026-08-01',
     title: 'Model Lab gains its visual half - see the data go in, read the results come out',

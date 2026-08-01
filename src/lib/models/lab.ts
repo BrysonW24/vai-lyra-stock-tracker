@@ -162,9 +162,12 @@ export const LAB_MODELS: LabModel[] = [
         sub: 'The 0-100 resemblance score',
         runnable: true,
       },
+      { key: 'double-12m', label: 'Double (2x) within 12 months', sub: 'Reference-v1 probability (nearer horizon)', runnable: true },
       { key: 'double-24m', label: 'Double (2x) within 24 months', sub: 'Reference-v1 probability', runnable: true },
       { key: 'five-36m', label: '5x within 36 months', sub: 'Reference-v1 probability', runnable: true },
       { key: 'ten-60m', label: '10x within 60 months', sub: 'Reference-v1 probability', runnable: true },
+      { key: 'lowest-ruin', label: 'Lowest ruin risk', sub: 'Safest downside first - P(-80% or delisting)', runnable: true },
+      { key: 'fastest-catalyst', label: 'Fastest to catalyst', sub: 'Nearest expected catalyst first', runnable: true },
     ],
   },
   {
@@ -259,8 +262,8 @@ export const UNIVERSES: UniverseOption[] = [
   {
     key: 'small-micro',
     label: 'Small + micro caps',
-    real: false,
-    note: 'Target universe. Resolves to the available set until the small-cap dataset lands.',
+    real: true,
+    note: 'Real filter: keeps names under $2B market cap (Emerging Winner engine, where cap is sourced).',
   },
 ];
 
@@ -391,6 +394,8 @@ export interface RunStage {
   sources: string[];
   /** The real output this stage produced - a short, true line. */
   output: string;
+  /** High-level, honest log lines for this step - what it did with the real data. Inspectable on demand. */
+  logs?: string[];
   state: StageState;
 }
 
@@ -514,12 +519,22 @@ function buildRadarRun(config: LabConfig, data: RunData): RunResult {
   }));
 
   const universeLabel = UNIVERSES.find((u) => u.key === config.universeKey)?.label || 'Tracked universe';
+  const rScores = ranked.map((s) => s.score);
+  const rMin = rScores.length ? Math.min(...rScores) : 0;
+  const rMax = rScores.length ? Math.max(...rScores) : 0;
+  const topS = ranked[0];
+  const cleanR = (a: string[]) => a.filter(Boolean);
   const stages: RunStage[] = [
     {
       id: 'resolve',
       label: 'Resolve universe',
       sources: ['Lyra deterministic signals'],
       output: `${nf(considered.length)} tracked names in scope`,
+      logs: cleanR([
+        `${nf(considered.length)} name${considered.length === 1 ? '' : 's'} in the ${universeLabel.toLowerCase()}`,
+        only ? `Filtered to your list: ${[...only].slice(0, 6).join(', ')}` : '',
+        selectedSectors.length ? `Sectors: ${config.verticals.join(', ')}` : '',
+      ]),
       state: 'queued',
     },
     {
@@ -527,6 +542,10 @@ function buildRadarRun(config: LabConfig, data: RunData): RunResult {
       label: 'Load market + indicator data',
       sources: ['Market and volume data'],
       output: `${nf(considered.length)} names with a current scan`,
+      logs: cleanR([
+        `${nf(considered.length)} name${considered.length === 1 ? '' : 's'} with a current hourly scan`,
+        'Deterministic indicators from market + volume data (no recompute in the client)',
+      ]),
       state: 'queued',
     },
     {
@@ -534,6 +553,11 @@ function buildRadarRun(config: LabConfig, data: RunData): RunResult {
       label: 'Compute the five score drivers',
       sources: ['RSI', 'MACD', 'price location', 'trend', 'volume'],
       output: `5 deterministic drivers x ${nf(considered.length)} names`,
+      logs: cleanR([
+        `5 drivers x ${nf(considered.length)} name${considered.length === 1 ? '' : 's'}`,
+        'RSI reset, MACD turn, price location, trend, volume confirmation',
+        'TS + Python golden-vector parity',
+      ]),
       state: 'queued',
     },
     {
@@ -541,6 +565,11 @@ function buildRadarRun(config: LabConfig, data: RunData): RunResult {
       label: 'Rank candidates',
       sources: ['Deterministic score'],
       output: `${nf(results.length)} ranked by ${config.outcomeKey === 'momentum' ? 'momentum' : 'recovery score'}`,
+      logs: cleanR([
+        `Ranked ${nf(results.length)} by ${config.outcomeKey === 'momentum' ? 'momentum' : 'recovery score'}`,
+        topS ? `Top: ${topS.symbol} at ${topS.score}` : '',
+        rScores.length ? `Score range ${rMin}-${rMax}` : '',
+      ]),
       state: 'queued',
     },
   ];
@@ -592,6 +621,9 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
   const emptyMarket = marketIsEmpty(config);
   const focus = (config.domainFocus ?? []).filter(Boolean);
 
+  // The "Small + micro caps" universe is a REAL filter now: names under $2B market cap (where cap is sourced).
+  const smallMicroCeil = config.universeKey === 'small-micro' ? 2e9 : null;
+
   let capExcluded = 0;
   const considered = emptyMarket
     ? []
@@ -603,6 +635,7 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
           const arche = r.archetype.toLowerCase();
           if (!selected.some((v) => arche.includes(v))) return false;
         }
+        if (smallMicroCeil != null && (r.market_cap == null || r.market_cap >= smallMicroCeil)) return false;
         if (!inBand(r.market_cap, band)) {
           if (band.key !== 'all') capExcluded += 1;
           return false;
@@ -623,12 +656,18 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
   const sortKey = (r: EmergingWinnerResult): number => {
     if (focus.length) return focusScore(r);
     switch (config.outcomeKey) {
+      case 'double-12m':
+        return r.outcome_distribution.p_2x_12m;
       case 'double-24m':
         return r.outcome_distribution.p_2x_24m;
       case 'five-36m':
         return r.outcome_distribution.p_5x_36m;
       case 'ten-60m':
         return r.outcome_distribution.p_10x_60m;
+      case 'lowest-ruin':
+        return -r.outcome_distribution.p_ruin; // lowest ruin first
+      case 'fastest-catalyst':
+        return -r.outcome_distribution.expected_time_to_catalyst_months; // soonest first
       case 'closest-winners':
         return r.analogues.winner_similarity;
       case 'closest-failures':
@@ -678,12 +717,38 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
   );
   const nonBlocked = considered.filter((r) => !r.risk.blocked).length;
 
+  // Honest per-step aggregates for the inspectable logs (all derived from real run data).
+  const covAvg = considered.length
+    ? Math.round(considered.reduce((s, r) => s + r.domains.filter((d) => d.coverage !== 'unavailable').length, 0) / considered.length)
+    : 0;
+  const sampleR = considered[0];
+  const unavailableDomains = sampleR ? sampleR.domains.filter((d) => d.coverage === 'unavailable').map((d) => d.label) : [];
+  const sims = ranked.map((r) => r.winner_similarity);
+  const simMin = sims.length ? Math.round(Math.min(...sims)) : 0;
+  const simMax = sims.length ? Math.round(Math.max(...sims)) : 0;
+  const topR = ranked[0];
+  const blockedSyms = considered.filter((r) => r.risk.blocked).map((r) => r.symbol);
+  const archNames = [...new Set(considered.map((r) => r.archetype))];
+  const timingCounts = considered.reduce((acc, r) => {
+    acc[r.timing_state] = (acc[r.timing_state] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const timingSummary = Object.entries(timingCounts).map(([k, v]) => `${v} ${k.replace(/_/g, ' ')}`).join(', ') || 'none';
+  const clean = (a: string[]) => a.filter(Boolean);
+
   const stages: RunStage[] = [
     {
       id: 'm1',
       label: 'Domain scorecard (M1)',
       sources: ['Market', 'Fundamentals', 'Themes', 'Government awards', 'Liquidity'],
       output: `10 domains scored x ${nf(considered.length)} candidate${considered.length === 1 ? '' : 's'}`,
+      logs: clean([
+        `Scored all 10 winner domains for ${nf(considered.length)} candidate${considered.length === 1 ? '' : 's'}`,
+        `Average coverage ${covAvg}/10 domains per name`,
+        unavailableDomains.length
+          ? `Left unavailable (data gate): ${unavailableDomains.slice(0, 4).join(', ')}`
+          : 'Every domain covered on the sample',
+      ]),
       state: 'queued',
     },
     {
@@ -691,6 +756,11 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
       label: 'Winner classifier (M2)',
       sources: ['Domain profile'],
       output: `Resemblance scored for ${nf(considered.length)} (reference-v1, not trained)`,
+      logs: clean([
+        'reference-v1 classifier over the domain profile - not trained on real winners yet',
+        topR ? `Highest resemblance: ${topR.symbol} at ${Math.round(topR.winner_similarity)}/100` : 'No candidates in scope',
+        sims.length ? `Resemblance range ${simMin}-${simMax} across ${nf(sims.length)} name${sims.length === 1 ? '' : 's'}` : '',
+      ]),
       state: 'queued',
     },
     {
@@ -698,6 +768,13 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
       label: 'Historical analogue (M3)',
       sources: ['Illustrative analogue library'],
       output: `Matched against the reference library`,
+      logs: clean([
+        'Cosine match of each domain profile against the reference analogue library',
+        topR && topR.analogues.nearest_winners[0]
+          ? `${topR.symbol} closest winner: ${topR.analogues.nearest_winners[0].name} (${Math.round(topR.analogues.nearest_winners[0].similarity)})`
+          : '',
+        'Illustrative library until the point-in-time winner dataset lands',
+      ]),
       state: 'queued',
     },
     {
@@ -705,6 +782,11 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
       label: 'Archetype + ranker (M4)',
       sources: ['Theme context', 'Nearest-winner prior'],
       output: `${distinctArchetypes} archetype${distinctArchetypes === 1 ? '' : 's'}, priority-ranked`,
+      logs: clean([
+        `${distinctArchetypes} archetype${distinctArchetypes === 1 ? '' : 's'}: ${archNames.slice(0, 4).join(', ') || 'none'}`,
+        `Priority-ranked ${nf(results.length)} name${results.length === 1 ? '' : 's'}`,
+        topR ? `Top research action: ${topR.action.replace(/_/g, ' ')}` : '',
+      ]),
       state: 'queued',
     },
     {
@@ -712,6 +794,13 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
       label: 'Risk gate stack (M5)',
       sources: ['Liquidity', 'Dilution', 'Manipulation', 'Downside', 'Survivability'],
       output: `5 gates · ${nf(gateStats.pass)} pass / ${nf(gateStats.block)} block · ${nf(nonBlocked)} cleared`,
+      logs: clean([
+        `5 gates x ${nf(considered.length)} name${considered.length === 1 ? '' : 's'} = ${nf(considered.length * 5)} checks`,
+        `${nf(gateStats.pass)} pass · ${nf(gateStats.block)} block`,
+        blockedSyms.length
+          ? `Blocked (excluded from the queue): ${blockedSyms.slice(0, 6).join(', ')}`
+          : 'No blocks - every name cleared risk',
+      ]),
       state: gateStats.block > 0 ? 'warning' : 'queued',
     },
     {
@@ -719,6 +808,10 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
       label: 'Timing + network (M6)',
       sources: ['Temporal', 'Network clusters'],
       output: `Annotated (shadow challenger - contributes nothing to ranking)`,
+      logs: clean([
+        `Timing states: ${timingSummary}`,
+        'Shadow challenger: annotates each name but never steers the ranking',
+      ]),
       state: 'queued',
     },
   ];
@@ -760,6 +853,14 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
 function headlineForEw(r: EmergingWinnerResult, outcomeKey: string): { value: number; label: string; tone: number } {
   const pct = (p: number) => Math.round(p * 100);
   switch (outcomeKey) {
+    case 'double-12m':
+      return { value: pct(r.outcome_distribution.p_2x_12m), label: 'P(2x·12m)', tone: r.winner_similarity };
+    case 'lowest-ruin':
+      return { value: pct(r.outcome_distribution.p_ruin), label: 'P(ruin)', tone: Math.max(0, 100 - pct(r.outcome_distribution.p_ruin)) };
+    case 'fastest-catalyst': {
+      const m = r.outcome_distribution.expected_time_to_catalyst_months;
+      return { value: m, label: 'mo to catalyst', tone: Math.max(0, 100 - m * 4) };
+    }
     case 'double-24m':
       return { value: pct(r.outcome_distribution.p_2x_24m), label: 'P(2x·24m)', tone: r.winner_similarity };
     case 'five-36m':

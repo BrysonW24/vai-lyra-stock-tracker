@@ -76,6 +76,7 @@ function ewr(symbol: string, sim: number, archetype: string, over: Partial<Emerg
       provenance: 'illustrative reference seed',
     },
     outcome_distribution: {
+      p_2x_12m: 0.12,
       p_2x_24m: 0.2,
       p_5x_36m: 0.1,
       p_10x_60m: 0.05,
@@ -224,6 +225,58 @@ describe('buildRun - EW controls (market / cap / focus / curated list)', () => {
     const d = data({ ew: queue([ewr('AAA', 50, 'AI'), ewr('BBB', 60, 'AI'), ewr('CCC', 70, 'AI')]) });
     const run = buildRun({ ...base, ticker: 'aaa, bbb' }, d);
     expect(run.results.map((r) => r.symbol).sort()).toEqual(['AAA', 'BBB']);
+  });
+});
+
+describe('buildRun - EW outcomes, step logs, small-cap universe', () => {
+  const base: LabConfig = { modelKey: 'emerging', outcomeKey: 'composite', verticals: [], universeKey: 'tracked', ticker: '' };
+  const dist = (over: Partial<EmergingWinnerResult['outcome_distribution']>) => ({
+    p_2x_12m: 0.1,
+    p_2x_24m: 0.2,
+    p_5x_36m: 0.1,
+    p_10x_60m: 0.05,
+    p_ruin: 0.2,
+    survivability: 'medium',
+    expected_time_to_catalyst_months: 12,
+    expected_max_drawdown_pct: 40,
+    provenance: 'coarse',
+    ...over,
+  });
+
+  it('ranks by Double (2x) within 12 months', () => {
+    const a = ewr('AAA', 40, 'AI', { outcome_distribution: dist({ p_2x_12m: 0.4 }) });
+    const b = ewr('BBB', 90, 'AI', { outcome_distribution: dist({ p_2x_12m: 0.1 }) });
+    const run = buildRun({ ...base, outcomeKey: 'double-12m' }, data({ ew: queue([a, b]) }));
+    expect(run.results.map((r) => r.symbol)).toEqual(['AAA', 'BBB']);
+    expect(run.results[0].headlineLabel).toBe('P(2x·12m)');
+  });
+
+  it('ranks lowest ruin risk first', () => {
+    const a = ewr('SAFE', 50, 'AI', { outcome_distribution: dist({ p_ruin: 0.05 }) });
+    const b = ewr('RISKY', 80, 'AI', { outcome_distribution: dist({ p_ruin: 0.6 }) });
+    const run = buildRun({ ...base, outcomeKey: 'lowest-ruin' }, data({ ew: queue([a, b]) }));
+    expect(run.results.map((r) => r.symbol)).toEqual(['SAFE', 'RISKY']);
+  });
+
+  it('ranks fastest to catalyst first', () => {
+    const a = ewr('SOON', 50, 'AI', { outcome_distribution: dist({ expected_time_to_catalyst_months: 5 }) });
+    const b = ewr('LATER', 80, 'AI', { outcome_distribution: dist({ expected_time_to_catalyst_months: 30 }) });
+    const run = buildRun({ ...base, outcomeKey: 'fastest-catalyst' }, data({ ew: queue([a, b]) }));
+    expect(run.results.map((r) => r.symbol)).toEqual(['SOON', 'LATER']);
+  });
+
+  it('gives every step inspectable high-level logs', () => {
+    const run = buildRun(base, data({ ew: queue([ewr('AIX', 80, 'AI Infrastructure Enabler', { market_cap: 1e9 })]) }));
+    expect(run.stages.length).toBe(6);
+    expect(run.stages.every((s) => (s.logs?.length ?? 0) > 0)).toBe(true);
+  });
+
+  it('treats the small + micro universe as a real sub-$2B cap filter', () => {
+    const small = ewr('SM', 60, 'AI', { market_cap: 500e6 });
+    const big = ewr('BIG', 90, 'AI', { market_cap: 5e9 });
+    const noCap = ewr('NC', 70, 'AI', { market_cap: null });
+    const run = buildRun({ ...base, universeKey: 'small-micro' }, data({ ew: queue([small, big, noCap]) }));
+    expect(run.results.map((r) => r.symbol)).toEqual(['SM']);
   });
 });
 

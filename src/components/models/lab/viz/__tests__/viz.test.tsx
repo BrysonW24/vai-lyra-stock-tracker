@@ -5,6 +5,8 @@ import { DomainRadar } from '../DomainRadar';
 import { LeaderboardHeatmap } from '../LeaderboardHeatmap';
 import { OpportunityMap } from '../OpportunityMap';
 import { ConvictionFunnel } from '../ConvictionFunnel';
+import { DomainProfileBars } from '../DomainProfileBars';
+import { RiskGateSummary } from '../RiskGateSummary';
 import { scoreColor, fmtCap, capRadius } from '../scale';
 import type { EWDomain } from '@/lib/emerging-winner/types';
 import type { LabResult, RunSummary } from '@/lib/models/lab';
@@ -70,6 +72,7 @@ function labResult(symbol: string, sim: number, cap: number | null): LabResult {
         provenance: 'ref',
       },
       outcome_distribution: {
+        p_2x_12m: 0.12,
         p_2x_24m: 0.2,
         p_5x_36m: 0.1,
         p_10x_60m: 0.05,
@@ -79,7 +82,15 @@ function labResult(symbol: string, sim: number, cap: number | null): LabResult {
         expected_max_drawdown_pct: 40,
         provenance: 'coarse',
       },
-      risk: { verdict: 'pass', penalty: 10, blocked: false, gates: [] },
+      risk: {
+        verdict: 'pass',
+        penalty: 10,
+        blocked: false,
+        gates: [
+          { key: 'liq', label: 'Liquidity', verdict: 'pass', penalty: 0, reasons: [] },
+          { key: 'dilution', label: 'Dilution', verdict: 'review', penalty: 10, reasons: ['thin'] },
+        ],
+      },
       priority_score: 40,
       action: 'watchlist',
       ranking_signals: {},
@@ -139,5 +150,22 @@ describe('ConvictionFunnel', () => {
     expect(screen.getByText('Reviewed')).toBeTruthy();
     expect(screen.getByText('Surfaced')).toBeTruthy();
     expect(screen.getByText('Watchlist')).toBeTruthy(); // open forward stage, honest placeholder
+  });
+});
+
+describe('DomainProfileBars', () => {
+  it('renders one row per domain averaged across the run', () => {
+    render(<DomainProfileBars results={[labResult('AAA', 80, 1e9), labResult('BBB', 40, 2e8)]} focus={['theme']} />);
+    expect(screen.getByText('Technical structure')).toBeTruthy();
+    expect(screen.getByText('Theme strength')).toBeTruthy();
+  });
+});
+
+describe('RiskGateSummary', () => {
+  it('renders a stacked bar per gate with a verdict legend', () => {
+    render(<RiskGateSummary results={[labResult('AAA', 80, 1e9)]} />);
+    expect(screen.getByText('Liquidity')).toBeTruthy();
+    expect(screen.getByText('Dilution')).toBeTruthy();
+    expect(screen.getAllByText('pass').length).toBeGreaterThan(0); // legend
   });
 });

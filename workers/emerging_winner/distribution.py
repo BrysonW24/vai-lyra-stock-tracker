@@ -21,6 +21,7 @@ from dataclasses import dataclass
 
 @dataclass
 class OutcomeDistribution:
+    p_2x_12m: float               # nearer-horizon double - always <= p_2x_24m (rarer in half the time)
     p_2x_24m: float
     p_5x_36m: float
     p_10x_60m: float
@@ -35,6 +36,7 @@ class OutcomeDistribution:
 
     def to_dict(self) -> dict:
         return {
+            "p_2x_12m": round(self.p_2x_12m, 3),
             "p_2x_24m": round(self.p_2x_24m, 3),
             "p_5x_36m": round(self.p_5x_36m, 3),
             "p_10x_60m": round(self.p_10x_60m, 3),
@@ -55,9 +57,13 @@ def estimate_distribution(probability: float, risk_penalty: float, completeness:
     risk = risk_penalty / 100.0
 
     # Upside probabilities scale with winner probability and decay for rarer multiples; risk shrinks them.
+    # The 12m double uses a smaller coefficient + a stronger risk shrink than the 24m double, so a nearer
+    # horizon is always rarer (p_2x_12m <= p_2x_24m by construction) - never a looser claim in less time.
+    p_2x_12 = _clamp(probability * 0.32 * (1.0 - 0.45 * risk), 0.0, 0.9)
     p_2x = _clamp(probability * 0.55 * (1.0 - 0.4 * risk), 0.0, 0.9)
     p_5x = _clamp(probability * 0.22 * (1.0 - 0.5 * risk), 0.0, 0.6)
     p_10x = _clamp(probability * 0.08 * (1.0 - 0.6 * risk), 0.0, 0.35)
+    p_2x_12 = min(p_2x_12, p_2x)  # belt-and-suspenders monotonicity guard
 
     # Ruin probability rises with risk and falls (mildly) with a stronger structural profile.
     p_ruin = _clamp(0.10 + 0.6 * risk - 0.15 * probability, 0.02, 0.9)
@@ -77,6 +83,6 @@ def estimate_distribution(probability: float, risk_penalty: float, completeness:
     exp_dd = -_clamp(20 + risk * 45 + (1 - probability) * 15, 15.0, 80.0)
 
     return OutcomeDistribution(
-        p_2x_24m=p_2x, p_5x_36m=p_5x, p_10x_60m=p_10x, p_ruin=p_ruin,
+        p_2x_12m=p_2x_12, p_2x_24m=p_2x, p_5x_36m=p_5x, p_10x_60m=p_10x, p_ruin=p_ruin,
         survivability=surv, expected_time_to_catalyst_months=ttc, expected_max_drawdown_pct=exp_dd,
     )

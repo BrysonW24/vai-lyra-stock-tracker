@@ -3,13 +3,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ArrowRight, RotateCcw, X, LayoutGrid, List as ListIcon, Info } from 'lucide-react';
-import type { RunResult, LabResult, ResultTone } from '@/lib/models/lab';
+import type { RunResult, LabResult, ResultTone, RunStage } from '@/lib/models/lab';
 import type { SignalRow } from '@/types/scanner';
 import type { EmergingWinnerResult, EWDomain } from '@/lib/emerging-winner/types';
 import { DomainRadar } from '@/components/models/lab/viz/DomainRadar';
 import { LeaderboardHeatmap } from '@/components/models/lab/viz/LeaderboardHeatmap';
 import { OpportunityMap } from '@/components/models/lab/viz/OpportunityMap';
 import { ConvictionFunnel } from '@/components/models/lab/viz/ConvictionFunnel';
+import { DomainProfileBars } from '@/components/models/lab/viz/DomainProfileBars';
+import { RiskGateSummary } from '@/components/models/lab/viz/RiskGateSummary';
 import { fmtCap } from '@/components/models/lab/viz/scale';
 
 /**
@@ -100,23 +102,22 @@ export function ResultsView({
         </ul>
       ) : null}
 
-      {/* How this run computed (collapsible, honest) */}
+      {/* How this run computed (collapsed, honest) - every step inspectable with its high-level logs */}
       <div className="rounded-xl border border-white/8 bg-white/[0.02]">
         <button
           type="button"
           onClick={() => setShowStages((v) => !v)}
           className="flex w-full items-center justify-between px-3 py-2 text-left"
         >
-          <span className="text-[12px] font-medium text-white/70">How this run was computed · {run.summary.version}</span>
+          <span className="text-[12px] font-medium text-white/70">
+            How this run was computed · {run.stages.length} steps · {run.summary.version}
+          </span>
           <ChevronDown size={14} className={`text-white/40 transition-transform ${showStages ? 'rotate-180' : ''}`} />
         </button>
         {showStages ? (
-          <ol className="space-y-1 border-t border-white/5 px-3 py-2">
+          <ol className="border-t border-white/5 px-2 py-1.5">
             {run.stages.map((s) => (
-              <li key={s.id} className="flex flex-wrap items-baseline gap-x-2 text-[11px]">
-                <span className="font-medium text-white/70">{s.label}</span>
-                <span className="text-white/45">{s.output}</span>
-              </li>
+              <StepRow key={s.id} stage={s} />
             ))}
           </ol>
         ) : null}
@@ -175,6 +176,50 @@ function ScopeChip({ k, v, tone }: { k: string; v: string; tone?: 'sky' }) {
   );
 }
 
+function StepRow({ stage }: { stage: RunStage }) {
+  const [open, setOpen] = useState(false);
+  const logs = stage.logs ?? [];
+  const hasDetail = logs.length > 0 || stage.sources.length > 0;
+  return (
+    <li className="border-b border-white/5 last:border-b-0">
+      <button
+        type="button"
+        onClick={() => hasDetail && setOpen((v) => !v)}
+        className="flex w-full items-baseline gap-2 px-1 py-1.5 text-left"
+      >
+        <span className="shrink-0 text-[11px] font-medium text-white/70">{stage.label}</span>
+        <span className="min-w-0 flex-1 truncate text-[11px] text-white/45">{stage.output}</span>
+        {hasDetail ? (
+          <ChevronDown size={12} className={`shrink-0 text-white/30 transition-transform ${open ? 'rotate-180' : ''}`} />
+        ) : null}
+      </button>
+      {open && hasDetail ? (
+        <div className="px-1 pb-2 pl-2">
+          {logs.length ? (
+            <ul className="space-y-0.5">
+              {logs.map((l, i) => (
+                <li key={i} className="flex gap-1.5 text-[11px] leading-relaxed text-white/60">
+                  <span className="text-white/25">·</span>
+                  <span>{l}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {stage.sources.length ? (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {stage.sources.map((src) => (
+                <span key={src} className="rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-white/45">
+                  {src}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
 function VizCard({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className="rounded-2xl border border-white/8 bg-white/[0.02] p-3">
@@ -211,6 +256,14 @@ function BoardView({
       <VizCard title="Domain heatmap" hint="every name x 10 domains">
         <LeaderboardHeatmap results={run.results} focus={focus} selectedSymbol={selected?.symbol} onSelect={onSelect} />
       </VizCard>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <VizCard title="Average domain profile" hint="the run's fingerprint">
+          <DomainProfileBars results={run.results} focus={focus} />
+        </VizCard>
+        <VizCard title="Risk gates" hint="how the batch cleared">
+          <RiskGateSummary results={run.results} />
+        </VizCard>
+      </div>
     </div>
   );
 }
@@ -466,10 +519,12 @@ function EwDetail({ r, focus }: { r: EmergingWinnerResult; focus: string[] }) {
 
       <Section title="Modelled outlook (reference-v1, illustrative)">
         <div className="grid grid-cols-2 gap-2 text-[11px]">
+          <Stat k="Double / 12m" v={pct(r.outcome_distribution.p_2x_12m)} />
           <Stat k="Double / 24m" v={pct(r.outcome_distribution.p_2x_24m)} />
           <Stat k="5x / 36m" v={pct(r.outcome_distribution.p_5x_36m)} />
           <Stat k="10x / 60m" v={pct(r.outcome_distribution.p_10x_60m)} />
           <Stat k="Ruin (down 80%+)" v={pct(r.outcome_distribution.p_ruin)} danger />
+          <Stat k="Catalyst" v={`~${r.outcome_distribution.expected_time_to_catalyst_months}mo`} />
         </div>
       </Section>
 
