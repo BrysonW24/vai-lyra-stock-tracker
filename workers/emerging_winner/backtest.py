@@ -640,6 +640,68 @@ def _weak_calibration(y: list[int], p: list[float]) -> dict:
             "spiegelhalter_z": round(z, 4) if z is not None else None, "spiegelhalter_p": p_val}
 
 
+def cross_generation_paired(scores_path_a: str, scores_path_b: str,
+                            model_a: str = "p_champion", model_b: str = "p_champion",
+                            k_frac: float = 0.05) -> dict:
+    """PAIRED test across two generations' per-row score archives (gen-NNN/scores-holdout.jsonl).
+
+    This is the test gen-1 made impossible (no archive) and gen-2's archiving exists to enable:
+    the same frozen model scored on two corpus generations' features, compared row-by-row on the
+    intersection of (symbol, entry-date) windows - so "the improvement came from data" becomes a
+    paired measurement instead of two marginal intervals eyeballed side by side.
+
+    Honesty rules: rows are aligned on (symbol, t); rows present in only one archive are dropped
+    and COUNTED; rows whose labels disagree between archives (label maths changed between
+    generations) are excluded and counted loudly - a high mismatch rate invalidates the whole
+    comparison and the report says so rather than averaging over it."""
+    def load(path: str) -> tuple[dict, dict]:
+        meta: dict = {}
+        rows: dict = {}
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                rec = json.loads(line)
+                if "_meta" in rec:
+                    meta = rec["_meta"]
+                    continue
+                rows[(rec["symbol"], rec["t"])] = rec
+        return meta, rows
+
+    meta_a, rows_a = load(scores_path_a)
+    meta_b, rows_b = load(scores_path_b)
+    keys = sorted(set(rows_a) & set(rows_b))
+    label_mismatches = [k for k in keys if rows_a[k]["y"] != rows_b[k]["y"]]
+    usable = [k for k in keys if rows_a[k]["y"] == rows_b[k]["y"]]
+    y = [rows_a[k]["y"] for k in usable]
+    p_a = [float(rows_a[k][model_a]) for k in usable]
+    p_b = [float(rows_b[k][model_b]) for k in usable]
+    symbols = [k[0] for k in usable]
+    mismatch_rate = len(label_mismatches) / len(keys) if keys else 0.0
+    report = {
+        "archive_a": {"path": os.path.abspath(scores_path_a), "model": model_a,
+                      "corpus_sha256": meta_a.get("corpus_sha256"), "n_rows": len(rows_a)},
+        "archive_b": {"path": os.path.abspath(scores_path_b), "model": model_b,
+                      "corpus_sha256": meta_b.get("corpus_sha256"), "n_rows": len(rows_b)},
+        "n_aligned": len(keys),
+        "n_only_a": len(rows_a) - len(keys),
+        "n_only_b": len(rows_b) - len(keys),
+        "n_label_mismatch_excluded": len(label_mismatches),
+        "label_mismatch_rate": round(mismatch_rate, 4),
+        "valid": bool(usable) and mismatch_rate <= 0.005,
+        "note": ("Paired (B minus A) on the intersection of (symbol, entry-date) windows with "
+                 "agreeing labels. INVALID above a 0.5% label-mismatch rate - that means the "
+                 "label maths changed between generations and no paired claim survives it."),
+    }
+    if usable:
+        report["paired_delta_b_minus_a"] = paired_delta_ci(y, p_a, p_b, symbols, k_frac)
+    _log_attempt("cross_gen_paired", {
+        "a": report["archive_a"]["corpus_sha256"], "b": report["archive_b"]["corpus_sha256"],
+        "models": [model_a, model_b], "n_aligned": len(keys), "valid": report["valid"],
+        "delta_lift_ci90": ({k: report["paired_delta_b_minus_a"]["lift_at_k"].get(k)
+                             for k in ("p05", "p95", "ci_excludes_zero")} if usable else None),
+    })
+    return report
+
+
 ATTEMPT_LOG = os.path.join(
     os.path.dirname(__file__), "..", "..", "lyra-evals", "model-attempt-log.jsonl"
 )
@@ -1302,7 +1364,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Emerging Winner real-history backtest")
     parser.add_argument("command",
                         choices=["build", "eval", "retrain", "compare", "holdout", "promote", "record",
-                                 "fill-form4"])
+                                 "fill-form4", "versus-scores"])
     parser.add_argument("--cache-dir", default=DEFAULT_CACHE_DIR)
     parser.add_argument("--sample", type=int, default=1400)
     parser.add_argument("--seed", type=int, default=7)
@@ -1319,6 +1381,14 @@ def main(argv: Optional[list[str]] = None) -> int:
                         help="retrain only: JSON dict of boosted hyperparameters, e.g. "
                              '\'{"rounds": 240, "learning_rate": 0.05}\' - recorded in the artifact '
                              "and the attempt ledger")
+    parser.add_argument("--scores-a", default=None,
+                        help="versus-scores only: earlier generation's scores-holdout.jsonl")
+    parser.add_argument("--scores-b", default=None,
+                        help="versus-scores only: later generation's scores-holdout.jsonl")
+    parser.add_argument("--model-a", default="p_champion",
+                        help="versus-scores only: score column in archive A (default p_champion)")
+    parser.add_argument("--model-b", default="p_champion",
+                        help="versus-scores only: score column in archive B (default p_champion)")
     args = parser.parse_args(argv)
 
     cache_dir = os.path.abspath(args.cache_dir)
@@ -1331,6 +1401,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         extra = {"challenger_real_v1": CHALLENGER_ARTIFACT} if os.path.exists(CHALLENGER_ARTIFACT) else None
         report = run_eval(cache_dir, k_frac=args.k_frac, extra_models=extra, rows_filter="dev")
         _print_models(report)
+    elif args.command == "versus-scores":
+        if not args.scores_a or not args.scores_b:
+            raise SystemExit("versus-scores needs --scores-a and --scores-b archive paths")
+        report = cross_generation_paired(args.scores_a, args.scores_b,
+                                         model_a=args.model_a, model_b=args.model_b,
+                                         k_frac=args.k_frac)
+        print(json.dumps(report, indent=2))
     elif args.command == "retrain":
         est_params = json.loads(args.estimator_params) if args.estimator_params else None
         payload = run_retrain(cache_dir, out_path=args.out, estimator=args.estimator,

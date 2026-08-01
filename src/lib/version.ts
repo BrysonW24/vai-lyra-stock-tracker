@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.116.0',
+    date: '2026-08-02',
+    title: 'The cross-generation paired test exists before generation 3 needs it',
+    highlights: [
+      'New versus-scores command: aligns two generations\' archived per-row holdout scores on identical (symbol, entry-date) windows and runs the paired symbol-clustered difference test across them - turning "the improvement came from the data" from a side-by-side eyeball into a measured, paired claim. Honesty built in: one-sided rows are dropped and counted, label disagreements between archives are excluded and counted, and a mismatch rate above 0.5% invalidates the whole comparison out loud (a changed label definition kills paired claims). Every run logs itself to the trial ledger.',
+      'Four pins cover the aligner before it matters: identical archives yield exactly zero delta, a consistent improvement is detected with the interval clear of zero, one-sided rows cannot silently vanish, and a label-definition drift refuses to produce a verdict. Generation 3 will run this against generation 2\'s archive on day one - the comparison generation 1 made impossible by never archiving scores.',
+    ],
+  },
+  {
     version: '0.115.1',
     date: '2026-08-02',
     title: 'Backfill at the ceiling',

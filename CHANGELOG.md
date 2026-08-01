@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.116.0] - 2026-08-02
+
+The cross-generation paired test exists before generation 3 needs it.
+
+### Changed
+
+- New versus-scores command: aligns two generations' archived per-row holdout scores on identical (symbol, entry-date) windows and runs the paired symbol-clustered difference test across them - turning "the improvement came from the data" from a side-by-side eyeball into a measured, paired claim. Honesty built in: one-sided rows are dropped and counted, label disagreements between archives are excluded and counted, and a mismatch rate above 0.5% invalidates the whole comparison out loud (a changed label definition kills paired claims). Every run logs itself to the trial ledger.
+- Four pins cover the aligner before it matters: identical archives yield exactly zero delta, a consistent improvement is detected with the interval clear of zero, one-sided rows cannot silently vanish, and a label-definition drift refuses to produce a verdict. Generation 3 will run this against generation 2's archive on day one - the comparison generation 1 made impossible by never archiving scores.
+
 ## [0.115.1] - 2026-08-02
 
 Backfill at the ceiling.
@@ -1598,7 +1607,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.116.0...HEAD
+[0.116.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.1...v0.116.0
 [0.115.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.0...v0.115.1
 [0.115.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.114.0...v0.115.0
 [0.114.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.113.0...v0.114.0
