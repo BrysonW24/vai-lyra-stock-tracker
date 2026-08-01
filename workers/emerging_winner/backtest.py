@@ -792,7 +792,7 @@ def corpus_as_ledger_rows(rows: list[dict]) -> tuple[list[dict], list[dict]]:
 
 
 def run_retrain(cache_dir: str, out_path: str = CHALLENGER_ARTIFACT, folds: int = 6,
-                estimator: str = "logistic") -> dict:
+                estimator: str = "logistic", estimator_params: Optional[dict] = None) -> dict:
     """Train the challenger on the DEVELOPMENT set only (predicted_at < HOLDOUT_START) with curated
     hindsight picks EXCLUDED - they may never teach the model, only be disclosed in eval slices."""
     from .train import ModelFloorError, train_and_export
@@ -822,6 +822,7 @@ def run_retrain(cache_dir: str, out_path: str = CHALLENGER_ARTIFACT, folds: int 
                            else f"emerging-winner-classifier-real-v1-{estimator}"),
             trained_at=meta["built_at_data_end"],  # deterministic: the corpus data-end, not wall clock
             estimator=estimator,
+            estimator_params=estimator_params,
             # The incumbent champion's stored metrics were measured on SYNTHETIC data - comparing a
             # real-data walk-forward against them is apples-to-oranges, so the regression-vs-incumbent
             # check is meaningless here; the ABSOLUTE floors still apply, enforced below.
@@ -842,6 +843,7 @@ def run_retrain(cache_dir: str, out_path: str = CHALLENGER_ARTIFACT, folds: int 
     _log_attempt("retrain", {
         "corpus_sha256": meta.get("corpus_sha256"),
         "estimator": estimator,
+        "estimator_params": dict(sorted(estimator_params.items())) if estimator_params else None,
         "out_path": os.path.abspath(out_path),
         "wf_lift_at_k": m.get("lift_at_k"),
         "wf_roc_auc": m.get("oos_auc"),
@@ -1215,7 +1217,7 @@ def fill_form4(cache_dir: str, *, since: str = "2015-06-01", max_docs_total: Opt
             failed += 1
         else:
             fetched += 1
-        hs.polite_sleep(0.18)  # SEC courtesy: ~5 req/s sustained for a long job
+        hs.polite_sleep(0.12)  # SEC courtesy: ~8 req/s sustained - inside the published 10 req/s fair-use ceiling
         if (fetched + failed) % 500 == 0 and (fetched + failed):
             logger.info("form4 fill: %d/%d indexed docs (fetched %d, cached %d, failed %d)",
                         i + 1, len(todo), fetched, already, failed)
@@ -1313,6 +1315,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                         help="retrain only: estimator family for the challenger (gen-3 bake-off seam)")
     parser.add_argument("--out", default=CHALLENGER_ARTIFACT,
                         help="retrain only: artifact output path (use a scratch path for bake-off runs)")
+    parser.add_argument("--estimator-params", default=None,
+                        help="retrain only: JSON dict of boosted hyperparameters, e.g. "
+                             '\'{"rounds": 240, "learning_rate": 0.05}\' - recorded in the artifact '
+                             "and the attempt ledger")
     args = parser.parse_args(argv)
 
     cache_dir = os.path.abspath(args.cache_dir)
@@ -1326,7 +1332,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         report = run_eval(cache_dir, k_frac=args.k_frac, extra_models=extra, rows_filter="dev")
         _print_models(report)
     elif args.command == "retrain":
-        payload = run_retrain(cache_dir, out_path=args.out, estimator=args.estimator)
+        est_params = json.loads(args.estimator_params) if args.estimator_params else None
+        payload = run_retrain(cache_dir, out_path=args.out, estimator=args.estimator,
+                              estimator_params=est_params)
         m = payload["metrics"]
         bc = m.get("precision_at_k_by_cohort", {})
         print(f"challenger (dev walk-forward): PR-AUC={m.get('oos_pr_auc')} ROC-AUC={m.get('oos_auc')} "

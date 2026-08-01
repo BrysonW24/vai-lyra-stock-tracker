@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.115.0] - 2026-08-02
+
+Tuning under discipline: a pre-committed sweep picks the gen-3 challenger config.
+
+### Changed
+
+- Boosted-family hyperparameters now thread through the whole lifecycle seam (train, walk-forward, frozen artifact, CLI) and are stamped into every artifact and ledger entry - no more anonymous configs. Passing knobs to the logistic is an error, never a silent ignore. Pinned by test.
+- A four-config hyperparameter sweep ran on the development split with the selection rule written down BEFORE any result was seen: highest walk-forward lift, ROC tiebreak. Winner: 200 rounds with finer split thresholds, at 1.393x lift versus the default 1.34x - frozen as the generation-3 challenger config, with its weak spot (thinnest worst-quarter of the five) recorded next to the win. Every attempt is in the trial ledger; the 1.5x floor stays unmet, so nothing is promoted.
+- The Form 4 insider backfill pace was raised from ~5 to ~8 requests per second - still comfortably inside the SEC's published 10 req/s fair-use ceiling - cutting the remaining backfill time by roughly a third. The generation-4 note is recorded: when the corpus widens beyond the current 991 names, the SEC's bulk Insider Transactions Data Sets are the right training source, with the raw-XML parser kept for live parity.
+
 ## [0.114.0] - 2026-08-02
 
 The evidence sprint: first estimator bake-off, calibration measured to its edges.
@@ -1580,7 +1590,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.114.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.0...HEAD
+[0.115.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.114.0...v0.115.0
 [0.114.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.113.0...v0.114.0
 [0.113.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.112.0...v0.113.0
 [0.112.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.111.0...v0.112.0

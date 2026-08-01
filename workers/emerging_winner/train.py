@@ -79,16 +79,24 @@ def _predict(mean: list[float], std: list[float], w: list[float], b: float, x: l
     return _sigmoid(b + sum(wi * xi for wi, xi in zip(w, xs)))
 
 
-def fit_estimator(estimator: str, X: list[list[float]], y: list[int]):
+def fit_estimator(estimator: str, X: list[list[float]], y: list[int],
+                  estimator_params: Optional[dict] = None):
     """The one seam the deck promised: swap the estimator, keep the lifecycle. Returns
     (params_for_artifact, predict_fn). 'logistic' is the incumbent family; 'boosted_stumps' is the
-    first nonlinear challenger family (pure stdlib gradient boosting over depth-1 trees)."""
+    first nonlinear challenger family (pure stdlib gradient boosting over depth-1 trees).
+    `estimator_params` are family hyperparameters (boosted only - the logistic has no knobs, and
+    passing params for it is an error rather than a silent ignore); they are recorded in the
+    artifact so every frozen model states exactly how it was fit."""
     if estimator == "boosted_stumps":
         from .stump_boost import fit_boosted_stumps, predict_boosted
 
-        model = fit_boosted_stumps(X, y)
-        return {"estimatorType": "boosted_stumps", "boost": model}, (
-            lambda x, _m=model: predict_boosted(_m, x))
+        model = fit_boosted_stumps(X, y, **(estimator_params or {}))
+        out = {"estimatorType": "boosted_stumps", "boost": model}
+        if estimator_params:
+            out["estimatorParams"] = dict(sorted(estimator_params.items()))
+        return out, (lambda x, _m=model: predict_boosted(_m, x))
+    if estimator_params:
+        raise ValueError("estimator_params are only valid for the boosted family - the logistic has no knobs")
     mean, std = _standardization(X)
     w, b = fit_logistic(X, y, mean, std)
     params = {
@@ -224,6 +232,7 @@ def walk_forward_metrics(
     horizon: float = PURGE_HORIZON_CALENDAR_DAYS,
     embargo: float = PURGE_EMBARGO_CALENDAR_DAYS,
     estimator: str = "logistic",
+    estimator_params: Optional[dict] = None,
 ) -> dict:
     """Walk-forward: train on prior folds, test on the next; out-of-sample only. When real timestamps are
     supplied (`times` - CALENDAR ordinals from predicted_at) the split is PURGED + EMBARGOED so a 12-month
@@ -259,7 +268,7 @@ def walk_forward_metrics(
         Xte, yte = Xs[train_end:test_end], ys[train_end:test_end]
         if not Xte or not Xtr or sum(ytr) == 0:
             continue
-        _params, predict_fn = fit_estimator(estimator, Xtr, ytr)
+        _params, predict_fn = fit_estimator(estimator, Xtr, ytr, estimator_params)
         base_rate = sum(ytr) / len(ytr)
         for j in range(train_end, test_end):
             oos_p.append(predict_fn(Xs[j]))
@@ -388,6 +397,7 @@ def train_and_export(
     model_version: Optional[str] = None,
     trained_at: Optional[str] = None,
     estimator: str = "logistic",
+    estimator_params: Optional[dict] = None,
 ) -> dict:
     """Train the classifier on the current dataset (real ledger rows if matured, else bootstrap), backtest
     with a PURGED + EMBARGOED walk-forward when timestamps exist, fit the final model on all data, and freeze
@@ -401,9 +411,9 @@ def train_and_export(
                                source_label=source_label, provenance_note=provenance_note)
     X, y = _build_model_matrix(ds)
     metrics = walk_forward_metrics(X, y, folds=folds, times=ds.get("times"), cohorts=ds.get("cohorts"),
-                                   estimator=estimator)
+                                   estimator=estimator, estimator_params=estimator_params)
 
-    est_params, predict_fn = fit_estimator(estimator, X, y)
+    est_params, predict_fn = fit_estimator(estimator, X, y, estimator_params)
     fixtures = _random_fixtures(predict_fn) + _boundary_fixtures(predict_fn)
 
     # Read the incumbent champion (if any) so the gate can block a material regression, not just an absolute

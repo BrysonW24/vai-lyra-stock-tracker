@@ -132,3 +132,21 @@ def test_logistic_artifacts_still_load_unchanged():
     model = C.load_champion_model()  # the shipped champion is a logistic artifact with no estimatorType
     assert model is not None and model.estimator == "logistic"
     assert model.weights is not None and model.mean is not None
+
+
+def test_estimator_params_thread_through_the_seam_and_are_recorded():
+    """Hyperparameters must (a) actually change the fitted model, (b) be stamped into the artifact
+    params for reproducibility, and (c) be refused for the logistic (no silent ignoring)."""
+    import pytest
+
+    from workers.emerging_winner.train import fit_estimator
+
+    X, y = _xor_dataset(seed=17)
+    default_params, _ = fit_estimator("boosted_stumps", X, y)
+    tuned_params, tuned_fn = fit_estimator("boosted_stumps", X, y, {"rounds": 20, "min_leaf": 60})
+    assert tuned_params["estimatorParams"] == {"min_leaf": 60, "rounds": 20}
+    assert "estimatorParams" not in default_params, "defaults stay unstamped - absent means defaults"
+    assert len(tuned_params["boost"]["trees"]) <= 20 < len(default_params["boost"]["trees"])
+    assert 0.0 < tuned_fn(X[0]) < 1.0
+    with pytest.raises(ValueError):
+        fit_estimator("logistic", X, y, {"rounds": 20})

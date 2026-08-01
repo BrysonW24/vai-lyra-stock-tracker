@@ -91,6 +91,20 @@ per-row WF score archiving is a gen-3 protocol addition) but fails the 1.5x abso
 does not threaten the frozen champion. Estimator regraded D+ -> C- on this evidence; the seat
 still requires winning gen-3's fresh one-shot holdout. The attempt self-logged to the ledger.
 
+**Boosted hyperparameter sweep - protocol pre-committed 2026-08-02 BEFORE any result was seen
+(garden-of-forking-paths guard):** four configs on the dev walk-forward only, every attempt
+ledger-logged: B={rounds 240, lr 0.05}, C={min_leaf 50}, D={rounds 200, n_thresholds 32},
+E={rounds 300, lr 0.03, min_leaf 40}. Selection rule: highest dev WF lift, ROC-AUC tiebreak.
+The winner (vs default A: 1.344x) is FROZEN as the gen-3 boosted config; no further sweeps once
+the gen-3 corpus exists.
+
+Sweep results (all dev WF, n_oos 17,495, ledger-logged): A default 1.344x / ROC 0.585 / worst
+0.055 · B 1.319x / 0.586 / 0.057 · C 1.344x / 0.585 / 0.067 · D **1.393x / 0.588 / 0.026** ·
+E 1.344x / 0.584 / 0.034. **Winner by the pre-committed rule: D = {rounds 200, n_thresholds 32}**
+(highest lift, also highest ROC). Recorded watch-out: D has the weakest worst-cohort of the five -
+if gen-3's per-cohort floor bites, that is where. Still below the 1.5x absolute floor; the seat
+remains unearned.
+
 **Grades (regraded 2026-08-02):** Accuracy B- · Calibration A- · Process A · Estimator C- ·
 Data C- · Honesty A (from C+ / B+ / A- / D+ / D / A at gen 1; Estimator moved D+ -> C- on the
 bake-off evidence above).
