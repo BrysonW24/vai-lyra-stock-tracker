@@ -1,0 +1,631 @@
+{
+  "generatedFromCorpus": {
+    "sha256": "ef1b5c52471d28a10732bb958e4014b5d11295225cda17dde7edf2653162c55f",
+    "dataEnd": "2026-07-31",
+    "rows": 27420,
+    "curatedRows": 262,
+    "symbols": 991,
+    "baseRate": 0.102,
+    "holdoutStart": "2024-01-01",
+    "label": "first-touch +100%/-80%, 252 trading days, option-4 conjuncts (still_listed + liquidity_grew) computed from the forward window"
+  },
+  "caveat": "Survivor-biased corpus: universe = the CURRENT SEC listing, so delisted names are absent, the ruin class is censored, and precision here is an optimistic bound. A second selection bias is disclosed and quarantined: the curated emergence names were hand-picked WITH hindsight (they are in the curated set because they later won), so their rows are flagged `curated`, EXCLUDED from all training, and reported as a separate slice - the random-sample slice is the honest headline. Features are point-in-time (causal indicators; EDGAR facts filtered on filed <= entry date); labels are matured 12-month first-touch outcomes.",
+  "verdict": [
+    {
+      "model": "real_v1",
+      "label": "real-v1 (trained on real outcomes)",
+      "split": "holdout",
+      "status": "promoted",
+      "lift": 1.718,
+      "ci90": [
+        1.3755,
+        2.0539
+      ],
+      "rocAuc": 0.5848,
+      "ece": 0.0422,
+      "precisionAtK": 0.2305,
+      "baseRate": 0.1341,
+      "n": 6165,
+      "worstCohort": 0.1111
+    },
+    {
+      "model": "real_v1",
+      "label": "real-v1 (trained on real outcomes)",
+      "split": "dev_walk_forward",
+      "status": "promoted",
+      "lift": 1.307,
+      "ci90": [
+        1.0869,
+        1.5609
+      ],
+      "rocAuc": 0.5786,
+      "ece": 0.026,
+      "precisionAtK": 0.1213,
+      "baseRate": 0.0928,
+      "n": 17495,
+      "worstCohort": 0.0
+    },
+    {
+      "model": "prior_champion",
+      "label": "prior champion (synthetic-trained)",
+      "split": "holdout",
+      "status": "refuted",
+      "lift": 0.702,
+      "ci90": [
+        0.4745,
+        0.9155
+      ],
+      "rocAuc": 0.4663,
+      "ece": 0.0949,
+      "precisionAtK": 0.0942,
+      "baseRate": 0.1341,
+      "n": 6165,
+      "worstCohort": 0.0
+    },
+    {
+      "model": "prior_champion",
+      "label": "prior champion (synthetic-trained)",
+      "split": "dev_oos",
+      "status": "refuted",
+      "lift": 0.777,
+      "ci90": [
+        0.6166,
+        0.9732
+      ],
+      "rocAuc": 0.4722,
+      "ece": 0.0567,
+      "precisionAtK": 0.0721,
+      "baseRate": 0.0928,
+      "n": 17495,
+      "worstCohort": 0.0
+    },
+    {
+      "model": "reference_scorecard",
+      "label": "reference scorecard (hand-designed)",
+      "split": "holdout",
+      "status": "refuted_as_ranker",
+      "lift": 0.678,
+      "ci90": [
+        0.4938,
+        0.8904
+      ],
+      "rocAuc": 0.4817,
+      "ece": 0.1728,
+      "precisionAtK": 0.0909,
+      "baseRate": 0.1341,
+      "n": 6165,
+      "worstCohort": 0.0
+    },
+    {
+      "model": "reference_scorecard",
+      "label": "reference scorecard (hand-designed)",
+      "split": "dev",
+      "status": "refuted_as_ranker",
+      "lift": 0.7,
+      "ci90": [
+        0.5624,
+        0.8658
+      ],
+      "rocAuc": 0.4852,
+      "ece": 0.2177,
+      "precisionAtK": 0.062,
+      "baseRate": 0.0886,
+      "n": 20993,
+      "worstCohort": 0.0
+    }
+  ],
+  "kScan": {
+    "0.02": {
+      "precision": 0.252,
+      "k": 123,
+      "lift": 1.879
+    },
+    "0.05": {
+      "precision": 0.2305,
+      "k": 308,
+      "lift": 1.718
+    },
+    "0.1": {
+      "precision": 0.2094,
+      "k": 616,
+      "lift": 1.561
+    }
+  },
+  "calibration": {
+    "real_v1": [
+      {
+        "bin": 0.05,
+        "predicted": 0.0454,
+        "actual": 0.0974,
+        "n": 616
+      },
+      {
+        "bin": 0.15,
+        "predicted": 0.0583,
+        "actual": 0.0972,
+        "n": 617
+      },
+      {
+        "bin": 0.25,
+        "predicted": 0.0662,
+        "actual": 0.1104,
+        "n": 616
+      },
+      {
+        "bin": 0.35,
+        "predicted": 0.0732,
+        "actual": 0.1167,
+        "n": 617
+      },
+      {
+        "bin": 0.45,
+        "predicted": 0.0802,
+        "actual": 0.112,
+        "n": 616
+      },
+      {
+        "bin": 0.55,
+        "predicted": 0.0878,
+        "actual": 0.1264,
+        "n": 617
+      },
+      {
+        "bin": 0.65,
+        "predicted": 0.0976,
+        "actual": 0.1218,
+        "n": 616
+      },
+      {
+        "bin": 0.75,
+        "predicted": 0.1101,
+        "actual": 0.1475,
+        "n": 617
+      },
+      {
+        "bin": 0.85,
+        "predicted": 0.1278,
+        "actual": 0.2013,
+        "n": 616
+      },
+      {
+        "bin": 0.95,
+        "predicted": 0.1728,
+        "actual": 0.2107,
+        "n": 617
+      }
+    ],
+    "prior_champion": [
+      {
+        "bin": 0.05,
+        "predicted": 0.0113,
+        "actual": 0.1948,
+        "n": 616
+      },
+      {
+        "bin": 0.15,
+        "predicted": 0.0175,
+        "actual": 0.1248,
+        "n": 617
+      },
+      {
+        "bin": 0.25,
+        "predicted": 0.0214,
+        "actual": 0.1201,
+        "n": 616
+      },
+      {
+        "bin": 0.35,
+        "predicted": 0.0255,
+        "actual": 0.1167,
+        "n": 617
+      },
+      {
+        "bin": 0.45,
+        "predicted": 0.0307,
+        "actual": 0.1429,
+        "n": 616
+      },
+      {
+        "bin": 0.55,
+        "predicted": 0.0367,
+        "actual": 0.1669,
+        "n": 617
+      },
+      {
+        "bin": 0.65,
+        "predicted": 0.0434,
+        "actual": 0.1266,
+        "n": 616
+      },
+      {
+        "bin": 0.75,
+        "predicted": 0.0521,
+        "actual": 0.1183,
+        "n": 617
+      },
+      {
+        "bin": 0.85,
+        "predicted": 0.0653,
+        "actual": 0.1331,
+        "n": 616
+      },
+      {
+        "bin": 0.95,
+        "predicted": 0.1058,
+        "actual": 0.0972,
+        "n": 617
+      }
+    ]
+  },
+  "cohorts": {
+    "dev": [
+      {
+        "cohort": "2017Q2",
+        "precision_at_k": 0.1333,
+        "k": 15,
+        "n": 316,
+        "base_rate": 0.0791,
+        "expected_hits_null": 1.19
+      },
+      {
+        "cohort": "2017Q4",
+        "precision_at_k": 0.0714,
+        "k": 28,
+        "n": 564,
+        "base_rate": 0.0709,
+        "expected_hits_null": 1.99
+      },
+      {
+        "cohort": "2018Q1",
+        "precision_at_k": 0.0714,
+        "k": 28,
+        "n": 567,
+        "base_rate": 0.0494,
+        "expected_hits_null": 1.38
+      },
+      {
+        "cohort": "2018Q2",
+        "precision_at_k": 0.1071,
+        "k": 28,
+        "n": 576,
+        "base_rate": 0.0486,
+        "expected_hits_null": 1.36
+      },
+      {
+        "cohort": "2018Q3",
+        "precision_at_k": 0.1429,
+        "k": 28,
+        "n": 577,
+        "base_rate": 0.0468,
+        "expected_hits_null": 1.31
+      },
+      {
+        "cohort": "2018Q4",
+        "precision_at_k": 0.1034,
+        "k": 29,
+        "n": 582,
+        "base_rate": 0.043,
+        "expected_hits_null": 1.25
+      },
+      {
+        "cohort": "2019Q1",
+        "precision_at_k": 0.1034,
+        "k": 29,
+        "n": 586,
+        "base_rate": 0.0802,
+        "expected_hits_null": 2.33
+      },
+      {
+        "cohort": "2019Q2",
+        "precision_at_k": 0.0,
+        "k": 29,
+        "n": 597,
+        "base_rate": 0.0369,
+        "expected_hits_null": 1.07
+      },
+      {
+        "cohort": "2019Q3",
+        "precision_at_k": 0.2,
+        "k": 30,
+        "n": 610,
+        "base_rate": 0.0656,
+        "expected_hits_null": 1.97
+      },
+      {
+        "cohort": "2019Q4",
+        "precision_at_k": 0.2333,
+        "k": 30,
+        "n": 618,
+        "base_rate": 0.1084,
+        "expected_hits_null": 3.25
+      },
+      {
+        "cohort": "2020Q1",
+        "precision_at_k": 0.3871,
+        "k": 31,
+        "n": 630,
+        "base_rate": 0.1302,
+        "expected_hits_null": 4.04
+      },
+      {
+        "cohort": "2020Q2",
+        "precision_at_k": 0.4839,
+        "k": 31,
+        "n": 629,
+        "base_rate": 0.3466,
+        "expected_hits_null": 10.74
+      },
+      {
+        "cohort": "2020Q3",
+        "precision_at_k": 0.2812,
+        "k": 32,
+        "n": 653,
+        "base_rate": 0.2389,
+        "expected_hits_null": 7.64
+      },
+      {
+        "cohort": "2020Q4",
+        "precision_at_k": 0.1765,
+        "k": 68,
+        "n": 1364,
+        "base_rate": 0.1672,
+        "expected_hits_null": 11.37
+      },
+      {
+        "cohort": "2021Q2",
+        "precision_at_k": 0.0571,
+        "k": 35,
+        "n": 702,
+        "base_rate": 0.0499,
+        "expected_hits_null": 1.75
+      },
+      {
+        "cohort": "2021Q3",
+        "precision_at_k": 0.0571,
+        "k": 35,
+        "n": 708,
+        "base_rate": 0.0424,
+        "expected_hits_null": 1.48
+      },
+      {
+        "cohort": "2021Q4",
+        "precision_at_k": 0.0959,
+        "k": 73,
+        "n": 1475,
+        "base_rate": 0.0292,
+        "expected_hits_null": 2.13
+      },
+      {
+        "cohort": "2022Q2",
+        "precision_at_k": 0.0513,
+        "k": 39,
+        "n": 782,
+        "base_rate": 0.0243,
+        "expected_hits_null": 0.95
+      },
+      {
+        "cohort": "2022Q3",
+        "precision_at_k": 0.1772,
+        "k": 79,
+        "n": 1583,
+        "base_rate": 0.079,
+        "expected_hits_null": 6.24
+      },
+      {
+        "cohort": "2022Q4",
+        "precision_at_k": 0.122,
+        "k": 41,
+        "n": 831,
+        "base_rate": 0.1047,
+        "expected_hits_null": 4.29
+      },
+      {
+        "cohort": "2023Q1",
+        "precision_at_k": 0.1905,
+        "k": 42,
+        "n": 843,
+        "base_rate": 0.0925,
+        "expected_hits_null": 3.88
+      },
+      {
+        "cohort": "2023Q2",
+        "precision_at_k": 0.0714,
+        "k": 42,
+        "n": 847,
+        "base_rate": 0.0826,
+        "expected_hits_null": 3.47
+      },
+      {
+        "cohort": "2023Q4",
+        "precision_at_k": 0.2143,
+        "k": 42,
+        "n": 855,
+        "base_rate": 0.1216,
+        "expected_hits_null": 5.11
+      }
+    ],
+    "holdout": [
+      {
+        "cohort": "2024Q1",
+        "precision_at_k": 0.2143,
+        "k": 42,
+        "n": 859,
+        "base_rate": 0.1176,
+        "expected_hits_null": 4.94
+      },
+      {
+        "cohort": "2024Q2",
+        "precision_at_k": 0.2093,
+        "k": 43,
+        "n": 872,
+        "base_rate": 0.0929,
+        "expected_hits_null": 3.99
+      },
+      {
+        "cohort": "2024Q3",
+        "precision_at_k": 0.3023,
+        "k": 43,
+        "n": 871,
+        "base_rate": 0.1274,
+        "expected_hits_null": 5.48
+      },
+      {
+        "cohort": "2024Q4",
+        "precision_at_k": 0.2791,
+        "k": 43,
+        "n": 875,
+        "base_rate": 0.1257,
+        "expected_hits_null": 5.41
+      },
+      {
+        "cohort": "2025Q1",
+        "precision_at_k": 0.2045,
+        "k": 44,
+        "n": 888,
+        "base_rate": 0.125,
+        "expected_hits_null": 5.5
+      },
+      {
+        "cohort": "2025Q2",
+        "precision_at_k": 0.2273,
+        "k": 44,
+        "n": 894,
+        "base_rate": 0.1767,
+        "expected_hits_null": 7.77
+      },
+      {
+        "cohort": "2025Q3",
+        "precision_at_k": 0.1111,
+        "k": 45,
+        "n": 906,
+        "base_rate": 0.1711,
+        "expected_hits_null": 7.7
+      }
+    ]
+  },
+  "weights": {
+    "features": [
+      "technical",
+      "accumulation",
+      "liquidity",
+      "theme",
+      "business_quality",
+      "capital",
+      "government",
+      "adoption",
+      "sponsorship",
+      "narrative",
+      "completeness"
+    ],
+    "current": [
+      -0.27875645,
+      0.03519849,
+      -0.18168781,
+      0.0,
+      0.11724137,
+      -0.0854886,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.3902193
+    ],
+    "baselineSynthetic": [
+      0.44103979,
+      0.40141994,
+      0.2805955,
+      0.65902246,
+      0.42897864,
+      0.40513001,
+      0.48983846,
+      0.33766252,
+      0.44527387,
+      0.38261733,
+      -0.0223345
+    ],
+    "note": "Standardised logistic weights. Zeros are domains whose data pipelines are unbuilt - honestly dead, never faked."
+  },
+  "leakage": [
+    {
+      "label": "first run",
+      "lift": 2.77,
+      "note": "stale-cache corpus; curated theme labels leaked"
+    },
+    {
+      "label": "theme leak removed",
+      "lift": 1.47,
+      "note": "symbol-identity leak stripped"
+    },
+    {
+      "label": "curated names quarantined",
+      "lift": 1.35,
+      "note": "14 hindsight picks out of training + headline"
+    },
+    {
+      "label": "purge units fixed",
+      "lift": 1.31,
+      "note": "calendar-day purge spans; honest dev number"
+    },
+    {
+      "label": "one-shot holdout",
+      "lift": 1.718,
+      "note": "untouched 2024-2025 confirmation",
+      "confirm": true
+    }
+  ],
+  "deploymentRestatement": {
+    "base": 0.03,
+    "precision": 0.0564,
+    "note": "Odds-rescaled top-pick precision at a realistic ~3% deployment base rate."
+  },
+  "labelDiagnostics": {
+    "option4_excluded_still_listed": 0,
+    "option4_excluded_liquidity": 457,
+    "note": "option-4 = first-touch AND still-listed AND liquidity-grew; on a survivor corpus the still-listed conjunct rarely binds - never present it as survival discipline here."
+  },
+  "promotion": {
+    "forced_over_floor": true,
+    "reason": "Incumbent bootstrap-synthetic champion REFUTED on real matured outcomes: dev OOS lift 0.78x CI90[0.62,0.97] and one-shot holdout (2024Q1-2025Q2, untouched) lift 0.70x CI90[0.47,0.92] - both CIs exclude 1.0 (anti-predictive). Challenger trained on real 2016-2023 outcomes: dev walk-forward lift 1.31x CI90[1.09,1.56], holdout lift 1.72x CI90[1.38,2.05], ECE 0.042 - CI floor above both incumbents' ceilings. Missing the 1.5x dev floor does not justify deploying the refuted model. Shadow-live unchanged; surfacing remains monitor+founder gated.",
+    "promoted_over": "incumbent champion artifact (see git history)"
+  },
+  "grades": {
+    "graded_at_corpus": "ef1b5c52",
+    "dimensions": [
+      {
+        "dimension": "Accuracy (real, out-of-time)",
+        "grade": "C+",
+        "why": "Holdout lift 1.72x CI90[1.38, 2.05] at top-5% on a survivor-biased corpus - a genuine research-queue edge, nowhere near a tradeable signal. Worst quarterly cohort is thin."
+      },
+      {
+        "dimension": "Calibration",
+        "grade": "B+",
+        "why": "ECE 0.042 on untouched holdout; needs re-calibration at deployment prevalence."
+      },
+      {
+        "dimension": "Process sophistication",
+        "grade": "A-",
+        "why": "Purged walk-forward, one-shot holdout, symbol-clustered CIs, drift fixtures, corpus integrity hashes, audited promotion."
+      },
+      {
+        "dimension": "Estimator sophistication",
+        "grade": "D+",
+        "why": "Deliberately basic 11-feature logistic, ~5 features alive. GBDT waits for deeper data."
+      },
+      {
+        "dimension": "Data depth",
+        "grade": "D",
+        "why": "The binding constraint: survivor-biased, 5 of 10 domains dark, annual fundamentals only."
+      },
+      {
+        "dimension": "Honesty of presentation",
+        "grade": "A",
+        "why": "Every caveat travels with every number; surfacing stays gated."
+      }
+    ]
+  },
+  "evidenceDocs": [
+    "lyra-modelling/research/2026-08-01-real-history-backtest-and-real-v1-champion.md",
+    "lyra-evals/MODEL-REPORT-CARD.md",
+    "lyra-modelling/NORTH-STAR.md"
+  ]
+}

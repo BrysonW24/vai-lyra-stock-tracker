@@ -32,9 +32,16 @@ ARTIFACT_VERSION = 1
 
 # Purge/embargo (López de Prado, AFML Ch. 7). The label horizon is 12 months, so a training row whose
 # barrier window reaches into a test fold shares outcome information with it and must be dropped. Embargo
-# is a further guard band before the test fold against serial-correlation leakage. For slow-moving small-cap
-# fundamentals a multi-week embargo is defensible; expressed in the same trading-day units as the horizon.
-EMBARGO_TRADING_DAYS = 10
+# is a further guard band before the test fold against serial-correlation leakage.
+#
+# UNITS MATTER (2026-08-01 adversarial-review fix): the row timestamps used for purging are CALENDAR
+# ordinals (dataset.predicted_at_ordinal -> date.toordinal()), so the purge horizon must be calendar
+# days too. The label window is 252 TRADING days ~= 365 calendar days (longer for thinly-traded names
+# whose 252 bars stretch further); comparing 252 against calendar ordinals under-purged by ~100 days
+# and let ~one quarterly cohort per fold train with label windows still open inside the test fold.
+EMBARGO_TRADING_DAYS = 10                 # retained for callers that pass bar-index timelines
+PURGE_HORIZON_CALENDAR_DAYS = 430         # 252 trading days + weekends/holidays + thin-trader margin
+PURGE_EMBARGO_CALENDAR_DAYS = 15
 
 # Pre-publish floor gate: a freshly trained model must clear these before it is allowed to overwrite the
 # champion artifact, so a bad retrain fails loudly instead of shipping silently.
@@ -192,14 +199,16 @@ def walk_forward_metrics(
     k_frac: float = 0.05,
     times: Optional[list[float]] = None,
     cohorts: Optional[list] = None,
-    horizon: float = HORIZON_TRADING_DAYS,
-    embargo: float = EMBARGO_TRADING_DAYS,
+    horizon: float = PURGE_HORIZON_CALENDAR_DAYS,
+    embargo: float = PURGE_EMBARGO_CALENDAR_DAYS,
 ) -> dict:
     """Walk-forward: train on prior folds, test on the next; out-of-sample only. When real timestamps are
-    supplied (`times`) the split is PURGED + EMBARGOED so a 12-month label window can never leak across the
-    fold boundary; the i.i.d. bootstrap has no timeline, so it runs index-ordered with purge correctly a
-    no-op. Reports the rare-positive family - PR-AUC (primary), per-cohort precision@k (worst cohort gates
-    surfacing), lift, adaptive ECE - with ROC-AUC/Brier as reference."""
+    supplied (`times` - CALENDAR ordinals from predicted_at) the split is PURGED + EMBARGOED so a 12-month
+    label window can never leak across the fold boundary; the defaults are CALENDAR-day spans matching the
+    timestamp units (the old trading-day defaults under-purged - see PURGE_HORIZON_CALENDAR_DAYS). The
+    i.i.d. bootstrap has no timeline, so it runs index-ordered with purge correctly a no-op. Reports the
+    rare-positive family - PR-AUC (primary), per-cohort precision@k (worst cohort gates surfacing), lift,
+    adaptive ECE - with ROC-AUC/Brier as reference."""
     n = len(X)
     if n == 0:
         return {"n_oos": 0, "note": "empty dataset"}
@@ -351,13 +360,21 @@ def train_and_export(
     max_ece: Optional[float] = None,
     regression_tol: float = FLOOR_REGRESSION_TOL,
     force: bool = False,
+    source_label: Optional[str] = None,
+    provenance_note: Optional[str] = None,
+    model_version: Optional[str] = None,
+    trained_at: Optional[str] = None,
 ) -> dict:
     """Train the classifier on the current dataset (real ledger rows if matured, else bootstrap), backtest
     with a PURGED + EMBARGOED walk-forward when timestamps exist, fit the final model on all data, and freeze
     to JSON with random + boundary drift fixtures. A PRE-PUBLISH FLOOR GATE refuses to overwrite the champion
     with a model that fails an absolute floor or materially regresses vs the incumbent - `force=True` to
-    override deliberately. A bad retrain raises `ModelFloorError` rather than shipping silently."""
-    ds = load_training_dataset(predictions, outcomes, n_bootstrap=n_bootstrap, seed=seed)
+    override deliberately. A bad retrain raises `ModelFloorError` rather than shipping silently.
+
+    `source_label` / `provenance_note` / `model_version` let a non-ledger point-in-time supplier (the
+    historical backtest corpus) stamp its honest provenance through the identical lifecycle."""
+    ds = load_training_dataset(predictions, outcomes, n_bootstrap=n_bootstrap, seed=seed,
+                               source_label=source_label, provenance_note=provenance_note)
     X, y = _build_model_matrix(ds)
     metrics = walk_forward_metrics(X, y, folds=folds, times=ds.get("times"), cohorts=ds.get("cohorts"))
 
@@ -387,8 +404,8 @@ def train_and_export(
 
     payload = {
         "version": ARTIFACT_VERSION,
-        "modelVersion": MODEL_VERSION,
-        "trainedAt": TRAINED_AT,
+        "modelVersion": model_version or MODEL_VERSION,
+        "trainedAt": trained_at or TRAINED_AT,
         "algorithm": "logistic-regression (stdlib GD, L2) over 10 domain scores + completeness",
         "featureOrder": FEATURE_ORDER_MODEL,
         "mean": [round(m, 8) for m in mean],

@@ -54,72 +54,180 @@ def fetch_company_facts(cik: int, *, timeout: int = 30, ua: Optional[str] = None
         return None
 
 
-def _annual_series(facts: dict, taxonomy: str, concept: str, unit: str) -> list[tuple[int, float]]:
-    """[(fiscal_year, value)] for ANNUAL (10-K, full-year) points of a concept, de-duped by fiscal year
-    (latest-filed wins) and sorted ascending by year. Empty when the concept/unit is absent."""
+def _days_between(a: str, b: str) -> Optional[int]:
+    import datetime as _dt
+
+    try:
+        return (_dt.date.fromisoformat(str(b)[:10]) - _dt.date.fromisoformat(str(a)[:10])).days
+    except ValueError:
+        return None
+
+
+# Two consecutive fiscal years are 330-430 days apart by END date (52/53-week calendars drift across
+# Jan 1, so calendar-year arithmetic silently loses them); two points under 200 days apart are the
+# SAME fiscal year seen through different filings (restatement/amendment - latest filed wins).
+_ANNUAL_GAP_MIN, _ANNUAL_GAP_MAX = 330, 430
+_SAME_SLOT_MAX_DAYS = 200
+
+
+def annual_points_from_rows(rows: list[dict], *, as_of: Optional[str] = None) -> list[tuple[str, str, float]]:
+    """Validated ANNUAL (10-K, full-year) points as [(end_date, filed, value)], ascending by end date,
+    de-duplicated per fiscal slot.
+
+    Discipline rules learned from real companyfacts payloads (2026-08-01 audits):
+      * Key by the PERIOD END DATE, never the filing's `fy` - every comparative period restated inside
+        a 10-K carries the FILING's fy/fp, so fy-keying lets a 2021 comparative overwrite the 2023 slot.
+      * When `start` is present the duration must look annual (330-400 days) - a Q4-only flow tagged
+        fp=FY inside a 10-K is not a fiscal year.
+      * Points whose ends are < 200 days apart are the same fiscal year (amended/restated filing) -
+        the latest-filed one wins. Date-clustering, not year-arithmetic, so 52/53-week fiscal
+        calendars that drift across Jan 1 are handled.
+      * `as_of` (optional) drops facts FILED after that date - the point-in-time view for backtests;
+        None keeps the live behaviour (best current truth, restatements included).
+    """
+    valid: list[tuple[str, str, float]] = []
+    for e in rows or []:
+        if e.get("form") not in ("10-K", "10-K/A"):
+            continue
+        if e.get("fp") != "FY":
+            continue
+        val, filed, end = e.get("val"), e.get("filed", ""), e.get("end")
+        if val is None or not end:
+            continue
+        if as_of is not None and filed > as_of:
+            continue
+        start = e.get("start")
+        if start:
+            dur = _days_between(start, end)
+            if dur is None or not 330 <= dur <= 400:
+                continue
+        valid.append((str(end)[:10], str(filed), float(val)))
+    valid.sort()
+    out: list[tuple[str, str, float]] = []
+    for end, filed, val in valid:
+        if out:
+            gap = _days_between(out[-1][0], end)
+            if gap is not None and gap < _SAME_SLOT_MAX_DAYS:
+                # Same fiscal slot: keep the latest-filed reading (tie -> the later end date).
+                if filed >= out[-1][1]:
+                    out[-1] = (end, filed, val)
+                continue
+        out.append((end, filed, val))
+    return out
+
+
+def _concept_series(facts: dict, taxonomy: str, concept: str, unit: str,
+                    *, as_of: Optional[str] = None) -> list[tuple[str, str, float]]:
     node = facts.get("facts", {}).get(taxonomy, {}).get(concept)
     if not node:
         return []
     rows = node.get("units", {}).get(unit)
     if not rows:
         return []
-    by_year: dict[int, tuple[str, float]] = {}  # fy -> (filed, val), keep latest filed
-    for e in rows:
-        if e.get("form") not in ("10-K", "10-K/A"):
-            continue
-        if e.get("fp") != "FY":
-            continue
-        fy, val, filed = e.get("fy"), e.get("val"), e.get("filed", "")
-        if not isinstance(fy, int) or val is None:
-            continue
-        prev = by_year.get(fy)
-        if prev is None or filed >= prev[0]:
-            by_year[fy] = (filed, float(val))
-    return [(fy, by_year[fy][1]) for fy in sorted(by_year)]
+    return annual_points_from_rows(rows, as_of=as_of)
 
 
-def _first_series(facts: dict, concepts: list[tuple[str, str, str]]) -> list[tuple[int, float]]:
-    for tax, concept, unit in concepts:
-        s = _annual_series(facts, tax, concept, unit)
-        if len(s) >= 2:
-            return s
-    return []
+def latest_annual_pair(series: list[tuple[str, str, float]]) -> Optional[tuple[str, float, str, float]]:
+    """(end0, val0, end1, val1) for the newest two points one fiscal year apart (330-430 days by end
+    date), else None - a delta across a filing gap is not a YoY and is dropped, not mislabelled."""
+    if len(series) < 2:
+        return None
+    (e0, _, v0), (e1, _, v1) = series[-2], series[-1]
+    gap = _days_between(e0, e1)
+    if gap is None or not _ANNUAL_GAP_MIN <= gap <= _ANNUAL_GAP_MAX:
+        return None
+    return (e0, v0, e1, v1)
+
+
+def freshest_pair_series(facts: dict, concepts: list[tuple[str, str, str]],
+                         *, as_of: Optional[str] = None) -> list[tuple[str, str, float]]:
+    """The series of the SINGLE concept variant with a valid latest YoY pair and the freshest latest
+    end date (priority order breaks ties). NEVER a cross-concept union: mixing e.g. a dei cover-date
+    share snapshot with a us-gaap fiscal-year weighted average manufactures a ~14-month pseudo-YoY
+    that sign-flipped real dilution reads (19 of 101 audited companies). Within one concept the
+    semantics are constant; picking the freshest variant still solves tag migration (an issuer that
+    stopped filing one tag keeps its YoY through the successor tag)."""
+    best: Optional[tuple[tuple[str, int], list[tuple[str, str, float]]]] = None
+    for i, (tax, concept, unit) in enumerate(concepts):
+        s = _concept_series(facts, tax, concept, unit, as_of=as_of)
+        if latest_annual_pair(s) is None:
+            continue
+        key = (s[-1][0], -i)  # freshest end wins; tie -> earlier-listed concept
+        if best is None or key > best[0]:
+            best = (key, s)
+    return best[1] if best else []
 
 
 def _clamp(v: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, v))
 
 
-def derive_edgar_features(facts: Optional[dict]) -> dict:
+def margin_series(rev_series: list[tuple[str, str, float]],
+                  gp_series: list[tuple[str, str, float]]) -> list[tuple[str, str, float]]:
+    """Per-fiscal-slot gross margins [(end, filed, GP/Rev)] where a revenue and gross-profit point share
+    the same fiscal slot (ends within 100 days - normally identical dates). Positive revenue only."""
+    out: list[tuple[str, str, float]] = []
+    for r_end, r_filed, rev in rev_series:
+        if rev <= 0:
+            continue
+        for g_end, _g_filed, gp in gp_series:
+            gap = _days_between(r_end, g_end)
+            if gap is not None and abs(gap) < 100:
+                out.append((r_end, r_filed, gp / rev))
+                break
+    return out
+
+
+def derive_edgar_features(facts: Optional[dict], *, as_of: Optional[str] = None,
+                          max_age_years: Optional[int] = None) -> dict:
     """Pure: map SEC companyfacts -> the trend fields the domains read. Coverage-honest - only emits a
-    field when >=2 comparable annual points exist. Returns {} when nothing can be derived."""
+    field when two points ONE FISCAL YEAR apart exist within a single concept (a change measured across
+    a filing gap, or across two different concepts, is not a "YoY" and is dropped, not mislabelled).
+    Returns {} when nothing can be derived.
+
+    `as_of` restricts to facts FILED on or before that date (point-in-time view for backtests).
+    `max_age_years` (optional) drops a derivation whose latest annual is older than that many years
+    relative to `as_of` - a decade-old dilution read presented as current is worse than absent."""
     if not facts:
         return {}
     out: dict = {}
 
+    def fresh_enough(latest_end: str) -> bool:
+        if max_age_years is None or as_of is None:
+            return True
+        age = _days_between(latest_end, as_of)
+        return age is not None and age <= max_age_years * 365 + 60
+
     # Real dilution: YoY change in shares outstanding (higher = more dilution = worse). The capital domain
     # scores -share_count_growth_yoy, so a real value here is the highest-evidence signal in the model.
-    shares = _first_series(facts, _SHARES_CONCEPTS)
-    if len(shares) >= 2:
-        prev, last = shares[-2][1], shares[-1][1]
-        if prev > 0:
+    pair = latest_annual_pair(freshest_pair_series(facts, _SHARES_CONCEPTS, as_of=as_of))
+    if pair is not None:
+        _e0, prev, e1, last = pair
+        if prev > 0 and fresh_enough(e1):
             out.setdefault("capital", {})["share_count_growth_yoy"] = round((last - prev) / prev * 100.0, 2)
 
-    # Gross-margin trend: change in GrossProfit/Revenues across the two most recent annuals, clamped to
-    # the [-1, 1] delta band the domain expects.
-    rev = dict(_first_series(facts, _REVENUE_CONCEPTS))
-    gp = dict(_first_series(facts, _GROSS_PROFIT_CONCEPTS))
-    common = sorted(y for y in rev if y in gp and rev[y] > 0)
-    if len(common) >= 2:
-        y0, y1 = common[-2], common[-1]
-        m0, m1 = gp[y0] / rev[y0], gp[y1] / rev[y1]
-        out.setdefault("fundamentals", {})["gross_margin_trend"] = round(_clamp(m1 - m0, -1.0, 1.0), 4)
+    # Gross-margin trend: change in GrossProfit/Revenues across the two most recent same-slot annuals,
+    # clamped to the [-1, 1] delta band the domain expects.
+    rev_series = freshest_pair_series(facts, _REVENUE_CONCEPTS, as_of=as_of)
+    gp_series = freshest_pair_series(facts, _GROSS_PROFIT_CONCEPTS, as_of=as_of)
+    m_pair = latest_annual_pair(margin_series(rev_series, gp_series))
+    if m_pair is not None:
+        _e0, m0, e1, m1 = m_pair
+        if fresh_enough(e1):
+            out.setdefault("fundamentals", {})["gross_margin_trend"] = round(_clamp(m1 - m0, -1.0, 1.0), 4)
 
     return out
 
 
 def fetch_edgar_features(cik: Optional[int], *, timeout: int = 30, ua: Optional[str] = None) -> dict:
-    """Convenience: fetch + derive in one call. Returns {} when there is no CIK or no usable facts."""
+    """Convenience: fetch + derive in one call. Returns {} when there is no CIK or no usable facts.
+    Live reads carry a 3-year recency guard: an issuer whose last 10-K is older than that no longer
+    gets a "current" dilution/margin trend from ancient filings."""
     if not cik:
         return {}
-    return derive_edgar_features(fetch_company_facts(cik, timeout=timeout, ua=ua))
+    import datetime as _dt
+
+    today = _dt.date.today().isoformat()
+    return derive_edgar_features(
+        fetch_company_facts(cik, timeout=timeout, ua=ua), as_of=today, max_age_years=3,
+    )

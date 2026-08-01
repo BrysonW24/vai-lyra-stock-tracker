@@ -78,7 +78,7 @@ export const MODEL_GROUPS: ModelGroup[] = [
     key: 'emerging-winner',
     title: 'Emerging Winner Engine - the six-model stack',
     blurb:
-      'Does this small cap structurally resemble the companies that became outsized winners? All six models run end to end in beta, logging to an immutable ledger. Reference v1 until the point-in-time winner dataset (Phase 1) lets the learned models train honestly.',
+      'Does this small cap structurally resemble the companies that became outsized winners? All six models run end to end in beta, logging to an immutable ledger. The winner classifier (Model 2) is now trained on real historical outcomes over a survivor-biased backtest corpus; the analogue library and learned ranker still wait on the delisted-inclusive point-in-time dataset.',
     entries: [
       {
         key: 'ew-m1-domain-score',
@@ -95,12 +95,12 @@ export const MODEL_GROUPS: ModelGroup[] = [
       {
         key: 'ew-m2-classifier',
         name: 'Model 2 - Emerging Winner Classifier',
-        family: 'Calibrated logistic (reference for CatBoost/LightGBM)',
+        family: 'Calibrated logistic, trained on real historical outcomes',
         answers:
           'Winner similarity 0-100, a 4-stage conviction ladder (weak / interesting / strong / breakout archetype), and which domains drove the call.',
         stage: 'shadow-live',
         provenance:
-          'Reference v1 - not yet trained on real winners. The trained gradient-boosted model drops in behind the same interface once the Phase 1 dataset exists.',
+          'Champion emerging-winner-classifier-real-v1: a calibrated logistic trained on a point-in-time backtest corpus of real historical outcomes - 991 US symbols, 27,420 quarterly rows (2016-2025), matured 12-month first-touch labels, EDGAR facts as-of entry dates. One-shot untouched holdout (2024Q1-2025Q2): 1.72x lift at top-5% (90% CI 1.38-2.05), ROC-AUC 0.585, ECE 0.042. The corpus is survivor-biased (delisted names absent), so precision is an optimistic bound - still shadow-live, research only.',
         surface: { href: '/emerging-winners', label: 'Emerging Winners' },
         code: 'workers/emerging_winner/classifier.py',
       },
@@ -224,10 +224,10 @@ export interface RoadmapPhase {
 /** The Emerging Winner Engine phased build plan (research doc §11), stated honestly. */
 export const ROADMAP: RoadmapPhase[] = [
   { phase: 0, title: 'Domain scorecard', status: 'done', note: 'Deterministic 10-domain engine, coverage-honest.' },
-  { phase: 1, title: 'Point-in-time dataset', status: 'next', note: 'Small-cap universe incl. delisted names + first-touch labels. The gate for everything learned.' },
-  { phase: 2, title: 'Winner classifier (trained)', status: 'pending', note: 'Gradient-boosted 4-class, walk-forward by year, SHAP.' },
+  { phase: 1, title: 'Point-in-time dataset', status: 'ongoing', note: 'Partially delivered: a survivor-biased free-data corpus exists (991 US symbols, 27,420 quarterly rows 2016-2025, matured first-touch labels). The delisted-inclusive corpus remains the gate.' },
+  { phase: 2, title: 'Winner classifier (trained)', status: 'done', note: 'Done on the v1 corpus: emerging-winner-classifier-real-v1, a calibrated logistic with purged walk-forward + one-shot holdout evidence. Retrains when the delisted-inclusive corpus lands.' },
   { phase: 3, title: 'Archetype classifier (trained)', status: 'pending', note: 'Learned archetype tags replace the rules.' },
   { phase: 4, title: 'Explainability layer', status: 'done', note: 'The research card ships today in reference form.' },
-  { phase: 5, title: 'Live research queue', status: 'done', note: 'Ranked queue + immutable ledger, beta today over an illustrative universe.' },
-  { phase: 6, title: 'Feedback loop', status: 'pending', note: 'Outcomes mature over 12 months, then challenger promotion begins.' },
+  { phase: 5, title: 'Live research queue', status: 'done', note: 'Ranked queue + immutable ledger, beta today (illustrative demo set until a live run populates the ledger).' },
+  { phase: 6, title: 'Feedback loop', status: 'next', note: 'The live-calibration gate is wired but has no matured ledger pairs yet; outcomes mature over 12 months, then surfacing and challenger promotion can be earned.' },
 ];

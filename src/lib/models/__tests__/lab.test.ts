@@ -47,7 +47,7 @@ function sig(symbol: string, score: number, over: Partial<SignalRow> = {}): Sign
 function ewr(symbol: string, sim: number, archetype: string, over: Partial<EmergingWinnerResult> = {}): EmergingWinnerResult {
   return {
     symbol,
-    engine_version: 'reference-v1',
+    engine_version: 'emerging-winner-classifier-real-v1',
     generated_at: '2026-08-01T00:00:00Z',
     winner_similarity: sim,
     probability: 0.1,
@@ -99,7 +99,7 @@ function ewr(symbol: string, sim: number, archetype: string, over: Partial<Emerg
 }
 
 function queue(results: EmergingWinnerResult[], demo = true): EmergingWinnerQueue {
-  return { queue: results, generated_at: '2026-08-01T00:00:00Z', engine_version: 'reference-v1', demo, note: '' };
+  return { queue: results, generated_at: '2026-08-01T00:00:00Z', engine_version: 'emerging-winner-classifier-real-v1', demo, note: '' };
 }
 
 function data(over: Partial<RunData> = {}): RunData {
@@ -144,6 +144,16 @@ describe('buildRun - EW family (Emerging Winner)', () => {
     expect(run.summary.illustrative).toBe(true);
     expect(run.stages.length).toBe(6); // the six-model pipeline
     expect(run.summary.reviewed).toBe(2);
+  });
+
+  it('states the real-v1 training truth in the M2 stage, with the survivor-biased caveat', () => {
+    const d = data({ ew: queue([ewr('AIX', 88, 'AI Infrastructure Enabler')]) });
+    const run = buildRun(cfg, d);
+    const m2 = run.stages.find((s) => s.id === 'm2');
+    expect(m2?.output).toContain('real-v1');
+    expect(m2?.output).toContain('trained on real outcomes');
+    expect(m2?.logs?.[0]).toMatch(/trained on real historical outcomes/);
+    expect(m2?.logs?.[0]).toMatch(/survivor-biased/);
   });
 
   it('filters by vertical/archetype', () => {

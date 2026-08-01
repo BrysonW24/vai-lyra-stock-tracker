@@ -45,4 +45,10 @@ describe('ModelsShowcase', () => {
     expect(screen.getByText(/in beta/i)).toBeTruthy();
     expect(screen.getByText(/research, not advice/i)).toBeTruthy();
   });
+
+  it('mirrors the in-app training truth without overclaiming', () => {
+    render(<ModelsShowcase />);
+    // The classifier claim carries its caveat on the same line - never a naked "trained" boast.
+    expect(screen.getByText(/trained on real historical outcomes \(survivor-biased backtest, still beta\)/i)).toBeTruthy();
+  });
 });

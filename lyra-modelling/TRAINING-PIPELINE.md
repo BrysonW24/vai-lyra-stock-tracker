@@ -52,9 +52,10 @@ the trained model will sit:
   10 domain scores**, emitting the EXACT output contract the trained model will (winner-similarity 0-100,
   ordinal stage 0-4, class probabilities, SHAP-like per-domain contributions, coverage-aware confidence),
   stamped `reference-v1 (shadow-live), not trained on real winners`.
-- `classifier.py::train_classifier` (line ~175) is a deliberate **Phase 1 seam** - `pragma: no cover`,
-  intentionally not implemented, waiting for the labelled dataset. When it lands it refits and re-exports;
-  nothing downstream changes.
+- `classifier.py::train_classifier` is IMPLEMENTED (it delegates to `train.py::train_and_export` -
+  dataset -> purged walk-forward -> floor gate -> frozen JSON artifact + drift fixtures) and the frozen
+  champion at `src/lib/generated/emerging-winner-model.json` is what `classify()` serves. (This bullet
+  previously described the pre-2026-07-31 stub state; refreshed 2026-08-01.)
 - `reference_data.py` analogue profiles are ILLUSTRATIVE, and `main.py` scores an ILLUSTRATIVE universe -
   clearly labelled, so the score -> persist -> read-back loop is provably live without pretending the data
   is real.
@@ -236,7 +237,7 @@ HOW WE BEGIN TO TRAIN  —  the CatBoost/LightGBM winner classifier (Model 2)
 |---|---|---|---|---|
 | `domains.py` + `scorecard.py` | 1 Domain Signal Engine | inputs | never (deterministic) | live |
 | `risk_gates.py` | 5 Risk Gate Stack | Gate 1 | v1 (survival/dilution/manip) | rule-based |
-| `classifier.py` | 2 Winner Classifier | Gate 2 | v1 (CatBoost/LightGBM ordinal) | `reference-v1` logistic; `train_classifier` stubbed |
+| `classifier.py` | 2 Winner Classifier | Gate 2 | v1 (CatBoost/LightGBM ordinal) | trained champion artifact served (`train_classifier` -> `train.py` lifecycle); reference logistic as fallback |
 | `analogue.py` + `reference_data.py` | 3 Historical Analogue | Gate 2 | v1 (metric-learning/kNN) | illustrative profiles |
 | `ranker.py` | 4 Archetype + Ranker | Gate 3 + 8 | v1 (LambdaMART) | deterministic |
 | `distribution.py` | Outcome distribution | Gate 7 | v1-v2 (NGBoost/quantile) | deterministic estimate |

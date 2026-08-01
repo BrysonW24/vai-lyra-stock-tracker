@@ -622,10 +622,5 @@
       "probability": 0.06411379,
       "kind": "boundary"
     }
-  ],
-  "promotion": {
-    "forced_over_floor": true,
-    "reason": "Incumbent bootstrap-synthetic champion REFUTED on real matured outcomes: dev OOS lift 0.78x CI90[0.62,0.97] and one-shot holdout (2024Q1-2025Q2, untouched) lift 0.70x CI90[0.47,0.92] - both CIs exclude 1.0 (anti-predictive). Challenger trained on real 2016-2023 outcomes: dev walk-forward lift 1.31x CI90[1.09,1.56], holdout lift 1.72x CI90[1.38,2.05], ECE 0.042 - CI floor above both incumbents' ceilings. Missing the 1.5x dev floor does not justify deploying the refuted model. Shadow-live unchanged; surfacing remains monitor+founder gated.",
-    "promoted_over": "incumbent champion artifact (see git history)"
-  }
+  ]
 }

@@ -127,12 +127,15 @@ def run_engine(symbol: str, features: dict, *, generated_at: str | None = None) 
     # Distribution (Gate 7) from calibrated probability + risk
     dist = estimate_distribution(clf.probability, risk.penalty, clf.completeness)
 
-    # M4b - rank / action (blocked risk => excluded from queue)
-    catalyst_freshness = float(features.get("news_attention", 0.5)) * 100.0
-    portfolio_relevance = float(features.get("portfolio_relevance", 0.5)) * 100.0
+    # M4b - rank / action (blocked risk => excluded from queue). Unsupplied attention/relevance pass
+    # through as None so the ranker renormalises over what is actually known - a silent 0.5 default
+    # fabricated 25% of the priority weight on every real candidate (2026-08-01 semantics audit).
+    news = features.get("news_attention")
+    pr = features.get("portfolio_relevance")
     priority, action, signals = m4.rank(
         clf, risk.penalty, risk.blocked,
-        catalyst_freshness=catalyst_freshness, portfolio_relevance=portfolio_relevance,
+        catalyst_freshness=float(news) * 100.0 if news is not None else None,
+        portfolio_relevance=float(pr) * 100.0 if pr is not None else None,
     )
 
     # Assemble the risk half (mandatory, never empty) from every layer.

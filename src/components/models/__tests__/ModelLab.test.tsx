@@ -8,8 +8,9 @@ import type { EmergingWinnerQueue } from '@/lib/emerging-winner/types';
 /**
  * The Model Lab is the product experience over the honest engine. Pinned: the four runnable models
  * appear with true availability, a Planned outcome can never arm a run, pressing Run transitions
- * into the honest execution view (which states plainly it is not trained on real winners), and the
- * technical catalogue is reachable behind Models & methods rather than being the front door.
+ * into the honest execution view (which states plainly the classifier is trained on real historical
+ * outcomes over a survivor-biased corpus and stays shadow-live), and the technical catalogue is
+ * reachable behind Models & methods rather than being the front door.
  */
 
 vi.mock('next/link', () => ({
@@ -49,7 +50,7 @@ const DATA: DashboardData = {
   thresholds: { alert: 70, watchlist: 50, signalChange: 5 },
 };
 
-const EW: EmergingWinnerQueue = { queue: [], generated_at: null, engine_version: 'reference-v1', demo: true, note: '' };
+const EW: EmergingWinnerQueue = { queue: [], generated_at: null, engine_version: 'emerging-winner-classifier-real-v1', demo: true, note: '' };
 
 function renderLab() {
   return render(<ModelLab data={DATA} ew={EW} />);
@@ -91,7 +92,10 @@ describe('ModelLab', () => {
     // Default model is Emerging Winner (recommended first run).
     fireEvent.click(screen.getByRole('button', { name: /Run Emerging Winner/ }));
     expect(screen.getByText(/Emerging Winner running/i)).toBeTruthy();
-    expect(screen.getByText(/not trained on real winners yet/i)).toBeTruthy();
+    expect(
+      screen.getByText(/real-v1, trained on real historical outcomes over a survivor-biased backtest corpus/i),
+    ).toBeTruthy();
+    expect(screen.getByText(/shadow-live, research only/i)).toBeTruthy();
   });
 
   it('keeps the technical catalogue behind Models & methods', () => {

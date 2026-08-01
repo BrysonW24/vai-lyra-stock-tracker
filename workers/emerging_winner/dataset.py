@@ -274,9 +274,15 @@ def load_training_dataset(
     min_matured: int = 200,
     n_bootstrap: int = 6000,
     seed: int = 42,
+    source_label: Optional[str] = None,
+    provenance_note: Optional[str] = None,
 ) -> dict:
     """Return the training dataset + its provenance. Real ledger rows once >= min_matured outcomes have
-    matured, else the reproducible bootstrap. The classifier's feature contract is identical either way."""
+    matured, else the reproducible bootstrap. The classifier's feature contract is identical either way.
+
+    `source_label` / `provenance_note` let a NON-ledger point-in-time supplier (the historical backtest
+    corpus) state its own honest provenance instead of inheriting the ledger wording - the rows flow
+    through the identical assembly, but the artifact must never claim they came from the 056 ledger."""
     if predictions is not None and outcomes is not None:
         rows = assemble_training_rows(predictions, outcomes)
         if len(rows) >= min_matured:
@@ -292,9 +298,9 @@ def load_training_dataset(
                 "completeness": [r.completeness for r in rows],
                 "times": times,
                 "cohorts": cohorts,
-                "source": "point-in-time-ledger",
+                "source": source_label or "point-in-time-ledger",
                 "n": len(rows),
-                "provenance": (
+                "provenance": provenance_note or (
                     f"Real point-in-time rows: {len(rows)} matured predictions from the 056 shadow-live "
                     "ledger joined to their first-touch outcomes. No look-ahead - features were frozen "
                     "before the outcome existed."

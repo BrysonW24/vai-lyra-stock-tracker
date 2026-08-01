@@ -145,7 +145,11 @@ def test_pipeline_strong_is_surfaced_and_ranked():
     assert r.engine_version == ENGINE_VERSION
     assert r.surfaced is True
     assert r.priority_score > 0
-    assert r.action in ("deep_research", "paper_bot_candidate")
+    # The action TIER follows the champion's learned probability (the real-v1 model does not equate
+    # a pretty scorecard with winner odds - that hypothesis was refuted on real outcomes), so a
+    # clean candidate may honestly land anywhere in the research vocabulary; the invariant is that
+    # it is a surfaced research action, never a review/block.
+    assert r.action in ("deep_research", "paper_bot_candidate", "watchlist_candidate")
     assert r.risks  # mandatory risk half is never empty
 
 

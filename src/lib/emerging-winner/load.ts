@@ -9,8 +9,9 @@ import { DEMO_QUEUE } from './demo';
 import type { EmergingWinnerQueue, EmergingWinnerResult } from './types';
 
 const SHADOW_NOTE =
-  'Beta: predictions are computed and logged to an immutable ledger, but are not surfaced as ' +
-  'truth until historical walk-forward and live calibration earn it. Research only, never advice.';
+  'Beta: predictions are computed and logged to an immutable ledger. The classifier now carries real ' +
+  'historical backtest evidence, but results are not surfaced as truth until live calibration on ' +
+  'matured ledger outcomes earns it. Research only, never advice.';
 
 export async function loadEmergingWinnerQueue(): Promise<EmergingWinnerQueue> {
   const supabase = await createSupabaseServerClient();

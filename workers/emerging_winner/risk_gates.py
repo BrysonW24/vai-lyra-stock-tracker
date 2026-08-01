@@ -119,7 +119,10 @@ def _gate_manipulation(f: dict) -> GateResult:
 
 def _gate_liquidity(f: dict) -> GateResult:
     adv = f.get("avg_dollar_volume")
-    if adv is None and f.get("close") is not None and f.get("volume") is not None:
+    if (adv is None and not f.get("usd_semantics_dropped")
+            and f.get("close") is not None and f.get("volume") is not None):
+        # Fallback only when the FX step did not deliberately drop the USD-semantics fields - close x
+        # volume is listing-currency and must not be compared against USD thresholds after that drop.
         adv = f["close"] * f["volume"]
     if adv is None:
         return GateResult("liquidity", "Liquidity / execution", INSUFFICIENT, 20.0,

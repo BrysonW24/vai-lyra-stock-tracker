@@ -36,8 +36,9 @@ _CACHE_PATH = os.path.join(tempfile.gettempdir(), "lyra_fx_usd_rates.json")
 
 # Approximate last-resort rates (1 unit of currency in USD). Order-of-magnitude correct for cap-tier
 # bucketing when the live source has never been reachable; every use is logged as approximate.
+# Refreshed 2026-08-01 against live ECB reference rates (AUD was pinned 0.65 vs live 0.7018).
 PINNED_USD_RATES: dict[str, float] = {
-    "AUD": 0.65, "GBP": 1.27, "EUR": 1.08, "CAD": 0.73, "NZD": 0.59,
+    "AUD": 0.70, "GBP": 1.27, "EUR": 1.08, "CAD": 0.73, "NZD": 0.62,
     "CHF": 1.10, "JPY": 0.0067, "HKD": 0.128, "SGD": 0.74, "SEK": 0.095,
     "NOK": 0.093, "DKK": 0.145, "GBX": 0.0127,  # GBX = pence quotes on the LSE
 }

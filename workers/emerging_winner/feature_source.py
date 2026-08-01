@@ -18,7 +18,6 @@ too-short series returns None and that symbol is skipped - the universe scan tol
 """
 from __future__ import annotations
 
-import statistics
 from typing import Optional
 
 from ..stock_scanner.indicators import calculate_indicators
@@ -32,6 +31,13 @@ MIN_CANDLES = 30  # below this, indicators (esp. the longer SMAs) are too sparse
 # USD-semantics fields: thresholds downstream (risk gates, cap tiers) read these AS US dollars, so for a
 # non-USD listing they are converted via fx.py - or DROPPED when no rate exists (absent beats wrong).
 _USD_SEMANTICS_KEYS = ("market_cap", "avg_dollar_volume")
+
+
+def normalise_currency_code(raw: str) -> str:
+    """Provider currency string -> the FX code the pipeline uses. The one trap: 'GBp' (LSE pence)
+    must map to GBX, not be uppercased into GBP - pence read as pounds overstates USD fields ~100x."""
+    code = raw.strip()
+    return "GBX" if code in ("GBp", "GBX", "gbp_pence") else code.upper()
 
 
 def _fetch_fundamentals(symbol: str) -> dict:
@@ -49,9 +55,11 @@ def _fetch_fundamentals(symbol: str) -> dict:
     out: dict = {}
     # The listing currency the provider itself states for this name (per-name truth; beats any
     # suffix-implied guess). Consumed by the FX normalisation step, never emitted as a feature.
+    # "GBp" (LSE pence) must NOT collapse to "GBP" via uppercasing - pence read as pounds overstates
+    # every USD-semantics field ~100x; fx.py's GBX rate handles pence correctly.
     ccy = info.get("currency")
     if isinstance(ccy, str) and ccy.strip():
-        out["_currency"] = ccy.strip().upper()
+        out["_currency"] = normalise_currency_code(ccy)
     mc = info.get("marketCap")
     if isinstance(mc, (int, float)) and mc > 0:
         out["market_cap"] = float(mc)
@@ -91,6 +99,9 @@ def _normalise_to_usd(feats: dict, currency: Optional[str]) -> None:
     if rate is None:
         for key in _USD_SEMANTICS_KEYS:
             feats.pop(key, None)
+        # Tell the downstream liquidity readers the drop was DELIBERATE, so their close x volume
+        # fallback does not reinstate a mislabeled listing-currency number against USD thresholds.
+        feats["usd_semantics_dropped"] = True
         return
     for key in _USD_SEMANTICS_KEYS:
         if isinstance(feats.get(key), (int, float)):
@@ -124,7 +135,12 @@ def assemble_features(
     if not snapshots:
         return None
     latest = snapshots[-1]
-    last_candle = candles[-1]
+    # Pair open with the SAME session as the latest snapshot: the indicator pass drops NaN-close rows,
+    # so candles[-1] can be a newer (still-forming/holiday) bar than snapshots[-1] - an up-day test
+    # across two different sessions is not an up-day test.
+    last_candle = next(
+        (c for c in reversed(candles) if c.candle_time == latest.candle_time), candles[-1]
+    )
 
     feats: dict = {}
 
@@ -146,9 +162,13 @@ def assemble_features(
     put("volume", latest.volume)
     if latest.volume_state:
         feats["volume_state"] = latest.volume_state
-    recent = [c for c in candles[-20:] if c.close and c.volume]
-    if recent:
-        feats["avg_dollar_volume"] = statistics.mean(c.close * c.volume for c in recent)
+    # Honest ADV denominator: the FULL 20-bar window, no-trade days counted as $0. Dropping them
+    # overstated executable liquidity on exactly the thin names the $250K/$2M gates exist to catch.
+    window = candles[-20:]
+    if any(c.close and c.volume for c in window):
+        feats["avg_dollar_volume"] = (
+            sum((c.close or 0.0) * (c.volume or 0.0) for c in window) / len(window)
+        )
 
     # Price context.
     put("close", latest.close)
@@ -162,7 +182,21 @@ def assemble_features(
     # and capital domains - the quality-discriminating layer. Best-effort: absent for names yfinance has no
     # fundamentals for, so those domains stay honestly partial/unavailable.
     if with_fundamentals:
-        feats.update(_fetch_fundamentals(symbol))
+        fundamentals = _fetch_fundamentals(symbol)
+        # Merge WITHOUT clobbering: a curated theme_context must survive the yfinance industry/sector
+        # labels (dict.update replaced the whole sub-dict, wiping e.g. RGTI's "quantum computing").
+        # Curated themes lead, Yahoo labels append - the theme domain sees both.
+        yf_theme = fundamentals.pop("theme_context", None)
+        if yf_theme:
+            existing = feats.get("theme_context")
+            if existing and existing.get("themes"):
+                merged = list(existing["themes"]) + [
+                    t for t in yf_theme.get("themes", []) if t not in existing["themes"]
+                ]
+                feats["theme_context"] = {**yf_theme, **existing, "themes": merged}
+            else:
+                feats["theme_context"] = yf_theme
+        feats.update(fundamentals)
 
         # Real SEC EDGAR fundamentals fill the TREND fields a single yfinance snapshot cannot: gross-margin
         # trend and real share-count dilution. Merged into the existing sub-dicts (never clobbering the

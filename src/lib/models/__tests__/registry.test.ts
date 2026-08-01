@@ -61,9 +61,28 @@ describe('models registry integrity', () => {
     }
   });
 
-  it('roadmap covers phases 0-6 with exactly one "next" gate', () => {
+  it('states the Model 2 champion truth with the survivor-biased caveat, never overclaiming', () => {
+    const m2 = ALL_ENTRIES.find((e) => e.key === 'ew-m2-classifier')!;
+    expect(m2.provenance).toMatch(/emerging-winner-classifier-real-v1/);
+    expect(m2.provenance).toMatch(/real historical outcomes/);
+    expect(m2.provenance).toMatch(/survivor-biased/);
+    expect(m2.provenance).toMatch(/shadow-live, research only/);
+    expect(m2.stage).toBe('shadow-live');
+  });
+
+  it('roadmap covers phases 0-6, keeps Phase 1 partial (never done) and exactly one "next" gate', () => {
     expect(ROADMAP.map((p) => p.phase)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    // Phase 1 is partially delivered: survivor-biased corpus exists, delisted-inclusive corpus is the gate.
+    const phase1 = ROADMAP.find((p) => p.phase === 1)!;
+    expect(phase1.status).toBe('ongoing');
+    expect(phase1.note).toMatch(/survivor-biased/i);
+    expect(phase1.note).toMatch(/delisted-inclusive/i);
+    // Phase 2 is done on the v1 corpus only, and says so.
+    const phase2 = ROADMAP.find((p) => p.phase === 2)!;
+    expect(phase2.status).toBe('done');
+    expect(phase2.note).toMatch(/v1 corpus/i);
+    // Exactly one "next" gate: live calibration on matured ledger outcomes (the feedback loop).
     expect(ROADMAP.filter((p) => p.status === 'next')).toHaveLength(1);
-    expect(ROADMAP.find((p) => p.status === 'next')!.phase).toBe(1);
+    expect(ROADMAP.find((p) => p.status === 'next')!.phase).toBe(6);
   });
 });

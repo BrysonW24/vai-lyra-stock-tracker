@@ -71,7 +71,10 @@ MARKETS: dict[str, Market] = {
     "us": Market("us", "United States (SEC listing)", "", "USD", "sec"),
     "au": Market("au", "Australia (ASX)", ".AX", "AUD", "ASX"),
     # Available but not in the default set - flip on with EW_MARKETS="us,au,uk".
-    "uk": Market("uk", "United Kingdom (LSE)", ".L", "GBP", "LSE"),
+    # Fallback currency is GBX (pence): Yahoo quotes the overwhelming majority of LSE equities in
+    # pence, so a GBP fallback would overstate USD-semantics fields ~100x whenever the provider's own
+    # currency read is unavailable (exactly the throttled case where the fallback fires).
+    "uk": Market("uk", "United Kingdom (LSE)", ".L", "GBX", "LSE"),
 }
 
 DEFAULT_MARKETS = "us,au"

@@ -185,8 +185,26 @@ class StooqProvider:
             text = download_with_retry(lambda: self._fetch_csv(url))
         except Exception:  # noqa: BLE001 - a fallback source failing is a miss, never a crash
             return []
+        if self.looks_bot_walled(text):
+            # Distinguish "no data for symbol" from "provider refusing this client": Stooq serves a
+            # JavaScript proof-of-work challenge page to non-browser clients from some networks
+            # (observed 2026-08-01). Without this check the wall parses to [] and the fallback chain
+            # is SILENTLY single-source. We log loudly and honour the wall - never script around it.
+            logger.warning(
+                "stooq: bot-verification challenge served instead of CSV for %s - provider is walled "
+                "from this network; fallback chain is effectively yfinance-only right now", symbol,
+            )
+            return []
         candles = self.parse_csv(text, symbol=symbol, timeframe=timeframe)
         return drop_incomplete_last_candle(candles, timeframe)
+
+    @staticmethod
+    def looks_bot_walled(text: str) -> bool:
+        """True when the response body is Stooq's JS anti-bot challenge rather than CSV data."""
+        if not text:
+            return False
+        head = text.lstrip()[:600].lower()
+        return head.startswith("<") and ("__verify" in text[:4000] or "javascript" in head)
 
     def parse_csv(self, text: str, *, symbol: str, timeframe: str) -> list[Candle]:
         """Pure parse of Stooq's `Date,Open,High,Low,Close,Volume` CSV (also tolerates a `No data`

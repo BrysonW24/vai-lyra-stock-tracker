@@ -130,8 +130,9 @@ export function ModelsView() {
           Emerging Winner Engine roadmap
         </h3>
         <p className="mt-1 max-w-3xl text-[12px] leading-relaxed text-white/50">
-          The phased build plan, stated honestly. Phase 1 is the gate: until the point-in-time dataset exists, the
-          learned models stay reference v1.
+          The phased build plan, stated honestly. Phase 1 is partially delivered: a survivor-biased free-data corpus now
+          backs the trained classifier (real-v1); the delisted-inclusive corpus and live ledger maturation remain the
+          gates.
         </p>
         <ol className="mt-3 space-y-2">
           {ROADMAP.map((p) => (

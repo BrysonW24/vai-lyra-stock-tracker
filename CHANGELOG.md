@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.109.0] - 2026-08-01
+
+The models face real history - and the one trained on real outcomes takes the champion seat.
+
+### Changed
+
+- First genuine backtest: every scoring model was tested against 27,420 point-in-time rows across 991 US symbols (2016-2025) with matured 12-month outcomes, built from free sources with strict as-of discipline (EDGAR facts only count once FILED, prices split-reconstructed, no look-ahead by construction). The hand-designed scorecard and the synthetic-trained champion were REFUTED - their top picks contained fewer real winners than random selection. A classifier retrained on real 2016-2023 outcomes showed genuine skill and confirmed it on untouched 2024-2025 data: 23% of its top picks doubled within 12 months vs a 13% base rate (lift 1.72x, 90% CI 1.38-2.05, well calibrated). It is now the deployed champion, emerging-winner-classifier-real-v1, with the full promotion justification recorded inside the artifact. Still Beta: the corpus is survivor-biased, and surfacing stays gated on live calibration.
+- The number was earned the hard way: the first run printed lift 2.77x and an adversarial review dismantled it before it was reported - a theme-label leak, hindsight-curated names, and a purge unit bug each gave back their share. A standing rule now triggers a mandatory leakage decomposition on any suspiciously high result.
+- Feeding-the-right-data fixes across the live path, each with a regression pin: the volume-state vocabulary mismatch that silently killed a sub-signal on every real scan, word-level theme matching (the top-weighted domain scored a false 0 on real names), the curated-theme clobber, EDGAR concept discipline (no more cross-concept pseudo-YoY that sign-flipped dilution for ~1 in 5 companies; 52/53-week fiscal calendars handled), price-normalised MACD scoring for micro-caps, honest ADV over full windows, the ranker no longer fabricates neutral inputs for 25% of its priority weight, Stooq bot-wall detection, and pence never read as pounds.
+- A standing testing + improvement suite ships with it: npm run worker:emerging-winner-backtest (build / retrain / compare / eval / one-shot holdout / promote / record), a metrics-over-time ledger in lyra-evals, a graded MODEL-REPORT-CARD, and a NORTH-STAR doc defining the most sophisticated stack this app can honestly carry - with earn-gates for every upgrade. 510 Python tests and 1,177 web tests green.
+
 ## [0.108.0] - 2026-08-01
 
 Plain English: the "Shadow-live" badge is now "Beta".
@@ -1520,7 +1531,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.108.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.109.0...HEAD
+[0.109.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.108.0...v0.109.0
 [0.108.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.107.0...v0.108.0
 [0.107.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.106.0...v0.107.0
 [0.106.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.105.0...v0.106.0

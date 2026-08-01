@@ -43,7 +43,7 @@ function labResult(symbol: string, sim: number, cap: number | null): LabResult {
     marketCap: cap,
     ew: {
       symbol,
-      engine_version: 'reference-v1',
+      engine_version: 'emerging-winner-classifier-real-v1',
       generated_at: '2026-08-01T00:00:00Z',
       winner_similarity: sim,
       probability: 0.1,
@@ -108,7 +108,7 @@ const SUMMARY: RunSummary = {
   surfaced: 12,
   universeLabel: 'Real SEC-listed universe',
   illustrative: true,
-  version: 'reference-v1',
+  version: 'emerging-winner-classifier-real-v1',
 };
 
 describe('viz scale', () => {

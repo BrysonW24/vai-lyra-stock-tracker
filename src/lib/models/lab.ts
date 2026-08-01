@@ -5,10 +5,10 @@
  * for, which data sources it touches, and - critically - what actually happens when you press Run.
  * It is pure data + pure functions: no fabrication, no fake counters. Every number a run reports is
  * derived from data the app already has (the tracked-universe signals or the shadow-live Emerging
- * Winner reference queue). The run STAGES mirror the real pipeline; the per-stage OUTPUTS are the
- * real outputs that stage produced. What the Lab never does: invent a 428-company universe, a
- * 9,842-record evidence count, a trained-classifier probability, or a percentile that no code
- * computes. Those arrive with the point-in-time dataset (the data gate) and slot in here unchanged.
+ * Winner queue). The run STAGES mirror the real pipeline; the per-stage OUTPUTS are the real outputs
+ * that stage produced. What the Lab never does: invent a 428-company universe, a 9,842-record
+ * evidence count, or a percentile that no code computes. Classifier probabilities come from the
+ * engine's logged output (real-v1, trained on real historical outcomes); the Lab only reads them back.
  */
 
 import type { SignalRow, TickerSetting, PortfolioHolding, WatchlistRow } from '@/types/scanner';
@@ -143,7 +143,7 @@ export const LAB_MODELS: LabModel[] = [
     horizon: '24 to 60 months',
     universeNote: 'Real SEC-listed universe (~10,400 US cos · small-caps · dynamic)',
     explainability: '10-domain contribution breakdown',
-    version: 'reference-v1',
+    version: 'emerging-winner-classifier-real-v1',
     looksFor: [
       'Structural quality',
       'Genuine thematic exposure',
@@ -155,7 +155,7 @@ export const LAB_MODELS: LabModel[] = [
     ],
     sources: ['market', 'signals', 'themes', 'fundamentals', 'government', 'insider'],
     runCaption:
-      'Replays the beta pipeline over an illustrative reference universe. Not a live scan of real companies - not trained on real winners yet.',
+      'Replays the beta pipeline over the loaded research queue (the illustrative demo set until a live run populates the ledger). The classifier is real-v1, trained on real historical outcomes over a survivor-biased backtest corpus - shadow-live, research only.',
     outcomes: [
       {
         key: 'composite',
@@ -163,10 +163,10 @@ export const LAB_MODELS: LabModel[] = [
         sub: 'The 0-100 resemblance score',
         runnable: true,
       },
-      { key: 'double-12m', label: 'Double (2x) within 12 months', sub: 'Reference-v1 probability (nearer horizon)', runnable: true },
-      { key: 'double-24m', label: 'Double (2x) within 24 months', sub: 'Reference-v1 probability', runnable: true },
-      { key: 'five-36m', label: '5x within 36 months', sub: 'Reference-v1 probability', runnable: true },
-      { key: 'ten-60m', label: '10x within 60 months', sub: 'Reference-v1 probability', runnable: true },
+      { key: 'double-12m', label: 'Double (2x) within 12 months', sub: 'Derived from the real-v1 classifier (nearer horizon)', runnable: true },
+      { key: 'double-24m', label: 'Double (2x) within 24 months', sub: 'Derived from the real-v1 classifier', runnable: true },
+      { key: 'five-36m', label: '5x within 36 months', sub: 'Derived from the real-v1 classifier', runnable: true },
+      { key: 'ten-60m', label: '10x within 60 months', sub: 'Derived from the real-v1 classifier', runnable: true },
       { key: 'lowest-ruin', label: 'Lowest ruin risk', sub: 'Safest downside first - P(-80% or delisting)', runnable: true },
       { key: 'fastest-catalyst', label: 'Fastest to catalyst', sub: 'Nearest expected catalyst first', runnable: true },
     ],
@@ -756,9 +756,9 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
       id: 'm2',
       label: 'Winner classifier (M2)',
       sources: ['Domain profile'],
-      output: `Resemblance scored for ${nf(considered.length)} (reference-v1, not trained)`,
+      output: `Resemblance scored for ${nf(considered.length)} (real-v1, trained on real outcomes)`,
       logs: clean([
-        'reference-v1 classifier over the domain profile - not trained on real winners yet',
+        'real-v1 calibrated logistic over the domain profile - trained on real historical outcomes (survivor-biased backtest corpus)',
         topR ? `Highest resemblance: ${topR.symbol} at ${Math.round(topR.winner_similarity)}/100` : 'No candidates in scope',
         sims.length ? `Resemblance range ${simMin}-${simMax} across ${nf(sims.length)} name${sims.length === 1 ? '' : 's'}` : '',
       ]),

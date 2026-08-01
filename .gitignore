@@ -29,3 +29,6 @@ tmp/
 # Corrupt/interrupted build output - regenerable, never tracked
 .next.stale-corrupt/
 .next-*/
+
+# Emerging Winner real-history backtest cache (prices + EDGAR bundles + corpus) - fetched, never tracked
+.ew-backtest-cache/

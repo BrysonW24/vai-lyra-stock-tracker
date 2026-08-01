@@ -111,7 +111,10 @@ export interface EmergingWinnerResult {
   risk: EWRisk;
   priority_score: number;
   action: string;
-  ranking_signals: Record<string, number>;
+  // Signals may carry the literal sentinel 'unavailable' when a pipeline does not supply an optional
+  // input (news attention / portfolio relevance) - the ranker renormalises rather than fabricating a
+  // neutral value, and the sentinel is part of the persisted ledger payload contract.
+  ranking_signals: Record<string, number | "unavailable">;
   surfaced: boolean;
   timing_state: string;
   timing: EWTiming;

@@ -171,7 +171,9 @@ def test_enabled_markets_parses_and_skips_unknown(monkeypatch):
 def test_currency_for_symbol_follows_the_suffix():
     assert us.currency_for_symbol("AAPL") == "USD"
     assert us.currency_for_symbol("XRO.AX") == "AUD"
-    assert us.currency_for_symbol("rr.l") == "GBP"
+    # LSE fallback is GBX (pence): Yahoo quotes most .L equities in pence, and a GBP fallback would
+    # overstate USD-semantics fields ~100x exactly when the provider's own currency read is missing.
+    assert us.currency_for_symbol("rr.l") == "GBX"
 
 
 def test_coverage_note_states_pool_and_cycle():

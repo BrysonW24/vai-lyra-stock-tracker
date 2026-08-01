@@ -19,7 +19,8 @@ import { fmtCap } from '@/components/models/lab/viz/scale';
  * opportunity map, 10-domain heatmap) so a run reads at a glance; LIST is the ranked detail. Both share
  * one finding drawer that decodes exactly why a name surfaced: its 10-domain radar, the fundamentals
  * inspected (real sub-signals), the driver breakdown, outlook, analogues and provenance. Every field is
- * real - nothing invents a percentile, a baseline, or a trained-model probability.
+ * real - nothing invents a percentile or a baseline; probabilities come from the engine's logged
+ * real-v1 output, never recomputed here.
  */
 
 const DRIVER_CAPS: Record<string, number> = { RSI: 25, MACD: 30, Price: 15, Trend: 15, Volume: 15 };
@@ -517,7 +518,7 @@ function EwDetail({ r, focus }: { r: EmergingWinnerResult; focus: string[] }) {
         </Section>
       ) : null}
 
-      <Section title="Modelled outlook (reference-v1, illustrative)">
+      <Section title="Modelled outlook (real-v1 derived, research only)">
         <div className="grid grid-cols-2 gap-2 text-[11px]">
           <Stat k="Double / 12m" v={pct(r.outcome_distribution.p_2x_12m)} />
           <Stat k="Double / 24m" v={pct(r.outcome_distribution.p_2x_24m)} />

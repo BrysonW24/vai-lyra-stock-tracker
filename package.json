@@ -1,6 +1,6 @@
 {
   "name": "vai-lyra-stock-tracker",
-  "version": "0.108.0",
+  "version": "0.109.0",
   "private": true,
   "license": "MIT",
   "description": "Hourly tech stock momentum scanner dashboard and Python worker.",
@@ -18,8 +18,10 @@
     "worker:emerging-winner": "node scripts/py.mjs -m workers.emerging_winner.main",
     "worker:emerging-winner-train": "node scripts/py.mjs -m workers.emerging_winner.train",
     "worker:emerging-winner-monitor": "node scripts/py.mjs -m workers.emerging_winner.monitor",
+    "worker:emerging-winner-backtest": "node scripts/py.mjs -m workers.emerging_winner.backtest",
     "scout:queue": "node scripts/scout-queue.mjs",
     "check:ledgers": "node scripts/check-ledgers.mjs",
+    "check:model-registry": "node scripts/check-model-registry.mjs",
     "check:data-economics": "node scripts/check-data-economics.mjs",
     "worker:digest": "node scripts/py.mjs -m workers.stock_scanner.digest_job",
     "worker:test": "node scripts/py.mjs -m pytest tests",

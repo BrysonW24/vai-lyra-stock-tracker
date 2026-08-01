@@ -159,7 +159,8 @@ def _domains(scores: dict) -> list[DomainResult]:
 def test_classify_uses_trained_champion_when_present():
     C.reset_model_cache()
     res = C.classify(_domains({k: 80.0 for k in FEATURE_ORDER}))
-    assert "trained" in res.model_version, "expected the trained champion to serve when the artifact exists"
+    assert res.model_version != C.MODEL_VERSION, "expected the champion artifact to serve, not the reference fallback"
+    assert "dataset=" in res.provenance, "champion provenance must state which dataset trained it"
 
 
 def test_classify_reference_fallback_when_no_artifact(monkeypatch, tmp_path):
@@ -173,12 +174,32 @@ def test_classify_reference_fallback_when_no_artifact(monkeypatch, tmp_path):
         C.reset_model_cache()  # restore the real champion for other tests
 
 
-def test_classify_is_monotonic_strong_over_weak():
+def test_classify_trained_path_responds_in_learned_directions():
+    """The 2026-08-01 real-history backtest REFUTED the all-domains-up hypothesis: on real matured
+    outcomes, pristine technicals + comfortable liquidity ANTI-predict 12-month doublers, so the
+    old 'uniform 85 beats uniform 15' pin encoded exactly the belief the data disproved. The honest
+    trained-path monotonicity pin: evidence moves probability in a direction the champion LEARNED
+    from real outcomes (business quality up, everything else held fixed, moves probability up).
+    Exact trained behaviour is pinned point-by-point by the artifact's drift fixtures."""
     C.reset_model_cache()
-    strong = C.classify(_domains({k: 85.0 for k in FEATURE_ORDER}))
-    weak = C.classify(_domains({k: 15.0 for k in FEATURE_ORDER}))
-    assert strong.winner_similarity > weak.winner_similarity
-    assert strong.probability > weak.probability
+    base = {k: 50.0 for k in FEATURE_ORDER}
+    hi = C.classify(_domains({**base, "business_quality": 90.0}))
+    lo = C.classify(_domains({**base, "business_quality": 10.0}))
+    assert hi.probability > lo.probability
+
+
+def test_classify_reference_path_stays_hypothesis_monotone(monkeypatch, tmp_path):
+    """The transparent reference fallback IS the hand-designed hypothesis, so strong-over-weak
+    monotonicity must keep holding THERE (it is structural: positive weights over centred scores)."""
+    monkeypatch.setattr(C, "_ARTIFACT_PATH", str(tmp_path / "does-not-exist.json"))
+    C.reset_model_cache()
+    try:
+        strong = C.classify(_domains({k: 85.0 for k in FEATURE_ORDER}))
+        weak = C.classify(_domains({k: 15.0 for k in FEATURE_ORDER}))
+        assert strong.winner_similarity > weak.winner_similarity
+        assert strong.probability > weak.probability
+    finally:
+        C.reset_model_cache()
 
 
 def test_classify_coverage_caps_stage():

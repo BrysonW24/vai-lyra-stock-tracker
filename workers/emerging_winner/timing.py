@@ -78,7 +78,12 @@ def _assess_temporal(features: dict) -> tuple[str, float | None, str]:
     if score_delta is not None:
         timing += _clamp(float(score_delta) * 4.0, -20.0, 20.0)
     if macd_delta is not None:
-        timing += _clamp(float(macd_delta) * 10.0, -10.0, 10.0)
+        # The histogram delta is in PRICE units - normalise to percent-of-price when the close is
+        # known (same scale fix as domains.macd_turn: an absolute band pins micro-caps at neutral
+        # and saturates large-caps). Falls back to the raw value only when no close is supplied.
+        close = features.get("close")
+        macd_term = (float(macd_delta) / float(close) * 100.0) if close else float(macd_delta)
+        timing += _clamp(macd_term * 10.0, -10.0, 10.0)
     if rsi_delta is not None:
         timing += _clamp(float(rsi_delta) * 1.5, -10.0, 10.0)
     volume_ratio = features.get("volume_ratio")

@@ -32,6 +32,7 @@ The input `features` dict contract (all keys optional - the engine is tolerant b
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
@@ -40,6 +41,30 @@ HOT_THEMES = {
     "ai", "agi", "robotics", "quantum", "defence", "defense", "space",
     "power", "energy", "infrastructure", "semiconductors", "chips", "compute",
 }
+
+# Word-level normalisations so REAL theme labels hit the hot set: the curated map and Yahoo's industry
+# taxonomy supply multiword strings ("quantum computing", "aerospace & defense", "semiconductor
+# equipment & materials") and singular forms ("semiconductor") that an exact set-membership test on the
+# whole string can never match - which silently pinned the top-weighted domain to a PRESENT score of 0
+# on real data (found by the 2026-08-01 feature-semantics audit).
+_HOT_ALIASES = {"semiconductor": "semiconductors", "chip": "chips", "aerospace": "space", "robotic": "robotics"}
+
+
+def hot_theme_hits(themes: list) -> int:
+    """How many supplied theme labels touch the hot set - matched WORD BY WORD, singular/plural and
+    alias tolerant, so 'quantum computing' counts as quantum and 'aerospace & defense' as defence."""
+    hits = 0
+    for label in themes:
+        words = [w for w in re.split(r"[^a-z]+", str(label).lower()) if w]
+        matched = False
+        for w in words:
+            canonical = _HOT_ALIASES.get(w, w)
+            if canonical in HOT_THEMES or f"{canonical}s" in HOT_THEMES or canonical.rstrip("s") in HOT_THEMES:
+                matched = True
+                break
+        if matched:
+            hits += 1
+    return hits
 
 PRESENT_THRESHOLD = 60.0  # a domain scoring at/above this counts as a "present trait"
 
@@ -135,15 +160,24 @@ def domain_technical(f: dict) -> DomainResult:
     p200 = _get(f, "price_vs_sma200")
     dist_low = _get(f, "dist_from_60_low_pct")
 
+    # The MACD histogram is denominated in PRICE units, so a fixed band is scale-dependent: a $500
+    # stock saturates it while a $0.50 micro-cap (the target class) pins at neutral. Normalise the
+    # delta to percent-of-price when the close is known; the band then means "histogram moved by x%
+    # of price in a bar" for every name. Falls back to the raw band only when no close is supplied.
+    close_for_norm = _get(f, "close")
+    macd_turn_score = None
+    if macd_hist_delta is not None:
+        weight = 1.0 if (macd_hist or 0) < 0 else 0.6  # early turn while negative is the tell
+        if close_for_norm:
+            macd_turn_score = _scale((macd_hist_delta / close_for_norm) * 100.0 * weight, -1.0, 1.0)
+        else:
+            macd_turn_score = _scale(macd_hist_delta * weight, -1.0, 1.0)
+
     subs = [
         SubSignal("rsi_reset_band", rsi, _reset_band_score(rsi)),
         SubSignal("rsi_improving", rsi_delta, _scale(rsi_delta, -3.0, 3.0)),
         # An improving histogram while still negative is the early-turn tell (weighted up).
-        SubSignal(
-            "macd_turn", macd_hist_delta,
-            None if macd_hist_delta is None
-            else _scale(macd_hist_delta * (1.0 if (macd_hist or 0) < 0 else 0.6), -1.0, 1.0),
-        ),
+        SubSignal("macd_turn", macd_hist_delta, macd_turn_score),
         SubSignal("trend_vs_sma200", p200, _scale(p200, 0.85, 1.15)),
         # Off the lows but not extended: reward ~5-15% above the 60-low.
         SubSignal(
@@ -167,7 +201,13 @@ def domain_accumulation(f: dict) -> DomainResult:
 
     state_score = None
     if isinstance(state, str):
-        state_score = {"accumulation": 85.0, "high": 70.0, "normal": 50.0, "low": 25.0}.get(state.lower())
+        # Both vocabularies score: the domain's own {accumulation, high, normal, low} AND the scanner's
+        # real derived_features enum {above_average, rising, falling, below_average} - the real enum
+        # previously never matched, so this sub-signal was silently dead on every live scan.
+        state_score = {
+            "accumulation": 85.0, "high": 70.0, "normal": 50.0, "low": 25.0,
+            "above_average": 70.0, "rising": 60.0, "falling": 40.0, "below_average": 30.0,
+        }.get(state.lower())
 
     subs = [
         SubSignal("volume_ratio", vr, _scale(vr, 0.5, 2.5)),
@@ -180,7 +220,10 @@ def domain_accumulation(f: dict) -> DomainResult:
 
 def domain_liquidity(f: dict) -> DomainResult:
     adv = _get(f, "avg_dollar_volume")
-    if adv is None:
+    if adv is None and not f.get("usd_semantics_dropped"):
+        # Single-day fallback ONLY when the USD-semantics fields were not deliberately dropped by the
+        # FX step - close x volume is in LISTING currency, so reinstating it after an unknown-rate drop
+        # would compare a mislabeled local-currency number against USD thresholds (absent beats wrong).
         close, vol = _get(f, "close"), _get(f, "volume")
         if close is not None and vol is not None:
             adv = close * vol
@@ -206,7 +249,7 @@ def domain_theme(f: dict) -> DomainResult:
         return DomainResult("theme", "Theme strength", None, "unavailable",
                             "no theme-graph membership supplied (curated theme graph needs small-cap coverage)", [])
     themes = ctx.get("themes") or []
-    hot_hits = sum(1 for t in themes if str(t).lower() in HOT_THEMES)
+    hot_hits = hot_theme_hits(themes)
     subs = [
         SubSignal("hot_theme_exposure", hot_hits, _scale(hot_hits, 0, 3)),
         SubSignal("supply_chain_centrality", ctx.get("supply_chain_centrality"),

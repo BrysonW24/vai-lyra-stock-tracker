@@ -35,6 +35,25 @@ _THEME_ARCHETYPE = {
 
 _CONFIDENCE_NUM = {"low": 0.4, "medium": 0.7, "high": 0.95}
 
+# Word-level aliases mirroring domains._HOT_ALIASES so both matchers read labels the same way.
+_ARCHETYPE_ALIASES = {"semiconductor": "semiconductors", "chip": "chips", "aerospace": "space", "robotic": "robotics"}
+
+
+def _archetype_for_label(label: str) -> str | None:
+    """Archetype for a theme label, matched word by word (singular/plural + alias tolerant) - the
+    same discipline domains.hot_theme_hits applies, so 'quantum computing' -> Quantum Infrastructure."""
+    import re as _re
+
+    for w in _re.split(r"[^a-z]+", label.lower()):
+        if not w:
+            continue
+        canonical = _ARCHETYPE_ALIASES.get(w, w)
+        for probe in (canonical, canonical.rstrip("s"), f"{canonical}s"):
+            hit = _THEME_ARCHETYPE.get(probe)
+            if hit:
+                return hit
+    return None
+
 # Research actions - research vocabulary only, never "buy".
 ACTION_DEEP_RESEARCH = "deep_research"
 ACTION_PAPER_BOT = "paper_bot_candidate"
@@ -72,10 +91,12 @@ def classify_archetype(
 ) -> tuple[str, str]:
     by_key = {d.key: d for d in domains}
 
-    # 1) Theme membership is the strongest archetype signal when present.
+    # 1) Theme membership is the strongest archetype signal when present. Matched WORD BY WORD with
+    # the same normalisation the theme domain uses, so real multiword labels ("quantum computing",
+    # "aerospace & defense") map to their archetype instead of silently missing an exact-string probe.
     if theme_context and theme_context.get("themes"):
         for t in theme_context["themes"]:
-            hit = _THEME_ARCHETYPE.get(str(t).lower())
+            hit = _archetype_for_label(str(t))
             if hit:
                 # Government strength promotes an AI/quantum theme to the strategic-tech archetype.
                 if _strong(by_key, "government", 65) and hit in ("AI Infrastructure Enabler", "Quantum Infrastructure"):
@@ -108,28 +129,40 @@ def rank(
     risk_penalty: float,
     blocked: bool,
     *,
-    catalyst_freshness: float = 50.0,
-    portfolio_relevance: float = 50.0,
+    catalyst_freshness: float | None = None,
+    portfolio_relevance: float | None = None,
 ) -> tuple[float, str, dict]:
-    """Compute the priority score + research action from the ranking signals. Blocked -> priority 0."""
+    """Compute the priority score + research action from the ranking signals. Blocked -> priority 0.
+
+    catalyst_freshness / portfolio_relevance are OPTIONAL: when a pipeline does not supply them the
+    positive weights renormalise over the signals that exist (the same coverage-honesty rule the
+    domains follow) instead of fabricating a neutral 50 - previously 25% of the priority weight was
+    silent default on every real candidate."""
     conf_num = _CONFIDENCE_NUM.get(classifier.confidence, 0.5)
     signals = {
         "winner_score": classifier.winner_similarity,
         "model_confidence_pct": conf_num * 100.0,
         "risk_penalty": risk_penalty,
-        "catalyst_freshness": catalyst_freshness,
-        "portfolio_relevance": portfolio_relevance,
+        "catalyst_freshness": catalyst_freshness if catalyst_freshness is not None else "unavailable",
+        "portfolio_relevance": portfolio_relevance if portfolio_relevance is not None else "unavailable",
     }
     if blocked:
         return (0.0, ACTION_REVIEW, signals)
 
-    priority = (
-        classifier.winner_similarity * 0.50
-        + catalyst_freshness * 0.15
-        + portfolio_relevance * 0.10
-        + conf_num * 100.0 * 0.15
-        - risk_penalty * 0.40
-    )
+    # Positive components: (value, weight) for what is actually known; weights renormalised to the
+    # full 0.90 positive budget so the scale stays comparable whether or not the optional signals exist.
+    components: list[tuple[float, float]] = [
+        (classifier.winner_similarity, 0.50),
+        (conf_num * 100.0, 0.15),
+    ]
+    if catalyst_freshness is not None:
+        components.append((catalyst_freshness, 0.15))
+    if portfolio_relevance is not None:
+        components.append((portfolio_relevance, 0.10))
+    weight_present = sum(w for _, w in components)
+    positive = sum(v * w for v, w in components) * (0.90 / weight_present if weight_present else 0.0)
+
+    priority = positive - risk_penalty * 0.40
     priority = max(0.0, min(100.0, priority))
 
     # Action from stage + risk. Research vocabulary only.

@@ -15,7 +15,7 @@ const MODELS = [
   {
     key: 'M2',
     name: 'Emerging Winner Classifier',
-    line: 'Winner similarity 0-100 with a conviction ladder, and which domains drove the call.',
+    line: 'Winner similarity 0-100 with a conviction ladder - now trained on real historical outcomes (survivor-biased backtest, still beta).',
   },
   {
     key: 'M3',
