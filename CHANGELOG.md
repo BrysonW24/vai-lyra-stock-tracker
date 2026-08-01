@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.103.0] - 2026-08-01
+
+Model Lab gains its visual half - see the data go in, read the results come out.
+
+### Changed
+
+- Visualise every run. Results now open in a Board view with four honest visualisations built on the numbers each result already carries: a conviction funnel (universe to reviewed to risk-cleared to surfaced to strong, with the forward stages - watchlist, position, realised - drawn as explicitly open), an opportunity map (resemblance x risk headroom, bubble size = market cap, colour = risk verdict), a 10-domain heatmap across every surfaced name, and a per-company 10-domain radar in the finding drawer. A List/Board toggle keeps the ranked detail one tap away.
+- Choose your market. A global-market selector lets you point the scan at a market - the US (SEC) universe runs live today; the rest (ASX, LSE, Europe, Tokyo, Korea, India) are selectable so the roadmap is visible, and a run against them returns an honest empty set with a note rather than a faked foreign scan.
+- Choose your size and your domains. A market-cap band (micro / small / mid / large / mega, with real dollar ranges) filters on the real market cap now threaded through the engine, and focus-domain chips let you prioritise the fundamentals you care about so results re-rank to lead with strength in those domains.
+- Curate and inspect. The ticker box is now a curated list - enter a comma-separated set to compare exactly the names you want side by side. The drawer surfaces the real fundamentals the engine inspected (market cap, revenue growth, debt, liquidity sub-signals) with a score for each, so every run is legible end to end.
+- Honest by construction, and covered. Unavailable domains are drawn as explicit gaps, never coloured as a low score; active market/cap/focus scope and what each filter did are shown as notes on every result set. The change threads a real market_cap field from worker to UI and adds a filter + visualisation test suite (all green).
+
 ## [0.102.0] - 2026-08-01
 
 The Emerging Winner engine now scans the real SEC-listed universe with real fundamentals.
@@ -1453,7 +1465,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.102.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.103.0...HEAD
+[0.103.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.102.0...v0.103.0
 [0.102.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.101.0...v0.102.0
 [0.101.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.100.0...v0.101.0
 [0.100.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.99.0...v0.100.0

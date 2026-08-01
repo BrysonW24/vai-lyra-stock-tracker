@@ -158,7 +158,7 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
             ) : null}
 
             {phase === 'results' && run ? (
-              <ResultsView run={run} modelName={model.name} onNewRun={() => setPhase('configure')} />
+              <ResultsView run={run} modelName={model.name} focus={config.domainFocus ?? []} onNewRun={() => setPhase('configure')} />
             ) : null}
           </div>
         ) : null}

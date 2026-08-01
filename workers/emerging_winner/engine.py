@@ -45,6 +45,8 @@ class EmergingWinnerResult:
     completeness: float
     archetype: str
     archetype_confidence: str
+    # size (real market cap when the feature source supplied one; None = not sourced, never a guess)
+    market_cap: float | None
     # domain layer
     domain_composite: float
     present_traits: list[str]
@@ -78,6 +80,7 @@ class EmergingWinnerResult:
             "completeness": round(self.completeness, 2),
             "archetype": self.archetype,
             "archetype_confidence": self.archetype_confidence,
+            "market_cap": self.market_cap,
             "domain_composite": round(self.domain_composite, 1),
             "present_traits": self.present_traits,
             "strongest_domains": self.strongest_domains,
@@ -161,6 +164,7 @@ def run_engine(symbol: str, features: dict, *, generated_at: str | None = None) 
         completeness=clf.completeness,
         archetype=archetype,
         archetype_confidence=arche_conf,
+        market_cap=(float(features["market_cap"]) if isinstance(features.get("market_cap"), (int, float)) else None),
         domain_composite=scorecard.winner_similarity,
         present_traits=scorecard.present_traits,
         strongest_domains=scorecard.strongest_domains,

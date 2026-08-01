@@ -265,6 +265,97 @@ export const UNIVERSES: UniverseOption[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Global markets - honest about which resolve today (US = SEC universe, live)
+// ---------------------------------------------------------------------------
+
+export interface MarketOption {
+  key: string;
+  label: string;
+  /** live = real listings scan today; false = arrives with the international dataset. */
+  live: boolean;
+}
+
+/**
+ * Which market a run scans. Only the US resolves today (the free SEC universe, ~10,400 listings).
+ * The rest are the international-dataset expansion - they stay selectable so the roadmap is visible,
+ * but a run against them returns an honest empty set with a note rather than a faked foreign scan.
+ * `global` means "every available market" - which is US today, shown with that caveat.
+ */
+export const MARKETS: MarketOption[] = [
+  { key: 'us', label: 'United States (SEC)', live: true },
+  { key: 'global', label: 'All markets (global)', live: true },
+  { key: 'au', label: 'Australia (ASX)', live: false },
+  { key: 'uk', label: 'United Kingdom (LSE)', live: false },
+  { key: 'eu', label: 'Europe', live: false },
+  { key: 'jp', label: 'Japan (TSE)', live: false },
+  { key: 'kr', label: 'South Korea (KRX)', live: false },
+  { key: 'in', label: 'India (NSE)', live: false },
+];
+
+export function marketFor(key: string | undefined): MarketOption {
+  return MARKETS.find((m) => m.key === key) ?? MARKETS[0];
+}
+
+// ---------------------------------------------------------------------------
+// Market-cap bands - real dollar ranges, filtered on the result's real market cap
+// ---------------------------------------------------------------------------
+
+export interface CapBand {
+  key: string;
+  label: string;
+  /** Inclusive lower / exclusive upper bound in USD; null = open-ended. */
+  min: number | null;
+  max: number | null;
+  hint: string;
+}
+
+export const CAP_BANDS: CapBand[] = [
+  { key: 'all', label: 'All caps', min: null, max: null, hint: 'No size filter' },
+  { key: 'micro', label: 'Micro', min: 0, max: 300e6, hint: 'Under $300M' },
+  { key: 'small', label: 'Small', min: 300e6, max: 2e9, hint: '$300M - $2B' },
+  { key: 'mid', label: 'Mid', min: 2e9, max: 10e9, hint: '$2B - $10B' },
+  { key: 'large', label: 'Large', min: 10e9, max: 200e9, hint: '$10B - $200B' },
+  { key: 'mega', label: 'Mega', min: 200e9, max: null, hint: 'Over $200B' },
+];
+
+export function capBandFor(key: string | undefined): CapBand {
+  return CAP_BANDS.find((c) => c.key === key) ?? CAP_BANDS[0];
+}
+
+function inBand(cap: number | null | undefined, band: CapBand): boolean {
+  if (band.key === 'all') return true;
+  if (cap == null) return false; // unknown cap can't be confirmed in-band - excluded honestly
+  if (band.min != null && cap < band.min) return false;
+  if (band.max != null && cap >= band.max) return false;
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// The 10 EW domains - the fundamentals the engine scores. Sourced from the live
+// result when present (drift-free), with a canonical fallback for an empty queue.
+// ---------------------------------------------------------------------------
+
+export const EW_DOMAIN_FALLBACK: { key: string; label: string }[] = [
+  { key: 'technical', label: 'Technical structure' },
+  { key: 'accumulation', label: 'Volume / accumulation' },
+  { key: 'liquidity', label: 'Liquidity / tradability' },
+  { key: 'theme', label: 'Theme strength' },
+  { key: 'business_quality', label: 'Business quality' },
+  { key: 'capital', label: 'Capital / survivability' },
+  { key: 'government', label: 'Government / policy' },
+  { key: 'adoption', label: 'Adoption / traction' },
+  { key: 'sponsorship', label: 'Sponsorship / smart money' },
+  { key: 'narrative', label: 'Narrative timing / attention' },
+];
+
+/** The 10 domains to offer as focus chips - live from the queue if we have one, else the canonical set. */
+export function domainOptions(data: RunData): { key: string; label: string }[] {
+  const sample = data.ew.queue[0];
+  if (sample && sample.domains.length) return sample.domains.map((d) => ({ key: d.key, label: d.label }));
+  return EW_DOMAIN_FALLBACK;
+}
+
+// ---------------------------------------------------------------------------
 // Run engine - pure, honest
 // ---------------------------------------------------------------------------
 
@@ -273,7 +364,14 @@ export interface LabConfig {
   outcomeKey: string;
   verticals: string[]; // vertical labels
   universeKey: string;
+  /** A curated ticker list (comma / space / newline separated) OR a single name; blank = whole universe. */
   ticker: string;
+  /** Global market to scan. Optional for back-compat; defaults to 'us'. */
+  market?: string;
+  /** Market-cap band key (see CAP_BANDS). Optional; defaults to 'all'. */
+  capBand?: string;
+  /** Domain keys the user wants to prioritise; when set, EW results re-rank by strength in these. */
+  domainFocus?: string[];
 }
 
 export interface RunData {
@@ -311,6 +409,8 @@ export interface LabResult {
   primaryRisk: string;
   confidence?: string;
   evidence: string;
+  /** Real market cap in USD when sourced (EW family); null/undefined when not - powers the opportunity map + cap band. */
+  marketCap?: number | null;
   radar?: SignalRow;
   ew?: EmergingWinnerResult;
 }
@@ -322,6 +422,11 @@ export interface RunSummary {
   universeLabel: string;
   illustrative: boolean;
   version: string;
+  marketLabel?: string;
+  capBandLabel?: string;
+  focusLabels?: string[];
+  /** Honest notes about what a filter did (e.g. non-US market has no data yet, cap-band excluded unknowns). */
+  notes?: string[];
 }
 
 export interface RunResult {
@@ -346,9 +451,20 @@ function symbolSetForUniverse(config: LabConfig, data: RunData): Set<string> | n
   return null; // tracked / small-micro -> whole available set
 }
 
-function tickerFilter(config: LabConfig): string | null {
-  const t = config.ticker.trim().toUpperCase();
-  return t.length ? t : null;
+/** Parse the ticker box as a curated list: comma / space / newline separated, de-duped, upper-cased. */
+function tickerSet(config: LabConfig): Set<string> | null {
+  const tokens = config.ticker
+    .toUpperCase()
+    .split(/[\s,]+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+  return tokens.length ? new Set(tokens) : null;
+}
+
+/** True when the run scans a market with no data yet (any specific non-US market). */
+function marketIsEmpty(config: LabConfig): boolean {
+  const key = config.market ?? 'us';
+  return key !== 'us' && key !== 'global';
 }
 
 function buildRadarRun(config: LabConfig, data: RunData): RunResult {
@@ -360,19 +476,22 @@ function buildRadarRun(config: LabConfig, data: RunData): RunResult {
   }
 
   const uniSet = symbolSetForUniverse(config, data);
-  const only = tickerFilter(config);
+  const only = tickerSet(config);
   const selectedSectors = config.verticals.map((v) => v.toLowerCase());
+  const emptyMarket = marketIsEmpty(config);
 
-  const considered = data.signals.filter((s) => {
-    const sym = s.symbol.toUpperCase();
-    if (uniSet && !uniSet.has(sym)) return false;
-    if (only && sym !== only) return false;
-    if (selectedSectors.length) {
-      const sec = (sectorBySymbol.get(sym) || '').toLowerCase();
-      if (!selectedSectors.some((v) => sec.includes(v))) return false;
-    }
-    return true;
-  });
+  const considered = emptyMarket
+    ? []
+    : data.signals.filter((s) => {
+        const sym = s.symbol.toUpperCase();
+        if (uniSet && !uniSet.has(sym)) return false;
+        if (only && !only.has(sym)) return false;
+        if (selectedSectors.length) {
+          const sec = (sectorBySymbol.get(sym) || '').toLowerCase();
+          if (!selectedSectors.some((v) => sec.includes(v))) return false;
+        }
+        return true;
+      });
 
   const ranked = [...considered].sort((a, b) => {
     if (config.outcomeKey === 'momentum') return b.histogramSlope + b.rsiDelta - (a.histogramSlope + a.rsiDelta);
@@ -426,6 +545,10 @@ function buildRadarRun(config: LabConfig, data: RunData): RunResult {
     },
   ];
 
+  const notes: string[] = [];
+  if (emptyMarket) notes.push(`${marketFor(config.market).label} listings arrive with the international dataset - the engine scans US (SEC) today.`);
+  if ((config.capBand ?? 'all') !== 'all') notes.push('Cap band applies to the Emerging Winner engine (market-cap tagged); the recovery radar has no cap tag, so all sizes are shown.');
+
   return {
     stages,
     results,
@@ -436,6 +559,10 @@ function buildRadarRun(config: LabConfig, data: RunData): RunResult {
       universeLabel,
       illustrative: data.signals.length > 0 ? false : true,
       version: model.version,
+      marketLabel: marketFor(config.market).label,
+      capBandLabel: capBandFor(config.capBand).label,
+      focusLabels: [],
+      notes,
     },
   };
 }
@@ -459,22 +586,42 @@ function topDrivers(s: SignalRow): string[] {
 function buildEwRun(config: LabConfig, data: RunData): RunResult {
   const model = getModel(config.modelKey);
   const uniSet = symbolSetForUniverse(config, data);
-  const only = tickerFilter(config);
+  const only = tickerSet(config);
   const selected = config.verticals.map((v) => v.toLowerCase());
+  const band = capBandFor(config.capBand);
+  const emptyMarket = marketIsEmpty(config);
+  const focus = (config.domainFocus ?? []).filter(Boolean);
 
-  const considered = data.ew.queue.filter((r) => {
-    const sym = r.symbol.toUpperCase();
-    if (uniSet && !uniSet.has(sym)) return false;
-    if (only && sym !== only) return false;
-    if (selected.length) {
-      const arche = r.archetype.toLowerCase();
-      const matches = selected.some((v) => arche.includes(v));
-      if (!matches) return false;
-    }
-    return true;
-  });
+  let capExcluded = 0;
+  const considered = emptyMarket
+    ? []
+    : data.ew.queue.filter((r) => {
+        const sym = r.symbol.toUpperCase();
+        if (uniSet && !uniSet.has(sym)) return false;
+        if (only && !only.has(sym)) return false;
+        if (selected.length) {
+          const arche = r.archetype.toLowerCase();
+          if (!selected.some((v) => arche.includes(v))) return false;
+        }
+        if (!inBand(r.market_cap, band)) {
+          if (band.key !== 'all') capExcluded += 1;
+          return false;
+        }
+        return true;
+      });
+
+  // Domain focus: mean score across the user's chosen domains (coverage-aware). When set, it becomes the
+  // primary sort so the names strongest in the domains the user cares about rise - honest re-ranking, not
+  // a new number. Names with no coverage in ANY focused domain sink (focus score 0).
+  const focusScore = (r: EmergingWinnerResult): number => {
+    if (!focus.length) return 0;
+    const picked = r.domains.filter((d) => focus.includes(d.key) && d.coverage !== 'unavailable' && d.score != null);
+    if (!picked.length) return 0;
+    return picked.reduce((sum, d) => sum + (d.score ?? 0), 0) / picked.length;
+  };
 
   const sortKey = (r: EmergingWinnerResult): number => {
+    if (focus.length) return focusScore(r);
     switch (config.outcomeKey) {
       case 'double-24m':
         return r.outcome_distribution.p_2x_24m;
@@ -513,6 +660,7 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
       evidence: `${r.domains.filter((d) => d.coverage !== 'unavailable').length}/${r.domains.length} domains covered · ${Math.round(
         r.completeness * 100,
       )}% complete`,
+      marketCap: r.market_cap,
       ew: r,
     };
   });
@@ -575,6 +723,22 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
     },
   ];
 
+  const domainLabel = new Map(domainOptions(data).map((d) => [d.key, d.label]));
+  const focusLabels = focus.map((k) => domainLabel.get(k) ?? k);
+
+  const notes: string[] = [];
+  if (emptyMarket) {
+    notes.push(`${marketFor(config.market).label} listings arrive with the international dataset - the engine scans US (SEC) today, so this run returned nothing.`);
+  } else if ((config.market ?? 'us') === 'global') {
+    notes.push('Global markets are expanding; today the available universe is US-listed (SEC), shown here.');
+  }
+  if (capExcluded > 0) {
+    notes.push(`${band.label} band (${band.hint}): ${nf(capExcluded)} name${capExcluded === 1 ? '' : 's'} excluded (out of band or market cap not sourced).`);
+  }
+  if (focusLabels.length) {
+    notes.push(`Ranked by your focus domains: ${focusLabels.join(', ')} - names strongest in these rise, others sink.`);
+  }
+
   return {
     stages,
     results,
@@ -585,6 +749,10 @@ function buildEwRun(config: LabConfig, data: RunData): RunResult {
       universeLabel: model.universeNote,
       illustrative: true,
       version: data.ew.engine_version || model.version,
+      marketLabel: marketFor(config.market).label,
+      capBandLabel: band.label,
+      focusLabels,
+      notes,
     },
   };
 }
@@ -657,4 +825,7 @@ export const RECOMMENDED_CONFIG: LabConfig = {
   verticals: [],
   universeKey: 'small-micro',
   ticker: '',
+  market: 'us',
+  capBand: 'all',
+  domainFocus: [],
 };

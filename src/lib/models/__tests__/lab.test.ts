@@ -57,6 +57,7 @@ function ewr(symbol: string, sim: number, archetype: string, over: Partial<Emerg
     completeness: 0.8,
     archetype,
     archetype_confidence: 'medium',
+    market_cap: null,
     domain_composite: 60,
     present_traits: [],
     strongest_domains: ['Technical', 'Theme'],
@@ -160,6 +161,69 @@ describe('buildRun - EW family (Emerging Winner)', () => {
     expect(gateStage?.state).toBe('warning');
     expect(gateStage?.output).toContain('block');
     expect(run.summary.passed).toBe(1); // one non-blocked
+  });
+});
+
+describe('buildRun - EW controls (market / cap / focus / curated list)', () => {
+  const base: LabConfig = { modelKey: 'emerging', outcomeKey: 'composite', verticals: [], universeKey: 'tracked', ticker: '' };
+  const dom = (key: string, label: string, score: number | null, coverage: 'full' | 'unavailable' = 'full') => ({
+    key,
+    label,
+    score,
+    coverage,
+    reason: '',
+    subsignals: [],
+  });
+
+  it('threads real market cap onto the result', () => {
+    const d = data({ ew: queue([ewr('MC', 60, 'AI Infrastructure Enabler', { market_cap: 1_500_000_000 })]) });
+    const run = buildRun(base, d);
+    expect(run.results[0].marketCap).toBe(1_500_000_000);
+  });
+
+  it('filters by market-cap band and excludes unknown-cap names from a specific band', () => {
+    const d = data({
+      ew: queue([
+        ewr('MIC', 50, 'AI', { market_cap: 100e6 }),
+        ewr('MID', 90, 'AI', { market_cap: 5e9 }),
+        ewr('UNK', 70, 'AI', { market_cap: null }),
+      ]),
+    });
+    const run = buildRun({ ...base, capBand: 'micro' }, d);
+    expect(run.results.map((r) => r.symbol)).toEqual(['MIC']);
+    expect(run.summary.notes?.some((n) => /Micro/.test(n))).toBe(true);
+  });
+
+  it('returns an honest empty set with a note for a non-US market', () => {
+    const d = data({ ew: queue([ewr('AIX', 88, 'AI Infrastructure Enabler', { market_cap: 2e9 })]) });
+    const run = buildRun({ ...base, market: 'kr' }, d);
+    expect(run.results.length).toBe(0);
+    expect(run.summary.notes?.some((n) => /international dataset/.test(n))).toBe(true);
+  });
+
+  it('runs US data for the global market with an expansion note', () => {
+    const d = data({ ew: queue([ewr('AIX', 88, 'AI Infrastructure Enabler', { market_cap: 2e9 })]) });
+    const run = buildRun({ ...base, market: 'global' }, d);
+    expect(run.results.map((r) => r.symbol)).toEqual(['AIX']);
+    expect(run.summary.notes?.some((n) => /Global markets/.test(n))).toBe(true);
+  });
+
+  it('re-ranks by focus domains, overriding the outcome sort', () => {
+    const a = ewr('AAA', 40, 'AI', { domains: [dom('technical', 'Technical', 20), dom('theme', 'Theme', 90)] });
+    const b = ewr('BBB', 95, 'AI', { domains: [dom('technical', 'Technical', 95), dom('theme', 'Theme', 10)] });
+    const d = data({ ew: queue([a, b]) });
+    // Without focus, BBB (higher resemblance) leads.
+    expect(buildRun(base, d).results.map((r) => r.symbol)).toEqual(['BBB', 'AAA']);
+    // Focused on Theme, AAA (strong theme) leads despite lower resemblance.
+    const focused = buildRun({ ...base, domainFocus: ['theme'] }, d);
+    expect(focused.results.map((r) => r.symbol)).toEqual(['AAA', 'BBB']);
+    expect(focused.summary.focusLabels).toEqual(['Theme']);
+  });
+
+  it('honours a curated multi-ticker list', () => {
+    const d = data({ ew: queue([ewr('AAA', 50, 'AI'), ewr('BBB', 60, 'AI'), ewr('CCC', 70, 'AI')]) });
+    const run = buildRun({ ...base, ticker: 'aaa, bbb' }, d);
+    expect(run.results.map((r) => r.symbol).sort()).toEqual(['AAA', 'BBB']);
   });
 });
 

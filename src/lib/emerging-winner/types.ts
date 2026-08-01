@@ -96,6 +96,8 @@ export interface EmergingWinnerResult {
   completeness: number;
   archetype: string;
   archetype_confidence: string;
+  /** Real market cap in USD when the feature source supplied one; null = not sourced (never a guess). */
+  market_cap: number | null;
   domain_composite: number;
   present_traits: string[];
   strongest_domains: string[];

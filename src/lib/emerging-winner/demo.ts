@@ -20,6 +20,7 @@ export const DEMO_QUEUE: EmergingWinnerQueue = {
       "completeness": 0.9,
       "archetype": "Quantum Infrastructure",
       "archetype_confidence": "medium",
+      "market_cap": 680000000,
       "domain_composite": 70.2,
       "present_traits": [
         "Technical structure",
@@ -483,6 +484,7 @@ export const DEMO_QUEUE: EmergingWinnerQueue = {
       "completeness": 0.3,
       "archetype": "Quantum Infrastructure",
       "archetype_confidence": "low",
+      "market_cap": 540000000,
       "domain_composite": 63.6,
       "present_traits": [
         "Technical structure"
@@ -829,6 +831,7 @@ export const DEMO_QUEUE: EmergingWinnerQueue = {
       "completeness": 0.6,
       "archetype": "Quantum Infrastructure",
       "archetype_confidence": "medium",
+      "market_cap": 90000000,
       "domain_composite": 50.7,
       "present_traits": [
         "Volume / accumulation",

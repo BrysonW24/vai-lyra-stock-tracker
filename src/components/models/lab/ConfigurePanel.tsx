@@ -6,6 +6,11 @@ import { LabSelect, type LabOption } from '@/components/models/lab/LabSelect';
 import {
   LAB_MODELS,
   UNIVERSES,
+  MARKETS,
+  marketFor,
+  CAP_BANDS,
+  capBandFor,
+  domainOptions,
   AVAILABILITY_LABEL,
   getModel,
   sourcesForModel,
@@ -57,6 +62,15 @@ export function ConfigurePanel({
   const verticals = verticalOptions(model, data);
   const sources = sourcesForModel(model);
   const canRun = outcome.runnable;
+  const isEw = model.family === 'ew';
+  const domains = domainOptions(data);
+  const focus = config.domainFocus ?? [];
+
+  const marketOptions: LabOption[] = MARKETS.map((m) => ({
+    value: m.key,
+    label: m.label,
+    badge: m.live ? { text: 'Live', tone: 'live' } : { text: 'Soon', tone: 'planned' },
+  }));
 
   const modelOptions: LabOption[] = LAB_MODELS.map((m) => ({
     value: m.key,
@@ -83,6 +97,11 @@ export function ConfigurePanel({
       ? config.verticals.filter((v) => v !== label)
       : [...config.verticals, label];
     onChange({ verticals: next });
+  }
+
+  function toggleFocus(key: string) {
+    const next = focus.includes(key) ? focus.filter((k) => k !== key) : [...focus, key];
+    onChange({ domainFocus: next });
   }
 
   return (
@@ -117,6 +136,89 @@ export function ConfigurePanel({
         subtitle={refineSubtitle(config)}
       >
         <div className="space-y-4 pt-1">
+          {/* Global market */}
+          <div>
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-white/50">Global market</p>
+            <LabSelect value={config.market ?? 'us'} options={marketOptions} onChange={(v) => onChange({ market: v })} ariaLabel="Market" />
+            {!marketFor(config.market).live ? (
+              <p className="mt-1.5 text-[11px] text-amber-300/70">
+                {marketFor(config.market).label} arrives with the international dataset. The engine scans US (SEC) today, so
+                this market returns nothing yet - the control is here so you can see the roadmap.
+              </p>
+            ) : config.market === 'global' ? (
+              <p className="mt-1.5 text-[11px] text-white/40">
+                Same checks, larger source. Today the available universe is US-listed (SEC, ~10,400 names); more markets land
+                as the international dataset connects.
+              </p>
+            ) : null}
+          </div>
+
+          {/* Market-cap band (EW - the engine that carries a real market cap) */}
+          {isEw ? (
+            <div>
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-white/50">Market-cap band</p>
+              <div className="flex flex-wrap gap-1.5">
+                {CAP_BANDS.map((c) => {
+                  const active = (config.capBand ?? 'all') === c.key;
+                  return (
+                    <button
+                      key={c.key}
+                      type="button"
+                      onClick={() => onChange({ capBand: c.key })}
+                      aria-pressed={active}
+                      title={c.hint}
+                      className={`rounded-full border px-2.5 py-1 text-[12px] transition-all duration-200 ${
+                        active
+                          ? 'border-sky-400/50 bg-sky-500/[0.15] text-white'
+                          : 'border-white/12 bg-white/[0.03] text-white/70 hover:border-white/25'
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1.5 text-[11px] text-white/40">{capBandFor(config.capBand).hint} · filters on the real market cap; unknown-cap names are excluded from a specific band.</p>
+            </div>
+          ) : null}
+
+          {/* Domain focus (EW - the 10 fundamentals; prioritise the ones you care about) */}
+          {isEw ? (
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-white/50">Focus domains</span>
+                {focus.length ? (
+                  <button type="button" onClick={() => onChange({ domainFocus: [] })} className="text-[10px] text-white/40 hover:text-sky-300">
+                    clear
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {domains.map((d) => {
+                  const active = focus.includes(d.key);
+                  return (
+                    <button
+                      key={d.key}
+                      type="button"
+                      onClick={() => toggleFocus(d.key)}
+                      aria-pressed={active}
+                      className={`rounded-full border px-2.5 py-1 text-[12px] transition-all duration-200 ${
+                        active
+                          ? 'border-sky-400/50 bg-sky-500/[0.15] text-white'
+                          : 'border-white/12 bg-white/[0.03] text-white/70 hover:border-white/25'
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1.5 text-[11px] text-white/40">
+                {focus.length ? 'Results re-rank by strength in these domains.' : 'Pick the fundamentals that matter to you; results re-rank to lead with them.'}
+              </p>
+            </div>
+          ) : null}
+
           {/* Verticals - all selectable */}
           <div>
             <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-white/50">
@@ -163,14 +265,14 @@ export function ConfigurePanel({
             ) : null}
           </div>
 
-          {/* Optional ticker */}
+          {/* Curated ticker list */}
           <div>
             <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-white/50">Optional ticker</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-white/50">Your ticker list</span>
               <button
                 type="button"
                 onClick={() => setTickerInfo((v) => !v)}
-                aria-label="What does adding a ticker do?"
+                aria-label="What does the ticker list do?"
                 className="text-white/40 transition hover:text-sky-300"
               >
                 <Info size={13} />
@@ -179,13 +281,13 @@ export function ConfigurePanel({
             <input
               value={config.ticker}
               onChange={(e) => onChange({ ticker: e.target.value })}
-              placeholder="e.g. BKSY - blank scans the whole universe"
+              placeholder="e.g. BKSY, RKLB, ACHR - blank scans the whole universe"
               className="w-full rounded-lg border border-white/12 bg-[#0d141c] px-2.5 py-2 text-[13px] text-white/90 placeholder:text-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
             />
             {tickerInfo ? (
               <p className="mt-1.5 rounded-lg bg-sky-500/[0.08] px-2.5 py-2 text-[11px] leading-relaxed text-sky-100/80 ring-1 ring-sky-400/20">
-                Leave blank to scan the selected universe. Add a ticker to run the model against one specific company and
-                get a deeper, company-level explanation.
+                Leave blank to scan the whole selected universe. Enter one name for a deep, company-level read, or a
+                comma-separated list (e.g. BKSY, RKLB, ACHR) to curate exactly the names you want compared side by side.
               </p>
             ) : null}
           </div>
@@ -239,11 +341,15 @@ export function ConfigurePanel({
 
 function refineSubtitle(config: LabConfig): string {
   const parts: string[] = [];
+  const market = marketFor(config.market);
+  if (market.key !== 'us') parts.push(market.label);
+  if ((config.capBand ?? 'all') !== 'all') parts.push(`${capBandFor(config.capBand).label} cap`);
+  if ((config.domainFocus?.length ?? 0) > 0) parts.push(`${config.domainFocus!.length} focus`);
   if (config.verticals.length) parts.push(`${config.verticals.length} vertical${config.verticals.length === 1 ? '' : 's'}`);
   const uni = UNIVERSES.find((u) => u.key === config.universeKey);
-  if (uni) parts.push(uni.label.toLowerCase());
+  if (uni && config.universeKey !== 'tracked') parts.push(uni.label.toLowerCase());
   if (config.ticker.trim()) parts.push(config.ticker.trim().toUpperCase());
-  return parts.join(' · ');
+  return parts.join(' · ') || 'markets · cap · domains · list';
 }
 
 function Labelled({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
