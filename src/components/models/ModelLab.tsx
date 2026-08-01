@@ -124,8 +124,10 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
         {ew.demo
           ? 'This surface currently shows illustrative examples; a live run populates the ledger.'
           : 'This surface shows the latest logged run.'}{' '}
-        The deep domains (SEC filings, insider flow, government contracts, and delisted history) are the remaining data
-        gate, so those read <span className="font-mono text-[11px]">unavailable</span> rather than a guessed value.
+        Real <span className="font-semibold">SEC EDGAR fundamentals</span> (margin trend + share dilution, keyed by the
+        authoritative CIK) are now wired for live runs; the remaining deep domains (insider flow, government contracts,
+        delisted history) are the data gate, so those read <span className="font-mono text-[11px]">unavailable</span>{' '}
+        rather than a guessed value.
       </div>
 
       {/* Tabs */}

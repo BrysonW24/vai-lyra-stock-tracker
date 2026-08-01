@@ -111,6 +111,29 @@ def load_candidate_symbols(*, limit: int | None = None, include_sec: bool = True
     return ordered[:limit] if limit else ordered
 
 
+def cik_by_symbol(*, timeout: int = 30) -> dict[str, int]:
+    """Authoritative ticker -> CIK map straight from the SEC listing (no fuzzy matching). This is the key
+    that lets the EDGAR fundamentals fetch attach filings to the RIGHT company. Best-effort: returns {} on
+    an offline/failed fetch so the caller degrades to no-EDGAR (domains stay unavailable) rather than
+    guessing an identity."""
+    try:
+        req = urllib.request.Request(
+            SEC_TICKERS_URL,
+            headers={"User-Agent": os.environ.get("SEC_USER_AGENT", DEFAULT_UA)},
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - fixed, trusted SEC host
+            data = json.load(resp)
+    except Exception:  # noqa: BLE001 - offline/rate-limited: no CIK map, EDGAR stays unavailable
+        return {}
+    out: dict[str, int] = {}
+    for row in data.values():
+        tkr = str(row.get("ticker", "")).upper().strip()
+        cik = row.get("cik_str")
+        if tkr and isinstance(cik, int):
+            out[tkr] = cik
+    return out
+
+
 def theme_by_symbol() -> dict[str, dict]:
     """Theme context for the curated names we actually know a theme for (from the scanner category). Names
     without a known theme get no theme_context, so the theme domain reads `unavailable` rather than guessing."""

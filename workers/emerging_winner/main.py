@@ -69,20 +69,24 @@ def load_real_candidates(*, limit: int) -> list[tuple[str, dict]]:
     if nothing could be assembled (offline / rate-limited), so the caller falls back honestly."""
     from ..stock_scanner.market_data import create_provider
     from .feature_source import assemble_features
-    from .universe_source import load_candidate_symbols, theme_by_symbol
+    from .universe_source import cik_by_symbol, load_candidate_symbols, theme_by_symbol
 
     provider = create_provider("yfinance")
     themes = theme_by_symbol()
+    ciks = cik_by_symbol()  # authoritative ticker -> CIK for real EDGAR fundamentals (empty if offline)
     symbols = load_candidate_symbols(limit=limit)
     out: list[tuple[str, dict]] = []
     for sym in symbols:
         try:
-            feats = assemble_features(sym, provider=provider, theme=themes.get(sym))
+            feats = assemble_features(sym, provider=provider, theme=themes.get(sym), cik=ciks.get(sym.upper()))
         except Exception:  # noqa: BLE001 - a single bad symbol never fails the run
             feats = None
         if feats:
             out.append((sym, feats))
-    logger.info("real universe: assembled features for %d of %d scanned symbols", len(out), len(symbols))
+    logger.info(
+        "real universe: assembled features for %d of %d scanned symbols (%d with a CIK for EDGAR)",
+        len(out), len(symbols), len(ciks),
+    )
     return out
 
 

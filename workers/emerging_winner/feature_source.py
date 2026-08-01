@@ -23,6 +23,7 @@ from typing import Optional
 
 from ..stock_scanner.indicators import calculate_indicators
 from ..stock_scanner.market_data import MarketDataProvider, create_provider
+from .edgar_source import fetch_edgar_features
 
 MIN_CANDLES = 30  # below this, indicators (esp. the longer SMAs) are too sparse to be honest
 
@@ -76,6 +77,7 @@ def assemble_features(
     lookback_days: int = 400,
     theme: Optional[dict] = None,
     with_fundamentals: bool = True,
+    cik: Optional[int] = None,
 ) -> Optional[dict]:
     """Real feature dict for `symbol` from live market data, or None if the series is unusable.
 
@@ -129,7 +131,15 @@ def assemble_features(
     if with_fundamentals:
         feats.update(_fetch_fundamentals(symbol))
 
+        # Real SEC EDGAR fundamentals fill the TREND fields a single yfinance snapshot cannot: gross-margin
+        # trend and real share-count dilution. Merged into the existing sub-dicts (never clobbering the
+        # yfinance level fields), keyed by the AUTHORITATIVE ticker->CIK map, so filings attach to the right
+        # company. Best-effort: absent CIK or facts -> nothing merged, the domain stays honestly partial.
+        if cik:
+            for section, vals in fetch_edgar_features(cik).items():
+                feats.setdefault(section, {}).update(vals)
+
     # Still deliberately absent (the deep data gate): government contracts, insider/institutional CHANGE,
-    # adoption/traction, and every trend/delta field a single snapshot cannot honestly provide. Those
-    # domains read `unavailable` rather than being defaulted.
+    # adoption/traction, and the point-in-time delisted-inclusive history. Those domains read `unavailable`
+    # rather than being defaulted.
     return feats

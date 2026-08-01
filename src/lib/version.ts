@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.105.0',
+    date: '2026-08-01',
+    title: 'Real SEC EDGAR fundamentals - the first deep-data domain, built without faking it',
+    highlights: [
+      'The first "coming soon" deep-data domain is now real, not illustrative. On a live run the Emerging Winner engine pulls real SEC EDGAR company facts (data.sec.gov, free, no key) and derives the two trend fields a single market-data snapshot cannot honestly give: real share-count dilution (year-over-year change in shares outstanding) and gross-margin trend. These light up the capital and business-quality domains with real filings.',
+      'Why this one first, and why it is safe: filings are attached by the SEC\'s own authoritative ticker-to-CIK map (already in the listing the engine scans), so there is zero fuzzy name matching and no risk of pinning one company\'s filings to another. Dilution also happens to be the single signal in the whole model with grade-A, internationally-replicated asset-pricing evidence, so making it real matters most.',
+      'Coverage-honest by construction: a field is emitted only when EDGAR actually has two or more comparable annual (10-K) points for it. Quarterly noise is ignored, and a missing concept stays unavailable rather than being defaulted - the derivation is a pure, fully unit-tested function separate from the network fetch.',
+      'The remaining deep domains (insider Form 4 / 13F flow, government contracts, and the delisted-inclusive point-in-time history) are still the honest data gate and read unavailable rather than a guessed value. They are the next real builds, sequenced by identity reliability, not faked.',
+    ],
+  },
+  {
     version: '0.104.0',
     date: '2026-08-01',
     title: 'Model Lab depth - more outcomes, inspectable step logs, a fuller board, and the small-cap universe made real',
