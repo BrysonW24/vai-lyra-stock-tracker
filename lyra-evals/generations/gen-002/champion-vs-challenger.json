@@ -1,0 +1,1766 @@
+{
+  "note": "DEV split, curated names excluded. Identical OOS rows: challenger scored only on its purged (calendar-day) walk-forward test windows; the synthetic champion never saw ANY real row, so the same windows are OOS for it too. A fair ranking protocol on this corpus - NOT an estimate of live edge; the one-shot holdout is the confirmation step.",
+  "n_oos": 17495,
+  "champion": {
+    "all": {
+      "n": 17495,
+      "n_symbols": 916,
+      "n_positive_symbols": 472,
+      "base_rate": 0.0928,
+      "pr_auc": 0.1366,
+      "roc_auc": 0.6281,
+      "brier": 0.0851,
+      "ece": 0.0439,
+      "precision_at_k": 0.1625,
+      "k": 874,
+      "lift_at_k": 1.75,
+      "k_scan": {
+        "0.02": {
+          "precision": 0.1691,
+          "k": 349,
+          "lift": 1.821
+        },
+        "0.05": {
+          "precision": 0.1625,
+          "k": 874,
+          "lift": 1.75
+        },
+        "0.1": {
+          "precision": 0.1601,
+          "k": 1749,
+          "lift": 1.725
+        }
+      },
+      "by_cohort": {
+        "n_cohorts": 23,
+        "mean": 0.147,
+        "median": 0.122,
+        "worst": 0.0,
+        "worst_cohort": "2017Q2",
+        "per_cohort": [
+          {
+            "cohort": "2017Q2",
+            "precision_at_k": 0.0,
+            "k": 15,
+            "n": 316,
+            "base_rate": 0.0791,
+            "expected_hits_null": 1.19
+          },
+          {
+            "cohort": "2017Q4",
+            "precision_at_k": 0.2143,
+            "k": 28,
+            "n": 564,
+            "base_rate": 0.0709,
+            "expected_hits_null": 1.99
+          },
+          {
+            "cohort": "2018Q1",
+            "precision_at_k": 0.1429,
+            "k": 28,
+            "n": 567,
+            "base_rate": 0.0494,
+            "expected_hits_null": 1.38
+          },
+          {
+            "cohort": "2018Q2",
+            "precision_at_k": 0.1071,
+            "k": 28,
+            "n": 576,
+            "base_rate": 0.0486,
+            "expected_hits_null": 1.36
+          },
+          {
+            "cohort": "2018Q3",
+            "precision_at_k": 0.1786,
+            "k": 28,
+            "n": 577,
+            "base_rate": 0.0468,
+            "expected_hits_null": 1.31
+          },
+          {
+            "cohort": "2018Q4",
+            "precision_at_k": 0.0345,
+            "k": 29,
+            "n": 582,
+            "base_rate": 0.043,
+            "expected_hits_null": 1.25
+          },
+          {
+            "cohort": "2019Q1",
+            "precision_at_k": 0.0,
+            "k": 29,
+            "n": 586,
+            "base_rate": 0.0802,
+            "expected_hits_null": 2.33
+          },
+          {
+            "cohort": "2019Q2",
+            "precision_at_k": 0.0,
+            "k": 29,
+            "n": 597,
+            "base_rate": 0.0369,
+            "expected_hits_null": 1.07
+          },
+          {
+            "cohort": "2019Q3",
+            "precision_at_k": 0.1333,
+            "k": 30,
+            "n": 610,
+            "base_rate": 0.0656,
+            "expected_hits_null": 1.97
+          },
+          {
+            "cohort": "2019Q4",
+            "precision_at_k": 0.2,
+            "k": 30,
+            "n": 618,
+            "base_rate": 0.1084,
+            "expected_hits_null": 3.25
+          },
+          {
+            "cohort": "2020Q1",
+            "precision_at_k": 0.1613,
+            "k": 31,
+            "n": 630,
+            "base_rate": 0.1302,
+            "expected_hits_null": 4.04
+          },
+          {
+            "cohort": "2020Q2",
+            "precision_at_k": 0.5484,
+            "k": 31,
+            "n": 629,
+            "base_rate": 0.3466,
+            "expected_hits_null": 10.74
+          },
+          {
+            "cohort": "2020Q3",
+            "precision_at_k": 0.4062,
+            "k": 32,
+            "n": 653,
+            "base_rate": 0.2389,
+            "expected_hits_null": 7.64
+          },
+          {
+            "cohort": "2020Q4",
+            "precision_at_k": 0.3088,
+            "k": 68,
+            "n": 1364,
+            "base_rate": 0.1672,
+            "expected_hits_null": 11.37
+          },
+          {
+            "cohort": "2021Q2",
+            "precision_at_k": 0.0571,
+            "k": 35,
+            "n": 702,
+            "base_rate": 0.0499,
+            "expected_hits_null": 1.75
+          },
+          {
+            "cohort": "2021Q3",
+            "precision_at_k": 0.0571,
+            "k": 35,
+            "n": 708,
+            "base_rate": 0.0424,
+            "expected_hits_null": 1.48
+          },
+          {
+            "cohort": "2021Q4",
+            "precision_at_k": 0.1096,
+            "k": 73,
+            "n": 1475,
+            "base_rate": 0.0292,
+            "expected_hits_null": 2.13
+          },
+          {
+            "cohort": "2022Q2",
+            "precision_at_k": 0.1026,
+            "k": 39,
+            "n": 782,
+            "base_rate": 0.0243,
+            "expected_hits_null": 0.95
+          },
+          {
+            "cohort": "2022Q3",
+            "precision_at_k": 0.1646,
+            "k": 79,
+            "n": 1583,
+            "base_rate": 0.079,
+            "expected_hits_null": 6.24
+          },
+          {
+            "cohort": "2022Q4",
+            "precision_at_k": 0.122,
+            "k": 41,
+            "n": 831,
+            "base_rate": 0.1047,
+            "expected_hits_null": 4.29
+          },
+          {
+            "cohort": "2023Q1",
+            "precision_at_k": 0.1667,
+            "k": 42,
+            "n": 843,
+            "base_rate": 0.0925,
+            "expected_hits_null": 3.88
+          },
+          {
+            "cohort": "2023Q2",
+            "precision_at_k": 0.0714,
+            "k": 42,
+            "n": 847,
+            "base_rate": 0.0826,
+            "expected_hits_null": 3.47
+          },
+          {
+            "cohort": "2023Q4",
+            "precision_at_k": 0.0952,
+            "k": 42,
+            "n": 855,
+            "base_rate": 0.1216,
+            "expected_hits_null": 5.11
+          }
+        ]
+      },
+      "calibration": [
+        {
+          "bin": 0.05,
+          "predicted": 0.0696,
+          "actual": 0.0486,
+          "n": 1749
+        },
+        {
+          "bin": 0.15,
+          "predicted": 0.0884,
+          "actual": 0.048,
+          "n": 1750
+        },
+        {
+          "bin": 0.25,
+          "predicted": 0.0999,
+          "actual": 0.0589,
+          "n": 1749
+        },
+        {
+          "bin": 0.35,
+          "predicted": 0.1099,
+          "actual": 0.0663,
+          "n": 1750
+        },
+        {
+          "bin": 0.45,
+          "predicted": 0.1205,
+          "actual": 0.072,
+          "n": 1749
+        },
+        {
+          "bin": 0.55,
+          "predicted": 0.132,
+          "actual": 0.0926,
+          "n": 1750
+        },
+        {
+          "bin": 0.65,
+          "predicted": 0.1455,
+          "actual": 0.1235,
+          "n": 1749
+        },
+        {
+          "bin": 0.75,
+          "predicted": 0.1622,
+          "actual": 0.1183,
+          "n": 1750
+        },
+        {
+          "bin": 0.85,
+          "predicted": 0.1877,
+          "actual": 0.1401,
+          "n": 1749
+        },
+        {
+          "bin": 0.95,
+          "predicted": 0.2513,
+          "actual": 0.16,
+          "n": 1750
+        }
+      ],
+      "ci_90": {
+        "precision_at_k": {
+          "p05": 0.1319,
+          "p50": 0.1583,
+          "p95": 0.1835,
+          "n_boot": 300
+        },
+        "lift_at_k": {
+          "p05": 1.4629,
+          "p50": 1.7169,
+          "p95": 1.967,
+          "n_boot": 300
+        },
+        "pr_auc": {
+          "p05": 0.124,
+          "p50": 0.1367,
+          "p95": 0.1481,
+          "n_boot": 300
+        }
+      }
+    },
+    "small": {
+      "n": 4986,
+      "n_symbols": 424,
+      "n_positive_symbols": 218,
+      "base_rate": 0.1235,
+      "pr_auc": 0.1511,
+      "roc_auc": 0.5802,
+      "brier": 0.109,
+      "ece": 0.0262,
+      "precision_at_k": 0.1245,
+      "k": 249,
+      "lift_at_k": 1.008,
+      "k_scan": {
+        "0.02": {
+          "precision": 0.1414,
+          "k": 99,
+          "lift": 1.145
+        },
+        "0.05": {
+          "precision": 0.1245,
+          "k": 249,
+          "lift": 1.008
+        },
+        "0.1": {
+          "precision": 0.1606,
+          "k": 498,
+          "lift": 1.3
+        }
+      },
+      "by_cohort": {
+        "n_cohorts": 23,
+        "mean": 0.1197,
+        "median": 0.0833,
+        "worst": 0.0,
+        "worst_cohort": "2017Q2",
+        "per_cohort": [
+          {
+            "cohort": "2017Q2",
+            "precision_at_k": 0.0,
+            "k": 4,
+            "n": 81,
+            "base_rate": 0.0988,
+            "expected_hits_null": 0.4
+          },
+          {
+            "cohort": "2017Q4",
+            "precision_at_k": 0.0,
+            "k": 7,
+            "n": 141,
+            "base_rate": 0.0922,
+            "expected_hits_null": 0.65
+          },
+          {
+            "cohort": "2018Q1",
+            "precision_at_k": 0.4286,
+            "k": 7,
+            "n": 144,
+            "base_rate": 0.0903,
+            "expected_hits_null": 0.63
+          },
+          {
+            "cohort": "2018Q2",
+            "precision_at_k": 0.1429,
+            "k": 7,
+            "n": 158,
+            "base_rate": 0.0633,
+            "expected_hits_null": 0.44
+          },
+          {
+            "cohort": "2018Q3",
+            "precision_at_k": 0.25,
+            "k": 8,
+            "n": 162,
+            "base_rate": 0.0432,
+            "expected_hits_null": 0.35
+          },
+          {
+            "cohort": "2018Q4",
+            "precision_at_k": 0.0,
+            "k": 8,
+            "n": 166,
+            "base_rate": 0.0301,
+            "expected_hits_null": 0.24
+          },
+          {
+            "cohort": "2019Q1",
+            "precision_at_k": 0.0,
+            "k": 8,
+            "n": 174,
+            "base_rate": 0.1092,
+            "expected_hits_null": 0.87
+          },
+          {
+            "cohort": "2019Q2",
+            "precision_at_k": 0.0,
+            "k": 8,
+            "n": 168,
+            "base_rate": 0.0476,
+            "expected_hits_null": 0.38
+          },
+          {
+            "cohort": "2019Q3",
+            "precision_at_k": 0.0,
+            "k": 8,
+            "n": 171,
+            "base_rate": 0.0643,
+            "expected_hits_null": 0.51
+          },
+          {
+            "cohort": "2019Q4",
+            "precision_at_k": 0.125,
+            "k": 8,
+            "n": 176,
+            "base_rate": 0.1136,
+            "expected_hits_null": 0.91
+          },
+          {
+            "cohort": "2020Q1",
+            "precision_at_k": 0.0,
+            "k": 8,
+            "n": 178,
+            "base_rate": 0.1461,
+            "expected_hits_null": 1.17
+          },
+          {
+            "cohort": "2020Q2",
+            "precision_at_k": 0.2222,
+            "k": 9,
+            "n": 187,
+            "base_rate": 0.4599,
+            "expected_hits_null": 4.14
+          },
+          {
+            "cohort": "2020Q3",
+            "precision_at_k": 0.3333,
+            "k": 9,
+            "n": 192,
+            "base_rate": 0.3125,
+            "expected_hits_null": 2.81
+          },
+          {
+            "cohort": "2020Q4",
+            "precision_at_k": 0.2105,
+            "k": 19,
+            "n": 390,
+            "base_rate": 0.2333,
+            "expected_hits_null": 4.43
+          },
+          {
+            "cohort": "2021Q2",
+            "precision_at_k": 0.0,
+            "k": 9,
+            "n": 195,
+            "base_rate": 0.0615,
+            "expected_hits_null": 0.55
+          },
+          {
+            "cohort": "2021Q3",
+            "precision_at_k": 0.1,
+            "k": 10,
+            "n": 211,
+            "base_rate": 0.0711,
+            "expected_hits_null": 0.71
+          },
+          {
+            "cohort": "2021Q4",
+            "precision_at_k": 0.0476,
+            "k": 21,
+            "n": 427,
+            "base_rate": 0.0422,
+            "expected_hits_null": 0.89
+          },
+          {
+            "cohort": "2022Q2",
+            "precision_at_k": 0.0,
+            "k": 10,
+            "n": 217,
+            "base_rate": 0.0323,
+            "expected_hits_null": 0.32
+          },
+          {
+            "cohort": "2022Q3",
+            "precision_at_k": 0.2273,
+            "k": 22,
+            "n": 457,
+            "base_rate": 0.105,
+            "expected_hits_null": 2.31
+          },
+          {
+            "cohort": "2022Q4",
+            "precision_at_k": 0.25,
+            "k": 12,
+            "n": 244,
+            "base_rate": 0.1311,
+            "expected_hits_null": 1.57
+          },
+          {
+            "cohort": "2023Q1",
+            "precision_at_k": 0.0833,
+            "k": 12,
+            "n": 247,
+            "base_rate": 0.1255,
+            "expected_hits_null": 1.51
+          },
+          {
+            "cohort": "2023Q2",
+            "precision_at_k": 0.0833,
+            "k": 12,
+            "n": 251,
+            "base_rate": 0.1355,
+            "expected_hits_null": 1.63
+          },
+          {
+            "cohort": "2023Q4",
+            "precision_at_k": 0.25,
+            "k": 12,
+            "n": 249,
+            "base_rate": 0.1687,
+            "expected_hits_null": 2.02
+          }
+        ]
+      },
+      "calibration": [
+        {
+          "bin": 0.05,
+          "predicted": 0.0773,
+          "actual": 0.0884,
+          "n": 498
+        },
+        {
+          "bin": 0.15,
+          "predicted": 0.0957,
+          "actual": 0.0902,
+          "n": 499
+        },
+        {
+          "bin": 0.25,
+          "predicted": 0.108,
+          "actual": 0.0984,
+          "n": 498
+        },
+        {
+          "bin": 0.35,
+          "predicted": 0.1194,
+          "actual": 0.0822,
+          "n": 499
+        },
+        {
+          "bin": 0.45,
+          "predicted": 0.1309,
+          "actual": 0.1122,
+          "n": 499
+        },
+        {
+          "bin": 0.55,
+          "predicted": 0.1431,
+          "actual": 0.1446,
+          "n": 498
+        },
+        {
+          "bin": 0.65,
+          "predicted": 0.1565,
+          "actual": 0.1323,
+          "n": 499
+        },
+        {
+          "bin": 0.75,
+          "predicted": 0.175,
+          "actual": 0.1586,
+          "n": 498
+        },
+        {
+          "bin": 0.85,
+          "predicted": 0.2014,
+          "actual": 0.1683,
+          "n": 499
+        },
+        {
+          "bin": 0.95,
+          "predicted": 0.2648,
+          "actual": 0.1603,
+          "n": 499
+        }
+      ]
+    },
+    "micro": {
+      "n": 1968,
+      "n_symbols": 222,
+      "n_positive_symbols": 141,
+      "base_rate": 0.2068,
+      "pr_auc": 0.234,
+      "roc_auc": 0.5565,
+      "brier": 0.1657,
+      "ece": 0.0523,
+      "precision_at_k": 0.2653,
+      "k": 98,
+      "lift_at_k": 1.283,
+      "k_scan": {
+        "0.02": {
+          "precision": 0.3333,
+          "k": 39,
+          "lift": 1.612
+        },
+        "0.05": {
+          "precision": 0.2653,
+          "k": 98,
+          "lift": 1.283
+        },
+        "0.1": {
+          "precision": 0.2296,
+          "k": 196,
+          "lift": 1.11
+        }
+      },
+      "by_cohort": {
+        "n_cohorts": 23,
+        "mean": 0.2459,
+        "median": 0.2,
+        "worst": 0.0,
+        "worst_cohort": "2017Q2",
+        "per_cohort": [
+          {
+            "cohort": "2017Q2",
+            "precision_at_k": 0.0,
+            "k": 2,
+            "n": 45,
+            "base_rate": 0.2,
+            "expected_hits_null": 0.4,
+            "low_k": true
+          },
+          {
+            "cohort": "2017Q4",
+            "precision_at_k": 0.3333,
+            "k": 3,
+            "n": 66,
+            "base_rate": 0.1667,
+            "expected_hits_null": 0.5
+          },
+          {
+            "cohort": "2018Q1",
+            "precision_at_k": 0.0,
+            "k": 3,
+            "n": 64,
+            "base_rate": 0.125,
+            "expected_hits_null": 0.38
+          },
+          {
+            "cohort": "2018Q2",
+            "precision_at_k": 0.0,
+            "k": 3,
+            "n": 65,
+            "base_rate": 0.1385,
+            "expected_hits_null": 0.42
+          },
+          {
+            "cohort": "2018Q3",
+            "precision_at_k": 0.3333,
+            "k": 3,
+            "n": 63,
+            "base_rate": 0.1429,
+            "expected_hits_null": 0.43
+          },
+          {
+            "cohort": "2018Q4",
+            "precision_at_k": 0.0,
+            "k": 3,
+            "n": 66,
+            "base_rate": 0.1515,
+            "expected_hits_null": 0.45
+          },
+          {
+            "cohort": "2019Q1",
+            "precision_at_k": 0.0,
+            "k": 3,
+            "n": 72,
+            "base_rate": 0.1389,
+            "expected_hits_null": 0.42
+          },
+          {
+            "cohort": "2019Q2",
+            "precision_at_k": 0.0,
+            "k": 3,
+            "n": 62,
+            "base_rate": 0.0806,
+            "expected_hits_null": 0.24
+          },
+          {
+            "cohort": "2019Q3",
+            "precision_at_k": 0.6667,
+            "k": 3,
+            "n": 71,
+            "base_rate": 0.169,
+            "expected_hits_null": 0.51
+          },
+          {
+            "cohort": "2019Q4",
+            "precision_at_k": 0.6667,
+            "k": 3,
+            "n": 76,
+            "base_rate": 0.25,
+            "expected_hits_null": 0.75
+          },
+          {
+            "cohort": "2020Q1",
+            "precision_at_k": 0.3333,
+            "k": 3,
+            "n": 69,
+            "base_rate": 0.4058,
+            "expected_hits_null": 1.22
+          },
+          {
+            "cohort": "2020Q2",
+            "precision_at_k": 0.75,
+            "k": 4,
+            "n": 82,
+            "base_rate": 0.6098,
+            "expected_hits_null": 2.44
+          },
+          {
+            "cohort": "2020Q3",
+            "precision_at_k": 0.3333,
+            "k": 3,
+            "n": 75,
+            "base_rate": 0.48,
+            "expected_hits_null": 1.44
+          },
+          {
+            "cohort": "2020Q4",
+            "precision_at_k": 0.4286,
+            "k": 7,
+            "n": 147,
+            "base_rate": 0.3605,
+            "expected_hits_null": 2.52
+          },
+          {
+            "cohort": "2021Q2",
+            "precision_at_k": 0.5,
+            "k": 2,
+            "n": 53,
+            "base_rate": 0.1509,
+            "expected_hits_null": 0.3,
+            "low_k": true
+          },
+          {
+            "cohort": "2021Q3",
+            "precision_at_k": 0.5,
+            "k": 2,
+            "n": 55,
+            "base_rate": 0.1091,
+            "expected_hits_null": 0.22,
+            "low_k": true
+          },
+          {
+            "cohort": "2021Q4",
+            "precision_at_k": 0.3333,
+            "k": 6,
+            "n": 131,
+            "base_rate": 0.0534,
+            "expected_hits_null": 0.32
+          },
+          {
+            "cohort": "2022Q2",
+            "precision_at_k": 0.0,
+            "k": 3,
+            "n": 72,
+            "base_rate": 0.0417,
+            "expected_hits_null": 0.13
+          },
+          {
+            "cohort": "2022Q3",
+            "precision_at_k": 0.1111,
+            "k": 9,
+            "n": 198,
+            "base_rate": 0.1263,
+            "expected_hits_null": 1.14
+          },
+          {
+            "cohort": "2022Q4",
+            "precision_at_k": 0.2,
+            "k": 5,
+            "n": 106,
+            "base_rate": 0.2358,
+            "expected_hits_null": 1.18
+          },
+          {
+            "cohort": "2023Q1",
+            "precision_at_k": 0.0,
+            "k": 5,
+            "n": 104,
+            "base_rate": 0.2115,
+            "expected_hits_null": 1.06
+          },
+          {
+            "cohort": "2023Q2",
+            "precision_at_k": 0.0,
+            "k": 5,
+            "n": 105,
+            "base_rate": 0.1429,
+            "expected_hits_null": 0.71
+          },
+          {
+            "cohort": "2023Q4",
+            "precision_at_k": 0.1667,
+            "k": 6,
+            "n": 121,
+            "base_rate": 0.2231,
+            "expected_hits_null": 1.34
+          }
+        ]
+      },
+      "calibration": [
+        {
+          "bin": 0.05,
+          "predicted": 0.0872,
+          "actual": 0.1224,
+          "n": 196
+        },
+        {
+          "bin": 0.15,
+          "predicted": 0.1088,
+          "actual": 0.1421,
+          "n": 197
+        },
+        {
+          "bin": 0.25,
+          "predicted": 0.1251,
+          "actual": 0.198,
+          "n": 197
+        },
+        {
+          "bin": 0.35,
+          "predicted": 0.1392,
+          "actual": 0.2234,
+          "n": 197
+        },
+        {
+          "bin": 0.45,
+          "predicted": 0.1508,
+          "actual": 0.2284,
+          "n": 197
+        },
+        {
+          "bin": 0.55,
+          "predicted": 0.1642,
+          "actual": 0.2092,
+          "n": 196
+        },
+        {
+          "bin": 0.65,
+          "predicted": 0.1796,
+          "actual": 0.2589,
+          "n": 197
+        },
+        {
+          "bin": 0.75,
+          "predicted": 0.1995,
+          "actual": 0.2234,
+          "n": 197
+        },
+        {
+          "bin": 0.85,
+          "predicted": 0.2268,
+          "actual": 0.2335,
+          "n": 197
+        },
+        {
+          "bin": 0.95,
+          "predicted": 0.2929,
+          "actual": 0.2284,
+          "n": 197
+        }
+      ]
+    }
+  },
+  "challenger": {
+    "all": {
+      "n": 17495,
+      "n_symbols": 916,
+      "n_positive_symbols": 472,
+      "base_rate": 0.0928,
+      "pr_auc": 0.1058,
+      "roc_auc": 0.5476,
+      "brier": 0.0898,
+      "ece": 0.0492,
+      "precision_at_k": 0.1178,
+      "k": 874,
+      "lift_at_k": 1.27,
+      "k_scan": {
+        "0.02": {
+          "precision": 0.1261,
+          "k": 349,
+          "lift": 1.358
+        },
+        "0.05": {
+          "precision": 0.1178,
+          "k": 874,
+          "lift": 1.27
+        },
+        "0.1": {
+          "precision": 0.1035,
+          "k": 1749,
+          "lift": 1.115
+        }
+      },
+      "by_cohort": {
+        "n_cohorts": 23,
+        "mean": 0.1431,
+        "median": 0.1071,
+        "worst": 0.0,
+        "worst_cohort": "2019Q2",
+        "per_cohort": [
+          {
+            "cohort": "2017Q2",
+            "precision_at_k": 0.1333,
+            "k": 15,
+            "n": 316,
+            "base_rate": 0.0791,
+            "expected_hits_null": 1.19
+          },
+          {
+            "cohort": "2017Q4",
+            "precision_at_k": 0.0714,
+            "k": 28,
+            "n": 564,
+            "base_rate": 0.0709,
+            "expected_hits_null": 1.99
+          },
+          {
+            "cohort": "2018Q1",
+            "precision_at_k": 0.0714,
+            "k": 28,
+            "n": 567,
+            "base_rate": 0.0494,
+            "expected_hits_null": 1.38
+          },
+          {
+            "cohort": "2018Q2",
+            "precision_at_k": 0.1071,
+            "k": 28,
+            "n": 576,
+            "base_rate": 0.0486,
+            "expected_hits_null": 1.36
+          },
+          {
+            "cohort": "2018Q3",
+            "precision_at_k": 0.1071,
+            "k": 28,
+            "n": 577,
+            "base_rate": 0.0468,
+            "expected_hits_null": 1.31
+          },
+          {
+            "cohort": "2018Q4",
+            "precision_at_k": 0.1034,
+            "k": 29,
+            "n": 582,
+            "base_rate": 0.043,
+            "expected_hits_null": 1.25
+          },
+          {
+            "cohort": "2019Q1",
+            "precision_at_k": 0.069,
+            "k": 29,
+            "n": 586,
+            "base_rate": 0.0802,
+            "expected_hits_null": 2.33
+          },
+          {
+            "cohort": "2019Q2",
+            "precision_at_k": 0.0,
+            "k": 29,
+            "n": 597,
+            "base_rate": 0.0369,
+            "expected_hits_null": 1.07
+          },
+          {
+            "cohort": "2019Q3",
+            "precision_at_k": 0.2333,
+            "k": 30,
+            "n": 610,
+            "base_rate": 0.0656,
+            "expected_hits_null": 1.97
+          },
+          {
+            "cohort": "2019Q4",
+            "precision_at_k": 0.1667,
+            "k": 30,
+            "n": 618,
+            "base_rate": 0.1084,
+            "expected_hits_null": 3.25
+          },
+          {
+            "cohort": "2020Q1",
+            "precision_at_k": 0.3226,
+            "k": 31,
+            "n": 630,
+            "base_rate": 0.1302,
+            "expected_hits_null": 4.04
+          },
+          {
+            "cohort": "2020Q2",
+            "precision_at_k": 0.4839,
+            "k": 31,
+            "n": 629,
+            "base_rate": 0.3466,
+            "expected_hits_null": 10.74
+          },
+          {
+            "cohort": "2020Q3",
+            "precision_at_k": 0.2812,
+            "k": 32,
+            "n": 653,
+            "base_rate": 0.2389,
+            "expected_hits_null": 7.64
+          },
+          {
+            "cohort": "2020Q4",
+            "precision_at_k": 0.1618,
+            "k": 68,
+            "n": 1364,
+            "base_rate": 0.1672,
+            "expected_hits_null": 11.37
+          },
+          {
+            "cohort": "2021Q2",
+            "precision_at_k": 0.0571,
+            "k": 35,
+            "n": 702,
+            "base_rate": 0.0499,
+            "expected_hits_null": 1.75
+          },
+          {
+            "cohort": "2021Q3",
+            "precision_at_k": 0.0571,
+            "k": 35,
+            "n": 708,
+            "base_rate": 0.0424,
+            "expected_hits_null": 1.48
+          },
+          {
+            "cohort": "2021Q4",
+            "precision_at_k": 0.0959,
+            "k": 73,
+            "n": 1475,
+            "base_rate": 0.0292,
+            "expected_hits_null": 2.13
+          },
+          {
+            "cohort": "2022Q2",
+            "precision_at_k": 0.0513,
+            "k": 39,
+            "n": 782,
+            "base_rate": 0.0243,
+            "expected_hits_null": 0.95
+          },
+          {
+            "cohort": "2022Q3",
+            "precision_at_k": 0.1899,
+            "k": 79,
+            "n": 1583,
+            "base_rate": 0.079,
+            "expected_hits_null": 6.24
+          },
+          {
+            "cohort": "2022Q4",
+            "precision_at_k": 0.1951,
+            "k": 41,
+            "n": 831,
+            "base_rate": 0.1047,
+            "expected_hits_null": 4.29
+          },
+          {
+            "cohort": "2023Q1",
+            "precision_at_k": 0.1429,
+            "k": 42,
+            "n": 843,
+            "base_rate": 0.0925,
+            "expected_hits_null": 3.88
+          },
+          {
+            "cohort": "2023Q2",
+            "precision_at_k": 0.0714,
+            "k": 42,
+            "n": 847,
+            "base_rate": 0.0826,
+            "expected_hits_null": 3.47
+          },
+          {
+            "cohort": "2023Q4",
+            "precision_at_k": 0.119,
+            "k": 42,
+            "n": 855,
+            "base_rate": 0.1216,
+            "expected_hits_null": 5.11
+          }
+        ]
+      },
+      "calibration": [
+        {
+          "bin": 0.05,
+          "predicted": 0.0266,
+          "actual": 0.0509,
+          "n": 1749
+        },
+        {
+          "bin": 0.15,
+          "predicted": 0.041,
+          "actual": 0.072,
+          "n": 1750
+        },
+        {
+          "bin": 0.25,
+          "predicted": 0.0493,
+          "actual": 0.0806,
+          "n": 1749
+        },
+        {
+          "bin": 0.35,
+          "predicted": 0.0566,
+          "actual": 0.0977,
+          "n": 1750
+        },
+        {
+          "bin": 0.45,
+          "predicted": 0.0641,
+          "actual": 0.1103,
+          "n": 1749
+        },
+        {
+          "bin": 0.55,
+          "predicted": 0.0725,
+          "actual": 0.1029,
+          "n": 1750
+        },
+        {
+          "bin": 0.65,
+          "predicted": 0.0836,
+          "actual": 0.1046,
+          "n": 1749
+        },
+        {
+          "bin": 0.75,
+          "predicted": 0.1022,
+          "actual": 0.1057,
+          "n": 1750
+        },
+        {
+          "bin": 0.85,
+          "predicted": 0.1577,
+          "actual": 0.1001,
+          "n": 1749
+        },
+        {
+          "bin": 0.95,
+          "predicted": 0.3093,
+          "actual": 0.1034,
+          "n": 1750
+        }
+      ],
+      "ci_90": {
+        "precision_at_k": {
+          "p05": 0.0984,
+          "p50": 0.118,
+          "p95": 0.1405,
+          "n_boot": 300
+        },
+        "lift_at_k": {
+          "p05": 1.0665,
+          "p50": 1.2777,
+          "p95": 1.4972,
+          "n_boot": 300
+        },
+        "pr_auc": {
+          "p05": 0.0965,
+          "p50": 0.1065,
+          "p95": 0.1142,
+          "n_boot": 300
+        }
+      }
+    },
+    "small": {
+      "n": 4986,
+      "n_symbols": 424,
+      "n_positive_symbols": 218,
+      "base_rate": 0.1235,
+      "pr_auc": 0.1263,
+      "roc_auc": 0.4982,
+      "brier": 0.1164,
+      "ece": 0.0729,
+      "precision_at_k": 0.1446,
+      "k": 249,
+      "lift_at_k": 1.17,
+      "k_scan": {
+        "0.02": {
+          "precision": 0.1616,
+          "k": 99,
+          "lift": 1.308
+        },
+        "0.05": {
+          "precision": 0.1446,
+          "k": 249,
+          "lift": 1.17
+        },
+        "0.1": {
+          "precision": 0.1285,
+          "k": 498,
+          "lift": 1.04
+        }
+      },
+      "by_cohort": {
+        "n_cohorts": 23,
+        "mean": 0.1221,
+        "median": 0.1,
+        "worst": 0.0,
+        "worst_cohort": "2018Q2",
+        "per_cohort": [
+          {
+            "cohort": "2017Q2",
+            "precision_at_k": 0.25,
+            "k": 4,
+            "n": 81,
+            "base_rate": 0.0988,
+            "expected_hits_null": 0.4
+          },
+          {
+            "cohort": "2017Q4",
+            "precision_at_k": 0.1429,
+            "k": 7,
+            "n": 141,
+            "base_rate": 0.0922,
+            "expected_hits_null": 0.65
+          },
+          {
+            "cohort": "2018Q1",
+            "precision_at_k": 0.1429,
+            "k": 7,
+            "n": 144,
+            "base_rate": 0.0903,
+            "expected_hits_null": 0.63
+          },
+          {
+            "cohort": "2018Q2",
+            "precision_at_k": 0.0,
+            "k": 7,
+            "n": 158,
+            "base_rate": 0.0633,
+            "expected_hits_null": 0.44
+          },
+          {
+            "cohort": "2018Q3",
+            "precision_at_k": 0.0,
+            "k": 8,
+            "n": 162,
+            "base_rate": 0.0432,
+            "expected_hits_null": 0.35
+          },
+          {
+            "cohort": "2018Q4",
+            "precision_at_k": 0.0,
+            "k": 8,
+            "n": 166,
+            "base_rate": 0.0301,
+            "expected_hits_null": 0.24
+          },
+          {
+            "cohort": "2019Q1",
+            "precision_at_k": 0.0,
+            "k": 8,
+            "n": 174,
+            "base_rate": 0.1092,
+            "expected_hits_null": 0.87
+          },
+          {
+            "cohort": "2019Q2",
+            "precision_at_k": 0.0,
+            "k": 8,
+            "n": 168,
+            "base_rate": 0.0476,
+            "expected_hits_null": 0.38
+          },
+          {
+            "cohort": "2019Q3",
+            "precision_at_k": 0.0,
+            "k": 8,
+            "n": 171,
+            "base_rate": 0.0643,
+            "expected_hits_null": 0.51
+          },
+          {
+            "cohort": "2019Q4",
+            "precision_at_k": 0.125,
+            "k": 8,
+            "n": 176,
+            "base_rate": 0.1136,
+            "expected_hits_null": 0.91
+          },
+          {
+            "cohort": "2020Q1",
+            "precision_at_k": 0.375,
+            "k": 8,
+            "n": 178,
+            "base_rate": 0.1461,
+            "expected_hits_null": 1.17
+          },
+          {
+            "cohort": "2020Q2",
+            "precision_at_k": 0.2222,
+            "k": 9,
+            "n": 187,
+            "base_rate": 0.4599,
+            "expected_hits_null": 4.14
+          },
+          {
+            "cohort": "2020Q3",
+            "precision_at_k": 0.2222,
+            "k": 9,
+            "n": 192,
+            "base_rate": 0.3125,
+            "expected_hits_null": 2.81
+          },
+          {
+            "cohort": "2020Q4",
+            "precision_at_k": 0.1579,
+            "k": 19,
+            "n": 390,
+            "base_rate": 0.2333,
+            "expected_hits_null": 4.43
+          },
+          {
+            "cohort": "2021Q2",
+            "precision_at_k": 0.0,
+            "k": 9,
+            "n": 195,
+            "base_rate": 0.0615,
+            "expected_hits_null": 0.55
+          },
+          {
+            "cohort": "2021Q3",
+            "precision_at_k": 0.1,
+            "k": 10,
+            "n": 211,
+            "base_rate": 0.0711,
+            "expected_hits_null": 0.71
+          },
+          {
+            "cohort": "2021Q4",
+            "precision_at_k": 0.0476,
+            "k": 21,
+            "n": 427,
+            "base_rate": 0.0422,
+            "expected_hits_null": 0.89
+          },
+          {
+            "cohort": "2022Q2",
+            "precision_at_k": 0.0,
+            "k": 10,
+            "n": 217,
+            "base_rate": 0.0323,
+            "expected_hits_null": 0.32
+          },
+          {
+            "cohort": "2022Q3",
+            "precision_at_k": 0.2727,
+            "k": 22,
+            "n": 457,
+            "base_rate": 0.105,
+            "expected_hits_null": 2.31
+          },
+          {
+            "cohort": "2022Q4",
+            "precision_at_k": 0.25,
+            "k": 12,
+            "n": 244,
+            "base_rate": 0.1311,
+            "expected_hits_null": 1.57
+          },
+          {
+            "cohort": "2023Q1",
+            "precision_at_k": 0.0833,
+            "k": 12,
+            "n": 247,
+            "base_rate": 0.1255,
+            "expected_hits_null": 1.51
+          },
+          {
+            "cohort": "2023Q2",
+            "precision_at_k": 0.0833,
+            "k": 12,
+            "n": 251,
+            "base_rate": 0.1355,
+            "expected_hits_null": 1.63
+          },
+          {
+            "cohort": "2023Q4",
+            "precision_at_k": 0.3333,
+            "k": 12,
+            "n": 249,
+            "base_rate": 0.1687,
+            "expected_hits_null": 2.02
+          }
+        ]
+      },
+      "calibration": [
+        {
+          "bin": 0.05,
+          "predicted": 0.0314,
+          "actual": 0.1225,
+          "n": 498
+        },
+        {
+          "bin": 0.15,
+          "predicted": 0.0435,
+          "actual": 0.1202,
+          "n": 499
+        },
+        {
+          "bin": 0.25,
+          "predicted": 0.0508,
+          "actual": 0.1245,
+          "n": 498
+        },
+        {
+          "bin": 0.35,
+          "predicted": 0.0576,
+          "actual": 0.1403,
+          "n": 499
+        },
+        {
+          "bin": 0.45,
+          "predicted": 0.0648,
+          "actual": 0.1242,
+          "n": 499
+        },
+        {
+          "bin": 0.55,
+          "predicted": 0.0736,
+          "actual": 0.1064,
+          "n": 498
+        },
+        {
+          "bin": 0.65,
+          "predicted": 0.0856,
+          "actual": 0.1363,
+          "n": 499
+        },
+        {
+          "bin": 0.75,
+          "predicted": 0.1081,
+          "actual": 0.1185,
+          "n": 498
+        },
+        {
+          "bin": 0.85,
+          "predicted": 0.1677,
+          "actual": 0.1142,
+          "n": 499
+        },
+        {
+          "bin": 0.95,
+          "predicted": 0.3265,
+          "actual": 0.1283,
+          "n": 499
+        }
+      ]
+    },
+    "micro": {
+      "n": 1968,
+      "n_symbols": 222,
+      "n_positive_symbols": 141,
+      "base_rate": 0.2068,
+      "pr_auc": 0.1913,
+      "roc_auc": 0.4715,
+      "brier": 0.1848,
+      "ece": 0.1373,
+      "precision_at_k": 0.1735,
+      "k": 98,
+      "lift_at_k": 0.839,
+      "k_scan": {
+        "0.02": {
+          "precision": 0.2051,
+          "k": 39,
+          "lift": 0.992
+        },
+        "0.05": {
+          "precision": 0.1735,
+          "k": 98,
+          "lift": 0.839
+        },
+        "0.1": {
+          "precision": 0.1684,
+          "k": 196,
+          "lift": 0.814
+        }
+      },
+      "by_cohort": {
+        "n_cohorts": 23,
+        "mean": 0.2409,
+        "median": 0.2,
+        "worst": 0.0,
+        "worst_cohort": "2017Q2",
+        "per_cohort": [
+          {
+            "cohort": "2017Q2",
+            "precision_at_k": 0.0,
+            "k": 2,
+            "n": 45,
+            "base_rate": 0.2,
+            "expected_hits_null": 0.4,
+            "low_k": true
+          },
+          {
+            "cohort": "2017Q4",
+            "precision_at_k": 0.0,
+            "k": 3,
+            "n": 66,
+            "base_rate": 0.1667,
+            "expected_hits_null": 0.5
+          },
+          {
+            "cohort": "2018Q1",
+            "precision_at_k": 0.0,
+            "k": 3,
+            "n": 64,
+            "base_rate": 0.125,
+            "expected_hits_null": 0.38
+          },
+          {
+            "cohort": "2018Q2",
+            "precision_at_k": 0.3333,
+            "k": 3,
+            "n": 65,
+            "base_rate": 0.1385,
+            "expected_hits_null": 0.42
+          },
+          {
+            "cohort": "2018Q3",
+            "precision_at_k": 0.0,
+            "k": 3,
+            "n": 63,
+            "base_rate": 0.1429,
+            "expected_hits_null": 0.43
+          },
+          {
+            "cohort": "2018Q4",
+            "precision_at_k": 0.3333,
+            "k": 3,
+            "n": 66,
+            "base_rate": 0.1515,
+            "expected_hits_null": 0.45
+          },
+          {
+            "cohort": "2019Q1",
+            "precision_at_k": 0.0,
+            "k": 3,
+            "n": 72,
+            "base_rate": 0.1389,
+            "expected_hits_null": 0.42
+          },
+          {
+            "cohort": "2019Q2",
+            "precision_at_k": 0.0,
+            "k": 3,
+            "n": 62,
+            "base_rate": 0.0806,
+            "expected_hits_null": 0.24
+          },
+          {
+            "cohort": "2019Q3",
+            "precision_at_k": 0.6667,
+            "k": 3,
+            "n": 71,
+            "base_rate": 0.169,
+            "expected_hits_null": 0.51
+          },
+          {
+            "cohort": "2019Q4",
+            "precision_at_k": 0.6667,
+            "k": 3,
+            "n": 76,
+            "base_rate": 0.25,
+            "expected_hits_null": 0.75
+          },
+          {
+            "cohort": "2020Q1",
+            "precision_at_k": 0.6667,
+            "k": 3,
+            "n": 69,
+            "base_rate": 0.4058,
+            "expected_hits_null": 1.22
+          },
+          {
+            "cohort": "2020Q2",
+            "precision_at_k": 1.0,
+            "k": 4,
+            "n": 82,
+            "base_rate": 0.6098,
+            "expected_hits_null": 2.44
+          },
+          {
+            "cohort": "2020Q3",
+            "precision_at_k": 0.3333,
+            "k": 3,
+            "n": 75,
+            "base_rate": 0.48,
+            "expected_hits_null": 1.44
+          },
+          {
+            "cohort": "2020Q4",
+            "precision_at_k": 0.2857,
+            "k": 7,
+            "n": 147,
+            "base_rate": 0.3605,
+            "expected_hits_null": 2.52
+          },
+          {
+            "cohort": "2021Q2",
+            "precision_at_k": 0.0,
+            "k": 2,
+            "n": 53,
+            "base_rate": 0.1509,
+            "expected_hits_null": 0.3,
+            "low_k": true
+          },
+          {
+            "cohort": "2021Q3",
+            "precision_at_k": 0.0,
+            "k": 2,
+            "n": 55,
+            "base_rate": 0.1091,
+            "expected_hits_null": 0.22,
+            "low_k": true
+          },
+          {
+            "cohort": "2021Q4",
+            "precision_at_k": 0.3333,
+            "k": 6,
+            "n": 131,
+            "base_rate": 0.0534,
+            "expected_hits_null": 0.32
+          },
+          {
+            "cohort": "2022Q2",
+            "precision_at_k": 0.3333,
+            "k": 3,
+            "n": 72,
+            "base_rate": 0.0417,
+            "expected_hits_null": 0.13
+          },
+          {
+            "cohort": "2022Q3",
+            "precision_at_k": 0.2222,
+            "k": 9,
+            "n": 198,
+            "base_rate": 0.1263,
+            "expected_hits_null": 1.14
+          },
+          {
+            "cohort": "2022Q4",
+            "precision_at_k": 0.2,
+            "k": 5,
+            "n": 106,
+            "base_rate": 0.2358,
+            "expected_hits_null": 1.18
+          },
+          {
+            "cohort": "2023Q1",
+            "precision_at_k": 0.0,
+            "k": 5,
+            "n": 104,
+            "base_rate": 0.2115,
+            "expected_hits_null": 1.06
+          },
+          {
+            "cohort": "2023Q2",
+            "precision_at_k": 0.0,
+            "k": 5,
+            "n": 105,
+            "base_rate": 0.1429,
+            "expected_hits_null": 0.71
+          },
+          {
+            "cohort": "2023Q4",
+            "precision_at_k": 0.1667,
+            "k": 6,
+            "n": 121,
+            "base_rate": 0.2231,
+            "expected_hits_null": 1.34
+          }
+        ]
+      },
+      "calibration": [
+        {
+          "bin": 0.05,
+          "predicted": 0.0413,
+          "actual": 0.1888,
+          "n": 196
+        },
+        {
+          "bin": 0.15,
+          "predicted": 0.0557,
+          "actual": 0.2183,
+          "n": 197
+        },
+        {
+          "bin": 0.25,
+          "predicted": 0.0646,
+          "actual": 0.2589,
+          "n": 197
+        },
+        {
+          "bin": 0.35,
+          "predicted": 0.0727,
+          "actual": 0.2284,
+          "n": 197
+        },
+        {
+          "bin": 0.45,
+          "predicted": 0.0815,
+          "actual": 0.2284,
+          "n": 197
+        },
+        {
+          "bin": 0.55,
+          "predicted": 0.0924,
+          "actual": 0.2041,
+          "n": 196
+        },
+        {
+          "bin": 0.65,
+          "predicted": 0.1061,
+          "actual": 0.198,
+          "n": 197
+        },
+        {
+          "bin": 0.75,
+          "predicted": 0.1328,
+          "actual": 0.2234,
+          "n": 197
+        },
+        {
+          "bin": 0.85,
+          "predicted": 0.2143,
+          "actual": 0.1523,
+          "n": 197
+        },
+        {
+          "bin": 0.95,
+          "predicted": 0.3775,
+          "actual": 0.1675,
+          "n": 197
+        }
+      ]
+    }
+  },
+  "corpus_caveat": "Survivor-biased corpus: universe = the CURRENT SEC listing, so delisted names are absent, the ruin class is censored, and precision here is an optimistic bound. A second selection bias is disclosed and quarantined: the curated emergence names were hand-picked WITH hindsight (they are in the curated set because they later won), so their rows are flagged `curated`, EXCLUDED from all training, and reported as a separate slice - the random-sample slice is the honest headline. Features are point-in-time (causal indicators; EDGAR facts filtered on filed <= entry date); labels are matured 12-month first-touch outcomes.",
+  "corpus_sha256": "a297e8adc5e0d1505f7cde4af7ef5946753f01b11ab96a7759204a7a05d78bb4"
+}

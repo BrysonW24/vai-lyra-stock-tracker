@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.112.0',
+    date: '2026-08-02',
+    title: 'Model evaluation operationalized: generation vs generation, forever',
+    highlights: [
+      'Every model generation now ends with a head-to-head board: the new generation against the previous one on the same holdout discipline, so improvements and regressions are observed side by side instead of remembered. The first one is live - generation 1 vs generation 2 - and shows the deployed champion confirming higher on richer data (holdout lift 1.72x to 1.94x, calibration error down 61%, all seven holdout quarters beating chance) while the retrained challenger was correctly refused for failing to beat the frozen incumbent. The delta is stated honestly as directional: the confidence intervals overlap.',
+      'A permanent generation archive now lives in lyra-evals/generations/: a narrative GENERATION-LOG (what changed, the biggest observed effect, watch-outs, grade movement - the retro that powers future tuning decisions) plus per-generation snapshots of the eval reports, since the working cache is disposable. Generations 1 and 2 are logged retroactively, including the gen-2 tier-story flip flagged as an open stability question, never a finding.',
+      'Boards can no longer ship with empty chart panels: a pre-render gate (lyra-evals/boards/prerender-board.mjs) executes each board\'s own chart code and bakes the resulting SVGs into the HTML, failing hard on any empty or NaN chart - graphs are now visible even where JavaScript never runs. The whole procedure is codified as /model-generation-eval, and the retrain CLI gained the --estimator/--out flags the generation-3 logistic-vs-trees bake-off needs.',
+    ],
+  },
+  {
     version: '0.111.0',
     date: '2026-08-01',
     title: 'The estimator seam is real: a nonlinear challenger family joins the lifecycle',

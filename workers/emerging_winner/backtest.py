@@ -655,7 +655,8 @@ def corpus_as_ledger_rows(rows: list[dict]) -> tuple[list[dict], list[dict]]:
     return predictions, outcomes
 
 
-def run_retrain(cache_dir: str, out_path: str = CHALLENGER_ARTIFACT, folds: int = 6) -> dict:
+def run_retrain(cache_dir: str, out_path: str = CHALLENGER_ARTIFACT, folds: int = 6,
+                estimator: str = "logistic") -> dict:
     """Train the challenger on the DEVELOPMENT set only (predicted_at < HOLDOUT_START) with curated
     hindsight picks EXCLUDED - they may never teach the model, only be disclosed in eval slices."""
     from .train import ModelFloorError, train_and_export
@@ -663,7 +664,8 @@ def run_retrain(cache_dir: str, out_path: str = CHALLENGER_ARTIFACT, folds: int 
     rows, meta = load_corpus(cache_dir)
     n_total = len(rows)
     rows = [r for r in rows if not r.get("curated") and r["predicted_at"] < HOLDOUT_START]
-    logger.info("retrain set: %d of %d rows (curated + holdout excluded)", len(rows), n_total)
+    logger.info("retrain set: %d of %d rows (curated + holdout excluded, estimator=%s)",
+                len(rows), n_total, estimator)
     predictions, outcomes = corpus_as_ledger_rows(rows)
     provenance = (
         f"Trained on the {CORPUS_SOURCE_LABEL} historical corpus DEV split: {len(rows)} point-in-time "
@@ -680,8 +682,10 @@ def run_retrain(cache_dir: str, out_path: str = CHALLENGER_ARTIFACT, folds: int 
             folds=folds,
             source_label=CORPUS_SOURCE_LABEL,
             provenance_note=provenance,
-            model_version="emerging-winner-classifier-real-v1",
+            model_version=("emerging-winner-classifier-real-v1" if estimator == "logistic"
+                           else f"emerging-winner-classifier-real-v1-{estimator}"),
             trained_at=meta["built_at_data_end"],  # deterministic: the corpus data-end, not wall clock
+            estimator=estimator,
             # The incumbent champion's stored metrics were measured on SYNTHETIC data - comparing a
             # real-data walk-forward against them is apples-to-oranges, so the regression-vs-incumbent
             # check is meaningless here; the ABSOLUTE floors still apply, enforced below.
@@ -1132,6 +1136,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--prefer", default="stooq", choices=["stooq", "yfinance"])
     parser.add_argument("--force-reason", default=None,
                         help="promote only: documented justification for promoting over a failed floor")
+    parser.add_argument("--estimator", default="logistic", choices=["logistic", "boosted_stumps"],
+                        help="retrain only: estimator family for the challenger (gen-3 bake-off seam)")
+    parser.add_argument("--out", default=CHALLENGER_ARTIFACT,
+                        help="retrain only: artifact output path (use a scratch path for bake-off runs)")
     args = parser.parse_args(argv)
 
     cache_dir = os.path.abspath(args.cache_dir)
@@ -1145,7 +1153,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         report = run_eval(cache_dir, k_frac=args.k_frac, extra_models=extra, rows_filter="dev")
         _print_models(report)
     elif args.command == "retrain":
-        payload = run_retrain(cache_dir)
+        payload = run_retrain(cache_dir, out_path=args.out, estimator=args.estimator)
         m = payload["metrics"]
         bc = m.get("precision_at_k_by_cohort", {})
         print(f"challenger (dev walk-forward): PR-AUC={m.get('oos_pr_auc')} ROC-AUC={m.get('oos_auc')} "

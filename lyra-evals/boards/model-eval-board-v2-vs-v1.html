@@ -1,0 +1,533 @@
+<title>Lyra Model Eval — Real-History Backtest, v1 vs v2</title>
+<style>
+  :root {
+    --ground: #FAFAF7; --panel: #F2F1EB; --ink: #1A1F1C; --ink-2: #4A4F4A; --ink-3: #7D817A;
+    --line: #E2E1D8; --grid: #EAE9E0;
+    --real: #0F8A5F; --synth: #BF5533; --ref: #4E6FBE;
+    --real-soft: rgba(15,138,95,.12); --synth-soft: rgba(191,85,51,.10); --ref-soft: rgba(78,111,190,.10);
+    --good: #0F8A5F; --bad: #B3432B; --warn: #9A7B24;
+    --chance: #A6A296;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --serif: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+    --body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #141816; --panel: #1B211E; --ink: #E8EAE6; --ink-2: #B4B8B2; --ink-3: #82867F;
+      --line: #2A302C; --grid: #232925;
+      --real: #29A275; --synth: #CF6F47; --ref: #6E86D6;
+      --real-soft: rgba(41,162,117,.16); --synth-soft: rgba(207,111,71,.13); --ref-soft: rgba(110,134,214,.14);
+      --good: #29A275; --bad: #D06A50; --warn: #C2A24A;
+      --chance: #6E7269;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #141816; --panel: #1B211E; --ink: #E8EAE6; --ink-2: #B4B8B2; --ink-3: #82867F;
+    --line: #2A302C; --grid: #232925;
+    --real: #29A275; --synth: #CF6F47; --ref: #6E86D6;
+    --real-soft: rgba(41,162,117,.16); --synth-soft: rgba(207,111,71,.13); --ref-soft: rgba(110,134,214,.14);
+    --good: #29A275; --bad: #D06A50; --warn: #C2A24A;
+    --chance: #6E7269;
+  }
+  :root[data-theme="light"] {
+    --ground: #FAFAF7; --panel: #F2F1EB; --ink: #1A1F1C; --ink-2: #4A4F4A; --ink-3: #7D817A;
+    --line: #E2E1D8; --grid: #EAE9E0;
+    --real: #0F8A5F; --synth: #BF5533; --ref: #4E6FBE;
+    --real-soft: rgba(15,138,95,.12); --synth-soft: rgba(191,85,51,.10); --ref-soft: rgba(78,111,190,.10);
+    --good: #0F8A5F; --bad: #B3432B; --warn: #9A7B24;
+    --chance: #A6A296;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--body); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 40px 20px 80px; }
+  header.masthead { border-bottom: 2px solid var(--ink); padding-bottom: 18px; margin-bottom: 8px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+  h1 { font-family: var(--serif); font-size: clamp(26px, 4.6vw, 40px); line-height: 1.12; margin: 8px 0 10px; text-wrap: balance; font-weight: 600; }
+  .stand { max-width: 68ch; color: var(--ink-2); margin: 0; }
+  .stand strong { color: var(--ink); }
+  .corpus-strip { display: flex; flex-wrap: wrap; gap: 10px 26px; padding: 12px 0; border-bottom: 1px solid var(--line); margin-bottom: 34px; }
+  .corpus-strip div { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+  .corpus-strip b { color: var(--ink); font-weight: 600; display: block; font-size: 15px; font-variant-numeric: tabular-nums; }
+  section { margin: 44px 0; }
+  h2 { font-family: var(--serif); font-size: 22px; margin: 0 0 4px; font-weight: 600; text-wrap: balance; }
+  .sub { color: var(--ink-3); font-size: 13.5px; margin: 0 0 16px; max-width: 76ch; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px; }
+  .scroll { overflow-x: auto; }
+  svg text { font-family: var(--mono); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0 0 12px; font-size: 12.5px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .swatch.faded { opacity: .4; }
+  .chip { font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); }
+  .chip.gated { border-color: var(--warn); color: var(--warn); }
+  .chip.promoted { border-color: var(--good); color: var(--good); }
+  .chip.refuted { border-color: var(--bad); color: var(--bad); }
+  .chip.inflight { border-color: var(--warn); color: var(--warn); }
+  .grades { display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); gap: 10px; }
+  .grade-card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 14px 12px; }
+  .grade-card .g { font-family: var(--serif); font-size: 30px; font-weight: 700; line-height: 1; display: flex; align-items: baseline; gap: 8px; }
+  .grade-card .g .was { font-size: 17px; color: var(--ink-3); font-weight: 600; text-decoration: line-through; text-decoration-thickness: 1.5px; }
+  .grade-card .g .arrow { font-size: 14px; color: var(--ink-3); font-weight: 400; }
+  .grade-card .dim { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px; }
+  .grade-card .why { font-size: 12px; color: var(--ink-2); margin-top: 7px; line-height: 1.45; }
+  .gA { color: var(--good); } .gB { color: var(--ink); } .gC { color: var(--warn); } .gD { color: var(--bad); } .gF { color: var(--bad); }
+  table.data { border-collapse: collapse; width: 100%; font-size: 13px; }
+  table.data th { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); text-align: left; padding: 7px 12px 7px 0; border-bottom: 1px solid var(--ink); font-weight: 600; }
+  table.data td { padding: 7px 12px 7px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: top; }
+  table.data td.num { font-family: var(--mono); font-size: 12.5px; }
+  td.delta-good { color: var(--good); font-weight: 600; }
+  td.delta-bad { color: var(--bad); font-weight: 600; }
+  td.delta-flat { color: var(--ink-3); }
+  .stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+  .stage { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 13px 14px; font-size: 12.5px; color: var(--ink-2); }
+  .stage b { display: block; color: var(--ink); font-size: 13px; margin: 4px 0 5px; }
+  .stage .tag { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+  .foot { border-top: 1px solid var(--line); margin-top: 56px; padding-top: 16px; font-size: 12px; color: var(--ink-3); max-width: 80ch; }
+  .foot code { font-family: var(--mono); font-size: 11px; }
+  #tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--ground); font-family: var(--mono); font-size: 11.5px; padding: 6px 9px; border-radius: 4px; opacity: 0; transition: opacity .12s; z-index: 10; max-width: 260px; line-height: 1.4; }
+  @media (prefers-reduced-motion: reduce) { #tip { transition: none; } }
+  .note { font-size: 12px; color: var(--ink-3); margin-top: 10px; max-width: 80ch; }
+  .callout { border-left: 3px solid var(--warn); padding: 10px 14px; background: var(--panel); border-radius: 0 6px 6px 0; font-size: 13px; color: var(--ink-2); max-width: 80ch; margin: 14px 0 0; }
+  .callout b { color: var(--ink); }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">Lyra · Emerging Winner Engine · generation 1 → generation 2 · corpus ef1b5c52 → a297e8ad · 2026-08-02</div>
+    <h1>Same discipline, richer data: v1 against v2, side by side.</h1>
+    <p class="stand">Identical windows, identical labels, identical one-shot rules. Between generations, two of the five
+    dark domains were lit honestly (theme from <strong>SEC SIC codes</strong>, narrative from a <strong>causal market-regime</strong> signal),
+    fundamentals moved from annual to quarterly YoY, and every model was re-scored. The deployed champion, its weights
+    <strong>frozen since v1</strong>, confirmed higher on the untouched holdout: <strong>1.72× → 1.94×</strong>. The retrained
+    challenger that actually learned the new domains was <strong>correctly refused</strong>: it could not beat the frozen champion.
+    The reference scorecard stayed exactly where it was, below chance.</p>
+  </header>
+
+  <div class="corpus-strip">
+    <div>rows (both gens)<b>27,420</b></div>
+    <div>symbols<b>991</b></div>
+    <div>dev / holdout<b>20,993 / 6,165</b></div>
+    <div>base rate dev / holdout<b>8.9% / 13.4%</b></div>
+    <div>curated (quarantined)<b>262 rows</b></div>
+    <div>python tests<b>509 → 535 ✓</b></div>
+    <div>dev rerun today<b>byte-identical ✓</b></div>
+  </div>
+
+  <section>
+    <h2>The verdict, one generation later</h2>
+    <p class="sub">Holdout (2024–2025Q3) lift over chance at the top-5% cut, 90% symbol-clustered bootstrap intervals.
+    Faded = generation 1. Solid = generation 2. Each generation's holdout was scored exactly once, after all decisions froze.</p>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--real)"></span>real-outcome model line <span class="chip promoted">champion · shadow-live</span></span>
+      <span><span class="swatch" style="background:transparent; border:2px solid var(--real)"></span>gen-2 retrained challenger <span class="chip refuted">refused</span></span>
+      <span><span class="swatch" style="background:var(--synth)"></span>synthetic champion <span class="chip refuted">retired after v1</span></span>
+      <span><span class="swatch" style="background:var(--ref)"></span>reference scorecard <span class="chip refuted">refuted as ranker</span></span>
+    </div>
+    <div class="panel scroll"><div id="ci-plot"><svg viewBox="0 0 980 282" width="100%" role="img" aria-label="Holdout lift with confidence intervals, generation 1 versus generation 2, all models"><line x1="294" x2="294" y1="26" y2="238" stroke="var(--grid)" stroke-width="1" stroke-dasharray="none"/><text x="294" y="256" text-anchor="middle" font-size="11" fill="var(--ink-3)">0.5×</text><line x1="453.99999999999994" x2="453.99999999999994" y1="26" y2="238" stroke="var(--chance)" stroke-width="1.6" stroke-dasharray="5 4"/><text x="453.99999999999994" y="256" text-anchor="middle" font-size="11" fill="var(--ink-3)">1.0×</text><line x1="614" x2="614" y1="26" y2="238" stroke="var(--grid)" stroke-width="1" stroke-dasharray="none"/><text x="614" y="256" text-anchor="middle" font-size="11" fill="var(--ink-3)">1.5×</text><line x1="773.9999999999999" x2="773.9999999999999" y1="26" y2="238" stroke="var(--grid)" stroke-width="1" stroke-dasharray="none"/><text x="773.9999999999999" y="256" text-anchor="middle" font-size="11" fill="var(--ink-3)">2.0×</text><line x1="934" x2="934" y1="26" y2="238" stroke="var(--grid)" stroke-width="1" stroke-dasharray="none"/><text x="934" y="256" text-anchor="middle" font-size="11" fill="var(--ink-3)">2.5×</text><text x="453.99999999999994" y="16" text-anchor="middle" font-size="10.5" fill="var(--ink-3)" letter-spacing=".08em">CHANCE</text><text x="0" y="46" font-size="12" fill="var(--ink)">real-v1 (frozen champion)</text><text x="0" y="59" font-size="10" fill="var(--ink-3)">gen 2 · holdout</text><g data-tip="real-v1 (frozen champion) · gen 2 · holdout: lift 1.94× · CI90 [1.55, 2.29]"><line x1="630.7679999999999" x2="865.9039999999999" y1="42" y2="42" stroke="var(--real)" stroke-width="5" stroke-linecap="round" opacity="0.45"/><circle cx="753.52" cy="42" r="7" fill="var(--real)" stroke="var(--panel)" stroke-width="2" opacity="1"/><text x="875.9039999999999" y="46" font-size="12" font-weight="700" fill="var(--ink)">1.94×</text></g><text x="0" y="93" font-size="10" fill="var(--ink-3)">gen 1 · holdout</text><g data-tip="real-v1 (frozen champion) · gen 1 · holdout: lift 1.72× · CI90 [1.38, 2.05]"><line x1="574.16" x2="791.2479999999999" y1="76" y2="76" stroke="var(--real)" stroke-width="3.5" stroke-linecap="round" opacity="0.2025"/><circle cx="683.76" cy="76" r="5.5" fill="var(--real)" stroke="var(--panel)" stroke-width="2" opacity="0.45"/><text x="801.2479999999999" y="80" font-size="12" font-weight="400" fill="var(--ink-3)">1.72×</text></g><text x="0" y="114" font-size="12" fill="var(--ink)">gen-2 challenger (relearned)</text><text x="0" y="127" font-size="10" fill="var(--ink-3)">gen 2 · holdout · refused</text><g data-tip="gen-2 challenger (relearned) · gen 2 · holdout · refused: lift 1.91× · CI90 [1.59, 2.32]"><line x1="643.1519999999999" x2="876.72" y1="110" y2="110" stroke="var(--real)" stroke-width="3.5" stroke-linecap="round" opacity="0.45"/><circle cx="745.8399999999999" cy="110" r="5.5" fill="var(--panel)" stroke="var(--real)" stroke-width="2" opacity="1"/><text x="886.72" y="114" font-size="12" font-weight="400" fill="var(--ink)">1.91×</text></g><text x="0" y="148" font-size="12" fill="var(--ink)">synthetic champion</text><text x="0" y="161" font-size="10" fill="var(--ink-3)">gen 1 · holdout · retired</text><g data-tip="synthetic champion · gen 1 · holdout · retired: lift 0.70× · CI90 [0.47, 0.92]"><line x1="285.84" x2="426.96" y1="144" y2="144" stroke="var(--synth)" stroke-width="3.5" stroke-linecap="round" opacity="0.2025"/><circle cx="358.64" cy="144" r="5.5" fill="var(--synth)" stroke="var(--panel)" stroke-width="2" opacity="0.45"/><text x="436.96" y="148" font-size="12" font-weight="400" fill="var(--ink-3)">0.70×</text></g><text x="0" y="182" font-size="12" fill="var(--ink)">reference scorecard</text><text x="0" y="195" font-size="10" fill="var(--ink-3)">gen 2 · holdout</text><g data-tip="reference scorecard · gen 2 · holdout: lift 0.68× · CI90 [0.49, 0.92]"><line x1="289.872" x2="426.96" y1="178" y2="178" stroke="var(--ref)" stroke-width="3.5" stroke-linecap="round" opacity="0.45"/><circle cx="350.96000000000004" cy="178" r="5.5" fill="var(--ref)" stroke="var(--panel)" stroke-width="2" opacity="1"/><text x="436.96" y="182" font-size="12" font-weight="400" fill="var(--ink)">0.68×</text></g><text x="0" y="229" font-size="10" fill="var(--ink-3)">gen 1 · holdout</text><g data-tip="reference scorecard · gen 1 · holdout: lift 0.68× · CI90 [0.49, 0.89]"><line x1="292.016" x2="418.928" y1="212" y2="212" stroke="var(--ref)" stroke-width="3.5" stroke-linecap="round" opacity="0.2025"/><circle cx="350.96000000000004" cy="212" r="5.5" fill="var(--ref)" stroke="var(--panel)" stroke-width="2" opacity="0.45"/><text x="428.928" y="216" font-size="12" font-weight="400" fill="var(--ink-3)">0.68×</text></g></svg></div></div>
+    <p class="note">The real-v1 model is the same artifact in both rows: trained once on gen-1 real outcomes, weights untouched since.
+    Its v2 gain came entirely from richer inputs. The gen-2 challenger relearned weights on the new corpus and reached 1.91×,
+    short of the frozen champion's 1.94×, with a dev walk-forward of only 1.27×, so the gates refused promotion.</p>
+    <div class="callout"><b>Read the delta honestly:</b> +0.22× is within the overlap of the two intervals
+    ([1.38, 2.05] vs [1.55, 2.29]). It is directional evidence, not proof of improvement. The gen-3 corpus
+    (Form 4 backfill now 37% complete) brings the next fresh one-shot test.</div>
+  </section>
+
+  <section>
+    <h2>Champion scorecard: v1 → v2, metric by metric</h2>
+    <p class="sub">The deployed model's one-shot holdout results in each generation. Same 6,165 rows, same labels, same k = 308.
+    What changed is the data feeding its features.</p>
+    <div class="panel scroll">
+      <table class="data">
+        <thead><tr><th>metric (holdout)</th><th>gen 1</th><th>gen 2</th><th>change</th><th>reading</th></tr></thead>
+        <tbody>
+          <tr><td>lift at top 5%</td><td class="num">1.718×</td><td class="num">1.936×</td><td class="num delta-good">+0.218</td><td>picks beat chance by ~94%</td></tr>
+          <tr><td>CI90 (symbol bootstrap)</td><td class="num">[1.38, 2.05]</td><td class="num">[1.55, 2.29]</td><td class="num delta-good">floor +0.18</td><td>whole interval clear of 1.0</td></tr>
+          <tr><td>precision at top 308</td><td class="num">23.1%</td><td class="num">26.0%</td><td class="num delta-good">+2.9pt</td><td>vs 13.4% picking at random</td></tr>
+          <tr><td>ECE (calibration error)</td><td class="num">0.042</td><td class="num">0.017</td><td class="num delta-good">−61%</td><td>probabilities now track reality closely</td></tr>
+          <tr><td>worst quarter precision</td><td class="num">11.1%</td><td class="num">20.0%</td><td class="num delta-good">+8.9pt</td><td>v2: all 7 quarters beat their own chance rate</td></tr>
+          <tr><td>ROC-AUC</td><td class="num">0.585</td><td class="num">0.592</td><td class="num delta-flat">+0.008</td><td>ranking skill roughly flat</td></tr>
+          <tr><td>PR-AUC</td><td class="num">0.184</td><td class="num">0.188</td><td class="num delta-flat">+0.004</td><td>vs 0.134 for a random ranker</td></tr>
+          <tr><td>lift at top 10%</td><td class="num">1.561×</td><td class="num">1.743×</td><td class="num delta-good">+0.182</td><td>edge persists as the list widens</td></tr>
+          <tr><td>deployment restatement (3% base)</td><td class="num">≈5.6%</td><td class="num">≈6.6%</td><td class="num delta-good">+1.0pt</td><td>expected top-pick hit rate at live prevalence</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why did a frozen model improve?</h2>
+    <p class="sub">The champion's weights never changed between generations, so the v2 gain can only come through its inputs.
+    The rebuild changed what its features see: quarterly-YoY fundamentals feed business quality, refreshed shares/price data
+    feed liquidity and capital, and the two newly lit domains raise coverage completeness, which happens to carry the champion's
+    heaviest positive weight (+0.39). No ablation has isolated the contributions yet; gen-3 will test them separately.</p>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--real); opacity:.45"></span>learned in gen 1 (deployed champion, frozen)</span>
+      <span><span class="swatch" style="background:var(--real)"></span>relearned in gen 2 (challenger, refused)</span>
+    </div>
+    <div class="panel scroll"><div id="weights-plot"><svg viewBox="0 0 980 376" width="100%" role="img" aria-label="Standardised weights learned in generation 1 versus relearned in generation 2"><line x1="550" x2="550" y1="8" y2="346" stroke="var(--ink-3)" stroke-width="1"/><line x1="331.81818181818187" x2="331.81818181818187" y1="8" y2="346" stroke="var(--grid)"/><text x="331.81818181818187" y="362" text-anchor="middle" font-size="10" fill="var(--ink-3)">-0.3</text><line x1="768.1818181818181" x2="768.1818181818181" y1="8" y2="346" stroke="var(--grid)"/><text x="768.1818181818181" y="362" text-anchor="middle" font-size="10" fill="var(--ink-3)">0.3</text><text x="550" y="362" text-anchor="middle" font-size="10" fill="var(--ink-3)">0</text><text x="0" y="27" font-size="12" fill="var(--ink)">technical</text><g data-tip="technical: gen 1 -0.28 → gen 2 relearn -0.26"><rect x="347.09090909090907" y="16" width="202.90909090909093" height="7" rx="2" fill="var(--real)" opacity="0.38"/><rect x="358" y="25" width="192" height="7" rx="2" fill="var(--real)"/></g><text x="0" y="57" font-size="12" fill="var(--ink)">accumulation</text><g data-tip="accumulation: gen 1 0.04 → gen 2 relearn 0.04"><rect x="550" y="46" width="25.454545454545496" height="7" rx="2" fill="var(--real)" opacity="0.38"/><rect x="550" y="55" width="29.090909090909122" height="7" rx="2" fill="var(--real)"/></g><text x="0" y="87" font-size="12" fill="var(--ink)">liquidity</text><g data-tip="liquidity: gen 1 -0.18 → gen 2 relearn -0.18"><rect x="417.6363636363636" y="76" width="132.36363636363637" height="7" rx="2" fill="var(--real)" opacity="0.38"/><rect x="417.6363636363636" y="85" width="132.36363636363637" height="7" rx="2" fill="var(--real)"/></g><text x="0" y="117" font-size="12" fill="var(--ink)">theme ✚</text><g data-tip="theme: 0.00 in gen 1 → 0.08 relearned in gen 2 (domain newly lit)"><rect x="550" y="106" width="1.5" height="7" rx="2" fill="var(--real)" opacity="0.38"/><rect x="550" y="115" width="56" height="7" rx="2" fill="var(--real)"/></g><text x="0" y="147" font-size="12" fill="var(--ink)">business quality</text><g data-tip="business quality: gen 1 0.12 → gen 2 relearn 0.10"><rect x="550" y="136" width="85.09090909090912" height="7" rx="2" fill="var(--real)" opacity="0.38"/><rect x="550" y="145" width="70.5454545454545" height="7" rx="2" fill="var(--real)"/></g><text x="0" y="177" font-size="12" fill="var(--ink)">capital</text><g data-tip="capital: gen 1 -0.09 → gen 2 relearn -0.08"><rect x="488.1818181818182" y="166" width="61.81818181818181" height="7" rx="2" fill="var(--real)" opacity="0.38"/><rect x="489.6363636363636" y="175" width="60.363636363636374" height="7" rx="2" fill="var(--real)"/></g><text x="0" y="207" font-size="12" fill="var(--ink-3)">government ·</text><g data-tip="government: still 0.00 in both generations (pipeline dark; Form 4 backfill running for sponsorship)"><rect x="550" y="196" width="1.5" height="7" rx="2" fill="var(--real)" opacity="0.38"/><rect x="550" y="205" width="1.5" height="7" rx="2" fill="var(--real)"/></g><text x="0" y="237" font-size="12" fill="var(--ink-3)">adoption ·</text><g data-tip="adoption: still 0.00 in both generations (pipeline dark; Form 4 backfill running for sponsorship)"><rect x="550" y="226" width="1.5" height="7" rx="2" fill="var(--real)" opacity="0.38"/><rect x="550" y="235" width="1.5" height="7" rx="2" fill="var(--real)"/></g><text x="0" y="267" font-size="12" fill="var(--ink-3)">sponsorship ·</text><g data-tip="sponsorship: still 0.00 in both generations (pipeline dark; Form 4 backfill running for sponsorship)"><rect x="550" y="256" width="1.5" height="7" rx="2" fill="var(--real)" opacity="0.38"/><rect x="550" y="265" width="1.5" height="7" rx="2" fill="var(--real)"/></g><text x="0" y="297" font-size="12" fill="var(--ink)">narrative ✚</text><g data-tip="narrative: 0.00 in gen 1 → -0.18 relearned in gen 2 (domain newly lit)"><rect x="550" y="286" width="1.5" height="7" rx="2" fill="var(--real)" opacity="0.38"/><rect x="415.4545454545455" y="295" width="134.5454545454545" height="7" rx="2" fill="var(--real)"/></g><text x="0" y="327" font-size="12" fill="var(--ink)">completeness</text><g data-tip="completeness: gen 1 0.39 → gen 2 relearn 0.40"><rect x="550" y="316" width="283.6363636363636" height="7" rx="2" fill="var(--real)" opacity="0.38"/><rect x="550" y="325" width="287.27272727272725" height="7" rx="2" fill="var(--real)"/></g></svg></div></div>
+    <p class="note">Theme woke up at +0.08 and narrative (market regime) entered at −0.19: risk-on quarters were
+    <em>worse</em> for finding 12-month doublers in-sample, an interaction a linear model can only average. Three domains stay
+    honestly at zero: government, adoption, sponsorship. The sponsorship pipeline (SEC Form 4) is backfilling now.
+    The relearned weights lost the fair fight anyway: better features beat better weights this generation.</p>
+  </section>
+
+  <section>
+    <h2>Calibration: the quiet win of generation 2</h2>
+    <p class="sub">Holdout reliability by probability decile. Gen-1's curve (faded) already tracked the diagonal loosely;
+    gen-2's champion curve is tighter and monotone: ECE 0.042 → 0.017. When this model says 20%, about 20% happen.</p>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--real); opacity:.45"></span>gen 1 (ECE 0.042)</span>
+      <span><span class="swatch" style="background:var(--real)"></span>gen 2 (ECE 0.017)</span>
+      <span><span class="swatch" style="background:var(--chance)"></span>perfect calibration</span>
+    </div>
+    <div class="panel scroll"><div id="calib-plot"><svg viewBox="0 0 480 360" width="100%" style="max-width:520px" role="img" aria-label="Calibration curves for generation 1 and generation 2 on the holdout"><line x1="46" x2="464" y1="320" y2="320" stroke="var(--grid)" stroke-width="1"/><text x="40" y="324" text-anchor="end" font-size="10" fill="var(--ink-3)">0%</text><text x="46" y="336" text-anchor="middle" font-size="10" fill="var(--ink-3)">0%</text><line x1="46" x2="464" y1="269" y2="269" stroke="var(--grid)" stroke-width="1"/><text x="40" y="273" text-anchor="end" font-size="10" fill="var(--ink-3)">5%</text><text x="115.66666666666667" y="336" text-anchor="middle" font-size="10" fill="var(--ink-3)">5%</text><line x1="46" x2="464" y1="218" y2="218" stroke="var(--grid)" stroke-width="1"/><text x="40" y="222" text-anchor="end" font-size="10" fill="var(--ink-3)">10%</text><text x="185.33333333333334" y="336" text-anchor="middle" font-size="10" fill="var(--ink-3)">10%</text><line x1="46" x2="464" y1="167" y2="167" stroke="var(--grid)" stroke-width="1"/><text x="40" y="171" text-anchor="end" font-size="10" fill="var(--ink-3)">15%</text><text x="255" y="336" text-anchor="middle" font-size="10" fill="var(--ink-3)">15%</text><line x1="46" x2="464" y1="115.99999999999997" y2="115.99999999999997" stroke="var(--grid)" stroke-width="1"/><text x="40" y="119.99999999999997" text-anchor="end" font-size="10" fill="var(--ink-3)">20%</text><text x="324.6666666666667" y="336" text-anchor="middle" font-size="10" fill="var(--ink-3)">20%</text><line x1="46" x2="464" y1="65" y2="65" stroke="var(--grid)" stroke-width="1"/><text x="40" y="69" text-anchor="end" font-size="10" fill="var(--ink-3)">25%</text><text x="394.33333333333337" y="336" text-anchor="middle" font-size="10" fill="var(--ink-3)">25%</text><line x1="46" x2="464" y1="14" y2="14" stroke="var(--grid)" stroke-width="1"/><text x="40" y="18" text-anchor="end" font-size="10" fill="var(--ink-3)">30%</text><text x="464" y="336" text-anchor="middle" font-size="10" fill="var(--ink-3)">30%</text><line x1="46" x2="464" y1="320" y2="14" stroke="var(--chance)" stroke-width="1.4" stroke-dasharray="5 4"/><path d="M109.3 220.7 L127.2 220.9 L138.2 207.4 L148.0 201.0 L157.7 205.8 L168.3 191.1 L182.0 195.8 L199.4 169.6 L224.1 114.7 L286.8 105.1" fill="none" stroke="var(--real)" stroke-width="2" opacity="0.4"/><circle cx="109.25733333333335" cy="220.652" r="4" fill="var(--real)" opacity="0.4" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 1: predicted 4.5% → actual 9.7%"/><circle cx="127.23133333333334" cy="220.856" r="4" fill="var(--real)" opacity="0.4" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 1: predicted 5.8% → actual 9.7%"/><circle cx="138.23866666666666" cy="207.392" r="4" fill="var(--real)" opacity="0.4" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 1: predicted 6.6% → actual 11.0%"/><circle cx="147.99200000000002" cy="200.966" r="4" fill="var(--real)" opacity="0.4" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 1: predicted 7.3% → actual 11.7%"/><circle cx="157.74533333333332" cy="205.76" r="4" fill="var(--real)" opacity="0.4" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 1: predicted 8.0% → actual 11.2%"/><circle cx="168.3346666666667" cy="191.07199999999997" r="4" fill="var(--real)" opacity="0.4" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 1: predicted 8.8% → actual 12.6%"/><circle cx="181.98933333333335" cy="195.764" r="4" fill="var(--real)" opacity="0.4" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 1: predicted 9.8% → actual 12.2%"/><circle cx="199.40600000000003" cy="169.55" r="4" fill="var(--real)" opacity="0.4" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 1: predicted 11.0% → actual 14.8%"/><circle cx="224.06799999999998" cy="114.67399999999998" r="4" fill="var(--real)" opacity="0.4" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 1: predicted 12.8% → actual 20.1%"/><circle cx="286.76800000000003" cy="105.08599999999998" r="4" fill="var(--real)" opacity="0.4" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 1: predicted 17.3% → actual 21.1%"/><path d="M143.5 230.5 L170.8 219.1 L187.7 222.3 L202.3 179.4 L217.5 214.0 L233.3 194.3 L254.3 179.2 L280.1 172.9 L315.1 139.6 L408.0 80.3" fill="none" stroke="var(--real)" stroke-width="2" opacity="1"/><circle cx="143.53333333333336" cy="230.546" r="4" fill="var(--real)" opacity="1" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 2: predicted 7.0% → actual 8.8%"/><circle cx="170.84266666666667" cy="219.122" r="4" fill="var(--real)" opacity="1" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 2: predicted 9.0% → actual 9.9%"/><circle cx="187.702" cy="222.284" r="4" fill="var(--real)" opacity="1" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 2: predicted 10.2% → actual 9.6%"/><circle cx="202.332" cy="179.444" r="4" fill="var(--real)" opacity="1" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 2: predicted 11.2% → actual 13.8%"/><circle cx="217.51933333333332" cy="214.022" r="4" fill="var(--real)" opacity="1" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 2: predicted 12.3% → actual 10.4%"/><circle cx="233.264" cy="194.336" r="4" fill="var(--real)" opacity="1" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 2: predicted 13.4% → actual 12.3%"/><circle cx="254.30333333333334" cy="179.23999999999998" r="4" fill="var(--real)" opacity="1" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 2: predicted 14.9% → actual 13.8%"/><circle cx="280.08000000000004" cy="172.916" r="4" fill="var(--real)" opacity="1" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 2: predicted 16.8% → actual 14.4%"/><circle cx="315.0526666666667" cy="139.562" r="4" fill="var(--real)" opacity="1" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 2: predicted 19.3% → actual 17.7%"/><circle cx="407.988" cy="80.30000000000001" r="4" fill="var(--real)" opacity="1" stroke="var(--panel)" stroke-width="1.5" data-tip="gen 2: predicted 26.0% → actual 23.5%"/><text x="255" y="354" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">predicted probability</text><text x="12" y="12" font-size="10.5" fill="var(--ink-3)">actual winner rate</text></svg></div></div>
+    <p class="note">Corpus-prevalence calibration only. The live-deployment claim still waits on the outcome ledger aging
+    ~12 months of real nightly predictions; surfacing promotion stays founder-gated on that, never on backtest numbers.</p>
+  </section>
+
+  <section>
+    <h2>Regime honesty: every gen-2 holdout quarter beat chance</h2>
+    <p class="sub">Champion precision per holdout quarter, gen 2. Ticks mark the hits pure chance would produce at each
+    quarter's own base rate. In gen 1 the weakest quarter (2025Q2, 11.1%) fell below its chance line; in gen 2 all seven
+    quarters, including newly matured 2025Q3, clear their null.</p>
+    <div class="panel scroll"><div id="cohort-plot"><svg viewBox="0 0 980 280" width="100%" role="img" aria-label="Generation 2 champion precision per holdout quarter versus chance"><line x1="46" x2="970" y1="228" y2="228" stroke="var(--grid)"/><text x="40" y="232" text-anchor="end" font-size="10" fill="var(--ink-3)">0%</text><line x1="46" x2="970" y1="182.66666666666666" y2="182.66666666666666" stroke="var(--grid)"/><text x="40" y="186.66666666666666" text-anchor="end" font-size="10" fill="var(--ink-3)">10%</text><line x1="46" x2="970" y1="137.33333333333331" y2="137.33333333333331" stroke="var(--grid)"/><text x="40" y="141.33333333333331" text-anchor="end" font-size="10" fill="var(--ink-3)">20%</text><line x1="46" x2="970" y1="92" y2="92" stroke="var(--grid)"/><text x="40" y="96" text-anchor="end" font-size="10" fill="var(--ink-3)">30%</text><line x1="46" x2="970" y1="46.66666666666666" y2="46.66666666666666" stroke="var(--grid)"/><text x="40" y="50.66666666666666" text-anchor="end" font-size="10" fill="var(--ink-3)">40%</text><g data-tip="2024Q1: 21.4% of top 42 doubled · chance would give 11.8%"><rect x="64.28" y="130.85066666666665" width="94.01142857142858" height="97.14933333333335" rx="4" fill="var(--real)"/><line x1="61.28" x2="161.29142857142858" y1="174.67936507936508" y2="174.67936507936508" stroke="var(--ink)" stroke-width="1.8" opacity="0.8"/><text x="111.28571428571429" y="122.85066666666665" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">21%</text><text x="111.28571428571429" y="244" text-anchor="middle" font-size="10" fill="var(--ink-3)">2024Q1</text></g><g data-tip="2024Q2: 20.9% of top 43 doubled · chance would give 9.3%"><rect x="194.85142857142858" y="133.11733333333333" width="94.01142857142858" height="94.88266666666667" rx="4" fill="var(--real)"/><line x1="191.85142857142858" x2="291.86285714285714" y1="185.93488372093023" y2="185.93488372093023" stroke="var(--ink)" stroke-width="1.8" opacity="0.8"/><text x="241.8571428571429" y="125.11733333333333" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">21%</text><text x="241.8571428571429" y="244" text-anchor="middle" font-size="10" fill="var(--ink-3)">2024Q2</text></g><g data-tip="2024Q3: 32.6% of top 43 doubled · chance would give 12.7%"><rect x="325.4228571428572" y="80.39466666666667" width="94.01142857142858" height="147.60533333333333" rx="4" fill="var(--real)"/><line x1="322.4228571428572" x2="422.4342857142858" y1="170.2263565891473" y2="170.2263565891473" stroke="var(--ink)" stroke-width="1.8" opacity="0.8"/><text x="372.4285714285715" y="72.39466666666667" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">33%</text><text x="372.4285714285715" y="244" text-anchor="middle" font-size="10" fill="var(--ink-3)">2024Q3</text></g><g data-tip="2024Q4: 34.9% of top 43 doubled · chance would give 12.6%"><rect x="455.9942857142858" y="69.87733333333335" width="94.01142857142858" height="158.12266666666665" rx="4" fill="var(--real)"/><line x1="452.9942857142858" x2="553.0057142857144" y1="170.96434108527131" y2="170.96434108527131" stroke="var(--ink)" stroke-width="1.8" opacity="0.8"/><text x="503.0000000000001" y="61.877333333333354" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">35%</text><text x="503.0000000000001" y="244" text-anchor="middle" font-size="10" fill="var(--ink-3)">2024Q4</text></g><g data-tip="2025Q1: 22.7% of top 44 doubled · chance would give 12.5%"><rect x="586.5657142857143" y="124.95733333333334" width="94.01142857142858" height="103.04266666666666" rx="4" fill="var(--real)"/><line x1="583.5657142857143" x2="683.5771428571429" y1="171.33333333333334" y2="171.33333333333334" stroke="var(--ink)" stroke-width="1.8" opacity="0.8"/><text x="633.5714285714286" y="116.95733333333334" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">23%</text><text x="633.5714285714286" y="244" text-anchor="middle" font-size="10" fill="var(--ink-3)">2025Q1</text></g><g data-tip="2025Q2: 27.3% of top 44 doubled · chance would give 17.7%"><rect x="717.1371428571429" y="104.376" width="94.01142857142858" height="123.624" rx="4" fill="var(--real)"/><line x1="714.1371428571429" x2="814.1485714285715" y1="147.94545454545454" y2="147.94545454545454" stroke="var(--ink)" stroke-width="1.8" opacity="0.8"/><text x="764.1428571428571" y="96.376" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">27%</text><text x="764.1428571428571" y="244" text-anchor="middle" font-size="10" fill="var(--ink-3)">2025Q2</text></g><g data-tip="2025Q3: 20.0% of top 45 doubled · chance would give 17.1%"><rect x="847.7085714285715" y="137.33333333333331" width="94.01142857142858" height="90.66666666666669" rx="4" fill="var(--real)"/><line x1="844.7085714285715" x2="944.7200000000001" y1="150.42962962962963" y2="150.42962962962963" stroke="var(--ink)" stroke-width="1.8" opacity="0.8"/><text x="894.7142857142858" y="129.33333333333331" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">20%</text><text x="894.7142857142858" y="244" text-anchor="middle" font-size="10" fill="var(--ink-3)">2025Q3</text></g><text x="46" y="272" font-size="10.5" fill="var(--ink-3)">▬ chance at that quarter's own base rate</text></svg></div></div>
+  </section>
+
+  <section>
+    <h2>The tier story flipped, and that is an open question, not a win</h2>
+    <p class="sub">Gen-1 said the signal concentrated in micro/small caps. Gen-2, with market caps recomputed
+    (shares-as-of × split-corrected raw close), says the large-cap tier leads at 2.84×. Tier membership itself shifted in
+    the rebuild (per-tier row counts changed), so part of this flip is reclassification, not signal migration.</p>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--real); opacity:.45"></span>gen 1 (point sizes ∝ rows)</span>
+      <span><span class="swatch" style="background:var(--real)"></span>gen 2</span>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:10px;">
+      <div class="panel"><div id="tier-plot"><svg viewBox="0 0 420 220" width="100%" role="img" aria-label="Lift by market cap tier, generation 1 versus generation 2"><line x1="46" x2="406" y1="176" y2="176" stroke="var(--grid)" stroke-dasharray="none"/><text x="40" y="180" text-anchor="end" font-size="10" fill="var(--ink-3)">0.0×</text><line x1="46" x2="406" y1="127.33333333333334" y2="127.33333333333334" stroke="var(--chance)" stroke-dasharray="5 4"/><text x="40" y="131.33333333333334" text-anchor="end" font-size="10" fill="var(--ink-3)">1.0×</text><line x1="46" x2="406" y1="78.66666666666667" y2="78.66666666666667" stroke="var(--grid)" stroke-dasharray="none"/><text x="40" y="82.66666666666667" text-anchor="end" font-size="10" fill="var(--ink-3)">2.0×</text><line x1="46" x2="406" y1="30" y2="30" stroke="var(--grid)" stroke-dasharray="none"/><text x="40" y="34" text-anchor="end" font-size="10" fill="var(--ink-3)">3.0×</text><line x1="82" x2="98" y1="104.84933333333333" y2="110.49466666666666" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 3"/><circle cx="82" cy="104.84933333333333" r="4.740487551109298" fill="var(--real)" opacity="0.38" stroke="var(--panel)" stroke-width="1.5" data-tip="micro · gen 1 (809 rows): lift 1.46×"/><circle cx="98" cy="110.49466666666666" r="4.955356249106169" fill="var(--real)" opacity="0.95" stroke="var(--panel)" stroke-width="1.5" data-tip="micro · gen 2 (884 rows, caps recomputed): lift 1.35×"/><text x="90" y="206" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">micro</text><line x1="178.66666666666669" x2="194.66666666666669" y1="93.12066666666666" y2="100.17733333333334" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 3"/><circle cx="178.66666666666669" cy="93.12066666666666" r="7.372998786864888" fill="var(--real)" opacity="0.38" stroke="var(--panel)" stroke-width="1.5" data-tip="small · gen 1 (1957 rows): lift 1.70×"/><circle cx="194.66666666666669" cy="100.17733333333334" r="6.972166887783963" fill="var(--real)" opacity="0.95" stroke="var(--panel)" stroke-width="1.5" data-tip="small · gen 2 (1750 rows, caps recomputed): lift 1.56×"/><text x="186.66666666666669" y="206" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">small</text><line x1="275.33333333333337" x2="291.33333333333337" y1="138.28333333333333" y2="93.16933333333333" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 3"/><circle cx="275.33333333333337" cy="138.28333333333333" r="5.607534613753574" fill="var(--real)" opacity="0.38" stroke="var(--panel)" stroke-width="1.5" data-tip="mid · gen 1 (1132 rows): lift 0.78×"/><circle cx="291.33333333333337" cy="93.16933333333333" r="4.856267428111155" fill="var(--real)" opacity="0.95" stroke="var(--panel)" stroke-width="1.5" data-tip="mid · gen 2 (849 rows, caps recomputed): lift 1.70×"/><text x="283.33333333333337" y="206" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">mid</text><line x1="372" x2="388" y1="176" y2="37.835333333333324" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 3"/><circle cx="372" cy="176" r="5.093568929978709" fill="var(--real)" opacity="0.38" stroke="var(--panel)" stroke-width="1.5" data-tip="large · gen 1 (934 rows): lift 0.00×"/><circle cx="388" cy="37.835333333333324" r="4.930066485916346" fill="var(--real)" opacity="0.95" stroke="var(--panel)" stroke-width="1.5" data-tip="large · gen 2 (875 rows, caps recomputed): lift 2.84×"/><text x="380" y="206" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">large</text></svg></div>
+        <p class="note">A conclusion that reverses when an input is corrected was never a conclusion. Flagged for a
+        dedicated tier-stability check in gen-3 before any tier claim ships anywhere.</p></div>
+      <div class="panel"><div id="kscan-plot"><svg viewBox="0 0 420 220" width="100%" role="img" aria-label="Lift at three cut-off widths, generation 1 versus generation 2"><line x1="46" x2="406" y1="155.14285714285714" y2="155.14285714285714" stroke="var(--chance)" stroke-dasharray="5 4"/><text x="40" y="159.14285714285714" text-anchor="end" font-size="10" fill="var(--ink-3)">1.0×</text><line x1="46" x2="406" y1="103" y2="103" stroke="var(--grid)" stroke-dasharray="none"/><text x="40" y="107" text-anchor="end" font-size="10" fill="var(--ink-3)">1.5×</text><line x1="46" x2="406" y1="50.85714285714285" y2="50.85714285714285" stroke="var(--grid)" stroke-dasharray="none"/><text x="40" y="54.85714285714285" text-anchor="end" font-size="10" fill="var(--ink-3)">2.0×</text><line x1="82" x2="98" y1="63.47571428571429" y2="57.21857142857142" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 3"/><circle cx="82" cy="63.47571428571429" r="5" fill="var(--real)" opacity="0.38" stroke="var(--panel)" stroke-width="1.5" data-tip="top 2% · gen 1: lift 1.88×"/><circle cx="98" cy="57.21857142857142" r="6" fill="var(--real)" opacity="0.95" stroke="var(--panel)" stroke-width="1.5" data-tip="top 2% · gen 2: lift 1.94×"/><text x="98" y="46.21857142857142" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">1.94×</text><text x="90" y="206" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">top 2%</text><line x1="224" x2="240" y1="80.2657142857143" y2="57.53142857142858" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 3"/><circle cx="224" cy="80.2657142857143" r="5" fill="var(--real)" opacity="0.38" stroke="var(--panel)" stroke-width="1.5" data-tip="top 5% · gen 1: lift 1.72×"/><circle cx="240" cy="57.53142857142858" r="6" fill="var(--real)" opacity="0.95" stroke="var(--panel)" stroke-width="1.5" data-tip="top 5% · gen 2: lift 1.94×"/><text x="240" y="46.53142857142858" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">1.94×</text><text x="232" y="206" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">top 5%</text><line x1="366" x2="382" y1="96.63857142857144" y2="77.6585714285714" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="2 3"/><circle cx="366" cy="96.63857142857144" r="5" fill="var(--real)" opacity="0.38" stroke="var(--panel)" stroke-width="1.5" data-tip="top 10% · gen 1: lift 1.56×"/><circle cx="382" cy="77.6585714285714" r="6" fill="var(--real)" opacity="0.95" stroke="var(--panel)" stroke-width="1.5" data-tip="top 10% · gen 2: lift 1.74×"/><text x="382" y="66.6585714285714" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">1.74×</text><text x="374" y="206" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">top 10%</text></svg></div>
+        <p class="note">Robustness held in both generations: the edge persists at every cut-off width, and widened in v2.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Report card: generation 1 → generation 2</h2>
+    <div class="grades">
+      <div class="grade-card"><div class="dim">Accuracy (real, out-of-time)</div>
+        <div class="g"><span class="was gC">C+</span><span class="arrow">→</span><span class="gB">B−</span></div>
+        <div class="why">Holdout 1.94× CI[1.55, 2.29], every quarter above chance. Still one favourable-regime era on a survivor corpus; the interval is the claim.</div></div>
+      <div class="grade-card"><div class="dim">Calibration</div>
+        <div class="g"><span class="was gB">B+</span><span class="arrow">→</span><span class="gA">A−</span></div>
+        <div class="why">ECE 0.017 on untouched data, monotone deciles. Full A waits on live-prevalence validation from the aging ledger.</div></div>
+      <div class="grade-card"><div class="dim">Process sophistication</div>
+        <div class="g"><span class="was gA">A−</span><span class="arrow">→</span><span class="gA">A</span></div>
+        <div class="why">Per-generation one-shot holdout held under pressure; refused promotion recorded; today's dev rerun reproduced gen-2 byte-identically.</div></div>
+      <div class="grade-card"><div class="dim">Estimator sophistication</div>
+        <div class="g"><span class="was gD">D+</span><span class="arrow">→</span><span class="gD">D+</span></div>
+        <div class="why">Unchanged by design. A depth-2 boosted-trees challenger now exists behind the same artifact seam (XOR-pinned); the grade moves only if it wins gen-3's fair fight.</div></div>
+      <div class="grade-card"><div class="dim">Data depth</div>
+        <div class="g"><span class="was gD">D</span><span class="arrow">→</span><span class="gC">C−</span></div>
+        <div class="why">2 of 5 dark domains lit honestly; quarterly fundamentals. Still survivor-biased, 3 domains dark, Form 4 backfill at 37%.</div></div>
+      <div class="grade-card"><div class="dim">Honesty of presentation</div>
+        <div class="g"><span class="was gA">A</span><span class="arrow">→</span><span class="gA">A</span></div>
+        <div class="why">Every caveat travels with every number. In-sample flattery is named where it occurs; the refused challenger is reported, not hidden.</div></div>
+    </div>
+    <p class="note"><b>Dev-split footnote:</b> once a real-data champion is promoted, its dev numbers are in-sample-flattered
+    (it trained on those rows). Champion "1.73×–1.75× dev" is therefore not comparable to the challenger's honest 1.27×
+    walk-forward; the one-shot holdout is the only fair fight, and the champion won it.</p>
+  </section>
+
+  <section>
+    <h2>What generation 2 actually shipped</h2>
+    <div class="stages">
+      <div class="stage"><span class="tag">domain · theme</span><span class="chip promoted">shipped</span><b>SEC SIC theme source</b>Point-in-time honest hot-theme mapping from filing metadata. No software→AI inflation; unmapped stays unmapped.</div>
+      <div class="stage"><span class="tag">domain · narrative</span><span class="chip promoted">shipped</span><b>Causal market regime</b>SPY 200-day SMA + drawdown, computed strictly as-of entry date. Learned weight −0.19 in the retrain.</div>
+      <div class="stage"><span class="tag">fundamentals</span><span class="chip promoted">shipped</span><b>Quarterly YoY preferred</b>Freshness-aware within-concept series; the dei cross-concept dilution bug (19/101 sign flips) stays fixed and pinned.</div>
+      <div class="stage"><span class="tag">domain · sponsorship</span><span class="chip inflight">in flight · 37%</span><b>Form 4 insider backfill</b>~205k filings, polite SEC pacing, resumable. Gates the gen-3 corpus; all-or-nothing per window, no partial pretence.</div>
+      <div class="stage"><span class="tag">estimator seam</span><span class="chip promoted">built · unproven</span><b>Depth-2 boosted trees</b>Nonlinear challenger rides the same frozen-artifact contract. Must win dev walk-forward + fresh holdout to take the seat.</div>
+      <div class="stage"><span class="tag">live loop</span><span class="chip promoted">shipped</span><b>Outcome maturation + cadence</b>Nightly maturation job shares label maths with the corpus; monthly eval workflow appends to the metrics history.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The standing suite, unchanged and enforced</h2>
+    <p class="sub">Both generations were produced by the same command family; every cycle appends to
+    <span style="font-family:var(--mono); font-size:12px">lyra-evals/model-metrics-history.jsonl</span> with the corpus hash,
+    so this exact v1-vs-v2 board is reconstructible from the audit trail alone.</p>
+    <div class="panel" style="font-family:var(--mono); font-size:12.5px; line-height:2">
+      npm run worker:emerging-winner-backtest -- build · retrain · compare · eval · <b>holdout (one-shot)</b> · promote · record
+    </div>
+    <p class="note">Rules that held across generations: the random-sample slice is always the headline · curated hindsight names
+    never train, only disclose · &gt;2× lift triggers a leakage decomposition · the holdout is never iterated against ·
+    a refused challenger is recorded with its numbers · surfacing promotion is founder-gated on live calibration.</p>
+  </section>
+
+  <div class="foot">
+    <b>Read the numbers with these caveats.</b> The corpus is survivor-biased (delisted names absent, the ruin class censored,
+    precision an optimistic bound) in both generations, so the v1→v2 comparison is internally fair but both absolute levels are
+    upper bounds. The +0.22× champion delta sits inside overlapping CI90s: directional, not proven. Tier results are unstable
+    under the market-cap recomputation and carry no conclusion yet. Holdout quarters cover one broadly favourable era;
+    2025Q3 matured between scorings and is included in gen-2's seven quarters. Deployment restatement at a 3% live base:
+    ≈6.6% top-pick precision. Research only: resemblance scores for a research queue, never advice, never a price target.
+    Evidence: <code>lyra-evals/model-metrics-history.jsonl</code> ·
+    <code>lyra-modelling/research/2026-08-01-real-history-backtest-and-real-v1-champion.md</code> ·
+    <code>lyra-evals/MODEL-REPORT-CARD.md</code> · v1 board preserved at <code>lyra-evals/boards/model-eval-board-v1.html</code>
+  </div>
+</div>
+<div id="tip"></div>
+
+<script>
+const D = {
+  // Holdout, top-5% cut, symbol-clustered bootstrap CI90. gen: 1|2. Sources:
+  // gen-1: model-metrics-history.jsonl record 0 (corpus ef1b5c52)
+  // gen-2: model-metrics-history.jsonl record 2 + eval-report-holdout.json (corpus a297e8ad)
+  ci: [
+    { model: "real-v1 (frozen champion)", color: "var(--real)", rows: [
+      { split: "gen 2 · holdout", lift: 1.936, lo: 1.5524, hi: 2.2872, bold: true, gen: 2 },
+      { split: "gen 1 · holdout", lift: 1.718, lo: 1.3755, hi: 2.0539, gen: 1 }]},
+    { model: "gen-2 challenger (relearned)", color: "var(--real)", rows: [
+      { split: "gen 2 · holdout · refused", lift: 1.912, lo: 1.5911, hi: 2.3210, gen: 2, hollow: true }]},
+    { model: "synthetic champion", color: "var(--synth)", rows: [
+      { split: "gen 1 · holdout · retired", lift: 0.702, lo: 0.4745, hi: 0.9155, gen: 1 }]},
+    { model: "reference scorecard", color: "var(--ref)", rows: [
+      { split: "gen 2 · holdout", lift: 0.678, lo: 0.4871, hi: 0.9155, gen: 2 },
+      { split: "gen 1 · holdout", lift: 0.678, lo: 0.4938, hi: 0.8904, gen: 1 }]},
+  ],
+  weights: [
+    { d: "technical",        g1: -0.279, g2: -0.264 },
+    { d: "accumulation",     g1:  0.035, g2:  0.040 },
+    { d: "liquidity",        g1: -0.182, g2: -0.182 },
+    { d: "theme",            g1:  0.000, g2:  0.077, lit: true },
+    { d: "business quality", g1:  0.117, g2:  0.097 },
+    { d: "capital",          g1: -0.085, g2: -0.083 },
+    { d: "government",       g1:  0.000, g2:  0.000, dead: true },
+    { d: "adoption",         g1:  0.000, g2:  0.000, dead: true },
+    { d: "sponsorship",      g1:  0.000, g2:  0.000, dead: true },
+    { d: "narrative",        g1:  0.000, g2: -0.185, lit: true },
+    { d: "completeness",     g1:  0.390, g2:  0.395 },
+  ],
+  calib: {
+    g1: [[0.0454,0.0974],[0.0583,0.0972],[0.0662,0.1104],[0.0732,0.1167],[0.0802,0.112],[0.0878,0.1264],[0.0976,0.1218],[0.1101,0.1475],[0.1278,0.2013],[0.1728,0.2107]],
+    g2: [[0.07,0.0877],[0.0896,0.0989],[0.1017,0.0958],[0.1122,0.1378],[0.1231,0.1039],[0.1344,0.1232],[0.1495,0.138],[0.168,0.1442],[0.1931,0.1769],[0.2598,0.235]],
+  },
+  cohorts: [
+    { q: "2024Q1", p: 0.2143, k: 42, nullHits: 4.94 },
+    { q: "2024Q2", p: 0.2093, k: 43, nullHits: 3.99 },
+    { q: "2024Q3", p: 0.3256, k: 43, nullHits: 5.48 },
+    { q: "2024Q4", p: 0.3488, k: 43, nullHits: 5.41 },
+    { q: "2025Q1", p: 0.2273, k: 44, nullHits: 5.50 },
+    { q: "2025Q2", p: 0.2727, k: 44, nullHits: 7.77 },
+    { q: "2025Q3", p: 0.2000, k: 45, nullHits: 7.70 },
+  ],
+  tiers: [
+    { tier: "micro", g1: { lift: 1.462, n: 809 },  g2: { lift: 1.346, n: 884 } },
+    { tier: "small", g1: { lift: 1.703, n: 1957 }, g2: { lift: 1.558, n: 1750 } },
+    { tier: "mid",   g1: { lift: 0.775, n: 1132 }, g2: { lift: 1.702, n: 849 } },
+    { tier: "large", g1: { lift: 0.000, n: 934 },  g2: { lift: 2.839, n: 875 } },
+  ],
+  kscan: [
+    { k: "top 2%",  g1: 1.879, g2: 1.939 },
+    { k: "top 5%",  g1: 1.718, g2: 1.936 },
+    { k: "top 10%", g1: 1.561, g2: 1.743 },
+  ],
+};
+
+const tip = document.getElementById("tip");
+function bindTips(root) {
+  root.querySelectorAll("[data-tip]").forEach(el => {
+    el.addEventListener("mousemove", e => {
+      tip.textContent = el.getAttribute("data-tip");
+      tip.style.opacity = 1;
+      tip.style.left = Math.min(window.innerWidth - 270, e.clientX + 14) + "px";
+      tip.style.top = (e.clientY + 16) + "px";
+    });
+    el.addEventListener("mouseleave", () => tip.style.opacity = 0);
+  });
+}
+const S = (tag, attrs, text) => {
+  let s = `<${tag}`;
+  for (const k in attrs) s += ` ${k}="${attrs[k]}"`;
+  return text !== undefined ? s + `>${text}</${tag}>` : s + "/>";
+};
+
+// ---- 1. CI interval plot: v1 faded vs v2 solid ---------------------------------------------
+(function () {
+  const W = 980, rowH = 34, padL = 230, padR = 46, groups = D.ci;
+  const rows = groups.flatMap(g => g.rows.map(r => ({ ...r, model: g.model, color: g.color })));
+  const H = rows.length * rowH + 78;
+  const xmin = 0.3, xmax = 2.5;
+  const X = v => padL + (v - xmin) / (xmax - xmin) * (W - padL - padR);
+  let s = "";
+  for (const t of [0.5, 1.0, 1.5, 2.0, 2.5]) {
+    const strong = t === 1.0;
+    s += S("line", { x1: X(t), x2: X(t), y1: 26, y2: H - 44,
+      stroke: strong ? "var(--chance)" : "var(--grid)", "stroke-width": strong ? 1.6 : 1,
+      "stroke-dasharray": strong ? "5 4" : "none" });
+    s += S("text", { x: X(t), y: H - 26, "text-anchor": "middle", "font-size": 11, fill: "var(--ink-3)" }, t.toFixed(1) + "×");
+  }
+  s += S("text", { x: X(1.0), y: 16, "text-anchor": "middle", "font-size": 10.5, fill: "var(--ink-3)", "letter-spacing": ".08em" }, "CHANCE");
+  let lastModel = null;
+  rows.forEach((r, i) => {
+    const y = 42 + i * rowH;
+    if (r.model !== lastModel) {
+      s += S("text", { x: 0, y: y + 4, "font-size": 12, fill: "var(--ink)" }, r.model);
+      lastModel = r.model;
+    }
+    s += S("text", { x: 0, y: y + 17, "font-size": 10, fill: "var(--ink-3)" }, r.split);
+    const op = r.gen === 1 ? 0.45 : 1;
+    s += `<g data-tip="${r.model} · ${r.split}: lift ${r.lift.toFixed(2)}× · CI90 [${r.lo.toFixed(2)}, ${r.hi.toFixed(2)}]">`;
+    s += S("line", { x1: X(r.lo), x2: X(r.hi), y1: y, y2: y, stroke: r.color, "stroke-width": r.bold ? 5 : 3.5, "stroke-linecap": "round", opacity: 0.45 * op });
+    s += S("circle", { cx: X(r.lift), cy: y, r: r.bold ? 7 : 5.5, fill: r.hollow ? "var(--panel)" : r.color,
+      stroke: r.hollow ? r.color : "var(--panel)", "stroke-width": 2, opacity: op });
+    s += S("text", { x: X(r.hi) + 10, y: y + 4, "font-size": 12, "font-weight": r.bold ? 700 : 400,
+      fill: r.gen === 1 ? "var(--ink-3)" : "var(--ink)" }, r.lift.toFixed(2) + "×");
+    s += "</g>";
+  });
+  const el = document.getElementById("ci-plot");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Holdout lift with confidence intervals, generation 1 versus generation 2, all models">${s}</svg>`;
+  bindTips(el);
+})();
+
+// ---- 2. weights: gen-1 learned vs gen-2 relearned -------------------------------------------
+(function () {
+  const W = 980, rowH = 30, padL = 150, mid = padL + (W - padL - 30) / 2;
+  const H = D.weights.length * rowH + 46;
+  const scale = (W - padL - 30) / 2 / 0.55;
+  const X = v => mid + v * scale;
+  let s = S("line", { x1: mid, x2: mid, y1: 8, y2: H - 30, stroke: "var(--ink-3)", "stroke-width": 1 });
+  for (const t of [-0.3, 0.3]) {
+    s += S("line", { x1: X(t), x2: X(t), y1: 8, y2: H - 30, stroke: "var(--grid)" });
+    s += S("text", { x: X(t), y: H - 14, "text-anchor": "middle", "font-size": 10, fill: "var(--ink-3)" }, t.toFixed(1));
+  }
+  s += S("text", { x: mid, y: H - 14, "text-anchor": "middle", "font-size": 10, fill: "var(--ink-3)" }, "0");
+  D.weights.forEach((w, i) => {
+    const y = 16 + i * rowH;
+    const mark = w.dead ? " ·" : (w.lit ? " ✚" : "");
+    s += S("text", { x: 0, y: y + 11, "font-size": 12, fill: w.dead ? "var(--ink-3)" : "var(--ink)" }, w.d + mark);
+    const tipTxt = w.dead
+      ? `${w.d}: still 0.00 in both generations (pipeline dark; Form 4 backfill running for sponsorship)`
+      : w.lit
+        ? `${w.d}: 0.00 in gen 1 → ${w.g2.toFixed(2)} relearned in gen 2 (domain newly lit)`
+        : `${w.d}: gen 1 ${w.g1.toFixed(2)} → gen 2 relearn ${w.g2.toFixed(2)}`;
+    s += `<g data-tip="${tipTxt}">`;
+    s += S("rect", { x: Math.min(mid, X(w.g1)), y: y, width: Math.max(1.5, Math.abs(X(w.g1) - mid)), height: 7, rx: 2, fill: "var(--real)", opacity: .38 });
+    s += S("rect", { x: Math.min(mid, X(w.g2)), y: y + 9, width: Math.max(1.5, Math.abs(X(w.g2) - mid)), height: 7, rx: 2, fill: "var(--real)" });
+    s += "</g>";
+  });
+  const el = document.getElementById("weights-plot");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Standardised weights learned in generation 1 versus relearned in generation 2">${s}</svg>`;
+  bindTips(el);
+})();
+
+// ---- 3. calibration: gen-1 vs gen-2 ---------------------------------------------------------
+(function () {
+  const W = 480, H = 360, pad = 46;
+  const max = 0.30;
+  const X = v => pad + v / max * (W - pad - 16);
+  const Y = v => H - 40 - v / max * (H - 40 - 14);
+  let s = "";
+  for (const t of [0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]) {
+    s += S("line", { x1: X(0), x2: X(max), y1: Y(t), y2: Y(t), stroke: "var(--grid)", "stroke-width": 1 });
+    s += S("text", { x: X(0) - 6, y: Y(t) + 4, "text-anchor": "end", "font-size": 10, fill: "var(--ink-3)" }, (t * 100).toFixed(0) + "%");
+    s += S("text", { x: X(t), y: H - 24, "text-anchor": "middle", "font-size": 10, fill: "var(--ink-3)" }, (t * 100).toFixed(0) + "%");
+  }
+  s += S("line", { x1: X(0), x2: X(max), y1: Y(0), y2: Y(max), stroke: "var(--chance)", "stroke-width": 1.4, "stroke-dasharray": "5 4" });
+  const line = (pts, opacity, name) => {
+    const path = pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join(" ");
+    let out = S("path", { d: path, fill: "none", stroke: "var(--real)", "stroke-width": 2, opacity });
+    pts.forEach(p => {
+      out += S("circle", { cx: X(p[0]), cy: Y(p[1]), r: 4, fill: "var(--real)", opacity, stroke: "var(--panel)", "stroke-width": 1.5,
+        "data-tip": `${name}: predicted ${(p[0] * 100).toFixed(1)}% → actual ${(p[1] * 100).toFixed(1)}%` });
+    });
+    return out;
+  };
+  s += line(D.calib.g1, 0.4, "gen 1");
+  s += line(D.calib.g2, 1, "gen 2");
+  s += S("text", { x: X(max / 2), y: H - 6, "text-anchor": "middle", "font-size": 10.5, fill: "var(--ink-3)" }, "predicted probability");
+  s += S("text", { x: 12, y: 12, "font-size": 10.5, fill: "var(--ink-3)" }, "actual winner rate");
+  const el = document.getElementById("calib-plot");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:520px" role="img" aria-label="Calibration curves for generation 1 and generation 2 on the holdout">${s}</svg>`;
+  bindTips(el);
+})();
+
+// ---- 4. gen-2 cohorts ------------------------------------------------------------------------
+(function () {
+  const W = 980, H = 280, padL = 46, padB = 52;
+  const n = D.cohorts.length;
+  const bw = (W - padL - 20) / n;
+  const Y = v => H - padB - v * (H - padB - 24) / 0.45;
+  let s = "";
+  for (const t of [0, 0.1, 0.2, 0.3, 0.4]) {
+    s += S("line", { x1: padL, x2: W - 10, y1: Y(t), y2: Y(t), stroke: "var(--grid)" });
+    s += S("text", { x: padL - 6, y: Y(t) + 4, "text-anchor": "end", "font-size": 10, fill: "var(--ink-3)" }, (t * 100).toFixed(0) + "%");
+  }
+  D.cohorts.forEach((r, i) => {
+    const x = padL + i * bw + bw * 0.14;
+    const w = bw * 0.72;
+    const nullRate = r.nullHits / r.k;
+    s += `<g data-tip="${r.q}: ${(r.p * 100).toFixed(1)}% of top ${r.k} doubled · chance would give ${(nullRate * 100).toFixed(1)}%">`;
+    s += S("rect", { x, y: Y(r.p), width: w, height: Math.max(1.2, Y(0) - Y(r.p)), rx: 4, fill: "var(--real)" });
+    s += S("line", { x1: x - 3, x2: x + w + 3, y1: Y(nullRate), y2: Y(nullRate), stroke: "var(--ink)", "stroke-width": 1.8, opacity: .8 });
+    s += S("text", { x: x + w / 2, y: Y(r.p) - 8, "text-anchor": "middle", "font-size": 11, "font-weight": 600, fill: "var(--ink)" }, (r.p * 100).toFixed(0) + "%");
+    s += S("text", { x: x + w / 2, y: H - padB + 16, "text-anchor": "middle", "font-size": 10, fill: "var(--ink-3)" }, r.q);
+    s += "</g>";
+  });
+  s += S("text", { x: padL, y: H - 8, "font-size": 10.5, fill: "var(--ink-3)" }, "▬ chance at that quarter's own base rate");
+  const el = document.getElementById("cohort-plot");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Generation 2 champion precision per holdout quarter versus chance">${s}</svg>`;
+  bindTips(el);
+})();
+
+// ---- 5. tiers paired -------------------------------------------------------------------------
+(function () {
+  const W = 420, H = 220, padL = 46;
+  const Y = v => H - 44 - v / 3.0 * (H - 74);
+  let s = "";
+  for (const t of [0, 1.0, 2.0, 3.0]) {
+    s += S("line", { x1: padL, x2: W - 14, y1: Y(t), y2: Y(t), stroke: t === 1 ? "var(--chance)" : "var(--grid)", "stroke-dasharray": t === 1 ? "5 4" : "none" });
+    s += S("text", { x: padL - 6, y: Y(t) + 4, "text-anchor": "end", "font-size": 10, fill: "var(--ink-3)" }, t.toFixed(1) + "×");
+  }
+  D.tiers.forEach((r, i) => {
+    const x = padL + 44 + i * ((W - padL - 84) / 3);
+    const r1 = Math.max(4, Math.sqrt(r.g1.n) / 6), r2 = Math.max(4, Math.sqrt(r.g2.n) / 6);
+    s += S("line", { x1: x - 8, x2: x + 8, y1: Y(r.g1.lift), y2: Y(r.g2.lift), stroke: "var(--ink-3)", "stroke-width": 1, "stroke-dasharray": "2 3" });
+    s += S("circle", { cx: x - 8, cy: Y(r.g1.lift), r: r1, fill: "var(--real)", opacity: .38, stroke: "var(--panel)", "stroke-width": 1.5,
+      "data-tip": `${r.tier} · gen 1 (${r.g1.n} rows): lift ${r.g1.lift.toFixed(2)}×` });
+    s += S("circle", { cx: x + 8, cy: Y(r.g2.lift), r: r2, fill: "var(--real)", opacity: .95, stroke: "var(--panel)", "stroke-width": 1.5,
+      "data-tip": `${r.tier} · gen 2 (${r.g2.n} rows, caps recomputed): lift ${r.g2.lift.toFixed(2)}×` });
+    s += S("text", { x, y: H - 14, "text-anchor": "middle", "font-size": 10.5, fill: "var(--ink-3)" }, r.tier);
+  });
+  const el = document.getElementById("tier-plot");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Lift by market cap tier, generation 1 versus generation 2">${s}</svg>`;
+  bindTips(el);
+})();
+
+// ---- 6. k-scan paired ------------------------------------------------------------------------
+(function () {
+  const W = 420, H = 220, padL = 46;
+  const Y = v => H - 44 - (v - 0.8) / 1.4 * (H - 74);
+  let s = "";
+  for (const t of [1.0, 1.5, 2.0]) {
+    s += S("line", { x1: padL, x2: W - 14, y1: Y(t), y2: Y(t), stroke: t === 1 ? "var(--chance)" : "var(--grid)", "stroke-dasharray": t === 1 ? "5 4" : "none" });
+    s += S("text", { x: padL - 6, y: Y(t) + 4, "text-anchor": "end", "font-size": 10, fill: "var(--ink-3)" }, t.toFixed(1) + "×");
+  }
+  D.kscan.forEach((r, i) => {
+    const x = padL + 44 + i * ((W - padL - 90) / 2);
+    s += S("line", { x1: x - 8, x2: x + 8, y1: Y(r.g1), y2: Y(r.g2), stroke: "var(--ink-3)", "stroke-width": 1, "stroke-dasharray": "2 3" });
+    s += S("circle", { cx: x - 8, cy: Y(r.g1), r: 5, fill: "var(--real)", opacity: .38, stroke: "var(--panel)", "stroke-width": 1.5,
+      "data-tip": `${r.k} · gen 1: lift ${r.g1.toFixed(2)}×` });
+    s += S("circle", { cx: x + 8, cy: Y(r.g2), r: 6, fill: "var(--real)", opacity: .95, stroke: "var(--panel)", "stroke-width": 1.5,
+      "data-tip": `${r.k} · gen 2: lift ${r.g2.toFixed(2)}×` });
+    s += S("text", { x: x + 8, y: Y(r.g2) - 11, "text-anchor": "middle", "font-size": 11, "font-weight": 600, fill: "var(--ink)" }, r.g2.toFixed(2) + "×");
+    s += S("text", { x, y: H - 14, "text-anchor": "middle", "font-size": 10.5, fill: "var(--ink-3)" }, r.k);
+  });
+  const el = document.getElementById("kscan-plot");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Lift at three cut-off widths, generation 1 versus generation 2">${s}</svg>`;
+  bindTips(el);
+})();
+</script>
