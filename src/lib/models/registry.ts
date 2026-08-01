@@ -36,7 +36,7 @@ export interface ModelGroup {
 
 export const STAGE_LABEL: Record<ModelStage, string> = {
   live: 'Live',
-  'shadow-live': 'Shadow-live',
+  'shadow-live': 'Beta',
   built: 'Reference',
   designed: 'Planned',
 };
@@ -78,7 +78,7 @@ export const MODEL_GROUPS: ModelGroup[] = [
     key: 'emerging-winner',
     title: 'Emerging Winner Engine - the six-model stack',
     blurb:
-      'Does this small cap structurally resemble the companies that became outsized winners? All six models run end to end, shadow-live, logging to an immutable ledger. Reference v1 until the point-in-time winner dataset (Phase 1) lets the learned models train honestly.',
+      'Does this small cap structurally resemble the companies that became outsized winners? All six models run end to end in beta, logging to an immutable ledger. Reference v1 until the point-in-time winner dataset (Phase 1) lets the learned models train honestly.',
     entries: [
       {
         key: 'ew-m1-domain-score',
@@ -228,6 +228,6 @@ export const ROADMAP: RoadmapPhase[] = [
   { phase: 2, title: 'Winner classifier (trained)', status: 'pending', note: 'Gradient-boosted 4-class, walk-forward by year, SHAP.' },
   { phase: 3, title: 'Archetype classifier (trained)', status: 'pending', note: 'Learned archetype tags replace the rules.' },
   { phase: 4, title: 'Explainability layer', status: 'done', note: 'The research card ships today in reference form.' },
-  { phase: 5, title: 'Live research queue', status: 'done', note: 'Ranked queue + immutable ledger, shadow-live today over an illustrative universe.' },
+  { phase: 5, title: 'Live research queue', status: 'done', note: 'Ranked queue + immutable ledger, beta today over an illustrative universe.' },
   { phase: 6, title: 'Feedback loop', status: 'pending', note: 'Outcomes mature over 12 months, then challenger promotion begins.' },
 ];

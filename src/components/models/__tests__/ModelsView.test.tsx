@@ -34,7 +34,7 @@ describe('ModelsView (Models & methods catalogue)', () => {
 
   it('shows the four honest availability states', () => {
     render(<ModelsView />);
-    expect(screen.getAllByText('Shadow-live').length).toBeGreaterThanOrEqual(6);
+    expect(screen.getAllByText('Beta').length).toBeGreaterThanOrEqual(6);
     expect(screen.getAllByText('Planned').length).toBeGreaterThanOrEqual(5);
     expect(screen.getAllByText('Live').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Reference').length).toBeGreaterThanOrEqual(1);

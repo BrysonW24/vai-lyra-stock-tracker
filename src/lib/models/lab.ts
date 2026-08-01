@@ -22,16 +22,17 @@ export type Availability = 'live' | 'shadow-live' | 'reference' | 'planned';
 
 export const AVAILABILITY_LABEL: Record<Availability, string> = {
   live: 'Live',
-  'shadow-live': 'Shadow-live',
+  'shadow-live': 'Beta',
   reference: 'Reference',
   planned: 'Planned',
 };
 
 export const AVAILABILITY_BLURB: Record<Availability, string> = {
-  live: 'Real model, real output.',
-  'shadow-live': 'Real execution, logged to an immutable ledger, not yet promoted.',
-  reference: 'Deterministic or illustrative output - not learned on real winners yet.',
-  planned: 'Architecture exists, implementation does not.',
+  live: 'Live: real model, real output you can act on.',
+  'shadow-live':
+    'Beta: it runs for real and logs every result to an immutable ledger, but is not trusted to decide yet - it is promoted to Live only once its track record earns it.',
+  reference: 'Reference: deterministic or illustrative output - not learned on real winners yet.',
+  planned: 'Planned: the architecture exists, the implementation does not.',
 };
 
 // ---------------------------------------------------------------------------
@@ -154,7 +155,7 @@ export const LAB_MODELS: LabModel[] = [
     ],
     sources: ['market', 'signals', 'themes', 'fundamentals', 'government', 'insider'],
     runCaption:
-      'Replays the shadow-live pipeline over an illustrative reference universe. Not a live scan of real companies - not trained on real winners yet.',
+      'Replays the beta pipeline over an illustrative reference universe. Not a live scan of real companies - not trained on real winners yet.',
     outcomes: [
       {
         key: 'composite',

@@ -9,7 +9,7 @@ import { DEMO_QUEUE } from './demo';
 import type { EmergingWinnerQueue, EmergingWinnerResult } from './types';
 
 const SHADOW_NOTE =
-  'Shadow-live: predictions are computed and logged to an immutable ledger, but are not surfaced as ' +
+  'Beta: predictions are computed and logged to an immutable ledger, but are not surfaced as ' +
   'truth until historical walk-forward and live calibration earn it. Research only, never advice.';
 
 export async function loadEmergingWinnerQueue(): Promise<EmergingWinnerQueue> {

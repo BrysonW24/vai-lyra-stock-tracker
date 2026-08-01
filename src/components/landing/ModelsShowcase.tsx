@@ -49,9 +49,9 @@ export function ModelsShowcase() {
         </h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#5A6B82]">
           The Emerging Winner Engine scores small caps against the structural shape of history&apos;s
-          winners - then risk-gates every finding before you see it. It runs shadow-live: every
-          prediction lands in an immutable ledger and the models are promoted only after their track
-          record earns it.
+          winners - then risk-gates every finding before you see it. It runs in beta: every
+          prediction lands in an immutable ledger and the models are promoted to live only after their
+          track record earns it.
         </p>
       </div>
 

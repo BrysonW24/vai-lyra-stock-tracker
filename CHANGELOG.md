@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.108.0] - 2026-08-01
+
+Plain English: the "Shadow-live" badge is now "Beta".
+
+### Changed
+
+- The model-status badge that read "Shadow-live" now reads "Beta" - the same honest meaning, in a word everyone already understands. A model in Beta runs for real and logs every result to an immutable ledger, but is not trusted to decide yet; it is promoted to Live only once its track record earns it.
+- Tapping "About this model" now spells that out in one plain line, so the badge is obvious at a glance and precise on a tap. The change is label-only - no model changed stage, and the honest four-state ladder (Live, Beta, Reference, Planned) is unchanged underneath.
+
 ## [0.107.0] - 2026-08-01
 
 Global ingestion - the dynamic pool goes multi-market, small caps to mega caps, still $0/mo.
@@ -1511,7 +1520,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.107.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.108.0...HEAD
+[0.108.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.107.0...v0.108.0
 [0.107.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.106.0...v0.107.0
 [0.106.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.105.0...v0.106.0
 [0.105.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.104.0...v0.105.0

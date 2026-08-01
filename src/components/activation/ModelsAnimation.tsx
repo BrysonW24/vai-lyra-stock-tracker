@@ -102,7 +102,7 @@ export function ModelsAnimation({ onComplete }: ModelsAnimationProps) {
             Emerging Winner Engine · Research queue
           </span>
           <span className="rounded-full border border-[#5bc8ff]/30 bg-[#0d1a2a] px-2 py-0.5 font-mono text-[9px] text-[#5bc8ff]">
-            Shadow-live
+            Beta
           </span>
         </div>
         <div className="p-3">

@@ -12,6 +12,7 @@ import {
   capBandFor,
   domainOptions,
   AVAILABILITY_LABEL,
+  AVAILABILITY_BLURB,
   getModel,
   sourcesForModel,
   verticalOptions,
@@ -303,6 +304,9 @@ export function ConfigurePanel({
         subtitle={`${AVAILABILITY_LABEL[model.availability]} · ${model.predicts}`}
       >
         <div className="space-y-3 pt-1">
+          <p className="rounded-lg bg-white/[0.03] px-2.5 py-2 text-[11px] leading-relaxed text-white/60 ring-1 ring-white/10">
+            {AVAILABILITY_BLURB[model.availability]}
+          </p>
           <dl className="space-y-1.5 text-[12px]">
             <Row k="Predicts" v={model.predicts} />
             <Row k="Horizon" v={model.horizon} />

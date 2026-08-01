@@ -6,7 +6,7 @@ import { loadEmergingWinnerQueue } from '@/lib/emerging-winner/load';
 export const metadata = {
   title: 'Emerging Winners',
   description:
-    "Small caps that structurally resemble past winners - a shadow-live, risk-gated research queue. Research, not advice.",
+    "Small caps that structurally resemble past winners - a beta, risk-gated research queue. Research, not advice.",
 };
 
 export const dynamic = 'force-dynamic';

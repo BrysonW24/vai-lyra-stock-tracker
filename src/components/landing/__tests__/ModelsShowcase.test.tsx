@@ -40,9 +40,9 @@ describe('ModelsShowcase', () => {
     expect(cta.getAttribute('href')).toBe('/models');
   });
 
-  it('keeps the shadow-live and research-not-advice framing visible', () => {
+  it('keeps the beta and research-not-advice framing visible', () => {
     render(<ModelsShowcase />);
-    expect(screen.getByText(/shadow-live/i)).toBeTruthy();
+    expect(screen.getByText(/in beta/i)).toBeTruthy();
     expect(screen.getByText(/research, not advice/i)).toBeTruthy();
   });
 });

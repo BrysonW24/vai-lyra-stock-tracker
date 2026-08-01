@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.108.0',
+    date: '2026-08-01',
+    title: 'Plain English: the "Shadow-live" badge is now "Beta"',
+    highlights: [
+      'The model-status badge that read "Shadow-live" now reads "Beta" - the same honest meaning, in a word everyone already understands. A model in Beta runs for real and logs every result to an immutable ledger, but is not trusted to decide yet; it is promoted to Live only once its track record earns it.',
+      'Tapping "About this model" now spells that out in one plain line, so the badge is obvious at a glance and precise on a tap. The change is label-only - no model changed stage, and the honest four-state ladder (Live, Beta, Reference, Planned) is unchanged underneath.',
+    ],
+  },
+  {
     version: '0.107.0',
     date: '2026-08-01',
     title: 'Global ingestion - the dynamic pool goes multi-market, small caps to mega caps, still $0/mo',

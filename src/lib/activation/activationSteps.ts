@@ -42,7 +42,7 @@ export const ACTIVATION_SCENES: Record<string, ActivationScene> = {
   models: {
     id: 'models',
     title: 'Models that earn their way',
-    description: 'A six-model engine scores small caps against the shape of history\'s winners — risk-gated, shadow-live, research only.',
+    description: 'A six-model engine scores small caps against the shape of history\'s winners — risk-gated, in beta, research only.',
     step: 5,
     totalSteps: 6,
   },

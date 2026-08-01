@@ -71,7 +71,7 @@ describe('ModelLab', () => {
     for (const name of ['Oversold Recovery', 'Emerging Winner', 'Historical Analogue', 'Risk Gate Review']) {
       expect(screen.getAllByText(name).length).toBeGreaterThan(0);
     }
-    expect(screen.getAllByText('Shadow-live').length).toBeGreaterThanOrEqual(3);
+    expect(screen.getAllByText('Beta').length).toBeGreaterThanOrEqual(3);
     expect(screen.getAllByText('Live').length).toBeGreaterThanOrEqual(1);
   });
 

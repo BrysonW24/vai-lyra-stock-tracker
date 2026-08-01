@@ -107,8 +107,8 @@ export function ModelsView() {
         role="note"
         className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/[0.06] p-3 text-[12px] leading-relaxed text-sky-200/90"
       >
-        A model earns its way to a surface: shadow-live first, logged to an immutable ledger, promoted only after its
-        track record supports it. Stages and provenance below are stated exactly as they are.
+        A model earns its way to a surface: Beta first (runs for real, logged to an immutable ledger), promoted to Live
+        only after its track record supports it. Stages and provenance below are stated exactly as they are.
       </div>
 
       {MODEL_GROUPS.map((group) => (
