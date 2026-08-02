@@ -515,8 +515,8 @@
     "dimensions": [
       {
         "dimension": "Accuracy (real, out-of-time)",
-        "grade": "B-",
-        "why": "Gen-2 holdout: lift 1.94x CI90[1.55, 2.29] at top-5%, worst quarterly cohort 0.20 (no more zero-hit regimes). Still a survivor-biased optimistic bound - a strong research-queue edge, not a tradeable signal."
+        "grade": "C+",
+        "why": "Regraded 2026-08-02 under the volatility-only null - the honest chance bar for a barrier label (random was too easy: pure jumpiness scores 1.41x pooled). The champion's 1.94x beats it paired (+0.48, CI90[+0.05, +0.92]) - real skill beyond volatility, but the floor is thin. Within-tier: unproven everywhere (micro/small lean positive, underpowered); the large-tier 2.84x was the null in disguise (6.15x). Survivor-biased bound; research-queue edge only."
       },
       {
         "dimension": "Calibration",

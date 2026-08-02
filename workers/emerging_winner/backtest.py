@@ -464,6 +464,60 @@ def _score_rows(rows: list[dict], champion_path: str,
     return out
 
 
+VOL_NULL_WINDOW_BARS = 63  # pre-committed 2026-08-02: 3-month trailing window, annualised
+VOL_NULL_MIN_BARS = 40
+
+
+def _trailing_vol_scores(rows: list[dict], cache_dir: str) -> list[float]:
+    """The volatility-only null: parameter-free trailing realised sigma at each row's entry date,
+    STRICTLY from the price cache (never the network). Why this is a standing reference model: a
+    barrier label ("touches +100% inside 12 months") is largely a volatility measurement - by the
+    reflection principle a driftless wild stock touches any barrier far more often than a calm one
+    with zero information involved. Random selection is therefore the WRONG chance bar for this
+    label; this ranking is the right one (holdout 1.41x CI90[1.09, 1.73] at gen-2 - every skill
+    claim must clear it, paired). Rows without enough cached bars score 0.0 (sinks to the bottom -
+    conservative for the null)."""
+    import math as _math
+
+    bars_by_symbol: dict[str, list] = {}
+
+    def bars_for(symbol: str) -> list:
+        if symbol not in bars_by_symbol:
+            path = os.path.join(cache_dir, "prices", f"{symbol.upper()}.json")
+            out = []
+            if os.path.exists(path):
+                try:
+                    with open(path, encoding="utf-8") as fh:
+                        out = [DailyBar(*row) for row in json.load(fh).get("bars", [])]
+                except Exception:  # noqa: BLE001 - unreadable cache = no vol signal for the null
+                    out = []
+            bars_by_symbol[symbol] = out
+        return bars_by_symbol[symbol]
+
+    from .history_source import DailyBar, bar_index_at  # local: keep module import graph light
+
+    scores: list[float] = []
+    for r in rows:
+        bars = bars_for(r["symbol"])
+        idx = bar_index_at(bars, r["predicted_at"]) if bars else None
+        if idx is None or idx < VOL_NULL_MIN_BARS:
+            scores.append(0.0)
+            continue
+        window = bars[max(0, idx - VOL_NULL_WINDOW_BARS):idx + 1]
+        rets = [
+            _math.log(b.close / a.close)
+            for a, b in zip(window, window[1:])
+            if a.close and b.close and a.close > 0 and b.close > 0
+        ]
+        if len(rets) < VOL_NULL_MIN_BARS:
+            scores.append(0.0)
+            continue
+        mu = sum(rets) / len(rets)
+        var = sum((x - mu) ** 2 for x in rets) / max(1, len(rets) - 1)
+        scores.append(_math.sqrt(var) * _math.sqrt(252.0))
+    return scores
+
+
 def _metric_block(y: list[int], p: list[float], cohorts: list, k_frac: float = 0.05,
                   symbols: Optional[list[str]] = None, ci: bool = False) -> dict:
     from ..stock_scanner.ml.recovery_model import auc, brier
@@ -610,12 +664,20 @@ def _weak_calibration(y: list[int], p: list[float]) -> dict:
     if not y or sum(y) in (0, len(y)):
         return {"n": len(y), "slope": None, "intercept": None,
                 "spiegelhalter_z": None, "spiegelhalter_p": None}
-    # 2-parameter Newton fit: y ~ sigmoid(a + b * logit(p)).
+    # 2-parameter Newton fit: y ~ sigmoid(a + b * logit(p)). Overflow-safe sigmoid: scores fed in
+    # as pseudo-probabilities (e.g. a raw volatility null clipped at 1-eps) can push |a + b*x|
+    # far beyond exp()'s range - found live when benchmarking the vol-only null.
+    def _sig(z: float) -> float:
+        if z >= 0:
+            return 1.0 / (1.0 + math.exp(-min(z, 700.0)))
+        e = math.exp(max(z, -700.0))
+        return e / (1.0 + e)
+
     a, b = 0.0, 1.0
     for _ in range(40):
         g_a = g_b = h_aa = h_ab = h_bb = 0.0
         for xi, yi in zip(lo, y):
-            mu = 1.0 / (1.0 + math.exp(-(a + b * xi)))
+            mu = _sig(a + b * xi)
             r = mu - yi
             wgt = max(mu * (1 - mu), 1e-9)
             g_a += r
@@ -798,7 +860,30 @@ def run_eval(cache_dir: str, champion_path: str = CHAMPION_ARTIFACT, k_frac: flo
         "label_diagnostics": label_diag,
         "models": {"reference_scorecard": slices(scored["p_reference"])},
         "k_frac": k_frac,
+        "null_note": ("volatility_null = parameter-free trailing 63-day realised sigma, the "
+                      "correct chance bar for a barrier-touch label (random selection is too "
+                      "easy). Its per-tier slices are the WITHIN-TIER nulls: a pick only counts "
+                      "as skill if it beats the jumpiness-sort of its own weight class. Its ECE "
+                      "is meaningless by construction (sigma is not a probability)."),
     }
+    vol_scores = _trailing_vol_scores(rows, cache_dir)
+    report["models"]["volatility_null"] = slices(vol_scores)
+    # WITHIN-TIER paired verdicts: does the champion beat the jumpiness-sort of each weight class
+    # on identical rows? (Pooled top-k comparisons hide tier composition; a "brilliant" tier cell
+    # can be the null in disguise - gen-2's large-tier 2.84x was, at 6.15x for pure vol.) Thin
+    # tiers report insufficient-evidence instead of faking a verdict.
+    if scored["champion_loaded"]:
+        wt: dict = {}
+        for tier in ("micro", "small", "mid", "large"):
+            idx = [i for i in random_idx if tiers[i] == tier]
+            if len(idx) >= 100:
+                pd = paired_delta_ci([y[i] for i in idx], [vol_scores[i] for i in idx],
+                                     [scored["p_champion"][i] for i in idx],
+                                     [symbols[i] for i in idx], k_frac)
+                wt[tier] = {"n": len(idx), "champion_minus_vol_lift": pd["lift_at_k"]}
+            else:
+                wt[tier] = {"n": len(idx), "note": "insufficient rows for a within-tier verdict"}
+        report["within_tier_paired_champion_minus_volatility_null"] = wt
     if scored["champion_loaded"]:
         report["models"]["champion"] = slices(scored["p_champion"])
         report["champion"] = {"version": scored["champion_version"], "dataset": scored["champion_dataset"],
@@ -1028,10 +1113,13 @@ MODEL_EVIDENCE = os.path.join(
 EVIDENCE_GRADES = {
     "graded_at_corpus": "a297e8ad",  # gen-2 (theme via SEC SIC + market regime lit)
     "dimensions": [
-        {"dimension": "Accuracy (real, out-of-time)", "grade": "B-",
-         "why": "Gen-2 holdout: lift 1.94x CI90[1.55, 2.29] at top-5%, worst quarterly cohort 0.20 "
-                "(no more zero-hit regimes). Still a survivor-biased optimistic bound - a strong "
-                "research-queue edge, not a tradeable signal."},
+        {"dimension": "Accuracy (real, out-of-time)", "grade": "C+",
+         "why": "Regraded 2026-08-02 under the volatility-only null - the honest chance bar for a "
+                "barrier label (random was too easy: pure jumpiness scores 1.41x pooled). The "
+                "champion's 1.94x beats it paired (+0.48, CI90[+0.05, +0.92]) - real skill beyond "
+                "volatility, but the floor is thin. Within-tier: unproven everywhere (micro/small "
+                "lean positive, underpowered); the large-tier 2.84x was the null in disguise "
+                "(6.15x). Survivor-biased bound; research-queue edge only."},
         {"dimension": "Calibration", "grade": "A-",
          "why": "ECE 0.017 on the untouched gen-2 holdout; level near-perfect (calibration-in-the-"
                 "large -0.05) and the 3%-base restatement transfers (median ECE 0.006 across 50 "

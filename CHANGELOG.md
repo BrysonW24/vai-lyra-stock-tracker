@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.117.0] - 2026-08-02
+
+The volatility null: the right chance bar arrives, and Accuracy is regraded under it.
+
+### Changed
+
+- A barrier label ("touches +100% in 12 months") is largely a volatility measurement - a jumpy stock hits any target more often with zero information involved - so comparing against random selection was too easy. A parameter-free jumpiness-sort now runs as a STANDING reference model in every eval: it scores 1.41x on the gen-2 holdout where random scores 1.0x. The champion beats it on identical rows (paired delta +0.48, CI90 from +0.05 to +0.92) - the first rigorous evidence the model finds something beyond wildness - and Accuracy is honestly regraded B- to C+ because the floor of that margin is thin. The bar moved, not the model.
+- Within-tier verdicts are now part of every eval: each cap tier's picks are judged against that tier's own jumpiness-sort, paired, with thin tiers reporting "insufficient evidence" instead of fake numbers. First results: micro and small caps (the actual hunting ground) lean positive but unproven; the celebrated large-tier 2.84x was the null in disguise - pure jumpiness scores 6.15x inside that tier and the champion significantly loses to it there. Standing product rule: no tier is claimed until the model beats that tier's own jumpiness baseline.
+- The government domain moved from designed to evidence-scoped: a USAspending feasibility probe confirmed exact-name matching works (15 of 15 known contractors matched with dated, point-in-time-safe award records) with the real risks documented - subsidiary booking means v1 award totals are a floor, and awards must be fetched by recipient id, never name search. Also: gen-3 pre-registers an explicit volatility feature - if the famous negative technical/liquidity weights collapse, they were volatility proxies all along; plus an overflow fix in the weak-calibration fit, found by feeding it raw sigma scores.
+
 ## [0.116.0] - 2026-08-02
 
 The cross-generation paired test exists before generation 3 needs it.
@@ -1607,7 +1617,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.116.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.117.0...HEAD
+[0.117.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.116.0...v0.117.0
 [0.116.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.1...v0.116.0
 [0.115.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.0...v0.115.1
 [0.115.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.114.0...v0.115.0

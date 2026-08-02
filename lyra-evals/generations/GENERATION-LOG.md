@@ -91,6 +91,26 @@ per-row WF score archiving is a gen-3 protocol addition) but fails the 1.5x abso
 does not threaten the frozen champion. Estimator regraded D+ -> C- on this evidence; the seat
 still requires winning gen-3's fresh one-shot holdout. The attempt self-logged to the ledger.
 
+**The volatility null (2026-08-02) - the finding that regraded Accuracy B- -> C+:** a barrier
+label is mostly a volatility measurement (reflection principle: a driftless wild stock touches
++100% far more often than a calm one, no information involved), so random selection was the wrong
+chance bar. Measured, parameter-free (63-day trailing sigma, pre-committed window, one logged
+holdout look): pooled holdout 1.41x CI90[1.09, 1.73] (dev-era 2.64x - vol's edge is regime-
+fragile where the champion's held). Champion vs vol PAIRED on identical rows: +0.48 CI90[+0.05,
++0.92] - significant skill beyond jumpiness, thin floor. WITHIN-TIER paired verdicts: micro +0.31
+[-0.38, +1.06], small +0.16 [-0.50, +0.75] (lean positive, underpowered), mid -1.29 [-2.90,
++0.21], large -2.96 [-5.92, -0.46] SIGNIFICANT LOSS - the gen-2 "large-tier 2.84x" was the null
+in disguise (vol alone: 6.15x within large). Institutionalised: volatility_null is a standing
+reference model in every eval with per-tier slices + within-tier paired blocks; STANDING RULE -
+the product claims no tier until the model beats that tier's own jumpiness-sort, paired.
+Gen-3 pre-registered arm: add trailing 63d sigma as an explicit feature to the retrains; if
+technical/liquidity negative weights collapse, they were vol proxies all along (they survive =
+gen-1's reading strengthened, now with a control). Cross-ref: the threshold-sweep design and
+vol-null arithmetic live in lyra-modelling/THRESHOLD-SWEEP-EXPERIMENT.md; USAspending name-bridge
+feasibility (government domain) CONFIRMED same day - see
+lyra-modelling/research/2026-08-02-usaspending-name-bridge-feasibility.md (15/15 contractor
+recall, dated awards by recipient_id, false-negative subsidiary risk documented).
+
 **Boosted hyperparameter sweep - protocol pre-committed 2026-08-02 BEFORE any result was seen
 (garden-of-forking-paths guard):** four configs on the dev walk-forward only, every attempt
 ledger-logged: B={rounds 240, lr 0.05}, C={min_leaf 50}, D={rounds 200, n_thresholds 32},
