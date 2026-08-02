@@ -88,7 +88,7 @@ function RichText({ text }: { text: string }) {
     const items = bullets;
     bullets = [];
     blocks.push(
-      <ul key={`u${blocks.length}`} className="list-disc space-y-1 pl-4 marker:text-[#5e6b78]">
+      <ul key={`u${blocks.length}`} className="list-disc space-y-1 pl-4 marker:text-ink-dim">
         {items.map((b, i) => (
           <li key={i}>{b}</li>
         ))}
@@ -408,7 +408,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-3 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ground/70 p-3 backdrop-blur-sm sm:items-center"
       style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
       onClick={onClose}
     >
@@ -417,18 +417,18 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Lyra copilot chat"
-        className="flex h-[78vh] max-h-[680px] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d1117] shadow-2xl sm:h-[70vh]"
+        className="flex h-[78vh] max-h-[680px] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/10 bg-panel-deep shadow-2xl sm:h-[70vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-lg border border-[#8aa2ff]/30 bg-[#101a2e] text-[#8aa2ff]">
+            <span className="grid h-7 w-7 place-items-center rounded-lg border border-[#8aa2ff]/30 bg-blue-tint text-[#8aa2ff]">
               <Sparkles size={14} />
             </span>
             <div className="leading-tight">
-              <p className="text-sm font-semibold text-[#eef3f8]">Ask Lyra</p>
-              <p className="text-[10px] text-[#7f8b98]">AI copilot · grounded in your dashboard</p>
+              <p className="text-sm font-semibold text-ink">Ask Lyra</p>
+              <p className="text-[10px] text-ink-3">AI copilot · grounded in your dashboard</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -437,12 +437,12 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 type="button"
                 onClick={newChat}
                 aria-label="New chat"
-                className="inline-flex items-center gap-1 rounded-md border border-[#1d2733] px-2 py-1 text-[10px] font-semibold text-[#8aa2ff] transition hover:border-[#8aa2ff]/40 hover:bg-[#101a2e]"
+                className="inline-flex items-center gap-1 rounded-md border border-line px-2 py-1 text-[10px] font-semibold text-[#8aa2ff] transition hover:border-[#8aa2ff]/40 hover:bg-blue-tint"
               >
                 <SquarePen size={11} /> New
               </button>
             )}
-            <button ref={closeBtnRef} type="button" onClick={onClose} aria-label="Close" className="ml-1 text-[#8190a0] transition hover:text-[#eef3f8]">
+            <button ref={closeBtnRef} type="button" onClick={onClose} aria-label="Close" className="ml-1 text-ink-3 transition hover:text-ink">
               <X size={16} />
             </button>
           </div>
@@ -451,11 +451,11 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
         {/* Body */}
         {!connected ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-            <span className="grid h-12 w-12 place-items-center rounded-full border border-[#8aa2ff]/25 bg-[#101a2e] text-[#8aa2ff]">
+            <span className="grid h-12 w-12 place-items-center rounded-full border border-[#8aa2ff]/25 bg-blue-tint text-[#8aa2ff]">
               {checkingRuntime ? <Loader2 size={22} className="animate-spin" /> : <KeyRound size={22} />}
             </span>
-            <p className="text-sm font-semibold text-[#eef3f8]">{checkingRuntime ? 'Checking hosted model' : 'Connect a model to chat'}</p>
-            <p className="max-w-xs text-[12px] leading-relaxed text-[#a8b5c2]">
+            <p className="text-sm font-semibold text-ink">{checkingRuntime ? 'Checking hosted model' : 'Connect a model to chat'}</p>
+            <p className="max-w-xs text-[12px] leading-relaxed text-ink-2">
               {checkingRuntime
                 ? 'Lyra is checking whether the hosted beta key is available for this deployment.'
                 : soloMode
@@ -467,7 +467,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
             <Link
               href="/account/ai"
               onClick={onClose}
-              className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-[#101a2e] px-4 py-2 text-xs font-semibold text-[#8aa2ff] transition hover:bg-[#13203a]"
+              className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-blue-tint px-4 py-2 text-xs font-semibold text-[#8aa2ff] transition hover:bg-blue-deep/25"
             >
               <KeyRound size={13} /> Open AI settings
             </Link>
@@ -477,19 +477,19 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
             <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
               {messages.length === 0 && (
                 <div className="space-y-3">
-                  <p className="text-[12px] leading-relaxed text-[#a8b5c2]">
+                  <p className="text-[12px] leading-relaxed text-ink-2">
                     I can read your holdings, watchlist, live signals, prime setups and catalysts. Pick a topic below or ask your own - I&apos;ll only answer from what&apos;s on your dashboard.
                   </p>
 
                   {saved.length > 0 && (
                     <div className="space-y-1.5">
-                      <p className="px-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#5e6b78]">Saved</p>
+                      <p className="px-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-dim">Saved</p>
                       {saved.map((q) => (
                         <div key={q} className="flex items-stretch gap-1.5">
                           <button
                             type="button"
                             onClick={() => send(q)}
-                            className="flex-1 rounded-lg border border-[#3a2a10] bg-[#140f06] px-3 py-2 text-left text-[12px] text-[#cdd8e3] transition hover:border-[#f3a33a]/50"
+                            className="flex-1 rounded-lg border border-accent-border/50 bg-accent-tint/60 px-3 py-2 text-left text-[12px] text-ink-title transition hover:border-accent/50"
                           >
                             {q}
                           </button>
@@ -497,9 +497,9 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                             type="button"
                             onClick={() => toggleSave(q)}
                             aria-label="Unsave prompt"
-                            className="grid w-9 shrink-0 place-items-center rounded-lg border border-[#3a2a10] bg-[#140f06]"
+                            className="grid w-9 shrink-0 place-items-center rounded-lg border border-accent-border/50 bg-accent-tint/60"
                           >
-                            <Star size={13} className="fill-[#f3a33a] text-[#f3a33a]" />
+                            <Star size={13} className="fill-accent text-accent" />
                           </button>
                         </div>
                       ))}
@@ -515,8 +515,8 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                           onClick={() => setCategory(c.label)}
                           className={`shrink-0 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold transition ${
                             category === c.label
-                              ? 'border-[#8aa2ff] bg-[#101a2e] text-[#8aa2ff]'
-                              : 'border-[#1d2733] bg-[#0d141c] text-[#a8b5c2] hover:border-[#3a4754]'
+                              ? 'border-[#8aa2ff] bg-blue-tint text-[#8aa2ff]'
+                              : 'border-line bg-panel text-ink-2 hover:border-line-hair'
                           }`}
                         >
                           {c.label}
@@ -531,7 +531,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                             <button
                               type="button"
                               onClick={() => send(q)}
-                              className="flex-1 rounded-lg border border-[#1d2733] bg-[#0d141c] px-3 py-2 text-left text-[12px] text-[#cdd8e3] transition hover:border-[#8aa2ff]/40 hover:bg-[#101a2e]"
+                              className="flex-1 rounded-lg border border-line bg-panel px-3 py-2 text-left text-[12px] text-ink-title transition hover:border-[#8aa2ff]/40 hover:bg-blue-tint"
                             >
                               {q}
                             </button>
@@ -539,9 +539,9 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                               type="button"
                               onClick={() => toggleSave(q)}
                               aria-label={isSaved ? 'Unsave prompt' : 'Save prompt'}
-                              className="grid w-9 shrink-0 place-items-center rounded-lg border border-[#1d2733] bg-[#0d141c] transition hover:border-[#8aa2ff]/40"
+                              className="grid w-9 shrink-0 place-items-center rounded-lg border border-line bg-panel transition hover:border-[#8aa2ff]/40"
                             >
-                              <Star size={13} className={isSaved ? 'fill-[#f3a33a] text-[#f3a33a]' : 'text-[#5e6b78]'} />
+                              <Star size={13} className={isSaved ? 'fill-accent text-accent' : 'text-ink-dim'} />
                             </button>
                           </div>
                         );
@@ -556,41 +556,41 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                   <div
                     className={
                       m.role === 'user'
-                        ? 'max-w-[82%] rounded-2xl rounded-br-sm border border-[#8aa2ff]/25 bg-[#101a2e] px-3 py-2 text-[12.5px] leading-relaxed text-[#eef3f8]'
-                        : 'max-w-[88%] rounded-2xl rounded-bl-sm border border-[#1d2733] bg-[#0d141c] px-3 py-2 text-[12.5px] leading-relaxed text-[#dbe5ee]'
+                        ? 'max-w-[82%] rounded-2xl rounded-br-sm border border-[#8aa2ff]/25 bg-blue-tint px-3 py-2 text-[12.5px] leading-relaxed text-ink'
+                        : 'max-w-[88%] rounded-2xl rounded-bl-sm border border-line bg-panel px-3 py-2 text-[12.5px] leading-relaxed text-ink-title'
                     }
                   >
                     {m.role === 'user' ? m.content : <RichText text={m.content} />}
                     {m.role === 'assistant' && m.action && (
-                      <div className="mt-2 rounded-lg border border-[#8aa2ff]/30 bg-[#0b1220] p-2.5">
+                      <div className="mt-2 rounded-lg border border-[#8aa2ff]/30 bg-blue-tint/60 p-2.5">
                         {(m.actionStatus === 'proposed' || m.actionStatus === 'running' || m.actionStatus === 'failed') && (
                           <>
                             <div className="flex items-center gap-1.5">
                               <Plus size={12} className="text-[#8aa2ff]" />
-                              <span className="text-[11.5px] font-semibold text-[#dbe5ee]">
+                              <span className="text-[11.5px] font-semibold text-ink-title">
                                 {ACTION_LABEL[m.action.type]}: {m.action.symbol}
                                 {m.action.type === 'log_trade' && m.action.notional ? ` - $${m.action.notional.toLocaleString()}` : ''}
                               </span>
                             </div>
                             {m.action.type === 'add_portfolio' && (
                               <div className="mt-1.5 flex items-center gap-1.5">
-                                <label className="text-[9px] uppercase tracking-wide text-[#6f7d8a]">Qty</label>
-                                <input type="number" min={1} defaultValue={m.qty ?? 10} onChange={(e) => { const v = Math.max(1, Number(e.target.value) || 1); setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, qty: v } : x))); }} className="min-h-[44px] w-16 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-2 font-mono text-[11px] text-[#dbe5ee] outline-none" />
-                                <label className="text-[9px] uppercase tracking-wide text-[#6f7d8a]">Buy $</label>
-                                <input type="number" min={0} step="0.01" placeholder="price" onChange={(e) => { const v = Number(e.target.value) || 0; setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, price: v } : x))); }} className="min-h-[44px] w-20 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-2 font-mono text-[11px] text-[#dbe5ee] outline-none" />
+                                <label className="text-[9px] uppercase tracking-wide text-ink-dim">Qty</label>
+                                <input type="number" min={1} defaultValue={m.qty ?? 10} onChange={(e) => { const v = Math.max(1, Number(e.target.value) || 1); setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, qty: v } : x))); }} className="min-h-[44px] w-16 rounded border border-line-strong bg-panel px-1.5 py-2 font-mono text-[11px] text-ink-title outline-none" />
+                                <label className="text-[9px] uppercase tracking-wide text-ink-dim">Buy $</label>
+                                <input type="number" min={0} step="0.01" placeholder="price" onChange={(e) => { const v = Number(e.target.value) || 0; setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, price: v } : x))); }} className="min-h-[44px] w-20 rounded border border-line-strong bg-panel px-1.5 py-2 font-mono text-[11px] text-ink-title outline-none" />
                               </div>
                             )}
-                            <p className="mt-1 text-[9px] leading-snug text-[#6f7d8a]">You confirm; Lyra never acts on its own. Reversible - you can undo it.</p>
-                            <button type="button" onClick={() => runAction(i)} disabled={m.actionStatus === 'running'} className="mt-1.5 inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-[#101a2e] px-2.5 py-1 text-[11px] font-semibold text-[#8aa2ff] transition hover:bg-[#13203a] disabled:opacity-50">
+                            <p className="mt-1 text-[9px] leading-snug text-ink-dim">You confirm; Lyra never acts on its own. Reversible - you can undo it.</p>
+                            <button type="button" onClick={() => runAction(i)} disabled={m.actionStatus === 'running'} className="mt-1.5 inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-blue-tint px-2.5 py-1 text-[11px] font-semibold text-[#8aa2ff] transition hover:bg-blue-deep/25 disabled:opacity-50">
                               {m.actionStatus === 'running' ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Confirm
                             </button>
-                            {m.actionStatus === 'failed' && <span className="ml-2 text-[10px] text-[#ff8a8a]">Didn&apos;t go through - try again.</span>}
+                            {m.actionStatus === 'failed' && <span className="ml-2 text-[10px] text-negative-soft">Didn&apos;t go through - try again.</span>}
                           </>
                         )}
                         {m.actionStatus === 'done' && (
                           <div className="flex items-center gap-1.5">
-                            <Check size={12} className="text-[#43d18b]" />
-                            <span className="text-[11.5px] text-[#43d18b]">
+                            <Check size={12} className="text-positive" />
+                            <span className="text-[11.5px] text-positive">
                               {m.action.type === 'log_trade'
                                 ? m.undoId?.startsWith(LOCAL_TRADE_ID_PREFIX)
                                   ? // Local rows track holdings but not a cash balance - do not claim cash moved.
@@ -599,19 +599,19 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                                 : `${m.action.symbol} added to your ${m.action.type === 'add_watchlist' ? 'watchlist' : 'portfolio'}.`}
                             </span>
                             {m.undoId && (
-                              <button type="button" onClick={() => undoAction(i)} className="ml-auto inline-flex items-center gap-1 rounded border border-[#3a2630] bg-[#1c1116] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-[#e08a9a] transition hover:bg-[#26161d]">
+                              <button type="button" onClick={() => undoAction(i)} className="ml-auto inline-flex items-center gap-1 rounded border border-negative/25 bg-negative/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-negative-soft transition hover:bg-negative/15">
                                 <Undo2 size={9} /> Undo
                               </button>
                             )}
                           </div>
                         )}
                         {m.actionStatus === 'undone' && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-[#8190a0]">
+                          <div className="flex items-center gap-1.5 text-[11px] text-ink-3">
                             <RotateCcw size={11} /> Undone - {m.action.type === 'log_trade' ? `${m.action.symbol} trade reversed.` : `${m.action.symbol} removed.`}
                           </div>
                         )}
                         {m.actionStatus === 'demo' && (
-                          <div className="text-[10.5px] leading-snug text-[#f3a33a]">
+                          <div className="text-[10.5px] leading-snug text-accent">
                             You&apos;re in demo mode - <Link href="/auth/login" className="underline">sign in</Link> to save {m.action.symbol} to your real {m.action.type === 'add_watchlist' ? 'watchlist' : m.action.type === 'add_portfolio' ? 'portfolio' : 'trade log'}.
                           </div>
                         )}
@@ -623,29 +623,29 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
 
               {status === 'sending' && (
                 <div className="flex justify-start">
-                  <div className="inline-flex items-center gap-2 rounded-2xl rounded-bl-sm border border-[#1d2733] bg-[#0d141c] px-3 py-2 text-[12px] text-[#7f8b98]">
+                  <div className="inline-flex items-center gap-2 rounded-2xl rounded-bl-sm border border-line bg-panel px-3 py-2 text-[12px] text-ink-3">
                     <Loader2 size={13} className="animate-spin" /> Lyra is reading your dashboard…
                   </div>
                 </div>
               )}
               {status === 'error' && (
-                <p className="text-center text-[11px] text-[#ff8a8a]">
+                <p className="text-center text-[11px] text-negative-soft">
                   {aiFailureMessage(errorReason ?? 'error')}
                 </p>
               )}
 
               {status === 'idle' && messages.length > 0 && suggestions.length > 0 && (
                 <div className="space-y-1.5 pt-1">
-                  <p className="px-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#5e6b78]">Ask next</p>
+                  <p className="px-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-dim">Ask next</p>
                   {suggestions.map((s) => (
                     <button
                       key={s}
                       type="button"
                       onClick={() => send(s)}
-                      className="flex w-full items-center justify-between gap-2 rounded-lg border border-[#1d2733] bg-[#0d141c] px-3 py-2 text-left text-[12px] text-[#cdd8e3] transition hover:border-[#8aa2ff]/40 hover:bg-[#101a2e]"
+                      className="flex w-full items-center justify-between gap-2 rounded-lg border border-line bg-panel px-3 py-2 text-left text-[12px] text-ink-title transition hover:border-[#8aa2ff]/40 hover:bg-blue-tint"
                     >
                       <span>{s}</span>
-                      <ArrowUpRight size={13} className="shrink-0 text-[#5e6b78]" />
+                      <ArrowUpRight size={13} className="shrink-0 text-ink-dim" />
                     </button>
                   ))}
                 </div>
@@ -666,19 +666,19 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                   }}
                   rows={1}
                   placeholder="Ask about your book, signals, catalysts…"
-                  className="max-h-28 min-h-[44px] flex-1 resize-none rounded-xl border border-[#263241] bg-[#0d141c] px-3 py-2 text-[13px] leading-snug text-[#dbe5ee] placeholder:text-[#5d6b79] outline-none focus:border-[#8aa2ff]/50"
+                  className="max-h-28 min-h-[44px] flex-1 resize-none rounded-xl border border-line-strong bg-panel px-3 py-2 text-[13px] leading-snug text-ink-title placeholder:text-ink-dim outline-none focus:border-blue-focus/60"
                 />
                 <button
                   type="button"
                   onClick={() => send(input)}
                   disabled={!input.trim() || status === 'sending'}
                   aria-label="Send"
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#8aa2ff]/40 bg-[#101a2e] text-[#8aa2ff] transition hover:bg-[#13203a] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#8aa2ff]/40 bg-blue-tint text-[#8aa2ff] transition hover:bg-blue-deep/25 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {status === 'sending' ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                 </button>
               </div>
-              <p className="mt-1.5 flex items-center justify-center gap-1 text-[9.5px] text-[#5e6b78]">
+              <p className="mt-1.5 flex items-center justify-center gap-1 text-[9.5px] text-ink-dim">
                 <ShieldCheck size={10} /> AI-generated answers - research, not financial advice. Lyra answers only from your data.
               </p>
             </div>

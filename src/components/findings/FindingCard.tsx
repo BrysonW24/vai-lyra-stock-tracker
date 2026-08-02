@@ -22,23 +22,23 @@ export function FindingCard({ finding, onOpen }: { finding: Finding; onOpen: (id
     <button
       type="button"
       onClick={() => onOpen(finding.id)}
-      className="terminal-panel block w-full rounded-md border border-[#1b2530] p-3 text-left transition hover:border-[#2b3a4a]"
+      className="terminal-panel block w-full rounded-panel border border-line p-3 text-left transition hover:border-line-strong"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            {finding.symbol && <span className="font-mono text-sm font-semibold text-[#eef3f8]">{finding.symbol}</span>}
+            {finding.symbol && <span className="font-mono text-sm font-semibold text-ink">{finding.symbol}</span>}
             <span className={`text-[10px] uppercase tracking-[0.12em] ${stateTone(finding.state)}`}>{finding.state}</span>
           </div>
-          <p className="mt-1 truncate text-[11px] text-[#a8b5c2]">{finding.title}</p>
+          <p className="mt-1 truncate text-[11px] text-ink-2">{finding.title}</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="numeric font-mono text-base font-semibold text-[#eef3f8]">{s.total > 0 ? s.total : 'NR'}</p>
-          <p className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{s.total > 0 ? 'score' : 'not rated'}</p>
+          <p className="numeric font-mono text-base font-semibold tabular-nums text-ink">{s.total > 0 ? s.total : 'NR'}</p>
+          <p className="text-[9px] uppercase tracking-[0.12em] text-ink-3">{s.total > 0 ? 'score' : 'not rated'}</p>
         </div>
       </div>
 
-      <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-[#8190a0]">{finding.summary}</p>
+      <p className="mt-2 line-clamp-2 text-[11px] leading-relaxed text-ink-3">{finding.summary}</p>
 
       <div className="mt-2 flex flex-wrap gap-1">
         {scoreChips
@@ -46,7 +46,7 @@ export function FindingCard({ finding, onOpen }: { finding: Finding; onOpen: (id
           .map(([label, v]) => (
             <span
               key={label}
-              className="rounded bg-[#0b1016] px-1.5 py-0.5 font-mono text-[9px] text-[#8190a0]"
+              className="rounded-cell bg-well px-1.5 py-0.5 font-mono text-[9px] tabular-nums text-ink-3"
             >
               {label} {v}
             </span>
@@ -54,8 +54,8 @@ export function FindingCard({ finding, onOpen }: { finding: Finding; onOpen: (id
       </div>
 
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-[10px] text-[#60a5fa]">Why surfaced - {finding.whySurfaced.length} reasons</span>
-        <span className="text-[10px] text-[#8190a0]">Open finding -&gt;</span>
+        <span className="text-[10px] text-blue-focus">Why surfaced - {finding.whySurfaced.length} reasons</span>
+        <span className="text-[10px] text-ink-3">Open finding -&gt;</span>
       </div>
     </button>
   );

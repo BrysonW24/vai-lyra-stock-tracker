@@ -81,19 +81,19 @@ export function LocalContextBar() {
   const WeatherIcon = weatherIcon(ctx.code);
 
   return (
-    <div className="flex min-w-0 items-center gap-2 font-mono text-[10px] text-[#8190a0]">
-      <span className="shrink-0 text-[#a8b5c2]">{dateStr}</span>
+    <div className="flex min-w-0 items-center gap-2 font-mono text-[10px] text-ink-3">
+      <span className="shrink-0 text-ink-2">{dateStr}</span>
       {ctx.tempCurrent != null && (
         <span className="inline-flex shrink-0 items-center gap-1">
-          <span className="text-[#3a4754]">·</span>
-          <WeatherIcon size={12} className="text-[#7fb0ff]" />
+          <span className="text-line-hair">·</span>
+          <WeatherIcon size={12} className="text-blue-info" />
           {ctx.tempCurrent}°{ctx.unit}
         </span>
       )}
       {ctx.city && (
         <span className="inline-flex min-w-0 items-center gap-1" title={ctx.city}>
-          <span className="text-[#3a4754]">·</span>
-          <MapPin size={11} className="shrink-0 text-[#43d18b]" />
+          <span className="text-line-hair">·</span>
+          <MapPin size={11} className="shrink-0 text-positive" />
           <span className="truncate">{ctx.city}</span>
         </span>
       )}

@@ -40,8 +40,8 @@ export function TickerQuickSearch() {
 
   return (
     <div className="relative flex min-w-0 flex-1 items-center lg:max-w-[380px]">
-      <div className="flex w-full items-center gap-1.5 rounded-md border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 focus-within:border-[#f3a33a]/50 focus-within:ring-1 focus-within:ring-[#f3a33a]/30 transition-all">
-        <Search size={14} className="shrink-0 text-[#8190a0]" />
+      <div className="flex w-full items-center gap-1.5 rounded-cell border border-line-strong bg-panel px-2.5 py-1.5 focus-within:border-blue-focus/50 focus-within:ring-1 focus-within:ring-blue-focus/30 transition-all">
+        <Search size={14} className="shrink-0 text-ink-3" />
         <input
           ref={inputRef}
           type="text"
@@ -72,12 +72,12 @@ export function TickerQuickSearch() {
               inputRef.current?.blur();
             }
           }}
-          className="min-w-0 flex-1 bg-transparent text-xs text-[#dbe5ee] placeholder:text-[#8190a0] outline-none"
+          className="min-w-0 flex-1 bg-transparent text-xs text-ink-title placeholder:text-ink-3 outline-none"
         />
       </div>
 
       {showSuggestions && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-[#1e2d3d] bg-[#070b10] shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-panel border border-line-strong bg-well shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
           {suggestions.map((s, i) => (
             <button
               key={s.symbol}
@@ -88,13 +88,13 @@ export function TickerQuickSearch() {
               }}
               onMouseEnter={() => setActiveIdx(i)}
               className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left transition-colors ${
-                i === activeIdx ? 'bg-[#0e1826]' : 'hover:bg-[#0b1520]'
+                i === activeIdx ? 'bg-blue-tint' : 'hover:bg-panel'
               }`}
             >
               <TickerLogo symbol={s.symbol} companyName={s.name} size={20} />
               <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                <span className="font-mono text-[12px] font-bold text-[#eef3f8]">{s.symbol}</span>
-                <span className="truncate text-[9px] text-[#5e6b78]">{s.name}</span>
+                <span className="font-mono text-[12px] font-bold text-ink">{s.symbol}</span>
+                <span className="truncate text-[9px] text-ink-dim">{s.name}</span>
               </div>
             </button>
           ))}

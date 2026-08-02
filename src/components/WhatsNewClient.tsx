@@ -40,15 +40,15 @@ export function WhatsNewClient() {
       <section className="terminal-panel glass-hero overflow-hidden rounded-lg">
         <div className="flex items-start justify-between gap-3 px-3.5 pt-3">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[#9a6a1f]/70 bg-gradient-to-br from-[#2e2010] to-[#191108] text-[#f3a33a] shadow-[0_8px_20px_-10px_rgba(243,163,58,0.65)]">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-accent-border/70 bg-gradient-to-br from-[#2e2010] to-[#191108] text-accent shadow-[0_8px_20px_-10px_rgba(243,163,58,0.65)]">
               <Sparkles size={16} />
             </span>
             <div className="min-w-0">
-              <h1 className="text-[15px] font-semibold leading-tight tracking-tight text-[#eef3f8]">Product updates</h1>
-              <p className="mt-0.5 text-[11px] leading-snug text-[#8190a0]">Everything that shipped - and what you want next.</p>
+              <h1 className="text-[15px] font-semibold leading-tight tracking-tight text-ink">Product updates</h1>
+              <p className="mt-0.5 text-[11px] leading-snug text-ink-3">Everything that shipped - and what you want next.</p>
             </div>
           </div>
-          <span className="shrink-0 rounded-full border border-[#1d7f55]/70 bg-[#0d251b]/70 px-2 py-0.5 font-mono text-[10px] text-[#43d18b]">
+          <span className="shrink-0 rounded-full border border-positive/50 bg-positive-tint/70 px-2 py-0.5 font-mono text-[10px] text-positive">
             v{APP_VERSION}
           </span>
         </div>
@@ -72,7 +72,7 @@ export function WhatsNewClient() {
                   aria-selected={active}
                   onClick={() => setTab(id)}
                   className={`relative z-10 inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-md px-2 text-[12px] font-semibold transition-colors ${
-                    active ? 'text-[#f3a33a]' : 'text-[#8190a0] hover:text-[#c8d3de]'
+                    active ? 'text-accent' : 'text-ink-3 hover:text-ink-title'
                   }`}
                 >
                   <Icon size={14} /> {label}

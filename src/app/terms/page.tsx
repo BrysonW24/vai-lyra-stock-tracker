@@ -11,11 +11,13 @@ export const metadata: Metadata = {
 
 const SUPPORT_EMAIL = 'support@vivacityai.com.au';
 
+// PanelCard section (PATTERNS.md): soft glass panel, uppercase ink-title heading, ink-2 prose.
+// Legal wording inside is verbatim - this wrapper is presentation only.
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-6">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#c8d3de]">{title}</h2>
-      <div className="mt-2 space-y-2 text-sm leading-relaxed text-[#a8b5c2]">{children}</div>
+    <section className="terminal-panel-soft rounded-panel mt-4 p-4 sm:p-5">
+      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">{title}</h2>
+      <div className="mt-2 space-y-2 text-sm leading-relaxed text-ink-2">{children}</div>
     </section>
   );
 }
@@ -31,25 +33,25 @@ export default function TermsPage() {
   const updated = new Date().toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
-    <main className="min-h-screen bg-[#070a0e] text-[#eef3f8]">
+    <main className="min-h-screen bg-ground text-ink">
       <div className="mx-auto max-w-2xl px-5 py-8">
         <div className="flex items-center justify-between">
           <BrandLogo size={26} showWordmark />
-          <Link href="/welcome" className="inline-flex items-center gap-1.5 text-sm text-[#a8b5c2] transition hover:text-[#eef3f8]">
+          <Link href="/welcome" className="inline-flex min-h-[44px] items-center gap-1.5 px-2 text-sm text-ink-2 transition hover:text-ink">
             <ArrowLeft size={14} /> Back
           </Link>
         </div>
 
-        <h1 className="mt-8 text-2xl font-semibold tracking-tight">Terms of Service</h1>
-        <p className="mt-1 text-xs text-[#6f7d8a]">Last updated {updated}</p>
+        <h1 className="mt-8 text-2xl font-semibold tracking-tight text-ink-title">Terms of Service</h1>
+        <p className="mt-1 text-xs text-ink-dim">Last updated {updated}</p>
 
-        <p className="mt-4 text-sm leading-relaxed text-[#a8b5c2]">
+        <p className="mt-4 text-sm leading-relaxed text-ink-2">
           These terms apply when you use {BRAND_NAME}. By using it, you agree to them.
         </p>
 
         <Section title="Not financial advice">
           <p>
-            {BRAND_NAME} is informational research software. It is <strong className="text-[#eef3f8]">not
+            {BRAND_NAME} is informational research software. It is <strong className="text-ink">not
             financial product advice</strong> and does not take your objectives, financial situation or
             needs into account.
           </p>
@@ -101,15 +103,15 @@ export default function TermsPage() {
         <Section title="Contact">
           <p>
             Questions about these terms:{' '}
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-[#5aa9ff] underline underline-offset-2">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-blue-info underline underline-offset-2 transition hover:text-blue-focus">
               {SUPPORT_EMAIL}
             </a>
           </p>
           <p className="flex gap-4 pt-1">
-            <Link href="/privacy" className="text-[#5aa9ff] underline underline-offset-2">
+            <Link href="/privacy" className="text-blue-info underline underline-offset-2 transition hover:text-blue-focus">
               Privacy Policy
             </Link>
-            <Link href="/support" className="text-[#5aa9ff] underline underline-offset-2">
+            <Link href="/support" className="text-blue-info underline underline-offset-2 transition hover:text-blue-focus">
               Support
             </Link>
           </p>

@@ -132,10 +132,10 @@ export function ActivationSequence({ mode = 'outro', onDone }: { mode?: 'intro' 
         {/* Scene 6: Ready (Final) */}
         {currentScene.id === 'ready' && (
           <div className="text-center max-w-2xl mx-auto w-full px-4">
-            <h2 className="text-3xl md:text-4xl font-semibold text-[#eef3f8] mb-4">
+            <h2 className="text-3xl md:text-4xl font-semibold text-ink mb-4">
               {mode === 'intro' ? 'Build your command centre' : 'Command Centre Ready'}
             </h2>
-            <p className="text-base md:text-lg text-[#a8b5c2] mb-8 leading-relaxed">
+            <p className="text-base md:text-lg text-ink-2 mb-8 leading-relaxed">
               {mode === 'intro'
                 ? 'A couple of minutes to tailor Lyra to you - your market, your book, and how you want to be alerted.'
                 : "Your scanner is active. We'll surface what changes, what matters and what deserves review."}
@@ -145,13 +145,13 @@ export function ActivationSequence({ mode = 'outro', onDone }: { mode?: 'intro' 
             <div className="flex flex-col md:flex-row items-center justify-center gap-4">
               <button
                 onClick={handleFinish}
-                className="px-6 py-3 rounded bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] text-[#07090c] text-sm font-semibold uppercase tracking-[0.16em] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110 w-full md:w-auto"
+                className="px-6 py-3 rounded-cell bg-[image:var(--lyra-cta-gradient)] text-white text-sm font-semibold uppercase tracking-[0.16em] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110 w-full md:w-auto"
               >
                 {mode === 'intro' ? 'Set up my console' : 'Enter Command Centre'}
               </button>
               <button
                 onClick={handleReplay}
-                className="px-6 py-3 rounded border border-[#263241] bg-[#0d141c] text-[#a8b5c2] text-sm font-semibold uppercase tracking-[0.16em] transition hover:text-[#eef3f8] w-full md:w-auto"
+                className="px-6 py-3 rounded-cell border border-line-strong bg-panel text-ink-2 text-sm font-semibold uppercase tracking-[0.16em] transition hover:text-ink w-full md:w-auto"
               >
                 Replay
               </button>

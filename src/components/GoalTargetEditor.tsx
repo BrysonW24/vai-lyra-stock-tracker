@@ -45,7 +45,7 @@ export function GoalTargetEditor({ currentTarget }: { currentTarget: number | nu
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#8190a0] transition hover:text-[#dbe5ee]"
+        className="inline-flex items-center gap-1 rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-ink-3 transition hover:text-ink-title"
       >
         <Pencil size={9} /> {currentTarget ? 'Edit target' : 'Set your target'}
       </button>
@@ -60,25 +60,25 @@ export function GoalTargetEditor({ currentTarget }: { currentTarget: number | nu
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="e.g. 50000"
-        className="w-28 rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-xs text-[#eef3f8] focus:border-[#3a4c60] focus:outline-none"
+        className="w-28 rounded border border-line-strong bg-panel px-2 py-1 font-mono text-xs text-ink focus:border-blue-focus focus:outline-none"
       />
       <button
         type="button"
         onClick={() => submit(false)}
         disabled={saving || !value}
-        className="rounded border border-[#1f5132] bg-[#0f2417] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-[#5fd08a] transition hover:brightness-125 disabled:opacity-50"
+        className="rounded border border-positive/40 bg-positive-tint px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-positive transition hover:brightness-125 disabled:opacity-50"
       >
         {saving ? 'Saving' : 'Save'}
       </button>
       {currentTarget && (
-        <button type="button" onClick={() => submit(true)} disabled={saving} className="font-mono text-[10px] text-[#8190a0] transition hover:text-[#f0758a]">
+        <button type="button" onClick={() => submit(true)} disabled={saving} className="font-mono text-[10px] text-ink-3 transition hover:text-negative-soft">
           Clear
         </button>
       )}
-      <button type="button" onClick={() => setOpen(false)} disabled={saving} className="font-mono text-[10px] text-[#5e6b78] transition hover:text-[#8190a0]">
+      <button type="button" onClick={() => setOpen(false)} disabled={saving} className="font-mono text-[10px] text-ink-dim transition hover:text-ink-3">
         Cancel
       </button>
-      {error && <span className="w-full font-mono text-[9px] text-[#f0758a]">{error}</span>}
+      {error && <span className="w-full font-mono text-[9px] text-negative-soft">{error}</span>}
     </div>
   );
 }

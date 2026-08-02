@@ -30,15 +30,15 @@ export function ResearchQueueView({ current }: { current: Record<string, Current
     return () => window.removeEventListener(QUEUE_EVENT, sync);
   }, []);
 
-  if (items === null) return <div className="terminal-panel h-32 animate-pulse rounded-md" aria-hidden />;
+  if (items === null) return <div className="terminal-panel h-32 animate-pulse rounded-panel" aria-hidden />;
 
   if (items.length === 0) {
     return (
-      <section className="terminal-panel rounded-md p-5 text-center">
-        <Bookmark className="mx-auto text-[#5e6b78]" size={22} />
-        <p className="mt-2 text-sm font-semibold text-[#eef3f8]">Your research queue is empty</p>
-        <p className="mx-auto mt-1 max-w-sm text-[11px] leading-snug text-[#8190a0]">
-          Tap <span className="text-[#f3a33a]">Save</span> on any ticker. Come back and Lyra shows what has changed since
+      <section className="terminal-panel rounded-panel p-5 text-center">
+        <Bookmark className="mx-auto text-ink-dim" size={22} />
+        <p className="mt-2 text-sm font-semibold text-ink">Your research queue is empty</p>
+        <p className="mx-auto mt-1 max-w-sm text-[11px] leading-snug text-ink-3">
+          Tap <span className="text-accent">Save</span> on any ticker. Come back and Lyra shows what has changed since
           you saved it - score, price, and your own notes.
         </p>
       </section>
@@ -46,12 +46,12 @@ export function ResearchQueueView({ current }: { current: Record<string, Current
   }
 
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="border-b border-[#1b2530] px-3 py-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Research queue · {items.length}</p>
-        <p className="mt-0.5 font-mono text-[10px] text-[#a8b5c2]">Saved ideas, and what has changed since you saved them.</p>
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="border-b border-line px-3 py-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Research queue · {items.length}</p>
+        <p className="mt-0.5 font-mono text-[10px] text-ink-2">Saved ideas, and what has changed since you saved them.</p>
       </div>
-      <div className="divide-y divide-[#141c25]">
+      <div className="divide-y divide-line">
         {items.map((item) => {
           const cur = current[item.symbol];
           const scoreSince = cur && item.savedScore != null ? cur.score - item.savedScore : null;
@@ -60,22 +60,22 @@ export function ResearchQueueView({ current }: { current: Record<string, Current
             <div key={item.symbol} className="px-3 py-2.5">
               <div className="flex items-center gap-2">
                 <TickerLogo symbol={item.symbol} companyName={item.label} size={16} />
-                <Link href={`/tickers/${item.symbol}?view=setup`} className="font-mono text-[12px] font-semibold text-[#eef3f8]">
+                <Link href={`/tickers/${item.symbol}?view=setup`} className="font-mono text-[12px] font-semibold text-ink">
                   {item.symbol}
                 </Link>
-                {cur && <span className="font-mono text-[10px] text-[#a8b5c2]">{cur.score}/100</span>}
-                <span className="ml-auto font-mono text-[9px] text-[#5e6b78]">saved {relativeTime(item.savedAt)}</span>
+                {cur && <span className="font-mono text-[10px] text-ink-2">{cur.score}/100</span>}
+                <span className="ml-auto font-mono text-[9px] text-ink-dim">saved {relativeTime(item.savedAt)}</span>
                 <button
                   type="button"
                   onClick={() => removeSaved(item.symbol)}
                   aria-label={`Remove ${item.symbol}`}
-                  className="text-[#5e6b78] transition hover:text-[#ff6b6b]"
+                  className="text-ink-dim transition hover:text-negative"
                 >
                   <Trash2 size={13} />
                 </button>
               </div>
 
-              <p className="mt-1 font-mono text-[10px] text-[#8190a0]">
+              <p className="mt-1 font-mono text-[10px] text-ink-3">
                 Since saved:{' '}
                 {scoreSince != null ? (
                   <span className={toneClass(scoreSince)}>score {formatSignedNumber(scoreSince, 0)}</span>
@@ -94,7 +94,7 @@ export function ResearchQueueView({ current }: { current: Record<string, Current
                 defaultValue={item.note ?? ''}
                 placeholder="Add a note..."
                 onBlur={(e) => updateNote(item.symbol, e.target.value)}
-                className="mt-1.5 w-full rounded border border-[#1b2530] bg-[#0b1016] px-2 py-1 text-[11px] text-[#dbe5ee] outline-none placeholder:text-[#5d6b79] focus:border-[#f3a33a]/40"
+                className="mt-1.5 w-full rounded-cell border border-line bg-chrome px-2 py-1 text-[11px] text-ink-title outline-none placeholder:text-ink-dim focus:border-blue-focus/40"
               />
             </div>
           );

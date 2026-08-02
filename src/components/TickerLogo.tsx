@@ -40,7 +40,7 @@ export function TickerLogo({ symbol, companyName, size = 18 }: TickerLogoProps) 
   if (exhausted) {
     return (
       <span
-        className="grid shrink-0 place-items-center rounded border border-[#263241] font-mono font-semibold text-white"
+        className="grid shrink-0 place-items-center rounded border border-line-strong font-mono font-semibold text-white"
         style={{ width: dim, height: dim, backgroundColor: `hsl(${hueFromString(symbol)}, 55%, 32%)`, fontSize: `${Math.round(size * 0.5)}px` }}
         title={companyName ?? symbol}
         aria-label={companyName ?? symbol}
@@ -54,7 +54,7 @@ export function TickerLogo({ symbol, companyName, size = 18 }: TickerLogoProps) 
 
   return (
     <span
-      className="grid shrink-0 place-items-center overflow-hidden rounded border border-[#263241] bg-white"
+      className="grid shrink-0 place-items-center overflow-hidden rounded border border-line-strong bg-white"
       style={{ width: dim, height: dim }}
       title={companyName ?? symbol}
       aria-label={companyName ?? symbol}

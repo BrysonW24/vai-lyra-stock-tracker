@@ -49,28 +49,28 @@ export function HelpDrawer({ title, subtitle, intro, terms, footnote, ariaLabel 
         onClick={() => setOpen(true)}
         aria-label={ariaLabel ?? title}
         title={ariaLabel ?? title}
-        className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-[#263241] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
+        className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-line-strong text-ink-3 transition hover:border-line-hair hover:text-ink"
       >
         <HelpCircle size={12} />
       </button>
 
       <DetailDrawer open={open} onClose={() => setOpen(false)} title={title} subtitle={subtitle}>
-        {intro && <p className="text-[12px] leading-relaxed text-[#dbe5ee]">{intro}</p>}
+        {intro && <p className="text-[12px] leading-relaxed text-ink-title">{intro}</p>}
 
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">What the terms mean</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">What the terms mean</p>
           {terms.map((t) => {
             const moduleEntry = t.moduleId ? getModule(t.moduleId) : undefined;
             return (
-              <div key={t.term} className="rounded-md border border-[#1b2530] bg-[#0d141c] p-2.5">
-                <p className="flex flex-wrap items-center gap-1.5 text-[12px] font-semibold text-[#eef3f8]">
-                  <span className="rounded border border-[#263241] bg-[#0b1016] px-1.5 py-0.5 font-mono text-[10px] text-[#a8b5c2]">{t.term}</span>
+              <div key={t.term} className="rounded-cell border border-line bg-panel p-2.5">
+                <p className="flex flex-wrap items-center gap-1.5 text-[12px] font-semibold text-ink">
+                  <span className="rounded border border-line-strong bg-chrome px-1.5 py-0.5 font-mono text-[10px] text-ink-2">{t.term}</span>
                 </p>
-                <p className="mt-1 text-[11px] leading-snug text-[#a8b5c2]">{t.what}</p>
+                <p className="mt-1 text-[11px] leading-snug text-ink-2">{t.what}</p>
                 {moduleEntry && t.moduleId && (
                   <Link
                     href={getModuleHref(t.moduleId)}
-                    className="mt-1.5 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.1em] text-[#8aa2ff] transition hover:text-[#b3c4ff]"
+                    className="mt-1.5 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.1em] text-blue-info transition hover:text-blue-focus"
                   >
                     Learn more <ArrowUpRight size={11} />
                   </Link>
@@ -80,7 +80,7 @@ export function HelpDrawer({ title, subtitle, intro, terms, footnote, ariaLabel 
           })}
         </div>
 
-        <p className="rounded-md border border-[#263241] bg-[#0d141c] p-2.5 font-mono text-[10px] leading-snug text-[#8190a0]">
+        <p className="rounded-cell border border-line-strong bg-panel p-2.5 font-mono text-[10px] leading-snug text-ink-3">
           {footnote ?? DEFAULT_FOOTNOTE}
         </p>
       </DetailDrawer>

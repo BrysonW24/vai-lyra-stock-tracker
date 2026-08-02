@@ -5,6 +5,15 @@ import { formatNumber } from '@/lib/format';
 import type { CSSProperties } from 'react';
 import { useState, useRef, useMemo } from 'react';
 
+/*
+ * NOTE ON COLOUR LITERALS: series/candle colours below are painted through SVG presentation
+ * ATTRIBUTES (fill= / stroke=) and interpolated into gradient ids (url(#...)), where CSS
+ * custom properties do not resolve and parentheses would break the fragment URL - so those
+ * stay literal hexes, kept byte-equal to the token table (positive #43d18b, negative #ff6b6b,
+ * line #1b2530-adjacent grid strokes). Everything painted through Tailwind classes or
+ * CSS-context inline style uses tokens. See lyra-ux/notes/2026-08-02-p0.md.
+ */
+
 type ChartSeries = {
   label: string;
   values: number[];
@@ -290,15 +299,15 @@ export function DenseLineChart({
   }
 
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1b2530] px-4 py-3">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">{title}</p>
-          {subtitle && <p className="mt-1 text-xs text-[#a8b5c2]">{subtitle}</p>}
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">{title}</p>
+          {subtitle && <p className="mt-1 text-xs text-ink-2">{subtitle}</p>}
         </div>
         <div className="flex flex-wrap gap-3">
           {series.map((item) => (
-            <span className="flex items-center gap-1.5 font-mono text-xs text-[#a8b5c2]" key={item.label}>
+            <span className="flex items-center gap-1.5 font-mono text-xs text-ink-2" key={item.label}>
               <span className="h-2 w-2 rounded-full" style={{ background: item.color }} />
               {item.label}
             </span>
@@ -384,7 +393,7 @@ export function DenseLineChart({
         {/* Hover tooltip - clamped inside the plot so it never escapes the panel */}
         {tooltipData !== null && (
           <div
-            className="pointer-events-none absolute z-10 max-w-[160px] rounded border border-[#263241] bg-[#0d1117]/95 px-2.5 py-1.5 font-mono text-xs text-[#dbe5ee] shadow-xl backdrop-blur-sm"
+            className="pointer-events-none absolute z-10 max-w-[160px] rounded border border-line-strong bg-panel-deep/95 px-2.5 py-1.5 font-mono text-xs text-ink-title shadow-xl backdrop-blur-sm"
             style={{
               left: tooltipLeft,
               right: tooltipRight,
@@ -396,18 +405,18 @@ export function DenseLineChart({
             <div className="font-semibold" style={{ color: tooltipData!.color }}>
               {tooltipData!.seriesLabel}
             </div>
-            <div className="mt-0.5 text-[10px] text-[#a8b5c2]">{tooltipData!.label}</div>
+            <div className="mt-0.5 text-[10px] text-ink-2">{tooltipData!.label}</div>
             <div className="mt-0.5">{formatNumber(tooltipData!.value, 2)}</div>
           </div>
         )}
 
-        <div className="absolute right-3 top-3 rounded border border-[#263241] bg-[#0d141c]/90 px-2 py-1 font-mono text-[11px] text-[#a8b5c2]">
+        <div className="absolute right-3 top-3 rounded border border-line-strong bg-panel/90 px-2 py-1 font-mono text-[11px] text-ink-2">
           {formatNumber(max)} / {formatNumber(min)}
         </div>
       </div>
 
       {/* X-axis labels - own row below the plot so they are always readable */}
-      <div className="flex justify-between gap-1 border-t border-[#1b2530] px-4 py-2 font-mono text-[10px] text-[#8190a0]">
+      <div className="flex justify-between gap-1 border-t border-line px-4 py-2 font-mono text-[10px] text-ink-3">
         {labels.map((label) => (
           <span key={label} className="truncate">{label}</span>
         ))}
@@ -466,10 +475,10 @@ export function MacdHistogramChart({
     hoveredIndex !== null ? ((padX + slot * hoveredIndex + slot / 2) / W) * 100 : 50;
 
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="border-b border-[#1b2530] px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">{title}</p>
-        <p className="mt-1 text-xs text-[#a8b5c2]">{subtitle}</p>
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="border-b border-line px-4 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">{title}</p>
+        <p className="mt-1 text-xs text-ink-2">{subtitle}</p>
       </div>
       <div className="relative h-[156px] overflow-hidden px-1">
         <svg
@@ -518,7 +527,7 @@ export function MacdHistogramChart({
 
         {/* Zero label pinned to the baseline */}
         <span
-          className="pointer-events-none absolute right-2 -translate-y-1/2 font-mono text-[9px] text-[#5e6b78]"
+          className="pointer-events-none absolute right-2 -translate-y-1/2 font-mono text-[9px] text-ink-dim"
           style={{ top: `${zeroPct}%` }}
         >
           0
@@ -527,20 +536,21 @@ export function MacdHistogramChart({
         {/* Hover tooltip */}
         {hovered !== null && (
           <div
-            className="pointer-events-none absolute top-1 z-10 -translate-x-1/2 whitespace-nowrap rounded border border-[#263241] bg-[#0d1117]/95 px-2.5 py-1.5 font-mono text-xs text-[#dbe5ee] shadow-xl backdrop-blur-sm"
+            className="pointer-events-none absolute top-1 z-10 -translate-x-1/2 whitespace-nowrap rounded border border-line-strong bg-panel-deep/95 px-2.5 py-1.5 font-mono text-xs text-ink-title shadow-xl backdrop-blur-sm"
             style={{ left: `${Math.min(Math.max(hoveredCenterPct, 18), 82)}%` }}
           >
-            <div className="font-semibold" style={{ color: hovered.histogram >= 0 ? '#43d18b' : '#ff6b6b' }}>
+            {/* Gain/loss IS the meaning here, so positive/negative are correct (CSS context - var resolves). */}
+            <div className="font-semibold" style={{ color: hovered.histogram >= 0 ? 'var(--lyra-positive)' : 'var(--lyra-negative)' }}>
               {hovered.label}
             </div>
-            <div className="mt-0.5 text-[10px] text-[#a8b5c2]">MACD histogram</div>
+            <div className="mt-0.5 text-[10px] text-ink-2">MACD histogram</div>
             <div className="mt-0.5">{formatNumber(hovered.histogram, 3)}</div>
           </div>
         )}
       </div>
 
       {/* X-axis labels in their own row so they stay readable */}
-      <div className="flex justify-between gap-1 border-t border-[#1b2530] px-4 py-2 font-mono text-[10px] text-[#8190a0]">
+      <div className="flex justify-between gap-1 border-t border-line px-4 py-2 font-mono text-[10px] text-ink-3">
         {points.map((point) => (
           <span key={point.label} className="truncate">{point.label}</span>
         ))}
@@ -552,13 +562,13 @@ export function MacdHistogramChart({
 
 export function ScoreHeatBars({ points, reconstructed = false }: { points: ScorePoint[]; reconstructed?: boolean }) {
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex items-center justify-between border-b border-[#1b2530] px-4 py-3">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Signal score history</p>
-          <p className="mt-1 text-xs text-[#a8b5c2]">Score, RSI, and histogram recovery window.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Signal score history</p>
+          <p className="mt-1 text-xs text-ink-2">Score, RSI, and histogram recovery window.</p>
         </div>
-        <span className="rounded border border-[#1d7f55] bg-[#0d251b] px-2 py-1 font-mono text-xs text-[#43d18b]">
+        <span className="rounded border border-positive/50 bg-positive-tint px-2 py-1 font-mono text-xs text-positive">
           Now {points.at(-1)?.score ?? 0}
         </span>
       </div>
@@ -566,12 +576,12 @@ export function ScoreHeatBars({ points, reconstructed = false }: { points: Score
         {points.map((point) => (
           <div className="group flex h-44 flex-col justify-end" key={point.label}>
             <div
-              className="rounded-sm border border-[#1d7f55] bg-[#43d18b]/70 transition group-hover:bg-[#43d18b]"
+              className="rounded-sm border border-positive/50 bg-positive/70 transition group-hover:bg-positive"
               style={{ height: `${Math.max(12, point.score * 1.55)}px` }}
               title={`Score ${point.score}`}
             />
-            <p className="mt-2 text-center font-mono text-sm text-[#eef3f8]">{point.score}</p>
-            <p className="text-center font-mono text-[10px] text-[#8190a0]">{point.label}</p>
+            <p className="mt-2 text-center font-mono text-sm text-ink">{point.score}</p>
+            <p className="text-center font-mono text-[10px] text-ink-3">{point.label}</p>
           </div>
         ))}
       </div>
@@ -588,8 +598,8 @@ export function ScoreHeatBars({ points, reconstructed = false }: { points: Score
  */
 function ReconstructedNote() {
   return (
-    <p className="border-t border-[#1b2530] px-4 py-2 text-[10px] leading-snug text-[#6f7d8a]">
-      Illustrative lead-in: only <span className="text-[#8190a0]">Now</span> is a measured value. The earlier
+    <p className="border-t border-line px-4 py-2 text-[10px] leading-snug text-ink-dim">
+      Illustrative lead-in: only <span className="text-ink-3">Now</span> is a measured value. The earlier
       bars are reconstructed to ease into it in the right direction - not recorded intraday history.
     </p>
   );

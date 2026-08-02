@@ -30,7 +30,7 @@ export function AnimatedTickerChip({
 
   return (
     <div
-      className={`inline-flex items-center gap-2 px-3 py-2 rounded border border-[#263241] terminal-panel-soft transition-all ${
+      className={`inline-flex items-center gap-2 px-3 py-2 rounded border border-line-strong terminal-panel-soft transition-all ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       style={{
@@ -39,7 +39,7 @@ export function AnimatedTickerChip({
       }}
     >
       <TickerLogo symbol={symbol} size={16} />
-      <span className="text-xs font-semibold text-[#eef3f8]">{symbol}</span>
+      <span className="text-xs font-semibold text-ink">{symbol}</span>
     </div>
   );
 }

@@ -15,17 +15,19 @@ export function VersionBadge({
   showDate?: boolean;
   className?: string;
 }) {
+  // 'light' serves the light landing surface: blue-tint doubles as near-navy TEXT there,
+  // white stays literal (the token palette is dark-console-first and has no light-surface set).
   const styles =
     variant === 'light'
-      ? 'border-[#0E1E3A]/15 bg-white/60 text-[#0E1E3A] hover:border-[#1E63FF]/40'
-      : 'border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:border-[#3a4754]';
+      ? 'border-blue-tint/15 bg-white/60 text-blue-tint hover:border-blue/40'
+      : 'border-line-strong bg-panel text-ink-2 hover:border-line-hair';
   return (
     <Link
       href="/whats-new"
       title={`Released ${formatVersionDate(APP_VERSION_DATE)} - see what's new`}
       className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] tracking-wide transition ${styles} ${className}`}
     >
-      <span className={variant === 'light' ? 'text-[#1E63FF]' : 'text-[#43d18b]'}>●</span>
+      <span className={variant === 'light' ? 'text-blue' : 'text-positive'}>●</span>
       v{APP_VERSION}
       {showDate && <span className="opacity-60">· {formatVersionDate(APP_VERSION_DATE)}</span>}
     </Link>

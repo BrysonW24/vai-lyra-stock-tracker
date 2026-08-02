@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ctaGradientClass } from '@/lib/ui';
 
 /**
  * Two-week rating prompt - "Has Lyra helped you trade?" -> 5 stars + an optional line.
@@ -91,19 +92,19 @@ export function RatingPrompt() {
 
   return (
     <div
-      className="fixed inset-x-3 bottom-3 z-40 mx-auto max-w-sm rounded-xl border border-[#263241] bg-[#0b1118] p-3 shadow-2xl xl:left-auto xl:right-4 xl:mx-0"
+      className="fixed inset-x-3 bottom-3 z-40 mx-auto max-w-sm rounded-panel border border-line-strong bg-panel-deep p-3 shadow-2xl xl:left-auto xl:right-4 xl:mx-0"
       style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
     >
       {sent ? (
-        <p className="py-2 text-center text-[12px] text-[#43d18b]">Thank you - that helps shape what we build next.</p>
+        <p className="py-2 text-center text-[12px] text-positive">Thank you - that helps shape what we build next.</p>
       ) : (
         <>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[12px] font-semibold text-[#eef3f8]">Has Lyra helped you trade?</p>
-              <p className="mt-0.5 text-[11px] leading-snug text-[#8190a0]">You have used it for a couple of weeks - how is it going?</p>
+              <p className="text-[12px] font-semibold text-ink">Has Lyra helped you trade?</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-ink-3">You have used it for a couple of weeks - how is it going?</p>
             </div>
-            <button type="button" onClick={snooze} aria-label="Dismiss" className="shrink-0 rounded px-1.5 text-[14px] leading-none text-[#5d6b79] hover:text-[#a8b5c2]">
+            <button type="button" onClick={snooze} aria-label="Dismiss" className="shrink-0 rounded px-1.5 text-[14px] leading-none text-ink-dim hover:text-ink-2">
               x
             </button>
           </div>
@@ -116,7 +117,7 @@ export function RatingPrompt() {
                 onClick={() => setStars(n)}
                 onMouseEnter={() => setHover(n)}
                 aria-label={`${n} star${n > 1 ? 's' : ''}`}
-                className={`text-[22px] leading-none transition ${n <= active ? 'text-[#f3a33a]' : 'text-[#39424d] hover:text-[#5d6b79]'}`}
+                className={`text-[22px] leading-none transition ${n <= active ? 'text-accent' : 'text-line-hair hover:text-ink-dim'}`}
               >
                 {n <= active ? '★' : '☆'}
               </button>
@@ -130,19 +131,20 @@ export function RatingPrompt() {
               onChange={(e) => setComment(e.target.value)}
               maxLength={200}
               placeholder={stars >= 4 ? 'What is working? (optional)' : 'What would make it better? (optional)'}
-              className="mt-2 h-8 w-full rounded-md border border-[#263241] bg-[#0d141c] px-2.5 text-[12px] text-[#dbe5ee] placeholder:text-[#5d6b79] outline-none focus:border-[#f3a33a]/50"
+              className="mt-2 h-8 w-full rounded-cell border border-line-strong bg-panel px-2.5 text-[12px] text-ink-title placeholder:text-ink-dim outline-none focus:border-blue-focus/50"
             />
           )}
 
           <div className="mt-2 flex items-center justify-end gap-2">
-            <button type="button" onClick={snooze} className="rounded-md px-2.5 py-1 text-[11px] text-[#8190a0] hover:text-[#a8b5c2]">
+            <button type="button" onClick={snooze} className="rounded-cell px-2.5 py-1 text-[11px] text-ink-3 hover:text-ink-2">
               Maybe later
             </button>
+            {/* The one gradient CTA on this card (--lyra-cta-gradient). */}
             <button
               type="button"
               onClick={submit}
               disabled={stars === 0}
-              className="rounded-md bg-gradient-to-r from-[#3b5bdb] to-[#43d18b] px-3 py-1 text-[11px] font-semibold text-[#07090c] disabled:opacity-40"
+              className={`${ctaGradientClass} disabled:opacity-40`}
             >
               Send
             </button>

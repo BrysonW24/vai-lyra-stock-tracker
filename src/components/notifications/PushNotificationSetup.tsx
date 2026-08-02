@@ -57,16 +57,16 @@ interface SaveChannelResponse {
 }
 
 const inputClass =
-  'w-full rounded border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 font-mono text-[13px] text-[#dbe5ee] outline-none transition focus:border-[#3a4754] focus:ring-1 focus:ring-[#f3a33a]/30';
+  'w-full rounded border border-line-strong bg-panel px-2.5 py-1.5 font-mono text-[13px] text-ink-title outline-none transition focus:border-line-hair focus:ring-1 focus:ring-blue-focus/40';
 
 const secondaryButton =
-  'inline-flex items-center justify-center gap-1.5 rounded border border-[#263241] bg-[#0d141c] px-3 py-1.5 font-mono text-[11px] text-[#c8d3de] transition hover:border-[#3a4754] disabled:opacity-40';
+  'inline-flex items-center justify-center gap-1.5 rounded border border-line-strong bg-panel px-3 py-1.5 font-mono text-[11px] text-ink-title transition hover:border-line-hair disabled:opacity-40';
 
 const successButton =
-  'inline-flex items-center justify-center gap-1.5 rounded border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 font-mono text-[11px] text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-40';
+  'inline-flex items-center justify-center gap-1.5 rounded border border-positive/40 bg-positive-tint px-3 py-1.5 font-mono text-[11px] text-positive transition hover:bg-positive/15 disabled:opacity-40';
 
 const dangerButton =
-  'inline-flex items-center justify-center gap-1.5 rounded border border-[#7a2230] bg-[#2a1115] px-3 py-1.5 font-mono text-[11px] text-[#ff6b6b] transition hover:bg-[#351419] disabled:opacity-40';
+  'inline-flex items-center justify-center gap-1.5 rounded border border-negative/40 bg-negative/10 px-3 py-1.5 font-mono text-[11px] text-negative transition hover:bg-negative/15 disabled:opacity-40';
 
 type PillTone = 'on' | 'off' | 'warn';
 
@@ -77,10 +77,10 @@ function StatusPill({ on, label, tone }: { on: boolean; label: string; tone?: Pi
   const resolved: PillTone = tone ?? (on ? 'on' : 'off');
   const cls =
     resolved === 'on'
-      ? 'border-[#1d7f55] bg-[#0d251b] text-[#43d18b]'
+      ? 'border-positive/40 bg-positive-tint text-positive'
       : resolved === 'warn'
-        ? 'border-[#7a5a22] bg-[#241a0d] text-[#f3a33a]'
-        : 'border-[#263241] bg-[#0d141c] text-[#8190a0]';
+        ? 'border-accent-border bg-accent-tint text-accent'
+        : 'border-line-strong bg-panel text-ink-3';
   const icon = resolved === 'on' ? <Check size={11} /> : resolved === 'warn' ? <AlertTriangle size={11} /> : <X size={11} />;
   return (
     <span className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[10px] ${cls}`}>
@@ -99,8 +99,8 @@ function ToggleRow({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-[#1b2530] py-2 first:border-t-0">
-      <span className="text-[13px] font-medium text-[#eef3f8]">{label}</span>
+    <div className="flex items-center justify-between gap-3 border-t border-line py-2 first:border-t-0">
+      <span className="text-[13px] font-medium text-ink">{label}</span>
       <Toggle checked={checked} onChange={onChange} label={label} />
     </div>
   );
@@ -416,13 +416,13 @@ export function PushNotificationSetup() {
         />
       </div>
 
-      <section className="space-y-2 border-t border-[#1b2530] pt-3">
+      <section className="space-y-2 border-t border-line pt-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">
               <Smartphone size={13} /> iPhone Push
             </p>
-            <p className="mt-1 text-[11px] leading-snug text-[#6f7d8a]">
+            <p className="mt-1 text-[11px] leading-snug text-ink-dim">
               Permission: {permissionLabel}. Active devices: {activePushCount}.
             </p>
           </div>
@@ -453,23 +453,23 @@ export function PushNotificationSetup() {
         </div>
 
         {testResult && (
-          <div className="mt-2 rounded-md border border-[#263241] bg-[#0d141c] p-3 text-[12px]">
+          <div className="mt-2 rounded-md border border-line-strong bg-panel p-3 text-[12px]">
             {testResult.deliveredChannels?.includes('push') ? (
-              <p className="font-semibold text-[#43d18b] mb-1">✓ Test push sent</p>
+              <p className="font-semibold text-positive mb-1">✓ Test push sent</p>
             ) : (
-              <p className="font-semibold text-[#f3a33a] mb-1">
+              <p className="font-semibold text-accent mb-1">
                 {testResult.suppressedChannels?.includes('push') ? 'Test logged but suppressed' : 'Push not delivered'}
               </p>
             )}
             
             {testResult.errors && testResult.errors.length > 0 && (
-              <p className="text-[#ff6b6b] mt-1 break-all font-mono text-[10px]">Error: {testResult.errors.join(', ')}</p>
+              <p className="text-negative mt-1 break-all font-mono text-[10px]">Error: {testResult.errors.join(', ')}</p>
             )}
             {testResult.routeReason && (
-              <p className="text-[#8190a0] mt-1 text-[11px]">Reason: {testResult.routeReason}</p>
+              <p className="text-ink-3 mt-1 text-[11px]">Reason: {testResult.routeReason}</p>
             )}
             
-            <div className="mt-2 border-t border-[#1b2530] pt-2 font-mono text-[10px] text-[#6f7d8a]">
+            <div className="mt-2 border-t border-line pt-2 font-mono text-[10px] text-ink-dim">
               <p>eventId: {testResult.eventId || 'none'}</p>
               <p>route: {testResult.routeReason === 'forced instant' ? 'force instant' : testResult.routeReason || 'default'}</p>
               <p>channels: {testResult.deliveredChannels?.length ? testResult.deliveredChannels.join(', ') : 'none'}</p>
@@ -479,23 +479,23 @@ export function PushNotificationSetup() {
         )}
 
         {settingsLoaded && !pushConfigured && (
-          <p className="text-[11px] leading-snug text-[#f3a33a]">VAPID keys are not configured in this environment.</p>
+          <p className="text-[11px] leading-snug text-accent">VAPID keys are not configured in this environment.</p>
         )}
         {!support.standalone && !nativeShell && (
-          <p className="text-[11px] leading-snug text-[#6f7d8a]">
+          <p className="text-[11px] leading-snug text-ink-dim">
             On iPhone, open Lyra from the Home Screen before enabling push.
           </p>
         )}
         {nativeShell && (
-          <p className="text-[11px] leading-snug text-[#6f7d8a]">
+          <p className="text-[11px] leading-snug text-ink-dim">
             In-app push is coming to the Lyra app - Telegram, Slack, and WhatsApp alerts work today.
           </p>
         )}
       </section>
 
-      <section className="grid gap-2 border-t border-[#1b2530] pt-3 md:grid-cols-2">
+      <section className="grid gap-2 border-t border-line pt-3 md:grid-cols-2">
         <div>
-          <label className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-[#8190a0]" htmlFor="tg-id">
+          <label className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-ink-3" htmlFor="tg-id">
             <TelegramLogo size={12} /> Telegram chat ID
           </label>
           <div className="flex gap-2">
@@ -504,13 +504,13 @@ export function PushNotificationSetup() {
               <TelegramLogo size={14} />
             </button>
           </div>
-          <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] text-[#60a5fa] hover:underline">
+          <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] text-blue-info hover:underline">
             Get chat ID <ExternalLink size={11} />
           </a>
         </div>
 
         <div>
-          <label className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-[#8190a0]" htmlFor="wa-phone">
+          <label className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-ink-3" htmlFor="wa-phone">
             <WhatsAppLogo size={12} /> WhatsApp number
           </label>
           <div className="flex gap-2">
@@ -522,7 +522,7 @@ export function PushNotificationSetup() {
         </div>
 
         <div>
-          <label className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-[#8190a0]" htmlFor="slack-webhook">
+          <label className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-ink-3" htmlFor="slack-webhook">
             <SlackLogo size={12} /> Slack webhook
           </label>
           <div className="flex gap-2">
@@ -539,7 +539,7 @@ export function PushNotificationSetup() {
               <SlackLogo size={13} />
             </button>
           </div>
-          <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] text-[#60a5fa] hover:underline">
+          <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] text-blue-info hover:underline">
             Create a webhook <ExternalLink size={11} />
           </a>
         </div>
@@ -548,8 +548,8 @@ export function PushNotificationSetup() {
           <div
             className={`md:col-span-2 rounded border px-3 py-2 font-mono text-[11px] leading-snug ${
               channelNotice.verified
-                ? 'border-[#1d7f55] bg-[#0d251b] text-[#43d18b]'
-                : 'border-[#7a5a22] bg-[#241a0d] text-[#f3a33a]'
+                ? 'border-positive/40 bg-positive-tint text-positive'
+                : 'border-accent-border bg-accent-tint text-accent'
             }`}
           >
             {channelNotice.verified ? <Check size={11} className="mr-1 inline" /> : <X size={11} className="mr-1 inline" />}
@@ -557,26 +557,26 @@ export function PushNotificationSetup() {
           </div>
         )}
         {!channelNotice && telegramChatId && !telegramVerified && (
-          <p className="md:col-span-2 font-mono text-[11px] text-[#f3a33a]">
+          <p className="md:col-span-2 font-mono text-[11px] text-accent">
             Telegram needs verification - open the bot, send /start, then save again so we can confirm delivery.
           </p>
         )}
         {!channelNotice && whatsappPhone && !whatsappVerified && (
-          <p className="md:col-span-2 font-mono text-[11px] text-[#f3a33a]">
+          <p className="md:col-span-2 font-mono text-[11px] text-accent">
             WhatsApp needs verification - we have not confirmed a message can reach this number yet.
           </p>
         )}
         {!channelNotice && slackWebhook && !slackVerified && (
-          <p className="md:col-span-2 font-mono text-[11px] text-[#f3a33a]">
+          <p className="md:col-span-2 font-mono text-[11px] text-accent">
             Slack needs verification - save the webhook so we can confirm a message reaches your channel.
           </p>
         )}
       </section>
 
-      <section className="space-y-2 border-t border-[#1b2530] pt-3">
+      <section className="space-y-2 border-t border-line pt-3">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Agent personality</p>
-          <p className="mt-1 text-[11px] leading-snug text-[#6f7d8a]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Agent personality</p>
+          <p className="mt-1 text-[11px] leading-snug text-ink-dim">
             How Lyra words its alerts to you. The numbers never change - only the framing. Pick one and check the preview.
           </p>
         </div>
@@ -588,33 +588,33 @@ export function PushNotificationSetup() {
               onClick={() => updatePrefs({ voice: preset.id })}
               className={`rounded-md border p-2.5 text-left transition ${
                 prefs.voice === preset.id
-                  ? 'border-[#1d7f55] bg-[#0d251b]'
-                  : 'border-[#263241] bg-[#0d141c] hover:border-[#3a4754]'
+                  ? 'border-positive/40 bg-positive-tint'
+                  : 'border-line-strong bg-panel hover:border-line-hair'
               }`}
             >
-              <span className={`block text-[12px] font-semibold ${prefs.voice === preset.id ? 'text-[#43d18b]' : 'text-[#dbe5ee]'}`}>
+              <span className={`block text-[12px] font-semibold ${prefs.voice === preset.id ? 'text-positive' : 'text-ink-title'}`}>
                 {preset.name}
               </span>
-              <span className="mt-0.5 block text-[10px] leading-snug text-[#6f7d8a]">{preset.tagline}</span>
+              <span className="mt-0.5 block text-[10px] leading-snug text-ink-dim">{preset.tagline}</span>
             </button>
           ))}
         </div>
-        <div className="rounded-md border border-[#263241] bg-[#0d141c] p-3">
-          <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-wider text-[#5A6B82]">Preview - a sample alert in this personality</p>
-          <pre className="whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-[#c8d3de]">
+        <div className="rounded-md border border-line-strong bg-panel p-3">
+          <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-wider text-ink-dim">Preview - a sample alert in this personality</p>
+          <pre className="whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-ink-title">
             {previewVoiceText(prefs.voice, firstName)}
           </pre>
         </div>
-        <p className="text-[10px] leading-snug text-[#5A6B82]">
+        <p className="text-[10px] leading-snug text-ink-dim">
           Personalities are pre-written templates - deterministic, instant, and they can never invent a number. An AI-written
           personality (BYOK, fabrication-guarded) is on the roadmap.
         </p>
       </section>
 
-      <section className="space-y-3 border-t border-[#1b2530] pt-3">
+      <section className="space-y-3 border-t border-line pt-3">
         <div className="grid gap-3 md:grid-cols-[1fr_150px]">
           <div>
-            <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-[#8190a0]" htmlFor="score-floor">
+            <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-ink-3" htmlFor="score-floor">
               Minimum signal score
             </label>
             <input
@@ -625,7 +625,7 @@ export function PushNotificationSetup() {
               step="5"
               value={prefs.minRelevanceScore}
               onChange={(event) => updatePrefs({ minRelevanceScore: Number(event.target.value) })}
-              className="w-full accent-[#43d18b]"
+              className="w-full accent-blue-focus"
             />
           </div>
           <input
@@ -641,13 +641,13 @@ export function PushNotificationSetup() {
 
         <div className="grid gap-2 md:grid-cols-2">
           <div>
-            <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-[#8190a0]" htmlFor="quiet-start">
+            <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-ink-3" htmlFor="quiet-start">
               Quiet start
             </label>
             <input id="quiet-start" type="time" value={prefs.quietStart} onChange={(event) => updatePrefs({ quietStart: event.target.value })} className={inputClass} />
           </div>
           <div>
-            <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-[#8190a0]" htmlFor="quiet-end">
+            <label className="mb-1 block text-[10px] font-medium uppercase tracking-wide text-ink-3" htmlFor="quiet-end">
               Quiet end
             </label>
             <input id="quiet-end" type="time" value={prefs.quietEnd} onChange={(event) => updatePrefs({ quietEnd: event.target.value })} className={inputClass} />
@@ -662,54 +662,54 @@ export function PushNotificationSetup() {
 
         <div className="space-y-4 my-4">
           {/* Portfolio Card */}
-          <div className="rounded-md border border-[#1b2530] border-l-4 border-l-[#f3a33a] bg-[#0d141c]/50 p-3">
-            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-[#f3a33a] mb-2">
+          <div className="rounded-md border border-line border-l-4 border-l-accent bg-panel/50 p-3">
+            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-accent mb-2">
               <span>💼</span> Portfolio-Driven Alerts
             </h3>
-            <p className="text-[11px] text-[#8190a0] mb-3 leading-relaxed">
+            <p className="text-[11px] text-ink-3 mb-3 leading-relaxed">
               Triggers for risk events, price movements, and news updates related to stocks in your active portfolio.
             </p>
-            <div className="divide-y divide-[#1b2530]/50">
+            <div className="divide-y divide-line/50">
               <ToggleRow label="Portfolio movement alerts" checked={prefs.portfolioMovementAlerts} onChange={(checked) => updatePrefs({ portfolioMovementAlerts: checked })} />
             </div>
           </div>
 
           {/* Watchlist Card */}
-          <div className="rounded-md border border-[#1b2530] border-l-4 border-l-[#3b5bdb] bg-[#0d141c]/50 p-3">
-            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-[#3b5bdb] mb-2">
+          <div className="rounded-md border border-line border-l-4 border-l-blue-deep bg-panel/50 p-3">
+            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-blue-deep mb-2">
               <span>⭐</span> Watchlist-Driven Alerts
             </h3>
-            <p className="text-[11px] text-[#8190a0] mb-3 leading-relaxed">
+            <p className="text-[11px] text-ink-3 mb-3 leading-relaxed">
               Triggers when watched stocks touch key support levels, breach RSI thresholds, or experience significant price swings.
             </p>
-            <div className="divide-y divide-[#1b2530]/50">
+            <div className="divide-y divide-line/50">
               <ToggleRow label="Watchlist trigger alerts" checked={prefs.watchlistMovementAlerts} onChange={(checked) => updatePrefs({ watchlistMovementAlerts: checked })} />
             </div>
           </div>
 
           {/* Paper Bot Card */}
-          <div className="rounded-md border border-[#1b2530] border-l-4 border-l-[#43d18b] bg-[#0d141c]/50 p-3">
-            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-[#43d18b] mb-2">
+          <div className="rounded-md border border-line border-l-4 border-l-positive bg-panel/50 p-3">
+            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-positive mb-2">
               <span>🤖</span> Paper Bot-Driven Alerts
             </h3>
-            <p className="text-[11px] text-[#8190a0] mb-3 leading-relaxed">
+            <p className="text-[11px] text-ink-3 mb-3 leading-relaxed">
               Real-time notifications for filled simulated orders, stop-loss executions, and trade proposals requiring approval.
             </p>
-            <div className="divide-y divide-[#1b2530]/50">
+            <div className="divide-y divide-line/50">
               <ToggleRow label="Paper bot trade alerts" checked={prefs.paperTradeAlerts} onChange={(checked) => updatePrefs({ paperTradeAlerts: checked })} />
               <ToggleRow label="Order approval alerts" checked={prefs.orderApprovalAlerts} onChange={(checked) => updatePrefs({ orderApprovalAlerts: checked })} />
             </div>
           </div>
 
           {/* General Preferences Card */}
-          <div className="rounded-md border border-[#1b2530] border-l-4 border-l-[#8190a0] bg-[#0d141c]/50 p-3">
-            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-[#a8b5c2] mb-2">
+          <div className="rounded-md border border-line border-l-4 border-l-ink-3 bg-panel/50 p-3">
+            <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-ink-2 mb-2">
               <span>⚙️</span> Delivery & Digest Rules
             </h3>
-            <p className="text-[11px] text-[#8190a0] mb-3 leading-relaxed">
+            <p className="text-[11px] text-ink-3 mb-3 leading-relaxed">
               Configure delivery windows, digests, quiet hours, and global alert settings.
             </p>
-            <div className="divide-y divide-[#1b2530]/50">
+            <div className="divide-y divide-line/50">
               <ToggleRow label="Instant alerts" checked={prefs.instantAlerts} onChange={(checked) => updatePrefs({ instantAlerts: checked })} />
               <ToggleRow label="Quiet hours" checked={prefs.quietHoursEnabled} onChange={(checked) => updatePrefs({ quietHoursEnabled: checked })} />
               <ToggleRow label="Theme alerts" checked={prefs.themeAlerts} onChange={(checked) => updatePrefs({ themeAlerts: checked })} />
@@ -725,8 +725,8 @@ export function PushNotificationSetup() {
         </button>
       </section>
 
-      {notice && <p className="font-mono text-[11px] text-[#43d18b]">{notice}</p>}
-      {error && <p className="font-mono text-[11px] text-[#ff6b6b]">{error}</p>}
+      {notice && <p className="font-mono text-[11px] text-positive">{notice}</p>}
+      {error && <p className="font-mono text-[11px] text-negative">{error}</p>}
     </div>
   );
 }

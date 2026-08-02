@@ -24,9 +24,9 @@ export function AlertStatusBadge() {
           window.dispatchEvent(new Event(OPEN_ACCOUNT_MENU_EVENT))
         }
         title="Solo: in-console signals only; no background notification delivery"
-        className="flex shrink-0 items-center gap-1.5 rounded-md border border-[#263241] bg-[#0d141c] px-2 py-1.5 font-mono text-[11px] text-[#a8b5c2] transition hover:brightness-110"
+        className="flex shrink-0 items-center gap-1.5 rounded-cell border border-line-strong bg-panel px-2 py-1.5 font-mono text-[11px] text-ink-2 transition hover:brightness-110"
       >
-        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#8190a0]" />
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink-3" />
         Solo
       </button>
     );
@@ -37,7 +37,7 @@ export function AlertStatusBadge() {
       type="button"
       onClick={() => window.dispatchEvent(new Event(OPEN_ACCOUNT_MENU_EVENT))}
       title={`Alerts: ${statusLabel} - tap to change`}
-      className={`flex shrink-0 items-center gap-1.5 rounded-md border px-2 py-1.5 font-mono text-[11px] transition hover:brightness-110 ${meta.tone}`}
+      className={`flex shrink-0 items-center gap-1.5 rounded-cell border px-2 py-1.5 font-mono text-[11px] transition hover:brightness-110 ${meta.tone}`}
     >
       <span className="relative flex h-1.5 w-1.5">
         {!isMuted && (

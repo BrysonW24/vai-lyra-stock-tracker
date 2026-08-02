@@ -65,65 +65,65 @@ export function CalendarEventDrawer({
       title={event.title}
       subtitle={event.ticker ? `${event.ticker} · ${exchangeFor(event.ticker)}` : eventTypeLabel(event.type)}
       badge={
-        <span className={`mb-1 inline-block rounded border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${eventTypeClass(event.type)}`}>
+        <span className={`mb-1 inline-block rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${eventTypeClass(event.type)}`}>
           {eventBadgeLabel(event)}
         </span>
       }
     >
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md bg-[#1b2530]">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-cell bg-line">
         {facts.map(([k, v]) => (
-          <div className="bg-[#0d1117] p-2" key={k}>
-            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{k}</p>
-            <p className="mt-0.5 truncate font-mono text-sm text-[#eef3f8] md:text-base">{v}</p>
+          <div className="bg-panel-deep p-2" key={k}>
+            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">{k}</p>
+            <p className="mt-0.5 truncate font-mono text-sm text-ink md:text-base">{v}</p>
           </div>
         ))}
       </div>
 
       {event.description && (
-        <div className="rounded-md border border-[#263241] bg-[#0d141c] p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">What this is</p>
-          <p className="mt-1.5 text-xs leading-5 text-[#dbe5ee]">{event.description}</p>
+        <div className="rounded-cell border border-line-strong bg-panel p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">What this is</p>
+          <p className="mt-1.5 text-xs leading-5 text-ink-title">{event.description}</p>
         </div>
       )}
 
       {macroMeta && (
-        <div className="rounded-md border border-[#263241] bg-[#0d141c] p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Why it matters</p>
-          <p className="mt-1.5 text-xs leading-5 text-[#a8b5c2]">{macroMeta.framing}</p>
-          <p className="mt-2 text-[10px] leading-4 text-[#5e6b78]">Research, not advice.</p>
+        <div className="rounded-cell border border-line-strong bg-panel p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Why it matters</p>
+          <p className="mt-1.5 text-xs leading-5 text-ink-2">{macroMeta.framing}</p>
+          <p className="mt-2 text-[10px] leading-4 text-ink-dim">Research, not advice.</p>
         </div>
       )}
 
       {event.ticker && (
-        <div className="rounded-md border border-[#263241] bg-[#0d141c] p-3 font-mono text-xs">
+        <div className="rounded-cell border border-line-strong bg-panel p-3 font-mono text-xs">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-[#eef3f8]">{event.ticker}</span>
-            <span className="text-[#8190a0]">{exchangeFor(event.ticker)}</span>
+            <span className="font-semibold text-ink">{event.ticker}</span>
+            <span className="text-ink-3">{exchangeFor(event.ticker)}</span>
           </div>
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-[#8190a0]">Event risk</span>
-            <span className="text-[#dbe5ee]">{eventRiskForTicker(event.ticker, signals, events, today)}</span>
+            <span className="text-ink-3">Event risk</span>
+            <span className="text-ink-title">{eventRiskForTicker(event.ticker, signals, events, today)}</span>
           </div>
         </div>
       )}
 
       {isEarnings && (
-        <div className="rounded-md border border-[#263241] bg-[#0d141c] p-3">
+        <div className="rounded-cell border border-line-strong bg-panel p-3">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Earnings detail</p>
-            <span className="rounded border border-[#9a6a1f] bg-[#2a1f0f] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[#f3a33a]">Sample</span>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Earnings detail</p>
+            <span className="rounded-full border border-accent-border bg-accent-tint px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-accent">Sample</span>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-xs">
-            <span className="text-[#8190a0]">Reports</span>
-            <span className="text-right text-[#dbe5ee]">After market close</span>
-            <span className="text-[#8190a0]">Consensus EPS</span>
-            <span className="text-right text-[#8190a0]">live next</span>
-            <span className="text-[#8190a0]">Last quarter</span>
-            <span className="text-right text-[#8190a0]">live next</span>
-            <span className="text-[#8190a0]">Forecast</span>
-            <span className="text-right text-[#8190a0]">live next</span>
+            <span className="text-ink-3">Reports</span>
+            <span className="text-right text-ink-title">After market close</span>
+            <span className="text-ink-3">Consensus EPS</span>
+            <span className="text-right text-ink-3">live next</span>
+            <span className="text-ink-3">Last quarter</span>
+            <span className="text-right text-ink-3">live next</span>
+            <span className="text-ink-3">Forecast</span>
+            <span className="text-right text-ink-3">live next</span>
           </div>
-          <p className="mt-2 text-[10px] leading-4 text-[#5e6b78]">
+          <p className="mt-2 text-[10px] leading-4 text-ink-dim">
             Consensus, last-quarter beat/miss and forecasts wire in with live fundamentals (Finnhub).
           </p>
         </div>
@@ -132,7 +132,7 @@ export function CalendarEventDrawer({
       {event.ticker && (
         <Link
           href={`/tickers/${event.ticker}`}
-          className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+          className="inline-flex min-h-[44px] items-center gap-1 rounded-cell border border-line-strong bg-panel px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-ink-2 transition hover:text-ink"
         >
           Open {event.ticker} <ArrowUpRight size={12} />
         </Link>
@@ -143,7 +143,7 @@ export function CalendarEventDrawer({
           href={macroMeta.sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+          className="inline-flex min-h-[44px] items-center gap-1 rounded-cell border border-line-strong bg-panel px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-ink-2 transition hover:text-ink"
         >
           {macroMeta.sourceLabel} <ArrowUpRight size={12} />
         </a>

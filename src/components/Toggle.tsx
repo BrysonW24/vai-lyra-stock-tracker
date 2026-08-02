@@ -26,7 +26,7 @@ export function Toggle({ checked, onChange, label, disabled }: ToggleProps) {
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-[26px] w-[44px] shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 after:absolute after:-inset-x-[2px] after:-inset-y-[9px] after:content-[''] ${
-        checked ? 'bg-[#43d18b]' : 'bg-[#39434f]'
+        checked ? 'bg-positive' : 'bg-line-hair'
       }`}
     >
       <span

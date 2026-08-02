@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, KeyRound, Sparkles, X } from 'lucide-react';
+import { ctaGradientClass } from '@/lib/ui';
 
 /**
  * First-landing AI trial splash for the command centre (CONFIGURED / prod deployments).
@@ -94,25 +95,25 @@ export function AiTrialSplash() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={welcome ? 'AI free trial' : 'AI trial ended'}>
       <button type="button" aria-label="Close" onClick={retire} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative w-full max-w-md rounded-2xl border border-[#263241] bg-[#0b1118] p-5 shadow-2xl">
+      <div className="relative w-full max-w-md rounded-panel border border-line-strong bg-panel-deep p-5 shadow-2xl">
         <button
           type="button"
           onClick={retire}
           aria-label="Close"
-          className="absolute right-1.5 top-1.5 grid h-11 w-11 place-items-center rounded text-[#5d6b79] transition hover:text-[#a8b5c2]"
+          className="absolute right-1.5 top-1.5 grid h-11 w-11 place-items-center rounded text-ink-dim transition hover:text-ink-2"
         >
           <X size={16} />
         </button>
 
-        <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-[#1E63FF] to-[#5BC8FF] text-white shadow-[0_10px_24px_-8px_rgba(30,99,255,0.7)] ring-1 ring-white/10">
+        <span className="grid h-11 w-11 place-items-center rounded-cell bg-blue-tint text-blue-info ring-1 ring-blue/30">
           {welcome ? <Sparkles size={20} /> : <KeyRound size={20} />}
         </span>
 
         {welcome ? (
           <>
-            <h2 className="mt-3 text-lg font-semibold text-[#eef3f8]">Your Lyra AI is free for 2 weeks</h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-[#a8b5c2]">
-              You have <span className="font-semibold text-[#eef3f8]">{days} {days === 1 ? 'day' : 'days'}</span> of
+            <h2 className="mt-3 text-lg font-semibold text-ink">Your Lyra AI is free for 2 weeks</h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-ink-2">
+              You have <span className="font-semibold text-ink">{days} {days === 1 ? 'day' : 'days'}</span> of
               Lyra&apos;s built-in AI included, free. When the trial ends it switches to your own AI key - about a
               minute to set up, and it stays in your browser. Your scanner, portfolio, watchlist and notifications
               keep working the whole time; only the AI chat needs a key.
@@ -120,8 +121,8 @@ export function AiTrialSplash() {
           </>
         ) : (
           <>
-            <h2 className="mt-3 text-lg font-semibold text-[#eef3f8]">Your 2 weeks of free AI are up</h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-[#a8b5c2]">
+            <h2 className="mt-3 text-lg font-semibold text-ink">Your 2 weeks of free AI are up</h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-ink-2">
               To keep Lyra&apos;s AI chat and explanations, add your own AI key - it stays in your browser and takes
               about a minute. Everything else - the scanner, your portfolio, watchlist and notifications - keeps
               working exactly as before.
@@ -130,14 +131,11 @@ export function AiTrialSplash() {
         )}
 
         <div className="mt-4 flex items-center justify-end gap-2">
-          <button type="button" onClick={retire} className="rounded-md px-3 py-2 text-xs font-medium text-[#8190a0] transition hover:text-[#c3d0dd]">
+          <button type="button" onClick={retire} className="rounded-cell px-3 py-2 text-xs font-medium text-ink-3 transition hover:text-ink-2">
             {welcome ? 'Got it' : 'Not now'}
           </button>
-          <Link
-            href="/account/ai"
-            onClick={retire}
-            className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-[#3b5bdb] to-[#43d18b] px-3.5 py-2 text-xs font-semibold text-[#07090c] transition hover:brightness-110"
-          >
+          {/* The one gradient CTA on this view (--lyra-cta-gradient). */}
+          <Link href="/account/ai" onClick={retire} className={ctaGradientClass}>
             {welcome ? 'Set up my key' : 'Add my key'} <ArrowRight size={14} />
           </Link>
         </div>

@@ -16,26 +16,26 @@ export default function ErrorBoundary({ error, reset }: { error: Error & { diges
   }, [error]);
 
   return (
-    <div className="grid min-h-screen place-items-center bg-[#080a0d] px-6 text-[#eef3f8]">
-      <div className="w-full max-w-md rounded-lg border border-[#1b2530] bg-[#0d141c] p-6 text-center">
+    <div className="grid min-h-screen place-items-center bg-ground px-6 text-ink">
+      <div className="w-full max-w-md rounded-panel border border-line bg-panel p-6 text-center">
         <div className="mb-4 flex justify-center">
           <BrandLogo size={34} />
         </div>
         <h1 className="text-base font-semibold">Something broke on this page</h1>
-        <p className="mt-2 text-sm text-[#8190a0]">
+        <p className="mt-2 text-sm text-ink-3">
           The rest of Lyra is fine - this view hit an error while rendering.
           {error.digest ? ` Reference: ${error.digest}.` : ''}
         </p>
         <div className="mt-5 flex justify-center gap-2">
           <button
             onClick={reset}
-            className="rounded-md border border-[#f3a33a]/50 bg-[#23180b] px-4 py-2 text-sm text-[#f3a33a] transition hover:bg-[#2d1f0e]"
+            className="rounded-cell border border-accent-border bg-accent-tint px-4 py-2 text-sm text-accent transition hover:brightness-110"
           >
             Try again
           </button>
           <Link
             href="/"
-            className="rounded-md border border-[#263241] bg-[#0d141c] px-4 py-2 text-sm text-[#a8b5c2] transition hover:text-[#eef3f8]"
+            className="rounded-cell border border-line-strong bg-panel px-4 py-2 text-sm text-ink-2 transition hover:text-ink"
           >
             Back to Command
           </Link>

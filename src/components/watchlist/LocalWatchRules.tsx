@@ -37,33 +37,33 @@ export function LocalWatchRules({ showEmpty = false }: { showEmpty?: boolean }) 
   if (items.length === 0 && !showEmpty) return null;
 
   return (
-    <section className="terminal-panel rounded-md p-3">
+    <section className="terminal-panel rounded-panel p-3">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#eef3f8]">Your watch rules</h2>
-        <span className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">on this device</span>
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink">Your watch rules</h2>
+        <span className="text-[9px] uppercase tracking-[0.12em] text-ink-3">on this device</span>
       </div>
       {items.length === 0 ? (
-        <p className="mt-3 rounded border border-[#263241] bg-[#0d141c] px-3 py-4 text-center text-xs text-[#8190a0]">
+        <p className="mt-3 rounded-cell border border-line-strong bg-panel px-3 py-4 text-center text-xs text-ink-3">
           No tickers on this device yet. Add one with the watch rule form.
         </p>
       ) : (
-      <ul className="mt-2 divide-y divide-[#1b2530]">
+      <ul className="mt-2 divide-y divide-line">
         {items.map((item) => (
           <li className="flex items-center gap-2 py-1.5" key={item.symbol}>
             <Link href={`/tickers/${item.symbol}`} className="flex min-w-0 flex-1 items-center gap-2">
               <TickerLogo symbol={item.symbol} size={18} />
-              <span className="font-mono text-xs font-semibold text-[#eef3f8]">{item.symbol}</span>
+              <span className="font-mono text-xs font-semibold text-ink">{item.symbol}</span>
               {item.targetBuyPrice !== undefined && (
-                <span className="font-mono text-[10px] text-[#f3a33a]">target {formatCurrency(item.targetBuyPrice)}</span>
+                <span className="font-mono text-[10px] text-accent">target {formatCurrency(item.targetBuyPrice)}</span>
               )}
-              {item.notes && <span className="truncate text-[10px] text-[#8190a0]">{item.notes}</span>}
-              <ArrowUpRight size={10} className="shrink-0 text-[#4a5a6a]" />
+              {item.notes && <span className="truncate text-[10px] text-ink-3">{item.notes}</span>}
+              <ArrowUpRight size={10} className="shrink-0 text-ink-dim" />
             </Link>
             <button
               type="button"
               aria-label={`Stop watching ${item.symbol}`}
               onClick={() => removeLocalWatchItem(item.symbol)}
-              className="rounded p-1 text-[#5e6b78] transition-colors hover:bg-[#101720] hover:text-[#ff6b6b]"
+              className="rounded-cell p-1 text-ink-dim transition-colors hover:bg-negative/10 hover:text-negative"
             >
               <X size={12} />
             </button>
@@ -71,7 +71,7 @@ export function LocalWatchRules({ showEmpty = false }: { showEmpty?: boolean }) 
         ))}
       </ul>
       )}
-      <p className="mt-2 text-[10px] leading-relaxed text-[#5e6b78]">
+      <p className="mt-2 text-[10px] leading-relaxed text-ink-dim">
         Stored in this browser only. Target proximity is computed from the latest
         available market snapshot; Solo does not send background trigger alerts.
       </p>
@@ -101,19 +101,19 @@ export function SoloWatchlistMetrics({ signals }: { signals: SignalRow[] }) {
   ).length;
 
   const metrics = [
-    ['Watching', String(items.length), 'text-[#eef3f8]'],
-    ['With targets', String(withTargets), 'text-[#f3a33a]'],
-    ['Approaching', String(approaching), 'text-[#f3a33a]'],
-    ['Triggered', String(triggered), triggered ? 'text-[#43d18b]' : 'text-[#8190a0]'],
-    ['Storage', 'Device', 'text-[#7fb0ff]'],
-    ['Delivery', 'Off', 'text-[#8190a0]'],
+    ['Watching', String(items.length), 'text-ink'],
+    ['With targets', String(withTargets), 'text-accent'],
+    ['Approaching', String(approaching), 'text-accent'],
+    ['Triggered', String(triggered), triggered ? 'text-positive' : 'text-ink-3'],
+    ['Storage', 'Device', 'text-blue-info'],
+    ['Delivery', 'Off', 'text-ink-3'],
   ];
 
   return (
     <section className="grid grid-cols-3 gap-1.5 md:grid-cols-4 xl:grid-cols-6">
       {metrics.map(([label, value, tone]) => (
-        <div className="terminal-panel rounded-md p-2" key={label}>
-          <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">
+        <div className="terminal-panel rounded-cell p-2" key={label}>
+          <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">
             {label}
           </p>
           <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>

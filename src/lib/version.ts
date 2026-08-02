@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.119.0',
+    date: '2026-08-02',
+    title: 'The convergence, round one: most of the app now speaks the Model Lab language',
+    highlights: [
+      'The app-wide restyle landed its first big wave: the shell and chrome (P0 - navigation, drawers, badges, error pages, and the font conflict resolved in favour of the native SF stack), activation cinematics, discovery and thematic surfaces, intelligence feeds, market tools, the book views, account and community, and the marketing/legal pages all converged on the lyra-ux token system. 129 files migrated with zero test regressions - 1187 of 1187 tests pass, the build is clean, and the token drift check stays green.',
+      'The old white-on-black opacity dialect is down to four straggler files, and the glass panel system now reads its colours from the versioned token variables with all accessibility fallbacks intact (reduced transparency, no-backdrop-filter, AA-safe solids).',
+      'Operational honesty note: the Form 4 insider backfill drew SEC throttling after hours at the 10 requests-per-second ceiling (failures spiked, throughput collapsed) - backed off to ~4 sustained with failed documents automatically retried on resume; the pace comment in the code now records the empirical lesson.',
+    ],
+  },
+  {
     version: '0.118.0',
     date: '2026-08-02',
     title: 'The Model Lab becomes the design north star, and the design system becomes law',

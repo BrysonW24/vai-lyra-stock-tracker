@@ -12,7 +12,7 @@ const RAMP = ['#3b5bdb', '#5bc8ff', '#43d18b', '#f3a33a', '#f0758a', '#a78bfa'];
 export function PortfolioDonut({ slices, size = 128 }: { slices: DonutSlice[]; size?: number }) {
   const total = slices.reduce((sum, s) => sum + s.value, 0);
   if (total <= 0) {
-    return <p className="text-[11px] text-[#8190a0]">Add holdings to see your composition.</p>;
+    return <p className="text-[11px] text-ink-3">Add holdings to see your composition.</p>;
   }
 
   const sorted = [...slices].sort((a, b) => b.value - a.value);
@@ -56,8 +56,8 @@ export function PortfolioDonut({ slices, size = 128 }: { slices: DonutSlice[]; s
         {segments.map((seg) => (
           <div key={seg.label} className="flex items-center gap-1.5 font-mono text-[11px]">
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: seg.color }} />
-            <span className="min-w-0 flex-1 truncate text-[#dbe5ee]">{seg.label}</span>
-            <span className="text-[#8190a0]">{Math.round((seg.value / total) * 100)}%</span>
+            <span className="min-w-0 flex-1 truncate text-ink-title">{seg.label}</span>
+            <span className="text-ink-3">{Math.round((seg.value / total) * 100)}%</span>
           </div>
         ))}
       </div>

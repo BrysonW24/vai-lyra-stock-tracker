@@ -15,40 +15,40 @@ const CAPITAL_FLOWS_TERMS: HelpTerm[] = [
 ];
 
 const TONE_CLASS: Record<'pos' | 'neg' | 'neutral', string> = {
-  pos: 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]',
-  neg: 'border-[#7f1d1d] bg-[#2b1214] text-[#ff8a8a]',
-  neutral: 'border-[#263241] bg-[#0d141c] text-[#8190a0]',
+  pos: 'border-positive/40 bg-positive-tint text-positive',
+  neg: 'border-negative/40 bg-negative/10 text-negative-soft',
+  neutral: 'border-line-strong bg-panel text-ink-3',
 };
 
 function InsiderSection() {
   const rows = listInsiderFlow();
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex items-center gap-2 border-b border-[#1b2530] px-3 py-2">
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#43d18b]">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="flex items-center gap-2 border-b border-line px-3 py-2">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-cell border border-line-strong bg-panel text-positive">
           <UserRound size={14} />
         </span>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Insider flow · Form 4</p>
-          <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">Who bought or sold - read in context (open-market vs planned, clustered, repeated).</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Insider flow · Form 4</p>
+          <p className="mt-0.5 text-[11px] leading-snug text-ink-2">Who bought or sold - read in context (open-market vs planned, clustered, repeated).</p>
         </div>
       </div>
-      <div className="divide-y divide-[#141c25]">
+      <div className="divide-y divide-line">
         {rows.map((tx) => {
           const meta = TX_META[tx.txType];
           return (
             <div key={tx.id} className="px-3 py-2.5">
               <div className="flex flex-wrap items-center gap-1.5">
                 <TickerLogo symbol={tx.symbol} companyName={tx.companyName} size={14} />
-                <span className="font-mono text-[12px] font-semibold text-[#eef3f8]">{tx.symbol}</span>
+                <span className="font-mono text-[12px] font-semibold text-ink">{tx.symbol}</span>
                 <span className={`rounded border px-1.5 py-0.5 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] ${TONE_CLASS[meta.tone]}`}>{meta.label}</span>
-                {tx.clustered && <span className="rounded border border-[#9a6a1f] bg-[#2a1f0f] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-[#f3a33a]">cluster</span>}
-                <span className="font-mono text-[10px] text-[#a8b5c2]">{tx.insider} · {tx.role}</span>
-                <span className="ml-auto font-mono text-[11px] font-semibold text-[#dbe5ee]">{formatCompactCurrency(tx.valueUsd)}</span>
+                {tx.clustered && <span className="rounded border border-accent-border bg-accent-tint px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-accent">cluster</span>}
+                <span className="font-mono text-[10px] text-ink-2">{tx.insider} · {tx.role}</span>
+                <span className="ml-auto font-mono text-[11px] font-semibold text-ink-title">{formatCompactCurrency(tx.valueUsd)}</span>
               </div>
-              <p className="mt-1 font-mono text-[10px] text-[#8190a0]">{formatNumber(tx.shares, 0)} sh · {tx.pattern} · {tx.date}</p>
-              <p className="mt-0.5 text-[10px] leading-snug text-[#a8b5c2]">{tx.context}</p>
-              <a href={tx.sourceUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 font-mono text-[9px] text-[#5e6b78] transition hover:text-[#dbe5ee]">
+              <p className="mt-1 font-mono text-[10px] text-ink-3">{formatNumber(tx.shares, 0)} sh · {tx.pattern} · {tx.date}</p>
+              <p className="mt-0.5 text-[10px] leading-snug text-ink-2">{tx.context}</p>
+              <a href={tx.sourceUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 font-mono text-[9px] text-ink-dim transition hover:text-ink-title">
                 <SourceFavicon domain="sec.gov" sourceName="SEC EDGAR" /> SEC Form 4
               </a>
             </div>
@@ -56,7 +56,7 @@ function InsiderSection() {
         })}
       </div>
       {INSIDER_FLOW_SAMPLE && (
-        <p className="border-t border-[#1b2530] px-3 py-1.5 font-mono text-[10px] text-[#5e6b78]">
+        <p className="border-t border-line px-3 py-1.5 font-mono text-[10px] text-ink-dim">
           Illustrative sample until the live Form 3/4/5 feed wires in. Form 4 is prompt but one filing proves little alone. Research only.
         </p>
       )}
@@ -67,35 +67,35 @@ function InsiderSection() {
 function CapexSection() {
   const events = listCapex();
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex items-center gap-2 border-b border-[#1b2530] px-3 py-2">
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#f3a33a]">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="flex items-center gap-2 border-b border-line px-3 py-2">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-cell border border-line-strong bg-panel text-accent">
           <Factory size={14} />
         </span>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Capex & expansion</p>
-          <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">Factory builds, datacentres, procurement + hiring - capex before it hits earnings.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Capex & expansion</p>
+          <p className="mt-0.5 text-[11px] leading-snug text-ink-2">Factory builds, datacentres, procurement + hiring - capex before it hits earnings.</p>
         </div>
       </div>
-      <div className="divide-y divide-[#141c25]">
+      <div className="divide-y divide-line">
         {events.map((e) => (
           <div key={e.id} className="px-3 py-2.5">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="rounded border border-[#263241] bg-[#0b1016] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-[#7fb0ff]">{KIND_LABEL[e.kind]}</span>
-              <span className="text-[12px] font-semibold text-[#eef3f8]">{e.recipient}</span>
-              <span className="font-mono text-[9px] text-[#5e6b78]">{e.location} · {e.date}</span>
-              <span className="ml-auto font-mono text-sm font-semibold text-[#43d18b]">{e.amount}</span>
+              <span className="rounded border border-line-strong bg-chrome px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-blue-info">{KIND_LABEL[e.kind]}</span>
+              <span className="text-[12px] font-semibold text-ink">{e.recipient}</span>
+              <span className="font-mono text-[9px] text-ink-dim">{e.location} · {e.date}</span>
+              <span className="ml-auto font-mono text-sm font-semibold text-positive">{e.amount}</span>
             </div>
-            <p className="mt-1 text-[11px] leading-snug text-[#a8b5c2]">{e.summary}</p>
-            <p className="mt-0.5 text-[10px] leading-snug text-[#a8b5c2]"><span className="font-semibold text-[#43d18b]">Why: </span>{e.why}</p>
+            <p className="mt-1 text-[11px] leading-snug text-ink-2">{e.summary}</p>
+            <p className="mt-0.5 text-[10px] leading-snug text-ink-2"><span className="font-semibold text-positive">Why: </span>{e.why}</p>
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#a8b5c2]">{e.theme}</span>
+              <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink-2">{e.theme}</span>
               {e.tickers.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[10px] text-[#dbe5ee]">
+                <span key={t} className="inline-flex items-center gap-1 rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[10px] text-ink-title">
                   <TickerLogo symbol={t} size={12} /> {t}
                 </span>
               ))}
-              <a href={e.sourceUrl} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 font-mono text-[9px] text-[#8190a0] transition hover:text-[#dbe5ee]">
+              <a href={e.sourceUrl} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 font-mono text-[9px] text-ink-3 transition hover:text-ink-title">
                 <SourceFavicon domain={new URL(e.sourceUrl).hostname} sourceName={e.source} /> {e.source}
               </a>
             </div>
@@ -103,7 +103,7 @@ function CapexSection() {
         ))}
       </div>
       {CAPEX_SAMPLE && (
-        <p className="border-t border-[#1b2530] px-3 py-1.5 font-mono text-[10px] text-[#5e6b78]">
+        <p className="border-t border-line px-3 py-1.5 font-mono text-[10px] text-ink-dim">
           Illustrative sample until live filings / permits / procurement feeds wire in. Research only.
         </p>
       )}
@@ -120,7 +120,7 @@ export function CapitalFlowsView() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2 px-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Capital flows - ownership intent + physical expansion</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Capital flows - ownership intent + physical expansion</p>
         <HelpDrawer
           title="What the terms mean"
           subtitle="Form 4, 13F, clusters and capex - in plain English"

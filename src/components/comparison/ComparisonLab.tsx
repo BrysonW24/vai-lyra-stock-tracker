@@ -124,16 +124,16 @@ export function ComparisonLab() {
   return (
     <div className="space-y-3 pb-20 md:pb-0">
       {/* Ticker Picker - search to add, with a one-tap "use my portfolio" */}
-      <section className="terminal-panel overflow-hidden rounded-md">
-        <div className="flex items-center justify-between gap-2 border-b border-[#1b2530] px-3 py-2">
+      <section className="terminal-panel overflow-hidden rounded-panel">
+        <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Ticker selector</p>
-            <p className="mt-0.5 text-[10px] text-[#a8b5c2]">Search to add - up to 6</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Ticker selector</p>
+            <p className="mt-0.5 text-[10px] text-ink-2">Search to add - up to 6</p>
           </div>
           <button
             type="button"
             onClick={usePortfolio}
-            className="shrink-0 rounded border border-[#f3a33a] bg-[#23180b] px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-[#f3a33a] transition hover:bg-[#2a1f0f]"
+            className="shrink-0 rounded-cell border border-accent-border bg-accent-tint px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] text-accent transition hover:border-accent"
           >
             Use my portfolio
           </button>
@@ -148,9 +148,9 @@ export function ComparisonLab() {
                   type="button"
                   onClick={() => removeTicker(t)}
                   title="Remove"
-                  className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d1117] px-2 py-0.5 font-mono text-[11px] font-semibold text-[#eef3f8] transition hover:border-[#ff6b6b]/50"
+                  className="inline-flex items-center gap-1 rounded-full border border-line-strong bg-panel-deep px-2 py-0.5 font-mono text-[11px] font-semibold text-ink transition hover:border-negative/50"
                 >
-                  {t} <span className="text-[#8190a0]">×</span>
+                  {t} <span className="text-ink-3">×</span>
                 </button>
               ))}
             </div>
@@ -161,19 +161,19 @@ export function ComparisonLab() {
               value={tickerSearch}
               onChange={(e) => setTickerSearch(e.target.value)}
               placeholder="Add a ticker (e.g. MSFT)"
-              className="h-8 w-full rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-xs text-[#dbe5ee] outline-none placeholder:text-[#5d6b79] focus:border-[#f3a33a]/50"
+              className="h-8 w-full rounded border border-line-strong bg-panel px-2 font-mono text-xs text-ink-title outline-none placeholder:text-ink-dim focus:border-blue-focus/50"
             />
             {tickerSearch.trim().length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {filteredTickers.length === 0 ? (
-                  <span className="font-mono text-[10px] text-[#8190a0]">No match in the comparison set</span>
+                  <span className="font-mono text-[10px] text-ink-3">No match in the comparison set</span>
                 ) : (
                   filteredTickers.slice(0, 8).map((t) => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => addTicker(t)}
-                      className="rounded border border-[#1b2530] bg-[#080a0d] px-2 py-0.5 font-mono text-[11px] text-[#8190a0] transition hover:text-[#dbe5ee]"
+                      className="rounded-full border border-line bg-ground px-2 py-0.5 font-mono text-[11px] text-ink-3 transition hover:text-ink-title"
                     >
                       + {t}
                     </button>
@@ -186,15 +186,15 @@ export function ComparisonLab() {
       </section>
 
       {selectedSeries.length === 0 ? (
-        <section className="terminal-panel rounded-md p-6 text-center">
-          <p className="text-sm text-[#8190a0]">Select tickers above to begin comparison</p>
+        <section className="terminal-panel rounded-panel p-6 text-center">
+          <p className="text-sm text-ink-3">Select tickers above to begin comparison</p>
         </section>
       ) : (
         <>
           {/* Metric Mode Switcher */}
-          <section className="terminal-panel overflow-hidden rounded-md">
-            <div className="border-b border-[#1b2530] px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+          <section className="terminal-panel overflow-hidden rounded-panel">
+            <div className="border-b border-line px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">
                 Metric
               </p>
             </div>
@@ -203,10 +203,10 @@ export function ComparisonLab() {
                 <button
                   key={mode}
                   onClick={() => setMetricMode(mode)}
-                  className={`rounded border px-2.5 py-1.5 font-mono text-[11px] font-semibold whitespace-nowrap transition ${
+                  className={`rounded-cell border px-2.5 py-1.5 font-mono text-[11px] font-semibold whitespace-nowrap transition ${
                     metricMode === mode
-                      ? 'border-[#263241] bg-[#0d1117] text-[#f3a33a]'
-                      : 'border-[#1b2530] bg-[#080a0d] text-[#8190a0] hover:text-[#dbe5ee]'
+                      ? 'border-line-strong bg-panel-deep text-accent'
+                      : 'border-line bg-ground text-ink-3 hover:text-ink-title'
                   }`}
                 >
                   {mode === 'return'
@@ -221,11 +221,11 @@ export function ComparisonLab() {
                 </button>
               ))}
             </div>
-            <p className="border-t border-[#1b2530] px-4 py-2 text-[10px] leading-relaxed text-[#8190a0]">
-              <span className="text-[#a8b5c2]">Score</span> = our 0-100 momentum-recovery read ·{' '}
-              <span className="text-[#a8b5c2]">RSI</span> = overbought/oversold gauge ·{' '}
-              <span className="text-[#a8b5c2]">MACD hist</span> = momentum turning up ·{' '}
-              <span className="text-[#a8b5c2]">Volume</span> = participation vs average. Each one feeds the Score.
+            <p className="border-t border-line px-4 py-2 text-[10px] leading-relaxed text-ink-3">
+              <span className="text-ink-2">Score</span> = our 0-100 momentum-recovery read ·{' '}
+              <span className="text-ink-2">RSI</span> = overbought/oversold gauge ·{' '}
+              <span className="text-ink-2">MACD hist</span> = momentum turning up ·{' '}
+              <span className="text-ink-2">Volume</span> = participation vs average. Each one feeds the Score.
             </p>
           </section>
 
@@ -302,17 +302,17 @@ function ComparisonChart({
   const hoverLeftPct = hover !== null ? (xAt(hover) / chartWidth) * 100 : 0;
 
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1b2530] px-4 py-3">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">
             {metricLabel} Comparison
           </p>
-          <p className="mt-1 text-xs text-[#a8b5c2]">Overlay of selected tickers over time</p>
+          <p className="mt-1 text-xs text-ink-2">Overlay of selected tickers over time</p>
         </div>
         <div className="flex flex-wrap gap-3">
           {series.map((item) => (
-            <span className="flex items-center gap-1.5 font-mono text-xs text-[#a8b5c2]" key={item.label}>
+            <span className="flex items-center gap-1.5 font-mono text-xs text-ink-2" key={item.label}>
               <span className="h-2 w-2 rounded-full" style={{ background: item.color }} />
               {item.label}
             </span>
@@ -330,6 +330,10 @@ function ComparisonChart({
         onPointerUp={() => setHover(null)}
         onPointerCancel={() => setHover(null)}
       >
+        {/* SVG paint attributes below stay literal hexes, byte-equal to the token table
+            (grid = line #1b2530, hover guide = ink-dim #5e6b78) - var() does not resolve
+            in fill=/stroke= attributes; see lyra-ux/notes/2026-08-02-p0.md. Series colours
+            come from lib/comparison series data, not this file. */}
         <svg
           className="h-full w-full"
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
@@ -347,7 +351,7 @@ function ComparisonChart({
                 x2={chartWidth}
                 y1={y}
                 y2={y}
-                stroke="#17202a"
+                stroke="#1b2530"
                 strokeWidth="1"
               />
             );
@@ -374,7 +378,7 @@ function ComparisonChart({
               x2={xAt(hover)}
               y1={pad}
               y2={chartHeight - pad}
-              stroke="#5d6b79"
+              stroke="#5e6b78"
               strokeWidth="1"
               strokeDasharray="4 4"
               vectorEffect="non-scaling-stroke"
@@ -387,13 +391,13 @@ function ComparisonChart({
           series.map((item) => (
             <div
               key={item.label}
-              className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#0b1016]"
+              className="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-chrome"
               style={{ left: `${hoverLeftPct}%`, top: `${(yAt(item.values[hover]) / chartHeight) * 100}%`, background: item.color }}
             />
           ))}
 
         {/* Time labels */}
-        <div className="absolute bottom-2 left-3 right-3 flex justify-between font-mono text-[10px] text-[#5d6b79]">
+        <div className="absolute bottom-2 left-3 right-3 flex justify-between font-mono text-[10px] text-ink-dim">
           {timeLabels.map((label, idx) => (
             <span key={idx}>{label}</span>
           ))}
@@ -401,20 +405,20 @@ function ComparisonChart({
 
         {/* Scrubber readout while hovering, else the static min/max bounds */}
         {hover !== null && hoverTs ? (
-          <div className="pointer-events-none absolute left-3 top-3 z-10 rounded border border-[#263241] bg-[#0d141c]/95 px-2 py-1.5 font-mono shadow-lg">
-            <p className="text-[10px] font-semibold text-[#dbe5ee]">{formatPointDateTime(hoverTs)}</p>
+          <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-cell border border-line-strong bg-panel/95 px-2 py-1.5 font-mono shadow-lg">
+            <p className="text-[10px] font-semibold text-ink-title">{formatPointDateTime(hoverTs)}</p>
             <div className="mt-1 space-y-0.5">
               {series.map((item) => (
                 <div key={item.label} className="flex items-center gap-2 text-[10px]">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: item.color }} />
-                  <span className="text-[#8190a0]">{item.label}</span>
-                  <span className="ml-auto text-[#eef3f8]">{formatNumber(item.values[hover], 2)}</span>
+                  <span className="text-ink-3">{item.label}</span>
+                  <span className="ml-auto text-ink">{formatNumber(item.values[hover], 2)}</span>
                 </div>
               ))}
             </div>
           </div>
         ) : (
-          <div className="absolute right-3 top-3 rounded border border-[#263241] bg-[#0d141c]/90 px-2 py-1 font-mono text-[11px] text-[#a8b5c2]">
+          <div className="absolute right-3 top-3 rounded-cell border border-line-strong bg-panel/90 px-2 py-1 font-mono text-[11px] text-ink-2">
             {formatNumber(max, 2)} / {formatNumber(min, 2)}
           </div>
         )}
@@ -447,18 +451,18 @@ function ComparisonTable({
 }) {
   // Desktop version
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="border-b border-[#1b2530] px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="border-b border-line px-4 py-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">
           Comparison Table
         </p>
-        <p className="mt-1 text-xs text-[#a8b5c2]">Latest metrics and relative strength ranking</p>
+        <p className="mt-1 text-xs text-ink-2">Latest metrics and relative strength ranking</p>
       </div>
 
       {/* Desktop table */}
       <div className="hidden overflow-x-auto md:block">
         <table className="min-w-full text-left text-xs">
-          <thead className="bg-[#0b1016] font-mono uppercase text-[#8190a0]">
+          <thead className="bg-chrome font-mono uppercase text-ink-3">
             <tr>
               <th className="px-3 py-2">Ticker</th>
               <th className="px-3 py-2">Return %</th>
@@ -471,24 +475,24 @@ function ComparisonTable({
               <th className="px-3 py-2">Strength %</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1b2530]">
+          <tbody className="divide-y divide-line">
             {rows.map((row) => (
-              <tr className="font-mono text-[#dbe5ee] hover:bg-[#101720]" key={row.ticker}>
-                <td className="px-3 py-2 font-semibold text-[#eef3f8]">{row.ticker}</td>
-                <td className={`px-3 py-2 ${row.latestReturn > 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+              <tr className="font-mono text-ink-title hover:bg-line/30" key={row.ticker}>
+                <td className="px-3 py-2 font-semibold text-ink">{row.ticker}</td>
+                <td className={`px-3 py-2 ${row.latestReturn > 0 ? 'text-positive' : 'text-negative'}`}>
                   {formatSignedPercent(row.latestReturn, 2)}
                 </td>
                 <td className="px-3 py-2">{row.latestScore}</td>
                 <td className="px-3 py-2">{formatNumber(row.latestRsi)}</td>
                 <td
-                  className={`px-3 py-2 ${row.latestMacd > 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}
+                  className={`px-3 py-2 ${row.latestMacd > 0 ? 'text-positive' : 'text-negative'}`}
                 >
                   {formatNumber(row.latestMacd, 3)}
                 </td>
                 <td className="px-3 py-2">{formatNumber(row.latestVolume, 2)}x</td>
-                <td className="px-3 py-2 text-[#f3a33a]">{row.returnRank}</td>
-                <td className="px-3 py-2 text-[#60a5fa]">{row.scoreRank}</td>
-                <td className="px-3 py-2 text-[#43d18b]">{row.relativeStrength}%</td>
+                <td className="px-3 py-2 text-accent">{row.returnRank}</td>
+                <td className="px-3 py-2 text-blue-focus">{row.scoreRank}</td>
+                <td className="px-3 py-2 text-positive">{row.relativeStrength}%</td>
               </tr>
             ))}
           </tbody>
@@ -496,34 +500,34 @@ function ComparisonTable({
       </div>
 
       {/* Mobile card layout */}
-      <div className="divide-y divide-[#1b2530] md:hidden">
+      <div className="divide-y divide-line md:hidden">
         {rows.map((row) => (
           <div className="grid grid-cols-[48px_1fr] gap-3 px-3 py-3" key={row.ticker}>
             <div>
-              <p className="font-mono text-lg font-semibold text-[#eef3f8]">{row.ticker}</p>
+              <p className="font-mono text-lg font-semibold text-ink">{row.ticker}</p>
               <div
                 className="mt-1 h-2 w-full rounded"
                 style={{ background: row.color, opacity: 0.6 }}
               />
             </div>
             <div className="min-w-0 space-y-1">
-              <p className="flex justify-between font-mono text-xs text-[#dbe5ee]">
+              <p className="flex justify-between font-mono text-xs text-ink-title">
                 <span>Return</span>
                 <span
-                  className={row.latestReturn > 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}
+                  className={row.latestReturn > 0 ? 'text-positive' : 'text-negative'}
                 >
                   {formatSignedPercent(row.latestReturn, 1)}
                 </span>
               </p>
-              <p className="flex justify-between font-mono text-xs text-[#dbe5ee]">
+              <p className="flex justify-between font-mono text-xs text-ink-title">
                 <span>Score</span>
                 <span>{row.latestScore}</span>
               </p>
-              <p className="flex justify-between font-mono text-xs text-[#a8b5c2]">
+              <p className="flex justify-between font-mono text-xs text-ink-2">
                 <span>Strength</span>
-                <span className="text-[#43d18b]">{row.relativeStrength}%</span>
+                <span className="text-positive">{row.relativeStrength}%</span>
               </p>
-              <p className="flex justify-between font-mono text-xs text-[#8190a0]">
+              <p className="flex justify-between font-mono text-xs text-ink-3">
                 <span>RSI / Hist</span>
                 <span>
                   {formatNumber(row.latestRsi)} / {formatNumber(row.latestMacd, 2)}

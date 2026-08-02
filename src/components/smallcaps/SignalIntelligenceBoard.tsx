@@ -20,13 +20,13 @@ interface SignalIntelligenceBoardProps {
 }
 
 const KIND_ICON: Record<SignalKind, React.ReactNode> = {
-  'gov-award': <Landmark size={10} className="text-[#8aa2ff]" />,
-  'capital-event': <Building2 size={10} className="text-[#8aa2ff]" />,
-  'big-tech-backing': <Cpu size={10} className="text-[#f3a33a]" />,
-  institutional: <Wallet size={10} className="text-[#5fd08a]" />,
-  bottleneck: <Gauge size={10} className="text-[#f3a33a]" />,
-  momentum: <TrendingUp size={10} className="text-[#43d18b]" />,
-  lifecycle: <Layers size={10} className="text-[#b79cff]" />,
+  'gov-award': <Landmark size={10} className="text-pending" />,
+  'capital-event': <Building2 size={10} className="text-pending" />,
+  'big-tech-backing': <Cpu size={10} className="text-accent" />,
+  institutional: <Wallet size={10} className="text-positive" />,
+  bottleneck: <Gauge size={10} className="text-accent" />,
+  momentum: <TrendingUp size={10} className="text-positive" />,
+  lifecycle: <Layers size={10} className="text-pending" />,
 };
 
 const HELP_TERMS: HelpTerm[] = [
@@ -37,9 +37,9 @@ const HELP_TERMS: HelpTerm[] = [
 ];
 
 function ConvergenceBar({ score }: { score: number }) {
-  const tone = score >= 55 ? 'bg-[#43d18b]' : score >= 40 ? 'bg-[#f3a33a]' : 'bg-[#5e6b78]';
+  const tone = score >= 55 ? 'bg-positive' : score >= 40 ? 'bg-accent' : 'bg-ink-dim';
   return (
-    <span className="relative h-1.5 w-14 overflow-hidden rounded-full bg-[#0d141c]">
+    <span className="relative h-1.5 w-14 overflow-hidden rounded-full bg-panel">
       <span className={`absolute inset-y-0 left-0 rounded-full ${tone}`} style={{ width: `${score}%` }} />
     </span>
   );
@@ -50,14 +50,14 @@ function DataPointRow({ p }: { p: SignalDataPoint }) {
     <li className="flex items-start gap-1.5 text-[9px] leading-snug">
       <span className="mt-px shrink-0">{KIND_ICON[p.kind]}</span>
       <span className="min-w-0 flex-1">
-        <span className="font-semibold text-[#dbe5ee]">{p.headline}</span>
-        <span className="text-[#8190a0]"> - {p.detail}</span>
+        <span className="font-semibold text-ink-title">{p.headline}</span>
+        <span className="text-ink-3"> - {p.detail}</span>
       </span>
-      <span className="shrink-0 font-mono text-[8px] text-[#5e6b78]">{p.date ?? '·'}</span>
-      <span className={`shrink-0 rounded px-1 py-px font-mono text-[8px] ${p.freshness === 'live' ? 'bg-[#0d251b] text-[#43d18b]' : 'bg-[#0d141c] text-[#6f7d8a]'}`}>
+      <span className="shrink-0 font-mono text-[8px] text-ink-dim">{p.date ?? '·'}</span>
+      <span className={`shrink-0 rounded px-1 py-px font-mono text-[8px] ${p.freshness === 'live' ? 'bg-positive-tint text-positive' : 'bg-panel text-ink-dim'}`}>
         {p.freshness === 'live' ? 'live' : 'smpl'}
       </span>
-      <span className="numeric w-5 shrink-0 text-right font-mono text-[9px] font-semibold text-[#dbe5ee]">{p.score}</span>
+      <span className="numeric w-5 shrink-0 text-right font-mono text-[9px] font-semibold text-ink-title">{p.score}</span>
     </li>
   );
 }
@@ -66,12 +66,12 @@ export function SignalIntelligenceBoard({ convergence, stats, generatedAt }: Sig
   const top = convergence.filter((c) => c.kinds.length >= 2).slice(0, 8);
 
   return (
-    <section className="terminal-panel space-y-2.5 rounded-md p-3">
+    <section className="terminal-panel space-y-2.5 rounded-panel p-3">
       <div className="flex items-center gap-2">
-        <Radar size={16} className="text-[#43d18b]" />
-        <h2 className="text-sm font-semibold text-[#eef3f8]">Signal intelligence</h2>
+        <Radar size={16} className="text-positive" />
+        <h2 className="text-sm font-semibold text-ink">Signal intelligence</h2>
         <span
-          className="ml-auto rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#8190a0]"
+          className="ml-auto rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink-3"
           title={`Generated ${generatedAt}`}
         >
           {stats.dataPoints} signals · {stats.convergentEntities} converging
@@ -85,11 +85,11 @@ export function SignalIntelligenceBoard({ convergence, stats, generatedAt }: Sig
           footnote="Every score here is deterministic. The AI can explain a convergence but never invents one. Research only - nothing here is a buy or sell call."
         />
       </div>
-      <p className="text-[10px] leading-snug text-[#a8b5c2]">
+      <p className="text-[10px] leading-snug text-ink-2">
         Where multiple independent signals line up right now - government backing, capital, institutional buying,
         supply-chain bottlenecks and turning momentum - ranked by conviction. The most effective data points, first.
       </p>
-      <p className="text-[10px] leading-snug text-[#5a6b7d]">
+      <p className="text-[10px] leading-snug text-ink-dim">
         Conviction measures how strongly signals agree today - it is not a track record. No forward-return outcomes are
         recorded for convergence yet, so a high score has no proven hit rate behind it. Research only.
       </p>
@@ -98,26 +98,26 @@ export function SignalIntelligenceBoard({ convergence, stats, generatedAt }: Sig
         {top.map((c) => (
           <details
             key={c.entity}
-            className="group overflow-hidden rounded-md border border-[#1b2530] bg-[#0d1117]"
+            className="group overflow-hidden rounded-cell border border-line bg-panel-deep"
             onToggle={(e) => {
               if (e.currentTarget.open) {
                 captureInteraction({ eventType: 'convergence_expand', entityType: 'convergence', entityId: c.entity });
               }
             }}
           >
-            <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 py-2 transition hover:bg-[#101720]">
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 py-2 transition hover:bg-panel">
               <TickerLogo symbol={c.entity} companyName={c.name} size={13} />
-              <span className="shrink-0 font-mono text-[11px] font-semibold text-[#eef3f8]">{c.entity}</span>
-              <span className="min-w-0 flex-1 truncate text-[10px] text-[#8190a0]">{c.narrative}</span>
+              <span className="shrink-0 font-mono text-[11px] font-semibold text-ink">{c.entity}</span>
+              <span className="min-w-0 flex-1 truncate text-[10px] text-ink-3">{c.narrative}</span>
               <span className="hidden shrink-0 items-center gap-1 sm:flex">
                 {c.kinds.map((k) => (
                   <span key={k} title={SIGNAL_KIND_LABEL[k]}>{KIND_ICON[k]}</span>
                 ))}
               </span>
               <ConvergenceBar score={c.convergenceScore} />
-              <span className="numeric w-6 shrink-0 text-right font-mono text-sm font-semibold text-[#eef3f8]">{c.convergenceScore}</span>
+              <span className="numeric w-6 shrink-0 text-right font-mono text-sm font-semibold text-ink">{c.convergenceScore}</span>
             </summary>
-            <div className="border-t border-[#1b2530] px-2.5 py-2">
+            <div className="border-t border-line px-2.5 py-2">
               <ul className="space-y-1">
                 {c.points.map((p, i) => (
                   <DataPointRow key={`${p.kind}-${i}`} p={p} />
@@ -127,16 +127,16 @@ export function SignalIntelligenceBoard({ convergence, stats, generatedAt }: Sig
           </details>
         ))}
         {top.length === 0 && (
-          <p className="p-2 text-[11px] text-[#a8b5c2]">No multi-signal convergence in the current data window.</p>
+          <p className="p-2 text-[11px] text-ink-2">No multi-signal convergence in the current data window.</p>
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-[#1b2530] pt-2 font-mono text-[9px] text-[#5e6b78]">
-        <span className="inline-flex items-center gap-1"><Landmark size={9} className="text-[#8aa2ff]" /> gov</span>
-        <span className="inline-flex items-center gap-1"><Cpu size={9} className="text-[#f3a33a]" /> big-tech</span>
-        <span className="inline-flex items-center gap-1"><Wallet size={9} className="text-[#5fd08a]" /> institutional</span>
-        <span className="inline-flex items-center gap-1"><Gauge size={9} className="text-[#f3a33a]" /> bottleneck</span>
-        <span className="inline-flex items-center gap-1"><TrendingUp size={9} className="text-[#43d18b]" /> momentum</span>
+      <div className="flex flex-wrap items-center gap-2 border-t border-line pt-2 font-mono text-[9px] text-ink-dim">
+        <span className="inline-flex items-center gap-1"><Landmark size={9} className="text-pending" /> gov</span>
+        <span className="inline-flex items-center gap-1"><Cpu size={9} className="text-accent" /> big-tech</span>
+        <span className="inline-flex items-center gap-1"><Wallet size={9} className="text-positive" /> institutional</span>
+        <span className="inline-flex items-center gap-1"><Gauge size={9} className="text-accent" /> bottleneck</span>
+        <span className="inline-flex items-center gap-1"><TrendingUp size={9} className="text-positive" /> momentum</span>
         <span className="ml-auto">{stats.liveDataPoints} live of {stats.dataPoints}</span>
       </div>
     </section>

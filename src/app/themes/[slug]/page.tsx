@@ -42,14 +42,14 @@ export default async function ThemeDetailPage({ params }: { params: Promise<{ sl
         <TwinCaptureBeacon eventType="theme_open" entityType="theme" entityId={slug} />
         <Link
           href="/themes"
-          className="inline-flex items-center gap-1 font-mono text-xs text-[#8190a0] transition hover:text-[#eef3f8]"
+          className="inline-flex items-center gap-1 font-mono text-xs text-ink-3 transition hover:text-ink"
         >
           <ArrowLeft size={12} /> World Radar
         </Link>
 
         <ThemeDossier theme={theme} nodes={nodes} companies={companies} events={events} investors={investors} />
 
-        <p className="text-[10px] text-[#6f7d8a]">
+        <p className="text-[10px] text-ink-dim">
           Research only - not financial advice. Scores are deterministic research rankings, not recommendations.
         </p>
       </div>

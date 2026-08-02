@@ -11,11 +11,11 @@ interface InvestorRadarProps {
 
 /** Colour-coded chip tones per disclosed action. Accumulation greens, distribution amber/red. */
 const ACTION_CHIP: Record<InvestorAction, string> = {
-  new: 'border-[#1f5132] bg-[#0f2417] text-[#43d18b]',
-  increase: 'border-[#1f5132] bg-[#0f2417] text-[#5fd08a]',
-  hold: 'border-[#3a4754] bg-[#0d141c] text-[#a8b5c2]',
-  reduce: 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]',
-  exit: 'border-[#7a2630] bg-[#260f12] text-[#f0758a]',
+  new: 'border-positive/40 bg-positive-tint text-positive',
+  increase: 'border-positive/40 bg-positive-tint text-positive',
+  hold: 'border-line-hair bg-panel text-ink-2',
+  reduce: 'border-accent-border bg-accent-tint text-accent',
+  exit: 'border-negative/40 bg-negative/10 text-negative-soft',
 };
 
 const ACTION_LABEL: Record<InvestorAction, string> = {
@@ -67,34 +67,34 @@ export function InvestorRadar({ investors, themesBySlug, smallCapSymbols }: Inve
 
   return (
     <div className="space-y-3">
-      <section className="rounded-md border border-[#9a6a1f] bg-[#2a1f0f] p-2.5">
-        <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#f3a33a]">Delayed filing data</p>
-        <p className="mt-1 text-[10px] leading-4 text-[#d9c9a8]">{FILING_CAVEAT}</p>
+      <section className="rounded-cell border border-accent-border bg-accent-tint p-2.5">
+        <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-accent">Delayed filing data</p>
+        <p className="mt-1 text-[10px] leading-4 text-ink-2">{FILING_CAVEAT}</p>
       </section>
 
       <div className="grid grid-cols-3 gap-1.5">
         {([
-          ['Managers tracked', investors.length, 'text-[#eef3f8]'],
-          ['New positions', newPositions, 'text-[#43d18b]'],
-          ['Small caps held', smallCapMoves, 'text-[#a78bfa]'],
+          ['Managers tracked', investors.length, 'text-ink'],
+          ['New positions', newPositions, 'text-positive'],
+          ['Small caps held', smallCapMoves, 'text-pending'],
         ] as const).map(([label, count, tone]) => (
-          <div className="rounded-md border border-[#263241] bg-[#0d141c] p-2" key={label}>
-            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
+          <div className="rounded-cell border border-line-strong bg-panel p-2" key={label}>
+            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">{label}</p>
             <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{count}</p>
           </div>
         ))}
       </div>
 
       {investors.map((inv) => (
-        <section className="terminal-panel rounded-md p-3" key={inv.id}>
+        <section className="terminal-panel rounded-panel p-3" key={inv.id}>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <h2 className="text-[13px] font-semibold text-[#eef3f8]">{inv.name}</h2>
-            <span className="text-[10px] text-[#8190a0]">{inv.firm}</span>
+            <h2 className="text-[13px] font-semibold text-ink">{inv.name}</h2>
+            <span className="text-[10px] text-ink-3">{inv.firm}</span>
           </div>
-          <p className="mt-0.5 font-mono text-[10px] text-[#8190a0]">
+          <p className="mt-0.5 font-mono text-[10px] text-ink-3">
             {inv.filingType} - period ended {inv.periodEnd} - filed {inv.filingDate}
           </p>
-          <p className="mt-1 text-[11px] leading-snug text-[#a8b5c2]">{inv.strategy}</p>
+          <p className="mt-1 text-[11px] leading-snug text-ink-2">{inv.strategy}</p>
 
           {inv.themes.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1">
@@ -102,7 +102,7 @@ export function InvestorRadar({ investors, themesBySlug, smallCapSymbols }: Inve
                 const theme = themesBySlug[slug];
                 return (
                   <span
-                    className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 text-[9px] text-[#a8b5c2]"
+                    className="rounded border border-line-strong bg-panel px-1.5 py-0.5 text-[9px] text-ink-2"
                     key={slug}
                   >
                     {theme ? `${theme.emoji} ${theme.name}` : slug}
@@ -115,7 +115,7 @@ export function InvestorRadar({ investors, themesBySlug, smallCapSymbols }: Inve
           <div className="mt-2 space-y-1">
             {inv.moves.map((move, i) => (
               <div
-                className="rounded-md border border-[#1b2530] bg-[#0d1117] px-2 py-1.5"
+                className="rounded-cell border border-line bg-panel-deep px-2 py-1.5"
                 key={`${move.symbol}-${move.action}-${i}`}
               >
                 <div className="flex items-center gap-1.5">
@@ -125,36 +125,36 @@ export function InvestorRadar({ investors, themesBySlug, smallCapSymbols }: Inve
                     {ACTION_LABEL[move.action]}
                   </span>
                   <TickerLogo symbol={move.symbol} companyName={move.name} size={13} />
-                  <span className="shrink-0 font-mono text-[11px] font-semibold text-[#eef3f8]">{move.symbol}</span>
-                  <span className="min-w-0 flex-1 truncate text-[10px] text-[#8190a0]">{move.name}</span>
+                  <span className="shrink-0 font-mono text-[11px] font-semibold text-ink">{move.symbol}</span>
+                  <span className="min-w-0 flex-1 truncate text-[10px] text-ink-3">{move.name}</span>
                   {smallCapSet.has(move.symbol) && (
-                    <span className="shrink-0 rounded border border-[#4c3a7a] bg-[#1a1430] px-1 py-px font-mono text-[8px] tracking-[0.08em] text-[#a78bfa]">
+                    <span className="shrink-0 rounded border border-pending/40 bg-pending/10 px-1 py-px font-mono text-[8px] tracking-[0.08em] text-pending">
                       SMALL CAP
                     </span>
                   )}
                   {typeof move.weightPct === 'number' && (
-                    <span className="shrink-0 font-mono text-[10px] text-[#a8b5c2]">
+                    <span className="shrink-0 font-mono text-[10px] text-ink-2">
                       {move.weightPct.toFixed(1)}% of book
                     </span>
                   )}
                 </div>
-                {move.note && <p className="mt-1 text-[10px] leading-4 text-[#8190a0]">{move.note}</p>}
+                {move.note && <p className="mt-1 text-[10px] leading-4 text-ink-3">{move.note}</p>}
               </div>
             ))}
           </div>
         </section>
       ))}
 
-      <section className="terminal-panel rounded-md p-3">
-        <p className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">Across managers</p>
-        <p className="mt-1 text-[10px] leading-4 text-[#a8b5c2]">
+      <section className="terminal-panel rounded-panel p-3">
+        <p className="text-[9px] uppercase tracking-[0.12em] text-ink-3">Across managers</p>
+        <p className="mt-1 text-[10px] leading-4 text-ink-2">
           Symbols touched by 2+ tracked managers. Convergence reads as conviction - but it is also how crowding starts.
         </p>
         {convergence.length > 0 ? (
           <div className="mt-1.5 flex flex-wrap gap-1">
             {convergence.map(({ symbol, count }) => (
               <span
-                className="rounded border border-[#2a4a7a] bg-[#0f1a2c] px-1.5 py-0.5 font-mono text-[10px] text-[#7fb0ff]"
+                className="rounded border border-blue-info/40 bg-blue-tint px-1.5 py-0.5 font-mono text-[10px] text-blue-info"
                 key={symbol}
               >
                 {symbol} x{count}
@@ -162,16 +162,16 @@ export function InvestorRadar({ investors, themesBySlug, smallCapSymbols }: Inve
             ))}
           </div>
         ) : (
-          <p className="mt-1.5 text-[10px] text-[#8190a0]">No symbol overlap across tracked managers this period.</p>
+          <p className="mt-1.5 text-[10px] text-ink-3">No symbol overlap across tracked managers this period.</p>
         )}
       </section>
 
-      <section className="terminal-panel rounded-md p-3">
-        <p className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">What 13F does not show</p>
-        <ul className="mt-1.5 space-y-1 text-[10px] leading-4 text-[#8190a0]">
+      <section className="terminal-panel rounded-panel p-3">
+        <p className="text-[9px] uppercase tracking-[0.12em] text-ink-3">What 13F does not show</p>
+        <ul className="mt-1.5 space-y-1 text-[10px] leading-4 text-ink-3">
           {NOT_SHOWN.map((item) => (
             <li className="flex gap-1.5" key={item}>
-              <span className="shrink-0 text-[#3a4754]">-</span>
+              <span className="shrink-0 text-line-hair">-</span>
               <span>{item}</span>
             </li>
           ))}

@@ -68,18 +68,21 @@ function SimpleLineChart({
   return (
     <div className="mt-3 flex flex-col items-center">
       <svg viewBox={`0 0 ${width} ${height}`} className="h-20 w-full" xmlns="http://www.w3.org/2000/svg">
-        {/* Grid lines */}
+        {/* Grid lines. SVG paint attributes stay literal hexes, byte-equal to the token
+            table (line-strong #263241, blue-info #7fb0ff) - var() does not resolve in
+            fill=/stroke= attributes; see lyra-ux/notes/2026-08-02-p0.md. Projection lines
+            use the blue chart scale, not status green: a balance curve is not a gain/loss. */}
         <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#263241" strokeWidth="1" />
         <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#263241" strokeWidth="1" />
 
         {/* Path */}
-        <path d={pathData} stroke="#43d18b" strokeWidth="2" fill="none" vectorEffect="non-scaling-stroke" />
+        <path d={pathData} stroke="#7fb0ff" strokeWidth="2" fill="none" vectorEffect="non-scaling-stroke" />
 
         {/* Gradient fill under path */}
         <defs>
           <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#43d18b', stopOpacity: 0.2 }} />
-            <stop offset="100%" style={{ stopColor: '#43d18b', stopOpacity: 0 }} />
+            <stop offset="0%" style={{ stopColor: '#7fb0ff', stopOpacity: 0.2 }} />
+            <stop offset="100%" style={{ stopColor: '#7fb0ff', stopOpacity: 0 }} />
           </linearGradient>
         </defs>
         <path
@@ -88,7 +91,7 @@ function SimpleLineChart({
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-      <p className="mt-1 text-xs text-[#8190a0]">{label}</p>
+      <p className="mt-1 text-xs text-ink-3">{label}</p>
     </div>
   );
 }
@@ -191,16 +194,16 @@ export function CalculatorsView() {
   return (
     <div className="space-y-3 pb-20 md:pb-0">
       {/* Tab Navigation */}
-      <div className="terminal-panel overflow-hidden rounded-md">
-        <div className="flex flex-wrap gap-1 border-b border-[#1b2530] px-3 py-3">
+      <div className="terminal-panel overflow-hidden rounded-panel">
+        <div className="flex flex-wrap gap-1 border-b border-line px-3 py-3">
           {(Object.keys(tabLabels) as Tab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => handleTabChange(tab)}
-              className={`rounded px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] transition ${
+              className={`rounded-cell px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] transition ${
                 activeTab === tab
-                  ? 'bg-[#1a3a2a] text-[#43d18b] border border-[#43d18b]'
-                  : 'bg-[#0d141c] text-[#a8b5c2] border border-[#263241] hover:text-[#eef3f8]'
+                  ? 'border border-accent-border bg-accent-tint text-accent'
+                  : 'border border-line-strong bg-panel text-ink-2 hover:text-ink'
               }`}
             >
               {tabLabels[tab]}
@@ -212,14 +215,14 @@ export function CalculatorsView() {
       {/* Compound Interest Tab */}
       {activeTab === 'compound' && (
         <section className="grid gap-3 lg:grid-cols-[1fr_1fr]">
-          <div className="terminal-panel overflow-hidden rounded-md">
-            <div className="border-b border-[#1b2530] px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Compound Interest</p>
-              <p className="mt-1 font-mono text-xs text-[#a8b5c2]">Project investment growth</p>
+          <div className="terminal-panel overflow-hidden rounded-panel">
+            <div className="border-b border-line px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Compound Interest</p>
+              <p className="mt-1 font-mono text-xs text-ink-2">Project investment growth</p>
             </div>
             <div className="space-y-3 p-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Initial Principal ${ciPrincipal.toLocaleString()}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Initial Principal ${ciPrincipal.toLocaleString()}</label>
                 <input
                   type="range"
                   min="100"
@@ -234,7 +237,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Monthly Contribution ${ciMonthly.toLocaleString()}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Monthly Contribution ${ciMonthly.toLocaleString()}</label>
                 <input
                   type="range"
                   min="0"
@@ -249,7 +252,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Annual Rate {ciRate.toFixed(2)}%</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Annual Rate {ciRate.toFixed(2)}%</label>
                 <input
                   type="range"
                   min="0"
@@ -264,7 +267,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Years {ciYears}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Years {ciYears}</label>
                 <input
                   type="range"
                   min="1"
@@ -279,43 +282,43 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Compounding</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Compounding</label>
                 <select
                   value={ciCompounding}
                   onChange={(e) => {
                     setCiCompounding(Number(e.target.value));
                     handleCompoundInterest();
                   }}
-                  className="mt-1 w-full rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-xs text-[#eef3f8]"
+                  className="mt-1 w-full rounded-cell border border-line-strong bg-panel px-2 py-1 font-mono text-xs text-ink"
                 >
                   <option value={1}>Annual</option>
                   <option value={4}>Quarterly</option>
                   <option value={12}>Monthly</option>
                 </select>
               </div>
-              <p className="mt-4 border-t border-[#1b2530] pt-3 text-[11px] uppercase tracking-[0.14em] text-[#8190a0]">Estimates only - not financial advice</p>
+              <p className="mt-4 border-t border-line pt-3 text-[11px] uppercase tracking-[0.14em] text-ink-3">Estimates only - not financial advice</p>
             </div>
           </div>
 
           {ciResult && (
-            <div className="terminal-panel overflow-hidden rounded-md">
-              <div className="border-b border-[#1b2530] px-3 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#43d18b]">Projection</p>
+            <div className="terminal-panel overflow-hidden rounded-panel">
+              <div className="border-b border-line px-3 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-title">Projection</p>
               </div>
               <div className="space-y-3 p-3 font-mono text-sm">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-[#8190a0]">Final Balance</p>
-                    <p className="mt-1 text-lg font-semibold text-[#eef3f8]">{formatCurrency(ciResult.finalBalance)}</p>
+                    <p className="text-xs text-ink-3">Final Balance</p>
+                    <p className="mt-1 text-lg font-semibold text-ink">{formatCurrency(ciResult.finalBalance)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#8190a0]">Total Interest</p>
-                    <p className="mt-1 text-lg font-semibold text-[#43d18b]">{formatCurrency(ciResult.totalInterest)}</p>
+                    <p className="text-xs text-ink-3">Total Interest</p>
+                    <p className="mt-1 text-lg font-semibold text-positive">{formatCurrency(ciResult.totalInterest)}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-[#8190a0]">Total Contributed</p>
-                  <p className="mt-1 font-semibold text-[#dbe5ee]">{formatCurrency(ciResult.totalContributed)}</p>
+                  <p className="text-xs text-ink-3">Total Contributed</p>
+                  <p className="mt-1 font-semibold text-ink-title">{formatCurrency(ciResult.totalContributed)}</p>
                 </div>
                 {ciResult.periodBalances.length > 1 && (
                   <SimpleLineChart
@@ -332,14 +335,14 @@ export function CalculatorsView() {
       {/* Dividends Tab */}
       {activeTab === 'dividends' && (
         <section className="grid gap-3 lg:grid-cols-[1fr_1fr]">
-          <div className="terminal-panel overflow-hidden rounded-md">
-            <div className="border-b border-[#1b2530] px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Dividend Income</p>
-              <p className="mt-1 font-mono text-xs text-[#a8b5c2]">Model dividend growth + DRIP</p>
+          <div className="terminal-panel overflow-hidden rounded-panel">
+            <div className="border-b border-line px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Dividend Income</p>
+              <p className="mt-1 font-mono text-xs text-ink-2">Model dividend growth + DRIP</p>
             </div>
             <div className="space-y-3 p-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Initial Investment ${divInvestment.toLocaleString()}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Initial Investment ${divInvestment.toLocaleString()}</label>
                 <input
                   type="range"
                   min="100"
@@ -354,7 +357,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Share Price ${divPrice.toFixed(2)}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Share Price ${divPrice.toFixed(2)}</label>
                 <input
                   type="range"
                   min="1"
@@ -369,7 +372,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Dividend Yield {divYield.toFixed(2)}%</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Dividend Yield {divYield.toFixed(2)}%</label>
                 <input
                   type="range"
                   min="0"
@@ -384,7 +387,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">
+                <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">
                   <input
                     type="checkbox"
                     checked={divDrip}
@@ -398,7 +401,7 @@ export function CalculatorsView() {
                 </label>
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Annual Dividend Growth {divGrowth.toFixed(2)}%</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Annual Dividend Growth {divGrowth.toFixed(2)}%</label>
                 <input
                   type="range"
                   min="0"
@@ -413,7 +416,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Years {divYears}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Years {divYears}</label>
                 <input
                   type="range"
                   min="1"
@@ -427,37 +430,37 @@ export function CalculatorsView() {
                   className="mt-1 w-full"
                 />
               </div>
-              <p className="mt-4 border-t border-[#1b2530] pt-3 text-[11px] uppercase tracking-[0.14em] text-[#8190a0]">Estimates only - not financial advice</p>
+              <p className="mt-4 border-t border-line pt-3 text-[11px] uppercase tracking-[0.14em] text-ink-3">Estimates only - not financial advice</p>
             </div>
           </div>
 
           {divResult && (
-            <div className="terminal-panel overflow-hidden rounded-md">
-              <div className="border-b border-[#1b2530] px-3 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#43d18b]">Income Projection</p>
+            <div className="terminal-panel overflow-hidden rounded-panel">
+              <div className="border-b border-line px-3 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-title">Income Projection</p>
               </div>
               <div className="space-y-3 p-3 font-mono text-sm">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-[#8190a0]">Year 1 Income</p>
-                    <p className="mt-1 text-lg font-semibold text-[#eef3f8]">{formatCurrency(divResult.year1Income)}</p>
+                    <p className="text-xs text-ink-3">Year 1 Income</p>
+                    <p className="mt-1 text-lg font-semibold text-ink">{formatCurrency(divResult.year1Income)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#8190a0]">Yield on Cost</p>
-                    <p className="mt-1 text-lg font-semibold text-[#43d18b]">{formatPercent(divResult.yieldOnCost, 2)}</p>
+                    <p className="text-xs text-ink-3">Yield on Cost</p>
+                    <p className="mt-1 text-lg font-semibold text-positive">{formatPercent(divResult.yieldOnCost, 2)}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-[#8190a0]">Total Projected Income</p>
-                  <p className="mt-1 font-semibold text-[#dbe5ee]">{formatCurrency(divResult.totalProjectedIncome)}</p>
+                  <p className="text-xs text-ink-3">Total Projected Income</p>
+                  <p className="mt-1 font-semibold text-ink-title">{formatCurrency(divResult.totalProjectedIncome)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#8190a0]">Final Portfolio Value</p>
-                  <p className="mt-1 font-semibold text-[#dbe5ee]">{formatCurrency(divResult.finalPortfolioValue)}</p>
+                  <p className="text-xs text-ink-3">Final Portfolio Value</p>
+                  <p className="mt-1 font-semibold text-ink-title">{formatCurrency(divResult.finalPortfolioValue)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#8190a0]">Final Share Count</p>
-                  <p className="mt-1 font-semibold text-[#dbe5ee]">{formatNumber(divResult.finalShareCount, 4)}</p>
+                  <p className="text-xs text-ink-3">Final Share Count</p>
+                  <p className="mt-1 font-semibold text-ink-title">{formatNumber(divResult.finalShareCount, 4)}</p>
                 </div>
                 {divResult.projectedIncome.length > 1 && (
                   <SimpleLineChart
@@ -474,14 +477,14 @@ export function CalculatorsView() {
       {/* Position Sizing Tab */}
       {activeTab === 'position' && (
         <section className="grid gap-3 lg:grid-cols-[1fr_1fr]">
-          <div className="terminal-panel overflow-hidden rounded-md">
-            <div className="border-b border-[#1b2530] px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Position Sizing</p>
-              <p className="mt-1 font-mono text-xs text-[#a8b5c2]">Risk-based position calculator</p>
+          <div className="terminal-panel overflow-hidden rounded-panel">
+            <div className="border-b border-line px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Position Sizing</p>
+              <p className="mt-1 font-mono text-xs text-ink-2">Risk-based position calculator</p>
             </div>
             <div className="space-y-3 p-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Account Size ${posAccount.toLocaleString()}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Account Size ${posAccount.toLocaleString()}</label>
                 <input
                   type="range"
                   min="1000"
@@ -496,7 +499,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Risk % per Trade {posRisk.toFixed(2)}%</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Risk % per Trade {posRisk.toFixed(2)}%</label>
                 <input
                   type="range"
                   min="0.1"
@@ -511,7 +514,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Entry Price ${posEntry.toFixed(2)}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Entry Price ${posEntry.toFixed(2)}</label>
                 <input
                   type="number"
                   min="0.01"
@@ -521,11 +524,11 @@ export function CalculatorsView() {
                     setPosEntry(Number(e.target.value));
                     handlePositionSizing();
                   }}
-                  className="mt-1 w-full rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-sm text-[#eef3f8]"
+                  className="mt-1 w-full rounded-cell border border-line-strong bg-panel px-2 py-1 font-mono text-sm text-ink"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Stop Loss Price ${posStop.toFixed(2)}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Stop Loss Price ${posStop.toFixed(2)}</label>
                 <input
                   type="number"
                   min="0.01"
@@ -535,46 +538,46 @@ export function CalculatorsView() {
                     setPosStop(Number(e.target.value));
                     handlePositionSizing();
                   }}
-                  className="mt-1 w-full rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-sm text-[#eef3f8]"
+                  className="mt-1 w-full rounded-cell border border-line-strong bg-panel px-2 py-1 font-mono text-sm text-ink"
                 />
               </div>
-              <p className="mt-4 border-t border-[#1b2530] pt-3 text-[11px] uppercase tracking-[0.14em] text-[#8190a0]">Estimates only - not financial advice</p>
+              <p className="mt-4 border-t border-line pt-3 text-[11px] uppercase tracking-[0.14em] text-ink-3">Estimates only - not financial advice</p>
             </div>
           </div>
 
           {posResult && (
-            <div className="terminal-panel overflow-hidden rounded-md">
-              <div className="border-b border-[#1b2530] px-3 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#43d18b]">Position Details</p>
+            <div className="terminal-panel overflow-hidden rounded-panel">
+              <div className="border-b border-line px-3 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-title">Position Details</p>
               </div>
               <div className="space-y-3 p-3 font-mono text-sm">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-[#8190a0]">Position Size</p>
-                    <p className="mt-1 text-lg font-semibold text-[#eef3f8]">{formatCurrency(posResult.positionSizeDollars)}</p>
+                    <p className="text-xs text-ink-3">Position Size</p>
+                    <p className="mt-1 text-lg font-semibold text-ink">{formatCurrency(posResult.positionSizeDollars)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#8190a0]">Shares</p>
-                    <p className="mt-1 text-lg font-semibold text-[#eef3f8]">{formatNumber(posResult.positionSizeShares, 4)}</p>
+                    <p className="text-xs text-ink-3">Shares</p>
+                    <p className="mt-1 text-lg font-semibold text-ink">{formatNumber(posResult.positionSizeShares, 4)}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-[#8190a0]">Risk $ per Trade</p>
-                  <p className="mt-1 font-semibold text-[#ff6b6b]">{formatCurrency(posResult.riskDollars)}</p>
+                  <p className="text-xs text-ink-3">Risk $ per Trade</p>
+                  <p className="mt-1 font-semibold text-negative">{formatCurrency(posResult.riskDollars)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#8190a0]">Risk:Reward Ratio</p>
-                  <p className="mt-1 font-semibold text-[#dbe5ee]">1R per {posResult.rMultiple.toFixed(2)} shares</p>
+                  <p className="text-xs text-ink-3">Risk:Reward Ratio</p>
+                  <p className="mt-1 font-semibold text-ink-title">1R per {posResult.rMultiple.toFixed(2)} shares</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#8190a0]">Max Shares (100% account)</p>
-                  <p className="mt-1 font-semibold text-[#dbe5ee]">{formatNumber(posResult.maxShares, 0)}</p>
+                  <p className="text-xs text-ink-3">Max Shares (100% account)</p>
+                  <p className="mt-1 font-semibold text-ink-title">{formatNumber(posResult.maxShares, 0)}</p>
                 </div>
               </div>
-              <div className="border-t border-[#1b2530] px-3 py-2.5">
+              <div className="border-t border-line px-3 py-2.5">
                 <Link
                   href="/plan"
-                  className="flex items-center justify-between gap-2 rounded border border-[#27496b] bg-[#0d1b2b] px-2.5 py-2 text-[11px] text-[#7fb0ff] transition hover:bg-[#0f2236]"
+                  className="flex items-center justify-between gap-2 rounded-cell border border-blue-focus/30 bg-blue-tint px-2.5 py-2 text-[11px] text-blue-info transition hover:border-blue-focus/60"
                 >
                   <span>
                     Take this to the <span className="font-semibold">Trade Plan</span> - sizes against a real name and your own
@@ -591,14 +594,14 @@ export function CalculatorsView() {
       {/* CAGR / Rule 72 Tab */}
       {activeTab === 'cagr' && (
         <section className="grid gap-3 lg:grid-cols-[1fr_1fr]">
-          <div className="terminal-panel overflow-hidden rounded-md">
-            <div className="border-b border-[#1b2530] px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">CAGR &amp; Rule of 72</p>
-              <p className="mt-1 font-mono text-xs text-[#a8b5c2]">Growth rates and doubling times</p>
+          <div className="terminal-panel overflow-hidden rounded-panel">
+            <div className="border-b border-line px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">CAGR &amp; Rule of 72</p>
+              <p className="mt-1 font-mono text-xs text-ink-2">Growth rates and doubling times</p>
             </div>
             <div className="space-y-3 p-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Start Value ${cagrStart.toLocaleString()}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Start Value ${cagrStart.toLocaleString()}</label>
                 <input
                   type="range"
                   min="100"
@@ -613,7 +616,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">End Value ${cagrEnd.toLocaleString()}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">End Value ${cagrEnd.toLocaleString()}</label>
                 <input
                   type="range"
                   min="100"
@@ -628,7 +631,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Years {cagrYears}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Years {cagrYears}</label>
                 <input
                   type="range"
                   min="1"
@@ -642,29 +645,29 @@ export function CalculatorsView() {
                   className="mt-1 w-full"
                 />
               </div>
-              <p className="mt-4 border-t border-[#1b2530] pt-3 text-[11px] uppercase tracking-[0.14em] text-[#8190a0]">Estimates only - not financial advice</p>
+              <p className="mt-4 border-t border-line pt-3 text-[11px] uppercase tracking-[0.14em] text-ink-3">Estimates only - not financial advice</p>
             </div>
           </div>
 
           {cagrResult && r72Result && (
-            <div className="terminal-panel overflow-hidden rounded-md">
-              <div className="border-b border-[#1b2530] px-3 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#43d18b]">Results</p>
+            <div className="terminal-panel overflow-hidden rounded-panel">
+              <div className="border-b border-line px-3 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-title">Results</p>
               </div>
               <div className="space-y-3 p-3 font-mono text-sm">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-[#8190a0]">CAGR</p>
-                    <p className="mt-1 text-lg font-semibold text-[#eef3f8]">{formatPercent(cagrResult.cagr, 2)}</p>
+                    <p className="text-xs text-ink-3">CAGR</p>
+                    <p className="mt-1 text-lg font-semibold text-ink">{formatPercent(cagrResult.cagr, 2)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#8190a0]">Doubling Time</p>
-                    <p className="mt-1 text-lg font-semibold text-[#43d18b]">{r72Result.doublingTimeYears.toFixed(1)} years</p>
+                    <p className="text-xs text-ink-3">Doubling Time</p>
+                    <p className="mt-1 text-lg font-semibold text-positive">{r72Result.doublingTimeYears.toFixed(1)} years</p>
                   </div>
                 </div>
-                <div className="border-t border-[#1b2530] pt-3">
-                  <p className="text-xs text-[#8190a0]">Rule of 72 Explanation</p>
-                  <p className="mt-2 text-xs leading-relaxed text-[#dbe5ee]">
+                <div className="border-t border-line pt-3">
+                  <p className="text-xs text-ink-3">Rule of 72 Explanation</p>
+                  <p className="mt-2 text-xs leading-relaxed text-ink-title">
                     Dividing 72 by the annual growth rate gives an estimate of how many years it takes for an investment to double. At {formatPercent(cagrResult.cagr, 2)},
                     money doubles roughly every {r72Result.doublingTimeYears.toFixed(1)} years.
                   </p>
@@ -678,14 +681,14 @@ export function CalculatorsView() {
       {/* DCA Tab */}
       {activeTab === 'dca' && (
         <section className="grid gap-3 lg:grid-cols-[1fr_1fr]">
-          <div className="terminal-panel overflow-hidden rounded-md">
-            <div className="border-b border-[#1b2530] px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Dollar-Cost Averaging</p>
-              <p className="mt-1 font-mono text-xs text-[#a8b5c2]">Simulate regular periodic investing</p>
+          <div className="terminal-panel overflow-hidden rounded-panel">
+            <div className="border-b border-line px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Dollar-Cost Averaging</p>
+              <p className="mt-1 font-mono text-xs text-ink-2">Simulate regular periodic investing</p>
             </div>
             <div className="space-y-3 p-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Periodic Amount ${dcaAmount.toLocaleString()}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Periodic Amount ${dcaAmount.toLocaleString()}</label>
                 <input
                   type="range"
                   min="100"
@@ -700,7 +703,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Periods (months) {dcaPeriods}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Periods (months) {dcaPeriods}</label>
                 <input
                   type="range"
                   min="1"
@@ -715,7 +718,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Current Price ${dcaCurrentPrice.toFixed(2)}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Current Price ${dcaCurrentPrice.toFixed(2)}</label>
                 <input
                   type="range"
                   min="1"
@@ -730,7 +733,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Average Price Paid ${dcaAveragePrice.toFixed(2)}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Average Price Paid ${dcaAveragePrice.toFixed(2)}</label>
                 <input
                   type="range"
                   min="1"
@@ -744,39 +747,39 @@ export function CalculatorsView() {
                   className="mt-1 w-full"
                 />
               </div>
-              <p className="mt-4 border-t border-[#1b2530] pt-3 text-[11px] uppercase tracking-[0.14em] text-[#8190a0]">Estimates only - not financial advice</p>
+              <p className="mt-4 border-t border-line pt-3 text-[11px] uppercase tracking-[0.14em] text-ink-3">Estimates only - not financial advice</p>
             </div>
           </div>
 
           {dcaResult && (
-            <div className="terminal-panel overflow-hidden rounded-md">
-              <div className="border-b border-[#1b2530] px-3 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#43d18b]">DCA Summary</p>
+            <div className="terminal-panel overflow-hidden rounded-panel">
+              <div className="border-b border-line px-3 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-title">DCA Summary</p>
               </div>
               <div className="space-y-3 p-3 font-mono text-sm">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-[#8190a0]">Total Units</p>
-                    <p className="mt-1 text-lg font-semibold text-[#eef3f8]">{formatNumber(dcaResult.totalUnits, 4)}</p>
+                    <p className="text-xs text-ink-3">Total Units</p>
+                    <p className="mt-1 text-lg font-semibold text-ink">{formatNumber(dcaResult.totalUnits, 4)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#8190a0]">Avg Cost/Unit</p>
-                    <p className="mt-1 text-lg font-semibold text-[#dbe5ee]">${dcaResult.averageCostPerUnit.toFixed(2)}</p>
+                    <p className="text-xs text-ink-3">Avg Cost/Unit</p>
+                    <p className="mt-1 text-lg font-semibold text-ink-title">${dcaResult.averageCostPerUnit.toFixed(2)}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-[#8190a0]">Total Invested</p>
-                    <p className="mt-1 font-semibold text-[#dbe5ee]">{formatCurrency(dcaResult.totalInvested)}</p>
+                    <p className="text-xs text-ink-3">Total Invested</p>
+                    <p className="mt-1 font-semibold text-ink-title">{formatCurrency(dcaResult.totalInvested)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#8190a0]">Current Value</p>
-                    <p className="mt-1 font-semibold text-[#dbe5ee]">{formatCurrency(dcaResult.currentValue)}</p>
+                    <p className="text-xs text-ink-3">Current Value</p>
+                    <p className="mt-1 font-semibold text-ink-title">{formatCurrency(dcaResult.currentValue)}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-[#8190a0]">Gain/Loss</p>
-                  <p className={`mt-1 text-lg font-semibold ${dcaResult.gainLoss >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+                  <p className="text-xs text-ink-3">Gain/Loss</p>
+                  <p className={`mt-1 text-lg font-semibold ${dcaResult.gainLoss >= 0 ? 'text-positive' : 'text-negative'}`}>
                     {formatCurrency(dcaResult.gainLoss)} {formatSignedPercent(dcaResult.gainLossPercent, 2)}
                   </p>
                 </div>
@@ -789,14 +792,14 @@ export function CalculatorsView() {
       {/* Profit Target Tab */}
       {activeTab === 'profit' && (
         <section className="grid gap-3 lg:grid-cols-[1fr_1fr]">
-          <div className="terminal-panel overflow-hidden rounded-md">
-            <div className="border-b border-[#1b2530] px-3 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Profit Target</p>
-              <p className="mt-1 font-mono text-xs text-[#a8b5c2]">Risk-reward analysis &amp; breakeven</p>
+          <div className="terminal-panel overflow-hidden rounded-panel">
+            <div className="border-b border-line px-3 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Profit Target</p>
+              <p className="mt-1 font-mono text-xs text-ink-2">Risk-reward analysis &amp; breakeven</p>
             </div>
             <div className="space-y-3 p-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Entry Price ${profitEntry.toFixed(2)}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Entry Price ${profitEntry.toFixed(2)}</label>
                 <input
                   type="number"
                   min="0.01"
@@ -806,11 +809,11 @@ export function CalculatorsView() {
                     setProfitEntry(Number(e.target.value));
                     handleProfitTarget();
                   }}
-                  className="mt-1 w-full rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-sm text-[#eef3f8]"
+                  className="mt-1 w-full rounded-cell border border-line-strong bg-panel px-2 py-1 font-mono text-sm text-ink"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Profit Target {profitTarget.toFixed(2)}%</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Profit Target {profitTarget.toFixed(2)}%</label>
                 <input
                   type="range"
                   min="0.1"
@@ -825,7 +828,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Stop Loss {profitStop.toFixed(2)}%</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Stop Loss {profitStop.toFixed(2)}%</label>
                 <input
                   type="range"
                   min="0.1"
@@ -840,7 +843,7 @@ export function CalculatorsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Position Size (shares) {profitShares.toLocaleString()}</label>
+                <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-ink-3">Position Size (shares) {profitShares.toLocaleString()}</label>
                 <input
                   type="range"
                   min="1"
@@ -854,37 +857,37 @@ export function CalculatorsView() {
                   className="mt-1 w-full"
                 />
               </div>
-              <p className="mt-4 border-t border-[#1b2530] pt-3 text-[11px] uppercase tracking-[0.14em] text-[#8190a0]">Estimates only - not financial advice</p>
+              <p className="mt-4 border-t border-line pt-3 text-[11px] uppercase tracking-[0.14em] text-ink-3">Estimates only - not financial advice</p>
             </div>
           </div>
 
           {profitResult && (
-            <div className="terminal-panel overflow-hidden rounded-md">
-              <div className="border-b border-[#1b2530] px-3 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#43d18b]">Trade Analysis</p>
+            <div className="terminal-panel overflow-hidden rounded-panel">
+              <div className="border-b border-line px-3 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-title">Trade Analysis</p>
               </div>
               <div className="space-y-3 p-3 font-mono text-sm">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-[#8190a0]">Target Price</p>
-                    <p className="mt-1 text-lg font-semibold text-[#eef3f8]">${profitResult.targetPrice.toFixed(2)}</p>
+                    <p className="text-xs text-ink-3">Target Price</p>
+                    <p className="mt-1 text-lg font-semibold text-ink">${profitResult.targetPrice.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-[#8190a0]">Risk:Reward</p>
-                    <p className="mt-1 text-lg font-semibold text-[#43d18b]">1:{profitResult.riskRewardRatio.toFixed(2)}</p>
+                    <p className="text-xs text-ink-3">Risk:Reward</p>
+                    <p className="mt-1 text-lg font-semibold text-positive">1:{profitResult.riskRewardRatio.toFixed(2)}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-[#8190a0]">Profit @ Target</p>
-                  <p className="mt-1 font-semibold text-[#43d18b]">{formatCurrency(profitResult.profitAtTarget)}</p>
+                  <p className="text-xs text-ink-3">Profit @ Target</p>
+                  <p className="mt-1 font-semibold text-positive">{formatCurrency(profitResult.profitAtTarget)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-[#8190a0]">Win Rate Required (breakeven)</p>
-                  <p className="mt-1 font-semibold text-[#dbe5ee]">{profitResult.winRateRequired.toFixed(1)}%</p>
+                  <p className="text-xs text-ink-3">Win Rate Required (breakeven)</p>
+                  <p className="mt-1 font-semibold text-ink-title">{profitResult.winRateRequired.toFixed(1)}%</p>
                 </div>
-                <div className="border-t border-[#1b2530] pt-3">
-                  <p className="text-xs text-[#8190a0]">Breakeven Analysis</p>
-                  <p className="mt-2 text-xs leading-relaxed text-[#dbe5ee]">
+                <div className="border-t border-line pt-3">
+                  <p className="text-xs text-ink-3">Breakeven Analysis</p>
+                  <p className="mt-2 text-xs leading-relaxed text-ink-title">
                     If you win {profitResult.winRateRequired.toFixed(1)}% of trades at this risk-reward ratio, you will break even. The higher your win rate, the more profitable.
                   </p>
                 </div>

@@ -89,16 +89,22 @@ export function FindingsFeed({ findings }: { findings?: Finding[] }) {
 
   return (
     <div className="space-y-4 pb-28 xl:pb-6">
-      <p className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">
+      <p className="text-[10px] uppercase tracking-[0.14em] text-ink-3">
         {isLive ? (
-          <span className="text-[#43d18b]">Live findings - projected from your alerts</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-positive/40 bg-positive-tint px-2 py-0.5 text-positive">
+            <span className="h-1.5 w-1.5 rounded-full bg-positive" aria-hidden />
+            Live findings - projected from your alerts
+          </span>
         ) : (
-          <span>Demo findings - live findings appear here as the scanner surfaces setups for you</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-2 py-0.5 text-ink-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-ink-dim" aria-hidden />
+            Demo findings - live findings appear here as the scanner surfaces setups for you
+          </span>
         )}
       </p>
       {groups.map(({ sec, findings }) => (
         <section key={sec}>
-          <h2 className="mb-1.5 text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{FEED_SECTION_LABELS[sec]}</h2>
+          <h2 className="mb-1.5 text-[10px] uppercase tracking-[0.14em] text-ink-3">{FEED_SECTION_LABELS[sec]}</h2>
           <div className="grid gap-1.5 md:grid-cols-2">
             {findings.map((f) => (
               <FindingCard key={f.id} finding={f} onOpen={openFinding} />

@@ -27,17 +27,17 @@ export function MarketContextStrip({ data }: MarketContextStripProps) {
   const regime = useMemo(() => {
     switch (data.regime) {
       case 'risk_on':
-        return { text: 'text-[#43d18b]', dot: 'bg-[#43d18b]' };
+        return { text: 'text-positive', dot: 'bg-positive' };
       case 'risk_off':
-        return { text: 'text-[#ff6b6b]', dot: 'bg-[#ff6b6b]' };
+        return { text: 'text-negative', dot: 'bg-negative' };
       case 'neutral':
       default:
-        return { text: 'text-[#60a5fa]', dot: 'bg-[#60a5fa]' };
+        return { text: 'text-blue-focus', dot: 'bg-blue-focus' };
     }
   }, [data.regime]);
 
   const items = useMemo<TapeEntry[]>(() => {
-    const tone = (pct: number | null) => (pct === null ? 'text-[#a8b5c2]' : pct >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]');
+    const tone = (pct: number | null) => (pct === null ? 'text-ink-2' : pct >= 0 ? 'text-positive' : 'text-negative');
     const pct = (val: number | null) => (val === null ? '-' : `${val >= 0 ? '+' : ''}${val.toFixed(2)}%`);
 
     const out: TapeEntry[] = [];
@@ -58,23 +58,23 @@ export function MarketContextStrip({ data }: MarketContextStripProps) {
     if (data.btcPrice !== null)
       out.push({ key: 'btc', label: 'BTC', value: `$${formatNumber(data.btcPrice)}`, change: pct(data.btcChangePct), changeTone: tone(data.btcChangePct), href: 'https://finance.yahoo.com/quote/BTC-USD/' });
     if (data.fearGreedIndex !== null)
-      out.push({ key: 'fg', label: 'Fear & Greed', value: String(data.fearGreedIndex), change: data.fearGreedLabel || '-', changeTone: 'text-[#8190a0]', href: 'https://edition.cnn.com/markets/fear-and-greed' });
+      out.push({ key: 'fg', label: 'Fear & Greed', value: String(data.fearGreedIndex), change: data.fearGreedLabel || '-', changeTone: 'text-ink-3', href: 'https://edition.cnn.com/markets/fear-and-greed' });
     return out;
   }, [data]);
 
   return (
-    <div className="intel-marquee terminal-panel glass-hero relative flex items-center overflow-hidden rounded-md">
+    <div className="intel-marquee terminal-panel glass-hero relative flex items-center overflow-hidden rounded-panel">
       {/* Fixed feed title - same treatment as the Intel tape. Dot stays regime-coloured. */}
-      <div className="z-20 flex shrink-0 items-center gap-1.5 border-r border-[#1b2530] bg-[#0b1016] px-3 py-1.5">
+      <div className="z-20 flex shrink-0 items-center gap-1.5 border-r border-line bg-chrome px-3 py-1.5">
         <span className={`h-1.5 w-1.5 animate-pulse rounded-full ${regime.dot}`} />
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8aa2ff]">Markets</span>
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-pending">Markets</span>
         {/* Regime as a WORD, not just an unlabeled dot - and honest sourcing: frozen
             demo numbers must never present as live (same convention as LiveWire). */}
         <span className={`font-mono text-[9px] uppercase tracking-[0.12em] ${regime.text}`}>
           {data.regime.replace('_', ' ')}
         </span>
         {data.source === 'sample' && (
-          <span className="rounded border border-[#9a6a1f] bg-[#2a1f0f] px-1 py-px font-mono text-[8px] uppercase tracking-[0.12em] text-[#f3a33a]">
+          <span className="rounded border border-accent-border bg-accent-tint px-1 py-px font-mono text-[8px] uppercase tracking-[0.12em] text-accent">
             Sample
           </span>
         )}
@@ -90,16 +90,16 @@ export function MarketContextStrip({ data }: MarketContextStripProps) {
               target="_blank"
               rel="noopener noreferrer"
               title={`Open source for ${item.label}`}
-              className="inline-flex shrink-0 items-baseline gap-1.5 border-r border-[#1b2530] px-4 font-mono transition hover:bg-[#101720]"
+              className="inline-flex shrink-0 items-baseline gap-1.5 border-r border-line px-4 font-mono transition hover:bg-line/30"
             >
-              <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{item.label}</span>
-              <span className="text-xs font-semibold text-[#dbe5ee]">{item.value}</span>
+              <span className="text-[10px] uppercase tracking-[0.14em] text-ink-3">{item.label}</span>
+              <span className="text-xs font-semibold text-ink-title">{item.value}</span>
               <span className={`text-[11px] ${item.changeTone}`}>{item.change}</span>
             </a>
           ))}
         </div>
         {/* Right edge fade */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[#0b1016] to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-chrome to-transparent" />
       </div>
     </div>
   );

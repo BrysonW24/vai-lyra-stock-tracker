@@ -26,7 +26,7 @@ const GLOBAL_MARKETS = [
 ];
 
 const fmtPct = (p: number) => `${p >= 0 ? '+' : ''}${p.toFixed(2)}%`;
-const toneClass = (p: number) => (p >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]');
+const toneClass = (p: number) => (p >= 0 ? 'text-positive' : 'text-negative');
 
 /**
  * Scene 3: Act from the console - a one-screen preview of the real command centre:
@@ -64,8 +64,8 @@ export function CommandCentreAnimation({
     <div className="mx-auto w-full max-w-3xl">
       {/* Header */}
       <div className="mb-2.5 text-center">
-        <h2 className="mb-0.5 text-xl font-semibold text-[#eef3f8] md:text-2xl">{scene.title}</h2>
-        <p className="text-xs text-[#a8b5c2] md:text-sm">{scene.description}</p>
+        <h2 className="mb-0.5 text-xl font-semibold text-ink md:text-2xl">{scene.title}</h2>
+        <p className="text-xs text-ink-2 md:text-sm">{scene.description}</p>
       </div>
 
       {/* KPI tiles - one compact row */}
@@ -77,25 +77,25 @@ export function CommandCentreAnimation({
         ].map((panel, i) => (
           <div
             key={panel.title}
-            className={`terminal-panel rounded px-2.5 py-2 transition-all duration-500 ${panelsVisible ? 'opacity-100' : 'opacity-0'}`}
+            className={`terminal-panel rounded-cell px-2.5 py-2 transition-all duration-500 ${panelsVisible ? 'opacity-100' : 'opacity-0'}`}
             style={{ transform: panelsVisible ? 'translateY(0)' : 'translateY(10px)', transitionDelay: `${i * 70}ms` }}
           >
-            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">{panel.title}</p>
-            <p className="mt-0.5 font-mono text-lg font-semibold text-[#eef3f8]">{panel.value}</p>
-            <p className="text-[9px] text-[#8190a0]">{panel.metric}</p>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-ink-3">{panel.title}</p>
+            <p className="mt-0.5 font-mono text-lg font-semibold text-ink">{panel.value}</p>
+            <p className="text-[9px] text-ink-3">{panel.metric}</p>
           </div>
         ))}
       </div>
 
       {/* Global markets strip */}
       <div
-        className={`terminal-panel mb-2 grid grid-cols-4 gap-px overflow-hidden rounded bg-[#1b2530] transition-all duration-500 ${panelsVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`terminal-panel mb-2 grid grid-cols-4 gap-px overflow-hidden rounded-cell bg-line transition-all duration-500 ${panelsVisible ? 'opacity-100' : 'opacity-0'}`}
         style={{ transform: panelsVisible ? 'translateY(0)' : 'translateY(10px)', transitionDelay: '240ms' }}
       >
         {GLOBAL_MARKETS.map((m) => (
-          <div key={m.label} className="bg-[#0d1117] px-2 py-1.5 text-center">
-            <p className="font-mono text-[8px] uppercase tracking-[0.1em] text-[#8190a0]">{m.label}</p>
-            <p className="mt-0.5 font-mono text-[11px] font-semibold text-[#dbe5ee]">{m.value}</p>
+          <div key={m.label} className="bg-panel-deep px-2 py-1.5 text-center">
+            <p className="font-mono text-[8px] uppercase tracking-[0.1em] text-ink-3">{m.label}</p>
+            <p className="mt-0.5 font-mono text-[11px] font-semibold text-ink-title">{m.value}</p>
             <p className={`font-mono text-[9px] ${toneClass(m.pct)}`}>{fmtPct(m.pct)}</p>
           </div>
         ))}
@@ -103,11 +103,11 @@ export function CommandCentreAnimation({
 
       {/* Signal table */}
       <div
-        className={`terminal-panel mb-2 overflow-hidden rounded transition-all duration-500 ${tableVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`terminal-panel mb-2 overflow-hidden rounded-panel transition-all duration-500 ${tableVisible ? 'opacity-100' : 'opacity-0'}`}
         style={{ transform: tableVisible ? 'translateY(0)' : 'translateY(12px)' }}
       >
         <table className="min-w-full text-left text-xs">
-          <thead className="bg-[#0b1016] font-mono uppercase text-[#8190a0]">
+          <thead className="bg-chrome font-mono uppercase text-ink-3">
             <tr>
               <th className="px-3 py-1.5">Strongest signals</th>
               <th className="px-3 py-1.5 text-right">Score</th>
@@ -115,18 +115,18 @@ export function CommandCentreAnimation({
               <th className="px-3 py-1.5 text-right">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1b2530]">
+          <tbody className="divide-y divide-line">
             {SIGNAL_TABLE_ROWS.slice(0, 3).map((row, i) => (
               <tr key={row.ticker} style={{ animation: tableVisible ? `tableRowSlide ${200 + i * 90}ms ease-out forwards` : 'none' }}>
-                <td className="flex items-center gap-2 px-3 py-1.5 font-semibold text-[#eef3f8]">
+                <td className="flex items-center gap-2 px-3 py-1.5 font-semibold text-ink">
                   <TickerLogo symbol={row.ticker} size={15} />
                   {row.ticker}
                 </td>
-                <td className="px-3 py-1.5 text-right font-mono text-[#eef3f8]">{row.score}</td>
-                <td className={`px-3 py-1.5 text-right font-mono ${row.delta > 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+                <td className="px-3 py-1.5 text-right font-mono text-ink">{row.score}</td>
+                <td className={`px-3 py-1.5 text-right font-mono ${row.delta > 0 ? 'text-positive' : 'text-negative'}`}>
                   {row.delta > 0 ? '+' : ''}{row.delta}
                 </td>
-                <td className="px-3 py-1.5 text-right text-[#a8b5c2]">{row.status}</td>
+                <td className="px-3 py-1.5 text-right text-ink-2">{row.status}</td>
               </tr>
             ))}
           </tbody>
@@ -143,18 +143,18 @@ export function CommandCentreAnimation({
 
       {/* Telegram-style alert */}
       <div
-        className={`terminal-panel flex items-center gap-2.5 rounded border-l-2 border-[#43d18b] px-3 py-2 transition-all duration-500 ${alertVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`terminal-panel flex items-center gap-2.5 rounded-cell border-l-2 border-positive px-3 py-2 transition-all duration-500 ${alertVisible ? 'opacity-100' : 'opacity-0'}`}
         style={{ transform: alertVisible ? 'translateY(0)' : 'translateY(12px)', transitionDelay: '120ms' }}
       >
         <TickerLogo symbol={SAMPLE_ALERT.ticker} size={18} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-[#eef3f8]">{SAMPLE_ALERT.ticker}</span>
-            <span className="font-mono text-[11px] text-[#43d18b]">Score {SAMPLE_ALERT.score} +{SAMPLE_ALERT.scoreDelta}</span>
+            <span className="text-xs font-semibold text-ink">{SAMPLE_ALERT.ticker}</span>
+            <span className="font-mono text-[11px] text-positive">Score {SAMPLE_ALERT.score} +{SAMPLE_ALERT.scoreDelta}</span>
           </div>
-          <p className="truncate text-[10px] text-[#a8b5c2]">{SAMPLE_ALERT.rsiStatus} • {SAMPLE_ALERT.macdStatus}</p>
+          <p className="truncate text-[10px] text-ink-2">{SAMPLE_ALERT.rsiStatus} • {SAMPLE_ALERT.macdStatus}</p>
         </div>
-        <span className="text-[10px] text-[#8190a0]">now</span>
+        <span className="text-[10px] text-ink-3">now</span>
       </div>
 
       <style jsx>{`

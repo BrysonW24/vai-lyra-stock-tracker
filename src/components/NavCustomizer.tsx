@@ -44,7 +44,7 @@ function moveItem<T>(arr: T[], from: number, to: number): T[] {
 
 export function NavCustomizer({ items, buckets, value, min, max, onChange, onReset, isDefault }: Props) {
   const byHref = new Map(items.map((i) => [i.href, i]));
-  const colorOf = (href: string) => buckets.find((b) => b.id === byHref.get(href)?.bucket)?.color ?? '#8190a0';
+  const colorOf = (href: string) => buckets.find((b) => b.id === byHref.get(href)?.bucket)?.color ?? 'var(--lyra-ink-3)';
 
   // Local working order for a smooth drag; commits up on drop / add / remove. Resyncs when the parent's
   // committed value changes (e.g. Reset), keyed on the joined string so array-identity churn is ignored.
@@ -131,20 +131,20 @@ export function NavCustomizer({ items, buckets, value, min, max, onChange, onRes
     <div className="space-y-4">
       {/* Live preview: exactly how the bottom bar will read, Explore always trailing. */}
       <div>
-        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Preview</p>
-        <div className="flex items-stretch gap-0.5 rounded-md border border-[#1b2530] bg-[#0b0f14] p-1">
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-3">Preview</p>
+        <div className="flex items-stretch gap-0.5 rounded-cell border border-line bg-well p-1">
           {order.map((href) => {
             const it = byHref.get(href);
             if (!it) return null;
             const Icon = it.icon;
             return (
-              <div key={href} className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded px-0.5 py-1 text-[9px] text-[#8190a0]">
+              <div key={href} className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded px-0.5 py-1 text-[9px] text-ink-3">
                 <Icon size={16} style={{ color: colorOf(href) }} />
                 <span className="max-w-full truncate leading-none">{it.short}</span>
               </div>
             );
           })}
-          <div className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded px-0.5 py-1 text-[9px] text-[#5e6b78]">
+          <div className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded px-0.5 py-1 text-[9px] text-ink-dim">
             <LayoutGrid size={16} />
             <span className="leading-none">Explore</span>
           </div>
@@ -154,15 +154,15 @@ export function NavCustomizer({ items, buckets, value, min, max, onChange, onRes
       {/* On your bar: the reorderable, removable list. Top -> bottom maps to left -> right on the bar. */}
       <div>
         <div className="mb-1.5 flex items-center justify-between gap-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-3">
             On your bar - {order.length}/{max}
           </p>
           <button
             type="button"
             onClick={onReset}
             disabled={isDefault}
-            className={`flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] transition ${
-              isDefault ? 'border-[#1b2530] text-[#4a5563]' : 'border-[#263241] text-[#a8b5c2] hover:text-[#eef3f8]'
+            className={`flex items-center gap-1 rounded-cell border px-2 py-1 text-[10px] transition ${
+              isDefault ? 'border-line text-ink-dim' : 'border-line-strong text-ink-2 hover:text-ink'
             }`}
           >
             <RotateCcw size={11} /> Reset
@@ -181,8 +181,8 @@ export function NavCustomizer({ items, buckets, value, min, max, onChange, onRes
                   if (el) rowEls.current.set(href, el);
                   else rowEls.current.delete(href);
                 }}
-                className={`flex h-11 items-center gap-2 rounded-md border px-2 transition ${
-                  dragging ? 'border-[#f3a33a]/60 bg-[#161c24] shadow-lg ring-1 ring-[#f3a33a]/30' : 'border-[#1b2530] bg-[#0d1117]'
+                className={`flex h-11 items-center gap-2 rounded-cell border px-2 transition ${
+                  dragging ? 'border-accent/60 bg-panel shadow-lg ring-1 ring-accent/30' : 'border-line bg-panel-deep'
                 }`}
               >
                 <button
@@ -194,19 +194,19 @@ export function NavCustomizer({ items, buckets, value, min, max, onChange, onRes
                   onPointerCancel={onHandleUp(href)}
                   onKeyDown={onHandleKey(href)}
                   style={{ touchAction: 'none' }}
-                  className="grid h-8 w-7 shrink-0 cursor-grab place-items-center rounded text-[#5e6b78] transition hover:text-[#a8b5c2] active:cursor-grabbing"
+                  className="grid h-8 w-7 shrink-0 cursor-grab place-items-center rounded text-ink-dim transition hover:text-ink-2 active:cursor-grabbing"
                 >
                   <GripVertical size={16} />
                 </button>
                 <Icon size={16} className="shrink-0" style={{ color: colorOf(href) }} />
-                <span className="min-w-0 flex-1 truncate text-[12px] text-[#dbe5ee]">{it.label}</span>
+                <span className="min-w-0 flex-1 truncate text-[12px] text-ink-title">{it.label}</span>
                 <button
                   type="button"
                   onClick={() => remove(href)}
                   disabled={atMin}
                   aria-label={`Remove ${it.label} from your bar`}
                   className={`grid h-7 w-7 shrink-0 place-items-center rounded transition ${
-                    atMin ? 'text-[#3a4351]' : 'text-[#8190a0] hover:text-[#f0758a]'
+                    atMin ? 'text-ink-dim' : 'text-ink-3 hover:text-negative-soft'
                   }`}
                 >
                   <X size={15} />
@@ -215,14 +215,14 @@ export function NavCustomizer({ items, buckets, value, min, max, onChange, onRes
             );
           })}
         </ul>
-        {atMin && <p className="mt-1 text-[10px] text-[#5e6b78]">Keep at least {min} on your bar.</p>}
+        {atMin && <p className="mt-1 text-[10px] text-ink-dim">Keep at least {min} on your bar.</p>}
       </div>
 
       {/* Add anything from the map, coloured by its job. */}
       <div>
-        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Add to your bar</p>
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-3">Add to your bar</p>
         {atMax ? (
-          <p className="rounded-md border border-[#1b2530] bg-[#0d1117] px-2.5 py-2 text-[11px] text-[#5e6b78]">
+          <p className="rounded-cell border border-line bg-panel-deep px-2.5 py-2 text-[11px] text-ink-dim">
             Your bar is full ({max}). Remove one to add another.
           </p>
         ) : (
@@ -243,11 +243,11 @@ export function NavCustomizer({ items, buckets, value, min, max, onChange, onRes
                         key={it.href}
                         type="button"
                         onClick={() => add(it.href)}
-                        className="flex items-center gap-2 rounded-md border border-[#1b2530] bg-[#0d1117] px-2.5 py-2 text-[12px] text-[#c3ccd6] transition hover:border-[#2a3646] hover:bg-[#101720]"
+                        className="flex items-center gap-2 rounded-cell border border-line bg-panel-deep px-2.5 py-2 text-[12px] text-ink-2 transition hover:border-line-strong hover:bg-panel"
                       >
                         <Icon size={15} className="shrink-0" style={{ color: bucket.color, opacity: 0.9 }} />
                         <span className="min-w-0 flex-1 truncate text-left">{it.label}</span>
-                        <Plus size={13} className="shrink-0 text-[#5fd08a]" />
+                        <Plus size={13} className="shrink-0 text-positive" />
                       </button>
                     );
                   })}

@@ -48,12 +48,12 @@ export function BriefAiNarration({ brief }: { brief: DailyBrief }) {
   if (!loading && !text) return null;
 
   return (
-    <div className="border-b border-[#1b2530] bg-[#0b1016] px-4 py-3">
+    <div className="border-b border-line bg-chrome px-4 py-3">
       <AiGeneratedLabel size={12} />
       {loading && !text ? (
-        <p className="mt-1.5 text-sm text-[#8190a0]">Writing your brief…</p>
+        <p className="mt-1.5 text-sm text-ink-3">Writing your brief…</p>
       ) : (
-        <p className="mt-1.5 text-sm leading-relaxed text-[#dbe5ee]">{text}</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-ink-title">{text}</p>
       )}
     </div>
   );

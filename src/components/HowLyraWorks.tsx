@@ -19,22 +19,22 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-[#1b2530] bg-[#0b1016] p-4">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-[#eef3f8]">
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#7fb0ff]">
+    <section className="rounded-panel border border-line bg-chrome p-4">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-line-strong bg-panel text-blue-info">
           <Icon size={14} />
         </span>
         {title}
       </h2>
-      <div className="mt-2.5 space-y-2.5 text-xs leading-relaxed text-[#a8b5c2]">{children}</div>
+      <div className="mt-2.5 space-y-2.5 text-xs leading-relaxed text-ink-2">{children}</div>
     </section>
   );
 }
 
 function Mono({ children }: { children: string }) {
   return (
-    <div className="overflow-x-auto rounded-md border border-[#1b2530] bg-[#080c11] p-3">
-      <pre className="font-mono text-[10.5px] leading-relaxed text-[#8fb0c8]">{children}</pre>
+    <div className="overflow-x-auto rounded-cell border border-line bg-well p-3">
+      <pre className="font-mono text-[10.5px] leading-relaxed text-ink-2">{children}</pre>
     </div>
   );
 }
@@ -42,9 +42,9 @@ function Mono({ children }: { children: string }) {
 export function HowLyraWorks() {
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-[#9a6a1f]/40 bg-[#1a1305] p-4">
-        <p className="text-sm font-semibold text-[#f3a33a]">The one law</p>
-        <p className="mt-1 text-xs leading-relaxed text-[#d9c39a]">
+      <div className="rounded-panel border border-accent-border/40 bg-accent-tint p-4">
+        <p className="text-sm font-semibold text-accent">The one law</p>
+        <p className="mt-1 text-xs leading-relaxed text-ink-2">
           The deterministic engine decides, the AI only explains, and the AI never invents a
           number. Scoring, ranking, signal state, and every notification are computed by plain
           code you can audit. The model is a bounded narrator - it is structurally kept out of
@@ -69,7 +69,7 @@ export function HowLyraWorks() {
 
       <Section icon={Gauge} title="2. The score (how 'analysed' works)">
         <p>
-          Each stock gets an additive <strong className="text-[#eef3f8]">0-100</strong> score from
+          Each stock gets an additive <strong className="text-ink">0-100</strong> score from
           five hard-capped blocks. Every rule reads a raw indicator and contributes 0 when its
           input is missing - it is never guessed.
         </p>
@@ -82,8 +82,8 @@ export function HowLyraWorks() {
         </ul>
         <p>
           The score maps to a state:{' '}
-          <strong className="text-[#eef3f8]">75+ = strong setup</strong>,{' '}
-          <strong className="text-[#eef3f8]">60+ = watchlist</strong>, a drop of more than 8
+          <strong className="text-ink">75+ = strong setup</strong>,{' '}
+          <strong className="text-ink">60+ = watchlist</strong>, a drop of more than 8
           weakens it. It is a dip / early-turn read: a high score means &quot;beaten-down name
           turning up&quot;, not a breakout to new highs.
         </p>
@@ -92,7 +92,7 @@ export function HowLyraWorks() {
       <Section icon={ListChecks} title="3. What gets sent (the ranking)">
         <p>
           Of everything that happens each scan, a relevance number decides what is worth your
-          attention. The biggest lever is <strong className="text-[#eef3f8]">you</strong> - a move
+          attention. The biggest lever is <strong className="text-ink">you</strong> - a move
           in something you hold or watch outranks a textbook setup in a name you have never looked
           at.
         </p>
@@ -100,7 +100,7 @@ export function HowLyraWorks() {
           A pure 10-rule router then decides deliver / hold / drop from your settings and clock:
           anything below your relevance floor (default 40) is dropped; you are capped at a default
           6 alerts an hour; and quiet-hours or capped alerts are{' '}
-          <strong className="text-[#eef3f8]">held, never lost</strong> - late beats lost.
+          <strong className="text-ink">held, never lost</strong> - late beats lost.
           Safety-critical alerts always get through.
         </p>
       </Section>
@@ -123,7 +123,7 @@ export function HowLyraWorks() {
         <p>
           A nightly worker reads ~100 sources and attaches each item to a theme by plain keyword
           matching. Something is promoted to an idea only when it recurs in{' '}
-          <strong className="text-[#eef3f8]">3+ items from 2+ independent sources</strong> inside a
+          <strong className="text-ink">3+ items from 2+ independent sources</strong> inside a
           14-day window - one outlet repeating a story is marketing; several independently is
           signal. Confidence is pure breadth math, never a model&apos;s opinion. An optional AI
           &quot;read&quot; can rephrase the evidence headlines, but the card never depends on it.
@@ -132,12 +132,12 @@ export function HowLyraWorks() {
 
       <Section icon={Sparkles} title="6. Where AI is - and is not">
         <p>
-          <strong className="text-[#eef3f8]">AI may:</strong> explain a signal in plain English,
+          <strong className="text-ink">AI may:</strong> explain a signal in plain English,
           answer questions grounded in your dashboard, and write the optional scout read. Its
           answers are stripped of any number that is not in the underlying data.
         </p>
         <p>
-          <strong className="text-[#eef3f8]">AI may not:</strong> compute a score, rank an alert,
+          <strong className="text-ink">AI may not:</strong> compute a score, rank an alert,
           build an order, or touch the notification path. Those are plain code, and a test fails
           the build if any AI route slips past its guard. On this build, AI runs on your own key
           when you add one; it is never required for the signals or the alerts.
@@ -145,7 +145,7 @@ export function HowLyraWorks() {
       </Section>
 
       <Section icon={Target} title="7. Coming: your goal shapes what you see">
-        <p className="text-[11px] uppercase tracking-wide text-[#6f7d8a]">Design / roadmap</p>
+        <p className="text-[11px] uppercase tracking-wide text-ink-dim">Design / roadmap</p>
         <p>
           Tell Lyra your goal in plain words - &quot;grow steadily&quot; or &quot;max upside, high
           risk&quot; - and the AI translates that into a ranking policy: which setups to float to
@@ -155,16 +155,16 @@ export function HowLyraWorks() {
         </p>
       </Section>
 
-      <div className="rounded-lg border border-[#1b2530] bg-[#0b1016] p-3 text-center">
+      <div className="rounded-panel border border-line bg-chrome p-3 text-center">
         <a
           href={REPO_DOC}
           target="_blank"
           rel="noreferrer"
-          className="text-xs font-semibold text-[#7fb0ff] hover:underline"
+          className="text-xs font-semibold text-blue-info hover:underline"
         >
           Read the full, code-cited version →
         </a>
-        <p className="mt-1 text-[10.5px] text-[#6f7d8a]">
+        <p className="mt-1 text-[10.5px] text-ink-dim">
           Every claim above is grounded in the source and traceable to a file and line.
         </p>
       </div>

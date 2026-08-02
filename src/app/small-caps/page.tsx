@@ -52,9 +52,9 @@ export default async function SmallCapsPage() {
   return (
     <AppShell data={data}>
       <div className="space-y-4 pb-28 xl:pb-6">
-        <section className="terminal-panel glass-hero rounded-md p-3">
-          <h1 className="text-sm font-semibold text-[#eef3f8]">Small caps - catch the emerging markets early</h1>
-          <p className="mt-1 max-w-3xl text-[11px] leading-relaxed text-[#a8b5c2]">
+        <section className="terminal-panel glass-hero rounded-panel p-3">
+          <h1 className="text-sm font-semibold text-ink">Small caps - catch the emerging markets early</h1>
+          <p className="mt-1 max-w-3xl text-[11px] leading-relaxed text-ink-2">
             Find low-cap companies early across the verticals below, trace each one through its whole lifecycle -
             back to the raw materials that feed it and forward to the demand that pays for it - and surface the
             ones already carrying government and big-tech capital. Deterministic research only, never a buy or
@@ -65,11 +65,11 @@ export default async function SmallCapsPage() {
               <Link
                 key={v.slug}
                 href={`/themes/${v.slug}`}
-                className="inline-flex items-center gap-1 rounded-full border border-[#263241] bg-[#0d141c] px-2 py-0.5 font-mono text-[9px] text-[#a8b5c2] transition hover:border-[#3a4754] hover:text-[#dbe5ee]"
+                className="inline-flex items-center gap-1 rounded-full border border-line-strong bg-panel px-2 py-0.5 font-mono text-[9px] text-ink-2 transition hover:border-line-hair hover:text-ink-title"
                 title={`${v.name} - ${v.smallCaps} small caps tracked - open the theme dossier`}
               >
                 <span aria-hidden>{v.emoji}</span> {v.name}
-                <span className="text-[#5e6b78]">{v.smallCaps}</span>
+                <span className="text-ink-dim">{v.smallCaps}</span>
               </Link>
             ))}
           </div>
@@ -89,14 +89,14 @@ export default async function SmallCapsPage() {
 
         {/* Full discovery engine below the shortlist. */}
         <div className="space-y-1">
-          <h2 className="text-[12px] font-semibold text-[#eef3f8]">Full discovery engine</h2>
-          <p className="text-[10px] leading-snug text-[#8190a0]">
+          <h2 className="text-[12px] font-semibold text-ink">Full discovery engine</h2>
+          <p className="text-[10px] leading-snug text-ink-3">
             Every small and micro cap ranked by the deterministic opportunity engine, bucketed and theme-filterable.
           </p>
         </div>
         <SmallCapDiscovery buckets={buckets} themesBySlug={themesBySlug} research={research} />
 
-        <p className="text-[10px] text-[#6f7d8a]">
+        <p className="text-[10px] text-ink-dim">
           Research only - not financial advice. Scores are deterministic research rankings, not recommendations.
         </p>
       </div>

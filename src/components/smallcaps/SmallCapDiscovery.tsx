@@ -39,10 +39,10 @@ interface SmallCapDiscoveryProps {
 
 /** Deterministic tone for the 0-100 opportunity total. */
 function scoreTone(total: number): string {
-  if (total >= 72) return 'text-[#43d18b]';
-  if (total >= 58) return 'text-[#f3a33a]';
-  if (total >= 45) return 'text-[#a8b5c2]';
-  return 'text-[#f0758a]';
+  if (total >= 72) return 'text-positive';
+  if (total >= 58) return 'text-accent';
+  if (total >= 45) return 'text-ink-2';
+  return 'text-negative-soft';
 }
 
 interface CompanyRowProps {
@@ -55,27 +55,27 @@ interface CompanyRowProps {
 function CompanyRow({ company, theme, open, onToggle }: CompanyRowProps) {
   const s = company.score;
   const breakdown: { label: string; value: string; tone: string }[] = [
-    { label: 'Theme fit', value: String(s.themeFit), tone: 'text-[#eef3f8]' },
-    { label: 'Bottleneck', value: String(s.bottleneck), tone: 'text-[#eef3f8]' },
-    { label: 'Evidence', value: String(s.evidence), tone: 'text-[#eef3f8]' },
-    { label: 'Momentum', value: String(s.momentum), tone: 'text-[#eef3f8]' },
-    { label: 'Quality', value: String(s.financialQuality), tone: 'text-[#eef3f8]' },
-    { label: 'Liquidity', value: String(s.liquidity), tone: 'text-[#eef3f8]' },
-    { label: 'Capital', value: String(s.capitalFlow), tone: 'text-[#eef3f8]' },
-    { label: 'Penalty', value: `-${s.riskPenalty}`, tone: 'text-[#f0758a]' },
+    { label: 'Theme fit', value: String(s.themeFit), tone: 'text-ink' },
+    { label: 'Bottleneck', value: String(s.bottleneck), tone: 'text-ink' },
+    { label: 'Evidence', value: String(s.evidence), tone: 'text-ink' },
+    { label: 'Momentum', value: String(s.momentum), tone: 'text-ink' },
+    { label: 'Quality', value: String(s.financialQuality), tone: 'text-ink' },
+    { label: 'Liquidity', value: String(s.liquidity), tone: 'text-ink' },
+    { label: 'Capital', value: String(s.capitalFlow), tone: 'text-ink' },
+    { label: 'Penalty', value: `-${s.riskPenalty}`, tone: 'text-negative-soft' },
   ];
 
   return (
-    <div className="overflow-hidden rounded-md border border-[#1b2530] bg-[#0d1117]">
+    <div className="overflow-hidden rounded-cell border border-line bg-panel-deep">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition hover:bg-[#101720]"
+        className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition hover:bg-panel"
       >
         <TickerLogo symbol={company.symbol} companyName={company.name} size={13} />
-        <span className="shrink-0 font-mono text-[11px] font-semibold text-[#eef3f8]">{company.symbol}</span>
-        <span className="min-w-0 flex-1 truncate text-[10px] text-[#8190a0]">{company.name}</span>
+        <span className="shrink-0 font-mono text-[11px] font-semibold text-ink">{company.symbol}</span>
+        <span className="min-w-0 flex-1 truncate text-[10px] text-ink-3">{company.name}</span>
         <span className="shrink-0 text-[10px]" title={theme.name} aria-hidden>
           {theme.emoji}
         </span>
@@ -83,24 +83,24 @@ function CompanyRow({ company, theme, open, onToggle }: CompanyRowProps) {
         <span className={`shrink-0 rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] ${ACTION_TONE[s.action]}`}>
           {s.action}
         </span>
-        <ChevronDown size={14} className={`shrink-0 text-[#8190a0] transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} className={`shrink-0 text-ink-3 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="space-y-2 border-t border-[#1b2530] px-2.5 py-2 text-[11px] leading-snug">
+        <div className="space-y-2 border-t border-line px-2.5 py-2 text-[11px] leading-snug">
           <div>
-            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">Why it matters</p>
-            <p className="mt-0.5 text-[#c8d3de]">{company.whyItMatters}</p>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-ink-3">Why it matters</p>
+            <p className="mt-0.5 text-ink-title">{company.whyItMatters}</p>
           </div>
           <div>
-            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">Evidence</p>
-            <p className="mt-0.5 text-[#c8d3de]">{company.evidenceSummary}</p>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-ink-3">Evidence</p>
+            <p className="mt-0.5 text-ink-title">{company.evidenceSummary}</p>
           </div>
 
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
             {breakdown.map((cell) => (
-              <div key={cell.label} className="rounded-md border border-[#263241] bg-[#0d141c] p-1.5">
-                <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{cell.label}</p>
+              <div key={cell.label} className="rounded-cell border border-line-strong bg-panel p-1.5">
+                <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">{cell.label}</p>
                 <p className={`numeric mt-0.5 font-mono text-xs font-semibold ${cell.tone}`}>{cell.value}</p>
               </div>
             ))}
@@ -110,12 +110,12 @@ function CompanyRow({ company, theme, open, onToggle }: CompanyRowProps) {
             <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] ${ACTION_TONE[s.action]}`}>
               {s.state}
             </span>
-            <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#a8b5c2]">
+            <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-ink-2">
               {SIZE_LABEL[company.sizeBucket]}
             </span>
             <Link
               href={`/themes/${company.theme}`}
-              className="rounded border border-[#2a4a7a] bg-[#0f1a2c] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#7fb0ff] transition hover:bg-[#13233c]"
+              className="rounded border border-blue-info/40 bg-blue-tint px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-blue-info transition hover:bg-blue/15"
             >
               Theme dossier {'->'}
             </Link>
@@ -123,10 +123,10 @@ function CompanyRow({ company, theme, open, onToggle }: CompanyRowProps) {
 
           {company.risks.length > 0 && (
             <div>
-              <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#f0758a]">Risks</p>
+              <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-negative-soft">Risks</p>
               <ul className="mt-0.5 space-y-0.5">
                 {company.risks.map((risk) => (
-                  <li key={risk} className="text-[10px] text-[#c8d3de]">
+                  <li key={risk} className="text-[10px] text-ink-title">
                     - {risk}
                   </li>
                 ))}
@@ -148,14 +148,14 @@ function ResearchCandidateRow({ candidate }: { candidate: SmallCapResearchCandid
   ] as const;
 
   return (
-    <div className="rounded-md border border-[#1b2530] bg-[#0d1117] p-2">
+    <div className="rounded-cell border border-line bg-panel-deep p-2">
       <div className="flex items-center gap-2">
         <TickerLogo symbol={candidate.symbol} companyName={candidate.name} size={14} />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-mono text-[12px] font-semibold text-[#eef3f8]">
-            {candidate.symbol} <span className="font-sans text-[10px] font-normal text-[#8190a0]">{candidate.name}</span>
+          <p className="truncate font-mono text-[12px] font-semibold text-ink">
+            {candidate.symbol} <span className="font-sans text-[10px] font-normal text-ink-3">{candidate.name}</span>
           </p>
-          <p className="truncate text-[10px] text-[#8190a0]">{candidate.vertical}</p>
+          <p className="truncate text-[10px] text-ink-3">{candidate.vertical}</p>
         </div>
         <span className={`numeric font-mono text-base font-semibold ${scoreTone(candidate.score.totalScore)}`}>
           {candidate.score.totalScore}
@@ -164,30 +164,30 @@ function ResearchCandidateRow({ candidate }: { candidate: SmallCapResearchCandid
 
       <div className="mt-2 grid grid-cols-4 gap-1.5">
         {scoreCells.map(([label, value]) => (
-          <div key={label} className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-1">
-            <p className="text-[8px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
-            <p className={`numeric font-mono text-[11px] font-semibold ${value >= 0 ? 'text-[#eef3f8]' : 'text-[#f0758a]'}`}>
+          <div key={label} className="rounded border border-line-strong bg-panel px-1.5 py-1">
+            <p className="text-[8px] uppercase tracking-[0.12em] text-ink-3">{label}</p>
+            <p className={`numeric font-mono text-[11px] font-semibold ${value >= 0 ? 'text-ink' : 'text-negative-soft'}`}>
               {value}
             </p>
           </div>
         ))}
       </div>
 
-      <p className="mt-1.5 line-clamp-2 text-[10px] leading-snug text-[#a8b5c2]">{candidate.evidenceSummary}</p>
+      <p className="mt-1.5 line-clamp-2 text-[10px] leading-snug text-ink-2">{candidate.evidenceSummary}</p>
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#a8b5c2]">
+        <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-ink-2">
           {candidate.researchState}
         </span>
         {candidate.paperBot.eligible ? (
           <Link
             href={candidate.paperBot.route}
-            className="rounded border border-[#1d7f55] bg-[#0d251b] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#43d18b] transition hover:bg-[#103626]"
+            className="rounded border border-positive/40 bg-positive-tint px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-positive transition hover:bg-positive/15"
           >
             Paper bot ready
           </Link>
         ) : (
-          <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#8190a0]">
+          <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-ink-3">
             Paper bot watch
           </span>
         )}
@@ -234,15 +234,15 @@ export function SmallCapDiscovery({ buckets, themesBySlug, research }: SmallCapD
 
   return (
     <div className="space-y-3">
-      <section className="terminal-panel rounded-md p-3">
+      <section className="terminal-panel rounded-panel p-3">
         <div className="flex items-center gap-2">
-          <Compass size={16} className="text-[#43d18b]" />
-          <h2 className="text-sm font-semibold text-[#eef3f8]">Research backend</h2>
-          <span className="ml-auto rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#8190a0]">
+          <Compass size={16} className="text-positive" />
+          <h2 className="text-sm font-semibold text-ink">Research backend</h2>
+          <span className="ml-auto rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink-3">
             {research.sources.filter((source) => source.integration === 'live-now').length} live / {research.sources.length} mapped
           </span>
         </div>
-        <p className="mt-1 text-[10px] leading-snug text-[#8190a0]">
+        <p className="mt-1 text-[10px] leading-snug text-ink-3">
           Official spend, filings, buyer-volume and technical markers are blended into a paper-only research queue.
         </p>
 
@@ -259,7 +259,7 @@ export function SmallCapDiscovery({ buckets, themesBySlug, research }: SmallCapD
               href={source.url}
               target="_blank"
               rel="noreferrer"
-              className="rounded border border-[#263241] bg-[#0d141c] px-2 py-0.5 font-mono text-[9px] text-[#8190a0] transition hover:text-[#dbe5ee]"
+              className="rounded border border-line-strong bg-panel px-2 py-0.5 font-mono text-[9px] text-ink-3 transition hover:text-ink-title"
             >
               {source.name}
             </a>
@@ -267,10 +267,10 @@ export function SmallCapDiscovery({ buckets, themesBySlug, research }: SmallCapD
         </div>
       </section>
 
-      <section className="terminal-panel rounded-md p-3">
+      <section className="terminal-panel rounded-panel p-3">
         <div className="flex items-center gap-2">
-          <Compass size={16} className="text-[#7fb0ff]" />
-          <h2 className="text-sm font-semibold text-[#eef3f8]">Discovery engine</h2>
+          <Compass size={16} className="text-blue-info" />
+          <h2 className="text-sm font-semibold text-ink">Discovery engine</h2>
           <HelpDrawer
             title="What the scores mean"
             subtitle="The small-cap discovery score, by component"
@@ -283,12 +283,12 @@ export function SmallCapDiscovery({ buckets, themesBySlug, research }: SmallCapD
 
         <div className="mt-2 grid grid-cols-3 gap-1.5">
           {([
-            ['Names tracked', namesTracked, 'text-[#eef3f8]'],
-            ['Emerging now', emergingNow, 'text-[#43d18b]'],
-            ['Flagged risky', flaggedRisky, 'text-[#f0758a]'],
+            ['Names tracked', namesTracked, 'text-ink'],
+            ['Emerging now', emergingNow, 'text-positive'],
+            ['Flagged risky', flaggedRisky, 'text-negative-soft'],
           ] as const).map(([label, value, tone]) => (
-            <div key={label} className="rounded-md border border-[#263241] bg-[#0d141c] p-2">
-              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
+            <div key={label} className="rounded-cell border border-line-strong bg-panel p-2">
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">{label}</p>
               <p className={`numeric mt-0.5 font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
             </div>
           ))}
@@ -300,8 +300,8 @@ export function SmallCapDiscovery({ buckets, themesBySlug, research }: SmallCapD
             onClick={() => setActiveTheme('all')}
             className={`rounded border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] transition ${
               activeTheme === 'all'
-                ? 'border-[#3b5bdb] bg-[#0d1530] text-[#8aa2ff]'
-                : 'border-[#1b2530] bg-[#0d141c] text-[#8190a0] hover:text-[#dbe5ee]'
+                ? 'border-blue-deep bg-blue-tint text-pending'
+                : 'border-line bg-panel text-ink-3 hover:text-ink-title'
             }`}
           >
             All
@@ -315,8 +315,8 @@ export function SmallCapDiscovery({ buckets, themesBySlug, research }: SmallCapD
                 onClick={() => setActiveTheme(slug)}
                 className={`rounded border px-2 py-0.5 font-mono text-[10px] transition ${
                   activeTheme === slug
-                    ? 'border-[#3b5bdb] bg-[#0d1530] text-[#8aa2ff]'
-                    : 'border-[#1b2530] bg-[#0d141c] text-[#8190a0] hover:text-[#dbe5ee]'
+                    ? 'border-blue-deep bg-blue-tint text-pending'
+                    : 'border-line bg-panel text-ink-3 hover:text-ink-title'
                 }`}
               >
                 {meta.emoji} {meta.name}
@@ -327,30 +327,30 @@ export function SmallCapDiscovery({ buckets, themesBySlug, research }: SmallCapD
       </section>
 
       {visibleBuckets.length === 0 && (
-        <section className="terminal-panel rounded-md p-3">
-          <p className="text-[11px] text-[#a8b5c2]">No names match this theme filter yet.</p>
+        <section className="terminal-panel rounded-panel p-3">
+          <p className="text-[11px] text-ink-2">No names match this theme filter yet.</p>
         </section>
       )}
 
       {visibleBuckets.map((bucket) => {
         const isAvoid = bucket.bucket === AVOID_BUCKET;
         return (
-          <section key={bucket.bucket} className="terminal-panel rounded-md p-3">
+          <section key={bucket.bucket} className="terminal-panel rounded-panel p-3">
             <div className="flex items-center gap-2">
-              <h3 className={`text-[12px] font-semibold ${isAvoid ? 'text-[#f0758a]' : 'text-[#eef3f8]'}`}>
+              <h3 className={`text-[12px] font-semibold ${isAvoid ? 'text-negative-soft' : 'text-ink'}`}>
                 {bucket.bucket}
               </h3>
               <span
                 className={`rounded border px-1.5 py-0.5 font-mono text-[9px] ${
                   isAvoid
-                    ? 'border-[#7a2630] bg-[#260f12] text-[#f0758a]'
-                    : 'border-[#263241] bg-[#0d141c] text-[#8190a0]'
+                    ? 'border-negative/40 bg-negative/10 text-negative-soft'
+                    : 'border-line-strong bg-panel text-ink-3'
                 }`}
               >
                 {bucket.items.length}
               </span>
             </div>
-            <p className="mt-0.5 text-[10px] leading-snug text-[#8190a0]">{bucket.blurb}</p>
+            <p className="mt-0.5 text-[10px] leading-snug text-ink-3">{bucket.blurb}</p>
 
             <div className="mt-2 space-y-1.5">
               {bucket.items.map((company) => (
@@ -367,7 +367,7 @@ export function SmallCapDiscovery({ buckets, themesBySlug, research }: SmallCapD
         );
       })}
 
-      <p className="text-[10px] leading-snug text-[#6f7d8a]">
+      <p className="text-[10px] leading-snug text-ink-dim">
         Discovery ranks are deterministic research scores built on evidence, bottleneck exposure and risk penalties -
         small caps carry real liquidity and dilution risk.
       </p>

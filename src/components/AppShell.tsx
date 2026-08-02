@@ -121,13 +121,14 @@ const navItems: NavItem[] = [
 ];
 
 // Each job gets a Lyra accent - the drawer reads in colour, not a grey wall, and the colour codes the
-// job so the eye learns "amber = my desk, cyan = discover, purple = research, green = practice".
+// job so the eye learns "amber = my desk, blue = discover, violet = research, green = practice".
+// Expressed as token vars (nearest token per lyra-ux/TOKENS.md) so the shell carries no ad-hoc hex.
 const NAV_BUCKETS: { id: NavBucketId; label: string; blurb: string; color: string }[] = [
-  { id: 'desk', label: 'Your desk', blurb: 'What you own and act on', color: '#f3a33a' },
-  { id: 'discover', label: 'Discover', blurb: 'Find the next opportunity', color: '#5bc8ff' },
-  { id: 'research', label: 'Research', blurb: 'Dig into the evidence', color: '#a78bfa' },
-  { id: 'practice', label: 'Practice', blurb: 'Test ideas with no real money', color: '#43d18b' },
-  { id: 'learn', label: 'Learn & set up', blurb: 'Get better, tune the rules', color: '#f0758a' },
+  { id: 'desk', label: 'Your desk', blurb: 'What you own and act on', color: 'var(--lyra-accent)' },
+  { id: 'discover', label: 'Discover', blurb: 'Find the next opportunity', color: 'var(--lyra-blue-info)' },
+  { id: 'research', label: 'Research', blurb: 'Dig into the evidence', color: 'var(--lyra-pending)' },
+  { id: 'practice', label: 'Practice', blurb: 'Test ideas with no real money', color: 'var(--lyra-positive)' },
+  { id: 'learn', label: 'Learn & set up', blurb: 'Get better, tune the rules', color: 'var(--lyra-negative-soft)' },
 ];
 
 const NAV_BY_HREF = new Map(navItems.map((item) => [item.href, item]));
@@ -144,8 +145,16 @@ const VALID_PRIMARY_HREFS: ReadonlySet<string> = new Set(NAV_BY_HREF.keys());
 const sanitizePrimaryHrefs = (hrefs: string[]) => sanitizePrimaries(hrefs, VALID_PRIMARY_HREFS, MAX_PRIMARIES);
 
 // Lyra colour ramp - nav icons ascend through the brand palette and descend back
-// (ping-pong), so the rail reads as one continuous Lyra gradient wave.
-const LYRA_RAMP = ['#3b5bdb', '#5bc8ff', '#43d18b', '#f3a33a', '#f0758a', '#a78bfa'];
+// (ping-pong), so the rail reads as one continuous Lyra gradient wave. Token vars,
+// mapped to the nearest TOKENS.md entry (cyan -> blue-info, violet -> pending).
+const LYRA_RAMP = [
+  'var(--lyra-blue-deep)',
+  'var(--lyra-blue-info)',
+  'var(--lyra-positive)',
+  'var(--lyra-accent)',
+  'var(--lyra-negative-soft)',
+  'var(--lyra-pending)',
+];
 function rampColor(index: number): string {
   const period = LYRA_RAMP.length * 2 - 2;
   const pos = index % period;
@@ -254,9 +263,9 @@ export function AppShell({ data, children }: AppShellProps) {
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-[#080a0d] text-[#eef3f8]">
-      <aside className="glass-chrome fixed bottom-0 left-0 top-0 z-30 hidden w-[72px] flex-col border-r border-[#1b2530] xl:flex">
-        <Link href="/" className="grid h-14 shrink-0 place-items-center border-b border-[#1b2530]">
+    <div className="min-h-screen bg-ground text-ink">
+      <aside className="glass-chrome fixed bottom-0 left-0 top-0 z-30 hidden w-[72px] flex-col border-r border-line xl:flex">
+        <Link href="/" className="grid h-14 shrink-0 place-items-center border-b border-line">
           <BrandLogo size={30} />
         </Link>
         {/* Slim rail: the daily-drivers, then one Explore door to everything else. The 30 research
@@ -269,29 +278,29 @@ export function AppShell({ data, children }: AppShellProps) {
               href={item.href}
               title={item.label}
               aria-current={isActive(item.href) ? 'page' : undefined}
-              className={`group relative grid h-11 w-11 place-items-center rounded-md transition ${
-                isActive(item.href) ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40' : 'hover:bg-[#151c25]'
+              className={`group relative grid h-11 w-11 place-items-center rounded-cell transition ${
+                isActive(item.href) ? 'bg-accent-tint text-accent ring-1 ring-accent/40' : 'hover:bg-panel'
               }`}
             >
               <item.icon size={18} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-75 transition group-hover:opacity-100'} />
-              <span className="pointer-events-none absolute left-14 z-20 hidden whitespace-nowrap rounded-md border border-[#263241] bg-[#101720] px-2 py-1 text-xs text-[#dbe5ee] shadow-xl group-hover:block group-focus-visible:block">
+              <span className="pointer-events-none absolute left-14 z-20 hidden whitespace-nowrap rounded-cell border border-line-strong bg-panel px-2 py-1 text-xs text-ink-title shadow-xl group-hover:block group-focus-visible:block">
                 {item.label}
               </span>
             </Link>
           ))}
-          <span aria-hidden className="mb-1 mt-1 h-px w-7 shrink-0 bg-[#1b2530]" />
+          <span aria-hidden className="mb-1 mt-1 h-px w-7 shrink-0 bg-line" />
           <button
             type="button"
             onClick={() => setExploreOpen(true)}
             title="Explore everything"
             aria-haspopup="dialog"
             aria-expanded={exploreOpen}
-            className={`group relative grid h-11 w-11 place-items-center rounded-md transition ${
-              exploreActive ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40' : 'text-[#a8b5c2] hover:bg-[#151c25]'
+            className={`group relative grid h-11 w-11 place-items-center rounded-cell transition ${
+              exploreActive ? 'bg-accent-tint text-accent ring-1 ring-accent/40' : 'text-ink-2 hover:bg-panel'
             }`}
           >
             <LayoutGrid size={18} className={exploreActive ? undefined : 'opacity-75 transition group-hover:opacity-100'} />
-            <span className="pointer-events-none absolute left-14 z-20 hidden whitespace-nowrap rounded-md border border-[#263241] bg-[#101720] px-2 py-1 text-xs text-[#dbe5ee] shadow-xl group-hover:block group-focus-visible:block">
+            <span className="pointer-events-none absolute left-14 z-20 hidden whitespace-nowrap rounded-cell border border-line-strong bg-panel px-2 py-1 text-xs text-ink-title shadow-xl group-hover:block group-focus-visible:block">
               Explore everything
             </span>
           </button>
@@ -300,7 +309,7 @@ export function AppShell({ data, children }: AppShellProps) {
 
       <div className="xl:pl-[72px]">
         <header
-          className="glass-chrome sticky top-0 z-20 border-b border-[#1b2530]"
+          className="glass-chrome sticky top-0 z-20 border-b border-line"
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
           <div className="flex h-14 items-center gap-3 px-3 md:px-5">
@@ -323,9 +332,9 @@ export function AppShell({ data, children }: AppShellProps) {
                     ? 'Solo mode - device-local book and settings; market scores refresh from public prices when available'
                     : 'Demo data - illustrative sample signals, not a live market scan'
                 }
-                className="hidden items-center gap-1.5 rounded-md border border-[#5a4a1a] bg-[#231a08] px-2 py-1.5 font-mono text-[11px] text-[#f3a33a] sm:flex"
+                className="hidden items-center gap-1.5 rounded-cell border border-accent-border/60 bg-accent-tint px-2 py-1.5 font-mono text-[11px] text-accent sm:flex"
               >
-                <span className="inline-flex h-2 w-2 rounded-full bg-[#f3a33a]" />
+                <span className="inline-flex h-2 w-2 rounded-full bg-accent" />
                 {soloMode ? 'SOLO' : 'DEMO'}
               </span>
             ) : (() => {
@@ -340,13 +349,13 @@ export function AppShell({ data, children }: AppShellProps) {
                         ? `Last scan ${data.latestRun.status} - data may be incomplete (${relativeTime(data.latestRun.finishedAt)})`
                         : `Stale - last scan ${relativeTime(data.latestRun.finishedAt)}, older than the ${STALE_AFTER_HOURS}h freshness window`
                     }
-                    className={`hidden items-center gap-1.5 rounded-md border px-2 py-1.5 font-mono text-[11px] sm:flex ${
+                    className={`hidden items-center gap-1.5 rounded-cell border px-2 py-1.5 font-mono text-[11px] sm:flex ${
                       failed
-                        ? 'border-[#5a1f1f] bg-[#2b0f0f] text-[#ff6b6b]'
-                        : 'border-[#5a4a1a] bg-[#231a08] text-[#f3a33a]'
+                        ? 'border-negative/40 bg-negative/10 text-negative'
+                        : 'border-accent-border/60 bg-accent-tint text-accent'
                     }`}
                   >
-                    <span className={`inline-flex h-2 w-2 rounded-full ${failed ? 'bg-[#ff6b6b]' : 'bg-[#f3a33a]'}`} />
+                    <span className={`inline-flex h-2 w-2 rounded-full ${failed ? 'bg-negative' : 'bg-accent'}`} />
                     {failed
                       ? `Scan ${data.latestRun.status.toUpperCase()}`
                       : `Stale · ${hoursAgo >= 24 ? `${Math.round(hoursAgo / 24)}d` : `${Math.round(hoursAgo)}h`} ago`}
@@ -356,11 +365,11 @@ export function AppShell({ data, children }: AppShellProps) {
               return (
                 <span
                   title={`Live · Last scan ${relativeTime(data.latestRun.finishedAt)} · ${data.latestRun.timeframe.toUpperCase()} timeframe`}
-                  className="hidden items-center gap-1.5 rounded-md border border-[#1d4f3a] bg-[#0d251b] px-2 py-1.5 font-mono text-[11px] text-[#43d18b] sm:flex"
+                  className="hidden items-center gap-1.5 rounded-cell border border-positive/40 bg-positive-tint px-2 py-1.5 font-mono text-[11px] text-positive sm:flex"
                 >
                   <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-60" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-[#43d18b]" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-positive" />
                   </span>
                   {data.latestRun.timeframe.toUpperCase()} · {relativeTime(data.latestRun.finishedAt)}
                 </span>
@@ -375,12 +384,12 @@ export function AppShell({ data, children }: AppShellProps) {
               href="/wire"
               title="Live Wire - the live signal feed"
               aria-label="Live Wire"
-              className="relative grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:border-[#1d4f3a] hover:text-[#43d18b] sm:h-9 sm:w-9"
+              className="relative grid h-11 w-11 shrink-0 place-items-center rounded-cell border border-line-strong bg-panel text-ink-2 transition hover:border-positive/40 hover:text-positive sm:h-9 sm:w-9"
             >
               <Bell size={16} />
               <span className="absolute right-1.5 top-1.5 flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-70" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#43d18b]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-70" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-positive" />
               </span>
             </Link>
 
@@ -389,11 +398,11 @@ export function AppShell({ data, children }: AppShellProps) {
               href="/whats-new"
               title="What's new"
               aria-label="What's new"
-              className="relative grid h-11 w-11 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8] sm:h-9 sm:w-9"
+              className="relative grid h-11 w-11 place-items-center rounded-cell border border-line-strong bg-panel text-ink-2 transition hover:text-ink sm:h-9 sm:w-9"
             >
               <Megaphone size={16} />
               {hasUnseenRelease && (
-                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#f3a33a] ring-2 ring-[#0d141c]" />
+                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-accent ring-2 ring-panel" />
               )}
             </Link>
 
@@ -401,7 +410,7 @@ export function AppShell({ data, children }: AppShellProps) {
               href="/onboarding"
               title="Guided setup"
               aria-label="Guided setup"
-              className="hidden h-9 w-9 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8] sm:grid"
+              className="hidden h-9 w-9 place-items-center rounded-cell border border-line-strong bg-panel text-ink-2 transition hover:text-ink sm:grid"
             >
               <Wand2 size={16} />
             </Link>
@@ -411,8 +420,8 @@ export function AppShell({ data, children }: AppShellProps) {
         </header>
 
         {data.generatedFrom === 'demo' && (
-          <div className="flex items-center justify-center gap-1.5 border-b border-[#5a4a1a]/50 bg-[#1a1407] px-3 py-1.5 text-center text-[11px] text-[#f3a33a] md:px-5">
-            <span className="inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-[#f3a33a]" />
+          <div className="flex items-center justify-center gap-1.5 border-b border-accent-border/50 bg-accent-tint/60 px-3 py-1.5 text-center text-[11px] text-accent md:px-5">
+            <span className="inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
             <span>
               {soloMode
                 ? 'Solo mode - your book, watchlist and trade log stay on this device. Market scores refresh from public prices when available; seeded context panels are labelled Sample.'
@@ -426,13 +435,13 @@ export function AppShell({ data, children }: AppShellProps) {
           {children}
         </main>
 
-        <footer className="border-t border-[#1b2530] px-3 py-2 text-[10px] text-[#6f7d8a] md:px-5">
+        <footer className="border-t border-line px-3 py-2 text-[10px] text-ink-dim md:px-5">
           Research only - not financial advice. Lyra never trades for you.
         </footer>
       </div>
 
       <nav
-        className="glass-chrome fixed bottom-0 left-0 right-0 z-30 border-t border-[#1b2530] xl:hidden"
+        className="glass-chrome fixed bottom-0 left-0 right-0 z-30 border-t border-line xl:hidden"
         style={{
           paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)',
           paddingLeft: 'env(safe-area-inset-left)',
@@ -446,8 +455,8 @@ export function AppShell({ data, children }: AppShellProps) {
               href={item.href}
               key={item.href}
               aria-current={isActive(item.href) ? 'page' : undefined}
-              className={`flex flex-1 flex-col items-center gap-1 rounded-md px-0.5 py-1.5 text-[10px] font-medium transition ${
-                isActive(item.href) ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40' : 'text-[#8190a0] active:bg-[#151c25]'
+              className={`flex flex-1 flex-col items-center gap-1 rounded-cell px-0.5 py-1.5 text-[10px] font-medium transition ${
+                isActive(item.href) ? 'bg-accent-tint text-accent ring-1 ring-accent/40' : 'text-ink-3 active:bg-panel'
               }`}
             >
               <item.icon size={20} style={isActive(item.href) ? undefined : { color: rampColor(i) }} className={isActive(item.href) ? undefined : 'opacity-80'} />
@@ -459,8 +468,8 @@ export function AppShell({ data, children }: AppShellProps) {
             onClick={() => setExploreOpen(true)}
             aria-haspopup="dialog"
             aria-expanded={exploreOpen}
-            className={`flex flex-1 flex-col items-center gap-1 rounded-md px-0.5 py-1.5 text-[10px] font-medium transition ${
-              exploreActive ? 'bg-[#23180b] text-[#f3a33a] ring-1 ring-[#f3a33a]/40' : 'text-[#8190a0] active:bg-[#151c25]'
+            className={`flex flex-1 flex-col items-center gap-1 rounded-cell px-0.5 py-1.5 text-[10px] font-medium transition ${
+              exploreActive ? 'bg-accent-tint text-accent ring-1 ring-accent/40' : 'text-ink-3 active:bg-panel'
             }`}
           >
             <LayoutGrid size={20} className={exploreActive ? undefined : 'opacity-80'} />
@@ -475,26 +484,26 @@ export function AppShell({ data, children }: AppShellProps) {
         <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Explore all surfaces">
           <button type="button" aria-label="Close Explore" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeExplore} />
           <div
-            className="glass-chrome relative ml-auto flex h-full w-full max-w-md flex-col border-l border-[#1b2530] shadow-2xl"
+            className="glass-chrome relative ml-auto flex h-full w-full max-w-md flex-col border-l border-line shadow-2xl"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)', paddingRight: 'env(safe-area-inset-right)' }}
           >
             <div
-              className="flex items-center gap-2 border-b border-[#1b2530] px-4 py-3"
+              className="flex items-center gap-2 border-b border-line px-4 py-3"
               style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
             >
-              {customizing ? <Pin size={16} className="text-[#f3a33a]" /> : <LayoutGrid size={16} className="text-[#f3a33a]" />}
-              <h2 className="text-sm font-semibold text-[#eef3f8]">{customizing ? 'Customise your bar' : 'Explore'}</h2>
-              <span className="hidden text-[11px] text-[#8190a0] sm:inline">
+              {customizing ? <Pin size={16} className="text-accent" /> : <LayoutGrid size={16} className="text-accent" />}
+              <h2 className="text-sm font-semibold text-ink">{customizing ? 'Customise your bar' : 'Explore'}</h2>
+              <span className="hidden text-[11px] text-ink-3 sm:inline">
                 {customizing ? 'Drag to reorder, add or remove' : 'everything behind your desk'}
               </span>
               <div className="ml-auto flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setCustomizing((c) => !c)}
-                  className={`flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition ${
+                  className={`flex items-center gap-1 rounded-cell border px-2 py-1 text-[11px] font-medium transition ${
                     customizing
-                      ? 'border-[#f3a33a]/50 bg-[#23180b] text-[#f3a33a]'
-                      : 'border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:text-[#eef3f8]'
+                      ? 'border-accent-border bg-accent-tint text-accent'
+                      : 'border-line-strong bg-panel text-ink-2 hover:text-ink'
                   }`}
                 >
                   <Pin size={12} />
@@ -505,7 +514,7 @@ export function AppShell({ data, children }: AppShellProps) {
                   autoFocus
                   onClick={closeExplore}
                   aria-label="Close"
-                  className="grid h-8 w-8 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+                  className="grid h-8 w-8 place-items-center rounded-cell border border-line-strong bg-panel text-ink-2 transition hover:text-ink"
                 >
                   <X size={16} />
                 </button>
@@ -532,7 +541,7 @@ export function AppShell({ data, children }: AppShellProps) {
                         <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: bucket.color }}>
                           {bucket.label}
                         </p>
-                        <p className="truncate text-[10px] text-[#5e6b78]">{bucket.blurb}</p>
+                        <p className="truncate text-[10px] text-ink-dim">{bucket.blurb}</p>
                       </div>
                       <div className="grid grid-cols-2 gap-1.5">
                         {navItems
@@ -546,10 +555,10 @@ export function AppShell({ data, children }: AppShellProps) {
                                 href={item.href}
                                 onClick={closeExplore}
                                 aria-current={active ? 'page' : undefined}
-                                className={`flex items-center gap-2 rounded-md border px-2.5 py-2 text-[12px] transition ${
+                                className={`flex items-center gap-2 rounded-cell border px-2.5 py-2 text-[12px] transition ${
                                   active
-                                    ? 'border-[#f3a33a]/40 bg-[#23180b] text-[#f3a33a]'
-                                    : 'border-[#1b2530] bg-[#0d1117] text-[#c3ccd6] hover:border-[#2a3646] hover:bg-[#101720]'
+                                    ? 'border-accent-border bg-accent-tint text-accent'
+                                    : 'border-line bg-panel-deep text-ink-2 hover:border-line-strong hover:bg-panel'
                                 }`}
                               >
                                 <item.icon
@@ -558,7 +567,7 @@ export function AppShell({ data, children }: AppShellProps) {
                                   style={active ? undefined : { color: bucket.color, opacity: 0.9 }}
                                 />
                                 <span className="truncate">{item.label}</span>
-                                {onBar && !active && <Pin size={11} className="ml-auto shrink-0 text-[#f3a33a]" />}
+                                {onBar && !active && <Pin size={11} className="ml-auto shrink-0 text-accent" />}
                               </Link>
                             );
                           })}

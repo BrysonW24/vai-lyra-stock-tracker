@@ -9,7 +9,7 @@ import { Sparkles } from 'lucide-react';
  */
 export function AiGeneratedLabel({ size = 12 }: { size?: number }) {
   return (
-    <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#f3a33a]">
+    <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
       <Sparkles size={size} /> Lyra · AI-generated
     </div>
   );

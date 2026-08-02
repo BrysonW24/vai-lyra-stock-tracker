@@ -27,7 +27,7 @@ interface Props {
   onLifecycleChange?: () => void;
 }
 
-const confidenceTone: Record<string, string> = { high: 'text-[#43d18b]', medium: 'text-[#f3a33a]', low: 'text-[#8190a0]' };
+const confidenceTone: Record<string, string> = { high: 'text-positive', medium: 'text-accent', low: 'text-ink-3' };
 
 export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClose, enableLifecycle, onLifecycleChange }: Props) {
   const isOpen = stack.length > 0 && Boolean(finding);
@@ -79,28 +79,28 @@ export function InvestigationDrawerStack({ finding, stack, onPush, onBack, onClo
         role="dialog"
         aria-modal="true"
         aria-label="Investigation detail"
-        className="flex h-full w-full max-w-xl flex-col border-l border-[#1b2530] bg-[#070b10] shadow-2xl md:w-[34rem]"
+        className="flex h-full w-full max-w-xl flex-col border-l border-line bg-ground shadow-2xl md:w-[34rem]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)', paddingRight: 'env(safe-area-inset-right)' }}
       >
         {/* breadcrumb + controls */}
         <div
-          className="flex items-center gap-2 border-b border-[#1b2530] px-3 py-2"
+          className="flex items-center gap-2 border-b border-line px-3 py-2"
           style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
         >
           {stack.length > 1 && (
-            <button type="button" onClick={onBack} className="rounded border border-[#1b2530] px-2 py-0.5 text-[10px] text-[#a8b5c2] hover:border-[#2b3a4a]">
+            <button type="button" onClick={onBack} className="rounded-cell border border-line px-2 py-0.5 text-[10px] text-ink-2 hover:border-line-strong">
               &lt;- Back
             </button>
           )}
-          <nav className="min-w-0 flex-1 truncate text-[10px] text-[#8190a0]">
+          <nav className="min-w-0 flex-1 truncate text-[10px] text-ink-3">
             {stack.map((item, i) => (
               <span key={`${item.type}:${item.id}:${i}`}>
-                {i > 0 && <span className="px-1 text-[#3a4654]">/</span>}
-                <span className={i === stack.length - 1 ? 'text-[#a8b5c2]' : ''}>{item.title || item.id}</span>
+                {i > 0 && <span className="px-1 text-line-hair">/</span>}
+                <span className={i === stack.length - 1 ? 'text-ink-2' : ''}>{item.title || item.id}</span>
               </span>
             ))}
           </nav>
-          <button ref={closeBtnRef} type="button" onClick={onClose} className="rounded border border-[#1b2530] px-2 py-0.5 text-[10px] text-[#a8b5c2] hover:border-[#2b3a4a]">
+          <button ref={closeBtnRef} type="button" onClick={onClose} className="rounded-cell border border-line px-2 py-0.5 text-[10px] text-ink-2 hover:border-line-strong">
             Close
           </button>
         </div>
@@ -144,28 +144,28 @@ function FindingBody({
   return (
     <div className="space-y-3">
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">
           {finding.symbol ? `${finding.symbol} - why Lyra surfaced this` : finding.title}
         </h2>
-        <p className="mt-1 text-[11px] leading-relaxed text-[#a8b5c2]">{finding.summary}</p>
+        <p className="mt-1 text-[11px] leading-relaxed text-ink-2">{finding.summary}</p>
       </div>
 
       <button
         type="button"
         onClick={() => onPush({ type: 'genui', id: finding.id, title: 'Generated view' })}
-        className="flex w-full items-center justify-between rounded-md border border-[#234] bg-gradient-to-r from-[#0b1016] to-[#0d1a26] px-3 py-2 text-left hover:border-[#2b4a63]"
+        className="flex w-full items-center justify-between rounded-cell border border-line-strong bg-blue-tint/50 px-3 py-2 text-left transition hover:border-blue-deep/60"
       >
-        <span className="text-[11px] text-[#8fd0ff]">Want to see what this looks like? Generate a view -&gt;</span>
-        <span className="text-[10px] text-[#8190a0]">AI composes, Lyra owns the numbers</span>
+        <span className="text-[11px] text-blue-info">Want to see what this looks like? Generate a view -&gt;</span>
+        <span className="text-[10px] text-ink-3">AI composes, Lyra owns the numbers</span>
       </button>
 
-      <div className="flex gap-1 border-b border-[#1b2530]">
+      <div className="flex gap-1 border-b border-line">
         {TABS.map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`px-2 py-1 text-[10px] uppercase tracking-[0.1em] ${tab === t ? 'border-b border-[#60a5fa] text-[#eef3f8]' : 'text-[#8190a0]'}`}
+            className={`px-2 py-1 text-[10px] uppercase tracking-[0.1em] ${tab === t ? 'border-b border-blue-focus text-ink' : 'text-ink-3'}`}
           >
             {t}
           </button>
@@ -177,8 +177,8 @@ function FindingBody({
           <Section title="Why surfaced">
             <ol className="space-y-1">
               {finding.whySurfaced.map((w, i) => (
-                <li key={i} className="text-[11px] leading-relaxed text-[#a8b5c2]">
-                  <span className="text-[#60a5fa]">{i + 1}.</span> {w}
+                <li key={i} className="text-[11px] leading-relaxed text-ink-2">
+                  <span className="text-blue-focus">{i + 1}.</span> {w}
                 </li>
               ))}
             </ol>
@@ -188,9 +188,9 @@ function FindingBody({
               {([['Total', s.total], ['Government', s.government], ['Technical', s.technical], ['Volume', s.volume], ['Theme fit', s.themeFit], ['Risk penalty', s.riskPenalty]] as [string, number | undefined][])
                 .filter(([, v]) => typeof v === 'number')
                 .map(([label, v]) => (
-                  <div key={label} className="rounded bg-[#0b1016] p-1.5">
-                    <p className="text-[9px] uppercase tracking-[0.1em] text-[#8190a0]">{label}</p>
-                    <p className="numeric font-mono text-sm font-semibold text-[#eef3f8]">{v}</p>
+                  <div key={label} className="rounded-cell bg-well p-1.5">
+                    <p className="text-[9px] uppercase tracking-[0.1em] text-ink-3">{label}</p>
+                    <p className="numeric font-mono text-sm font-semibold tabular-nums text-ink">{v}</p>
                   </div>
                 ))}
             </div>
@@ -205,14 +205,14 @@ function FindingBody({
               key={ev.id}
               type="button"
               onClick={() => onPush({ type: 'evidence', id: ev.id, title: ev.sourceName })}
-              className="block w-full rounded border border-[#1b2530] p-2 text-left hover:border-[#2b3a4a]"
+              className="block w-full rounded-cell border border-line p-2 text-left transition hover:border-line-strong"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-[#dbe5ee]">{ev.sourceName}</span>
+                <span className="text-[11px] font-semibold text-ink-title">{ev.sourceName}</span>
                 <span className={`text-[9px] uppercase ${confidenceTone[ev.confidence]}`}>{ev.confidence}</span>
               </div>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-[#a8b5c2]">{ev.summary}</p>
-              <p className="mt-0.5 text-[10px] text-[#8190a0]">{ev.eventDate} - {ev.freshness} -&gt;</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-ink-2">{ev.summary}</p>
+              <p className="mt-0.5 text-[10px] text-ink-3">{ev.eventDate} - {ev.freshness} -&gt;</p>
             </button>
           ))}
         </div>
@@ -221,24 +221,24 @@ function FindingBody({
       {tab === 'Risk' && (
         <div className="space-y-1.5">
           {finding.risks.map((r) => (
-            <div key={r.id} className="rounded border border-[#1b2530] p-2">
+            <div key={r.id} className="rounded-cell border border-line p-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-[#dbe5ee]">{r.label}</span>
-                <span className={`text-[9px] uppercase ${r.severity === 'high' ? 'text-[#f1646c]' : r.severity === 'medium' ? 'text-[#f3a33a]' : 'text-[#8190a0]'}`}>{r.severity}</span>
+                <span className="text-[11px] font-semibold text-ink-title">{r.label}</span>
+                <span className={`text-[9px] uppercase ${r.severity === 'high' ? 'text-negative' : r.severity === 'medium' ? 'text-accent' : 'text-ink-3'}`}>{r.severity}</span>
               </div>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-[#a8b5c2]">{r.detail}</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-ink-2">{r.detail}</p>
             </div>
           ))}
         </div>
       )}
 
       {tab === 'Timeline' && (
-        <ol className="space-y-2 border-l border-[#1b2530] pl-3">
+        <ol className="space-y-2 border-l border-line pl-3">
           {finding.timeline.map((t, i) => (
             <li key={i} className="relative">
-              <span className="absolute -left-[15px] top-1 h-1.5 w-1.5 rounded-full bg-[#60a5fa]" />
-              <p className="text-[10px] text-[#8190a0]">{t.date}</p>
-              <p className={`text-[11px] ${t.stateChange ? 'text-[#43d18b]' : 'text-[#a8b5c2]'}`}>{t.label}</p>
+              <span className="absolute -left-[15px] top-1 h-1.5 w-1.5 rounded-full bg-blue-focus" />
+              <p className="text-[10px] text-ink-3">{t.date}</p>
+              <p className={`text-[11px] ${t.stateChange ? 'text-positive' : 'text-ink-2'}`}>{t.label}</p>
             </li>
           ))}
         </ol>
@@ -248,15 +248,15 @@ function FindingBody({
         <div className="space-y-3">
           {enableLifecycle && <LifecycleControls finding={finding} onChange={onLifecycleChange} />}
           <div>
-            <p className="mb-1 text-[9px] uppercase tracking-[0.14em] text-[#8190a0]">Research shortcuts</p>
+            <p className="mb-1 text-[9px] uppercase tracking-[0.14em] text-ink-3">Research shortcuts</p>
             <div className="flex flex-wrap gap-1.5">
               {finding.actions.map((a) =>
                 a.href ? (
-                  <a key={a.kind} href={a.href} className="rounded border border-[#1b2530] px-2.5 py-1 text-[11px] text-[#a8b5c2] hover:border-[#2b3a4a]">
+                  <a key={a.kind} href={a.href} className="rounded-cell border border-line px-2.5 py-1 text-[11px] text-ink-2 transition hover:border-line-strong">
                     {a.label}
                   </a>
                 ) : (
-                  <span key={a.kind} className="rounded border border-[#1b2530] px-2.5 py-1 text-[11px] text-[#a8b5c2]">
+                  <span key={a.kind} className="rounded-cell border border-line px-2.5 py-1 text-[11px] text-ink-2">
                     {a.label}
                   </span>
                 ),
@@ -276,13 +276,13 @@ function EvidenceBody({ finding, evidenceId, onPush }: { finding: Finding; evide
   if (!ev) return <Missing />;
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">{ev.sourceName}</h2>
+      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">{ev.sourceName}</h2>
       <Meta rows={[['Source', ev.sourceName], ['Type', ev.sourceType.replace(/_/g, ' ')], ['Date', ev.eventDate], ['Freshness', ev.freshness], ['Confidence', ev.confidence]]} />
       <Section title="Why it matters">
-        <p className="text-[11px] leading-relaxed text-[#a8b5c2]">{ev.whyItMatters}</p>
+        <p className="text-[11px] leading-relaxed text-ink-2">{ev.whyItMatters}</p>
       </Section>
       <Section title="What it does not prove">
-        <p className="text-[11px] leading-relaxed text-[#f3a33a]">{ev.whatItDoesNotProve}</p>
+        <p className="text-[11px] leading-relaxed text-accent">{ev.whatItDoesNotProve}</p>
       </Section>
       {ev.linkedEntityIds.length > 0 && (
         <Section title="Linked">
@@ -291,7 +291,7 @@ function EvidenceBody({ finding, evidenceId, onPush }: { finding: Finding; evide
               .map((id) => finding.entities.find((e) => e.id === id))
               .filter((e): e is NonNullable<typeof e> => Boolean(e))
               .map((e) => (
-                <button key={e.id} type="button" onClick={() => onPush({ type: drawerTypeForEntity(e.type), id: e.id, title: e.name })} className="rounded bg-[#0b1016] px-2 py-0.5 text-[10px] text-[#60a5fa] hover:underline">
+                <button key={e.id} type="button" onClick={() => onPush({ type: drawerTypeForEntity(e.type), id: e.id, title: e.name })} className="rounded-cell bg-well px-2 py-0.5 text-[10px] text-blue-focus hover:underline">
                   {e.name}
                 </button>
               ))}
@@ -299,7 +299,7 @@ function EvidenceBody({ finding, evidenceId, onPush }: { finding: Finding; evide
         </Section>
       )}
       {ev.rawPayload && (
-        <button type="button" onClick={() => onPush({ type: 'source_record', id: ev.id, title: 'Source record' })} className="w-full rounded border border-[#1b2530] px-2.5 py-1.5 text-[11px] text-[#a8b5c2] hover:border-[#2b3a4a]">
+        <button type="button" onClick={() => onPush({ type: 'source_record', id: ev.id, title: 'Source record' })} className="w-full rounded-cell border border-line px-2.5 py-1.5 text-[11px] text-ink-2 transition hover:border-line-strong">
           Open source record -&gt;
         </button>
       )}
@@ -313,26 +313,26 @@ function SourceRecordBody({ finding, evidenceId }: { finding: Finding; evidenceI
   const payload = ev.rawPayload ?? {};
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Source record</h2>
+      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">Source record</h2>
       <Meta rows={[['Source', ev.sourceName], ['Type', ev.sourceType.replace(/_/g, ' ')], ['Date', ev.eventDate]]} />
       <Section title="Raw record">
         <dl className="space-y-1">
           {Object.entries(payload).map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-3 border-b border-[#101820] py-0.5">
-              <dt className="text-[10px] uppercase tracking-[0.08em] text-[#8190a0]">{k}</dt>
-              <dd className="text-right font-mono text-[11px] text-[#a8b5c2]">{String(v)}</dd>
+            <div key={k} className="flex justify-between gap-3 border-b border-line/50 py-0.5">
+              <dt className="text-[10px] uppercase tracking-[0.08em] text-ink-3">{k}</dt>
+              <dd className="text-right font-mono text-[11px] tabular-nums text-ink-2">{String(v)}</dd>
             </div>
           ))}
         </dl>
       </Section>
       <Section title="Lyra interpretation">
-        <p className="text-[11px] leading-relaxed text-[#a8b5c2]">{ev.whyItMatters}</p>
+        <p className="text-[11px] leading-relaxed text-ink-2">{ev.whyItMatters}</p>
       </Section>
       <Section title="Limitations">
-        <p className="text-[11px] leading-relaxed text-[#f3a33a]">{ev.whatItDoesNotProve}</p>
+        <p className="text-[11px] leading-relaxed text-accent">{ev.whatItDoesNotProve}</p>
       </Section>
       {ev.sourceUrl && (
-        <a href={ev.sourceUrl} target="_blank" rel="noreferrer" className="block w-full rounded border border-[#1b2530] px-2.5 py-1.5 text-center text-[11px] text-[#60a5fa] hover:border-[#2b3a4a]">
+        <a href={ev.sourceUrl} target="_blank" rel="noreferrer" className="block w-full rounded-cell border border-line px-2.5 py-1.5 text-center text-[11px] text-blue-focus transition hover:border-line-strong">
           View original source -&gt;
         </a>
       )}
@@ -359,16 +359,16 @@ function EntityBody({ finding, entityId, onPush }: { finding: Finding; entityId:
 
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">{entity.name}</h2>
-      <p className="text-[10px] uppercase tracking-[0.1em] text-[#8190a0]">{entity.type.replace(/_/g, ' ')}{entity.ref ? ` - ${entity.ref}` : ''}</p>
-      {entity.summary && <p className="text-[11px] leading-relaxed text-[#a8b5c2]">{entity.summary}</p>}
+      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">{entity.name}</h2>
+      <p className="text-[10px] uppercase tracking-[0.1em] text-ink-3">{entity.type.replace(/_/g, ' ')}{entity.ref ? ` - ${entity.ref}` : ''}</p>
+      {entity.summary && <p className="text-[11px] leading-relaxed text-ink-2">{entity.summary}</p>}
       {entity.facts && entity.facts.length > 0 && (
         <Section title="Detail">
           <dl className="space-y-1">
             {entity.facts.map((f) => (
-              <div key={f.label} className="flex justify-between gap-3 border-b border-[#101820] py-0.5">
-                <dt className="text-[10px] uppercase tracking-[0.08em] text-[#8190a0]">{f.label}</dt>
-                <dd className="text-right text-[11px] text-[#a8b5c2]">{f.value}</dd>
+              <div key={f.label} className="flex justify-between gap-3 border-b border-line/50 py-0.5">
+                <dt className="text-[10px] uppercase tracking-[0.08em] text-ink-3">{f.label}</dt>
+                <dd className="text-right text-[11px] text-ink-2">{f.value}</dd>
               </div>
             ))}
           </dl>
@@ -382,9 +382,9 @@ function EntityBody({ finding, entityId, onPush }: { finding: Finding; entityId:
                 key={ev.id}
                 type="button"
                 onClick={() => onPush({ type: 'evidence', id: ev.id, title: ev.sourceName })}
-                className="flex w-full items-center justify-between rounded border border-[#1b2530] px-2 py-1 text-left hover:border-[#2b3a4a]"
+                className="flex w-full items-center justify-between rounded-cell border border-line px-2 py-1 text-left transition hover:border-line-strong"
               >
-                <span className="min-w-0 truncate text-[11px] text-[#dbe5ee]">{ev.sourceName}</span>
+                <span className="min-w-0 truncate text-[11px] text-ink-title">{ev.sourceName}</span>
                 <span className={`shrink-0 text-[9px] uppercase ${confidenceTone[ev.confidence]}`}>{ev.confidence} -&gt;</span>
               </button>
             ))}
@@ -395,9 +395,9 @@ function EntityBody({ finding, entityId, onPush }: { finding: Finding; entityId:
         <Section title="Connected">
           <div className="space-y-1">
             {connections.map((c, i) => (
-              <button key={i} type="button" onClick={() => onPush({ type: drawerTypeForEntity(c.other.type), id: c.other.id, title: c.other.name })} className="flex w-full items-center justify-between rounded border border-[#1b2530] px-2 py-1 text-left hover:border-[#2b3a4a]">
-                <span className="text-[11px] text-[#dbe5ee]">{c.other.name}</span>
-                <span className="text-[9px] uppercase tracking-[0.08em] text-[#8190a0]">{c.rel.replace(/_/g, ' ')} -&gt;</span>
+              <button key={i} type="button" onClick={() => onPush({ type: drawerTypeForEntity(c.other.type), id: c.other.id, title: c.other.name })} className="flex w-full items-center justify-between rounded-cell border border-line px-2 py-1 text-left transition hover:border-line-strong">
+                <span className="text-[11px] text-ink-title">{c.other.name}</span>
+                <span className="text-[9px] uppercase tracking-[0.08em] text-ink-3">{c.rel.replace(/_/g, ' ')} -&gt;</span>
               </button>
             ))}
           </div>
@@ -412,9 +412,9 @@ function RiskBody({ finding, riskId }: { finding: Finding; riskId: string }) {
   if (!r) return <Missing />;
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">{r.label}</h2>
-      <p className="text-[10px] uppercase text-[#f3a33a]">{r.severity} risk</p>
-      <p className="text-[11px] leading-relaxed text-[#a8b5c2]">{r.detail}</p>
+      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">{r.label}</h2>
+      <p className="text-[10px] uppercase text-accent">{r.severity} risk</p>
+      <p className="text-[11px] leading-relaxed text-ink-2">{r.detail}</p>
     </div>
   );
 }
@@ -458,7 +458,7 @@ function LifecycleControls({ finding, onChange }: { finding: Finding; onChange?:
 
   return (
     <div>
-      <p className="mb-1 text-[9px] uppercase tracking-[0.14em] text-[#8190a0]">Set status (research lifecycle)</p>
+      <p className="mb-1 text-[9px] uppercase tracking-[0.14em] text-ink-3">Set status (research lifecycle)</p>
       <div className="flex flex-wrap gap-1.5">
         {LIFECYCLE_STATES.map((st) => (
           <button
@@ -466,8 +466,8 @@ function LifecycleControls({ finding, onChange }: { finding: Finding; onChange?:
             type="button"
             disabled={pending !== null}
             onClick={() => post({ state: st }, st)}
-            className={`rounded border px-2 py-1 text-[10px] disabled:opacity-50 ${
-              finding.state === st ? 'border-[#60a5fa] text-[#eef3f8]' : 'border-[#1b2530] text-[#a8b5c2] hover:border-[#2b3a4a]'
+            className={`rounded-cell border px-2 py-1 text-[10px] transition disabled:opacity-50 ${
+              finding.state === st ? 'border-blue-focus text-ink' : 'border-line text-ink-2 hover:border-line-strong'
             }`}
           >
             {pending === st ? 'Saving...' : st}
@@ -477,12 +477,12 @@ function LifecycleControls({ finding, onChange }: { finding: Finding; onChange?:
           type="button"
           disabled={pending !== null}
           onClick={() => post({ dismiss: true }, 'dismiss')}
-          className="rounded border border-[#7f1d1d] px-2 py-1 text-[10px] text-[#ff6b6b] hover:border-[#a52a2a] disabled:opacity-50"
+          className="rounded-cell border border-negative/40 px-2 py-1 text-[10px] text-negative transition hover:border-negative/70 disabled:opacity-50"
         >
           {pending === 'dismiss' ? 'Saving...' : 'Dismiss as noise'}
         </button>
       </div>
-      {err && <p className="mt-1 text-[10px] text-[#ff6b6b]">{err}</p>}
+      {err && <p className="mt-1 text-[10px] text-negative">{err}</p>}
     </div>
   );
 }
@@ -520,7 +520,7 @@ function GenUIBody({ finding, onPush }: { finding: Finding; onPush: (i: DrawerSt
   }, [finding]);
 
   if (state === 'loading' || !view) {
-    return <p className="text-[11px] text-[#8190a0]">Generating a view...</p>;
+    return <p className="text-[11px] text-ink-3">Generating a view...</p>;
   }
 
   const metricMap = new Map(buildAllowedMetrics(finding).map((m) => [m.key, m]));
@@ -528,8 +528,8 @@ function GenUIBody({ finding, onPush }: { finding: Finding; onPush: (i: DrawerSt
   return (
     <div className="space-y-3">
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">{view.title}</h2>
-        {view.subtitle && <p className="mt-1 text-[11px] leading-relaxed text-[#a8b5c2]">{view.subtitle}</p>}
+        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">{view.title}</h2>
+        {view.subtitle && <p className="mt-1 text-[11px] leading-relaxed text-ink-2">{view.subtitle}</p>}
       </div>
 
       {view.blocks.map((b, i) => {
@@ -540,9 +540,9 @@ function GenUIBody({ finding, onPush }: { finding: Finding; onPush: (i: DrawerSt
             <Section key={i} title={b.title || 'Metrics'}>
               <div className="grid grid-cols-3 gap-1.5">
                 {cells.map((m) => (
-                  <div key={m.key} className="rounded bg-[#0b1016] p-1.5">
-                    <p className="text-[9px] uppercase tracking-[0.1em] text-[#8190a0]">{m.label}</p>
-                    <p className="numeric font-mono text-sm font-semibold text-[#eef3f8]">{m.value}</p>
+                  <div key={m.key} className="rounded-cell bg-well p-1.5">
+                    <p className="text-[9px] uppercase tracking-[0.1em] text-ink-3">{m.label}</p>
+                    <p className="numeric font-mono text-sm font-semibold tabular-nums text-ink">{m.value}</p>
                   </div>
                 ))}
               </div>
@@ -554,14 +554,14 @@ function GenUIBody({ finding, onPush }: { finding: Finding; onPush: (i: DrawerSt
             <Section key={i} title={b.title || 'Notes'}>
               <ul className="space-y-1">
                 {b.items.map((it, j) => (
-                  <li key={j} className="text-[11px] leading-relaxed text-[#a8b5c2]">- {it}</li>
+                  <li key={j} className="text-[11px] leading-relaxed text-ink-2">- {it}</li>
                 ))}
               </ul>
             </Section>
           );
         }
         if (b.kind === 'note') {
-          return <p key={i} className="text-[11px] leading-relaxed text-[#a8b5c2]">{b.text}</p>;
+          return <p key={i} className="text-[11px] leading-relaxed text-ink-2">{b.text}</p>;
         }
         if (b.kind === 'evidence_list') {
           return (
@@ -572,10 +572,10 @@ function GenUIBody({ finding, onPush }: { finding: Finding; onPush: (i: DrawerSt
                     key={ev.id}
                     type="button"
                     onClick={() => onPush({ type: 'evidence', id: ev.id, title: ev.sourceName })}
-                    className="flex w-full items-center justify-between rounded border border-[#1b2530] px-2 py-1 text-left hover:border-[#2b3a4a]"
+                    className="flex w-full items-center justify-between rounded-cell border border-line px-2 py-1 text-left transition hover:border-line-strong"
                   >
-                    <span className="min-w-0 truncate text-[11px] text-[#dbe5ee]">{ev.sourceName}</span>
-                    <span className="shrink-0 text-[9px] uppercase text-[#8190a0]">{ev.freshness} -&gt;</span>
+                    <span className="min-w-0 truncate text-[11px] text-ink-title">{ev.sourceName}</span>
+                    <span className="shrink-0 text-[9px] uppercase text-ink-3">{ev.freshness} -&gt;</span>
                   </button>
                 ))}
               </div>
@@ -587,12 +587,12 @@ function GenUIBody({ finding, onPush }: { finding: Finding; onPush: (i: DrawerSt
             <Section key={i} title={b.title || 'Risks'}>
               <div className="space-y-1">
                 {finding.risks.map((r) => (
-                  <div key={r.id} className="rounded border border-[#1b2530] p-2">
+                  <div key={r.id} className="rounded-cell border border-line p-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-[#dbe5ee]">{r.label}</span>
-                      <span className={`text-[9px] uppercase ${r.severity === 'high' ? 'text-[#f1646c]' : r.severity === 'medium' ? 'text-[#f3a33a]' : 'text-[#8190a0]'}`}>{r.severity}</span>
+                      <span className="text-[11px] font-semibold text-ink-title">{r.label}</span>
+                      <span className={`text-[9px] uppercase ${r.severity === 'high' ? 'text-negative' : r.severity === 'medium' ? 'text-accent' : 'text-ink-3'}`}>{r.severity}</span>
                     </div>
-                    <p className="mt-0.5 text-[11px] leading-relaxed text-[#a8b5c2]">{r.detail}</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-ink-2">{r.detail}</p>
                   </div>
                 ))}
               </div>
@@ -602,12 +602,12 @@ function GenUIBody({ finding, onPush }: { finding: Finding; onPush: (i: DrawerSt
         if (b.kind === 'timeline') {
           return (
             <Section key={i} title={b.title || 'Timeline'}>
-              <ol className="space-y-2 border-l border-[#1b2530] pl-3">
+              <ol className="space-y-2 border-l border-line pl-3">
                 {finding.timeline.map((t, j) => (
                   <li key={j} className="relative">
-                    <span className="absolute -left-[15px] top-1 h-1.5 w-1.5 rounded-full bg-[#60a5fa]" />
-                    <p className="text-[10px] text-[#8190a0]">{t.date}</p>
-                    <p className={`text-[11px] ${t.stateChange ? 'text-[#43d18b]' : 'text-[#a8b5c2]'}`}>{t.label}</p>
+                    <span className="absolute -left-[15px] top-1 h-1.5 w-1.5 rounded-full bg-blue-focus" />
+                    <p className="text-[10px] text-ink-3">{t.date}</p>
+                    <p className={`text-[11px] ${t.stateChange ? 'text-positive' : 'text-ink-2'}`}>{t.label}</p>
                   </li>
                 ))}
               </ol>
@@ -617,7 +617,7 @@ function GenUIBody({ finding, onPush }: { finding: Finding; onPush: (i: DrawerSt
         return null;
       })}
 
-      <p className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">
+      <p className="text-[9px] uppercase tracking-[0.12em] text-ink-3">
         {view.source === 'ai' ? 'AI-composed layout - every number from Lyra\'s engine' : 'Deterministic view - connect a model for an AI-composed layout'}
       </p>
     </div>
@@ -638,7 +638,7 @@ function drawerTypeForEntity(type: Finding['entities'][number]['type']): DrawerS
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-1 text-[9px] uppercase tracking-[0.14em] text-[#8190a0]">{title}</p>
+      <p className="mb-1 text-[9px] uppercase tracking-[0.14em] text-ink-3">{title}</p>
       {children}
     </div>
   );
@@ -648,9 +648,9 @@ function Meta({ rows }: { rows: [string, string][] }) {
   return (
     <dl className="grid grid-cols-2 gap-1.5">
       {rows.map(([k, v]) => (
-        <div key={k} className="rounded bg-[#0b1016] p-1.5">
-          <dt className="text-[9px] uppercase tracking-[0.1em] text-[#8190a0]">{k}</dt>
-          <dd className="text-[11px] text-[#a8b5c2]">{v}</dd>
+        <div key={k} className="rounded-cell bg-well p-1.5">
+          <dt className="text-[9px] uppercase tracking-[0.1em] text-ink-3">{k}</dt>
+          <dd className="text-[11px] text-ink-2">{v}</dd>
         </div>
       ))}
     </dl>
@@ -658,5 +658,5 @@ function Meta({ rows }: { rows: [string, string][] }) {
 }
 
 function Missing() {
-  return <p className="text-[11px] text-[#8190a0]">That detail is not in this finding.</p>;
+  return <p className="text-[11px] text-ink-3">That detail is not in this finding.</p>;
 }

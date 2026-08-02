@@ -115,16 +115,16 @@ export function PortfolioView({ data }: { data: DashboardData }) {
 
   // Layout: 2 headline boxes on top, then two rows of 3 - all labels a user understands.
   const topStats: Array<[string, string, string]> = [
-    ['Total value', formatCurrency(totalValue), 'text-[#eef3f8]'],
-    ['Unrealised P/L', formatCurrency(totalPnl), totalPnl >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'],
+    ['Total value', formatCurrency(totalValue), 'text-ink'],
+    ['Unrealised P/L', formatCurrency(totalPnl), totalPnl >= 0 ? 'text-positive' : 'text-negative'],
   ];
   const gridStats: Array<[string, string, string]> = [
-    ['Holdings', formatNumber(holdings.length, 0), 'text-[#eef3f8]'],
-    ['Strong', formatNumber(strongInHoldings, 0), 'text-[#43d18b]'],
-    ['Risky', formatNumber(dailyRisk, 0), dailyRisk > 0 ? 'text-[#ff6b6b]' : 'text-[#8190a0]'],
-    ['Cost basis', formatCurrency(costBasis), 'text-[#a8b5c2]'],
-    ['Last trade', lastTrade, 'text-[#a8b5c2]'],
-    ['Last scan', data.latestRun.timeframe.toUpperCase(), 'text-[#a8b5c2]'],
+    ['Holdings', formatNumber(holdings.length, 0), 'text-ink'],
+    ['Strong', formatNumber(strongInHoldings, 0), 'text-positive'],
+    ['Risky', formatNumber(dailyRisk, 0), dailyRisk > 0 ? 'text-negative' : 'text-ink-3'],
+    ['Cost basis', formatCurrency(costBasis), 'text-ink-2'],
+    ['Last trade', lastTrade, 'text-ink-2'],
+    ['Last scan', data.latestRun.timeframe.toUpperCase(), 'text-ink-2'],
   ];
 
   return (
@@ -132,16 +132,16 @@ export function PortfolioView({ data }: { data: DashboardData }) {
       <div className="space-y-2">
         <section className="grid grid-cols-2 gap-1.5">
           {topStats.map(([label, value, tone]) => (
-            <div className="terminal-panel rounded-md p-2" key={label}>
-              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
+            <div className="terminal-panel rounded-cell p-2" key={label}>
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">{label}</p>
               <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
             </div>
           ))}
         </section>
         <section className="grid grid-cols-3 gap-1.5">
           {gridStats.map(([label, value, tone]) => (
-            <div className="terminal-panel rounded-md p-2" key={label}>
-              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</p>
+            <div className="terminal-panel rounded-cell p-2" key={label}>
+              <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">{label}</p>
               <p className={`numeric mt-0.5 truncate font-mono text-sm font-semibold md:text-base ${tone}`}>{value}</p>
             </div>
           ))}
@@ -149,27 +149,27 @@ export function PortfolioView({ data }: { data: DashboardData }) {
       </div>
 
       <section className="grid gap-3 xl:grid-cols-[1fr_340px]">
-        <div className="terminal-panel overflow-hidden rounded-md">
-          <div className="border-b border-[#1b2530] px-3 py-3">
-            <h1 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Portfolio holdings</h1>
-            <p className="mt-1 font-mono text-xs text-[#8190a0]">Values, risk states, and action states are middleware overlay outputs.</p>
+        <div className="terminal-panel overflow-hidden rounded-panel">
+          <div className="border-b border-line px-3 py-3">
+            <h1 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">Portfolio holdings</h1>
+            <p className="mt-1 font-mono text-xs text-ink-3">Values, risk states, and action states are middleware overlay outputs.</p>
           </div>
 
           {removeError && (
-            <p className="border-b border-[#5a1f1f] bg-[#2b0f0f] px-3 py-2 font-mono text-[11px] text-[#ff6b6b]">
+            <p className="border-b border-negative/40 bg-negative/10 px-3 py-2 font-mono text-[11px] text-negative">
               {removeError}
             </p>
           )}
 
           {holdings.length === 0 ? (
-            <p className="px-3 py-6 text-center font-mono text-xs text-[#8190a0]">
+            <p className="px-3 py-6 text-center font-mono text-xs text-ink-3">
               No holdings yet. Add one on the right to populate your book.
             </p>
           ) : (
             <>
               <div className="hidden overflow-x-auto md:block">
                 <table className="min-w-[1180px] text-left text-xs">
-                  <thead className="bg-[#0b1016] font-mono uppercase text-[#8190a0]">
+                  <thead className="bg-chrome font-mono uppercase text-ink-3">
                     <tr>
                       <th className="px-3 py-2">Ticker</th>
                       <th className="px-3 py-2">Qty</th>
@@ -187,10 +187,10 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                       <th className="px-3 py-2 text-right"><span className="sr-only">Remove</span></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#1b2530]">
+                  <tbody className="divide-y divide-line">
                     {holdings.map((holding) => (
-                      <tr className="font-mono text-[#dbe5ee] hover:bg-[#101720]" key={holding.symbol}>
-                        <td className="px-3 py-2 font-semibold text-[#eef3f8]">
+                      <tr className="font-mono text-ink-title hover:bg-line/30" key={holding.symbol}>
+                        <td className="px-3 py-2 font-semibold text-ink">
                           <Link href={`/tickers/${holding.symbol}`} className="inline-flex items-center gap-1.5">
                             <TickerLogo symbol={holding.symbol} size={16} />
                             {holding.symbol} <ArrowUpRight size={11} />
@@ -207,7 +207,7 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                         <td className="px-3 py-2">
                           {(() => {
                             const cgt = cgtStatusFor(holding.purchaseDate, todayIso);
-                            if (!cgt) return <span className="text-[#5e6b78]">-</span>;
+                            if (!cgt) return <span className="text-ink-dim">-</span>;
                             return (
                               <span
                                 className={`inline-block rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-[0.08em] ${cgtBadgeClass(cgt.state)}`}
@@ -227,7 +227,7 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                         <td className="px-3 py-2">{formatNumber(holding.rsi)}</td>
                         <td className="px-3 py-2">{holding.macdState}</td>
                         <td className="px-3 py-2">{holding.riskState.replaceAll('_', ' ')}</td>
-                        <td className="px-3 py-2 text-[#f3a33a]">{holding.actionState.replaceAll('_', ' ')}</td>
+                        <td className="px-3 py-2 text-accent">{holding.actionState.replaceAll('_', ' ')}</td>
                         <td className="px-2 py-2 text-right">
                           <button
                             type="button"
@@ -235,7 +235,7 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                             disabled={removing === holding.symbol}
                             title={`Remove ${holding.symbol} from your book`}
                             aria-label={`Remove ${holding.symbol}`}
-                            className="inline-grid h-8 w-8 place-items-center rounded text-[#6f7d8a] transition hover:bg-[#2b0f0f] hover:text-[#ff6b6b] disabled:opacity-40"
+                            className="inline-grid h-8 w-8 place-items-center rounded-cell text-ink-dim transition hover:bg-negative/10 hover:text-negative disabled:opacity-40"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -246,7 +246,7 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                 </table>
               </div>
 
-              <div className="divide-y divide-[#1b2530] md:hidden">
+              <div className="divide-y divide-line md:hidden">
                 {holdings.map((holding) => (
                   <div className="relative" key={holding.symbol}>
                     <Link href={`/tickers/${holding.symbol}`} className="block px-3 py-2.5 pr-12">
@@ -255,12 +255,12 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                           <TickerLogo symbol={holding.symbol} size={20} />
                           <div className="min-w-0">
                             <p className="font-mono text-sm font-semibold">{holding.symbol}</p>
-                            <p className="truncate font-mono text-[10px] text-[#8190a0]">{formatCurrency(holding.marketValue)} | {formatPercent(holding.portfolioWeight)}</p>
+                            <p className="truncate font-mono text-[10px] text-ink-3">{formatCurrency(holding.marketValue)} | {formatPercent(holding.portfolioWeight)}</p>
                           </div>
                         </div>
                         <div className="shrink-0 text-right font-mono">
                           <p className={`text-sm ${toneClass(holding.unrealisedPnl)}`}>{formatPercent(holding.unrealisedPnlPercent)}</p>
-                          <p className="text-[10px] text-[#f3a33a]">{holding.actionState.replaceAll('_', ' ')}</p>
+                          <p className="text-[10px] text-accent">{holding.actionState.replaceAll('_', ' ')}</p>
                           {(() => {
                             const cgt = cgtStatusFor(holding.purchaseDate, todayIso);
                             // Mobile keeps only the states worth a glance - quiet while building.
@@ -279,7 +279,7 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                       onClick={() => handleRemove(holding)}
                       disabled={removing === holding.symbol}
                       aria-label={`Remove ${holding.symbol}`}
-                      className="absolute right-1 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded text-[#6f7d8a] transition hover:bg-[#2b0f0f] hover:text-[#ff6b6b] disabled:opacity-40"
+                      className="absolute right-1 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-cell text-ink-dim transition hover:bg-negative/10 hover:text-negative disabled:opacity-40"
                     >
                       <Trash2 size={15} />
                     </button>
@@ -291,10 +291,10 @@ export function PortfolioView({ data }: { data: DashboardData }) {
         </div>
 
         <aside className="space-y-3">
-          <section className="terminal-panel rounded-md p-3">
+          <section className="terminal-panel rounded-panel p-3">
             <div className="flex items-center gap-2">
-              <Plus className="text-[#f3a33a]" size={16} />
-              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Add holding</h2>
+              <Plus className="text-accent" size={16} />
+              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">Add holding</h2>
             </div>
             <div className="mt-3">
               <AddHoldingForm />
@@ -302,16 +302,16 @@ export function PortfolioView({ data }: { data: DashboardData }) {
           </section>
 
           {holdings.length > 0 && (
-            <section className="terminal-panel rounded-md p-3">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Portfolio signal overlay</h2>
+            <section className="terminal-panel rounded-panel p-3">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">Portfolio signal overlay</h2>
               <div className="mt-3 space-y-3">
                 {holdings.map((holding) => (
-                  <div className="border-b border-[#1b2530] pb-3 last:border-b-0 last:pb-0" key={holding.symbol}>
+                  <div className="border-b border-line pb-3 last:border-b-0 last:pb-0" key={holding.symbol}>
                     <div className="flex justify-between font-mono text-xs">
-                      <span className="font-semibold text-[#eef3f8]">{holding.symbol}</span>
-                      <span className="text-[#f3a33a]">{holding.suggestedAction}</span>
+                      <span className="font-semibold text-ink">{holding.symbol}</span>
+                      <span className="text-accent">{holding.suggestedAction}</span>
                     </div>
-                    <p className="mt-1 text-xs leading-5 text-[#a8b5c2]">{holding.explanation.riskNotes[0] ?? holding.riskState.replaceAll('_', ' ')}</p>
+                    <p className="mt-1 text-xs leading-5 text-ink-2">{holding.explanation.riskNotes[0] ?? holding.riskState.replaceAll('_', ' ')}</p>
                   </div>
                 ))}
               </div>

@@ -6,10 +6,10 @@ import { relativeTime } from '@/lib/format';
 import type { FeedItem, FeedKind, FeedTone } from '@/lib/feed';
 
 const TONE: Record<FeedTone, string> = {
-  pos: 'text-[#43d18b]',
-  neg: 'text-[#ff6b6b]',
-  warn: 'text-[#f3a33a]',
-  neutral: 'text-[#8aa2ff]',
+  pos: 'text-positive',
+  neg: 'text-negative',
+  warn: 'text-accent',
+  neutral: 'text-pending',
 };
 
 const KIND_ICON: Record<FeedKind, typeof Activity> = {
@@ -41,32 +41,32 @@ export function LiveWire({
   const shown = filter === 'all' ? items : items.filter((i) => i.kind === filter);
 
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex items-center justify-between gap-2 border-b border-[#1b2530] px-3 py-2">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Live wire</p>
-          <p className="mt-0.5 text-[10px] text-[#a8b5c2]">Every signal change + market headlines, newest first</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Live wire</p>
+          <p className="mt-0.5 text-[10px] text-ink-2">Every signal change + market headlines, newest first</p>
         </div>
-        <span className="inline-flex shrink-0 items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-[#43d18b]">
+        <span className="inline-flex shrink-0 items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-positive">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#43d18b]" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-positive" />
           </span>
           Live
         </span>
       </div>
 
       {/* Small minimal filters */}
-      <div className="flex gap-1 border-b border-[#1b2530] px-3 py-1.5">
+      <div className="flex flex-wrap gap-1 border-b border-line px-3 py-1.5">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             type="button"
             onClick={() => setFilter(f.key)}
-            className={`rounded border px-1.5 py-0.5 font-mono text-[10px] transition ${
+            className={`rounded-full border px-2 py-0.5 font-mono text-[10px] transition ${
               filter === f.key
-                ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
-                : 'border-[#1b2530] bg-[#0d141c] text-[#8190a0] hover:text-[#dbe5ee]'
+                ? 'border-accent-border bg-accent-tint text-accent'
+                : 'border-line bg-panel text-ink-3 hover:text-ink-title'
             }`}
           >
             {f.label}
@@ -74,7 +74,7 @@ export function LiveWire({
         ))}
       </div>
 
-      <div className="divide-y divide-[#141c25]">
+      <div className="divide-y divide-line">
         {shown.map((item) => {
           const Icon = KIND_ICON[item.kind];
           return (
@@ -83,11 +83,11 @@ export function LiveWire({
                 <Icon size={13} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[12px] leading-snug text-[#dbe5ee]">
-                  {item.ticker && <span className="font-mono font-semibold text-[#eef3f8]">{item.ticker} </span>}
+                <p className="text-[12px] leading-snug text-ink-title">
+                  {item.ticker && <span className="font-mono font-semibold text-ink">{item.ticker} </span>}
                   {item.text}
                 </p>
-                <p className="mt-0.5 font-mono text-[10px] text-[#8190a0]">
+                <p className="mt-0.5 font-mono text-[10px] text-ink-3">
                   {relativeTime(item.time)} · {item.source}
                   {item.sample ? ' · sample' : ''}
                 </p>
@@ -97,7 +97,7 @@ export function LiveWire({
         })}
       </div>
 
-      <p className="border-t border-[#1b2530] px-3 py-1.5 font-mono text-[10px] text-[#5e6b78]">
+      <p className="border-t border-line px-3 py-1.5 font-mono text-[10px] text-ink-dim">
         {intelligenceIsSample
           ? 'Signal changes are live from the engine. The news + macro/policy wire is an illustrative sample until live newsflow (Finnhub + AI) lands - sample items are tagged "· sample".'
           : 'Signal changes and ticker news are live; the macro/policy wire is a sample until it wires in - sample items are tagged "· sample".'}

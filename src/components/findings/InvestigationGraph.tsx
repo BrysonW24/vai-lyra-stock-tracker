@@ -83,7 +83,7 @@ export function InvestigationGraph({ findings }: { findings?: Finding[] }) {
 
   return (
     <div className="space-y-3 pb-28 xl:pb-6">
-      <div className="terminal-panel overflow-x-auto rounded-md p-2">
+      <div className="terminal-panel overflow-x-auto rounded-panel p-2">
         <svg
           viewBox={`0 0 ${graph.width} ${graph.height}`}
           className="mx-auto block h-auto w-full"
@@ -106,12 +106,12 @@ export function InvestigationGraph({ findings }: { findings?: Finding[] }) {
                   y1={a.y}
                   x2={b.x}
                   y2={b.y}
-                  stroke={act ? '#5bc8ff' : '#1b2530'}
+                  className={act ? 'stroke-blue-focus' : 'stroke-line'}
                   strokeWidth={act ? 1.8 : 1}
                   strokeOpacity={active && !act ? 0.25 : 1}
                 />
                 {act && (
-                  <text x={mx} y={my - 3} textAnchor="middle" className="fill-[#8190a0]" style={{ fontSize: 9 }}>
+                  <text x={mx} y={my - 3} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 9 }}>
                     {e.relationshipType.replace(/_/g, ' ')}
                   </text>
                 )}
@@ -122,7 +122,7 @@ export function InvestigationGraph({ findings }: { findings?: Finding[] }) {
           {/* nodes */}
           {graph.nodes.map((n) => {
             const r = Math.min(30, 15 + n.degree * 3);
-            const color = NODE_COLOR[n.type] ?? '#8190a0';
+            const color = NODE_COLOR[n.type] ?? 'var(--lyra-ink-3)';
             const dim = active != null && active !== n.id && !graph.edges.some((e) => (e.from === active && e.to === n.id) || (e.to === active && e.from === n.id));
             return (
               <g
@@ -133,11 +133,11 @@ export function InvestigationGraph({ findings }: { findings?: Finding[] }) {
                 onMouseLeave={() => setHovered(null)}
                 style={{ cursor: 'pointer', opacity: dim ? 0.4 : 1 }}
               >
-                <circle r={r} fill="#0b1016" stroke={color} strokeWidth={n.id === selectedId ? 3 : 1.6} />
-                <text textAnchor="middle" dy="0.32em" fill={color} style={{ fontSize: 11, fontWeight: 600 }}>
+                <circle r={r} className="fill-chrome" style={{ stroke: color }} strokeWidth={n.id === selectedId ? 3 : 1.6} />
+                <text textAnchor="middle" dy="0.32em" style={{ fill: color, fontSize: 11, fontWeight: 600 }}>
                   {n.ref ?? n.name.slice(0, 6)}
                 </text>
-                <text textAnchor="middle" y={r + 12} className="fill-[#a8b5c2]" style={{ fontSize: 9 }}>
+                <text textAnchor="middle" y={r + 12} className="fill-ink-2" style={{ fontSize: 9 }}>
                   {n.name.length > 22 ? `${n.name.slice(0, 21)}…` : n.name}
                 </text>
               </g>
@@ -146,15 +146,15 @@ export function InvestigationGraph({ findings }: { findings?: Finding[] }) {
         </svg>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 px-1">
+      <div className="terminal-panel-soft flex flex-wrap items-center gap-3 rounded-panel px-3 py-2">
         {LEGEND.map((l) => (
-          <span key={l.type} className="flex items-center gap-1.5 text-[10px] text-[#8190a0]">
+          <span key={l.type} className="flex items-center gap-1.5 text-[10px] text-ink-3">
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: NODE_COLOR[l.type] }} />
             {l.label}
           </span>
         ))}
-        <span className="text-[10px] text-[#8190a0]">Tap a node to investigate - bigger = more connected.</span>
-        <span className={`text-[10px] ${isLive ? 'text-[#43d18b]' : 'text-[#8190a0]'}`}>
+        <span className="text-[10px] text-ink-3">Tap a node to investigate - bigger = more connected.</span>
+        <span className={`text-[10px] ${isLive ? 'text-positive' : 'text-ink-3'}`}>
           {isLive ? 'Live - built from your findings' : 'Demo map - live findings populate this as the scanner surfaces setups'}
         </span>
       </div>

@@ -9,11 +9,13 @@ export const metadata: Metadata = {
   description: `How ${BRAND_NAME} collects, uses, and protects your data.`,
 };
 
+// PanelCard section (PATTERNS.md): soft glass panel, uppercase ink-title heading, ink-2 prose.
+// Legal wording inside is verbatim - this wrapper is presentation only.
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-6">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#c8d3de]">{title}</h2>
-      <div className="mt-2 space-y-2 text-sm leading-relaxed text-[#a8b5c2]">{children}</div>
+    <section className="terminal-panel-soft rounded-panel mt-4 p-4 sm:p-5">
+      <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">{title}</h2>
+      <div className="mt-2 space-y-2 text-sm leading-relaxed text-ink-2">{children}</div>
     </section>
   );
 }
@@ -22,19 +24,19 @@ export default function PrivacyPage() {
   const updated = new Date().toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
-    <main className="min-h-screen bg-[#070a0e] text-[#eef3f8]">
+    <main className="min-h-screen bg-ground text-ink">
       <div className="mx-auto max-w-2xl px-5 py-8">
         <div className="flex items-center justify-between">
           <BrandLogo size={26} showWordmark />
-          <Link href="/welcome" className="inline-flex items-center gap-1.5 text-sm text-[#a8b5c2] transition hover:text-[#eef3f8]">
+          <Link href="/welcome" className="inline-flex min-h-[44px] items-center gap-1.5 px-2 text-sm text-ink-2 transition hover:text-ink">
             <ArrowLeft size={14} /> Back
           </Link>
         </div>
 
-        <h1 className="mt-8 text-2xl font-semibold tracking-tight">Privacy Policy</h1>
-        <p className="mt-1 text-xs text-[#6f7d8a]">Last updated {updated}</p>
+        <h1 className="mt-8 text-2xl font-semibold tracking-tight text-ink-title">Privacy Policy</h1>
+        <p className="mt-1 text-xs text-ink-dim">Last updated {updated}</p>
 
-        <p className="mt-4 text-sm leading-relaxed text-[#a8b5c2]">
+        <p className="mt-4 text-sm leading-relaxed text-ink-2">
           {BRAND_NAME} is research software for tracking US technology-stock momentum. It is not a broker, does not hold funds, and never places trades. This policy explains what we collect, why, and the control you have over it.
         </p>
 
@@ -69,7 +71,7 @@ export default function PrivacyPage() {
           <p>We may update this policy as the product evolves; material changes will be reflected on this page. Questions about your data can be raised through the app.</p>
         </Section>
 
-        <p className="mt-8 border-t border-[#1b2530] pt-4 text-[11px] text-[#6f7d8a]">
+        <p className="mt-8 border-t border-line pt-4 text-[11px] text-ink-dim">
           {BRAND_NAME} provides information and analysis only. Nothing here is financial advice.
         </p>
       </div>

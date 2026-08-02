@@ -37,11 +37,11 @@ function FaceBlock({ face, icon: Icon }: { face: Face; icon: LucideIcon }) {
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-[9px] font-semibold uppercase tracking-[0.14em] text-[#8190a0] md:text-[10px] md:tracking-[0.15em]">{face.label}</p>
+        <p className="truncate text-[9px] font-semibold uppercase tracking-[0.14em] text-ink-3 md:text-[10px] md:tracking-[0.15em]">{face.label}</p>
         <Icon className={`${face.tone} shrink-0`} size={13} />
       </div>
       <p className={`numeric mt-1 truncate font-mono text-sm font-semibold md:text-base ${face.tone}`}>{face.value}</p>
-      <p className={`numeric mt-0.5 truncate text-[10px] ${face.detailTone ?? 'text-[#8190a0]'}`}>{face.detail}</p>
+      <p className={`numeric mt-0.5 truncate text-[10px] ${face.detailTone ?? 'text-ink-3'}`}>{face.detail}</p>
     </div>
   );
 }
@@ -75,7 +75,7 @@ export function MetricStrip({ data, soloMode = false }: MetricStripProps) {
   const topHolding = [...data.portfolio].sort((a, b) => b.marketValue - a.marketValue)[0];
   const bestPerformer = [...data.portfolio].sort((a, b) => b.unrealisedPnlPercent - a.unrealisedPnlPercent)[0];
 
-  const pnlTone = portfolioPnl >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]';
+  const pnlTone = portfolioPnl >= 0 ? 'text-positive' : 'text-negative';
 
   // Scan health: demo data is always treated as fresh; a live run is stale once it
   // failed/skipped or has aged past the freshness window. Drives the scan tile colour
@@ -84,7 +84,7 @@ export function MetricStrip({ data, soloMode = false }: MetricStripProps) {
   const runFailed = runStatus === 'failed' || runStatus === 'skipped';
   const hoursAgo = scanHoursAgo(data.latestRun.finishedAt);
   const scanStale = data.generatedFrom !== 'demo' && (runFailed || hoursAgo > STALE_AFTER_HOURS);
-  const scanTone = scanStale ? (runFailed ? 'text-[#ff6b6b]' : 'text-[#f3a33a]') : 'text-[#a8b5c2]';
+  const scanTone = scanStale ? (runFailed ? 'text-negative' : 'text-accent') : 'text-ink-2';
   const scanDetail = runFailed
     ? `Scan ${runStatus} · ${formatNumber(data.latestRun.tickersScanned, 0)} tickers`
     : scanStale
@@ -96,11 +96,11 @@ export function MetricStrip({ data, soloMode = false }: MetricStripProps) {
       key: 'signals',
       icon: TrendingUp,
       faces: [
-        { label: 'Strong', value: strong.toString(), detail: `${watchlistCount} watch / ${invalidations} risk`, tone: 'text-[#43d18b]' },
+        { label: 'Strong', value: strong.toString(), detail: `${watchlistCount} watch / ${invalidations} risk`, tone: 'text-positive' },
         nearTrigger
-          ? { label: 'Near', value: nearTrigger.symbol, detail: `score ${nearTrigger.signalScore} ${formatSignedNumber(nearTrigger.scoreDelta, 0)}`, tone: 'text-[#f3a33a]' }
-          : { label: 'Near', value: '-', detail: 'None close', tone: 'text-[#8190a0]' },
-        { label: 'Risk', value: invalidations.toString(), detail: highestRisk ? `${highestRisk.symbol} ${formatSignedNumber(highestRisk.scoreDelta, 0)}` : 'None', tone: invalidations > 0 ? 'text-[#ff6b6b]' : 'text-[#43d18b]' },
+          ? { label: 'Near', value: nearTrigger.symbol, detail: `score ${nearTrigger.signalScore} ${formatSignedNumber(nearTrigger.scoreDelta, 0)}`, tone: 'text-accent' }
+          : { label: 'Near', value: '-', detail: 'None close', tone: 'text-ink-3' },
+        { label: 'Risk', value: invalidations.toString(), detail: highestRisk ? `${highestRisk.symbol} ${formatSignedNumber(highestRisk.scoreDelta, 0)}` : 'None', tone: invalidations > 0 ? 'text-negative' : 'text-positive' },
       ],
     },
     {
@@ -109,11 +109,11 @@ export function MetricStrip({ data, soloMode = false }: MetricStripProps) {
       faces: [
         { label: 'Portfolio', value: formatCurrency(portfolioValue), detail: `${formatCurrency(portfolioPnl)} ${formatSignedPercent(portfolioPnlPct)}`, tone: pnlTone, detailTone: pnlTone },
         topHolding
-          ? { label: 'Largest', value: topHolding.symbol, detail: `${formatNumber(topHolding.portfolioWeight, 1)}% · ${formatCompactCurrency(topHolding.marketValue)}`, tone: 'text-[#dbe5ee]' }
-          : { label: 'Largest', value: '-', detail: 'No holdings', tone: 'text-[#8190a0]' },
+          ? { label: 'Largest', value: topHolding.symbol, detail: `${formatNumber(topHolding.portfolioWeight, 1)}% · ${formatCompactCurrency(topHolding.marketValue)}`, tone: 'text-ink-title' }
+          : { label: 'Largest', value: '-', detail: 'No holdings', tone: 'text-ink-3' },
         bestPerformer
-          ? { label: 'Winner', value: bestPerformer.symbol, detail: `${formatSignedPercent(bestPerformer.unrealisedPnlPercent)} P/L`, tone: bestPerformer.unrealisedPnlPercent >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]' }
-          : { label: 'Winner', value: '-', detail: 'No holdings', tone: 'text-[#8190a0]' },
+          ? { label: 'Winner', value: bestPerformer.symbol, detail: `${formatSignedPercent(bestPerformer.unrealisedPnlPercent)} P/L`, tone: bestPerformer.unrealisedPnlPercent >= 0 ? 'text-positive' : 'text-negative' }
+          : { label: 'Winner', value: '-', detail: 'No holdings', tone: 'text-ink-3' },
       ],
     },
     {
@@ -121,14 +121,14 @@ export function MetricStrip({ data, soloMode = false }: MetricStripProps) {
       icon: Radar,
       faces: [
         bestSetup
-          ? { label: 'Setup', value: `${bestSetup.symbol} ${bestSetup.score}`, detail: `${bestSetup.actionState.replaceAll('_', ' ')} ${formatSignedNumber(bestSetup.scoreDelta, 0)}`, tone: 'text-[#f3a33a]' }
-          : { label: 'Setup', value: 'N/A', detail: 'No signal', tone: 'text-[#8190a0]' },
+          ? { label: 'Setup', value: `${bestSetup.symbol} ${bestSetup.score}`, detail: `${bestSetup.actionState.replaceAll('_', ' ')} ${formatSignedNumber(bestSetup.scoreDelta, 0)}`, tone: 'text-accent' }
+          : { label: 'Setup', value: 'N/A', detail: 'No signal', tone: 'text-ink-3' },
         bestSetup
-          ? { label: 'Read', value: `RSI ${formatNumber(bestSetup.rsi, 0)}`, detail: `hist ${formatSignedNumber(bestSetup.macdHistogram, 2)}`, tone: 'text-[#7fb0ff]' }
-          : { label: 'Read', value: '-', detail: 'No signal', tone: 'text-[#8190a0]' },
+          ? { label: 'Read', value: `RSI ${formatNumber(bestSetup.rsi, 0)}`, detail: `hist ${formatSignedNumber(bestSetup.macdHistogram, 2)}`, tone: 'text-blue-info' }
+          : { label: 'Read', value: '-', detail: 'No signal', tone: 'text-ink-3' },
         runnerUp
-          ? { label: 'Runner-up', value: `${runnerUp.symbol} ${runnerUp.score}`, detail: runnerUp.actionState.replaceAll('_', ' '), tone: 'text-[#a8b5c2]' }
-          : { label: 'Runner-up', value: '-', detail: 'One name', tone: 'text-[#8190a0]' },
+          ? { label: 'Runner-up', value: `${runnerUp.symbol} ${runnerUp.score}`, detail: runnerUp.actionState.replaceAll('_', ' '), tone: 'text-ink-2' }
+          : { label: 'Runner-up', value: '-', detail: 'One name', tone: 'text-ink-3' },
       ],
     },
     {
@@ -136,14 +136,14 @@ export function MetricStrip({ data, soloMode = false }: MetricStripProps) {
       icon: TrendingDown,
       faces: [
         highestRisk
-          ? { label: 'Worst', value: highestRisk.symbol, detail: `${highestRisk.status.replaceAll('_', ' ')} ${formatSignedNumber(highestRisk.scoreDelta, 0)}`, tone: highestRisk.scoreDelta < 0 ? 'text-[#ff6b6b]' : 'text-[#8190a0]' }
-          : { label: 'Worst', value: 'N/A', detail: 'No risk', tone: 'text-[#8190a0]' },
+          ? { label: 'Worst', value: highestRisk.symbol, detail: `${highestRisk.status.replaceAll('_', ' ')} ${formatSignedNumber(highestRisk.scoreDelta, 0)}`, tone: highestRisk.scoreDelta < 0 ? 'text-negative' : 'text-ink-3' }
+          : { label: 'Worst', value: 'N/A', detail: 'No risk', tone: 'text-ink-3' },
         highestRisk
-          ? { label: 'Read', value: `RSI ${formatNumber(highestRisk.rsi, 0)}`, detail: `hist Δ ${formatSignedNumber(highestRisk.histDelta, 2)}`, tone: 'text-[#f0758a]' }
-          : { label: 'Read', value: '-', detail: 'No risk', tone: 'text-[#8190a0]' },
+          ? { label: 'Read', value: `RSI ${formatNumber(highestRisk.rsi, 0)}`, detail: `hist Δ ${formatSignedNumber(highestRisk.histDelta, 2)}`, tone: 'text-negative-soft' }
+          : { label: 'Read', value: '-', detail: 'No risk', tone: 'text-ink-3' },
         secondRisk
-          ? { label: 'Watch', value: secondRisk.symbol, detail: `${secondRisk.status.replaceAll('_', ' ')} ${formatSignedNumber(secondRisk.scoreDelta, 0)}`, tone: 'text-[#a8b5c2]' }
-          : { label: 'Watch', value: '-', detail: 'Nothing', tone: 'text-[#8190a0]' },
+          ? { label: 'Watch', value: secondRisk.symbol, detail: `${secondRisk.status.replaceAll('_', ' ')} ${formatSignedNumber(secondRisk.scoreDelta, 0)}`, tone: 'text-ink-2' }
+          : { label: 'Watch', value: '-', detail: 'Nothing', tone: 'text-ink-3' },
       ],
     },
     {
@@ -151,8 +151,8 @@ export function MetricStrip({ data, soloMode = false }: MetricStripProps) {
       icon: Activity,
       faces: [
         { label: scanStale ? (runFailed ? 'Scan failed' : 'Scan stale') : 'Scan', value: relativeTime(data.latestRun.finishedAt), detail: scanDetail, tone: scanTone, detailTone: scanStale ? scanTone : undefined },
-        { label: 'Cadence', value: data.latestRun.timeframe.toUpperCase(), detail: 'Hourly · market hrs', tone: 'text-[#7fb0ff]' },
-        { label: 'Coverage', value: formatNumber(data.latestRun.tickersScanned, 0), detail: 'US tech universe', tone: 'text-[#dbe5ee]' },
+        { label: 'Cadence', value: data.latestRun.timeframe.toUpperCase(), detail: 'Hourly · market hrs', tone: 'text-blue-info' },
+        { label: 'Coverage', value: formatNumber(data.latestRun.tickersScanned, 0), detail: 'US tech universe', tone: 'text-ink-title' },
       ],
     },
     {
@@ -160,14 +160,14 @@ export function MetricStrip({ data, soloMode = false }: MetricStripProps) {
       icon: BellRing,
       faces: soloMode
         ? [
-            { label: 'Alerts', value: 'In-console', detail: 'No background delivery', tone: 'text-[#a8b5c2]' },
-            { label: 'Storage', value: 'Device', detail: 'No destinations collected', tone: 'text-[#7fb0ff]' },
-            { label: 'Cloud', value: 'Off', detail: 'Solo accountless mode', tone: 'text-[#8190a0]' },
+            { label: 'Alerts', value: 'In-console', detail: 'No background delivery', tone: 'text-ink-2' },
+            { label: 'Storage', value: 'Device', detail: 'No destinations collected', tone: 'text-blue-info' },
+            { label: 'Cloud', value: 'Off', detail: 'Solo accountless mode', tone: 'text-ink-3' },
           ]
         : [
-            { label: 'Alerts', value: formatNumber(data.latestRun.alertsSent, 0), detail: `Overlay ${data.latestRun.portfolioOverlaysCreated}/${data.latestRun.watchlistOverlaysCreated}`, tone: 'text-[#60a5fa]' },
-            { label: 'Mode', value: statusLabel, detail: 'Tap avatar', tone: modeMeta.tone.split(' ').find((c) => c.startsWith('text-')) ?? 'text-[#a8b5c2]' },
-            { label: 'Delivery', value: 'Telegram', detail: 'Backend bot', tone: 'text-[#a8b5c2]' },
+            { label: 'Alerts', value: formatNumber(data.latestRun.alertsSent, 0), detail: `Overlay ${data.latestRun.portfolioOverlaysCreated}/${data.latestRun.watchlistOverlaysCreated}`, tone: 'text-blue-focus' },
+            { label: 'Mode', value: statusLabel, detail: 'Tap avatar', tone: modeMeta.tone.split(' ').find((c) => c.startsWith('text-')) ?? 'text-ink-2' },
+            { label: 'Delivery', value: 'Telegram', detail: 'Backend bot', tone: 'text-ink-2' },
           ],
     },
   ];
@@ -270,8 +270,8 @@ export function MetricStrip({ data, soloMode = false }: MetricStripProps) {
             onPointerUp={clearPress}
             onPointerCancel={clearPress}
             style={{ touchAction: dragKey ? 'none' : 'auto' }}
-            className={`terminal-panel select-none rounded-md p-2 transition ${
-              isDragging ? 'z-10 scale-105 opacity-95 shadow-xl ring-1 ring-[#f3a33a]/60' : dragKey ? 'opacity-60' : ''
+            className={`terminal-panel select-none rounded-panel p-2 transition ${
+              isDragging ? 'z-10 scale-105 opacity-95 shadow-xl ring-1 ring-accent/60' : dragKey ? 'opacity-60' : ''
             }`}
           >
             <RotatingFaces

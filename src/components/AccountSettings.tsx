@@ -34,14 +34,14 @@ import { pageTitleClass } from '@/lib/ui';
 
 function Panel({ icon: Icon, title, subtitle, children }: { icon: typeof UserRound; title: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex items-start gap-2.5 border-b border-[#1b2530] px-3 py-2">
-        <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#f3a33a]">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="flex items-start gap-2.5 border-b border-line px-3 py-2">
+        <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md border border-line-strong bg-panel text-accent">
           <Icon size={14} />
         </span>
         <div className="min-w-0">
-          <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-[#c8d3de]">{title}</p>
-          <p className="mt-0.5 text-[11px] leading-snug text-[#8190a0]">{subtitle}</p>
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-ink-title">{title}</p>
+          <p className="mt-0.5 text-[11px] leading-snug text-ink-3">{subtitle}</p>
         </div>
       </div>
       <div className="p-3">{children}</div>
@@ -52,10 +52,10 @@ function Panel({ icon: Icon, title, subtitle, children }: { icon: typeof UserRou
 // One consistent sans face across every field so the form reads calm, not typewriter-bouncy. Genuinely
 // tabular data (tables, code, tickers) keeps font-mono elsewhere; prose inputs like name/email do not.
 const inputClass =
-  'w-full rounded border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 text-[13px] text-[#dbe5ee] outline-none transition focus:border-[#3a4754] focus:ring-1 focus:ring-[#f3a33a]/30';
-const labelClass = 'mb-0.5 block text-[10px] font-medium uppercase tracking-wide text-[#8190a0]';
+  'w-full rounded-cell border border-line-strong bg-panel px-2.5 py-1.5 text-[13px] text-ink-title outline-none transition focus:border-line-hair focus:ring-1 focus:ring-blue-focus/40';
+const labelClass = 'mb-0.5 block text-[10px] font-medium uppercase tracking-wide text-ink-3';
 const buttonPrimary =
-  'inline-flex items-center justify-center gap-1.5 rounded border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5 text-[11px] font-medium text-[#43d18b] transition hover:bg-[#103626] disabled:opacity-40';
+  'inline-flex items-center justify-center gap-1.5 rounded-cell border border-positive/40 bg-positive-tint px-3 py-1.5 text-[11px] font-medium text-positive transition hover:bg-positive/15 disabled:opacity-40';
 
 /**
  * Per-provider display + key sourcing. `hosted` uses the server-side OpenAI beta key when present;
@@ -75,7 +75,7 @@ const PROVIDER_META: Record<
 function SavedTick({ show }: { show: boolean }) {
   if (!show) return null;
   return (
-    <span className="inline-flex items-center gap-1 font-mono text-xs text-[#43d18b]">
+    <span className="inline-flex items-center gap-1 font-mono text-xs text-positive">
       <Check size={13} /> Saved
     </span>
   );
@@ -329,9 +329,9 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
 
   return (
     <div className="space-y-2.5">
-      <div className="terminal-panel rounded-md px-3 py-2.5">
+      <div className="terminal-panel rounded-panel px-3 py-2.5">
         <h1 className={pageTitleClass}>{sectionHeader.title}</h1>
-        <p className="mt-0.5 text-[11px] leading-snug text-[#8190a0]">{sectionHeader.subtitle}</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-ink-3">{sectionHeader.subtitle}</p>
       </div>
 
       <div className={section === 'account' ? 'grid gap-2.5 lg:grid-cols-2' : 'space-y-2.5'}>
@@ -344,7 +344,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                 {/* The circle IS the picker: a <label> wraps a real (transparent) input so a tap
                     natively focuses it and opens the device keyboard - no text box to type into.
                     A <label> is the most reliable keyboard trigger on iOS. */}
-                <label className="relative grid h-12 w-12 shrink-0 cursor-pointer place-items-center rounded-full border border-[#263241] bg-[#0d141c] text-2xl">
+                <label className="relative grid h-12 w-12 shrink-0 cursor-pointer place-items-center rounded-full border border-line-strong bg-panel text-2xl">
                   <span aria-hidden>{profile.avatarEmoji || '🦎'}</span>
                   <input
                     ref={emojiInputRef}
@@ -354,7 +354,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                     className="absolute inset-0 h-full w-full cursor-pointer rounded-full bg-transparent text-transparent caret-transparent opacity-0"
                   />
                 </label>
-                <p className="text-[10px] leading-snug text-[#8190a0]">Tap the circle to pick any emoji from your keyboard.</p>
+                <p className="text-[10px] leading-snug text-ink-3">Tap the circle to pick any emoji from your keyboard.</p>
               </div>
             </div>
             <div>
@@ -388,7 +388,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                   onChange={(event) => setProfile({ ...profile, baseCurrency: event.target.value })}
                 >
                   {CURRENCIES.map((code) => (
-                    <option key={code} value={code} className="bg-[#0d141c]">{code}</option>
+                    <option key={code} value={code} className="bg-panel">{code}</option>
                   ))}
                 </select>
               </div>
@@ -401,7 +401,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                   onChange={(event) => setProfile({ ...profile, region: event.target.value })}
                 >
                   {REGIONS.map((name) => (
-                    <option key={name} value={name} className="bg-[#0d141c]">{name}</option>
+                    <option key={name} value={name} className="bg-panel">{name}</option>
                   ))}
                 </select>
               </div>
@@ -410,7 +410,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
               <button type="button" className={buttonPrimary} onClick={commitProfile}>Save profile</button>
               <SavedTick show={profileSaved} />
             </div>
-            {profileSaveError && <p role="alert" className="text-xs text-[#ff8a8a]">{profileSaveError}</p>}
+            {profileSaveError && <p role="alert" className="text-xs text-negative-soft">{profileSaveError}</p>}
           </div>
         </Panel>
         )}
@@ -418,15 +418,15 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
         {section === 'account' && (
         <Panel icon={Lock} title="Security · local PIN" subtitle="A light lock for this browser. Not account-level security.">
           <div className="space-y-3">
-            <div className="flex items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs">
-              <ShieldCheck size={14} className={lock.enabled ? 'text-[#43d18b]' : 'text-[#8190a0]'} />
-              <span className={lock.enabled ? 'text-[#43d18b]' : 'text-[#8190a0]'}>
+            <div className="flex items-center gap-2 rounded-cell border border-line-strong bg-panel px-3 py-2 text-xs">
+              <ShieldCheck size={14} className={lock.enabled ? 'text-positive' : 'text-ink-3'} />
+              <span className={lock.enabled ? 'text-positive' : 'text-ink-3'}>
                 {lock.enabled ? 'PIN lock is ON for this device' : 'PIN lock is off'}
               </span>
             </div>
 
             {lock.enabled ? (
-              <button type="button" onClick={disablePin} className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 text-xs font-medium text-[#ff6b6b] transition hover:bg-[#3a1518]">
+              <button type="button" onClick={disablePin} className="inline-flex items-center gap-1.5 rounded-cell border border-negative/40 bg-negative/10 px-3 py-2 text-xs font-medium text-negative transition hover:bg-negative/15">
                 Turn off PIN lock
               </button>
             ) : (
@@ -467,8 +467,8 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
               </>
             )}
 
-            {pinError && <p className="text-xs text-[#ff6b6b]">{pinError}</p>}
-            <p className="text-[11px] leading-relaxed text-[#6f7d8a]">
+            {pinError && <p className="text-xs text-negative">{pinError}</p>}
+            <p className="text-[11px] leading-relaxed text-ink-dim">
               The PIN is stored as a one-way hash in this browser only. If you forget it, you can reset from the lock screen - that clears local data, it does not recover the PIN.
             </p>
           </div>
@@ -484,7 +484,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
           >
             <div className="space-y-2.5">
               {trialDaysLeft > 0 && (
-                <div className="rounded-md border border-[#1f5c3a]/40 bg-[#0c1a12] p-2.5 text-[11px] leading-relaxed text-[#9fd8b6]">
+                <div className="rounded-cell border border-positive/30 bg-positive-tint p-2.5 text-[11px] leading-relaxed text-positive">
                   AI is included free for {trialDaysLeft} more {trialDaysLeft === 1 ? 'day' : 'days'}. After that,
                   add your own provider key below to keep AI on - your watchlist, portfolio and alerts are
                   unaffected either way.
@@ -510,22 +510,22 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                     }}
                   >
                     <optgroup label={aiHosting.openaiOptgroupLabel}>
-                      <option value="openai" className="bg-[#0d141c]">
+                      <option value="openai" className="bg-panel">
                         {aiHosting.openaiOptionLabel}
                       </option>
                     </optgroup>
                     <optgroup label="Free / open">
-                      <option value="google" className="bg-[#0d141c]">Google Gemini (free)</option>
-                      <option value="openrouter" className="bg-[#0d141c]">Llama 3.1 (open-source)</option>
+                      <option value="google" className="bg-panel">Google Gemini (free)</option>
+                      <option value="openrouter" className="bg-panel">Llama 3.1 (open-source)</option>
                     </optgroup>
                     <optgroup label="Your own key">
-                      <option value="anthropic" className="bg-[#0d141c]">Claude</option>
-                      <option value="xai" className="bg-[#0d141c]">Grok (xAI)</option>
+                      <option value="anthropic" className="bg-panel">Claude</option>
+                      <option value="xai" className="bg-panel">Grok (xAI)</option>
                     </optgroup>
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass} htmlFor="acct-model">Version <span className="text-[#6f7d8a]">(optional)</span></label>
+                  <label className={labelClass} htmlFor="acct-model">Version <span className="text-ink-dim">(optional)</span></label>
                   <input
                     id="acct-model"
                     type="text"
@@ -559,7 +559,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                   <button
                     type="button"
                     onClick={pasteAiKey}
-                    className="inline-flex shrink-0 items-center gap-1 rounded border border-[#8aa2ff]/40 bg-[#101a2e] px-2.5 text-[11px] font-semibold text-[#8aa2ff] transition hover:bg-[#13203a]"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-cell border border-blue-focus/40 bg-blue-tint px-2.5 text-[11px] font-semibold text-blue-info transition hover:bg-blue-deep/25"
                   >
                     <ClipboardPaste size={13} /> Paste
                   </button>
@@ -567,7 +567,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                     <button
                       type="button"
                       onClick={() => commitAi(withoutAiKey(ai))}
-                      className="inline-flex shrink-0 items-center gap-1 rounded border border-[#ff6b6b]/35 bg-[#251113] px-2.5 text-[11px] font-semibold text-[#ff8c8c] transition hover:bg-[#331619]"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-cell border border-negative/35 bg-negative/10 px-2.5 text-[11px] font-semibold text-negative-soft transition hover:bg-negative/15"
                     >
                       <Trash2 size={13} /> Remove key
                     </button>
@@ -583,15 +583,15 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                     href={PROVIDER_META[ai.provider].keyUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[10px] font-semibold text-[#8aa2ff] transition hover:text-[#aab8ff]"
+                    className="text-[10px] font-semibold text-blue-info transition hover:text-ink"
                   >
                     {PROVIDER_META[ai.provider].group === 'hosted' ? 'Use your own key from' : 'Get a key from'} {PROVIDER_META[ai.provider].keyHost} →
                   </a>
                 </div>
               </div>
-              {aiSaveError && <p role="alert" className="text-xs text-[#ff8a8a]">{aiSaveError}</p>}
+              {aiSaveError && <p role="alert" className="text-xs text-negative-soft">{aiSaveError}</p>}
 
-              <p className="text-[9.5px] leading-snug text-[#6f7d8a]">
+              <p className="text-[9.5px] leading-snug text-ink-dim">
                 {PROVIDER_META[ai.provider].group === 'hosted'
                   ? isSupabaseConfigured()
                     ? `Hosted beta uses Lyra's server-side OpenAI key when available. Add your own key here only if you want to override it; browser keys are never stored on Lyra's servers.`
@@ -604,19 +604,19 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                     : `Your key stays in this browser and is only used for ${PROVIDER_META[ai.provider].label} requests - never committed or stored by Lyra.`}
               </p>
 
-              <label className="flex cursor-pointer items-start gap-2 rounded border border-[#1d2733] bg-[#0b1016] p-2.5">
+              <label className="flex cursor-pointer items-start gap-2 rounded-cell border border-line bg-chrome p-2.5">
                 <input
                   type="checkbox"
                   checked={botInterest}
                   onChange={(event) => toggleBotInterest(event.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#8aa2ff]"
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-blue-focus"
                 />
                 <span className="min-w-0">
                   <span className="flex items-center gap-1.5">
-                    <span className="text-[12px] font-semibold text-[#dbe5ee]">Trading bot (paper)</span>
-                    <span className="rounded-full border border-[#8aa2ff]/30 bg-[#101a2e] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-[#8aa2ff]">Coming soon</span>
+                    <span className="text-[12px] font-semibold text-ink-title">Trading bot (paper)</span>
+                    <span className="rounded-full border border-pending/30 bg-blue-tint px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-pending">Coming soon</span>
                   </span>
-                  <span className="mt-0.5 block text-[10px] leading-snug text-[#8190a0]">
+                  <span className="mt-0.5 block text-[10px] leading-snug text-ink-3">
                     {soloMode
                       ? 'Remember this preference on this device. Solo does not submit it or enrol an account in a beta.'
                       : 'Let Lyra paper-trade your portfolio behind an approval gate - never live. Tick to register interest and join the beta.'}
@@ -624,17 +624,17 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                 </span>
               </label>
 
-              <label className="flex cursor-pointer items-start gap-2 rounded border border-[#1d2733] bg-[#0b1016] p-2.5">
+              <label className="flex cursor-pointer items-start gap-2 rounded-cell border border-line bg-chrome p-2.5">
                 <input
                   type="checkbox"
                   checked={agentActions}
                   onChange={(event) => toggleAgentActions(event.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#8aa2ff]"
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-blue-focus"
                 />
                 <span className="min-w-0">
-                  <span className="text-[12px] font-semibold text-[#dbe5ee]">AI actions (confirm-to-act)</span>
-                  <span className="mt-0.5 block text-[10px] leading-snug text-[#8190a0]">
-                    When on, Lyra can <span className="text-[#a8b5c2]">propose</span> reversible actions in chat - like adding a stock to your watchlist, portfolio, or trade log - and you confirm each one. Lyra never changes your data on its own, never trades, and every action can be undone.
+                  <span className="text-[12px] font-semibold text-ink-title">AI actions (confirm-to-act)</span>
+                  <span className="mt-0.5 block text-[10px] leading-snug text-ink-3">
+                    When on, Lyra can <span className="text-ink-2">propose</span> reversible actions in chat - like adding a stock to your watchlist, portfolio, or trade log - and you confirm each one. Lyra never changes your data on its own, never trades, and every action can be undone.
                   </span>
                 </span>
               </label>
@@ -657,11 +657,11 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
             {isSupabaseConfigured() ? (
               <NotificationsSetup />
             ) : (
-              <div className="rounded-lg border border-[#263241] bg-[#0d141c] p-4">
-                <p className="text-sm font-semibold text-[#eef3f8]">
+              <div className="rounded-cell border border-line-strong bg-panel p-4">
+                <p className="text-sm font-semibold text-ink">
                   No notification delivery in Solo
                 </p>
-                <p className="mt-1 text-xs leading-relaxed text-[#a8b5c2]">
+                <p className="mt-1 text-xs leading-relaxed text-ink-2">
                   Solo has no account or server-side destination, so it cannot
                   deliver push, Telegram, WhatsApp, or scheduled digests. Your
                   watchlist and signal changes remain available when you open
@@ -671,7 +671,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                       (2026-07-27 audit V12 fix). */}
                   <a
                     href={communitySignupHref('solo-settings')}
-                    className="font-medium text-[#a9c7ff] underline decoration-[#1E63FF]/40 underline-offset-2 transition hover:text-[#cfe0ff]"
+                    className="font-medium text-blue-info underline decoration-blue/40 underline-offset-2 transition hover:text-ink"
                   >
                     Create a free Community account
                   </a>{' '}
@@ -687,7 +687,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
         {section === 'account' && (
         <Panel icon={Trash2} title="Data &amp; privacy" subtitle="See it, keep it, or delete it - your call.">
           <div className="space-y-3">
-            <p className="text-xs leading-relaxed text-[#a8b5c2]">
+            <p className="text-xs leading-relaxed text-ink-2">
               {soloMode
                 ? 'Solo keeps your profile, preferences, board layout, watchlist, portfolio, trade log and any AI key in this browser. It has no account or cloud copy. Behavioural “twin” capture is off.'
                 : 'On this device, Lyra keeps your profile, preferences, board layout and any AI key in local storage. When you are signed in, your profile, settings, watchlist and paper-trade history are also saved to your private Lyra account so they follow you across devices - visible only to you, never sold. Behavioural “twin” capture stays off until you opt in.'}
@@ -696,7 +696,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
               <button
                 type="button"
                 onClick={wipeEverything}
-                className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 text-xs font-medium text-[#ff6b6b] transition hover:bg-[#3a1518]"
+                className="inline-flex items-center gap-1.5 rounded-cell border border-negative/40 bg-negative/10 px-3 py-2 text-xs font-medium text-negative transition hover:bg-negative/15"
               >
                 <Trash2 size={13} /> Clear local data (this device)
               </button>
@@ -704,7 +704,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                 <>
                   <a
                     href="/api/account/export"
-                    className="inline-flex items-center gap-1.5 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-medium text-[#7fb0ff] transition hover:bg-[#101a2e]"
+                    className="inline-flex items-center gap-1.5 rounded-cell border border-line-strong bg-panel px-3 py-2 text-xs font-medium text-blue-info transition hover:bg-blue-tint"
                   >
                     <ClipboardPaste size={13} /> Export my data
                   </a>
@@ -712,21 +712,21 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
                     type="button"
                     onClick={deleteServerAccount}
                     disabled={serverDeleteBusy}
-                    className="inline-flex items-center gap-1.5 rounded border border-[#7f1d1d] bg-[#2b1214] px-3 py-2 text-xs font-medium text-[#ff6b6b] transition hover:bg-[#3a1518] disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded-cell border border-negative/40 bg-negative/10 px-3 py-2 text-xs font-medium text-negative transition hover:bg-negative/15 disabled:opacity-40"
                   >
                     <Trash2 size={13} /> {serverDeleteBusy ? 'Deleting…' : 'Delete my account data'}
                   </button>
                 </>
               )}
             </div>
-            {privacyNote && <p className="text-[11px] leading-snug text-[#f3a33a]">{privacyNote}</p>}
+            {privacyNote && <p className="text-[11px] leading-snug text-accent">{privacyNote}</p>}
           </div>
         </Panel>
         )}
       </div>
 
       {lockNote && (
-        <div className="terminal-panel rounded-md border-[#1d4f3a] px-4 py-2 text-xs text-[#43d18b]">{lockNote}</div>
+        <div className="terminal-panel rounded-panel border-positive/40 px-4 py-2 text-xs text-positive">{lockNote}</div>
       )}
     </div>
   );

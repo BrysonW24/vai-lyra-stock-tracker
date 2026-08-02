@@ -81,27 +81,27 @@ export function AccountMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className="grid h-9 w-9 place-items-center rounded-full border border-[#263241] bg-[#0d141c] text-lg leading-none transition hover:border-[#f3a33a]/60"
+        className="grid h-9 w-9 place-items-center rounded-full border border-line-strong bg-panel text-lg leading-none transition hover:border-accent/60"
       >
         <span aria-hidden>{avatar}</span>
       </button>
 
       {open && (
-        <div role="menu" className="absolute right-0 top-11 z-40 max-h-[82vh] w-64 overflow-y-auto rounded-md border border-[#263241] bg-[#0d1117] shadow-2xl">
-          <div className="flex items-center gap-2.5 border-b border-[#1b2530] px-3 py-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#263241] bg-[#0d141c] text-lg" aria-hidden>
+        <div role="menu" className="absolute right-0 top-11 z-40 max-h-[82vh] w-64 overflow-y-auto rounded-cell border border-line-strong bg-panel-deep shadow-2xl">
+          <div className="flex items-center gap-2.5 border-b border-line px-3 py-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-line-strong bg-panel text-lg" aria-hidden>
               {avatar}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[#eef3f8]">{label}</p>
-              <p className="text-[11px] text-[#8190a0]">{soloMode ? 'Solo · this device' : 'Signed in'}</p>
+              <p className="truncate text-sm font-semibold text-ink">{label}</p>
+              <p className="text-[11px] text-ink-3">{soloMode ? 'Solo · this device' : 'Signed in'}</p>
             </div>
           </div>
 
           {/* Alert mode - colour-coded, lives here so it is actually discovered */}
           {!soloMode && (
-          <div className="border-b border-[#1b2530] px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Alert mode</p>
+          <div className="border-b border-line px-3 py-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Alert mode</p>
             <div className="mt-1.5 grid grid-cols-2 gap-1">
               {ALERT_MODES.map((m) => {
                 const active = activeMode === m.value;
@@ -112,7 +112,7 @@ export function AccountMenu() {
                     title={m.hint}
                     onClick={() => update({ mode: m.value, mutedUntil: m.value === 'muted' ? prefs.mutedUntil : null })}
                     className={`flex items-center gap-1.5 rounded border px-2 py-1.5 text-xs transition ${
-                      active ? m.tone : 'border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:border-[#3a4754]'
+                      active ? m.tone : 'border-line-strong bg-panel text-ink-2 hover:border-line-hair'
                     }`}
                   >
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: m.dot }} />
@@ -128,7 +128,7 @@ export function AccountMenu() {
                   key={lbl}
                   type="button"
                   onClick={() => muteFor(ms)}
-                  className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[10px] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+                  className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[10px] text-ink-2 transition hover:text-ink"
                 >
                   Mute {lbl}
                 </button>
@@ -137,7 +137,7 @@ export function AccountMenu() {
                 <button
                   type="button"
                   onClick={() => update({ mutedUntil: null })}
-                  className="rounded border border-[#1d7f55] bg-[#0d251b] px-1.5 py-0.5 font-mono text-[10px] text-[#43d18b]"
+                  className="rounded border border-positive/50 bg-positive-tint px-1.5 py-0.5 font-mono text-[10px] text-positive"
                 >
                   Unmute
                 </button>
@@ -150,18 +150,18 @@ export function AccountMenu() {
                 they were dead controls (2026-07-27 audit V6). */}
             {prefs.mode === 'custom' && (
               <div className="mt-2 space-y-1.5">
-                <label className="flex items-center justify-between rounded border border-[#263241] bg-[#0d141c] px-2 py-1 text-[11px] text-[#a8b5c2]">
+                <label className="flex items-center justify-between rounded border border-line-strong bg-panel px-2 py-1 text-[11px] text-ink-2">
                   Quiet hours
                   <input type="checkbox" checked={prefs.quietHoursEnabled} onChange={(e) => update({ quietHoursEnabled: e.target.checked })} />
                 </label>
                 {prefs.quietHoursEnabled && (
-                  <div className="flex items-center gap-1.5 font-mono text-[11px] text-[#dbe5ee]">
-                    <input type="time" value={prefs.quietStart} onChange={(e) => update({ quietStart: e.target.value })} className="flex-1 rounded border border-[#263241] bg-[#080a0d] px-1.5 py-0.5 outline-none" />
-                    <span className="text-[#8190a0]">to</span>
-                    <input type="time" value={prefs.quietEnd} onChange={(e) => update({ quietEnd: e.target.value })} className="flex-1 rounded border border-[#263241] bg-[#080a0d] px-1.5 py-0.5 outline-none" />
+                  <div className="flex items-center gap-1.5 font-mono text-[11px] text-ink-title">
+                    <input type="time" value={prefs.quietStart} onChange={(e) => update({ quietStart: e.target.value })} className="flex-1 rounded border border-line-strong bg-well px-1.5 py-0.5 outline-none" />
+                    <span className="text-ink-3">to</span>
+                    <input type="time" value={prefs.quietEnd} onChange={(e) => update({ quietEnd: e.target.value })} className="flex-1 rounded border border-line-strong bg-well px-1.5 py-0.5 outline-none" />
                   </div>
                 )}
-                <p className="text-[10px] leading-snug text-[#6f7d8a]">
+                <p className="text-[10px] leading-snug text-ink-dim">
                   Quiet hours pause non-urgent alerts on your account; they release after the window.
                 </p>
               </div>
@@ -173,32 +173,32 @@ export function AccountMenu() {
             href="/account"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2.5 text-sm text-[#cdd8e3] transition hover:bg-[#101720]"
+            className="flex items-center gap-2 px-3 py-2.5 text-sm text-ink-2 transition hover:bg-panel hover:text-ink"
           >
-            <Settings size={15} className="text-[#8190a0]" /> {soloMode ? 'Settings' : 'Account'}
+            <Settings size={15} className="text-ink-3" /> {soloMode ? 'Settings' : 'Account'}
           </Link>
           <Link
             href="/account/notifications"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 border-t border-[#1b2530] px-3 py-2.5 text-sm text-[#cdd8e3] transition hover:bg-[#101720]"
+            className="flex items-center gap-2 border-t border-line px-3 py-2.5 text-sm text-ink-2 transition hover:bg-panel hover:text-ink"
           >
-            <BellRing size={15} className="text-[#8190a0]" /> {soloMode ? 'Notification limits' : 'Notifications'}
+            <BellRing size={15} className="text-ink-3" /> {soloMode ? 'Notification limits' : 'Notifications'}
           </Link>
           <Link
             href="/account/ai"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 border-t border-[#1b2530] px-3 py-2.5 text-sm text-[#cdd8e3] transition hover:bg-[#101720]"
+            className="flex items-center gap-2 border-t border-line px-3 py-2.5 text-sm text-ink-2 transition hover:bg-panel hover:text-ink"
           >
-            <BrainCircuit size={15} className="text-[#8190a0]" /> AI Settings
+            <BrainCircuit size={15} className="text-ink-3" /> AI Settings
           </Link>
           {isSupabaseConfigured() && (
             <button
               type="button"
               role="menuitem"
               onClick={signOut}
-              className="flex w-full items-center gap-2 border-t border-[#1b2530] px-3 py-2.5 text-left text-sm text-[#f0758a] transition hover:bg-[#1a1012]"
+              className="flex w-full items-center gap-2 border-t border-line px-3 py-2.5 text-left text-sm text-negative-soft transition hover:bg-negative/10"
             >
               <LogOut size={15} /> Sign out
             </button>
@@ -208,7 +208,7 @@ export function AccountMenu() {
             href="/whats-new"
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center justify-between gap-2 border-t border-[#1b2530] px-3 py-2.5 text-[11px] text-[#5d6b79] transition hover:bg-[#101720] hover:text-[#a8b5c2]"
+            className="flex items-center justify-between gap-2 border-t border-line px-3 py-2.5 text-[11px] text-ink-dim transition hover:bg-panel hover:text-ink-2"
           >
             <span>What&apos;s new</span>
             <span className="font-mono">

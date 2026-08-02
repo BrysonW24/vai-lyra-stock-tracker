@@ -27,9 +27,9 @@ export function ExecutiveStrip({ panels }: { panels: StripPanel[] }) {
   const faces = usable.map((panel) => (
     <div key={panel.label}>
       <div className="flex items-center justify-between gap-2 px-3 pb-1.5 pt-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">{panel.label} · tap a tile</p>
-        <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-[#43d18b]">
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#43d18b]" />
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-3">{panel.label} · tap a tile</p>
+        <span className="inline-flex items-center gap-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-positive">
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-positive" />
           As of last scan
         </span>
       </div>
@@ -39,13 +39,13 @@ export function ExecutiveStrip({ panels }: { panels: StripPanel[] }) {
             key={s.symbol}
             type="button"
             onClick={() => setSelected(s)}
-            className="flex min-w-0 flex-col gap-0.5 rounded-md border border-[#1b2530] bg-[#0d141c] px-2 py-1.5 text-left transition hover:border-[#3a4754]"
+            className="flex min-w-0 flex-col gap-0.5 rounded-cell border border-line bg-panel px-2 py-1.5 text-left transition hover:border-line-hair"
           >
             <div className="flex items-center gap-1">
               <TickerLogo symbol={s.symbol} companyName={s.companyName} size={13} />
-              <span className="truncate font-mono text-[11px] font-semibold text-[#eef3f8]">{s.symbol}</span>
+              <span className="truncate font-mono text-[11px] font-semibold text-ink">{s.symbol}</span>
             </div>
-            <span className="truncate font-mono text-[11px] text-[#dbe5ee]">{formatCurrency(s.close)}</span>
+            <span className="truncate font-mono text-[11px] text-ink-title">{formatCurrency(s.close)}</span>
             <span className={`font-mono text-[10px] ${toneClass(s.priceChange1d)}`}>{formatSignedPercent(s.priceChange1d)}</span>
           </button>
         ))}
@@ -54,7 +54,7 @@ export function ExecutiveStrip({ panels }: { panels: StripPanel[] }) {
   ));
 
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
+    <section className="terminal-panel overflow-hidden rounded-panel">
       <RotatingFaces faces={faces} intervalMs={7500} />
       <SignalDrawer signal={selected} onClose={() => setSelected(null)} />
     </section>

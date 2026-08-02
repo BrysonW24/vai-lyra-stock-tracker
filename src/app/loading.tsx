@@ -8,15 +8,16 @@ import { BrandLogo } from '@/components/BrandLogo';
  */
 export default function Loading() {
   return (
-    <div className="grid min-h-screen place-items-center bg-[#080a0d]">
+    <div className="grid min-h-screen place-items-center bg-ground">
       <div className="flex flex-col items-center gap-4">
         <div className="animate-pulse">
           <BrandLogo size={48} />
         </div>
+        {/* Brand-gradient echo (logo colours), not status colours. */}
         <div className="flex gap-1.5">
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#43d18b] [animation-delay:-0.3s]" />
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#5bc8ff] [animation-delay:-0.15s]" />
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#3b5bdb]" />
+          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-positive [animation-delay:-0.3s]" />
+          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-info [animation-delay:-0.15s]" />
+          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-deep" />
         </div>
       </div>
     </div>

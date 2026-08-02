@@ -53,10 +53,10 @@ function fmtDate(iso: string): string {
 }
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
-  planned: { label: 'Planned', cls: 'border-[#2a4a7a] bg-[#0f1a2c] text-[#7fb0ff]' },
-  in_progress: { label: 'In progress', cls: 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]' },
-  shipped: { label: 'Shipped', cls: 'border-[#1f5132] bg-[#0f2417] text-[#5fd08a]' },
-  declined: { label: 'Not planned', cls: 'border-[#3a4754] bg-[#141b23] text-[#8190a0]' },
+  planned: { label: 'Planned', cls: 'border-blue-focus/40 bg-blue-tint text-blue-info' },
+  in_progress: { label: 'In progress', cls: 'border-accent-border bg-accent-tint text-accent' },
+  shipped: { label: 'Shipped', cls: 'border-positive/40 bg-positive-tint text-positive' },
+  declined: { label: 'Not planned', cls: 'border-line-hair bg-panel text-ink-3' },
 };
 
 const ALL_STATUSES = ['open', 'planned', 'in_progress', 'shipped', 'declined'];
@@ -204,34 +204,34 @@ export function ScoutProposals() {
 
   return (
     <section className="terminal-panel overflow-hidden rounded-lg">
-      <div className="border-b border-[#1b2530]/70 px-3 py-2">
-        <p className="text-[11px] text-[#8190a0]">
-          <span className="font-semibold text-[#7fb0ff]">Scout proposals</span>
-          <span className="text-[#4c5866]"> · </span>signals strong enough to file - nothing changes unless a human accepts one
+      <div className="border-b border-line/70 px-3 py-2">
+        <p className="text-[11px] text-ink-3">
+          <span className="font-semibold text-blue-info">Scout proposals</span>
+          <span className="text-ink-dim"> · </span>signals strong enough to file - nothing changes unless a human accepts one
         </p>
       </div>
 
-      {note && <p className="border-b border-[#1b2530]/70 bg-[#241a0d]/80 px-3 py-2 text-[11px] text-[#f3a33a]">{note}</p>}
+      {note && <p className="border-b border-line/70 bg-accent-tint/80 px-3 py-2 text-[11px] text-accent">{note}</p>}
 
       {loading ? (
-        <p className="flex items-center gap-2 px-3 py-4 text-[12px] text-[#8190a0]"><Loader2 size={14} className="animate-spin" /> Loading proposals...</p>
+        <p className="flex items-center gap-2 px-3 py-4 text-[12px] text-ink-3"><Loader2 size={14} className="animate-spin" /> Loading proposals...</p>
       ) : (
-        <ul className="divide-y divide-[#101820]/80">
+        <ul className="divide-y divide-panel-deep/80">
           {sorted.map((idea) => {
             const status = STATUS_META[idea.status];
             return (
               <li key={idea.id} className="glass-row flex items-start gap-3 px-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#5d6b79]">{fmtDate(idea.createdAt)}</span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-dim">{fmtDate(idea.createdAt)}</span>
                     <span
-                      className="inline-flex items-center gap-1 rounded-full border border-[#2a4a7a] bg-[#0f1a2c] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#7fb0ff]"
+                      className="inline-flex items-center gap-1 rounded-full border border-blue-focus/40 bg-blue-tint px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-blue-info"
                       title="Raised automatically by the AI scout from recurring unmapped news signal. Nothing changes unless a human accepts it."
                     >
                       <Bot size={9} /> Scout{typeof idea.confidence === 'number' ? ` ${idea.confidence}` : ''}
                     </span>
                     {KIND_LABEL[idea.kind] && (
-                      <span className="rounded-full border border-[#3a4754] bg-[#141b23] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#a8b5c2]">
+                      <span className="rounded-full border border-line-hair bg-panel px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-ink-2">
                         {KIND_LABEL[idea.kind]}
                       </span>
                     )}
@@ -239,48 +239,48 @@ export function ScoutProposals() {
                       <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] ${status.cls}`}>{status.label}</span>
                     )}
                   </div>
-                  <p className="mt-1 text-[13px] font-semibold leading-snug text-[#eef3f8]">{idea.title}</p>
-                  {idea.description && <p className="mt-0.5 text-[12px] leading-relaxed text-[#98a6b4]">{idea.description}</p>}
+                  <p className="mt-1 text-[13px] font-semibold leading-snug text-ink">{idea.title}</p>
+                  {idea.description && <p className="mt-0.5 text-[12px] leading-relaxed text-ink-2">{idea.description}</p>}
                   {idea.kind === 'vertical' && (idea.status === 'planned' || idea.status === 'in_progress') && (
-                    <p className="mt-1 text-[10px] leading-snug text-[#7fb0ff]">
+                    <p className="mt-1 text-[10px] leading-snug text-blue-info">
                       {idea.status === 'planned'
                         ? 'Queued for drafting - the next agent session builds this vertical as a reviewable PR (/draft-vertical).'
                         : 'Being drafted - a vertical PR is in flight for this card.'}
                     </p>
                   )}
                   {typeof briefs[idea.id] === 'string' && briefs[idea.id] !== 'loading' && (
-                    <div className="mt-1.5 border-l-2 border-[#9a6a1f]/60 bg-[#13100a]/60 py-1 pl-2 pr-1">
-                      <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#f3a33a]"><Sparkles size={10} /> Lyra&apos;s read - grounded in the evidence below</p>
-                      <p className="mt-0.5 text-[12px] leading-relaxed text-[#dbe5ee]">{briefs[idea.id]}</p>
+                    <div className="mt-1.5 border-l-2 border-accent-border/60 bg-accent-tint/40 py-1 pl-2 pr-1">
+                      <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-accent"><Sparkles size={10} /> Lyra&apos;s read - grounded in the evidence below</p>
+                      <p className="mt-0.5 text-[12px] leading-relaxed text-ink-title">{briefs[idea.id]}</p>
                     </div>
                   )}
                   {idea.evidence.length > 0 && aiAvailable && briefs[idea.id] === undefined && (
                     <button
                       type="button"
                       onClick={() => loadBrief(idea)}
-                      className="mt-1.5 inline-flex min-h-[44px] items-center gap-1 rounded border border-[#9a6a1f]/50 bg-[#23180b]/60 px-2 text-[10px] font-medium text-[#f3a33a] transition hover:border-[#9a6a1f] hover:bg-[#2a1f0f] sm:min-h-[32px]"
+                      className="mt-1.5 inline-flex min-h-[44px] items-center gap-1 rounded border border-accent-border/50 bg-accent-tint/60 px-2 text-[10px] font-medium text-accent transition hover:border-accent-border hover:bg-accent-tint sm:min-h-[32px]"
                     >
                       <Sparkles size={11} /> AI read of this signal
                     </button>
                   )}
                   {briefs[idea.id] === 'loading' && (
-                    <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#8190a0]"><Loader2 size={11} className="animate-spin" /> Reading the evidence...</p>
+                    <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-ink-3"><Loader2 size={11} className="animate-spin" /> Reading the evidence...</p>
                   )}
                   {idea.evidence.length > 0 && (
                     <ul className="mt-1.5 space-y-0.5">
                       {(expandedEvidence.has(idea.id) ? idea.evidence : idea.evidence.slice(0, 4)).map((ev, i) => (
-                        <li key={`${idea.id}-ev-${i}`} className="flex items-start gap-1 text-[11px] leading-snug text-[#8190a0]">
-                          <ExternalLink size={10} className="mt-0.5 shrink-0 text-[#5d6b79]" />
+                        <li key={`${idea.id}-ev-${i}`} className="flex items-start gap-1 text-[11px] leading-snug text-ink-3">
+                          <ExternalLink size={10} className="mt-0.5 shrink-0 text-ink-dim" />
                           <span className="min-w-0">
                             {ev.url ? (
-                              <a href={ev.url} target="_blank" rel="noopener noreferrer" className="underline decoration-[#3a4754] underline-offset-2 transition hover:text-[#c8d3de]">
+                              <a href={ev.url} target="_blank" rel="noopener noreferrer" className="underline decoration-line-hair underline-offset-2 transition hover:text-ink-title">
                                 {ev.title}
                               </a>
                             ) : (
                               <span>{ev.title}</span>
                             )}
                             {(ev.sourceName || ev.sourceId || ev.publishedAt) && (
-                              <span className="text-[#5d6b79]">
+                              <span className="text-ink-dim">
                                 {' '}- {ev.sourceName || ev.sourceId}
                                 {ev.publishedAt && <> · {fmtDate(ev.publishedAt)}</>}
                               </span>
@@ -300,7 +300,7 @@ export function ScoutProposals() {
                                 return next;
                               })
                             }
-                            className="min-h-[44px] text-[10px] font-medium text-[#5d6b79] underline decoration-[#3a4754] underline-offset-2 transition hover:text-[#c8d3de] sm:min-h-[32px]"
+                            className="min-h-[44px] text-[10px] font-medium text-ink-dim underline decoration-line-hair underline-offset-2 transition hover:text-ink-title sm:min-h-[32px]"
                           >
                             {expandedEvidence.has(idea.id) ? 'Show fewer evidence links' : `+ ${idea.evidence.length - 4} more evidence links`}
                           </button>
@@ -318,8 +318,8 @@ export function ScoutProposals() {
                           disabled={idea.status === s}
                           className={`rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.08em] transition ${
                             idea.status === s
-                              ? 'border-[#43d18b] bg-[#0c1f16] text-[#5fd08a]'
-                              : 'border-[#263241] bg-[#0d141c] text-[#6f7d8a] hover:text-[#c8d3de]'
+                              ? 'border-positive bg-positive-tint text-positive'
+                              : 'border-line-strong bg-panel text-ink-dim hover:text-ink-title'
                           }`}
                         >
                           {STATUS_META[s]?.label ?? 'Open'}
@@ -335,11 +335,11 @@ export function ScoutProposals() {
                   aria-label={idea.voted ? `Remove your vote (${idea.voteCount})` : `Upvote (${idea.voteCount})`}
                   className={`flex min-h-[44px] w-[46px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-md border transition active:scale-[0.96] motion-reduce:active:scale-100 ${
                     idea.voted
-                      ? 'border-[#1d7f55]/80 bg-[#0d251b]/80 text-[#43d18b] shadow-[0_6px_16px_-8px_rgba(67,209,139,0.55)]'
-                      : 'glass-well text-[#a8b5c2] hover:border-[#3a4754] hover:text-[#eef3f8]'
+                      ? 'border-positive/50 bg-positive-tint/80 text-positive shadow-[0_6px_16px_-8px_rgba(67,209,139,0.55)]'
+                      : 'glass-well text-ink-2 hover:border-line-hair hover:text-ink'
                   }`}
                 >
-                  <ChevronUp size={15} className={idea.voted ? '' : 'text-[#6f7d8a]'} />
+                  <ChevronUp size={15} className={idea.voted ? '' : 'text-ink-dim'} />
                   <span className="font-mono text-[12px] font-semibold tabular-nums leading-none">{idea.voteCount}</span>
                 </button>
               </li>

@@ -17,17 +17,17 @@ export function SoloUpgradeCta({ headline, sub }: { headline?: string; sub?: str
   if (!shouldShowSoloUpgradeCta(isSupabaseConfigured(), soloUpgradeCtaEnabled())) return null;
 
   return (
-    <div className="mt-3 rounded-lg border border-[#1E63FF]/30 bg-[#0c1626] p-3">
-      <p className="text-sm font-semibold text-[#eef3f8]">
+    <div className="mt-3 rounded-panel border border-blue/30 bg-blue-tint p-3">
+      <p className="text-sm font-semibold text-ink">
         {headline ?? 'Want notifications? Create a free account'}
       </p>
-      <p className="mt-1 text-xs leading-relaxed text-[#a8b5c2]">
+      <p className="mt-1 text-xs leading-relaxed text-ink-2">
         {sub ??
           'Your Solo setup stays in this browser. A free Community account adds push, Telegram, WhatsApp and scheduled digests - plus private cloud sync across your devices.'}
       </p>
       <a
         href={communitySignupHref('solo')}
-        className="mt-2.5 inline-flex items-center gap-1.5 rounded border border-[#1E63FF]/40 bg-[#12305f] px-3 py-2 text-xs font-medium text-[#a9c7ff] transition hover:bg-[#163a73]"
+        className="mt-2.5 inline-flex min-h-[44px] items-center gap-1.5 rounded-cell border border-blue/40 bg-blue/30 px-3 py-2 text-xs font-medium text-blue-info transition hover:bg-blue/40"
       >
         Create my account <ArrowUpRight size={13} />
       </a>

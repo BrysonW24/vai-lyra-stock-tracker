@@ -10,17 +10,17 @@ import { BriefAiNarration } from '@/components/BriefAiNarration';
 import { formatSignedNumber } from '@/lib/format';
 
 const TONE_DOT: Record<BriefTone, string> = {
-  pos: 'bg-[#43d18b]',
-  neg: 'bg-[#ff6b6b]',
-  warn: 'bg-[#f3a33a]',
-  neutral: 'bg-[#5e6b78]',
+  pos: 'bg-positive',
+  neg: 'bg-negative',
+  warn: 'bg-accent',
+  neutral: 'bg-ink-dim',
 };
 
 const REGIME_CHIP: Record<BriefTone, string> = {
-  pos: 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]',
-  neg: 'border-[#7f1d1d] bg-[#2b1214] text-[#ff6b6b]',
-  warn: 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]',
-  neutral: 'border-[#263241] bg-[#0d141c] text-[#a8b5c2]',
+  pos: 'border-positive/40 bg-positive-tint text-positive',
+  neg: 'border-negative/50 bg-negative/10 text-negative',
+  warn: 'border-accent-border bg-accent-tint text-accent',
+  neutral: 'border-line-strong bg-panel text-ink-2',
 };
 
 interface LiveLineData {
@@ -81,8 +81,8 @@ function LiveLine({ line }: { line: LiveLineData }) {
   return (
     <Link
       href={`/tickers/${line.symbol}?view=setup`}
-      className={`flex items-start gap-2 px-3 py-1.5 transition-colors duration-[1500ms] hover:bg-[#101720] ${
-        settled ? 'bg-transparent' : hot ? 'bg-[#2a1f0f]' : 'bg-[#0d251b]'
+      className={`flex items-start gap-2 px-3 py-1.5 transition-colors duration-[1500ms] hover:bg-line/30 ${
+        settled ? 'bg-transparent' : hot ? 'bg-accent-tint' : 'bg-positive-tint'
       }`}
       style={{ animation: 'tableRowSlide 420ms ease-out' }}
     >
@@ -90,18 +90,18 @@ function LiveLine({ line }: { line: LiveLineData }) {
         <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${TONE_DOT[line.tone]}`} />
         <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${TONE_DOT[line.tone]}`} />
       </span>
-      <p className="min-w-0 flex-1 text-xs leading-snug text-[#c8d3de]">
-        <span className="font-mono text-[10px] uppercase tracking-wide text-[#8190a0]">{line.label}</span>
+      <p className="min-w-0 flex-1 text-xs leading-snug text-ink-title">
+        <span className="font-mono text-[10px] uppercase tracking-wide text-ink-3">{line.label}</span>
         <span
           className={`mx-1.5 inline-block -translate-y-px rounded border px-1 py-px font-mono text-[8px] font-semibold uppercase tracking-[0.1em] ${
-            hot ? 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]' : 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]'
+            hot ? 'border-accent-border bg-accent-tint text-accent' : 'border-positive/40 bg-positive-tint text-positive'
           }`}
         >
           {line.chip}
         </span>
         {line.text}
       </p>
-      <ArrowUpRight size={12} className="mt-1 shrink-0 text-[#5e6b78]" />
+      <ArrowUpRight size={12} className="mt-1 shrink-0 text-ink-dim" />
     </Link>
   );
 }
@@ -146,22 +146,22 @@ export function DailyBriefCard({ data, market }: DailyBriefCardProps) {
   }, [pool]);
 
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[#1b2530] px-3 py-2">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-line px-3 py-2">
         <div className="flex min-w-0 items-start gap-2">
-          <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#f3a33a]">
+          <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-cell border border-line-strong bg-panel text-accent">
             <Sparkles size={14} />
           </span>
           <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-3">
               Daily brief
               <span className="relative flex h-1.5 w-1.5" title="Listening for new signals">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-60" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#43d18b]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-positive" />
               </span>
-              <span className="font-mono text-[8px] tracking-[0.14em] text-[#43d18b]">listening</span>
+              <span className="font-mono text-[8px] tracking-[0.14em] text-positive">listening</span>
             </p>
-            <p className="mt-0.5 text-[13px] font-semibold leading-snug text-[#eef3f8]">{brief.headline}</p>
+            <p className="mt-0.5 text-[13px] font-semibold leading-snug text-ink">{brief.headline}</p>
           </div>
         </div>
         <span className={`shrink-0 rounded border px-1.5 py-0.5 font-mono text-[9px] ${REGIME_CHIP[brief.regimeTone]}`}>
@@ -172,7 +172,7 @@ export function DailyBriefCard({ data, market }: DailyBriefCardProps) {
       {/* AI narration appears here when enabled in Account; otherwise nothing renders. */}
       <BriefAiNarration brief={brief} />
 
-      <div className="divide-y divide-[#141c25]">
+      <div className="divide-y divide-line/70">
         {liveLines.map((line) => (
           <LiveLine key={line.id} line={line} />
         ))}
@@ -181,16 +181,16 @@ export function DailyBriefCard({ data, market }: DailyBriefCardProps) {
           const inner = (
             <>
               <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${TONE_DOT[line.tone]}`} />
-              <p className="min-w-0 flex-1 text-xs leading-snug text-[#c8d3de]">
-                <span className="font-mono text-[10px] uppercase tracking-wide text-[#8190a0]">{line.label}</span>
-                <span className="mx-1.5 text-[#3a4654]">·</span>
+              <p className="min-w-0 flex-1 text-xs leading-snug text-ink-title">
+                <span className="font-mono text-[10px] uppercase tracking-wide text-ink-3">{line.label}</span>
+                <span className="mx-1.5 text-line-hair">·</span>
                 {line.text}
               </p>
-              {line.symbol && <ArrowUpRight size={12} className="mt-1 shrink-0 text-[#5e6b78]" />}
+              {line.symbol && <ArrowUpRight size={12} className="mt-1 shrink-0 text-ink-dim" />}
             </>
           );
           return line.symbol ? (
-            <Link key={key} href={`/tickers/${line.symbol}?view=setup`} className="flex items-start gap-2 px-3 py-1.5 transition hover:bg-[#101720]">
+            <Link key={key} href={`/tickers/${line.symbol}?view=setup`} className="flex items-start gap-2 px-3 py-1.5 transition hover:bg-line/30">
               {inner}
             </Link>
           ) : (
@@ -201,7 +201,7 @@ export function DailyBriefCard({ data, market }: DailyBriefCardProps) {
         })}
       </div>
 
-      <p className="border-t border-[#1b2530] px-3 py-1.5 font-mono text-[10px] text-[#5e6b78]">
+      <p className="border-t border-line px-3 py-1.5 font-mono text-[10px] text-ink-dim">
         Auto-generated from the latest scan. Enable AI in Account to have it written for you.
       </p>
     </section>

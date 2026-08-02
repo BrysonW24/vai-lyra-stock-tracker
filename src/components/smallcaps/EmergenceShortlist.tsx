@@ -31,11 +31,11 @@ interface EmergenceShortlistProps {
 }
 
 const STAGE_TONE: Record<LifecycleStage, string> = {
-  concept: 'border-[#2a4a7a] bg-[#0f1a2c] text-[#7fb0ff]',
-  funded: 'border-[#5a3ca0] bg-[#170f2c] text-[#b79cff]',
-  contracted: 'border-[#1f5132] bg-[#0f2417] text-[#5fd08a]',
-  scaling: 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]',
-  crowded: 'border-[#7a2630] bg-[#260f12] text-[#f0758a]',
+  concept: 'border-blue-info/40 bg-blue-tint text-blue-info',
+  funded: 'border-pending/40 bg-pending/10 text-pending',
+  contracted: 'border-positive/40 bg-positive-tint text-positive',
+  scaling: 'border-accent-border bg-accent-tint text-accent',
+  crowded: 'border-negative/40 bg-negative/10 text-negative-soft',
 };
 
 const HELP_TERMS: HelpTerm[] = [
@@ -56,32 +56,32 @@ function BackingBadges({ candidate }: { candidate: LifecycleCandidate }) {
   return (
     <>
       {b.government && (
-        <span className="inline-flex items-center gap-1 rounded border border-[#2a4a7a] bg-[#0f1a2c] px-1 py-0.5 font-mono text-[9px] text-[#8aa2ff]" title="Government contract, grant or backer on record">
+        <span className="inline-flex items-center gap-1 rounded border border-blue-info/40 bg-blue-tint px-1 py-0.5 font-mono text-[9px] text-pending" title="Government contract, grant or backer on record">
           <Landmark size={9} /> Gov
         </span>
       )}
       {b.bigTech && (
-        <span className="inline-flex items-center gap-1 rounded border border-[#9a6a1f] bg-[#231708] px-1 py-0.5 font-mono text-[9px] text-[#f3a33a]" title="Hyperscaler / big-tech / big-AI capital or partnership">
+        <span className="inline-flex items-center gap-1 rounded border border-accent-border bg-accent-tint px-1 py-0.5 font-mono text-[9px] text-accent" title="Hyperscaler / big-tech / big-AI capital or partnership">
           <Cpu size={9} /> Big-tech
         </span>
       )}
       {b.smartMoney && (
-        <span className="inline-flex items-center gap-1 rounded border border-[#1f5132] bg-[#0f2417] px-1 py-0.5 font-mono text-[9px] text-[#5fd08a]" title="Tracked 13F institutional filer holds the name">
+        <span className="inline-flex items-center gap-1 rounded border border-positive/40 bg-positive-tint px-1 py-0.5 font-mono text-[9px] text-positive" title="Tracked 13F institutional filer holds the name">
           <Wallet size={9} /> Smart money
         </span>
       )}
       {b.strength === 0 && (
-        <span className="rounded border border-[#263241] bg-[#0d141c] px-1 py-0.5 font-mono text-[9px] text-[#6f7d8a]">No disclosed backing</span>
+        <span className="rounded border border-line-strong bg-panel px-1 py-0.5 font-mono text-[9px] text-ink-dim">No disclosed backing</span>
       )}
     </>
   );
 }
 
 function scoreTone(total: number): string {
-  if (total >= 70) return 'text-[#43d18b]';
-  if (total >= 55) return 'text-[#f3a33a]';
-  if (total >= 42) return 'text-[#a8b5c2]';
-  return 'text-[#f0758a]';
+  if (total >= 70) return 'text-positive';
+  if (total >= 55) return 'text-accent';
+  if (total >= 42) return 'text-ink-2';
+  return 'text-negative-soft';
 }
 
 const UPSIDE_TIER_LABEL: Record<UpsideTier, string> = {
@@ -92,10 +92,10 @@ const UPSIDE_TIER_LABEL: Record<UpsideTier, string> = {
 };
 
 const UPSIDE_TONE: Record<UpsideTier, string> = {
-  lottery: 'border-[#7a2630] bg-[#260f12] text-[#f0758a]',
-  asymmetric: 'border-[#1f5132] bg-[#0f2417] text-[#5fd08a]',
-  balanced: 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]',
-  limited: 'border-[#263241] bg-[#0d141c] text-[#8190a0]',
+  lottery: 'border-negative/40 bg-negative/10 text-negative-soft',
+  asymmetric: 'border-positive/40 bg-positive-tint text-positive',
+  balanced: 'border-accent-border bg-accent-tint text-accent',
+  limited: 'border-line-strong bg-panel text-ink-3',
 };
 
 /** Compact model-estimated asymmetry badge: base-case upside % and the upside:downside ratio. */
@@ -117,7 +117,7 @@ function LifecycleArc({ distribution, active }: { distribution: Record<Lifecycle
       {LIFECYCLE_ORDER.map((stage, i) => (
         <div key={stage} className="flex flex-1 items-center gap-1">
           <div
-            className={`flex-1 rounded-md border p-1.5 text-center transition ${STAGE_TONE[stage]} ${
+            className={`flex-1 rounded-cell border p-1.5 text-center transition ${STAGE_TONE[stage]} ${
               active === stage ? 'ring-1 ring-inset ring-current' : 'opacity-90'
             }`}
             title={LIFECYCLE_BLURB[stage]}
@@ -125,7 +125,7 @@ function LifecycleArc({ distribution, active }: { distribution: Record<Lifecycle
             <p className="font-mono text-[9px] uppercase tracking-[0.1em]">{LIFECYCLE_LABEL[stage]}</p>
             <p className="numeric font-mono text-sm font-semibold">{distribution[stage]}</p>
           </div>
-          {i < LIFECYCLE_ORDER.length - 1 && <span className="shrink-0 text-[10px] text-[#3a4754]">{'->'}</span>}
+          {i < LIFECYCLE_ORDER.length - 1 && <span className="shrink-0 text-[10px] text-line-hair">{'->'}</span>}
         </div>
       ))}
     </div>
@@ -143,11 +143,11 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, ver
 
   return (
     <div className="space-y-3">
-      <section className="terminal-panel glass-hero rounded-md p-3">
+      <section className="terminal-panel glass-hero rounded-panel p-3">
         <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-[#43d18b]" />
-          <h2 className="text-sm font-semibold text-[#eef3f8]">Emergence shortlist</h2>
-          <span className="ml-auto rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#8190a0]">
+          <Sparkles size={16} className="text-positive" />
+          <h2 className="text-sm font-semibold text-ink">Emergence shortlist</h2>
+          <span className="ml-auto rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink-3">
             {shortlist.length} early + backed
           </span>
           <HelpDrawer
@@ -159,17 +159,17 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, ver
             footnote="Everything here is a deterministic research rank built on disclosed evidence and backing. Small caps carry real liquidity and dilution risk. Nothing here is a buy or sell call. Research only."
           />
         </div>
-        <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-[#a8b5c2]">
+        <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-ink-2">
           Catch them early: names still concept-to-contracted in an emerging market, already carrying government
           or big-tech capital and real evidence, ranked by the emergence engine. Select one to trace it end-to-end.
         </p>
-        <p className="mt-1 max-w-2xl text-[10px] leading-snug text-[#5a6b7d]">
+        <p className="mt-1 max-w-2xl text-[10px] leading-snug text-ink-dim">
           The emergence score and upside tier are deterministic model estimates of shape, not price targets or a proven
           hit rate - no forward-return outcomes are tracked for these names yet. Research only.
         </p>
 
         <div className="mt-2.5">
-          <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">
+          <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-ink-3">
             Lifecycle arc - the whole small-cap universe by stage
           </p>
           <LifecycleArc distribution={distribution} active={active?.stage} />
@@ -178,7 +178,7 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, ver
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,340px)_1fr]">
         {/* Shortlist rows */}
-        <section className="terminal-panel space-y-1.5 rounded-md p-2.5">
+        <section className="terminal-panel space-y-1.5 rounded-panel p-2.5">
           {shortlist.map((c) => {
             const isSel = c.symbol === active?.symbol;
             return (
@@ -189,14 +189,14 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, ver
                   setSelected(c.symbol);
                   captureInteraction({ eventType: 'drawer_open', entityType: 'candidate', entityId: c.symbol, meta: { stage: c.stage } });
                 }}
-                className={`w-full rounded-md border p-2 text-left transition ${
-                  isSel ? 'border-[#43d18b] bg-[#0c1f16]' : 'border-[#1b2530] bg-[#0d1117] hover:bg-[#101720]'
+                className={`w-full rounded-cell border p-2 text-left transition ${
+                  isSel ? 'border-positive bg-positive-tint' : 'border-line bg-panel-deep hover:bg-panel'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <TickerLogo symbol={c.symbol} companyName={c.name} size={14} />
-                  <span className="shrink-0 font-mono text-[12px] font-semibold text-[#eef3f8]">{c.symbol}</span>
-                  <span className="min-w-0 flex-1 truncate text-[10px] text-[#8190a0]">{c.name}</span>
+                  <span className="shrink-0 font-mono text-[12px] font-semibold text-ink">{c.symbol}</span>
+                  <span className="min-w-0 flex-1 truncate text-[10px] text-ink-3">{c.name}</span>
                   <span className={`numeric shrink-0 font-mono text-sm font-semibold ${scoreTone(c.emergence.total)}`}>
                     {c.emergence.total}
                   </span>
@@ -205,7 +205,7 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, ver
                   <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] ${STAGE_TONE[c.stage]}`}>
                     {LIFECYCLE_LABEL[c.stage]}
                   </span>
-                  <span className="rounded border border-[#263241] bg-[#0d141c] px-1 py-0.5 font-mono text-[9px] text-[#8190a0]" title={c.themeName}>
+                  <span className="rounded border border-line-strong bg-panel px-1 py-0.5 font-mono text-[9px] text-ink-3" title={c.themeName}>
                     {c.themeEmoji} {c.themeName}
                   </span>
                   <BackingBadges candidate={c} />
@@ -215,7 +215,7 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, ver
             );
           })}
           {shortlist.length === 0 && (
-            <p className="p-2 text-[11px] text-[#a8b5c2]">No early + backed names surfaced from the current data.</p>
+            <p className="p-2 text-[11px] text-ink-2">No early + backed names surfaced from the current data.</p>
           )}
         </section>
 
@@ -224,8 +224,8 @@ export function EmergenceShortlist({ shortlist, distribution, chainsByTheme, ver
           {active ? (
             <StoryDrawer candidate={active} position={positionsBySymbol[active.symbol] ?? null} />
           ) : (
-            <section className="terminal-panel rounded-md p-3">
-              <p className="text-[11px] text-[#a8b5c2]">Select a name to see its story and trace its value chain.</p>
+            <section className="terminal-panel rounded-panel p-3">
+              <p className="text-[11px] text-ink-2">Select a name to see its story and trace its value chain.</p>
             </section>
           )}
 

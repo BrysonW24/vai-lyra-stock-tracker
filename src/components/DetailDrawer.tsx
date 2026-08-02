@@ -73,26 +73,26 @@ export function DetailDrawer({ open, onClose, title, subtitle, badge, children }
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`absolute right-0 top-0 flex h-full w-full max-w-[440px] flex-col overflow-y-auto border-l border-[#1b2530] bg-[#0b1016] shadow-2xl transition-transform duration-300 ${
+        className={`absolute right-0 top-0 flex h-full w-full max-w-[440px] flex-col overflow-y-auto border-l border-line bg-chrome shadow-2xl transition-transform duration-300 ${
           shown ? 'translate-x-0' : 'translate-x-full'
         }`}
         style={{ paddingRight: 'env(safe-area-inset-right)' }}
       >
         <div
-          className="sticky top-0 z-10 flex items-start justify-between gap-2 border-b border-[#1b2530] bg-[#0b1016]/95 px-4 py-3 backdrop-blur"
+          className="sticky top-0 z-10 flex items-start justify-between gap-2 border-b border-line bg-chrome/95 px-4 py-3 backdrop-blur"
           style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
         >
           <div className="min-w-0">
             {badge}
-            <p className="truncate text-sm font-semibold text-[#eef3f8]">{title}</p>
-            {subtitle && <p className="mt-0.5 truncate font-mono text-[11px] text-[#8190a0]">{subtitle}</p>}
+            <p className="truncate text-sm font-semibold text-ink">{title}</p>
+            {subtitle && <p className="mt-0.5 truncate font-mono text-[11px] text-ink-3">{subtitle}</p>}
           </div>
           <button
             ref={closeRef}
             onClick={onClose}
             type="button"
             aria-label="Close"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded border border-[#263241] text-[#8190a0] transition hover:text-[#eef3f8]"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded border border-line-strong text-ink-3 transition hover:text-ink"
           >
             <X size={15} />
           </button>

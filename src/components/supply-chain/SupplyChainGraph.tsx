@@ -18,9 +18,9 @@ const SUPPLY_CHAIN_TERMS: HelpTerm[] = [
 ];
 
 const EXPOSURE_CLASS: Record<ExposureType, string> = {
-  direct: 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]',
-  supplier: 'border-[#27496b] bg-[#0d1b2b] text-[#7fb0ff]',
-  'second-order': 'border-[#263241] bg-[#0d141c] text-[#8190a0]',
+  direct: 'border-positive/40 bg-positive-tint text-positive',
+  supplier: 'border-blue-info/40 bg-blue-tint text-blue-info',
+  'second-order': 'border-line-strong bg-panel text-ink-3',
 };
 
 function tierLabel(index: number, total: number): string {
@@ -47,9 +47,9 @@ export function SupplyChainGraph() {
   const companiesForNode = (id: string) => companies.filter((c) => c.nodes.includes(id));
 
   return (
-    <section className="terminal-panel space-y-3 rounded-md p-3">
+    <section className="terminal-panel space-y-3 rounded-panel p-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Supply-chain map - demand to bottleneck</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Supply-chain map - demand to bottleneck</p>
         <HelpDrawer
           title="What the terms mean"
           subtitle="Tiers, bottleneck scores and exposure tags"
@@ -65,8 +65,8 @@ export function SupplyChainGraph() {
             key={t.slug}
             type="button"
             onClick={() => setSlug(t.slug)}
-            className={`shrink-0 rounded-md border px-2.5 py-1 font-mono text-[10px] transition ${
-              t.slug === theme.slug ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]' : 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:text-[#eef3f8]'
+            className={`shrink-0 rounded-cell border px-2.5 py-1 font-mono text-[10px] transition ${
+              t.slug === theme.slug ? 'border-accent bg-accent-tint text-accent' : 'border-line-strong bg-panel text-ink-3 hover:text-ink'
             }`}
           >
             {t.emoji} {t.name}
@@ -75,9 +75,9 @@ export function SupplyChainGraph() {
       </div>
 
       <div>
-        <p className="text-[13px] font-semibold text-[#eef3f8]">{theme.emoji} {theme.name}</p>
-        <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">{theme.thesis}</p>
-        <p className="mt-1 text-[10px] leading-snug text-[#f0758a]">
+        <p className="text-[13px] font-semibold text-ink">{theme.emoji} {theme.name}</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-ink-2">{theme.thesis}</p>
+        <p className="mt-1 text-[10px] leading-snug text-negative-soft">
           <span className="font-semibold uppercase tracking-[0.1em]">Falsifier:</span> {theme.falsifier}
         </p>
       </div>
@@ -85,17 +85,17 @@ export function SupplyChainGraph() {
       <div className="space-y-1">
         {layers.map((layer, i) => (
           <div key={layer}>
-            <p className="mb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[#5e6b78]">{tierLabel(i, layers.length)}</p>
+            <p className="mb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-ink-dim">{tierLabel(i, layers.length)}</p>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {nodes
                 .filter((n) => n.layer === layer)
                 .map((node) => {
                   const nodeCompanies = companiesForNode(node.id);
                   return (
-                    <div key={node.id} className="rounded-md border border-[#1b2530] bg-[#0d141c] p-2">
+                    <div key={node.id} className="rounded-cell border border-line bg-panel p-2">
                       <div className="flex items-center justify-between gap-1">
-                        <span className="truncate text-[11px] font-semibold text-[#eef3f8]">{node.name}</span>
-                        <span className="shrink-0 font-mono text-[8px] uppercase tracking-[0.1em] text-[#f3a33a]" title="Bottleneck score">btl {node.bottleneck}</span>
+                        <span className="truncate text-[11px] font-semibold text-ink">{node.name}</span>
+                        <span className="shrink-0 font-mono text-[8px] uppercase tracking-[0.1em] text-accent" title="Bottleneck score">btl {node.bottleneck}</span>
                       </div>
                       {nodeCompanies.length > 0 && (
                         <div className="mt-1.5 flex flex-wrap gap-1">
@@ -111,7 +111,7 @@ export function SupplyChainGraph() {
                 })}
             </div>
             {i < layers.length - 1 && (
-              <div className="flex justify-center py-0.5 text-[#3a4754]">
+              <div className="flex justify-center py-0.5 text-line-hair">
                 <ArrowDown size={14} />
               </div>
             )}
@@ -119,10 +119,10 @@ export function SupplyChainGraph() {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-[#1b2530] pt-2 font-mono text-[9px] text-[#5e6b78]">
-        <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#43d18b]" /> direct</span>
-        <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#7fb0ff]" /> supplier</span>
-        <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#5e6b78]" /> second-order</span>
+      <div className="flex flex-wrap items-center gap-2 border-t border-line pt-2 font-mono text-[9px] text-ink-dim">
+        <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-positive" /> direct</span>
+        <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-info" /> supplier</span>
+        <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-ink-dim" /> second-order</span>
         <span className="ml-auto">Demand flows down to the bottleneck. Research only.</span>
       </div>
     </section>

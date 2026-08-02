@@ -32,6 +32,10 @@ export function BrandLogo({ size = 30, showWordmark = false, className = '' }: B
         style={{ filter: 'drop-shadow(0 1px 2px rgba(59,91,219,0.28))' }}
       >
         <defs>
+          {/* Brand gradient - stops are the token values blue-deep / positive / accent and MUST
+              stay byte-equal to public/icons/app-icon.svg so the in-app mark and the installed
+              icon are one and the same. var() is intentionally avoided: stop-color is set as an
+              SVG attribute (not CSS), where custom properties do not resolve. */}
           <linearGradient id={gid} x1="0" y1="32" x2="32" y2="0" gradientUnits="userSpaceOnUse">
             <stop stopColor="#3b5bdb" />
             <stop offset="0.55" stopColor="#43d18b" />
@@ -50,7 +54,7 @@ export function BrandLogo({ size = 30, showWordmark = false, className = '' }: B
         />
       </svg>
       {showWordmark && (
-        <span className="bg-gradient-to-r from-[#8aa2ff] via-[#43d18b] to-[#f3a33a] bg-clip-text text-base font-semibold tracking-tight text-transparent">
+        <span className="bg-gradient-to-r from-pending via-positive to-accent bg-clip-text text-base font-semibold tracking-tight text-transparent">
           {BRAND_NAME}
         </span>
       )}

@@ -59,23 +59,23 @@ export function AiOfferCard() {
 
   return (
     <>
-      <section className="terminal-panel relative overflow-hidden rounded-md p-3">
-        <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#43d18b]/40 to-transparent" />
+      <section className="terminal-panel relative overflow-hidden rounded-panel p-3">
+        <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-positive/40 to-transparent" />
         <button
           type="button"
           onClick={dismiss}
           aria-label="Dismiss"
-          className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded text-[#6f7d8a] transition hover:bg-[#151c25] hover:text-[#eef3f8]"
+          className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded text-ink-dim transition hover:bg-line/50 hover:text-ink"
         >
           <X size={13} />
         </button>
         <div className="flex items-start gap-2.5 pr-7">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#8aa2ff]/30 bg-[#101a2e] text-[#8aa2ff]">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-cell border border-pending/30 bg-blue-tint text-pending">
             <Sparkles size={15} />
           </span>
           <div className="min-w-0">
-            <h2 className="text-[13px] font-semibold text-[#eef3f8]">Turn on your AI copilot</h2>
-            <p className="mt-0.5 text-[11px] leading-relaxed text-[#8190a0]">
+            <h2 className="text-[13px] font-semibold text-ink">Turn on your AI copilot</h2>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-ink-3">
               {`Ask Lyra to explain any setup in plain English, grounded in ${soloMode ? 'your device-local data' : 'your data'}. ${
                 effectiveHosted
                   ? 'Use the hosted beta model, or bring your own key.'
@@ -85,7 +85,7 @@ export function AiOfferCard() {
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-[#101a2e] px-3 py-1.5 text-xs font-semibold text-[#8aa2ff] transition hover:bg-[#13203a]"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-cell border border-pending/40 bg-blue-tint px-3 py-1.5 text-xs font-semibold text-pending transition hover:bg-blue-deep/30"
             >
               <Sparkles size={13} /> Set up AI <ArrowRight size={13} />
             </button>
@@ -95,14 +95,14 @@ export function AiOfferCard() {
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ground/80 p-4 backdrop-blur-sm"
           style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}
           onClick={() => setOpen(false)}
         >
-          <div className="mt-10 w-full max-w-lg rounded-xl border border-[#1d2733] bg-[#0b1016] p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="mt-10 w-full max-w-lg rounded-panel border border-line bg-chrome p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">AI copilot setup</span>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="grid h-11 w-11 place-items-center rounded text-[#8190a0] transition hover:bg-[#151c25] hover:text-[#eef3f8] sm:h-7 sm:w-7">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-3">AI copilot setup</span>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="grid h-11 w-11 place-items-center rounded text-ink-3 transition hover:bg-line/50 hover:text-ink sm:h-7 sm:w-7">
                 <X size={15} />
               </button>
             </div>

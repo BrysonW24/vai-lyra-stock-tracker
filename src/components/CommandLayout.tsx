@@ -83,14 +83,14 @@ export function CommandLayout({ sections, leading }: CommandLayoutProps) {
           disabled={refreshing}
           aria-label="Refresh data"
           title="Refresh - re-pull the latest scan"
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8] disabled:opacity-60 sm:h-[26px] sm:w-[26px]"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-cell border border-line-strong bg-panel text-ink-3 transition hover:border-line-hair hover:text-ink disabled:opacity-60 sm:h-[26px] sm:w-[26px]"
         >
           <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
         </button>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-cell border border-line-strong bg-panel px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3 transition hover:border-line-hair hover:text-ink"
         >
           <SlidersHorizontal size={12} /> Customise
         </button>
@@ -112,12 +112,12 @@ export function CommandLayout({ sections, leading }: CommandLayoutProps) {
             return (
               <div
                 key={id}
-                className={`flex items-center gap-2 rounded-md border px-2.5 py-2 transition ${
-                  isHidden ? 'border-[#1b2530] bg-[#0b1016]' : 'border-[#263241] bg-[#0d141c]'
+                className={`flex items-center gap-2 rounded-cell border px-2.5 py-2 transition ${
+                  isHidden ? 'border-line bg-chrome' : 'border-line-strong bg-panel'
                 }`}
               >
-                <span className="w-4 shrink-0 text-center font-mono text-[10px] text-[#5e6b78]">{i + 1}</span>
-                <span className={`min-w-0 flex-1 truncate text-[12px] ${isHidden ? 'text-[#6f7d8a] line-through' : 'text-[#dbe5ee]'}`}>
+                <span className="w-4 shrink-0 text-center font-mono text-[10px] text-ink-dim">{i + 1}</span>
+                <span className={`min-w-0 flex-1 truncate text-[12px] ${isHidden ? 'text-ink-dim line-through' : 'text-ink-title'}`}>
                   {COMMAND_SECTION_LABELS[id] ?? id}
                 </span>
                 <button
@@ -125,7 +125,7 @@ export function CommandLayout({ sections, leading }: CommandLayoutProps) {
                   onClick={() => move(i, -1)}
                   disabled={i === 0}
                   aria-label="Move up"
-                  className="grid h-6 w-6 place-items-center rounded border border-[#263241] text-[#a8b5c2] transition enabled:hover:text-[#eef3f8] disabled:opacity-30"
+                  className="grid h-6 w-6 place-items-center rounded border border-line-strong text-ink-2 transition enabled:hover:text-ink disabled:opacity-30"
                 >
                   <ArrowUp size={13} />
                 </button>
@@ -134,7 +134,7 @@ export function CommandLayout({ sections, leading }: CommandLayoutProps) {
                   onClick={() => move(i, 1)}
                   disabled={i === state.order.length - 1}
                   aria-label="Move down"
-                  className="grid h-6 w-6 place-items-center rounded border border-[#263241] text-[#a8b5c2] transition enabled:hover:text-[#eef3f8] disabled:opacity-30"
+                  className="grid h-6 w-6 place-items-center rounded border border-line-strong text-ink-2 transition enabled:hover:text-ink disabled:opacity-30"
                 >
                   <ArrowDown size={13} />
                 </button>
@@ -143,7 +143,7 @@ export function CommandLayout({ sections, leading }: CommandLayoutProps) {
                   onClick={() => toggleHidden(id)}
                   aria-label={isHidden ? 'Show section' : 'Hide section'}
                   className={`grid h-6 w-6 place-items-center rounded border transition ${
-                    isHidden ? 'border-[#263241] text-[#5e6b78] hover:text-[#a8b5c2]' : 'border-[#1d4f3a] text-[#43d18b]'
+                    isHidden ? 'border-line-strong text-ink-dim hover:text-ink-2' : 'border-positive/40 text-positive'
                   }`}
                 >
                   {isHidden ? <EyeOff size={13} /> : <Eye size={13} />}
@@ -155,11 +155,11 @@ export function CommandLayout({ sections, leading }: CommandLayoutProps) {
         <button
           type="button"
           onClick={reset}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-[#263241] bg-[#0d141c] px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[#8190a0] transition hover:text-[#eef3f8]"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-cell border border-line-strong bg-panel px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3 transition hover:text-ink"
         >
           <RotateCcw size={12} /> Reset to default
         </button>
-        <p className="mt-2 font-mono text-[10px] leading-snug text-[#5e6b78]">
+        <p className="mt-2 font-mono text-[10px] leading-snug text-ink-dim">
           Arrows reorder; the eye hides a section. Saved to this device - reset anytime.
         </p>
       </DetailDrawer>

@@ -224,13 +224,13 @@ export const FEED_SECTION_LABELS: Record<FeedSection, string> = {
 export function stateTone(state: FindingState): string {
   switch (state) {
     case 'Paper-bot research queue':
-      return 'text-[#43d18b]';
+      return 'text-positive';
     case 'Deep research candidate':
     case 'Watchlist candidate':
-      return 'text-[#60a5fa]';
+      return 'text-blue-focus';
     case 'Review risk':
-      return 'text-[#f3a33a]';
+      return 'text-accent';
     default:
-      return 'text-[#8190a0]';
+      return 'text-ink-3';
   }
 }

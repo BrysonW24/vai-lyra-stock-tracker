@@ -72,9 +72,9 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
     <div className="space-y-3 pb-20 md:pb-0">
       {/* Event Risk Callout */}
       {elevatedRiskTickers.length > 0 && (
-        <section className="terminal-panel rounded-md border-l-4 border-[#ff6b6b] p-3">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#ff6b6b]">⚠ Event Risk Alert</h2>
-          <p className="mt-2 text-xs text-[#a8b5c2]">
+        <section className="terminal-panel rounded-panel border-l-4 border-negative p-3">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-negative">⚠ Event Risk Alert</h2>
+          <p className="mt-2 text-xs text-ink-2">
             {elevatedRiskTickers.length} ticker
             {elevatedRiskTickers.length !== 1 ? 's have' : ' has'} active signals with upcoming high-importance
             events within 7 days.
@@ -94,7 +94,7 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
               return (
                 <div
                   key={signal.symbol}
-                  className={`rounded-md border px-3 py-1 font-mono text-xs ${eventRiskClass(risk)}`}
+                  className={`rounded-cell border px-3 py-1 font-mono text-xs ${eventRiskClass(risk)}`}
                 >
                   <span className="font-semibold">{signal.symbol}</span>
                   {days !== null && <span className="ml-2 text-[10px] opacity-80">in {days}d</span>}
@@ -106,12 +106,12 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
       )}
 
       {/* Controls */}
-      <section className="terminal-panel rounded-md p-3">
+      <section className="terminal-panel rounded-panel p-3">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setViewMode(viewMode === 'agenda' ? 'month' : 'agenda')}
-              className="inline-flex items-center gap-2 rounded-md border border-[#263241] bg-[#0d141c] px-3 py-1 font-mono text-xs text-[#a8b5c2] transition hover:border-[#f3a33a] hover:text-[#f3a33a]"
+              className="inline-flex items-center gap-2 rounded-cell border border-line-strong bg-panel px-3 py-1 font-mono text-xs text-ink-2 transition hover:border-accent hover:text-accent"
             >
               {viewMode === 'agenda' ? 'Month View' : 'Agenda View'}
             </button>
@@ -119,7 +119,7 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
             <select
               value={filterType || ''}
               onChange={(e) => setFilterType(e.target.value || null)}
-              className="rounded-md border border-[#263241] bg-[#0d141c] px-3 py-1 font-mono text-xs text-[#a8b5c2] transition hover:border-[#f3a33a] hover:text-[#f3a33a]"
+              className="rounded-cell border border-line-strong bg-panel px-3 py-1 font-mono text-xs text-ink-2 transition hover:border-accent hover:text-accent"
             >
               <option value="">All event types</option>
               <option value="earnings">Earnings</option>
@@ -133,10 +133,10 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
 
             <button
               onClick={() => setShowPortfolioOnly(!showPortfolioOnly)}
-              className={`inline-flex items-center gap-2 rounded-md border px-3 py-1 font-mono text-xs transition ${
+              className={`inline-flex items-center gap-2 rounded-cell border px-3 py-1 font-mono text-xs transition ${
                 showPortfolioOnly
-                  ? 'border-[#43d18b] bg-[#0d251b] text-[#43d18b]'
-                  : 'border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:border-[#43d18b] hover:text-[#43d18b]'
+                  ? 'border-accent-border bg-accent-tint text-accent'
+                  : 'border-line-strong bg-panel text-ink-2 hover:border-accent hover:text-accent'
               }`}
             >
               {showPortfolioOnly ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -144,9 +144,9 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
             </button>
           </div>
 
-          <div className="text-right text-xs text-[#8190a0]">
+          <div className="text-right text-xs text-ink-3">
             {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} upcoming
-            <span className="block font-mono text-[9px] uppercase tracking-[0.1em] text-[#5a6b7d]">
+            <span className="block font-mono text-[9px] uppercase tracking-[0.1em] text-ink-dim">
               {source === 'live' ? 'Live - synced nightly' : 'Sample set - live sync lights up with Supabase + Finnhub'}
             </span>
           </div>
@@ -155,16 +155,16 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
 
       {/* Agenda View */}
       {viewMode === 'agenda' && (
-        <section className="terminal-panel rounded-md overflow-hidden">
-          <div className="border-b border-[#1b2530] px-3 py-3">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Event Agenda</h2>
-            <p className="mt-1 font-mono text-xs text-[#8190a0]">Grouped by date. Future events next 30 days.</p>
+        <section className="terminal-panel rounded-panel overflow-hidden">
+          <div className="border-b border-line px-3 py-3">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">Event Agenda</h2>
+            <p className="mt-1 font-mono text-xs text-ink-3">Grouped by date. Future events next 30 days.</p>
           </div>
 
-          <div className="divide-y divide-[#1b2530]">
+          <div className="divide-y divide-line">
             {groupEventsByDate(filteredEvents).length === 0 ? (
               <div className="px-3 py-4">
-                <p className="text-xs text-[#8190a0]">No events match filters.</p>
+                <p className="text-xs text-ink-3">No events match filters.</p>
               </div>
             ) : (
               groupEventsByDate(filteredEvents).map(({ date, events }) => {
@@ -182,41 +182,41 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
 
                 return (
                   <div key={date}>
-                    <div className="flex items-center justify-between border-b border-[#263241] bg-[#0b1016] px-3 py-2">
+                    <div className="flex items-center justify-between border-b border-line-strong bg-chrome px-3 py-2">
                       <div>
-                        <p className="font-mono text-xs font-semibold text-[#eef3f8]">{dayLabel}</p>
-                        <p className="text-xs text-[#8190a0]">{date}</p>
+                        <p className="font-mono text-xs font-semibold text-ink">{dayLabel}</p>
+                        <p className="text-xs text-ink-3">{date}</p>
                       </div>
-                      <div className="font-mono text-xs text-[#a8b5c2]">
+                      <div className="font-mono text-xs text-ink-2">
                         {events.length} event{events.length !== 1 ? 's' : ''}
                       </div>
                     </div>
 
-                    <div className="divide-y divide-[#1b2530]">
+                    <div className="divide-y divide-line">
                       {events.map((event) => (
                         <button
                           key={event.id}
                           type="button"
                           onClick={() => setSelectedEvent(event)}
-                          className={`flex w-full flex-col gap-1.5 border-l-2 px-3 py-2 text-left transition hover:bg-[#101720] sm:flex-row sm:items-start sm:justify-between ${eventTypeClass(event.type).split(' ')[0]}`}
+                          className={`flex w-full flex-col gap-1.5 border-l-2 px-3 py-2 text-left transition hover:bg-line/30 sm:flex-row sm:items-start sm:justify-between ${eventTypeClass(event.type).split(' ')[0]}`}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start gap-2">
-                              <div className={`rounded-md border px-2 py-1 font-mono text-xs font-semibold ${eventTypeClass(event.type)}`}>
+                              <div className={`rounded-cell border px-2 py-1 font-mono text-xs font-semibold ${eventTypeClass(event.type)}`}>
                                 {eventBadgeLabel(event)}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-[13px] font-medium leading-snug text-[#eef3f8]">{event.title}</p>
-                                <p className="text-[11px] text-[#8190a0]">{eventTypeLabel(event.type)}</p>
+                                <p className="text-[13px] font-medium leading-snug text-ink">{event.title}</p>
+                                <p className="text-[11px] text-ink-3">{eventTypeLabel(event.type)}</p>
                               </div>
                             </div>
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
-                            <div className={`rounded-md border px-2 py-1 font-mono text-xs font-semibold ${importanceClass(event.importance)}`}>
+                            <div className={`rounded-cell border px-2 py-1 font-mono text-xs font-semibold ${importanceClass(event.importance)}`}>
                               {event.importance}
                             </div>
-                            <div className="font-mono text-xs text-[#a8b5c2]">in {days}d</div>
+                            <div className="font-mono text-xs text-ink-2">in {days}d</div>
                           </div>
                         </button>
                       ))}
@@ -288,11 +288,11 @@ function MonthCalendar({
   }
 
   return (
-    <section className="terminal-panel rounded-md overflow-hidden">
-      <div className="flex items-center justify-between gap-2 border-b border-[#1b2530] px-3 py-2">
+    <section className="terminal-panel rounded-panel overflow-hidden">
+      <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#dbe5ee]">Calendar grid</h2>
-          <p className="mt-0.5 font-mono text-xs text-[#8190a0]">{monthLabel}</p>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">Calendar grid</h2>
+          <p className="mt-0.5 font-mono text-xs text-ink-3">{monthLabel}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <button
@@ -300,7 +300,7 @@ function MonthCalendar({
             onClick={() => setMonthOffset((o) => Math.max(MIN_OFFSET, o - 1))}
             disabled={monthOffset <= MIN_OFFSET}
             aria-label="Previous month"
-            className="grid h-7 w-7 place-items-center rounded border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8] disabled:opacity-30"
+            className="grid h-7 w-7 place-items-center rounded-cell border border-line-strong bg-panel text-ink-2 transition hover:text-ink disabled:opacity-30"
           >
             <ChevronLeft size={15} />
           </button>
@@ -309,7 +309,7 @@ function MonthCalendar({
             onClick={() => setMonthOffset((o) => Math.min(MAX_OFFSET, o + 1))}
             disabled={monthOffset >= MAX_OFFSET}
             aria-label="Next month"
-            className="grid h-7 w-7 place-items-center rounded border border-[#263241] bg-[#0d141c] text-[#a8b5c2] transition hover:text-[#eef3f8] disabled:opacity-30"
+            className="grid h-7 w-7 place-items-center rounded-cell border border-line-strong bg-panel text-ink-2 transition hover:text-ink disabled:opacity-30"
           >
             <ChevronRight size={15} />
           </button>
@@ -318,10 +318,10 @@ function MonthCalendar({
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-xs">
-          <thead className="bg-[#0b1016] font-mono text-[#8190a0]">
+          <thead className="bg-chrome font-mono text-ink-3">
             <tr>
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                <th key={day} className="border-b border-[#1b2530] px-2 py-2 font-semibold">
+                <th key={day} className="border-b border-line px-2 py-2 font-semibold">
                   {day}
                 </th>
               ))}
@@ -344,13 +344,13 @@ function MonthCalendar({
                     return (
                       <td
                         key={dayIndex}
-                        className={`border border-[#263241] px-2 py-2 align-top ${
-                          day === null ? 'bg-[#0b1016]' : isToday ? 'bg-[#0d251b]' : 'bg-[#0d141c]'
+                        className={`border border-line-strong px-2 py-2 align-top ${
+                          day === null ? 'bg-chrome' : isToday ? 'bg-positive-tint' : 'bg-panel'
                         }`}
                       >
                         {day && (
                           <div>
-                            <div className={`font-mono font-semibold ${isToday ? 'text-[#43d18b]' : 'text-[#eef3f8]'}`}>
+                            <div className={`font-mono font-semibold ${isToday ? 'text-positive' : 'text-ink'}`}>
                               {day}
                             </div>
                             {dayEvents && dayEvents.length > 0 && (
@@ -368,7 +368,7 @@ function MonthCalendar({
                                   </button>
                                 ))}
                                 {dayEvents.length > 2 && (
-                                  <div className="text-[10px] text-[#8190a0]">+{dayEvents.length - 2} more</div>
+                                  <div className="text-[10px] text-ink-3">+{dayEvents.length - 2} more</div>
                                 )}
                               </div>
                             )}

@@ -60,10 +60,10 @@ export function ChooseMarketAnimation({
     <div className="w-full max-w-2xl mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-semibold text-[#eef3f8] mb-2">
+        <h2 className="text-2xl md:text-3xl font-semibold text-ink mb-2">
           {scene.title}
         </h2>
-        <p className="text-sm md:text-base text-[#a8b5c2]">{scene.description}</p>
+        <p className="text-sm md:text-base text-ink-2">{scene.description}</p>
       </div>
 
       {/* Search Box */}
@@ -72,11 +72,11 @@ export function ChooseMarketAnimation({
           searchVisible ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        <div className="terminal-panel px-4 py-3 rounded">
+        <div className="terminal-panel px-4 py-3 rounded-panel">
           <input
             type="text"
             placeholder="Search tickers, e.g. NVDA, AMD, MSFT..."
-            className="w-full bg-transparent text-[#eef3f8] placeholder-[#8190a0] text-sm font-mono focus:outline-none"
+            className="w-full bg-transparent text-ink placeholder-ink-3 text-sm font-mono focus:outline-none"
             disabled
           />
         </div>
@@ -86,7 +86,7 @@ export function ChooseMarketAnimation({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Portfolio Card */}
         <div
-          className={`terminal-panel rounded px-4 py-4 transition-all duration-600 ${
+          className={`terminal-panel rounded-panel px-4 py-4 transition-all duration-600 ${
             cardsVisible ? 'opacity-100' : 'opacity-0'
           }`}
           style={{
@@ -94,10 +94,10 @@ export function ChooseMarketAnimation({
           }}
         >
           <div className="flex items-center justify-between mb-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-3">
               Portfolio
             </p>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded border border-[#263241] text-[9px] text-[#60a5fa] font-mono">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded border border-line-strong text-[9px] text-blue-focus font-mono">
               {PORTFOLIO_EXAMPLE.length}
             </span>
           </div>
@@ -119,7 +119,7 @@ export function ChooseMarketAnimation({
 
         {/* Watchlist Card */}
         <div
-          className={`terminal-panel rounded px-4 py-4 transition-all duration-600 ${
+          className={`terminal-panel rounded-panel px-4 py-4 transition-all duration-600 ${
             cardsVisible ? 'opacity-100' : 'opacity-0'
           }`}
           style={{
@@ -127,10 +127,10 @@ export function ChooseMarketAnimation({
           }}
         >
           <div className="flex items-center justify-between mb-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-3">
               Watchlist
             </p>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded border border-[#263241] text-[9px] text-[#43d18b] font-mono">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded border border-line-strong text-[9px] text-positive font-mono">
               {WATCHLIST_EXAMPLE.length}
             </span>
           </div>
@@ -165,7 +165,8 @@ export function ChooseMarketAnimation({
               cx="100"
               cy="100"
               r={40 + i * 30}
-              stroke="rgba(96, 165, 250, 0.5)"
+              stroke="var(--lyra-blue-focus)"
+              strokeOpacity="0.5"
               strokeWidth="1"
               style={{
                 animation: `radarPulse 2s ease-in-out infinite`,

@@ -131,41 +131,41 @@ export function ScoutFeed() {
 
   return (
     <section className="terminal-panel overflow-hidden rounded-lg">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-[#1b2530]/70 px-3 py-2">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7fb0ff]">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line/70 px-3 py-2">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-info">
           <Radar size={13} /> What the scout saw
         </span>
-        {run && <span className="font-mono text-[10px] text-[#5d6b79]">{timeAgo(run.runAt)}</span>}
-        {demo && <span className="rounded-full border border-[#3a4754] bg-[#141b23] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#8190a0]">Demo preview</span>}
+        {run && <span className="font-mono text-[10px] text-ink-dim">{timeAgo(run.runAt)}</span>}
+        {demo && <span className="rounded-full border border-line-hair bg-panel px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-ink-3">Demo preview</span>}
       </div>
 
       {loading ? (
-        <p className="flex items-center gap-2 px-3 py-4 text-[12px] text-[#8190a0]"><Loader2 size={13} className="animate-spin" /> Reading the scout ledger...</p>
+        <p className="flex items-center gap-2 px-3 py-4 text-[12px] text-ink-3"><Loader2 size={13} className="animate-spin" /> Reading the scout ledger...</p>
       ) : !run && items.length === 0 ? (
-        <p className="px-3 py-4 text-[12px] text-[#8190a0]">
+        <p className="px-3 py-4 text-[12px] text-ink-3">
           The scout&apos;s first nightly run has not landed yet - it reads its sources after the US close and its ledger will appear here.
         </p>
       ) : (
         <div className="space-y-2.5 px-3 py-2.5">
           {run && (
             <>
-              <p className="text-[12px] leading-relaxed text-[#98a6b4]">
-                Last run read <span className="font-mono font-semibold text-[#c8d3de]">{run.itemsFetched}</span> items from{' '}
-                <span className="font-mono font-semibold text-[#c8d3de]">{run.sourcesActive}</span> live sources
+              <p className="text-[12px] leading-relaxed text-ink-2">
+                Last run read <span className="font-mono font-semibold text-ink-title">{run.itemsFetched}</span> items from{' '}
+                <span className="font-mono font-semibold text-ink-title">{run.sourcesActive}</span> live sources
                 {run.sourcesGated > 0 && <> ({run.sourcesGated} more registered, waiting on access keys)</>}
-                {' '}- <span className="font-mono font-semibold text-[#c8d3de]">{run.itemsUnmapped}</span> items matched no existing vertical and joined the drumbeat window.
+                {' '}- <span className="font-mono font-semibold text-ink-title">{run.itemsUnmapped}</span> items matched no existing vertical and joined the drumbeat window.
               </p>
 
               {themeChips.length > 0 && (
                 <div>
                   {totalsMode && (
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5d6b79]">Attach volume - trailing 14 nights</p>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-dim">Attach volume - trailing 14 nights</p>
                   )}
                   <div className="flex flex-wrap gap-1">
                     {themeChips.map(({ slug, count, meta }) => (
-                      <span key={slug} className="inline-flex items-center gap-1 rounded-full border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 text-[10px] text-[#a8b5c2]">
+                      <span key={slug} className="inline-flex items-center gap-1 rounded-full border border-line-strong bg-panel px-1.5 py-0.5 text-[10px] text-ink-2">
                         {meta ? `${meta.emoji} ${meta.name}` : slug}
-                        <span className="font-mono font-semibold text-[#c8d3de]">{count}</span>
+                        <span className="font-mono font-semibold text-ink-title">{count}</span>
                       </span>
                     ))}
                   </div>
@@ -174,13 +174,13 @@ export function ScoutFeed() {
 
               {run.drumbeats.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#f3a33a]">Building signals - not yet promoted</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">Building signals - not yet promoted</p>
                   <ul className="mt-1 space-y-1">
                     {run.drumbeats.slice(0, 5).map((d) => (
-                      <li key={d.entity} className="text-[11px] leading-snug text-[#98a6b4]">
-                        <span className="font-semibold text-[#dbe5ee]">{d.entity}</span>
-                        <span className="font-mono text-[#8190a0]"> {d.items}/3 items · {d.sources}/2 sources</span>
-                        <span className="text-[#6f7d8a]">
+                      <li key={d.entity} className="text-[11px] leading-snug text-ink-2">
+                        <span className="font-semibold text-ink-title">{d.entity}</span>
+                        <span className="font-mono text-ink-3"> {d.items}/3 items · {d.sources}/2 sources</span>
+                        <span className="text-ink-dim">
                           {' '}- needs {d.needItems > 0 ? `${d.needItems} more item${d.needItems === 1 ? '' : 's'}` : ''}
                           {d.needItems > 0 && d.needSources > 0 ? ' and ' : ''}
                           {d.needSources > 0 ? `${d.needSources} more independent source${d.needSources === 1 ? '' : 's'}` : ''}
@@ -194,15 +194,15 @@ export function ScoutFeed() {
 
               {sourceScores.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5d6b79]">Earned source scores - from your verdicts</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-dim">Earned source scores - from your verdicts</p>
                   <ul className="mt-1 space-y-0.5">
                     {sourceScores.map((s) => (
                       <li key={s.sourceName} className="flex items-center justify-between gap-2 text-[11px] leading-snug">
-                        <span className="min-w-0 truncate text-[#a8b5c2]">{s.sourceName}</span>
+                        <span className="min-w-0 truncate text-ink-2">{s.sourceName}</span>
                         <span className="shrink-0 font-mono text-[10px]">
-                          <span className="text-[#43d18b]">+{s.accepted}</span>
-                          <span className="text-[#4c5866]"> · </span>
-                          <span className="text-[#f0758a]">-{s.declined}</span>
+                          <span className="text-positive">+{s.accepted}</span>
+                          <span className="text-ink-dim"> · </span>
+                          <span className="text-negative-soft">-{s.declined}</span>
                         </span>
                       </li>
                     ))}
@@ -211,13 +211,13 @@ export function ScoutFeed() {
               )}
 
               {stoplistCount > 0 && (
-                <p className="text-[10px] text-[#6f7d8a]">
+                <p className="text-[10px] text-ink-dim">
                   {stoplistCount} entit{stoplistCount === 1 ? 'y' : 'ies'} stop-listed by your verdicts - declined signals never re-file.
                 </p>
               )}
 
               {run.windowSaturated && (
-                <p className="rounded border border-[#9a6a1f]/50 bg-[#23180b]/60 px-2 py-1 text-[10px] text-[#f3a33a]">
+                <p className="rounded border border-accent-border/50 bg-accent-tint/60 px-2 py-1 text-[10px] text-accent">
                   The drumbeat window is saturated - the oldest unmapped signal is being dropped. Clustering may be conservative until the window is widened.
                 </p>
               )}
@@ -226,26 +226,26 @@ export function ScoutFeed() {
 
           {visible.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5d6b79]">Freshest items</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-dim">Freshest items</p>
               <ul className="mt-1 space-y-1">
                 {visible.map((it) => (
                   <li key={it.id} className="flex items-start gap-1.5 text-[11px] leading-snug">
-                    <ExternalLink size={10} className="mt-0.5 shrink-0 text-[#5d6b79]" />
+                    <ExternalLink size={10} className="mt-0.5 shrink-0 text-ink-dim" />
                     <span className="min-w-0">
                       {it.url ? (
-                        <a href={it.url} target="_blank" rel="noopener noreferrer" className="text-[#c8d3de] underline decoration-[#3a4754] underline-offset-2 transition hover:text-[#eef3f8]">
+                        <a href={it.url} target="_blank" rel="noopener noreferrer" className="text-ink-title underline decoration-line-hair underline-offset-2 transition hover:text-ink">
                           {it.title}
                         </a>
                       ) : (
-                        <span className="text-[#c8d3de]">{it.title}</span>
+                        <span className="text-ink-title">{it.title}</span>
                       )}
-                      <span className="text-[#6f7d8a]">
+                      <span className="text-ink-dim">
                         {' '}- {it.sourceName}
                         {it.publishedAt && <> · {timeAgo(it.publishedAt)}</>}
                         {it.themes.length > 0 ? (
                           <> · {it.themes.map((t) => THEME_META[t]?.name ?? t).join(', ')}</>
                         ) : it.unmapped ? (
-                          <> · <span className="text-[#7fb0ff]">unmapped</span></>
+                          <> · <span className="text-blue-info">unmapped</span></>
                         ) : null}
                       </span>
                     </span>
@@ -256,7 +256,7 @@ export function ScoutFeed() {
                 <button
                   type="button"
                   onClick={() => setShowAll((s) => !s)}
-                  className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-[10px] font-medium text-[#8190a0] transition hover:text-[#c8d3de] sm:min-h-[32px]"
+                  className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-[10px] font-medium text-ink-3 transition hover:text-ink-title sm:min-h-[32px]"
                 >
                   {showAll ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
                   {showAll ? 'Show fewer' : `Show all ${items.length}`}
@@ -265,7 +265,7 @@ export function ScoutFeed() {
             </div>
           )}
 
-          <p className="flex items-center gap-1 border-t border-[#101820]/80 pt-1.5 text-[10px] leading-snug text-[#5d6b79]">
+          <p className="flex items-center gap-1 border-t border-panel-deep/80 pt-1.5 text-[10px] leading-snug text-ink-dim">
             <Bot size={10} className="shrink-0" />
             Signal that recurs across 3+ items from 2+ independent sources is promoted to an idea card below. Nothing changes unless a human accepts it.
           </p>

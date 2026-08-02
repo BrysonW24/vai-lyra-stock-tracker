@@ -13,7 +13,7 @@ const CALLBACK_ERRORS: Record<string, string> = {
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
   return (
-    <main className="grid min-h-screen place-items-center bg-[#080a0d] px-4">
+    <main className="grid min-h-screen place-items-center bg-ground px-4">
       <AuthForm mode="login" initialError={error ? (CALLBACK_ERRORS[error] ?? null) : null} />
     </main>
   );

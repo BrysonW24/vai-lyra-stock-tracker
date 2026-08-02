@@ -117,10 +117,10 @@ export function AddHoldingForm() {
   return (
     <form onSubmit={handleSubmit} className="grid gap-2">
       <label className="grid gap-1 relative">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Ticker</span>
+        <span className="text-[10px] uppercase tracking-[0.14em] text-ink-3">Ticker</span>
         <div className="relative">
           <input
-            className="h-8 w-full rounded border border-[#263241] bg-[#0d141c] pl-8 pr-2 font-mono text-[13px] text-[#dbe5ee] outline-none focus:border-[#f3a33a]/50 focus:ring-1 focus:ring-[#f3a33a]/30 transition-all"
+            className="h-8 w-full rounded-cell border border-line-strong bg-panel pl-8 pr-2 font-mono text-[13px] text-ink-title outline-none focus:border-blue-focus/50 focus:ring-1 focus:ring-blue-focus/30 transition-all"
             placeholder="Ticker"
             name="symbol"
             autoComplete="off"
@@ -139,26 +139,26 @@ export function AddHoldingForm() {
             required
           />
           <div className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2">
-            <Search size={12} className="text-[#4a5a6a]" />
+            <Search size={12} className="text-ink-dim" />
           </div>
         </div>
 
         {/* Suggestion list */}
         {showSuggestions && (
-          <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-[#1e2d3d] bg-[#070b10] shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+          <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-panel border border-line-strong bg-well shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
             {suggestions.slice(0, 5).map((s, i) => (
               <button
                 key={s.symbol}
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); pickSuggestion(s.symbol); }}
                 onMouseEnter={() => setActiveIdx(i)}
-                className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left transition-colors ${i === activeIdx ? 'bg-[#0e1826]' : 'hover:bg-[#0b1520]'}`}
+                className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left transition-colors ${i === activeIdx ? 'bg-blue-tint' : 'hover:bg-panel'}`}
               >
                 <TickerLogo symbol={s.symbol} companyName={s.name} size={20} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-mono text-[11px] font-bold text-[#eef3f8]">{s.symbol}</span>
-                    <span className="truncate text-[9px] text-[#5e6b78]">{s.name}</span>
+                    <span className="font-mono text-[11px] font-bold text-ink">{s.symbol}</span>
+                    <span className="truncate text-[9px] text-ink-dim">{s.name}</span>
                   </div>
                 </div>
               </button>
@@ -167,9 +167,9 @@ export function AddHoldingForm() {
         )}
       </label>
       <label className="grid gap-1">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Quantity</span>
+        <span className="text-[10px] uppercase tracking-[0.14em] text-ink-3">Quantity</span>
         <input
-          className="h-8 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-[13px] text-[#dbe5ee] outline-none"
+          className="h-8 rounded-cell border border-line-strong bg-panel px-2 font-mono text-[13px] text-ink-title outline-none focus:border-blue-focus/50 focus:ring-1 focus:ring-blue-focus/30 transition-all"
           placeholder="Quantity"
           name="quantity"
           type="number"
@@ -180,9 +180,9 @@ export function AddHoldingForm() {
         />
       </label>
       <label className="grid gap-1">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Average buy price</span>
+        <span className="text-[10px] uppercase tracking-[0.14em] text-ink-3">Average buy price</span>
         <input
-          className="h-8 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-[13px] text-[#dbe5ee] outline-none"
+          className="h-8 rounded-cell border border-line-strong bg-panel px-2 font-mono text-[13px] text-ink-title outline-none focus:border-blue-focus/50 focus:ring-1 focus:ring-blue-focus/30 transition-all"
           placeholder="Average buy price"
           name="averageBuyPrice"
           type="number"
@@ -193,9 +193,9 @@ export function AddHoldingForm() {
         />
       </label>
       <label className="grid gap-1">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Brokerage / fees</span>
+        <span className="text-[10px] uppercase tracking-[0.14em] text-ink-3">Brokerage / fees</span>
         <input
-          className="h-8 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-[13px] text-[#dbe5ee] outline-none"
+          className="h-8 rounded-cell border border-line-strong bg-panel px-2 font-mono text-[13px] text-ink-title outline-none focus:border-blue-focus/50 focus:ring-1 focus:ring-blue-focus/30 transition-all"
           placeholder="Brokerage / fees"
           name="brokerageFee"
           type="number"
@@ -205,9 +205,9 @@ export function AddHoldingForm() {
         />
       </label>
       <label className="grid gap-1">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Purchase date</span>
+        <span className="text-[10px] uppercase tracking-[0.14em] text-ink-3">Purchase date</span>
         <input
-          className="h-8 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-[13px] text-[#dbe5ee] outline-none"
+          className="h-8 rounded-cell border border-line-strong bg-panel px-2 font-mono text-[13px] text-ink-title outline-none focus:border-blue-focus/50 focus:ring-1 focus:ring-blue-focus/30 transition-all"
           placeholder="Purchase date"
           name="purchaseDate"
           type="date"
@@ -216,9 +216,9 @@ export function AddHoldingForm() {
         />
       </label>
       <label className="grid gap-1">
-        <span className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Notes</span>
+        <span className="text-[10px] uppercase tracking-[0.14em] text-ink-3">Notes</span>
         <input
-          className="h-8 rounded border border-[#263241] bg-[#0d141c] px-2 font-mono text-[13px] text-[#dbe5ee] outline-none"
+          className="h-8 rounded-cell border border-line-strong bg-panel px-2 font-mono text-[13px] text-ink-title outline-none focus:border-blue-focus/50 focus:ring-1 focus:ring-blue-focus/30 transition-all"
           placeholder="Notes"
           name="notes"
           value={formData.notes}
@@ -226,7 +226,7 @@ export function AddHoldingForm() {
         />
       </label>
       <button
-        className="mt-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#f3a33a] hover:bg-[#101720] disabled:opacity-50"
+        className="mt-1 rounded-cell border border-accent-border bg-accent-tint px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-accent transition hover:brightness-110 disabled:opacity-50"
         type="submit"
         disabled={status.type === 'loading'}
       >
@@ -235,7 +235,7 @@ export function AddHoldingForm() {
       {status.message && (
         <p
           className={`mt-1 text-xs ${
-            status.type === 'success' ? 'text-[#43d18b]' : status.type === 'error' ? 'text-[#ff6b6b]' : 'text-[#8190a0]'
+            status.type === 'success' ? 'text-positive' : status.type === 'error' ? 'text-negative' : 'text-ink-3'
           }`}
         >
           {status.message}

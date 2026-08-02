@@ -37,7 +37,7 @@ export function SourceFavicon({ domain, sourceName }: SourceFaviconProps) {
   if (imageError) {
     return (
       <div
-        className="grid h-8 w-8 shrink-0 place-items-center rounded border border-[#263241] text-xs font-semibold"
+        className="grid h-8 w-8 shrink-0 place-items-center rounded border border-line-strong text-xs font-semibold"
         style={{ backgroundColor: bgColor, color: textColor }}
         title={sourceName}
       >
@@ -53,7 +53,7 @@ export function SourceFavicon({ domain, sourceName }: SourceFaviconProps) {
     <img
       src={faviconUrl(domain, 32)}
       alt={sourceName}
-      className="h-8 w-8 shrink-0 rounded border border-[#263241]"
+      className="h-8 w-8 shrink-0 rounded border border-line-strong"
       onError={() => setImageError(true)}
       title={sourceName}
     />

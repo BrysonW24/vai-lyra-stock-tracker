@@ -10,7 +10,7 @@ export default async function StrategyLabPage() {
 
   return (
     <AppShell data={data}>
-      <Suspense fallback={<div className="terminal-panel rounded-md p-4 text-sm text-[#8190a0]">Loading strategy lab...</div>}>
+      <Suspense fallback={<div className="terminal-panel rounded-panel p-4 text-sm text-ink-3">Loading strategy lab...</div>}>
         <StrategyLab signals={data.signals} />
       </Suspense>
     </AppShell>

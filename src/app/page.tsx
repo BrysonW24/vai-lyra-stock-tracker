@@ -164,46 +164,46 @@ export default async function OverviewPage() {
     {
       id: 'portfolio-exposure',
       node: (
-        <section className="terminal-panel overflow-hidden rounded-md">
-          <div className="flex items-center justify-between border-b border-[#1b2530] px-3 py-2">
+        <section className="terminal-panel overflow-hidden rounded-panel">
+          <div className="flex items-center justify-between border-b border-line px-3 py-2">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Portfolio exposure / current holdings</p>
-              <p className="mt-0.5 font-mono text-[10px] text-[#a8b5c2]">Displays backend portfolio overlay values</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Portfolio exposure / current holdings</p>
+              <p className="mt-0.5 font-mono text-[10px] text-ink-2">Displays backend portfolio overlay values</p>
             </div>
-            <Link href="/portfolio" className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-2 py-1 text-xs text-[#a8b5c2] transition hover:text-[#eef3f8]">
+            <Link href="/portfolio" className="inline-flex items-center gap-1 rounded border border-line-strong bg-panel px-2 py-1 text-xs text-ink-2 transition hover:text-ink">
               Portfolio <ArrowUpRight size={12} />
             </Link>
           </div>
           {portfolioRows.length === 0 ? (
             // A signed-in user with no holdings used to see a header over an empty bordered grid
             // (2026-07-27 audit V3 fix) - give the live path the same honest empty state the Solo path has.
-            <p className="px-3 py-6 text-center font-mono text-xs text-[#8190a0]">
+            <p className="px-3 py-6 text-center font-mono text-xs text-ink-3">
               No holdings yet.{' '}
-              <Link href="/portfolio" className="text-[#8aa2ff] transition hover:text-[#c9d6ff]">Add one</Link>{' '}
+              <Link href="/portfolio" className="text-pending transition hover:text-ink">Add one</Link>{' '}
               to see your exposure, weights and per-position risk here.
             </p>
           ) : (
-            <div className="grid grid-cols-2 gap-px bg-[#1b2530] md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-px bg-line md:grid-cols-2 xl:grid-cols-4">
               {portfolioRows.map((holding) => (
-                <div className="bg-[#0d1117] p-2" key={holding.symbol}>
+                <div className="bg-panel-deep p-2" key={holding.symbol}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-mono text-sm font-semibold text-[#eef3f8]">{holding.symbol}</p>
-                      <p className="font-mono text-[10px] text-[#8190a0]">Weight {formatPercent(holding.portfolioWeight)}</p>
+                      <p className="font-mono text-sm font-semibold text-ink">{holding.symbol}</p>
+                      <p className="font-mono text-[10px] text-ink-3">Weight {formatPercent(holding.portfolioWeight)}</p>
                     </div>
-                    <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[10px] text-[#f3a33a]">
+                    <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[10px] text-accent">
                       {holding.actionState.replaceAll('_', ' ')}
                     </span>
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-1.5 font-mono text-[11px]">
-                    <span className="text-[#8190a0]">Value</span>
-                    <span className="text-right text-[#dbe5ee]">{formatCurrency(holding.marketValue)}</span>
-                    <span className="text-[#8190a0]">P/L</span>
+                    <span className="text-ink-3">Value</span>
+                    <span className="text-right text-ink-title">{formatCurrency(holding.marketValue)}</span>
+                    <span className="text-ink-3">P/L</span>
                     <span className={`text-right ${toneClass(holding.unrealisedPnl)}`}>{formatCurrency(holding.unrealisedPnl)}</span>
-                    <span className="text-[#8190a0]">Signal</span>
-                    <span className="text-right text-[#dbe5ee]">{holding.signalScore} {formatSignedNumber(holding.scoreDelta, 0)}</span>
-                    <span className="text-[#8190a0]">Risk</span>
-                    <span className="text-right text-[#dbe5ee]">{holding.riskState.replaceAll('_', ' ')}</span>
+                    <span className="text-ink-3">Signal</span>
+                    <span className="text-right text-ink-title">{holding.signalScore} {formatSignedNumber(holding.scoreDelta, 0)}</span>
+                    <span className="text-ink-3">Risk</span>
+                    <span className="text-right text-ink-title">{holding.riskState.replaceAll('_', ' ')}</span>
                   </div>
                 </div>
               ))}
@@ -215,7 +215,7 @@ export default async function OverviewPage() {
     {
       id: 'compact-feed',
       node: (
-        <Suspense fallback={<div className="terminal-panel rounded-md p-4 text-sm text-[#8190a0]">Loading compact ticker feed...</div>}>
+        <Suspense fallback={<div className="terminal-panel rounded-panel p-4 text-sm text-ink-3">Loading compact ticker feed...</div>}>
           <SignalTable
             signals={data.signals.slice(0, 5)}
             compact
@@ -229,35 +229,35 @@ export default async function OverviewPage() {
     {
       id: 'strongest',
       node: (
-        <section className="terminal-panel overflow-hidden rounded-md">
-          <div className="flex items-center justify-between border-b border-[#1b2530] px-3 py-2">
+        <section className="terminal-panel overflow-hidden rounded-panel">
+          <div className="flex items-center justify-between border-b border-line px-3 py-2">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Strongest setups</p>
-              <p className="mt-0.5 font-mono text-[10px] text-[#a8b5c2]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Strongest setups</p>
+              <p className="mt-0.5 font-mono text-[10px] text-ink-2">
                 {hasStrong ? 'Ranked backend signal outputs' : 'No strong setups right now - showing the top-scored radar names'}
               </p>
             </div>
-            <Link href="/radar" className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-2 py-1 text-xs text-[#a8b5c2] transition hover:text-[#eef3f8]">
+            <Link href="/radar" className="inline-flex items-center gap-1 rounded border border-line-strong bg-panel px-2 py-1 text-xs text-ink-2 transition hover:text-ink">
               Radar <ArrowUpRight size={12} />
             </Link>
           </div>
           {/* Mobile cards - this was the one table in the app with no card fallback,
               forcing sideways scrolling at 375px. Mirrors the SignalTable card shape. */}
-          <div className="divide-y divide-[#1b2530] md:hidden">
+          <div className="divide-y divide-line md:hidden">
             {strongSignals.map((signal) => (
               <Link href={`/tickers/${signal.symbol}`} className="block px-3 py-2.5" key={signal.symbol}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-sm font-semibold text-[#eef3f8]">{signal.symbol}</span>
+                      <span className="font-mono text-sm font-semibold text-ink">{signal.symbol}</span>
                       <StatusBadge status={signal.status} />
                     </div>
-                    <p className="mt-0.5 truncate font-mono text-[10px] text-[#a8b5c2]">
+                    <p className="mt-0.5 truncate font-mono text-[10px] text-ink-2">
                       RSI {formatNumber(signal.rsi)}{trendArrow(signal.rsiDelta)} | Hist {formatNumber(signal.macdHistogram, 2)}{trendArrow(signal.histDelta)} | Vol {formatNumber(signal.volumeRatio, 2)}x | Low {formatPercent(signal.distanceFromLow)}
                     </p>
                   </div>
                   <div className="shrink-0 text-right font-mono">
-                    <p className="text-base font-semibold leading-none text-[#eef3f8]">{signal.score}</p>
+                    <p className="text-base font-semibold leading-none text-ink">{signal.score}</p>
                     <p className={`text-[11px] ${toneClass(signal.scoreDelta)}`}>{formatSignedNumber(signal.scoreDelta, 0)}</p>
                   </div>
                 </div>
@@ -266,7 +266,7 @@ export default async function OverviewPage() {
           </div>
           <div className="no-scrollbar hidden overflow-x-auto md:block">
             <table className="min-w-[640px] text-left text-xs md:min-w-full">
-              <thead className="bg-[#0b1016] font-mono uppercase text-[#8190a0]">
+              <thead className="bg-chrome font-mono uppercase text-ink-3">
                 <tr>
                   <th className="px-3 py-2">Ticker</th>
                   <th className="px-3 py-2">Score</th>
@@ -278,10 +278,10 @@ export default async function OverviewPage() {
                   <th className="px-3 py-2">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1b2530]">
+              <tbody className="divide-y divide-line">
                 {strongSignals.map((signal) => (
-                  <tr className="font-mono text-[#dbe5ee] hover:bg-[#101720]" key={signal.symbol}>
-                    <td className="px-3 py-2 font-semibold text-[#eef3f8]">
+                  <tr className="font-mono text-ink-title hover:bg-line/30" key={signal.symbol}>
+                    <td className="px-3 py-2 font-semibold text-ink">
                       <Link href={`/tickers/${signal.symbol}`} className="inline-flex items-center gap-1">
                         {signal.symbol} <ArrowUpRight size={11} />
                       </Link>

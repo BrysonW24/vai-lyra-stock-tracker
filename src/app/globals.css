@@ -21,7 +21,7 @@ body {
 }
 
 html {
-  background: #07090c;
+  background: var(--lyra-ground);
   letter-spacing: 0;
   scroll-behavior: smooth;
   /* Global density baseline: shrink the rem base a touch so every rem-based size
@@ -75,11 +75,12 @@ body {
     radial-gradient(760px 640px at 50% 118%, rgba(124, 58, 237, 0.10), transparent 60%),
     linear-gradient(rgba(20, 31, 42, 0.13) 1px, transparent 1px),
     linear-gradient(90deg, rgba(20, 31, 42, 0.13) 1px, transparent 1px),
-    #07090c;
+    var(--lyra-ground);
   background-size: 100% 100%, 100% 100%, 100% 100%, 28px 28px, 28px 28px, 100% 100%;
   background-attachment: fixed;
-  color: #eef3f8;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--lyra-ink);
+  /* No font-family here on purpose: Tailwind preflight applies the SF-first sans stack
+     from tailwind.config.ts to <html>. A body-level Inter override used to defeat it. */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -97,8 +98,8 @@ textarea {
 }
 
 ::selection {
-  background: rgba(96, 165, 250, 0.30);
-  color: #eef3f8;
+  background: rgba(96, 165, 250, 0.30); /* --lyra-blue-focus at 30% */
+  color: var(--lyra-ink);
 }
 
 .glass-bar {
@@ -145,7 +146,7 @@ textarea {
 
 /* Translucent chrome for the app shell sidebar / header / mobile bar. */
 .glass-chrome {
-  background: rgba(11, 16, 22, 0.62);
+  background: rgba(11, 16, 22, 0.62); /* --lyra-chrome at 62% */
   backdrop-filter: blur(18px) saturate(120%);
   -webkit-backdrop-filter: blur(18px) saturate(120%);
 }
@@ -195,8 +196,8 @@ textarea {
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .terminal-panel { background: #161d27; }
   .terminal-panel-soft { background: #131a23; }
-  .glass-chrome { background: #0b1016; }
-  .glass-well, .glass-segment { background: #0a0e13; }
+  .glass-chrome { background: var(--lyra-chrome); }
+  .glass-well, .glass-segment { background: var(--lyra-well); }
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -210,8 +211,8 @@ textarea {
   }
   .terminal-panel { background: #161d27; }
   .terminal-panel-soft { background: #131a23; }
-  .glass-chrome { background: #0b1016; }
-  .glass-well, .glass-segment { background: #0a0e13; }
+  .glass-chrome { background: var(--lyra-chrome); }
+  .glass-well, .glass-segment { background: var(--lyra-well); }
   .glass-thumb { background: #3c2a10; }
 }
 

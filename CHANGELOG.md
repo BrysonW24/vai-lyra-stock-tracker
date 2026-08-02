@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.119.0] - 2026-08-02
+
+The convergence, round one: most of the app now speaks the Model Lab language.
+
+### Changed
+
+- The app-wide restyle landed its first big wave: the shell and chrome (P0 - navigation, drawers, badges, error pages, and the font conflict resolved in favour of the native SF stack), activation cinematics, discovery and thematic surfaces, intelligence feeds, market tools, the book views, account and community, and the marketing/legal pages all converged on the lyra-ux token system. 129 files migrated with zero test regressions - 1187 of 1187 tests pass, the build is clean, and the token drift check stays green.
+- The old white-on-black opacity dialect is down to four straggler files, and the glass panel system now reads its colours from the versioned token variables with all accessibility fallbacks intact (reduced transparency, no-backdrop-filter, AA-safe solids).
+- Operational honesty note: the Form 4 insider backfill drew SEC throttling after hours at the 10 requests-per-second ceiling (failures spiked, throughput collapsed) - backed off to ~4 sustained with failed documents automatically retried on resume; the pace comment in the code now records the empirical lesson.
+
 ## [0.118.0] - 2026-08-02
 
 The Model Lab becomes the design north star, and the design system becomes law.
@@ -1627,7 +1637,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.118.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.119.0...HEAD
+[0.119.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.118.0...v0.119.0
 [0.118.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.117.0...v0.118.0
 [0.117.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.116.0...v0.117.0
 [0.116.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.1...v0.116.0

@@ -25,12 +25,12 @@ export function DataSourceBanner({
   if (source === 'sample') {
     return (
       <div
-        className="flex items-start gap-2 rounded-md border border-[#9a6a1f] bg-[#2a1f0f] px-3 py-2"
+        className="flex items-start gap-2 rounded-cell border border-accent-border bg-accent-tint px-3 py-2"
         role="note"
       >
-        <FlaskConical size={14} className="mt-0.5 shrink-0 text-[#f3a33a]" />
-        <p className="text-xs leading-relaxed text-[#f3c98a]">
-          <span className="font-semibold text-[#f3a33a]">Illustrative sample</span> - {sampleLabel} This is
+        <FlaskConical size={14} className="mt-0.5 shrink-0 text-accent" />
+        <p className="text-xs leading-relaxed text-accent">
+          <span className="font-semibold">Illustrative sample</span> - {sampleLabel} This is
           bundled demo content, not live market data, and no external source has published it. It appears when
           the live feed is not configured on this deployment.
         </p>
@@ -39,11 +39,11 @@ export function DataSourceBanner({
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-md border border-[#1d7f55] bg-[#0d251b] px-3 py-1.5">
-      <Radio size={13} className="shrink-0 animate-pulse text-[#43d18b]" />
-      <p className="text-xs text-[#8fd9b4]">
-        <span className="font-semibold text-[#43d18b]">Live</span> - {liveLabel}
-        {updatedAt ? <span className="text-[#5d8f77]"> · synced {relativeTime(updatedAt)}</span> : null}
+    <div className="flex items-center gap-2 rounded-cell border border-positive/40 bg-positive-tint px-3 py-1.5">
+      <Radio size={13} className="shrink-0 animate-pulse text-positive" />
+      <p className="text-xs text-positive">
+        <span className="font-semibold">Live</span> - {liveLabel}
+        {updatedAt ? <span className="text-positive/60"> · synced {relativeTime(updatedAt)}</span> : null}
       </p>
     </div>
   );

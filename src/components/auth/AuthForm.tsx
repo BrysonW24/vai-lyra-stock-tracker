@@ -7,8 +7,9 @@ import { CheckCircle2, CircleAlert } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { BrandLogo } from '@/components/BrandLogo';
 
+// Inputs sit on a recessed well (PATTERNS.md); focus rings are blue-focus per the token roles.
 const inputClass =
-  'w-full rounded-md border border-[#263241] bg-[#0b1016] px-3 py-2.5 text-sm text-[#eef3f8] placeholder:text-[#5a6772] outline-none transition focus:border-[#f3a33a]/60 focus:ring-1 focus:ring-[#f3a33a]/30';
+  'w-full rounded-cell border border-line-strong bg-well px-3 py-2.5 text-sm text-ink placeholder:text-ink-dim outline-none transition focus:border-blue-focus/60 focus:ring-1 focus:ring-blue-focus/30';
 
 /**
  * Simple, founder-friendly auth: first name, last name, email and a 6-digit PIN.
@@ -74,19 +75,19 @@ export function AuthForm({ mode, initialError = null }: { mode: 'login' | 'signu
   }
 
   return (
-    <div className="w-full max-w-sm rounded-xl border border-[#263241] bg-[#0d1117] p-6 shadow-2xl">
-      <Link href="/welcome" className="mb-2 -ml-2 inline-flex min-h-[44px] items-center gap-1 px-2 text-xs text-[#8190a0] transition hover:text-[#eef3f8]">
+    <div className="terminal-panel rounded-panel w-full max-w-sm border-line-strong p-6">
+      <Link href="/welcome" className="mb-2 -ml-2 inline-flex min-h-[44px] items-center gap-1 px-2 text-xs text-ink-3 transition hover:text-ink">
         ← Back
       </Link>
       <div className="mb-5 flex flex-col items-center gap-2 text-center">
         <BrandLogo size={34} showWordmark />
-        <p className="text-xs text-[#8190a0]">
+        <p className="text-xs text-ink-3">
           {mode === 'signup' ? 'Create your operator account' : 'Sign in to your console'}
         </p>
       </div>
 
       {demo && (
-        <p className="mb-3 rounded-md border border-[#9a6a1f]/40 bg-[#2a1f0f]/60 px-3 py-2 text-[11px] leading-snug text-[#f3a33a]">
+        <p className="mb-3 rounded-cell border border-accent-border/40 bg-accent-tint/60 px-3 py-2 text-[11px] leading-snug text-accent">
           Solo mode - this Lyra runs without accounts, so there is nothing to sign
           {mode === 'signup' ? ' up for' : ' into'}. Your watchlist, holdings, and trade log stay
           in this browser. Continue straight in; self-hosters can add the Supabase env vars (see

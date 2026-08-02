@@ -18,9 +18,9 @@ export default async function InvestorsPage() {
   return (
     <AppShell data={data}>
       <div className="space-y-3 pb-28 xl:pb-6">
-        <section className="terminal-panel glass-hero rounded-md p-3">
+        <section className="terminal-panel glass-hero rounded-panel p-3">
           <h1 className={pageTitleClass}>Investor Radar</h1>
-          <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-[#a8b5c2]">
+          <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-ink-2">
             What elite managers disclosed in their latest 13F filings - new positions, adds, trims and exits across
             every tracked book. Small-cap overlap is flagged on each move: disciplined money showing up in a small name
             is the signal this page exists for.
@@ -29,7 +29,7 @@ export default async function InvestorsPage() {
 
         <InvestorRadar investors={investors} themesBySlug={themesBySlug} smallCapSymbols={smallCapSymbols} />
 
-        <p className="text-[10px] text-[#6f7d8a]">
+        <p className="text-[10px] text-ink-dim">
           Research only - not financial advice. Scores are deterministic research rankings, not recommendations.
         </p>
       </div>

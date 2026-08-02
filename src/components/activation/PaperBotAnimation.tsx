@@ -53,8 +53,8 @@ export function PaperBotAnimation({ onComplete }: PaperBotAnimationProps) {
     <div className="mx-auto w-full max-w-3xl px-1">
       {/* Title */}
       <div className="mb-3 text-center">
-        <h2 className="mb-0.5 text-xl font-semibold text-[#eef3f8] md:text-2xl">{scene.title}</h2>
-        <p className="text-xs text-[#a8b5c2] md:text-sm">{scene.description}</p>
+        <h2 className="mb-0.5 text-xl font-semibold text-ink md:text-2xl">{scene.title}</h2>
+        <p className="text-xs text-ink-2 md:text-sm">{scene.description}</p>
       </div>
 
       {/* Stats strip */}
@@ -67,32 +67,32 @@ export function PaperBotAnimation({ onComplete }: PaperBotAnimationProps) {
           { label: 'Open trades', value: '2', sub: 'Active positions', pos: null },
           { label: 'Win rate', value: '67%', sub: '6 of 9 closed', pos: true },
         ].map((tile) => (
-          <div key={tile.label} className="terminal-panel rounded px-2.5 py-2">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">{tile.label}</p>
-            <p className={`mt-0.5 font-mono text-lg font-semibold ${tile.pos === true ? 'text-[#43d18b]' : tile.pos === false ? 'text-[#ff6b6b]' : 'text-[#eef3f8]'}`}>
+          <div key={tile.label} className="terminal-panel rounded-cell px-2.5 py-2">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-ink-3">{tile.label}</p>
+            <p className={`mt-0.5 font-mono text-lg font-semibold ${tile.pos === true ? 'text-positive' : tile.pos === false ? 'text-negative' : 'text-ink'}`}>
               {tile.value}
             </p>
-            <p className="text-[9px] text-[#8190a0]">{tile.sub}</p>
+            <p className="text-[9px] text-ink-3">{tile.sub}</p>
           </div>
         ))}
       </div>
 
       {/* Bot proposal card */}
       <div
-        className="terminal-panel mb-2 overflow-hidden rounded-md border border-[#8aa2ff]/30 transition-all duration-500"
+        className="terminal-panel mb-2 overflow-hidden rounded-panel border border-pending/30 transition-all duration-500"
         style={{ opacity: stage >= 1 ? 1 : 0, transform: stage >= 1 ? 'translateY(0)' : 'translateY(12px)' }}
       >
         {/* Card header */}
-        <div className="flex items-center justify-between border-b border-[#1b2530] bg-[#0b1016] px-3 py-2">
+        <div className="flex items-center justify-between border-b border-line bg-chrome px-3 py-2">
           <div className="flex items-center gap-2">
-            <span className="grid h-5 w-5 place-items-center rounded border border-[#8aa2ff]/40 bg-[#101a2e] text-[#8aa2ff]">
+            <span className="grid h-5 w-5 place-items-center rounded border border-pending/40 bg-blue-tint text-pending">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
               </svg>
             </span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8aa2ff]">Paper Bot · Proposal</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-pending">Paper Bot · Proposal</span>
           </div>
-          <span className="rounded-full border border-[#8aa2ff]/30 bg-[#101a2e] px-2 py-0.5 font-mono text-[9px] text-[#8aa2ff]">
+          <span className="rounded-full border border-pending/30 bg-blue-tint px-2 py-0.5 font-mono text-[9px] text-pending">
             Awaiting approval
           </span>
         </div>
@@ -100,23 +100,23 @@ export function PaperBotAnimation({ onComplete }: PaperBotAnimationProps) {
         {/* Proposal body */}
         <div className="p-3">
           <div className="mb-2 flex items-baseline gap-3">
-            <span className="rounded border border-[#1d7f55] bg-[#0d251b] px-2 py-0.5 font-mono text-xs font-bold text-[#43d18b]">
+            <span className="rounded border border-positive/50 bg-positive-tint px-2 py-0.5 font-mono text-xs font-bold text-positive">
               {BOT_PROPOSAL.side}
             </span>
-            <span className="text-sm font-semibold text-[#eef3f8]">{BOT_PROPOSAL.ticker}</span>
-            <span className="font-mono text-xs text-[#a8b5c2]">{BOT_PROPOSAL.shares} shares @ ${BOT_PROPOSAL.price.toFixed(2)}</span>
+            <span className="text-sm font-semibold text-ink">{BOT_PROPOSAL.ticker}</span>
+            <span className="font-mono text-xs text-ink-2">{BOT_PROPOSAL.shares} shares @ ${BOT_PROPOSAL.price.toFixed(2)}</span>
           </div>
 
-          <p className="mb-2.5 font-mono text-[10px] leading-relaxed text-[#8190a0]">{BOT_PROPOSAL.reason}</p>
+          <p className="mb-2.5 font-mono text-[10px] leading-relaxed text-ink-3">{BOT_PROPOSAL.reason}</p>
 
           <div className="mb-3 grid grid-cols-2 gap-2">
-            <div className="rounded border border-[#1b2530] bg-[#0d1117] px-2.5 py-1.5">
-              <p className="text-[9px] uppercase tracking-[0.12em] text-[#6f7d8a]">Notional</p>
-              <p className="mt-0.5 font-mono text-sm font-semibold text-[#eef3f8]">{BOT_PROPOSAL.risk}</p>
+            <div className="rounded-cell border border-line bg-panel-deep px-2.5 py-1.5">
+              <p className="text-[9px] uppercase tracking-[0.12em] text-ink-dim">Notional</p>
+              <p className="mt-0.5 font-mono text-sm font-semibold text-ink">{BOT_PROPOSAL.risk}</p>
             </div>
-            <div className="rounded border border-[#1b2530] bg-[#0d1117] px-2.5 py-1.5">
-              <p className="text-[9px] uppercase tracking-[0.12em] text-[#6f7d8a]">Stop loss</p>
-              <p className="mt-0.5 font-mono text-sm font-semibold text-[#ff8a8a]">{BOT_PROPOSAL.stopLoss}</p>
+            <div className="rounded-cell border border-line bg-panel-deep px-2.5 py-1.5">
+              <p className="text-[9px] uppercase tracking-[0.12em] text-ink-dim">Stop loss</p>
+              <p className="mt-0.5 font-mono text-sm font-semibold text-negative-soft">{BOT_PROPOSAL.stopLoss}</p>
             </div>
           </div>
 
@@ -126,18 +126,18 @@ export function PaperBotAnimation({ onComplete }: PaperBotAnimationProps) {
             style={{ opacity: stage >= 2 ? 1 : 0, transform: stage >= 2 ? 'translateY(0)' : 'translateY(6px)' }}
           >
             <div
-              className="flex-1 rounded-md border border-[#1d7f55] bg-[#0d251b] px-3 py-2 text-center font-mono text-xs font-semibold text-[#43d18b] transition-all duration-300"
+              className="flex-1 rounded-cell border border-positive/50 bg-positive-tint px-3 py-2 text-center font-mono text-xs font-semibold text-positive transition-all duration-300"
               style={{
                 boxShadow: stage >= 2 ? '0 0 18px -4px rgba(67,209,139,0.45)' : 'none',
               }}
             >
               ✓ Approve fill
             </div>
-            <div className="rounded-md border border-[#263241] bg-[#0d141c] px-3 py-2 text-center font-mono text-xs text-[#6f7d8a]">
+            <div className="rounded-cell border border-line-strong bg-panel px-3 py-2 text-center font-mono text-xs text-ink-dim">
               ✕ Skip
             </div>
           </div>
-          <p className="mt-1.5 text-center font-mono text-[9px] text-[#4a5868]">
+          <p className="mt-1.5 text-center font-mono text-[9px] text-ink-dim">
             Paper only · no real money · you stay in control
           </p>
         </div>
@@ -145,14 +145,14 @@ export function PaperBotAnimation({ onComplete }: PaperBotAnimationProps) {
 
       {/* Trade journal mini-table */}
       <div
-        className="terminal-panel mb-2 overflow-hidden rounded-md transition-all duration-500"
+        className="terminal-panel mb-2 overflow-hidden rounded-panel transition-all duration-500"
         style={{ opacity: stage >= 3 ? 1 : 0, transform: stage >= 3 ? 'translateY(0)' : 'translateY(10px)' }}
       >
-        <div className="border-b border-[#1b2530] bg-[#0b1016] px-3 py-1.5">
-          <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Paper journal</p>
+        <div className="border-b border-line bg-chrome px-3 py-1.5">
+          <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-ink-3">Paper journal</p>
         </div>
         <table className="min-w-full text-left">
-          <tbody className="divide-y divide-[#141c25]">
+          <tbody className="divide-y divide-line">
             {TRADE_JOURNAL.map((row, i) => (
               <tr
                 key={row.ticker}
@@ -162,19 +162,19 @@ export function PaperBotAnimation({ onComplete }: PaperBotAnimationProps) {
                   transition: `opacity 400ms ease ${i * 120}ms, transform 400ms ease ${i * 120}ms`,
                 }}
               >
-                <td className="px-3 py-1.5 font-mono text-xs font-semibold text-[#eef3f8]">{row.ticker}</td>
+                <td className="px-3 py-1.5 font-mono text-xs font-semibold text-ink">{row.ticker}</td>
                 <td className="px-3 py-1.5">
-                  <span className="rounded border border-[#1d7f55]/50 bg-[#0d251b] px-1.5 py-0.5 font-mono text-[9px] text-[#43d18b]">
+                  <span className="rounded border border-positive/25 bg-positive-tint px-1.5 py-0.5 font-mono text-[9px] text-positive">
                     {row.side}
                   </span>
                 </td>
-                <td className={`px-3 py-1.5 text-right font-mono text-xs font-semibold ${row.positive ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+                <td className={`px-3 py-1.5 text-right font-mono text-xs font-semibold ${row.positive ? 'text-positive' : 'text-negative'}`}>
                   {row.pnl}
                 </td>
-                <td className={`px-3 py-1.5 text-right font-mono text-[10px] ${row.positive ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+                <td className={`px-3 py-1.5 text-right font-mono text-[10px] ${row.positive ? 'text-positive' : 'text-negative'}`}>
                   {row.pnlPct}
                 </td>
-                <td className="px-3 py-1.5 text-right font-mono text-[10px] text-[#6f7d8a]">{row.status}</td>
+                <td className="px-3 py-1.5 text-right font-mono text-[10px] text-ink-dim">{row.status}</td>
               </tr>
             ))}
           </tbody>
@@ -183,28 +183,28 @@ export function PaperBotAnimation({ onComplete }: PaperBotAnimationProps) {
 
       {/* Live bot teaser */}
       <div
-        className="relative overflow-hidden rounded-md border border-[#5bc8ff]/20 bg-gradient-to-r from-[#07090c] via-[#0d1a2a] to-[#07090c] px-4 py-3 transition-all duration-500"
+        className="relative overflow-hidden rounded-panel border border-blue-focus/20 bg-gradient-to-r from-ground via-blue-tint to-ground px-4 py-3 transition-all duration-500"
         style={{ opacity: stage >= 4 ? 1 : 0, transform: stage >= 4 ? 'translateY(0)' : 'translateY(8px)' }}
       >
         {/* Subtle shimmer line */}
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#5bc8ff]/40 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-focus/40 to-transparent" />
 
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-semibold text-[#5bc8ff]">Live Trading Bot</span>
-              <span className="rounded-full border border-[#5bc8ff]/30 bg-[#0d1a2a] px-2 py-0.5 font-mono text-[8px] uppercase tracking-[0.14em] text-[#5bc8ff]">
+              <span className="font-mono text-xs font-semibold text-blue-focus">Live Trading Bot</span>
+              <span className="rounded-full border border-blue-focus/30 bg-blue-tint px-2 py-0.5 font-mono text-[8px] uppercase tracking-[0.14em] text-blue-focus">
                 Coming soon
               </span>
             </div>
-            <p className="mt-0.5 font-mono text-[10px] leading-snug text-[#4a6a88]">
+            <p className="mt-0.5 font-mono text-[10px] leading-snug text-ink-dim">
               When you&apos;re ready: the same approval gate, but filling against your real broker.
               Paper bot is the proving ground - live bot is the graduation.
             </p>
           </div>
           <div className="shrink-0">
             {/* Animated lock icon */}
-            <div className="grid h-9 w-9 place-items-center rounded-full border border-[#5bc8ff]/25 bg-[#0d1a2a] text-[#5bc8ff]/60">
+            <div className="grid h-9 w-9 place-items-center rounded-full border border-blue-focus/25 bg-blue-tint text-blue-focus/60">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>

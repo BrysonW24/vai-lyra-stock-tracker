@@ -99,36 +99,36 @@ function SoloWatchlistSection({
     <div className="space-y-2">
       {rows.length > 0 && <WatchlistTriggerBoard rows={rows} />}
       {targetless.length > 0 && (
-        <section className="terminal-panel overflow-hidden rounded-md">
-          <div className="flex items-center justify-between border-b border-[#1b2530] px-3 py-2">
+        <section className="terminal-panel overflow-hidden rounded-panel">
+          <div className="flex items-center justify-between border-b border-line px-3 py-2">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">
                 Your watchlist
               </p>
-              <p className="mt-0.5 text-[10px] text-[#a8b5c2]">
+              <p className="mt-0.5 text-[10px] text-ink-2">
                 Tracked on this device. Add a target price to enable proximity
                 triggers.
               </p>
             </div>
             <Link
               href="/watchlist"
-              className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-2 py-1 text-xs text-[#a8b5c2] transition hover:text-[#eef3f8]"
+              className="inline-flex items-center gap-1 rounded border border-line-strong bg-panel px-2 py-1 text-xs text-ink-2 transition hover:text-ink"
             >
               Edit <ArrowUpRight size={12} />
             </Link>
           </div>
-          <div className="grid gap-px bg-[#1b2530] sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-px bg-line sm:grid-cols-2 xl:grid-cols-4">
             {targetless.map((item) => (
               <Link
                 key={item.symbol}
                 href={`/tickers/${item.symbol}`}
-                className="flex items-center gap-2 bg-[#0d1117] px-3 py-2.5 transition hover:bg-[#101720]"
+                className="flex items-center gap-2 bg-panel-deep px-3 py-2.5 transition hover:bg-line/30"
               >
-                <Star size={13} className="text-[#f3a33a]" />
-                <span className="font-mono text-sm font-semibold text-[#eef3f8]">
+                <Star size={13} className="text-accent" />
+                <span className="font-mono text-sm font-semibold text-ink">
                   {item.symbol}
                 </span>
-                <span className="ml-auto text-[10px] text-[#8190a0]">
+                <span className="ml-auto text-[10px] text-ink-3">
                   No target
                 </span>
               </Link>
@@ -137,16 +137,16 @@ function SoloWatchlistSection({
         </section>
       )}
       {items.length === 0 && (
-        <section className="terminal-panel rounded-md p-4 text-center">
-          <p className="text-sm font-semibold text-[#dbe5ee]">
+        <section className="terminal-panel rounded-panel p-4 text-center">
+          <p className="text-sm font-semibold text-ink-title">
             Your watchlist is empty
           </p>
-          <p className="mt-1 text-xs text-[#8190a0]">
+          <p className="mt-1 text-xs text-ink-3">
             Add a ticker to track it on this device.
           </p>
           <Link
             href="/watchlist"
-            className="mt-3 inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-1.5 text-xs text-[#a8b5c2]"
+            className="mt-3 inline-flex items-center gap-1 rounded border border-line-strong bg-panel px-3 py-1.5 text-xs text-ink-2"
           >
             Open watchlist <ArrowUpRight size={12} />
           </Link>
@@ -162,57 +162,57 @@ function SoloPortfolioExposure({
   holdings: PortfolioHolding[];
 }) {
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex items-center justify-between border-b border-[#1b2530] px-3 py-2">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="flex items-center justify-between border-b border-line px-3 py-2">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">
             Your device-local holdings
           </p>
-          <p className="mt-0.5 font-mono text-[10px] text-[#a8b5c2]">
+          <p className="mt-0.5 font-mono text-[10px] text-ink-2">
             Your quantities and cost basis, priced from the latest available scan
           </p>
         </div>
         <Link
           href="/portfolio"
-          className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-2 py-1 text-xs text-[#a8b5c2] transition hover:text-[#eef3f8]"
+          className="inline-flex items-center gap-1 rounded border border-line-strong bg-panel px-2 py-1 text-xs text-ink-2 transition hover:text-ink"
         >
           Portfolio <ArrowUpRight size={12} />
         </Link>
       </div>
       {holdings.length === 0 ? (
-        <p className="px-3 py-6 text-center font-mono text-xs text-[#8190a0]">
+        <p className="px-3 py-6 text-center font-mono text-xs text-ink-3">
           No holdings on this device yet.
         </p>
       ) : (
-        <div className="grid grid-cols-2 gap-px bg-[#1b2530] xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-px bg-line xl:grid-cols-4">
           {holdings.slice(0, 4).map((holding) => (
-            <div className="bg-[#0d1117] p-2" key={holding.symbol}>
+            <div className="bg-panel-deep p-2" key={holding.symbol}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-mono text-sm font-semibold text-[#eef3f8]">
+                  <p className="font-mono text-sm font-semibold text-ink">
                     {holding.symbol}
                   </p>
-                  <p className="font-mono text-[10px] text-[#8190a0]">
+                  <p className="font-mono text-[10px] text-ink-3">
                     Weight {formatPercent(holding.portfolioWeight)}
                   </p>
                 </div>
-                <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[10px] text-[#f3a33a]">
+                <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[10px] text-accent">
                   {holding.actionState.replaceAll('_', ' ')}
                 </span>
               </div>
               <div className="mt-2 grid grid-cols-2 gap-1.5 font-mono text-[11px]">
-                <span className="text-[#8190a0]">Value</span>
-                <span className="text-right text-[#dbe5ee]">
+                <span className="text-ink-3">Value</span>
+                <span className="text-right text-ink-title">
                   {formatCurrency(holding.marketValue)}
                 </span>
-                <span className="text-[#8190a0]">P/L</span>
+                <span className="text-ink-3">P/L</span>
                 <span
                   className={`text-right ${toneClass(holding.unrealisedPnl)}`}
                 >
                   {formatCurrency(holding.unrealisedPnl)}
                 </span>
-                <span className="text-[#8190a0]">Signal</span>
-                <span className="text-right text-[#dbe5ee]">
+                <span className="text-ink-3">Signal</span>
+                <span className="text-right text-ink-title">
                   {holding.signalScore}{' '}
                   {formatSignedNumber(holding.scoreDelta, 0)}
                 </span>

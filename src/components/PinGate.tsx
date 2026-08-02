@@ -51,13 +51,13 @@ export function PinGate() {
   if (!mounted || !locked) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] grid place-items-center bg-[#070a0e]/95 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-xs rounded-xl border border-[#263241] bg-[#0d1117] p-6 text-center shadow-2xl">
-        <span className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-[#263241] bg-[#0d141c] text-[#f3a33a]">
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-ground/95 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-xs rounded-panel border border-line-strong bg-panel-deep p-6 text-center shadow-2xl">
+        <span className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-line-strong bg-panel text-accent">
           <Lock size={20} />
         </span>
-        <h1 className="mt-4 text-sm font-semibold uppercase tracking-[0.16em] text-[#c8d3de]">Lyra is locked</h1>
-        <p className="mt-1 text-xs text-[#8190a0]">Enter your PIN to continue on this device.</p>
+        <h1 className="mt-4 text-sm font-semibold uppercase tracking-[0.16em] text-ink-title">Lyra is locked</h1>
+        <p className="mt-1 text-xs text-ink-3">Enter your PIN to continue on this device.</p>
 
         <form
           onSubmit={(event) => {
@@ -74,20 +74,20 @@ export function PinGate() {
             value={entry}
             onChange={(event) => setEntry(event.target.value.replace(/\D/g, ''))}
             placeholder="••••"
-            className="w-full rounded-md border border-[#263241] bg-[#0b1016] px-3 py-2.5 text-center font-mono text-lg tracking-[0.4em] text-[#eef3f8] outline-none focus:border-[#f3a33a]/60 focus:ring-1 focus:ring-[#f3a33a]/30"
+            className="w-full rounded-cell border border-line-strong bg-well px-3 py-2.5 text-center font-mono text-lg tracking-[0.4em] text-ink outline-none focus:border-blue-focus/60 focus:ring-1 focus:ring-blue-focus/30"
             aria-label="PIN"
           />
-          {error && <p className="text-xs text-[#ff6b6b]">{error}</p>}
+          {error && <p className="text-xs text-negative">{error}</p>}
           <button
             type="submit"
             disabled={entry.length < 4}
-            className="w-full rounded-md border border-[#f3a33a] bg-[#23180b] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#f3a33a] transition hover:bg-[#2a1f0f] disabled:opacity-40"
+            className="w-full rounded-cell border border-accent-border bg-accent-tint px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-accent transition hover:brightness-110 disabled:opacity-40"
           >
             Unlock
           </button>
         </form>
 
-        <button type="button" onClick={resetLock} className="mt-4 text-[11px] text-[#6f7d8a] underline-offset-2 hover:text-[#a8b5c2] hover:underline">
+        <button type="button" onClick={resetLock} className="mt-4 text-[11px] text-ink-dim underline-offset-2 hover:text-ink-2 hover:underline">
           Forgot PIN? Reset this device
         </button>
       </div>

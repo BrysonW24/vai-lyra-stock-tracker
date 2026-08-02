@@ -29,7 +29,7 @@ export function LyraReveal({ onDone, holdMs = 5000 }: { onDone: () => void; hold
       onClick={onDone}
       role="button"
       tabIndex={0}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[#07090c]"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-ground"
       style={{ animation: leaving ? 'lyraRevealOut 500ms ease forwards' : undefined }}
     >
       {/* Concentric radar rings + core glow */}
@@ -37,7 +37,7 @@ export function LyraReveal({ onDone, holdMs = 5000 }: { onDone: () => void; hold
         {[0, 1, 2, 3].map((i) => (
           <span
             key={i}
-            className="absolute rounded-full border border-[#1e63ff]/15"
+            className="absolute rounded-full border border-blue/15"
             style={{
               width: `${(i + 1) * 170}px`,
               height: `${(i + 1) * 170}px`,
@@ -45,7 +45,7 @@ export function LyraReveal({ onDone, holdMs = 5000 }: { onDone: () => void; hold
             }}
           />
         ))}
-        <div className="absolute h-72 w-72 rounded-full bg-[#1e63ff]/15 blur-[90px]" />
+        <div className="absolute h-72 w-72 rounded-full bg-blue/15 blur-[90px]" />
       </div>
 
       {/* Logo + wordmark */}
@@ -58,13 +58,13 @@ export function LyraReveal({ onDone, holdMs = 5000 }: { onDone: () => void; hold
           className="text-center"
           style={{ animation: reduced ? undefined : 'lyraWordIn 900ms ease 800ms both' }}
         >
-          <p className="text-3xl font-semibold tracking-tight text-[#eef3f8]">{BRAND_NAME}</p>
-          <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.3em] text-[#8190a0]">{BRAND_TAGLINE}</p>
+          <p className="text-3xl font-semibold tracking-tight text-ink">{BRAND_NAME}</p>
+          <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.3em] text-ink-3">{BRAND_TAGLINE}</p>
         </div>
       </div>
 
       <p
-        className="absolute bottom-10 text-[10px] uppercase tracking-[0.18em] text-[#3a4754]"
+        className="absolute bottom-10 text-[10px] uppercase tracking-[0.18em] text-line-hair"
         style={{ animation: reduced ? undefined : 'lyraWordIn 600ms ease 2200ms both' }}
       >
         Tap to continue

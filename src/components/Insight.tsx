@@ -67,26 +67,26 @@ export function Insight() {
   // --- Slider view -----------------------------------------------------------
   if (mode === 'slider') {
     return (
-      <div className="intel-marquee terminal-panel relative flex items-center overflow-hidden rounded-md">
-        <div className="z-20 flex shrink-0 items-center gap-1.5 border-r border-[#1b2530] bg-[#0b1016] px-3 py-1.5">
-          <Lightbulb size={11} className="text-[#f3a33a]" />
-          <button type="button" onClick={toggle} title="Switch to panel" className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8aa2ff] transition hover:text-[#eef3f8]">
+      <div className="intel-marquee terminal-panel relative flex items-center overflow-hidden rounded-panel">
+        <div className="z-20 flex shrink-0 items-center gap-1.5 border-r border-line bg-chrome px-3 py-1.5">
+          <Lightbulb size={11} className="text-accent" />
+          <button type="button" onClick={toggle} title="Switch to panel" className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-pending transition hover:text-ink">
             Insight
           </button>
-          <button type="button" onClick={toggle} aria-label="Switch insight view" className="text-[#5e6b78] transition hover:text-[#a8b5c2]">
+          <button type="button" onClick={toggle} aria-label="Switch insight view" className="text-ink-dim transition hover:text-ink-2">
             <Settings2 size={11} />
           </button>
         </div>
         <div className="relative min-w-0 flex-1 overflow-hidden py-1.5">
           <div className="insight-track flex w-max items-center">
             {[...TAPE_FACTS, ...TAPE_FACTS].map((f, i) => (
-              <span key={`${f.id}-${i}`} className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap border-r border-[#1b2530] px-4">
-                <span className="font-mono text-[11px] font-semibold text-[#eef3f8]">{f.term}</span>
-                <span className="text-[11px] text-[#a8b5c2]">{f.body}</span>
+              <span key={`${f.id}-${i}`} className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap border-r border-line px-4">
+                <span className="font-mono text-[11px] font-semibold text-ink">{f.term}</span>
+                <span className="text-[11px] text-ink-2">{f.body}</span>
               </span>
             ))}
           </div>
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-[#0b1016] to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-chrome to-transparent" />
         </div>
       </div>
     );
@@ -96,23 +96,23 @@ export function Insight() {
   const fact = mounted && order.length ? FINANCE_FACTS[order[pos % order.length]] : FINANCE_FACTS[0];
 
   return (
-    <section className="terminal-panel rounded-md p-3">
+    <section className="terminal-panel rounded-panel p-3">
       <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#f3a33a]">
+        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-cell border border-line-strong bg-panel text-accent">
           <Lightbulb size={13} />
         </span>
-        <button type="button" onClick={toggle} title="Switch to slider" className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0] transition hover:text-[#eef3f8]">
+        <button type="button" onClick={toggle} title="Switch to slider" className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-3 transition hover:text-ink">
           Insight
         </button>
-        <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-[#7fb0ff]">
+        <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-blue-info">
           {CATEGORY_LABEL[fact.category]}
         </span>
         {fact.level && (
           <span className={`rounded border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] ${
-            fact.level === 'beginner' ? 'border-[#43d18b]/30 bg-[#43d18b]/10 text-[#43d18b]' :
-            fact.level === 'intermediate' ? 'border-[#7fb0ff]/30 bg-[#7fb0ff]/10 text-[#7fb0ff]' :
-            fact.level === 'advanced' ? 'border-[#f3a33a]/30 bg-[#f3a33a]/10 text-[#f3a33a]' :
-            'border-[#ff6b6b]/30 bg-[#ff6b6b]/10 text-[#ff6b6b]'
+            fact.level === 'beginner' ? 'border-positive/30 bg-positive/10 text-positive' :
+            fact.level === 'intermediate' ? 'border-blue-info/30 bg-blue-info/10 text-blue-info' :
+            fact.level === 'advanced' ? 'border-accent/30 bg-accent/10 text-accent' :
+            'border-negative/30 bg-negative/10 text-negative'
           }`}>
             {fact.level}
           </span>
@@ -120,20 +120,20 @@ export function Insight() {
         {fact.educationId ? (
           <Link
             href={`/education?module=${fact.educationId}`}
-            className="ml-auto inline-flex items-center gap-0.5 font-mono text-[9px] text-[#f3a33a] hover:underline"
+            className="ml-auto inline-flex items-center gap-0.5 font-mono text-[9px] text-accent hover:underline"
           >
             Learn more →
           </Link>
         ) : (
-          <span className="ml-auto font-mono text-[9px] text-[#5e6b78]">tap for another</span>
+          <span className="ml-auto font-mono text-[9px] text-ink-dim">tap for another</span>
         )}
-        <button type="button" onClick={toggle} aria-label="Switch insight view" title="Switch view" className="text-[#5e6b78] transition hover:text-[#a8b5c2] ml-2">
+        <button type="button" onClick={toggle} aria-label="Switch insight view" title="Switch view" className="text-ink-dim transition hover:text-ink-2 ml-2">
           <Settings2 size={12} />
         </button>
       </div>
       <button type="button" onClick={() => order.length && setPos((p) => p + 1)} className="mt-2 block w-full text-left">
-        <p className="text-[12px] font-semibold text-[#eef3f8]">{fact.term}</p>
-        <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">{fact.body}</p>
+        <p className="text-[12px] font-semibold text-ink">{fact.term}</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-ink-2">{fact.body}</p>
       </button>
     </section>
   );

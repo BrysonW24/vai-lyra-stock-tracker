@@ -59,12 +59,12 @@ export function ChainExplorer({ chains, verticals, followTheme, focusSymbol }: C
 
   return (
     <section id="chain-explorer" className="scroll-mt-20 space-y-2">
-      <div className="terminal-panel rounded-md p-2.5">
+      <div className="terminal-panel rounded-panel p-2.5">
         <div className="flex items-center gap-2">
-          <Network size={14} className="text-[#7fb0ff]" />
-          <h3 className="text-[12px] font-semibold text-[#eef3f8]">End-to-end value chains - every vertical</h3>
+          <Network size={14} className="text-blue-info" />
+          <h3 className="text-[12px] font-semibold text-ink">End-to-end value chains - every vertical</h3>
         </div>
-        <p className="mt-1 text-[10px] leading-snug text-[#8190a0]">
+        <p className="mt-1 text-[10px] leading-snug text-ink-3">
           Pick a vertical to walk its whole chain - end demand at the top, down through every tier to the raw
           materials that feed it, with the capital flowing in at each layer. Selecting a shortlist name above
           jumps here with that name highlighted where it sits.
@@ -82,13 +82,13 @@ export function ChainExplorer({ chains, verticals, followTheme, focusSymbol }: C
                 }}
                 className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[9px] transition ${
                   isSel
-                    ? 'border-[#43d18b] bg-[#0c1f16] text-[#5fd08a]'
-                    : 'border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:border-[#3a4754] hover:text-[#dbe5ee]'
+                    ? 'border-positive bg-positive-tint text-positive'
+                    : 'border-line-strong bg-panel text-ink-2 hover:border-line-hair hover:text-ink-title'
                 }`}
                 title={`${v.name} - ${v.smallCaps} small caps tracked`}
               >
                 <span aria-hidden>{v.emoji}</span> {v.name}
-                <span className={isSel ? 'text-[#43d18b]' : 'text-[#5e6b78]'}>{v.smallCaps}</span>
+                <span className={isSel ? 'text-positive' : 'text-ink-dim'}>{v.smallCaps}</span>
               </button>
             );
           })}
@@ -98,8 +98,8 @@ export function ChainExplorer({ chains, verticals, followTheme, focusSymbol }: C
       {focused ? (
         <ValueChainMap chain={focused} />
       ) : (
-        <section className="terminal-panel rounded-md p-3">
-          <p className="text-[11px] text-[#a8b5c2]">No chain is mapped for this vertical yet.</p>
+        <section className="terminal-panel rounded-panel p-3">
+          <p className="text-[11px] text-ink-2">No chain is mapped for this vertical yet.</p>
         </section>
       )}
     </section>

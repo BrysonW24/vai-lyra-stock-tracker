@@ -38,7 +38,7 @@ export function MetricHelp({ moduleId, text, label, size = 12 }: MetricHelpProps
         aria-label={`What is ${linkLabel}`}
         aria-expanded={open}
         title={body}
-        className="grid h-4 w-4 shrink-0 place-items-center rounded-full border border-[#263241] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
+        className="grid h-4 w-4 shrink-0 place-items-center rounded-full border border-line-strong text-ink-3 transition hover:border-line-hair hover:text-ink"
       >
         <HelpCircle size={size} />
       </button>
@@ -46,11 +46,11 @@ export function MetricHelp({ moduleId, text, label, size = 12 }: MetricHelpProps
       {open && (
         <>
           <span className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
-          <span className="absolute left-0 top-5 z-50 block w-60 rounded-md border border-[#263241] bg-[#0b1016] p-2.5 text-left shadow-2xl">
-            <span className="block text-[11px] leading-snug text-[#c8d3de]">{body}</span>
+          <span className="absolute left-0 top-5 z-50 block w-60 rounded-cell border border-line-strong bg-chrome p-2.5 text-left shadow-2xl">
+            <span className="block text-[11px] leading-snug text-ink-2">{body}</span>
             <Link
               href={getModuleHref(moduleId)}
-              className="mt-1.5 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.1em] text-[#8aa2ff] transition hover:text-[#b3c4ff]"
+              className="mt-1.5 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.1em] text-blue-info transition hover:text-blue-focus"
             >
               Learn more <ArrowUpRight size={11} />
             </Link>
