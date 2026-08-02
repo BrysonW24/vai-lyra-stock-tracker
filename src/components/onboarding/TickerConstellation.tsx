@@ -16,36 +16,60 @@ import { TickerLogo } from '@/components/TickerLogo';
 interface ConstellationNode {
   ticker: string;
   sector: string;
-  color: string;
 }
 
-const SECTOR_COLORS: Record<string, string> = {
-  Semiconductors: '#60a5fa',
-  'Mega-cap': '#f3a33a',
-  Cloud: '#43d18b',
-  Cybersecurity: '#a78bfa',
-  'AI infra': '#4fd1d9',
+// Sector identity colours, expressed as design tokens (TOKENS.md v1.0.0). This is a bespoke
+// artistic visual, so per-sector variety is kept, but every base colour is a token: the THREE
+// sprites resolve the CSS variable at runtime, the HTML chips use the Tailwind classes.
+const SECTOR_TOKEN_VAR: Record<string, string> = {
+  Semiconductors: '--lyra-blue-focus',
+  'Mega-cap': '--lyra-accent',
+  Cloud: '--lyra-positive',
+  Cybersecurity: '--lyra-pending',
+  'AI infra': '--lyra-blue-info',
+};
+
+const SECTOR_TEXT_CLASS: Record<string, string> = {
+  Semiconductors: 'text-blue-focus',
+  'Mega-cap': 'text-accent',
+  Cloud: 'text-positive',
+  Cybersecurity: 'text-pending',
+  'AI infra': 'text-blue-info',
+};
+
+const SECTOR_CHIP_BORDER_CLASS: Record<string, string> = {
+  Semiconductors: 'border-blue-focus/35',
+  'Mega-cap': 'border-accent/35',
+  Cloud: 'border-positive/35',
+  Cybersecurity: 'border-pending/35',
+  'AI infra': 'border-blue-info/35',
 };
 
 const NODES: ConstellationNode[] = [
-  { ticker: 'NVDA', sector: 'Semiconductors', color: '#60a5fa' },
-  { ticker: 'AMD', sector: 'Semiconductors', color: '#60a5fa' },
-  { ticker: 'AVGO', sector: 'Semiconductors', color: '#60a5fa' },
-  { ticker: 'AAPL', sector: 'Mega-cap', color: '#f3a33a' },
-  { ticker: 'MSFT', sector: 'Mega-cap', color: '#f3a33a' },
-  { ticker: 'GOOGL', sector: 'Mega-cap', color: '#f3a33a' },
-  { ticker: 'SNOW', sector: 'Cloud', color: '#43d18b' },
-  { ticker: 'CRM', sector: 'Cloud', color: '#43d18b' },
-  { ticker: 'NET', sector: 'Cloud', color: '#43d18b' },
-  { ticker: 'CRWD', sector: 'Cybersecurity', color: '#a78bfa' },
-  { ticker: 'PANW', sector: 'Cybersecurity', color: '#a78bfa' },
-  { ticker: 'S', sector: 'Cybersecurity', color: '#a78bfa' },
-  { ticker: 'SMCI', sector: 'AI infra', color: '#4fd1d9' },
-  { ticker: 'ANET', sector: 'AI infra', color: '#4fd1d9' },
-  { ticker: 'TSM', sector: 'AI infra', color: '#4fd1d9' },
+  { ticker: 'NVDA', sector: 'Semiconductors' },
+  { ticker: 'AMD', sector: 'Semiconductors' },
+  { ticker: 'AVGO', sector: 'Semiconductors' },
+  { ticker: 'AAPL', sector: 'Mega-cap' },
+  { ticker: 'MSFT', sector: 'Mega-cap' },
+  { ticker: 'GOOGL', sector: 'Mega-cap' },
+  { ticker: 'SNOW', sector: 'Cloud' },
+  { ticker: 'CRM', sector: 'Cloud' },
+  { ticker: 'NET', sector: 'Cloud' },
+  { ticker: 'CRWD', sector: 'Cybersecurity' },
+  { ticker: 'PANW', sector: 'Cybersecurity' },
+  { ticker: 'S', sector: 'Cybersecurity' },
+  { ticker: 'SMCI', sector: 'AI infra' },
+  { ticker: 'ANET', sector: 'AI infra' },
+  { ticker: 'TSM', sector: 'AI infra' },
 ];
 
 const SECTORS = Array.from(new Set(NODES.map((n) => n.sector)));
+
+/** Resolve a Lyra token CSS variable to its concrete colour (client-only). */
+function resolveTokenColor(varName: string): string {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  return value || 'white';
+}
 
 let threePromise: Promise<unknown> | null = null;
 function loadThree(): Promise<unknown> {
@@ -65,6 +89,8 @@ function loadThree(): Promise<unknown> {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// The glow texture must stay a white radial falloff: the sprite material's colour (a resolved
+// token) multiplies this texture, so a white core is what lets the token tint show correctly.
 function makeGlowTexture(THREE: any): any {
   const size = 128;
   const canvas = document.createElement('canvas');
@@ -120,6 +146,11 @@ export function TickerConstellation() {
 
           const glowTex = makeGlowTexture(THREE);
 
+          // Base colours come from the design tokens, resolved once per mount.
+          const sectorColor: Record<string, string> = {};
+          for (const sector of SECTORS) sectorColor[sector] = resolveTokenColor(SECTOR_TOKEN_VAR[sector]);
+          const webColor = resolveTokenColor('--lyra-ink-3');
+
           // Bounding box (half-extents) sized to the visible frustum at z=0, inset
           // so the glow never clips the panel edges. Recomputed on resize.
           const bounds = { x: 3, y: 3, z: 1.1 };
@@ -144,7 +175,7 @@ export function TickerConstellation() {
 
             const mat = new THREE.SpriteMaterial({
               map: glowTex,
-              color: new THREE.Color(node.color),
+              color: new THREE.Color(sectorColor[node.sector]),
               transparent: true,
               opacity: 0.9,
               blending: THREE.AdditiveBlending,
@@ -162,7 +193,7 @@ export function TickerConstellation() {
           const linePos = new Float32Array(maxPairs * 2 * 3);
           const lineGeo = new THREE.BufferGeometry();
           lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
-          const lineMat = new THREE.LineBasicMaterial({ color: 0x5a7da6, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending });
+          const lineMat = new THREE.LineBasicMaterial({ color: new THREE.Color(webColor), transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending });
           const lines = new THREE.LineSegments(lineGeo, lineMat);
           scene.add(lines);
           const LINK_DIST = 2.4;
@@ -272,13 +303,13 @@ export function TickerConstellation() {
     return (
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3">
         {SECTORS.map((sector) => (
-          <div key={sector} className="terminal-panel rounded-xl p-3">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: SECTOR_COLORS[sector] }}>
+          <div key={sector} className="terminal-panel rounded-panel p-3">
+            <p className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] ${SECTOR_TEXT_CLASS[sector]}`}>
               {sector}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {NODES.filter((n) => n.sector === sector).map((n) => (
-                <span key={n.ticker} className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 font-mono text-[10px] text-[#dbe5ee]">
+                <span key={n.ticker} className="flex items-center gap-1 rounded-full border border-line bg-well px-2 py-0.5 font-mono text-[10px] text-ink-title">
                   <TickerLogo symbol={n.ticker} size={12} /> {n.ticker}
                 </span>
               ))}
@@ -295,11 +326,10 @@ export function TickerConstellation() {
         <div
           key={node.ticker}
           ref={(el) => { labelRefs.current[i] = el; }}
-          className="pointer-events-none absolute left-0 top-0 z-10 flex items-center gap-1 rounded-full border px-2 py-0.5 opacity-0 shadow-[0_8px_22px_-10px_rgba(0,0,0,0.8)] backdrop-blur-md transition-opacity"
-          style={{ borderColor: `${node.color}55`, background: 'rgba(13,17,23,0.55)' }}
+          className={`pointer-events-none absolute left-0 top-0 z-10 flex items-center gap-1 rounded-full border bg-panel-deep/55 px-2 py-0.5 opacity-0 shadow-[0_8px_22px_-10px_rgba(0,0,0,0.8)] backdrop-blur-md transition-opacity ${SECTOR_CHIP_BORDER_CLASS[node.sector]}`}
         >
           <TickerLogo symbol={node.ticker} size={14} />
-          <span className="font-mono text-[10px] font-semibold tracking-tight text-[#eef3f8]">{node.ticker}</span>
+          <span className="font-mono text-[10px] font-semibold tracking-tight text-ink">{node.ticker}</span>
         </div>
       ))}
     </div>

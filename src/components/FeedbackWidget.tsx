@@ -97,7 +97,7 @@ export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidget
           type="button"
           onClick={() => setInternalOpen(true)}
           aria-label="Send feedback"
-          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] z-40 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-ink-title shadow-[0_12px_34px_-12px_rgba(0,0,0,0.85)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-accent-border xl:bottom-4"
+          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] z-40 inline-flex items-center gap-1.5 rounded-full border border-line bg-chrome/80 px-3 py-2 text-xs font-semibold text-ink-title shadow-[0_12px_34px_-12px_rgba(0,0,0,0.85)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-accent-border xl:bottom-4"
         >
           <MessageSquarePlus size={15} className="text-accent" /> Feedback
         </button>
@@ -114,11 +114,11 @@ export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidget
             role="dialog"
             aria-modal="true"
             aria-label="Send feedback"
-            className="w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-panel-deep shadow-2xl"
+            className="w-full max-w-sm overflow-hidden rounded-panel border border-line-strong bg-panel-deep shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ink/25 to-transparent" />
+            <div className="flex items-center justify-between border-b border-line px-4 py-3">
               <p className="text-sm font-semibold text-ink">Suggest a feature or report a bug</p>
               <button ref={closeBtnRef} type="button" onClick={close} aria-label="Close" className="text-ink-3 transition hover:text-ink">
                 <X size={16} />
@@ -147,9 +147,9 @@ export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidget
                       key={v}
                       type="button"
                       onClick={() => setType(v)}
-                      className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
+                      className={`flex-1 rounded-cell border px-2 py-1.5 text-xs font-semibold transition ${
                         type === v
-                          ? 'border-[#f3a33a] bg-accent-tint text-accent'
+                          ? 'border-accent bg-accent-tint text-accent'
                           : 'border-line-strong bg-panel text-ink-2 hover:border-line-hair'
                       }`}
                     >
@@ -162,7 +162,7 @@ export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidget
                   <a
                     href="/whats-new?tab=ideas"
                     onClick={close}
-                    className="flex items-center justify-between gap-2 rounded-md border border-positive/40 bg-positive-tint px-3 py-2 text-[12px] font-medium text-positive transition hover:bg-positive/15"
+                    className="flex items-center justify-between gap-2 rounded-cell border border-positive/40 bg-positive-tint px-3 py-2 text-[12px] font-medium text-positive transition hover:bg-positive/15"
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <Lightbulb size={13} /> Post it on the Ideas board so others can vote
@@ -176,16 +176,16 @@ export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidget
                   onChange={(e) => setMessage(e.target.value)}
                   rows={4}
                   placeholder="What would make this more useful for you?"
-                  className="w-full resize-none rounded-md border border-line-strong bg-panel px-3 py-2 text-[13px] leading-snug text-ink-title placeholder:text-ink-dim outline-none focus:border-blue-focus/60"
+                  className="w-full resize-none rounded-cell border border-line-strong bg-panel px-3 py-2 text-[13px] leading-snug text-ink-title placeholder:text-ink-dim outline-none focus:border-blue-focus/60"
                 />
                 <input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email (optional - if you'd like a reply)"
-                  className="h-9 w-full rounded-md border border-line-strong bg-panel px-3 text-[13px] text-ink-title placeholder:text-ink-dim outline-none focus:border-blue-focus/60"
+                  className="h-9 w-full rounded-cell border border-line-strong bg-panel px-3 text-[13px] text-ink-title placeholder:text-ink-dim outline-none focus:border-blue-focus/60"
                 />
 
-                <label className="flex cursor-pointer items-center gap-2 rounded-md border border-line-strong bg-panel px-3 py-2">
+                <label className="flex cursor-pointer items-center gap-2 rounded-cell border border-line-strong bg-panel px-3 py-2">
                   <input
                     type="checkbox"
                     checked={botInterest}
@@ -201,7 +201,7 @@ export function FeedbackWidget({ open: controlledOpen, onClose }: FeedbackWidget
                   type="button"
                   onClick={submit}
                   disabled={!message.trim() || status === 'sending'}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-[#f3a33a] bg-accent-tint px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-accent transition hover:bg-accent-tint disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-cell border border-accent bg-accent-tint px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-accent transition hover:bg-accent-tint disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {status === 'sending' ? <Loader2 size={14} className="animate-spin" /> : 'Send feedback'}
                 </button>

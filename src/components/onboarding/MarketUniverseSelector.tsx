@@ -3,7 +3,10 @@
 import { MarketUniverseSelection, MARKET_CATEGORIES, MarketCategory } from '@/lib/onboarding';
 
 // Lyra brand gradient sampled across the sector grid: blue -> cyan -> green ->
-// yellow -> orange, so the coverage reads as one gradient sweep.
+// yellow -> orange, so the coverage reads as one gradient sweep. Artistic gradient
+// (allowed per TOKENS.md); its anchor stops are the token values of blue-focus,
+// positive and accent, with two interpolated midpoints. Numeric RGB is required
+// for the runtime rgba() interpolation below.
 const GRAD_STOPS: { p: number; c: [number, number, number] }[] = [
   { p: 0, c: [96, 165, 250] },
   { p: 0.25, c: [79, 209, 217] },
@@ -46,15 +49,15 @@ export function MarketUniverseSelector({ onNext }: MarketUniverseSelectorProps) 
 
   return (
     <div className="space-y-4">
-      <p className="text-[12px] leading-snug text-[#a8b5c2]">
+      <p className="text-[12px] leading-snug text-ink-2">
         Lyra continuously scans the top US &amp; ASX equities and ETFs - hourly. Next you&apos;ll add the names that are
         actually yours - any ticker, fetched live.
       </p>
 
       <div>
         <div className="mb-2 flex items-baseline justify-between">
-          <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Sectors covered</h3>
-          <span className="font-mono text-[10px] text-[#8190a0]">{categories.length} sectors · always on</span>
+          <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Sectors covered</h3>
+          <span className="font-mono text-[10px] text-ink-3">{categories.length} sectors · always on</span>
         </div>
         <div className="grid grid-cols-2 gap-1.5">
           {categories.map(([key, data], i) => {
@@ -63,7 +66,7 @@ export function MarketUniverseSelector({ onNext }: MarketUniverseSelectorProps) 
               <div
                 key={key}
                 title={`${data.label} · ${data.tickers.length} names`}
-                className="flex items-center justify-between gap-2 rounded border px-2.5 py-1.5"
+                className="flex items-center justify-between gap-2 rounded-cell border px-2.5 py-1.5"
                 style={{
                   borderColor: `rgba(${r}, ${g}, ${b}, 0.4)`,
                   color: `rgb(${r}, ${g}, ${b})`,
@@ -78,15 +81,15 @@ export function MarketUniverseSelector({ onNext }: MarketUniverseSelectorProps) 
         </div>
       </div>
 
-      <p className="text-[11px] leading-snug text-[#5d6b79]">
-        <span className="font-semibold text-[#8190a0]">How it works:</span> ~100 of the top US (NASDAQ) and ASX names are
+      <p className="text-[11px] leading-snug text-ink-dim">
+        <span className="font-semibold text-ink-3">How it works:</span> ~100 of the top US (NASDAQ) and ASX names are
         scanned hourly out of the box. Anything else you add - your holdings or watchlist - is fetched live on demand via
         Lyra&apos;s market API.
       </p>
 
       <button
         onClick={onNext}
-        className="w-full rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
+        className="min-h-[44px] w-full rounded-cell bg-[image:var(--lyra-cta-gradient)] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-white shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
       >
         Continue
       </button>

@@ -26,6 +26,14 @@ const SECTOR_MAP: Record<string, string> = {
   'MQG.AX':'Finance','ASX.AX':'Finance','QAN.AX':'Industrial','WDS.AX':'Energy',
 };
 
+/*
+ * Chart category palettes stay LITERAL HEX on purpose (P2 chart-literal precedent): each value
+ * feeds SVG fill=/stroke=/stopColor= presentation attributes, which cannot resolve var(), and
+ * the same constant is shared with inline-style dots/bars, so one representation is kept.
+ * Design-owner tension (same class as P0's LYRA_RAMP + P2's PanelCarousel flag): these are
+ * categorical series palettes that include status-colour values - flagged in the P3 note, not
+ * redesigned in a token-convergence pass.
+ */
 const SECTOR_COLORS: Record<string, string> = {
   Tech:'#8aa2ff', Finance:'#43d18b', Health:'#e879f9', Consumer:'#f3a33a',
   Energy:'#ff8a5c', Industrial:'#6fb1ff', Media:'#f472b6', Materials:'#a3e635',
@@ -104,10 +112,11 @@ function DonutChart({ slices }: { slices: { label: string; pct: number; color: s
             className="cursor-pointer transition-opacity duration-150"
             onMouseEnter={() => setHovered(a.label)} onMouseLeave={() => setHovered(null)} />
         ))}
+        {/* SVG fill= attrs cannot resolve var(): byte-copies of ink / ink-dim (P0/P2 precedent) */}
         <text x={cx} y={cy - 5} textAnchor="middle" fill="#eef3f8" fontSize={9} fontWeight={700}>
           {active ? active.label : `${slices.length}`}
         </text>
-        <text x={cx} y={cy + 8} textAnchor="middle" fill="#6f7d8a" fontSize={7.5}>
+        <text x={cx} y={cy + 8} textAnchor="middle" fill="#5e6b78" fontSize={7.5}>
           {active ? `${active.pct.toFixed(1)}%` : 'positions'}
         </text>
       </svg>
@@ -117,8 +126,8 @@ function DonutChart({ slices }: { slices: { label: string; pct: number; color: s
             onMouseEnter={() => setHovered(a.label)} onMouseLeave={() => setHovered(null)}>
             <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: a.color }} />
             <TickerLogo symbol={a.label} size={14} />
-            <span className={`font-mono text-[11px] font-bold transition-colors ${hovered === a.label ? 'text-[#eef3f8]' : 'text-[#8190a0]'}`}>{a.label}</span>
-            <span className="ml-auto font-mono text-[10px] text-[#5e6b78]">{a.pct.toFixed(1)}%</span>
+            <span className={`font-mono text-[11px] font-bold transition-colors ${hovered === a.label ? 'text-ink' : 'text-ink-3'}`}>{a.label}</span>
+            <span className="ml-auto font-mono text-[10px] tabular-nums text-ink-dim">{a.pct.toFixed(1)}%</span>
           </li>
         ))}
       </ul>
@@ -135,11 +144,11 @@ function HorizBars({ bars }: { bars: { label: string; pct: number; color: string
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: b.color }} />
-              <span className="text-[11px] font-semibold text-[#c8d3de]">{b.label}</span>
+              <span className="text-[11px] font-semibold text-ink-title">{b.label}</span>
             </div>
-            <span className="font-mono text-[10px] text-[#6f7d8a]">{b.pct.toFixed(1)}% · {b.count} pos</span>
+            <span className="font-mono text-[10px] tabular-nums text-ink-dim">{b.pct.toFixed(1)}% · {b.count} pos</span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-[#0d141c]">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-panel">
             <div className="h-full rounded-full transition-all duration-700"
               style={{ width: `${Math.max(3, b.pct)}%`, backgroundColor: b.color }} />
           </div>
@@ -163,21 +172,21 @@ function PnlBars({ positions, colors }: { positions: Position[]; colors: string[
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
                 <TickerLogo symbol={p.symbol} size={14} />
-                <span className="font-mono text-[11px] font-bold text-[#c8d3de]">{p.symbol}</span>
+                <span className="font-mono text-[11px] font-bold text-ink-title">{p.symbol}</span>
               </div>
-              <span className={`font-mono text-[11px] font-semibold ${up ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+              <span className={`font-mono text-[11px] font-semibold tabular-nums ${up ? 'text-positive' : 'text-negative'}`}>
                 {up ? '+' : ''}{p.unrealisedPnlPct.toFixed(2)}% · {up ? '+' : ''}${p.unrealisedPnl.toFixed(0)}
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-[#0d141c]">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-panel">
               <div className={`h-full rounded-full transition-all duration-700 ${up
-                ? 'bg-gradient-to-r from-[#1d7f55] to-[#43d18b]'
-                : 'bg-gradient-to-r from-[#7f1d1d] to-[#ff6b6b]'}`}
+                ? 'bg-gradient-to-r from-positive/50 to-positive'
+                : 'bg-gradient-to-r from-negative/50 to-negative'}`}
                 style={{ width: `${Math.max(4, barPct)}%` }} />
             </div>
-            <div className="flex justify-between mt-0.5">
-              <span className="text-[9px] text-[#3a4a5a]">entry ${p.avgEntryPrice.toFixed(2)}</span>
-              <span className="text-[9px] text-[#3a4a5a]">now ${p.currentPrice.toFixed(2)} · {p.quantity} shares</span>
+            <div className="flex justify-between mt-0.5 tabular-nums">
+              <span className="text-[9px] text-ink-dim/80">entry ${p.avgEntryPrice.toFixed(2)}</span>
+              <span className="text-[9px] text-ink-dim/80">now ${p.currentPrice.toFixed(2)} · {p.quantity} shares</span>
             </div>
           </li>
         );
@@ -208,7 +217,7 @@ function BenchmarkChart({
   ];
 
   if (allSeries.length === 0) {
-    return <p className="text-[10px] text-[#3a4a5a] py-4 text-center">No benchmark data yet - execute a paper trade to start tracking</p>;
+    return <p className="text-[10px] text-ink-dim/80 py-4 text-center">No benchmark data yet - execute a paper trade to start tracking</p>;
   }
 
   const allValues = allSeries.flatMap(s => s.points);
@@ -228,8 +237,8 @@ function BenchmarkChart({
           return (
             <div key={s.label} className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
-              <span className="font-mono text-[10px] font-bold text-[#c8d3de]">{s.label}</span>
-              <span className={`font-mono text-[10px] ${pct >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+              <span className="font-mono text-[10px] font-bold text-ink-title">{s.label}</span>
+              <span className={`font-mono text-[10px] tabular-nums ${pct >= 0 ? 'text-positive' : 'text-negative'}`}>
                 {pct >= 0 ? '+' : ''}{pct.toFixed(2)}%
               </span>
             </div>
@@ -238,7 +247,7 @@ function BenchmarkChart({
       </div>
 
       {/* SVG chart */}
-      <div className="relative overflow-hidden rounded-xl border border-[#111d28] bg-[#040710]">
+      <div className="relative overflow-hidden rounded-cell border border-line/70 bg-ground">
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="w-full"
@@ -261,7 +270,7 @@ function BenchmarkChart({
             ))}
           </defs>
 
-          {/* 100 baseline */}
+          {/* 100 baseline. SVG stroke= attrs cannot resolve var(): byte-copy of line-strong (P0/P2 precedent) */}
           {(() => {
             const baseY = H - pad - ((100 - min) / (max - min || 1)) * (H - pad * 2);
             return <line x1={pad} x2={W - pad} y1={baseY} y2={baseY}
@@ -281,7 +290,7 @@ function BenchmarkChart({
               strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
           ))}
 
-          {/* Hover crosshair */}
+          {/* Hover crosshair. Literal SVG strokes: ink-dim byte-copy + the ground chart backdrop */}
           {hovered && (
             <>
               <line x1={hovered.x} x2={hovered.x} y1={pad} y2={H - pad}
@@ -293,7 +302,7 @@ function BenchmarkChart({
                 const range = max - min || 1;
                 const cy = H - pad - ((s.points[hovered.idx] - min) / range) * (H - pad * 2);
                 return <circle key={s.label} cx={cx} cy={cy} r="3"
-                  fill={s.color} stroke="#040710" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />;
+                  fill={s.color} stroke="#07090c" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />;
               })}
             </>
           )}
@@ -301,7 +310,7 @@ function BenchmarkChart({
 
         {/* Hover tooltip */}
         {hovered && (
-          <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 z-10 rounded-lg border border-[#263241] bg-[#0b1220]/95 px-3 py-2 shadow-xl backdrop-blur-sm">
+          <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 z-10 rounded-cell border border-line-strong bg-panel-deep/95 px-3 py-2 shadow-xl backdrop-blur-sm">
             {allSeries.map(s => {
               if (hovered.idx >= s.points.length) return null;
               const val = s.points[hovered.idx];
@@ -309,14 +318,14 @@ function BenchmarkChart({
               return (
                 <div key={s.label} className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: s.color }} />
-                  <span className="font-mono text-[10px] text-[#a8b5c2]">{s.label}</span>
-                  <span className={`ml-auto font-mono text-[10px] font-bold ${pct >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}`}>
+                  <span className="font-mono text-[10px] text-ink-2">{s.label}</span>
+                  <span className={`ml-auto font-mono text-[10px] font-bold tabular-nums ${pct >= 0 ? 'text-positive' : 'text-negative'}`}>
                     {pct >= 0 ? '+' : ''}{pct.toFixed(2)}%
                   </span>
                 </div>
               );
             })}
-            <p className="mt-1 text-center font-mono text-[8px] text-[#3a4a5a]">
+            <p className="mt-1 text-center font-mono text-[8px] text-ink-dim/80">
               {new Date(Date.now() - (days - 1 - hovered.idx) * 86400000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             </p>
           </div>
@@ -325,11 +334,11 @@ function BenchmarkChart({
 
       {/* X-axis labels */}
       <div className="mt-1 flex justify-between px-1">
-        <span className="font-mono text-[8px] text-[#3a4a5a]">{new Date(Date.now() - 30 * 86400000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-        <span className="font-mono text-[8px] text-[#3a4a5a]">Today</span>
+        <span className="font-mono text-[8px] text-ink-dim/80">{new Date(Date.now() - 30 * 86400000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+        <span className="font-mono text-[8px] text-ink-dim/80">Today</span>
       </div>
 
-      <p className="mt-2 text-[9px] text-[#3a4a5a]">
+      <p className="mt-2 text-[9px] text-ink-dim/80">
         All series indexed to 100 at start. NASDAQ + ASX 200 are the last 30 days of live Yahoo Finance
         data; Session is your live paper run, which spans a different (usually shorter) window - so the
         lines share an index, not a calendar. Compare the shapes, not a head-to-head % return.
@@ -393,13 +402,13 @@ export function PaperAccountCharts({ positions, totalMarketValue, equityCurve, s
   ];
 
   return (
-    <div className="rounded-xl border border-[#1d2733] bg-[#070b10] overflow-hidden">
+    <div className="rounded-cell border border-line bg-well overflow-hidden">
       {/* Tab bar */}
-      <div className="flex border-b border-[#111d28]">
+      <div className="flex border-b border-line/70">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button key={id} type="button" onClick={() => setTab(id)}
-            className={`flex flex-1 items-center justify-center gap-1 py-2.5 text-[8.5px] font-semibold uppercase tracking-[0.08em] transition-colors ${
-              tab === id ? 'border-b-2 border-[#8aa2ff] text-[#8aa2ff] bg-[#0b1220]' : 'text-[#4a5a6a] hover:text-[#8190a0]'
+            className={`flex min-h-[44px] flex-1 items-center justify-center gap-1 py-2.5 text-[8.5px] font-semibold uppercase tracking-[0.08em] transition-colors sm:min-h-0 ${
+              tab === id ? 'border-b-2 border-pending text-pending bg-panel-deep' : 'text-ink-dim hover:text-ink-3'
             }`}>
             <Icon size={11} />{label}
           </button>
@@ -409,30 +418,30 @@ export function PaperAccountCharts({ positions, totalMarketValue, equityCurve, s
       <div className="p-4">
         {tab === 'allocation' && (
           <>
-            <p className="mb-3 text-[9px] uppercase tracking-[0.1em] text-[#3a4a5a]">Portfolio by market value</p>
+            <p className="mb-3 text-[9px] uppercase tracking-[0.1em] text-ink-dim/80">Portfolio by market value</p>
             <DonutChart slices={allocationSlices} />
           </>
         )}
         {tab === 'sector' && (
           <>
-            <p className="mb-3 text-[9px] uppercase tracking-[0.1em] text-[#3a4a5a]">Capital by industry sector</p>
+            <p className="mb-3 text-[9px] uppercase tracking-[0.1em] text-ink-dim/80">Capital by industry sector</p>
             {sectorBars.length === 1 && sectorBars[0].label === 'Other'
-              ? <p className="text-[10px] text-[#3a4a5a]">Sector data unavailable - try AAPL, NVDA, JPM…</p>
+              ? <p className="text-[10px] text-ink-dim/80">Sector data unavailable - try AAPL, NVDA, JPM…</p>
               : <HorizBars bars={sectorBars} />}
           </>
         )}
         {tab === 'pnl' && (
           <>
-            <p className="mb-3 text-[9px] uppercase tracking-[0.1em] text-[#3a4a5a]">Unrealised return per position</p>
+            <p className="mb-3 text-[9px] uppercase tracking-[0.1em] text-ink-dim/80">Unrealised return per position</p>
             <PnlBars positions={positions} colors={POSITION_COLORS} />
           </>
         )}
         {tab === 'benchmark' && (
           <>
-            <p className="mb-3 text-[9px] uppercase tracking-[0.1em] text-[#3a4a5a]">Your portfolio vs NASDAQ & ASX 200 - 30 days indexed</p>
+            <p className="mb-3 text-[9px] uppercase tracking-[0.1em] text-ink-dim/80">Your portfolio vs NASDAQ & ASX 200 - 30 days indexed</p>
             {benchmarkLoading
-              ? <div className="flex items-center gap-2 py-6 justify-center text-[#4a5a6a]">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#8aa2ff] border-t-transparent" />
+              ? <div className="flex items-center gap-2 py-6 justify-center text-ink-dim">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-pending border-t-transparent" />
                   <span className="text-[11px]">Fetching live market data…</span>
                 </div>
               : <BenchmarkChart benchmarks={benchmarks} equityCurve={equityCurve} startingEquity={startingEquity} />

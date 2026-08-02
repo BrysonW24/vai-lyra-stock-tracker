@@ -25,12 +25,12 @@ const BREAKDOWN = [
 // investing questions that make you think. Changes each day to keep it feeling alive.
 type NuggetKind = 'fact' | 'tip' | 'think' | 'book' | 'market';
 
-const NUGGET_META: Record<NuggetKind, { label: string; icon: typeof Lightbulb; color: string }> = {
-  fact: { label: 'Fun fact', icon: Lightbulb, color: '#60a5fa' },
-  tip: { label: 'Handy tip', icon: Sparkles, color: '#43d18b' },
-  think: { label: 'Worth pondering', icon: HelpCircle, color: '#f3a33a' },
-  book: { label: 'Worth a read', icon: BookOpen, color: '#a78bfa' },
-  market: { label: 'The bigger picture', icon: TrendingUp, color: '#4fd1d9' },
+const NUGGET_META: Record<NuggetKind, { label: string; icon: typeof Lightbulb; colorClass: string }> = {
+  fact: { label: 'Fun fact', icon: Lightbulb, colorClass: 'text-blue-focus' },
+  tip: { label: 'Handy tip', icon: Sparkles, colorClass: 'text-positive' },
+  think: { label: 'Worth pondering', icon: HelpCircle, colorClass: 'text-accent' },
+  book: { label: 'Worth a read', icon: BookOpen, colorClass: 'text-pending' },
+  market: { label: 'The bigger picture', icon: TrendingUp, colorClass: 'text-blue-info' },
 };
 
 const NUGGETS: { kind: NuggetKind; text: string }[] = [
@@ -86,22 +86,22 @@ function SetupSlide() {
         <div className="flex items-center gap-2">
           <TickerLogo symbol="NVDA" companyName="Nvidia" size={28} />
           <div>
-            <p className="font-mono text-sm font-semibold text-[#eef3f8]">NVDA</p>
-            <p className="text-[10px] uppercase tracking-wide text-[#8190a0]">Technology · Semiconductors</p>
+            <p className="font-mono text-sm font-semibold text-ink">NVDA</p>
+            <p className="text-[10px] uppercase tracking-wide text-ink-3">Technology · Semiconductors</p>
           </div>
         </div>
-        <span className="rounded border border-[#1f5132] bg-[#0f2417] px-2 py-0.5 font-mono text-[11px] font-semibold text-[#5fd08a]">Buy · review</span>
+        <span className="rounded border border-positive/40 bg-positive-tint px-2 py-0.5 font-mono text-[11px] font-semibold text-positive">Buy · review</span>
       </div>
 
       <div className="grid grid-cols-3 gap-2 font-mono">
         {[
-          { v: '82', l: 'Setup', c: 'text-[#f3a33a]' },
-          { v: '46', l: 'RSI', c: 'text-[#60a5fa]' },
-          { v: '+9', l: 'Delta', c: 'text-[#43d18b]' },
+          { v: '82', l: 'Setup', c: 'text-accent' },
+          { v: '46', l: 'RSI', c: 'text-blue-focus' },
+          { v: '+9', l: 'Delta', c: 'text-positive' },
         ].map((t) => (
-          <div key={t.l} className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-center backdrop-blur">
+          <div key={t.l} className="rounded-cell border border-line bg-well px-3 py-2 text-center">
             <p className={`text-xl font-bold ${t.c}`}>{t.v}</p>
-            <p className="mt-0.5 text-[10px] uppercase tracking-wide text-[#8190a0]">{t.l}</p>
+            <p className="mt-0.5 text-[10px] uppercase tracking-wide text-ink-3">{t.l}</p>
           </div>
         ))}
       </div>
@@ -109,19 +109,19 @@ function SetupSlide() {
       <div className="space-y-1.5">
         {BREAKDOWN.map((b) => (
           <div key={b.label} className="flex items-center gap-2">
-            <span className="w-12 shrink-0 font-mono text-[10px] text-[#8190a0]">{b.label}</span>
-            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#161e27]">
-              <span className="block h-full rounded-full bg-[#f3a33a]" style={{ width: `${(b.value / b.max) * 100}%` }} />
+            <span className="w-12 shrink-0 font-mono text-[10px] text-ink-3">{b.label}</span>
+            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line/70">
+              <span className="block h-full rounded-full bg-accent" style={{ width: `${(b.value / b.max) * 100}%` }} />
             </span>
-            <span className="w-9 shrink-0 text-right font-mono text-[10px] text-[#a8b5c2]">{b.value}/{b.max}</span>
+            <span className="w-9 shrink-0 text-right font-mono text-[10px] text-ink-2">{b.value}/{b.max}</span>
           </div>
         ))}
       </div>
 
       <div className="mt-auto space-y-1">
-        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#5fd08a]">Why this setup</p>
-        <p className="flex gap-1.5 text-[11px] leading-snug text-[#cdd8e3]"><span className="text-[#5fd08a]">▸</span> RSI is below 50 and rising</p>
-        <p className="flex gap-1.5 text-[11px] leading-snug text-[#cdd8e3]"><span className="text-[#5fd08a]">▸</span> MACD histogram is negative but improving</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-positive">Why this setup</p>
+        <p className="flex gap-1.5 text-[11px] leading-snug text-ink-title"><span className="text-positive">▸</span> RSI is below 50 and rising</p>
+        <p className="flex gap-1.5 text-[11px] leading-snug text-ink-title"><span className="text-positive">▸</span> MACD histogram is negative but improving</p>
       </div>
     </div>
   );
@@ -135,28 +135,28 @@ function BriefSlide() {
 
   return (
     <div className="flex h-full flex-col gap-3 p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">Daily brief · plain English</p>
-      <p className="text-[15px] leading-relaxed text-[#dbe5ee]">
-        Morning. <span className="font-semibold text-[#eef3f8]">2 strong setups</span> on the radar - NVDA leads at
-        <span className="font-semibold text-[#f3a33a]"> 82</span>. Your book is
-        <span className="font-semibold text-[#43d18b]"> +6.5%</span>, with NVDA cooling since this morning. One watchlist
-        name is <span className="text-[#f3a33a]">near a trigger</span>.
+      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-3">Daily brief · plain English</p>
+      <p className="text-[15px] leading-relaxed text-ink-title">
+        Morning. <span className="font-semibold text-ink">2 strong setups</span> on the radar - NVDA leads at
+        <span className="font-semibold text-accent"> 82</span>. Your book is
+        <span className="font-semibold text-positive"> +6.5%</span>, with NVDA cooling since this morning. One watchlist
+        name is <span className="text-accent">near a trigger</span>.
       </p>
 
       <div className="space-y-1">
-        <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[#f3a33a]">
+        <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-accent">
           <Rocket size={12} /> Looking ahead
         </p>
-        <p className="text-[13px] leading-relaxed text-[#a8b5c2]">
+        <p className="text-[13px] leading-relaxed text-ink-2">
           The SpaceX IPO goes ahead June 12. One to keep an eye on.
         </p>
       </div>
 
       <div className="mt-auto space-y-1">
-        <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em]" style={{ color: meta.color }}>
+        <p className={`flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] ${meta.colorClass}`}>
           <NuggetIcon size={12} /> {meta.label}
         </p>
-        <p className="text-[13px] leading-relaxed text-[#a8b5c2]">{nugget.text}</p>
+        <p className="text-[13px] leading-relaxed text-ink-2">{nugget.text}</p>
       </div>
     </div>
   );
@@ -180,16 +180,16 @@ export function LandingShowcase() {
 
   return (
     <div
-      className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-[0_28px_80px_-28px_rgba(0,0,0,0.8)] backdrop-blur-xl"
+      className="relative w-full max-w-md overflow-hidden rounded-panel border border-line-strong bg-panel/40 shadow-[0_28px_80px_-28px_rgba(0,0,0,0.8)] backdrop-blur-xl"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       {/* premium glass highlights */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-      <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#f3a33a]/10 blur-3xl" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ink/30 to-transparent" />
+      <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-accent/10 blur-3xl" />
 
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#a8b5c2]">{SLIDES[index].label}</p>
+      <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2">{SLIDES[index].label}</p>
         <div className="flex gap-1.5">
           {SLIDES.map((slide, i) => (
             <button
@@ -197,7 +197,7 @@ export function LandingShowcase() {
               type="button"
               onClick={() => setIndex(i)}
               aria-label={`Show ${slide.label}`}
-              className={`h-1.5 rounded-full transition-all ${i === index ? 'w-5 bg-[#f3a33a]' : 'w-1.5 bg-white/20'}`}
+              className={`h-1.5 rounded-full transition-all ${i === index ? 'w-5 bg-accent' : 'w-1.5 bg-line-hair'}`}
             />
           ))}
         </div>
@@ -212,8 +212,8 @@ export function LandingShowcase() {
       </div>
 
       {/* Source attribution - builds credibility: real market data, named source */}
-      <div className="border-t border-white/10 px-4 py-2">
-        <p className="text-[10px] italic leading-snug text-[#6f7d8a]">
+      <div className="border-t border-line px-4 py-2">
+        <p className="text-[10px] italic leading-snug text-ink-dim">
           Live market data from Yahoo Finance · chart by TradingView.
         </p>
       </div>

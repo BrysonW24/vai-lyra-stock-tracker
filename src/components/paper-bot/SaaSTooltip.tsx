@@ -65,21 +65,21 @@ export function SaaSTooltip({ title, body, position = 'top', align = 'center', o
 
   return (
     <div ref={ref} className={`absolute z-50 w-72 ${posClasses}`}>
-      <div className="relative overflow-hidden rounded-xl border border-[#f3a33a]/50 bg-[#23180b]/95 p-3 shadow-2xl backdrop-blur-md">
-        <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-[#f3a33a]/20 blur-xl" />
-        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#f3a33a]">
+      <div className="relative overflow-hidden rounded-cell border border-accent/50 bg-accent-tint/95 p-3 shadow-2xl backdrop-blur-md">
+        <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-accent/20 blur-xl" />
+        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-accent">
           <Sparkles size={12} /> {title}
         </p>
-        <p className="mt-1 text-xs leading-relaxed text-[#dbe5ee]">{body}</p>
+        <p className="mt-1 text-xs leading-relaxed text-ink-title">{body}</p>
 
         {/* Action buttons */}
         {hasActions && (
-          <div className="mt-3 flex items-center gap-2 border-t border-[#f3a33a]/15 pt-2.5">
+          <div className="mt-3 flex items-center gap-2 border-t border-accent/15 pt-2.5">
             {onDismiss && (
               <button
                 type="button"
                 onClick={onDismiss}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#43d18b]/40 bg-[#0d251b] px-3 py-1.5 text-[11px] font-semibold text-[#43d18b] transition hover:bg-[#103626]"
+                className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-cell border border-positive/40 bg-positive-tint px-3 py-1.5 text-[11px] font-semibold text-positive transition hover:bg-positive/20 sm:min-h-0"
               >
                 <CheckCircle2 size={12} /> Got it!
               </button>
@@ -88,7 +88,7 @@ export function SaaSTooltip({ title, body, position = 'top', align = 'center', o
               <button
                 type="button"
                 onClick={onReplay}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#f3a33a]/30 bg-[#1a1206] px-3 py-1.5 text-[11px] font-semibold text-[#f3a33a] transition hover:bg-[#231a08]"
+                className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-cell border border-accent/30 bg-accent-tint/60 px-3 py-1.5 text-[11px] font-semibold text-accent transition hover:bg-accent-tint sm:min-h-0"
               >
                 <RotateCcw size={12} /> Replay
               </button>
@@ -96,9 +96,9 @@ export function SaaSTooltip({ title, body, position = 'top', align = 'center', o
           </div>
         )}
       </div>
-      
-      {/* Arrow pointer */}
-      <div className={`absolute h-3 w-3 rotate-45 bg-[#23180b]/95 border-[#f3a33a]/50 ${arrowClasses}`} />
+
+      {/* Arrow pointer (must match the card fill/border above) */}
+      <div className={`absolute h-3 w-3 rotate-45 bg-accent-tint/95 border-accent/50 ${arrowClasses}`} />
     </div>
   );
 }

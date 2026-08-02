@@ -100,11 +100,11 @@ function TvWidget({ config, height }: { config: Record<string, unknown>; height:
   }, [configKey]);
 
   return (
-    <div className="relative w-full bg-[#0d1117]" style={{ height }}>
+    <div className="relative w-full bg-panel-deep" style={{ height }}>
       <div ref={ref} className="tradingview-widget-container h-full w-full" />
       {loading && (
-        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-[#0d1117]">
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#5f6b78]">Loading chart...</span>
+        <div className="pointer-events-none absolute inset-0 grid place-items-center bg-panel-deep">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-dim">Loading chart...</span>
         </div>
       )}
     </div>
@@ -159,11 +159,11 @@ export function TradingViewChart({
           type="button"
           onClick={() => setInterval(iv.code)}
           className={[
-            'rounded border font-mono transition',
+            'rounded-cell border font-mono transition',
             compact ? 'px-1.5 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]',
             interval === iv.code
-              ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
-              : 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:text-[#dbe5ee]',
+              ? 'border-accent bg-accent-tint/80 text-accent'
+              : 'border-line-strong bg-panel text-ink-3 hover:text-ink-title',
           ].join(' ')}
         >
           {iv.label}
@@ -175,15 +175,15 @@ export function TradingViewChart({
   // Compact: lives inside an existing panel cell, so no outer panel chrome.
   if (compact) {
     return (
-      <div className="overflow-hidden rounded border border-[#1b2530] bg-[#0d1117]">
-        <div className="flex items-center justify-between gap-2 border-b border-[#1b2530] px-2 py-1.5">
-          <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">
+      <div className="overflow-hidden rounded-cell border border-line bg-panel-deep">
+        <div className="flex items-center justify-between gap-2 border-b border-line px-2 py-1.5">
+          <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-ink-3">
             {tvSymbol} · live · {studyLabel}
           </p>
           {intervalButtons}
         </div>
         <TvWidget config={config} height={frameHeight} />
-        <p className="border-t border-[#1b2530] px-2 py-1 text-[9px] leading-3 text-[#5f6b78]">
+        <p className="border-t border-line px-2 py-1 text-[9px] leading-3 text-ink-dim">
           Live TradingView chart · research only - not financial advice.
         </p>
       </div>
@@ -191,19 +191,19 @@ export function TradingViewChart({
   }
 
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1b2530] px-3 py-3">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Price chart</p>
-          <p className="mt-1 font-mono text-xs text-[#a8b5c2]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Price chart</p>
+          <p className="mt-1 font-mono text-xs text-ink-2">
             {companyName ? `${companyName} · ` : ''}{tvSymbol} · {studyLabel} · live market data
           </p>
         </div>
         {intervalButtons}
       </div>
       <TvWidget config={config} height={frameHeight} />
-      <div className="border-t border-[#1b2530] px-3 py-2">
-        <p className="text-[10px] leading-4 text-[#8190a0]">
+      <div className="border-t border-line px-3 py-2">
+        <p className="text-[10px] leading-4 text-ink-3">
           Live chart by TradingView for visual analysis. The deterministic signal score, RSI/MACD states and action
           state below are computed by the backend and remain the source of truth. Research only - not financial advice.
         </p>

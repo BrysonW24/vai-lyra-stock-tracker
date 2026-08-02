@@ -24,7 +24,7 @@ export function LyraIdle({ caption, size = 72 }: LyraIdleProps) {
     >
       <BrandLogo size={size} />
       {caption && (
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#5d6b79]">{caption}</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-dim">{caption}</p>
       )}
     </div>
   );

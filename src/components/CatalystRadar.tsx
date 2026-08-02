@@ -15,9 +15,9 @@ const CATEGORY_ICON: Record<CatalystCategory, LucideIcon> = {
 };
 
 const TIER: Record<CatalystTier, { label: string; chip: string; heat: string }> = {
-  now: { label: 'Act window', chip: 'border-[#7f1d1d] bg-[#2b1214] text-[#ff8a8a]', heat: 'text-[#ff6b6b]' },
-  building: { label: 'Building', chip: 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]', heat: 'text-[#f3a33a]' },
-  horizon: { label: 'Horizon', chip: 'border-[#27496b] bg-[#0d1b2b] text-[#7fb0ff]', heat: 'text-[#7fb0ff]' },
+  now: { label: 'Act window', chip: 'border-negative/50 bg-negative/10 text-negative', heat: 'text-negative' },
+  building: { label: 'Building', chip: 'border-accent-border bg-accent-tint text-accent', heat: 'text-accent' },
+  horizon: { label: 'Horizon', chip: 'border-blue-focus/40 bg-blue-tint text-blue-info', heat: 'text-blue-info' },
 };
 
 function whenLabel(days: number): string {
@@ -30,11 +30,11 @@ function whenLabel(days: number): string {
 function MatrixBar({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className="w-[52px] shrink-0 font-mono text-[9px] uppercase tracking-[0.1em] text-[#8190a0]">{label}</span>
-      <div className="h-1 flex-1 overflow-hidden rounded-full bg-[#17202a]">
-        <div className="h-full rounded-full bg-gradient-to-r from-[#3b5bdb] to-[#43d18b]" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+      <span className="w-[52px] shrink-0 font-mono text-[9px] uppercase tracking-[0.1em] text-ink-3">{label}</span>
+      <div className="h-1 flex-1 overflow-hidden rounded-full bg-line/70">
+        <div className="h-full rounded-full bg-gradient-to-r from-blue-deep to-positive" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
       </div>
-      <span className="w-6 shrink-0 text-right font-mono text-[9px] text-[#a8b5c2]">{value}</span>
+      <span className="w-6 shrink-0 text-right font-mono text-[9px] text-ink-2">{value}</span>
     </div>
   );
 }
@@ -44,13 +44,13 @@ const isTicker = (s: string) => /^[A-Z]{1,5}$/.test(s);
 function ExposureChip({ item }: { item: string }) {
   if (isTicker(item)) {
     return (
-      <span className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[10px] text-[#dbe5ee]">
+      <span className="inline-flex items-center gap-1 rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[10px] text-ink-title">
         <TickerLogo symbol={item} size={12} /> {item}
       </span>
     );
   }
   return (
-    <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[10px] text-[#a8b5c2]">{item}</span>
+    <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[10px] text-ink-2">{item}</span>
   );
 }
 
@@ -60,7 +60,7 @@ function CatalystBody({ catalyst }: { catalyst: ScoredCatalyst }) {
   return (
     <>
       {/* The priority matrix - the three axes feeding Heat. */}
-      <div className="mt-2 space-y-1 rounded-md border border-[#1b2530] bg-[#0b1016] px-2.5 py-1.5">
+      <div className="mt-2 space-y-1 rounded-cell border border-line bg-chrome px-2.5 py-1.5">
         <MatrixBar label="Timing" value={catalyst.timing} />
         <MatrixBar label="Impact" value={catalyst.impactScore} />
         <MatrixBar label="Attention" value={catalyst.attentionScore} />
@@ -68,27 +68,27 @@ function CatalystBody({ catalyst }: { catalyst: ScoredCatalyst }) {
 
       {/* IPO / funding value chain: time -> price -> access. */}
       {showFlow && (
-        <div className="mt-2 grid gap-1 rounded-md border border-[#27406b]/50 bg-[#0c1422] p-2 sm:grid-cols-3">
+        <div className="mt-2 grid gap-1 rounded-cell border border-blue-focus/40 bg-blue-tint/60 p-2 sm:grid-cols-3">
           <div className="flex items-start gap-1.5">
-            <Timer size={11} className="mt-0.5 shrink-0 text-[#7fb0ff]" />
-            <p className="text-[10px] leading-snug text-[#c8d3de]"><span className="text-[#8190a0]">When </span>{whenLabel(catalyst.daysUntil)}</p>
+            <Timer size={11} className="mt-0.5 shrink-0 text-blue-info" />
+            <p className="text-[10px] leading-snug text-ink-title"><span className="text-ink-3">When </span>{whenLabel(catalyst.daysUntil)}</p>
           </div>
           {catalyst.priceNote && (
             <div className="flex items-start gap-1.5">
-              <DollarSign size={11} className="mt-0.5 shrink-0 text-[#43d18b]" />
-              <p className="text-[10px] leading-snug text-[#c8d3de]"><span className="text-[#8190a0]">Price </span>{catalyst.priceNote}</p>
+              <DollarSign size={11} className="mt-0.5 shrink-0 text-positive" />
+              <p className="text-[10px] leading-snug text-ink-title"><span className="text-ink-3">Price </span>{catalyst.priceNote}</p>
             </div>
           )}
           {catalyst.accessNote && (
             <div className="flex items-start gap-1.5">
-              <Link2 size={11} className="mt-0.5 shrink-0 text-[#f3a33a]" />
-              <p className="text-[10px] leading-snug text-[#c8d3de]"><span className="text-[#8190a0]">Access </span>{catalyst.accessNote}</p>
+              <Link2 size={11} className="mt-0.5 shrink-0 text-accent" />
+              <p className="text-[10px] leading-snug text-ink-title"><span className="text-ink-3">Access </span>{catalyst.accessNote}</p>
             </div>
           )}
         </div>
       )}
 
-      <p className="mt-2 text-[10px] leading-snug text-[#a8b5c2]"><span className="font-semibold text-[#43d18b]">Set up: </span>{catalyst.setup}</p>
+      <p className="mt-2 text-[10px] leading-snug text-ink-2"><span className="font-semibold text-positive">Set up: </span>{catalyst.setup}</p>
 
       {(catalyst.exposure.length > 0 || catalyst.sources?.length) && (
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -96,7 +96,7 @@ function CatalystBody({ catalyst }: { catalyst: ScoredCatalyst }) {
             <ExposureChip key={item} item={item} />
           ))}
           {catalyst.sources?.map((source) => (
-            <span key={source.domain} className="inline-flex items-center gap-1 font-mono text-[9px] text-[#8190a0]">
+            <span key={source.domain} className="inline-flex items-center gap-1 font-mono text-[9px] text-ink-3">
               <SourceFavicon domain={source.domain} sourceName={source.name} /> {source.name}
             </span>
           ))}
@@ -113,23 +113,23 @@ function CatalystCard({ catalyst }: { catalyst: ScoredCatalyst }) {
   return (
     <div className="px-3 py-2.5">
       <div className="flex items-start gap-2">
-        <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#7fb0ff]">
+        <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-cell border border-line-strong bg-panel text-blue-info">
           <Icon size={13} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[12px] font-semibold leading-snug text-[#eef3f8]">{catalyst.title}</span>
+            <span className="text-[12px] font-semibold leading-snug text-ink">{catalyst.title}</span>
             <span className={`rounded border px-1.5 py-0.5 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] ${tier.chip}`}>{tier.label}</span>
-            <span className="font-mono text-[9px] text-[#8190a0]">{whenLabel(catalyst.daysUntil)}</span>
+            <span className="font-mono text-[9px] text-ink-3">{whenLabel(catalyst.daysUntil)}</span>
             {catalyst.dateConfidence !== 'confirmed' && (
-              <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-[#5e6b78]">{catalyst.dateConfidence}</span>
+              <span className="font-mono text-[8px] uppercase tracking-[0.1em] text-ink-dim">{catalyst.dateConfidence}</span>
             )}
           </div>
-          <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">{catalyst.why}</p>
+          <p className="mt-0.5 text-[11px] leading-snug text-ink-2">{catalyst.why}</p>
         </div>
         <div className="shrink-0 text-right">
           <p className={`font-mono text-lg font-semibold leading-none ${tier.heat}`}>{catalyst.heat}</p>
-          <p className="font-mono text-[8px] uppercase tracking-[0.12em] text-[#5e6b78]">heat</p>
+          <p className="font-mono text-[8px] uppercase tracking-[0.12em] text-ink-dim">heat</p>
         </div>
       </div>
 
@@ -139,7 +139,7 @@ function CatalystCard({ catalyst }: { catalyst: ScoredCatalyst }) {
         <CatalystBody catalyst={catalyst} />
       </div>
       <details className="md:hidden">
-        <summary className="-mx-1 mt-1 min-h-[44px] cursor-pointer list-none rounded px-1 py-2 font-mono text-[11px] text-[#8aa2ff]">
+        <summary className="-mx-1 mt-1 min-h-[44px] cursor-pointer list-none rounded px-1 py-2 font-mono text-[11px] text-pending">
           Heat breakdown + how to set up
         </summary>
         <CatalystBody catalyst={catalyst} />
@@ -159,44 +159,44 @@ export function CatalystRadar() {
   const actNow = catalysts.filter((c) => c.tier === 'now').length;
 
   return (
-    <section id="catalyst-radar" className="terminal-panel scroll-mt-16 overflow-hidden rounded-md">
-      <div className="flex items-center justify-between gap-2 border-b border-[#1b2530] px-3 py-2">
+    <section id="catalyst-radar" className="terminal-panel scroll-mt-16 overflow-hidden rounded-panel">
+      <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
         <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#f3a33a]">
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-cell border border-line-strong bg-panel text-accent">
             <RadarIcon size={14} />
           </span>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Catalyst radar</p>
-            <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-3">Catalyst radar</p>
+            <p className="mt-0.5 text-[11px] leading-snug text-ink-2">
               The moments worth positioning for - scored on timing, impact and attention. Set up today for what is coming.
             </p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <span className="font-mono text-[10px] text-[#8190a0]">{actNow} act now</span>
+          <span className="font-mono text-[10px] text-ink-3">{actNow} act now</span>
           <CatalystRadarHelp />
         </div>
       </div>
 
       {isEmpty ? (
         <div className="px-3 py-6 text-center">
-          <p className="text-[12px] font-semibold text-[#dbe5ee]">No fresh catalysts on the board</p>
-          <p className="mx-auto mt-1 max-w-md text-[11px] leading-snug text-[#a8b5c2]">
+          <p className="text-[12px] font-semibold text-ink-title">No fresh catalysts on the board</p>
+          <p className="mx-auto mt-1 max-w-md text-[11px] leading-snug text-ink-2">
             Every event in the curated set has passed. This is a hand-maintained editorial list, last curated on{' '}
-            <span className="font-mono text-[#f3a33a]">{asOf}</span>
+            <span className="font-mono text-accent">{asOf}</span>
             {stalenessDays > 0 ? ` (${stalenessDays}d ago)` : ''} - an empty board means it is due a refresh, not that
             nothing is coming.
           </p>
         </div>
       ) : (
-        <div className="divide-y divide-[#141c25]">
+        <div className="divide-y divide-line/70">
           {catalysts.map((catalyst) => (
             <CatalystCard key={catalyst.id} catalyst={catalyst} />
           ))}
         </div>
       )}
 
-      <p className="border-t border-[#1b2530] px-3 py-1.5 font-mono text-[10px] text-[#5e6b78]">
+      <p className="border-t border-line px-3 py-1.5 font-mono text-[10px] text-ink-dim">
         Deterministic priority: timing x impact x attention. Curated list as of {asOf}. Research context for what is coming - never a buy/sell instruction.
       </p>
     </section>

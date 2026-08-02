@@ -11,11 +11,11 @@ import { formatCurrency, formatSignedNumber } from '@/lib/format';
  */
 
 const STATE_CHIP: Record<WatchlistRow['triggerState'], string> = {
-  triggered: 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]',
-  approaching: 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]',
-  not_ready: 'border-[#263241] bg-[#0d141c] text-[#a8b5c2]',
-  missed: 'border-[#3a4754] bg-[#0d141c] text-[#8190a0]',
-  invalidated: 'border-[#7f1d1d] bg-[#2b1214] text-[#ff6b6b]',
+  triggered: 'border-positive/40 bg-positive-tint text-positive',
+  approaching: 'border-accent-border bg-accent-tint text-accent',
+  not_ready: 'border-line-strong bg-panel text-ink-2',
+  missed: 'border-line-hair bg-panel text-ink-3',
+  invalidated: 'border-negative/50 bg-negative/10 text-negative',
 };
 
 function read(item: WatchlistRow): string {
@@ -58,12 +58,12 @@ function Gate({ label, current, target, pct, tone }: { label: string; current: s
   return (
     <div>
       <div className="flex items-baseline justify-between font-mono text-[10px]">
-        <span className="text-[#8190a0]">{label}</span>
-        <span className="text-[#a8b5c2]">
-          {current} <span className="text-[#5e6b78]">/ {target}</span>
+        <span className="text-ink-3">{label}</span>
+        <span className="text-ink-2">
+          {current} <span className="text-ink-dim">/ {target}</span>
         </span>
       </div>
-      <div className="mt-1 h-1 overflow-hidden rounded-full bg-[#1b2530]">
+      <div className="mt-1 h-1 overflow-hidden rounded-full bg-line">
         <div className={`h-full rounded-full ${tone}`} style={{ width: `${Math.max(4, Math.min(100, pct))}%` }} />
       </div>
     </div>
@@ -72,16 +72,16 @@ function Gate({ label, current, target, pct, tone }: { label: string; current: s
 
 export function WatchlistTriggerBoard({ rows }: { rows: WatchlistRow[] }) {
   return (
-    <div className="terminal-panel overflow-hidden rounded-md">
-      <div className="border-b border-[#1b2530] px-3 py-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">Watchlist - about to set up</p>
-        <p className="mt-0.5 text-[10px] leading-snug text-[#a8b5c2]">
+    <div className="terminal-panel overflow-hidden rounded-panel">
+      <div className="border-b border-line px-3 py-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Watchlist - about to set up</p>
+        <p className="mt-0.5 text-[10px] leading-snug text-ink-2">
           A name triggers when both gates align: price drops into your buy zone, and the signal score confirms.
         </p>
       </div>
-      <div className="divide-y divide-[#1b2530]">
+      <div className="divide-y divide-line">
         {rows.length === 0 ? (
-          <p className="px-3 py-4 text-center text-[11px] text-[#8190a0]">No watchlist names yet. Add targets to track setups here.</p>
+          <p className="px-3 py-4 text-center text-[11px] text-ink-3">No watchlist names yet. Add targets to track setups here.</p>
         ) : (
           rows.map((item) => {
             const dist = Math.abs(item.distanceToTarget);
@@ -92,32 +92,32 @@ export function WatchlistTriggerBoard({ rows }: { rows: WatchlistRow[] }) {
               <div className="px-3 py-2.5" key={item.symbol}>
                 <div className="flex items-center gap-2">
                   <TickerLogo symbol={item.symbol} companyName={item.companyName} size={14} />
-                  <Link href={`/tickers/${item.symbol}`} className="font-mono text-[12px] font-semibold text-[#eef3f8]">
+                  <Link href={`/tickers/${item.symbol}`} className="font-mono text-[12px] font-semibold text-ink">
                     {item.symbol}
                   </Link>
-                  <span className="truncate text-[11px] text-[#8190a0]">{item.companyName}</span>
+                  <span className="truncate text-[11px] text-ink-3">{item.companyName}</span>
                   <span className={`ml-auto shrink-0 rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] ${STATE_CHIP[item.triggerState]}`}>
                     {item.alertStatus}
                   </span>
                 </div>
-                <p className="mt-1 text-[11px] leading-snug text-[#c8d3de]">{read(item)}</p>
+                <p className="mt-1 text-[11px] leading-snug text-ink-title">{read(item)}</p>
                 <div className="mt-2 grid grid-cols-2 gap-3">
                   <Gate
                     label="Price into zone"
                     current={formatCurrency(item.currentPrice)}
                     target={item.targetBuyZone === null ? 'any' : formatCurrency(item.targetBuyZone)}
                     pct={item.targetBuyZone === null ? 100 : priceProgress}
-                    tone="bg-[#7fb0ff]"
+                    tone="bg-blue-info"
                   />
                   <Gate
                     label="Signal confirm"
                     current={item.signalScore.toString()}
                     target={item.targetSignalScore.toString()}
                     pct={signalProgress}
-                    tone={signalConfirmed ? 'bg-[#43d18b]' : 'bg-[#f3a33a]'}
+                    tone={signalConfirmed ? 'bg-positive' : 'bg-accent'}
                   />
                 </div>
-                <p className="mt-1.5 font-mono text-[10px] text-[#8190a0]">
+                <p className="mt-1.5 font-mono text-[10px] text-ink-3">
                   RSI {Math.round(item.rsi)} · MACD hist {item.macdHistogram.toFixed(2)} · Vol {item.volumeRatio.toFixed(1)}x · score{' '}
                   {formatSignedNumber(item.scoreDelta, 0)} since scan
                 </p>

@@ -553,7 +553,7 @@ export default function OnboardingPage() {
             {saveError && (
               <p
                 role="alert"
-                className="rounded-md border border-[#7a2230] bg-[#2a1115] px-3 py-2 text-[12px] leading-snug text-[#ff8a8a]"
+                className="rounded-cell border border-negative/40 bg-negative/10 px-3 py-2 text-[12px] leading-snug text-negative-soft"
               >
                 {saveError}
               </p>

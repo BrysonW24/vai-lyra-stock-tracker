@@ -30,10 +30,10 @@ export function PineExportButton({ symbol }: { symbol: string }) {
       onClick={onClick}
       title={`Copy ${symbol}'s Lyra strategy as a TradingView Pine script. Paste into Pine editor then Add to chart to backtest.`}
       className={[
-        'inline-flex items-center gap-1 rounded border px-1.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] transition',
+        'inline-flex min-h-[44px] items-center gap-1 rounded-cell border px-1.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] transition sm:min-h-0',
         copied
-          ? 'border-[#2f8f5b] bg-[#0c1f15] text-[#43d18b]'
-          : 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:border-[#3a4754] hover:text-[#eef3f8]',
+          ? 'border-positive/50 bg-positive-tint text-positive'
+          : 'border-line-strong bg-panel text-ink-3 hover:border-line-hair hover:text-ink',
       ].join(' ')}
     >
       {copied ? <Check size={12} /> : <Code2 size={12} />}

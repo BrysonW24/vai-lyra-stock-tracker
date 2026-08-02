@@ -17,7 +17,7 @@ export function SoloWatchCount() {
   }, []);
 
   return (
-    <span className="rounded border border-[#9a6a1f] bg-[#2a1f0f] px-2 py-1 text-[#f3a33a]">
+    <span className="rounded border border-accent-border bg-accent-tint px-2 py-1 text-accent">
       Watch {count}
     </span>
   );

@@ -20,23 +20,23 @@ interface CliPanelProps {
 /** Command line - drives the same paper-only engine as the buttons. Pure presentational. */
 export function CliPanel({ open, onToggle, log, input, onInputChange, busy, onRun, endRef }: CliPanelProps) {
   return (
-    <div className="terminal-panel rounded-md px-2.5 py-2">
-      <button type="button" onClick={onToggle} className="flex w-full items-center gap-1.5 text-left">
-        <Terminal size={11} className="text-[#8aa2ff]" />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#c8d3de]">Command line</span>
-        <span className="ml-auto text-[9px] text-[#6f7d8a]">{open ? 'hide' : 'show'}</span>
+    <div className="terminal-panel rounded-panel px-2.5 py-2">
+      <button type="button" onClick={onToggle} className="flex min-h-[44px] w-full items-center gap-1.5 text-left sm:min-h-0">
+        <Terminal size={11} className="text-pending" />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-title">Command line</span>
+        <span className="ml-auto text-[9px] text-ink-dim">{open ? 'hide' : 'show'}</span>
       </button>
       {open && (
         <>
-          <div className="mt-1.5 max-h-44 overflow-y-auto rounded border border-[#161e28] bg-[#080c11] p-2 font-mono text-[10px] leading-relaxed">
+          <div className="mt-1.5 max-h-44 overflow-y-auto rounded-cell border border-line/70 bg-well p-2 font-mono text-[10px] leading-relaxed">
             {log.length === 0 ? (
-              <p className="text-[#5e6b78]">Type <span className="text-[#8aa2ff]">help</span> to list commands. The CLI drives the same paper-only engine as the buttons - no live path.</p>
+              <p className="text-ink-dim">Type <span className="text-pending">help</span> to list commands. The CLI drives the same paper-only engine as the buttons - no live path.</p>
             ) : (
               log.map((e, i) => (
                 <div key={i} className="mb-1">
-                  <p className="text-[#8aa2ff]">&gt; {e.cmd}</p>
+                  <p className="text-pending">&gt; {e.cmd}</p>
                   {e.lines.map((ln, j) => (
-                    <p key={j} className={e.ok ? 'text-[#a8b5c2]' : 'text-[#ff8a8a]'} style={{ whiteSpace: 'pre-wrap' }}>{ln}</p>
+                    <p key={j} className={e.ok ? 'text-ink-2' : 'text-negative'} style={{ whiteSpace: 'pre-wrap' }}>{ln}</p>
                   ))}
                 </div>
               ))
@@ -44,7 +44,7 @@ export function CliPanel({ open, onToggle, log, input, onInputChange, busy, onRu
             <div ref={endRef} />
           </div>
           <form onSubmit={(ev) => { ev.preventDefault(); onRun(input); }} className="mt-1.5 flex items-center gap-1.5">
-            <span className="font-mono text-[11px] text-[#8aa2ff]">&gt;</span>
+            <span className="font-mono text-[11px] text-pending">&gt;</span>
             <input
               value={input}
               onChange={(e) => onInputChange(e.target.value)}
@@ -52,15 +52,15 @@ export function CliPanel({ open, onToggle, log, input, onInputChange, busy, onRu
               disabled={busy}
               spellCheck={false}
               autoCapitalize="none"
-              className="flex-1 rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-[11px] text-[#dbe5ee] outline-none focus:border-[#8aa2ff]/50"
+              className="min-h-[44px] flex-1 rounded-cell border border-line-strong bg-panel px-2 py-1 font-mono text-[11px] text-ink-title outline-none focus:border-blue-focus/50 sm:min-h-0"
             />
-            <button type="submit" disabled={busy} className="inline-flex items-center gap-1 rounded border border-[#8aa2ff]/40 bg-[#101a2e] px-2 py-1 text-[10px] font-semibold text-[#8aa2ff] disabled:opacity-50">
+            <button type="submit" disabled={busy} className="inline-flex min-h-[44px] items-center gap-1 rounded-cell border border-pending/40 bg-blue-tint px-2 py-1 text-[10px] font-semibold text-pending disabled:opacity-50 sm:min-h-0">
               {busy ? <Loader2 size={11} className="animate-spin" /> : <CornerDownLeft size={11} />}
             </button>
           </form>
           <div className="mt-1.5 flex flex-wrap gap-1">
             {QUICK_CMDS.map((c) => (
-              <button key={c} type="button" onClick={() => onRun(c)} disabled={busy} className="rounded-full border border-[#1d2733] bg-[#0b1016] px-1.5 py-0.5 font-mono text-[9px] text-[#8190a0] transition hover:border-[#8aa2ff]/40 hover:text-[#8aa2ff] disabled:opacity-50">{c}</button>
+              <button key={c} type="button" onClick={() => onRun(c)} disabled={busy} className="rounded-full border border-line bg-chrome px-1.5 py-0.5 font-mono text-[9px] text-ink-3 transition hover:border-pending/40 hover:text-pending disabled:opacity-50">{c}</button>
             ))}
           </div>
         </>

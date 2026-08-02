@@ -32,7 +32,7 @@ export function CatalystRadarHelp() {
         onClick={() => setOpen(true)}
         aria-label="How the catalyst priority works"
         title="How the catalyst priority works"
-        className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-[#263241] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
+        className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-line-strong text-ink-3 transition hover:border-line-hair hover:text-ink"
       >
         <HelpCircle size={12} />
       </button>
@@ -43,40 +43,40 @@ export function CatalystRadarHelp() {
         title="How the catalyst priority works"
         subtitle="Why a moment ranks where it does on the radar"
       >
-        <p className="text-[12px] leading-relaxed text-[#dbe5ee]">
+        <p className="text-[12px] leading-relaxed text-ink-title">
           Every upcoming moment is scored on three axes, blended into a single{' '}
-          <span className="font-semibold text-[#f3a33a]">Heat</span> (0-100). Heat is what ranks the radar - the higher it
+          <span className="font-semibold text-accent">Heat</span> (0-100). Heat is what ranks the radar - the higher it
           is, the more the moment deserves your attention today.
         </p>
 
         {/* Heat formula diagram */}
-        <div className="rounded-md border border-[#263241] bg-[#0d141c] p-3">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">The blend</p>
+        <div className="rounded-cell border border-line-strong bg-panel p-3">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">The blend</p>
           <div className="flex items-center justify-center gap-1.5 font-mono text-[11px]">
-            <span className="rounded border border-[#27496b] bg-[#0d1b2b] px-1.5 py-1 text-[#7fb0ff]">Timing</span>
-            <span className="text-[#5e6b78]">+</span>
-            <span className="rounded border border-[#1d4f3a] bg-[#0d251b] px-1.5 py-1 text-[#43d18b]">Impact</span>
-            <span className="text-[#5e6b78]">+</span>
-            <span className="rounded border border-[#5a3b7a] bg-[#170f24] px-1.5 py-1 text-[#a78bfa]">Attention</span>
-            <span className="text-[#5e6b78]">=</span>
-            <span className="rounded border border-[#9a6a1f] bg-[#2a1f0f] px-1.5 py-1 font-semibold text-[#f3a33a]">Heat</span>
+            <span className="rounded border border-blue-focus/40 bg-blue-tint px-1.5 py-1 text-blue-info">Timing</span>
+            <span className="text-ink-dim">+</span>
+            <span className="rounded border border-positive/40 bg-positive-tint px-1.5 py-1 text-positive">Impact</span>
+            <span className="text-ink-dim">+</span>
+            <span className="rounded border border-pending/40 bg-pending/10 px-1.5 py-1 text-pending">Attention</span>
+            <span className="text-ink-dim">=</span>
+            <span className="rounded border border-accent-border bg-accent-tint px-1.5 py-1 font-semibold text-accent">Heat</span>
           </div>
         </div>
 
         {/* The three axes */}
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">The three axes</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">The three axes</p>
           {AXES.map((axis) => (
-            <div key={axis.label} className="flex items-start gap-2 rounded-md border border-[#1b2530] bg-[#0d141c] p-2.5">
-              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0b1016] text-[#7fb0ff]">
+            <div key={axis.label} className="flex items-start gap-2 rounded-cell border border-line bg-panel p-2.5">
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-cell border border-line-strong bg-chrome text-blue-info">
                 <axis.icon size={13} />
               </span>
               <div className="min-w-0">
-                <p className="flex items-center gap-1.5 text-[12px] font-semibold text-[#eef3f8]">
+                <p className="flex items-center gap-1.5 text-[12px] font-semibold text-ink">
                   {axis.label}
-                  <span className="rounded border border-[#263241] bg-[#0b1016] px-1.5 py-0.5 font-mono text-[9px] text-[#a8b5c2]">{axis.weight}</span>
+                  <span className="rounded border border-line-strong bg-chrome px-1.5 py-0.5 font-mono text-[9px] text-ink-2">{axis.weight}</span>
                 </p>
-                <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">{axis.what}</p>
+                <p className="mt-0.5 text-[11px] leading-snug text-ink-2">{axis.what}</p>
               </div>
             </div>
           ))}
@@ -84,20 +84,20 @@ export function CatalystRadarHelp() {
 
         {/* Tiers */}
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Urgency tiers</p>
-          <div className="flex items-start gap-2 rounded-md border border-[#7f1d1d] bg-[#2b1214] p-2.5">
-            <Flame size={14} className="mt-0.5 shrink-0 text-[#ff6b6b]" />
-            <p className="text-[11px] leading-snug text-[#c8d3de]"><span className="font-semibold text-[#ff8a8a]">Act window</span> - high heat and imminent (within ~2 weeks). The set-up window is open now.</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Urgency tiers</p>
+          <div className="flex items-start gap-2 rounded-cell border border-negative/50 bg-negative/10 p-2.5">
+            <Flame size={14} className="mt-0.5 shrink-0 text-negative" />
+            <p className="text-[11px] leading-snug text-ink-title"><span className="font-semibold text-negative">Act window</span> - high heat and imminent (within ~2 weeks). The set-up window is open now.</p>
           </div>
-          <div className="rounded-md border border-[#9a6a1f] bg-[#2a1f0f] p-2.5">
-            <p className="text-[11px] leading-snug text-[#c8d3de]"><span className="font-semibold text-[#f3a33a]">Building</span> - meaningful heat and approaching. Worth tracking as it firms up.</p>
+          <div className="rounded-cell border border-accent-border bg-accent-tint p-2.5">
+            <p className="text-[11px] leading-snug text-ink-title"><span className="font-semibold text-accent">Building</span> - meaningful heat and approaching. Worth tracking as it firms up.</p>
           </div>
-          <div className="rounded-md border border-[#27496b] bg-[#0d1b2b] p-2.5">
-            <p className="text-[11px] leading-snug text-[#c8d3de]"><span className="font-semibold text-[#7fb0ff]">Horizon</span> - further out or quieter. On the radar, not yet urgent.</p>
+          <div className="rounded-cell border border-blue-focus/40 bg-blue-tint p-2.5">
+            <p className="text-[11px] leading-snug text-ink-title"><span className="font-semibold text-blue-info">Horizon</span> - further out or quieter. On the radar, not yet urgent.</p>
           </div>
         </div>
 
-        <p className="rounded-md border border-[#263241] bg-[#0d141c] p-2.5 font-mono text-[10px] leading-snug text-[#8190a0]">
+        <p className="rounded-cell border border-line-strong bg-panel p-2.5 font-mono text-[10px] leading-snug text-ink-3">
           Catalysts are curated research context with explicit date-confidence flags. Lyra surfaces what is coming and why
           it matters - it never tells you to buy or sell, and never invents a price.
         </p>

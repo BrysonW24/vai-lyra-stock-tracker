@@ -51,9 +51,9 @@ const PLAIN_SUMMARY: Record<string, string> = {
 };
 
 const SUITABILITY: Record<string, { label: string; cls: string }> = {
-  low: { label: 'Beginner-friendly', cls: 'border-[#1d7f55] bg-[#0d251b] text-[#43d18b]' },
-  medium: { label: 'Balanced', cls: 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]' },
-  high: { label: 'For active traders', cls: 'border-[#7f1d1d] bg-[#2b1214] text-[#ff6b6b]' },
+  low: { label: 'Beginner-friendly', cls: 'border-positive/40 bg-positive-tint text-positive' },
+  medium: { label: 'Balanced', cls: 'border-accent-border bg-accent-tint text-accent' },
+  high: { label: 'For active traders', cls: 'border-negative/40 bg-negative/10 text-negative' },
 };
 
 const RISK_LABEL: Record<string, string> = { low: 'lower risk', medium: 'medium risk', high: 'higher risk' };
@@ -122,7 +122,7 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
   const selectedStrategy = getStrategyById(value.strategyId);
 
   if (!selectedStrategy) {
-    return <div className="text-[#8190a0]">Strategy not found</div>;
+    return <div className="text-ink-3">Strategy not found</div>;
   }
 
   const answeredProfile = PROFILE_QUESTIONS.filter((q) => Boolean(value.overrides[q.key])).length;
@@ -157,8 +157,8 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
 
   return (
     <div className="space-y-3">
-      <p className="flex items-start gap-1.5 text-[11px] leading-snug text-[#a8b5c2]">
-        <TrendingUp className="mt-px shrink-0 text-[#60a5fa]" size={14} />
+      <p className="flex items-start gap-1.5 text-[11px] leading-snug text-ink-2">
+        <TrendingUp className="mt-px shrink-0 text-blue-focus" size={14} />
         <span>Tell us how you operate and Lyra tunes what it watches for - plain questions, no jargon. Change it anytime. (Research software, not advice.)</span>
       </p>
 
@@ -168,7 +168,7 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
           const current = value.overrides[q.key] as string | undefined;
           return (
             <div key={q.key}>
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">{q.prompt}</p>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-3">{q.prompt}</p>
               <div className="flex flex-wrap gap-1.5">
                 {q.options.map((o, oi) => {
                   const sel = current === o.value;
@@ -180,10 +180,10 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
                       onClick={() => handleProfileChange(q.key, o.value)}
                       aria-pressed={sel}
                       style={sel ? gradientSelectedStyle(t) : undefined}
-                      className={`rounded-md border px-2.5 py-1 text-[12px] leading-tight transition ${
+                      className={`rounded-cell border px-2.5 py-1 text-[12px] leading-tight transition ${
                         sel
                           ? ''
-                          : 'border-[#263241] bg-[#0d141c] text-[#cdd8e3] hover:border-[#3a4754] hover:text-[#eef3f8]'
+                          : 'border-line-strong bg-panel text-ink-2 hover:border-line-hair hover:text-ink'
                       }`}
                     >
                       {o.label}
@@ -197,22 +197,22 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
       </div>
 
       {/* Recommendation derived from the answers */}
-      <section className={`rounded-lg border p-3 ${profileComplete ? 'border-[#f3a33a]/60 bg-[#1a130a]' : 'border-[#1b2530] bg-[#0b1016]'}`}>
+      <section className={`rounded-cell border p-3 ${profileComplete ? 'border-accent/60 bg-accent-tint/60' : 'border-line bg-chrome'}`}>
         <div className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-1.5">
-            <Sparkles size={13} className="text-[#f3a33a]" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">
+            <Sparkles size={13} className="text-accent" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">
               {profileComplete ? 'Recommended for you' : 'Your match so far'}
             </span>
           </span>
-          <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${SUITABILITY[selectedStrategy.riskLevel]?.cls ?? 'border-[#263241] text-[#8190a0]'}`}>
+          <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${SUITABILITY[selectedStrategy.riskLevel]?.cls ?? 'border-line-strong text-ink-3'}`}>
             {SUITABILITY[selectedStrategy.riskLevel]?.label ?? selectedStrategy.riskLevel}
           </span>
         </div>
-        <p className="mt-1.5 text-sm font-semibold text-[#eef3f8]">{selectedStrategy.name}</p>
-        <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">{PLAIN_SUMMARY[selectedStrategy.name] ?? selectedStrategy.description}</p>
+        <p className="mt-1.5 text-sm font-semibold text-ink">{selectedStrategy.name}</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-ink-2">{PLAIN_SUMMARY[selectedStrategy.name] ?? selectedStrategy.description}</p>
         {!profileComplete && (
-          <p className="mt-1.5 text-[10px] text-[#8190a0]">Answer the questions above to lock in your best-fit strategy.</p>
+          <p className="mt-1.5 text-[10px] text-ink-3">Answer the questions above to lock in your best-fit strategy.</p>
         )}
       </section>
 
@@ -221,16 +221,16 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex w-full items-center justify-between rounded-md border border-[#263241] bg-[#0d141c] px-3 py-2 text-left hover:bg-[#101720]"
+          className="flex min-h-[44px] w-full items-center justify-between rounded-cell border border-line-strong bg-panel px-3 py-2 text-left transition hover:border-line-hair"
         >
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-3">
             Advanced - pick a specific strategy &amp; fine-tune (optional)
           </span>
-          <ChevronDown size={14} className={`text-[#8190a0] transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+          <ChevronDown size={14} className={`text-ink-3 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
         </button>
 
         {showAdvanced && (
-          <div className="space-y-4 rounded-md border border-[#1b2530] bg-[#0b1016] p-3">
+          <div className="space-y-4 rounded-cell border border-line bg-chrome p-3">
             <div className="grid gap-2 sm:grid-cols-2">
               {list.map((strat) => {
                 const sel = value.strategyId === strat.id;
@@ -239,13 +239,13 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
                     key={strat.id}
                     type="button"
                     onClick={() => handlePickSpecific(strat.id)}
-                    className={`rounded-md border p-3 text-left transition ${
-                      sel ? 'border-[#f3a33a] bg-[#23180b]' : 'border-[#263241] bg-[#0d141c] hover:border-[#3a4754]'
+                    className={`rounded-cell border p-3 text-left transition ${
+                      sel ? 'border-accent bg-accent-tint/80' : 'border-line-strong bg-panel hover:border-line-hair'
                     }`}
                   >
-                    <p className={`text-sm font-semibold ${sel ? 'text-[#f3a33a]' : 'text-[#eef3f8]'}`}>{strat.name}</p>
-                    <p className="mt-1 text-[11px] leading-4 text-[#a8b5c2]">{PLAIN_SUMMARY[strat.name] ?? strat.description}</p>
-                    <p className="mt-1.5 font-mono text-[10px] text-[#8190a0]">
+                    <p className={`text-sm font-semibold ${sel ? 'text-accent' : 'text-ink'}`}>{strat.name}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-ink-2">{PLAIN_SUMMARY[strat.name] ?? strat.description}</p>
+                    <p className="mt-1.5 font-mono text-[10px] text-ink-3">
                       {strat.winRate}% win (illustrative) · {RISK_LABEL[strat.riskLevel] ?? strat.riskLevel}
                     </p>
                   </button>
@@ -254,24 +254,24 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
             </div>
 
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">What it looks for</p>
-              <p className="mt-1 font-mono text-sm text-[#dbe5ee]">{activeSummary}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">What it looks for</p>
+              <p className="mt-1 font-mono text-sm text-ink-title">{activeSummary}</p>
             </div>
             {renderThresholdControls(selectedStrategy, value.overrides, handleOverrideChange)}
 
             <div className="grid gap-2 sm:grid-cols-3">
               {[
-                ['Win rate', `${selectedStrategy.backtestStats.winRate}%`, 'text-[#43d18b]'],
-                ['Avg return', `${formatNumber(selectedStrategy.backtestStats.avgReturn, 1)}%`, selectedStrategy.backtestStats.avgReturn >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'],
-                ['Max drawdown', `${selectedStrategy.backtestStats.maxDrawdown}%`, 'text-[#ff6b6b]'],
+                ['Win rate', `${selectedStrategy.backtestStats.winRate}%`, 'text-positive'],
+                ['Avg return', `${formatNumber(selectedStrategy.backtestStats.avgReturn, 1)}%`, selectedStrategy.backtestStats.avgReturn >= 0 ? 'text-positive' : 'text-negative'],
+                ['Max drawdown', `${selectedStrategy.backtestStats.maxDrawdown}%`, 'text-negative'],
               ].map(([label, val, tone]) => (
-                <div key={label} className="rounded-md border border-[#263241] bg-[#0d141c] p-2.5">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-[#8190a0]">{label}</p>
-                  <p className={`mt-1 font-mono text-sm font-semibold ${tone}`}>{val} <span className="text-[10px] text-[#8190a0]">illustrative</span></p>
+                <div key={label} className="rounded-cell border border-line-strong bg-well p-2.5">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-ink-3">{label}</p>
+                  <p className={`mt-1 font-mono text-sm font-semibold tabular-nums ${tone}`}>{val} <span className="text-[10px] text-ink-3">illustrative</span></p>
                 </div>
               ))}
             </div>
-            <p className="text-[10px] leading-4 text-[#8190a0]">
+            <p className="text-[10px] leading-4 text-ink-3">
               These figures are illustrative reference numbers, not a measured track record - no live
               backtest has run yet. Treat them as what the strategy is aiming at, not proof of what it returns.
             </p>
@@ -283,7 +283,7 @@ export function StrategyPicker({ value, onChange, onNext }: StrategyPickerProps)
         <button
           onClick={onNext}
           type="button"
-          className="w-full rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
+          className="min-h-[44px] w-full rounded-cell bg-[image:var(--lyra-cta-gradient)] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-white shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
         >
           Next: Watchlist
         </button>
@@ -403,10 +403,10 @@ function renderThresholdControls(
     const max = (overrides.rsiMax as number) ?? bounds[1];
     controls.push(
       <div key="rsi" className="space-y-2">
-        <label className="block text-xs font-semibold uppercase tracking-[0.12em] text-[#8190a0]">RSI range (momentum, 0-100)</label>
+        <label className="block text-xs font-semibold uppercase tracking-[0.12em] text-ink-3">RSI range (momentum, 0-100)</label>
         <div className="grid grid-cols-2 gap-2">
-          <NumberField value={min} min={0} max={100} onCommit={(v) => onChange('rsiMin', v)} className="w-full rounded border border-[#263241] bg-[#080a0d] px-2 py-1 font-mono text-xs text-[#eef3f8]" />
-          <NumberField value={max} min={0} max={100} onCommit={(v) => onChange('rsiMax', v)} className="w-full rounded border border-[#263241] bg-[#080a0d] px-2 py-1 font-mono text-xs text-[#eef3f8]" />
+          <NumberField value={min} min={0} max={100} onCommit={(v) => onChange('rsiMin', v)} className="w-full rounded-cell border border-line-strong bg-well px-2 py-1 font-mono text-xs text-ink" />
+          <NumberField value={max} min={0} max={100} onCommit={(v) => onChange('rsiMax', v)} className="w-full rounded-cell border border-line-strong bg-well px-2 py-1 font-mono text-xs text-ink" />
         </div>
       </div>,
     );
@@ -417,9 +417,9 @@ function renderThresholdControls(
     const val = (overrides.volumeRatioMin as number) ?? defaultVal;
     controls.push(
       <div key="volume" className="space-y-2">
-        <label className="block text-xs font-semibold uppercase tracking-[0.12em] text-[#8190a0]">Volume vs average</label>
-        <NumberField value={val} min={0.5} max={2} step={0.1} onCommit={(v) => onChange('volumeRatioMin', v)} className="w-full rounded border border-[#263241] bg-[#080a0d] px-2 py-1 font-mono text-xs text-[#eef3f8]" />
-        <p className="text-[10px] text-[#8190a0]">{formatNumber(val, 2)}x of normal volume</p>
+        <label className="block text-xs font-semibold uppercase tracking-[0.12em] text-ink-3">Volume vs average</label>
+        <NumberField value={val} min={0.5} max={2} step={0.1} onCommit={(v) => onChange('volumeRatioMin', v)} className="w-full rounded-cell border border-line-strong bg-well px-2 py-1 font-mono text-xs text-ink" />
+        <p className="text-[10px] text-ink-3">{formatNumber(val, 2)}x of normal volume</p>
       </div>,
     );
   }
@@ -428,14 +428,14 @@ function renderThresholdControls(
     const val = (overrides.distanceFromLowMax as number) ?? (distRule.value as number);
     controls.push(
       <div key="distance" className="space-y-2">
-        <label className="block text-xs font-semibold uppercase tracking-[0.12em] text-[#8190a0]">How close to its recent low (%)</label>
-        <NumberField value={Math.round(val * 100)} min={0} max={50} onCommit={(v) => onChange('distanceFromLowMax', v / 100)} className="w-full rounded border border-[#263241] bg-[#080a0d] px-2 py-1 font-mono text-xs text-[#eef3f8]" />
-        <p className="text-[10px] text-[#8190a0]">within {(val * 100).toFixed(0)}% of its recent low</p>
+        <label className="block text-xs font-semibold uppercase tracking-[0.12em] text-ink-3">How close to its recent low (%)</label>
+        <NumberField value={Math.round(val * 100)} min={0} max={50} onCommit={(v) => onChange('distanceFromLowMax', v / 100)} className="w-full rounded-cell border border-line-strong bg-well px-2 py-1 font-mono text-xs text-ink" />
+        <p className="text-[10px] text-ink-3">within {(val * 100).toFixed(0)}% of its recent low</p>
       </div>,
     );
   }
 
-  return controls.length > 0 ? <div className="space-y-3">{controls}</div> : <p className="text-xs text-[#8190a0]">No adjustable rules for this strategy.</p>;
+  return controls.length > 0 ? <div className="space-y-3">{controls}</div> : <p className="text-xs text-ink-3">No adjustable rules for this strategy.</p>;
 }
 
 export type { StrategyRule };

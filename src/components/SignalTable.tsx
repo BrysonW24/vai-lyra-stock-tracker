@@ -197,11 +197,11 @@ export function SignalTable({
   const rowPadding = dense ? 'px-3 py-2' : 'px-3 py-3';
 
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1b2530] px-3 py-3">
+    <section className="terminal-panel overflow-hidden rounded-panel tabular-nums">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-3 py-3">
         <div>
           <div className="flex items-center gap-1.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">{title}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">{title}</p>
             <HelpDrawer
               title="What do these columns mean?"
               subtitle="Every column on the radar, in plain English"
@@ -210,22 +210,22 @@ export function SignalTable({
               terms={COLUMN_HELP}
             />
           </div>
-          <p className="mt-1 font-mono text-xs text-[#a8b5c2]">{rows.length}/{signals.length} rows | middleware-owned signal fields</p>
+          <p className="mt-1 font-mono text-xs text-ink-2">{rows.length}/{signals.length} rows | middleware-owned signal fields</p>
         </div>
         {!compact && (
           <div className="flex flex-wrap items-center gap-2">
-            <label className="flex h-8 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-[11px] text-[#8190a0]">
+            <label className="flex h-8 items-center gap-2 rounded-cell border border-line-strong bg-panel px-2 text-[11px] text-ink-3">
               <Search size={14} />
               <input
-                className="w-32 bg-transparent font-mono text-xs text-[#dbe5ee] outline-none placeholder:text-[#5d6b79]"
+                className="w-32 bg-transparent font-mono text-xs text-ink-title outline-none placeholder:text-ink-dim"
                 placeholder="Ticker"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
             </label>
-            <label className="flex h-8 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-[11px] text-[#8190a0]">
+            <label className="flex h-8 items-center gap-2 rounded-cell border border-line-strong bg-panel px-2 text-[11px] text-ink-3">
               <ListFilter size={14} />
-              <select aria-label="Sort signals by" className="bg-transparent font-mono text-xs text-[#dbe5ee] outline-none" value={sort} onChange={(event) => setSort(event.target.value as SortMode)}>
+              <select aria-label="Sort signals by" className="bg-transparent font-mono text-xs text-ink-title outline-none" value={sort} onChange={(event) => setSort(event.target.value as SortMode)}>
                 <option value="score">Score</option>
                 <option value="delta">Score Delta</option>
                 <option value="ticker">Ticker</option>
@@ -236,7 +236,7 @@ export function SignalTable({
             </label>
             <button
               type="button"
-              className="flex h-11 items-center gap-2 rounded border border-[#263241] bg-[#0d141c] px-2 text-[11px] text-[#a8b5c2] transition hover:text-[#eef3f8] sm:h-8"
+              className="flex h-11 items-center gap-2 rounded-cell border border-line-strong bg-panel px-2 text-[11px] text-ink-2 transition hover:text-ink sm:h-8"
               onClick={() => setDense((value) => !value)}
             >
               <Rows3 size={14} />
@@ -247,15 +247,15 @@ export function SignalTable({
       </div>
 
       {!compact && (
-        <div className="flex gap-1 overflow-x-auto border-b border-[#1b2530] px-3 py-2">
+        <div className="flex gap-1 overflow-x-auto border-b border-line px-3 py-2">
           {filterLabels.map((item) => (
             <button
               type="button"
               className={[
                 'shrink-0 rounded border px-2 py-0.5 font-mono text-[10px] transition',
                 filter === item.value
-                  ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
-                  : 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:text-[#dbe5ee]',
+                  ? 'border-accent bg-accent-tint/80 text-accent'
+                  : 'border-line-strong bg-panel text-ink-3 hover:text-ink-title',
               ].join(' ')}
               onClick={() => setFilter(item.value)}
               key={item.value}
@@ -268,41 +268,41 @@ export function SignalTable({
 
       <div className="hidden overflow-x-auto md:block">
         <table className="min-w-[1500px] table-fixed text-left text-xs">
-          <thead className="sticky top-0 z-10 bg-[#0b1016] font-mono uppercase text-[#8190a0]">
+          <thead className="sticky top-0 z-10 bg-chrome font-mono uppercase text-ink-3">
             <tr>
-              <th className={`${rowPadding} sticky left-0 z-20 w-28 bg-[#0b1016] font-semibold`}>
+              <th className={`${rowPadding} sticky left-0 z-20 w-28 bg-chrome font-semibold`}>
                 <span className="inline-flex items-center gap-1"><Pin size={12} /> Ticker</span>
               </th>
               <th className={`${rowPadding} w-48 font-semibold`}>Company</th>
               <th className={`${rowPadding} w-24 font-semibold`}>Price</th>
               <th className={`${rowPadding} w-20 font-semibold`}>1D %</th>
-              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Score')}>Score</th>
-              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Delta')}>Delta</th>
-              <th className={`${rowPadding} w-36 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Signal Status')}>Signal Status</th>
-              <th className={`${rowPadding} w-32 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Action')}>Action</th>
-              <th className={`${rowPadding} w-20 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('RSI')}>RSI</th>
-              <th className={`${rowPadding} w-20 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('RSI Delta')}>RSI Delta</th>
-              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('MACD Hist')}>MACD Hist</th>
-              <th className={`${rowPadding} w-20 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Hist Delta')}>Hist Delta</th>
-              <th className={`${rowPadding} w-28 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('MACD State')}>MACD State</th>
-              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Vol Ratio')}>Vol Ratio</th>
-              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('vs 20MA')}>vs 20MA</th>
-              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('vs 50MA')}>vs 50MA</th>
-              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('vs 200MA')}>vs 200MA</th>
-              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('60D Low')}>60D Low</th>
-              <th className={`${rowPadding} w-28 cursor-help font-semibold underline decoration-dotted decoration-[#3a4754] underline-offset-2`} title={tip('Lifecycle')}>Lifecycle</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('Score')}>Score</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('Delta')}>Delta</th>
+              <th className={`${rowPadding} w-36 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('Signal Status')}>Signal Status</th>
+              <th className={`${rowPadding} w-32 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('Action')}>Action</th>
+              <th className={`${rowPadding} w-20 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('RSI')}>RSI</th>
+              <th className={`${rowPadding} w-20 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('RSI Delta')}>RSI Delta</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('MACD Hist')}>MACD Hist</th>
+              <th className={`${rowPadding} w-20 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('Hist Delta')}>Hist Delta</th>
+              <th className={`${rowPadding} w-28 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('MACD State')}>MACD State</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('Vol Ratio')}>Vol Ratio</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('vs 20MA')}>vs 20MA</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('vs 50MA')}>vs 50MA</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('vs 200MA')}>vs 200MA</th>
+              <th className={`${rowPadding} w-24 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('60D Low')}>60D Low</th>
+              <th className={`${rowPadding} w-28 cursor-help font-semibold underline decoration-dotted decoration-line-hair underline-offset-2`} title={tip('Lifecycle')}>Lifecycle</th>
               <th className={`${rowPadding} w-32 font-semibold`}>Last Alert</th>
               <th className={`${rowPadding} w-12 font-semibold`}><span className="sr-only">Explain</span></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1b2530]">
+          <tbody className="divide-y divide-line">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={21} className="px-3 py-8 text-center font-mono text-xs text-[#8190a0]">
+                <td colSpan={21} className="px-3 py-8 text-center font-mono text-xs text-ink-3">
                   No signals match{search ? ` "${search}"` : ''} with the current filter.{' '}
                   <button
                     type="button"
-                    className="text-[#f3a33a] underline decoration-dotted underline-offset-2 hover:text-[#f7b95e]"
+                    className="text-accent underline decoration-dotted underline-offset-2 hover:text-ink"
                     onClick={() => {
                       setSearch('');
                       setFilter('all');
@@ -314,21 +314,21 @@ export function SignalTable({
               </tr>
             )}
             {rows.map((signal) => (
-              <tr className="font-mono text-[#dbe5ee] transition hover:bg-[#101720]" key={signal.symbol}>
-                <td className={`${rowPadding} sticky left-0 z-10 bg-[#0d1117] font-semibold text-[#eef3f8]`}>
+              <tr className="font-mono text-ink-title transition hover:bg-line/30" key={signal.symbol}>
+                <td className={`${rowPadding} sticky left-0 z-10 bg-panel-deep font-semibold text-ink`}>
                   <Link href={`/tickers/${signal.symbol}`} className="group inline-flex items-center gap-1.5">
                     <TickerLogo symbol={signal.symbol} companyName={signal.companyName} size={16} />
                     {signal.symbol}
                     <ArrowUpRight className="opacity-0 transition group-hover:opacity-100" size={12} />
                   </Link>
                 </td>
-                <td className={`${rowPadding} truncate text-[#a8b5c2]`}>{signal.companyName}</td>
+                <td className={`${rowPadding} truncate text-ink-2`}>{signal.companyName}</td>
                 <td className={rowPadding}>{formatCurrency(signal.close)}</td>
                 <td className={`${rowPadding} ${toneClass(signal.priceChange1d)}`}>{formatSignedPercent(signal.priceChange1d)}</td>
-                <td className={`${rowPadding} text-lg font-semibold text-[#eef3f8]`}>{signal.score}</td>
+                <td className={`${rowPadding} text-lg font-semibold text-ink`}>{signal.score}</td>
                 <td className={`${rowPadding} ${toneClass(signal.scoreDelta)}`}>{formatSignedNumber(signal.scoreDelta, 0)}</td>
                 <td className={rowPadding}><StatusBadge status={signal.status} /></td>
-                <td className={`${rowPadding} text-[#f3a33a]`}>{signal.actionState.replaceAll('_', ' ')}</td>
+                <td className={`${rowPadding} text-accent`}>{signal.actionState.replaceAll('_', ' ')}</td>
                 <td className={rowPadding}>{formatNumber(signal.rsi)}</td>
                 <td className={`${rowPadding} ${toneClass(signal.rsiDelta)}`}>{trendArrow(signal.rsiDelta)} {formatSignedNumber(signal.rsiDelta)}</td>
                 <td className={rowPadding}>{formatNumber(signal.macdHistogram, 2)}</td>
@@ -339,15 +339,15 @@ export function SignalTable({
                 <td className={`${rowPadding} ${toneClass(signal.priceVsSma50)}`}>{formatSignedPercent(signal.priceVsSma50)}</td>
                 <td className={`${rowPadding} ${toneClass(signal.priceVsSma200)}`}>{formatSignedPercent(signal.priceVsSma200)}</td>
                 <td className={rowPadding}>{formatPercent(signal.distanceFromLow)}</td>
-                <td className={`${rowPadding} text-[#a8b5c2]`}>{signal.lifecycleState.replaceAll('_', ' ')}</td>
-                <td className={`${rowPadding} text-[#8190a0]`}>{signal.lastAlert ?? 'none'}</td>
+                <td className={`${rowPadding} text-ink-2`}>{signal.lifecycleState.replaceAll('_', ' ')}</td>
+                <td className={`${rowPadding} text-ink-3`}>{signal.lastAlert ?? 'none'}</td>
                 <td className={rowPadding}>
                   <button
                     type="button"
                     onClick={() => openSignal(signal)}
                     aria-label={`Explain ${signal.symbol} signal`}
                     title="Explain this signal"
-                    className="grid h-11 w-11 place-items-center rounded border border-[#263241] bg-[#0d141c] text-[#8190a0] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
+                    className="grid h-11 w-11 place-items-center rounded-cell border border-line-strong bg-panel text-ink-3 transition hover:border-line-hair hover:text-ink"
                   >
                     <Info size={13} />
                   </button>
@@ -358,9 +358,9 @@ export function SignalTable({
         </table>
       </div>
 
-      <div className="divide-y divide-[#1b2530] md:hidden">
+      <div className="divide-y divide-line md:hidden">
         {rows.length === 0 && (
-          <p className="px-3 py-6 text-center font-mono text-xs text-[#8190a0]">
+          <p className="px-3 py-6 text-center font-mono text-xs text-ink-3">
             No signals match{search ? ` "${search}"` : ''} with the current filter.
           </p>
         )}
@@ -368,23 +368,23 @@ export function SignalTable({
           <button
             type="button"
             onClick={() => openSignal(signal)}
-            className="block w-full px-3 py-2 text-left transition hover:bg-[#101720]"
+            className="block w-full px-3 py-2 text-left transition hover:bg-line/30"
             key={signal.symbol}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <TickerLogo symbol={signal.symbol} companyName={signal.companyName} size={16} />
-                  <span className="font-mono text-sm font-semibold text-[#eef3f8]">{signal.symbol}</span>
+                  <span className="font-mono text-sm font-semibold text-ink">{signal.symbol}</span>
                   <StatusBadge status={signal.status} />
-                  <span className="ml-auto truncate text-[10px] text-[#f3a33a]">{signal.actionState.replaceAll('_', ' ')}</span>
+                  <span className="ml-auto truncate text-[10px] text-accent">{signal.actionState.replaceAll('_', ' ')}</span>
                 </div>
-                <p className="mt-0.5 truncate font-mono text-[10px] text-[#a8b5c2]">
+                <p className="mt-0.5 truncate font-mono text-[10px] text-ink-2">
                   {formatCurrency(signal.close)} | RSI {formatNumber(signal.rsi)}{trendArrow(signal.rsiDelta)} | Hist {formatNumber(signal.macdHistogram, 2)}{trendArrow(signal.histDelta)} | Vol {formatNumber(signal.volumeRatio, 2)}x
                 </p>
               </div>
               <div className="shrink-0 text-right font-mono">
-                <p className="text-base font-semibold leading-none text-[#eef3f8]">{signal.score}</p>
+                <p className="text-base font-semibold leading-none text-ink">{signal.score}</p>
                 <p className={`text-[11px] ${toneClass(signal.scoreDelta)}`}>{formatSignedNumber(signal.scoreDelta, 0)}</p>
               </div>
             </div>
@@ -394,7 +394,7 @@ export function SignalTable({
           <button
             type="button"
             onClick={() => setMobileVisible((n) => n + 20)}
-            className="block min-h-[44px] w-full px-3 py-3 text-center font-mono text-xs font-semibold uppercase tracking-[0.12em] text-[#8aa2ff] transition hover:bg-[#101720]"
+            className="block min-h-[44px] w-full px-3 py-3 text-center font-mono text-xs font-semibold uppercase tracking-[0.12em] text-pending transition hover:bg-line/30"
           >
             Show {Math.min(20, rows.length - mobileVisible)} more of {rows.length}
           </button>

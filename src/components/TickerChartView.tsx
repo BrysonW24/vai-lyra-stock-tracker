@@ -72,12 +72,12 @@ export function TickerChartView({
         <button
           type="button"
           onClick={goBack}
-          className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-1 font-mono text-[10px] text-[#a8b5c2] transition hover:border-[#3a4754] hover:text-[#eef3f8]"
+          className="inline-flex min-h-[44px] items-center gap-1 rounded-cell border border-line-strong bg-panel px-1.5 py-1 font-mono text-[10px] text-ink-2 sm:min-h-0 transition hover:border-line-hair hover:text-ink"
         >
           <ArrowLeft size={12} /> Back
         </button>
-        <span className="mx-0.5 h-3.5 w-px bg-[#263241]" />
-        <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#8190a0]">Indicators</span>
+        <span className="mx-0.5 h-3.5 w-px bg-line-strong" />
+        <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink-3">Indicators</span>
         {([
           ['bb', 'BB'],
           ['rsi', 'RSI'],
@@ -89,10 +89,10 @@ export function TickerChartView({
             onClick={() => toggle(key)}
             aria-pressed={indicators[key]}
             className={[
-              'rounded border px-1.5 py-1 font-mono text-[10px] transition',
+              'min-h-[44px] rounded-cell border px-1.5 py-1 font-mono text-[10px] transition sm:min-h-0',
               indicators[key]
-                ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
-                : 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:text-[#dbe5ee]',
+                ? 'border-accent bg-accent-tint/80 text-accent'
+                : 'border-line-strong bg-panel text-ink-3 hover:text-ink-title',
             ].join(' ')}
           >
             {label}
@@ -102,13 +102,13 @@ export function TickerChartView({
           type="button"
           onClick={() => setIndicators(ALL_ON)}
           className={[
-            'rounded border px-1.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] transition',
-            allOn ? 'border-[#3b5bdb] bg-[#0d1530] text-[#8aa2ff]' : 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:text-[#dbe5ee]',
+            'min-h-[44px] rounded-cell border px-1.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] transition sm:min-h-0',
+            allOn ? 'border-blue-deep bg-blue-tint text-pending' : 'border-line-strong bg-panel text-ink-3 hover:text-ink-title',
           ].join(' ')}
         >
           Full setup
         </button>
-        <span className="mx-0.5 h-3.5 w-px bg-[#263241]" />
+        <span className="mx-0.5 h-3.5 w-px bg-line-strong" />
         <PineExportButton symbol={symbol} />
       </div>
       <TradingViewChart symbol={symbol} exchange={exchange} companyName={companyName} indicators={indicators} />

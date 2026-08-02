@@ -417,13 +417,13 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Lyra copilot chat"
-        className="flex h-[78vh] max-h-[680px] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/10 bg-panel-deep shadow-2xl sm:h-[70vh]"
+        className="flex h-[78vh] max-h-[680px] w-full max-w-md flex-col overflow-hidden rounded-panel border border-line-strong bg-panel-deep shadow-2xl sm:h-[70vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+        <div className="flex items-center justify-between border-b border-line px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-lg border border-[#8aa2ff]/30 bg-blue-tint text-[#8aa2ff]">
+            <span className="grid h-7 w-7 place-items-center rounded-cell border border-pending/30 bg-blue-tint text-pending">
               <Sparkles size={14} />
             </span>
             <div className="leading-tight">
@@ -437,7 +437,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 type="button"
                 onClick={newChat}
                 aria-label="New chat"
-                className="inline-flex items-center gap-1 rounded-md border border-line px-2 py-1 text-[10px] font-semibold text-[#8aa2ff] transition hover:border-[#8aa2ff]/40 hover:bg-blue-tint"
+                className="inline-flex items-center gap-1 rounded-cell border border-line px-2 py-1 text-[10px] font-semibold text-pending transition hover:border-pending/40 hover:bg-blue-tint"
               >
                 <SquarePen size={11} /> New
               </button>
@@ -451,7 +451,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
         {/* Body */}
         {!connected ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-            <span className="grid h-12 w-12 place-items-center rounded-full border border-[#8aa2ff]/25 bg-blue-tint text-[#8aa2ff]">
+            <span className="grid h-12 w-12 place-items-center rounded-full border border-pending/25 bg-blue-tint text-pending">
               {checkingRuntime ? <Loader2 size={22} className="animate-spin" /> : <KeyRound size={22} />}
             </span>
             <p className="text-sm font-semibold text-ink">{checkingRuntime ? 'Checking hosted model' : 'Connect a model to chat'}</p>
@@ -467,7 +467,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
             <Link
               href="/account/ai"
               onClick={onClose}
-              className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-blue-tint px-4 py-2 text-xs font-semibold text-[#8aa2ff] transition hover:bg-blue-deep/25"
+              className="mt-1 inline-flex items-center gap-1.5 rounded-cell border border-pending/40 bg-blue-tint px-4 py-2 text-xs font-semibold text-pending transition hover:bg-blue-deep/25"
             >
               <KeyRound size={13} /> Open AI settings
             </Link>
@@ -489,7 +489,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                           <button
                             type="button"
                             onClick={() => send(q)}
-                            className="flex-1 rounded-lg border border-accent-border/50 bg-accent-tint/60 px-3 py-2 text-left text-[12px] text-ink-title transition hover:border-accent/50"
+                            className="flex-1 rounded-cell border border-accent-border/50 bg-accent-tint/60 px-3 py-2 text-left text-[12px] text-ink-title transition hover:border-accent/50"
                           >
                             {q}
                           </button>
@@ -497,7 +497,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                             type="button"
                             onClick={() => toggleSave(q)}
                             aria-label="Unsave prompt"
-                            className="grid w-9 shrink-0 place-items-center rounded-lg border border-accent-border/50 bg-accent-tint/60"
+                            className="grid w-9 shrink-0 place-items-center rounded-cell border border-accent-border/50 bg-accent-tint/60"
                           >
                             <Star size={13} className="fill-accent text-accent" />
                           </button>
@@ -515,7 +515,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                           onClick={() => setCategory(c.label)}
                           className={`shrink-0 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold transition ${
                             category === c.label
-                              ? 'border-[#8aa2ff] bg-blue-tint text-[#8aa2ff]'
+                              ? 'border-pending bg-blue-tint text-pending'
                               : 'border-line bg-panel text-ink-2 hover:border-line-hair'
                           }`}
                         >
@@ -531,7 +531,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                             <button
                               type="button"
                               onClick={() => send(q)}
-                              className="flex-1 rounded-lg border border-line bg-panel px-3 py-2 text-left text-[12px] text-ink-title transition hover:border-[#8aa2ff]/40 hover:bg-blue-tint"
+                              className="flex-1 rounded-cell border border-line bg-panel px-3 py-2 text-left text-[12px] text-ink-title transition hover:border-pending/40 hover:bg-blue-tint"
                             >
                               {q}
                             </button>
@@ -539,7 +539,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                               type="button"
                               onClick={() => toggleSave(q)}
                               aria-label={isSaved ? 'Unsave prompt' : 'Save prompt'}
-                              className="grid w-9 shrink-0 place-items-center rounded-lg border border-line bg-panel transition hover:border-[#8aa2ff]/40"
+                              className="grid w-9 shrink-0 place-items-center rounded-cell border border-line bg-panel transition hover:border-pending/40"
                             >
                               <Star size={13} className={isSaved ? 'fill-accent text-accent' : 'text-ink-dim'} />
                             </button>
@@ -556,17 +556,17 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                   <div
                     className={
                       m.role === 'user'
-                        ? 'max-w-[82%] rounded-2xl rounded-br-sm border border-[#8aa2ff]/25 bg-blue-tint px-3 py-2 text-[12.5px] leading-relaxed text-ink'
-                        : 'max-w-[88%] rounded-2xl rounded-bl-sm border border-line bg-panel px-3 py-2 text-[12.5px] leading-relaxed text-ink-title'
+                        ? 'max-w-[82%] rounded-panel rounded-br-sm border border-pending/25 bg-blue-tint px-3 py-2 text-[12.5px] leading-relaxed text-ink'
+                        : 'max-w-[88%] rounded-panel rounded-bl-sm border border-line bg-panel px-3 py-2 text-[12.5px] leading-relaxed text-ink-title'
                     }
                   >
                     {m.role === 'user' ? m.content : <RichText text={m.content} />}
                     {m.role === 'assistant' && m.action && (
-                      <div className="mt-2 rounded-lg border border-[#8aa2ff]/30 bg-blue-tint/60 p-2.5">
+                      <div className="mt-2 rounded-cell border border-pending/30 bg-blue-tint/60 p-2.5">
                         {(m.actionStatus === 'proposed' || m.actionStatus === 'running' || m.actionStatus === 'failed') && (
                           <>
                             <div className="flex items-center gap-1.5">
-                              <Plus size={12} className="text-[#8aa2ff]" />
+                              <Plus size={12} className="text-pending" />
                               <span className="text-[11.5px] font-semibold text-ink-title">
                                 {ACTION_LABEL[m.action.type]}: {m.action.symbol}
                                 {m.action.type === 'log_trade' && m.action.notional ? ` - $${m.action.notional.toLocaleString()}` : ''}
@@ -575,13 +575,13 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                             {m.action.type === 'add_portfolio' && (
                               <div className="mt-1.5 flex items-center gap-1.5">
                                 <label className="text-[9px] uppercase tracking-wide text-ink-dim">Qty</label>
-                                <input type="number" min={1} defaultValue={m.qty ?? 10} onChange={(e) => { const v = Math.max(1, Number(e.target.value) || 1); setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, qty: v } : x))); }} className="min-h-[44px] w-16 rounded border border-line-strong bg-panel px-1.5 py-2 font-mono text-[11px] text-ink-title outline-none" />
+                                <input type="number" min={1} defaultValue={m.qty ?? 10} onChange={(e) => { const v = Math.max(1, Number(e.target.value) || 1); setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, qty: v } : x))); }} className="min-h-[44px] w-16 rounded-cell border border-line-strong bg-panel px-1.5 py-2 font-mono text-[11px] text-ink-title outline-none" />
                                 <label className="text-[9px] uppercase tracking-wide text-ink-dim">Buy $</label>
-                                <input type="number" min={0} step="0.01" placeholder="price" onChange={(e) => { const v = Number(e.target.value) || 0; setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, price: v } : x))); }} className="min-h-[44px] w-20 rounded border border-line-strong bg-panel px-1.5 py-2 font-mono text-[11px] text-ink-title outline-none" />
+                                <input type="number" min={0} step="0.01" placeholder="price" onChange={(e) => { const v = Number(e.target.value) || 0; setMessages((mm) => mm.map((x, j) => (j === i ? { ...x, price: v } : x))); }} className="min-h-[44px] w-20 rounded-cell border border-line-strong bg-panel px-1.5 py-2 font-mono text-[11px] text-ink-title outline-none" />
                               </div>
                             )}
                             <p className="mt-1 text-[9px] leading-snug text-ink-dim">You confirm; Lyra never acts on its own. Reversible - you can undo it.</p>
-                            <button type="button" onClick={() => runAction(i)} disabled={m.actionStatus === 'running'} className="mt-1.5 inline-flex items-center gap-1.5 rounded-md border border-[#8aa2ff]/40 bg-blue-tint px-2.5 py-1 text-[11px] font-semibold text-[#8aa2ff] transition hover:bg-blue-deep/25 disabled:opacity-50">
+                            <button type="button" onClick={() => runAction(i)} disabled={m.actionStatus === 'running'} className="mt-1.5 inline-flex items-center gap-1.5 rounded-cell border border-pending/40 bg-blue-tint px-2.5 py-1 text-[11px] font-semibold text-pending transition hover:bg-blue-deep/25 disabled:opacity-50">
                               {m.actionStatus === 'running' ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Confirm
                             </button>
                             {m.actionStatus === 'failed' && <span className="ml-2 text-[10px] text-negative-soft">Didn&apos;t go through - try again.</span>}
@@ -623,7 +623,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
 
               {status === 'sending' && (
                 <div className="flex justify-start">
-                  <div className="inline-flex items-center gap-2 rounded-2xl rounded-bl-sm border border-line bg-panel px-3 py-2 text-[12px] text-ink-3">
+                  <div className="inline-flex items-center gap-2 rounded-panel rounded-bl-sm border border-line bg-panel px-3 py-2 text-[12px] text-ink-3">
                     <Loader2 size={13} className="animate-spin" /> Lyra is reading your dashboard…
                   </div>
                 </div>
@@ -642,7 +642,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                       key={s}
                       type="button"
                       onClick={() => send(s)}
-                      className="flex w-full items-center justify-between gap-2 rounded-lg border border-line bg-panel px-3 py-2 text-left text-[12px] text-ink-title transition hover:border-[#8aa2ff]/40 hover:bg-blue-tint"
+                      className="flex w-full items-center justify-between gap-2 rounded-cell border border-line bg-panel px-3 py-2 text-left text-[12px] text-ink-title transition hover:border-pending/40 hover:bg-blue-tint"
                     >
                       <span>{s}</span>
                       <ArrowUpRight size={13} className="shrink-0 text-ink-dim" />
@@ -653,7 +653,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
             </div>
 
             {/* Composer */}
-            <div className="border-t border-white/10 px-3 py-2.5">
+            <div className="border-t border-line px-3 py-2.5">
               <div className="flex items-end gap-2">
                 <textarea
                   value={input}
@@ -666,14 +666,14 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                   }}
                   rows={1}
                   placeholder="Ask about your book, signals, catalysts…"
-                  className="max-h-28 min-h-[44px] flex-1 resize-none rounded-xl border border-line-strong bg-panel px-3 py-2 text-[13px] leading-snug text-ink-title placeholder:text-ink-dim outline-none focus:border-blue-focus/60"
+                  className="max-h-28 min-h-[44px] flex-1 resize-none rounded-cell border border-line-strong bg-panel px-3 py-2 text-[13px] leading-snug text-ink-title placeholder:text-ink-dim outline-none focus:border-blue-focus/60"
                 />
                 <button
                   type="button"
                   onClick={() => send(input)}
                   disabled={!input.trim() || status === 'sending'}
                   aria-label="Send"
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#8aa2ff]/40 bg-blue-tint text-[#8aa2ff] transition hover:bg-blue-deep/25 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-cell border border-pending/40 bg-blue-tint text-pending transition hover:bg-blue-deep/25 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {status === 'sending' ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                 </button>

@@ -15,10 +15,10 @@ const ACTION_META: Record<ActionState, { label: string; tone: 'good' | 'warn' | 
 };
 
 const TONE_CLASS: Record<'good' | 'warn' | 'bad' | 'neutral', string> = {
-  good: 'border-[#1f5132] bg-[#0f2417] text-[#5fd08a]',
-  warn: 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]',
-  bad: 'border-[#7a2630] bg-[#260f12] text-[#f0758a]',
-  neutral: 'border-[#263241] bg-[#0d141c] text-[#a8b5c2]',
+  good: 'border-positive/40 bg-positive-tint text-positive',
+  warn: 'border-accent-border bg-accent-tint text-accent',
+  bad: 'border-negative/50 bg-negative/10 text-negative-soft',
+  neutral: 'border-line-strong bg-panel text-ink-2',
 };
 
 // max points per component in the momentum-recovery_v1 model (sums to 100).
@@ -60,20 +60,20 @@ export function HoldingSetupSlide({ signal, ticker }: HoldingSetupSlideProps) {
   ].slice(0, 3);
 
   return (
-    <div className="flex h-full flex-col gap-2.5 rounded border border-[#1b2530] bg-[#0d1117] p-3">
+    <div className="flex h-full flex-col gap-2.5 rounded-cell border border-line bg-panel-deep p-3">
       {/* Action + score header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className={`rounded border px-2 py-0.5 font-mono text-[11px] font-semibold ${TONE_CLASS[action.tone]}`}>
           {action.label}
         </span>
-        <span className="font-mono text-[11px] text-[#8190a0]">
-          Setup <span className="text-sm font-semibold text-[#eef3f8]">{signal.score}</span>/100{' '}
+        <span className="font-mono text-[11px] text-ink-3">
+          Setup <span className="text-sm font-semibold text-ink">{signal.score}</span>/100{' '}
           <span className={toneClass(signal.scoreDelta)}>{formatSignedNumber(signal.scoreDelta, 0)}</span>
         </span>
       </div>
 
       {ticker ? (
-        <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-[#5f6b78]">
+        <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-dim">
           {ticker.sector} · {ticker.industry} · {signal.lifecycleState.replaceAll('_', ' ')}
         </p>
       ) : null}
@@ -81,9 +81,9 @@ export function HoldingSetupSlide({ signal, ticker }: HoldingSetupSlideProps) {
       {/* Real metric values (match the live chart) */}
       <div className="grid grid-cols-3 gap-1.5 font-mono sm:grid-cols-5">
         {metrics.map((metric) => (
-          <div key={metric.label} className="rounded border border-[#1b2530] bg-[#0d141c] px-1.5 py-1">
-            <p className="text-[9px] uppercase tracking-wide text-[#5f6b78]">{metric.label}</p>
-            <p className="mt-0.5 text-[11px] text-[#dbe5ee]">{metric.value}</p>
+          <div key={metric.label} className="rounded-cell border border-line bg-panel px-1.5 py-1">
+            <p className="text-[9px] uppercase tracking-wide text-ink-dim">{metric.label}</p>
+            <p className="mt-0.5 text-[11px] text-ink-title">{metric.value}</p>
           </div>
         ))}
       </div>
@@ -95,11 +95,11 @@ export function HoldingSetupSlide({ signal, ticker }: HoldingSetupSlideProps) {
           const pct = Math.min(100, (Math.max(0, value) / entry.max) * 100);
           return (
             <div key={entry.key} className="flex items-center gap-2">
-              <span className="w-12 shrink-0 font-mono text-[10px] text-[#8190a0]">{entry.label}</span>
-              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#161e27]">
-                <span className="block h-full rounded-full bg-[#f3a33a]" style={{ width: `${pct}%` }} />
+              <span className="w-12 shrink-0 font-mono text-[10px] text-ink-3">{entry.label}</span>
+              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line/70">
+                <span className="block h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
               </span>
-              <span className="w-10 shrink-0 text-right font-mono text-[10px] text-[#a8b5c2]">
+              <span className="w-10 shrink-0 text-right font-mono text-[10px] text-ink-2">
                 {Math.round(value)}/{entry.max}
               </span>
             </div>
@@ -110,11 +110,11 @@ export function HoldingSetupSlide({ signal, ticker }: HoldingSetupSlideProps) {
       {/* Why this setup */}
       {triggered.length > 0 ? (
         <div>
-          <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#5fd08a]">Why this setup</p>
+          <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-positive">Why this setup</p>
           <ul className="space-y-0.5">
             {triggered.map((reason) => (
-              <li key={reason} className="flex gap-1.5 text-[11px] leading-snug text-[#cdd8e3]">
-                <span className="text-[#5fd08a]">▸</span>
+              <li key={reason} className="flex gap-1.5 text-[11px] leading-snug text-ink-title">
+                <span className="text-positive">▸</span>
                 <span>{reason}</span>
               </li>
             ))}
@@ -125,11 +125,11 @@ export function HoldingSetupSlide({ signal, ticker }: HoldingSetupSlideProps) {
       {/* Still needs / risks */}
       {watchItems.length > 0 ? (
         <div>
-          <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#f3a33a]">Watch / risks</p>
+          <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.12em] text-accent">Watch / risks</p>
           <ul className="space-y-0.5">
             {watchItems.map((note) => (
-              <li key={note} className="flex gap-1.5 text-[11px] leading-snug text-[#a8b5c2]">
-                <span className="text-[#f3a33a]">!</span>
+              <li key={note} className="flex gap-1.5 text-[11px] leading-snug text-ink-2">
+                <span className="text-accent">!</span>
                 <span>{note}</span>
               </li>
             ))}

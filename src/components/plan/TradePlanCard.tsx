@@ -64,13 +64,13 @@ const FLAG_META: Record<TradePlanFlag, { label: string; tone: 'danger' | 'warn' 
 };
 
 const toneClass: Record<'danger' | 'warn' | 'info', string> = {
-  danger: 'border-[#5c2530] bg-[#2a141a] text-[#f0758a]',
-  warn: 'border-[#5c4a25] bg-[#2a2414] text-[#f3a33a]',
-  info: 'border-[#25405c] bg-[#14202a] text-[#7fb0ff]',
+  danger: 'border-negative-soft/40 bg-negative/10 text-negative-soft',
+  warn: 'border-accent-border/60 bg-accent-tint/60 text-accent',
+  info: 'border-blue-focus/40 bg-blue-tint/60 text-blue-info',
 };
 
-const labelCls = 'text-[11px] uppercase tracking-[0.14em] text-[#8190a0]';
-const inputCls = 'mt-1 w-full rounded border border-[#263241] bg-[#0d141c] px-2 py-1 font-mono text-sm text-[#eef3f8] focus:border-[#3a4c60] focus:outline-none';
+const labelCls = 'text-[11px] uppercase tracking-[0.14em] text-ink-3';
+const inputCls = 'mt-1 min-h-[44px] w-full rounded-cell border border-line-strong bg-panel px-2 py-1 font-mono text-sm text-ink focus:border-blue-focus focus:outline-none sm:min-h-0';
 
 export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defaultMaxPositionPct, crossCurrencyDefault, hasCapitalOnFile, openPositionsValue, soloMode = false }: Props) {
   const sorted = useMemo(() => [...symbols].sort((a, b) => a.symbol.localeCompare(b.symbol)), [symbols]);
@@ -196,15 +196,15 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-lg font-semibold text-[#eef3f8]">Trade Plan</h1>
-        <p className="mt-1 text-xs text-[#8190a0]">
+        <h1 className="text-lg font-semibold text-ink">Trade Plan</h1>
+        <p className="mt-1 text-xs text-ink-3">
           Sizing, cost, and expectancy for one name against your real capital. Research only - this is math from your own
           numbers, never a recommendation to place a trade.
         </p>
       </div>
 
       {soloMode && activeCurrency !== 'USD' && (
-        <div className="rounded border border-[#25405c] bg-[#14202a] px-3 py-2 text-xs text-[#7fb0ff]">
+        <div className="rounded-cell border border-blue-focus/40 bg-blue-tint/60 px-3 py-2 text-xs text-blue-info">
           These radar names are USD-quoted. Enter an {activeCurrency}-converted
           entry price before sizing. Lyra includes estimated FX friction but
           does not fetch or assume an exchange rate.
@@ -212,7 +212,7 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
       )}
 
       {!capitalOnFile && (
-        <div className="rounded border border-[#25405c] bg-[#14202a] px-3 py-2 text-xs text-[#7fb0ff]">
+        <div className="rounded-cell border border-blue-focus/40 bg-blue-tint/60 px-3 py-2 text-xs text-blue-info">
           No account capital is on file, so this starts from a {formatCurrency(defaultAccountSize, activeCurrency)} example.
           Set your available cash in settings and the plan will size against your real balance.
         </div>
@@ -220,8 +220,8 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Inputs */}
-        <div className="terminal-panel overflow-hidden rounded-md">
-          <div className="border-b border-[#1b2530] px-3 py-3 text-sm font-semibold text-[#eef3f8]">Your inputs</div>
+        <div className="terminal-panel overflow-hidden rounded-panel">
+          <div className="border-b border-line px-3 py-3 text-sm font-semibold text-ink">Your inputs</div>
           <div className="space-y-3 px-3 py-3">
             <div>
               <label className={labelCls}>Symbol</label>
@@ -265,11 +265,11 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
               </div>
             </div>
             <div className="flex flex-wrap gap-4 pt-1">
-              <label className="flex items-center gap-2 text-xs text-[#c3ccd6]">
+              <label className="flex items-center gap-2 text-xs text-ink-2">
                 <input type="checkbox" checked={wholeShares} onChange={(e) => setWholeShares(e.target.checked)} />
                 Whole shares only
               </label>
-              <label className="flex items-center gap-2 text-xs text-[#c3ccd6]">
+              <label className="flex items-center gap-2 text-xs text-ink-2">
                 <input type="checkbox" checked={crossCurrency} onChange={(e) => setCrossCurrency(e.target.checked)} />
                 Cross-currency (FX cost)
               </label>
@@ -278,15 +278,15 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
         </div>
 
         {/* Plan */}
-        <div className="terminal-panel overflow-hidden rounded-md">
-          <div className="flex items-center justify-between border-b border-[#1b2530] px-3 py-3">
-            <span className="text-sm font-semibold text-[#eef3f8]">Plan for {plan.symbol}</span>
-            <button onClick={copyTicket} className="rounded border border-[#263241] px-2 py-1 text-[11px] uppercase tracking-[0.12em] text-[#c3ccd6] hover:border-[#3a4c60]">
+        <div className="terminal-panel overflow-hidden rounded-panel">
+          <div className="flex items-center justify-between border-b border-line px-3 py-3">
+            <span className="text-sm font-semibold text-ink">Plan for {plan.symbol}</span>
+            <button onClick={copyTicket} className="min-h-[44px] rounded-cell border border-line-strong px-2 py-1 text-[11px] uppercase tracking-[0.12em] text-ink-2 hover:border-line-hair sm:min-h-0">
               {copied ? 'Copied' : 'Copy ticket'}
             </button>
           </div>
           {planReady ? (
-            <div className="space-y-2 px-3 py-3 font-mono text-sm text-[#eef3f8]">
+            <div className="space-y-2 px-3 py-3 font-mono text-sm tabular-nums text-ink">
             <Row label="Size" value={plan.shares > 0 ? `${plan.shares} sh = ${cur(plan.positionValue)} (${plan.positionPctOfAccount}%)` : 'below one whole share'} />
             <Row label="Risk budget" value={`${cur(plan.riskDollars)} (${plan.riskPercentPerTrade}%)`} />
             <Row label="Worst case (stop hit)" value={cur(plan.worstCaseLossDollars)} tone={plan.worstCaseLossDollars !== null ? 'danger' : undefined} />
@@ -298,12 +298,12 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
                 tone={plan.flags.includes('portfolio-heat-high') || plan.flags.includes('theme-concentration') ? 'warn' : undefined}
               />
             )}
-            <div className="my-2 border-t border-[#1b2530]" />
+            <div className="my-2 border-t border-line" />
             <Row label="Round-trip cost" value={`${cur(plan.cost.roundTripCost)} (${plan.cost.breakEvenMovePct}% to break even)`} tone={plan.cost.breakEvenMovePct > 2 ? 'warn' : undefined} />
             <Row label="  commission / fx / slip" value={`${cur(plan.cost.commission)} / ${cur(plan.cost.fx)} / ${cur(plan.cost.slippage)}`} muted />
             {plan.expectancy && (
               <>
-                <div className="my-2 border-t border-[#1b2530]" />
+                <div className="my-2 border-t border-line" />
                 <Row
                   label={`Expectancy (${plan.provenance})`}
                   value={`${plan.expectancy.expectedValuePct}% gross · ${plan.expectancyNetPct}% net`}
@@ -314,10 +314,10 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
             </div>
           ) : (
             <div className="px-3 py-6 text-center">
-              <p className="text-sm font-semibold text-[#dbe5ee]">
+              <p className="text-sm font-semibold text-ink-title">
                 Enter a positive {activeCurrency} entry price
               </p>
-              <p className="mt-1 text-xs text-[#8190a0]">
+              <p className="mt-1 text-xs text-ink-3">
                 Lyra will calculate the size, costs, and risk only after the
                 currency-adjusted input is complete.
               </p>
@@ -337,17 +337,17 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
       )}
 
       {planReady && plan.notes.length > 0 && (
-        <ul className="space-y-1 rounded border border-[#1b2530] bg-[#0d141c] px-3 py-3 text-xs text-[#c3ccd6]">
+        <ul className="space-y-1 rounded-cell border border-line bg-panel px-3 py-3 text-xs text-ink-2">
           {plan.notes.map((n, i) => (
             <li key={i} className="flex gap-2">
-              <span className="text-[#8190a0]">-</span>
+              <span className="text-ink-3">-</span>
               <span>{n}</span>
             </li>
           ))}
         </ul>
       )}
 
-      <p className="border-t border-[#1b2530] pt-3 text-[11px] uppercase tracking-[0.14em] text-[#8190a0]">
+      <p className="border-t border-line pt-3 text-[11px] uppercase tracking-[0.14em] text-ink-3">
         Deterministic sizing and cost math - research only, not financial advice
       </p>
     </div>
@@ -356,10 +356,10 @@ export function TradePlanCard({ symbols, defaultAccountSize, baseCurrency, defau
 
 function Row({ label, value, tone, muted }: { label: string; value: string; tone?: 'danger' | 'good' | 'warn'; muted?: boolean }) {
   const valueColor =
-    tone === 'danger' ? 'text-[#f0758a]' : tone === 'good' ? 'text-[#43d18b]' : tone === 'warn' ? 'text-[#f3a33a]' : muted ? 'text-[#8190a0]' : 'text-[#eef3f8]';
+    tone === 'danger' ? 'text-negative-soft' : tone === 'good' ? 'text-positive' : tone === 'warn' ? 'text-accent' : muted ? 'text-ink-3' : 'text-ink';
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <span className="text-[11px] uppercase tracking-[0.12em] text-[#8190a0]">{label}</span>
+      <span className="text-[11px] uppercase tracking-[0.12em] text-ink-3">{label}</span>
       <span className={`text-right ${valueColor}`}>{value}</span>
     </div>
   );

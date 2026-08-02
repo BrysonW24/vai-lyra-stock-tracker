@@ -84,10 +84,10 @@ export function OnboardingShell({
   }, [currentStep]);
 
   return (
-    <div className="min-h-screen text-[#eef3f8]">
+    <div className="min-h-screen text-ink">
       {/* Header */}
       <header
-        className="glass-chrome sticky top-0 z-20 border-b border-[#1b2530]"
+        className="glass-chrome sticky top-0 z-20 border-b border-line"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="flex h-14 items-center justify-between px-3 md:px-5">
@@ -95,7 +95,7 @@ export function OnboardingShell({
             {canGoBack && (
               <button
                 onClick={onBack}
-                className="grid h-9 w-9 place-items-center rounded text-[#8190a0] transition hover:bg-[#151c25] hover:text-[#eef3f8]"
+                className="grid h-11 w-11 place-items-center rounded-cell text-ink-3 transition hover:bg-panel hover:text-ink"
                 title="Go back"
                 type="button"
               >
@@ -103,7 +103,7 @@ export function OnboardingShell({
               </button>
             )}
             <BrandLogo size={24} showWordmark />
-            <span className="ml-1 hidden font-mono text-[11px] uppercase tracking-[0.16em] text-[#8190a0] sm:inline">
+            <span className="ml-1 hidden font-mono text-[11px] uppercase tracking-[0.16em] text-ink-3 sm:inline">
               Setup · {safeNumber}/{totalSteps}
             </span>
           </div>
@@ -111,9 +111,9 @@ export function OnboardingShell({
         </div>
 
         {/* Progress bar */}
-        <div className="h-0.5 bg-[#0d141c]">
+        <div className="h-0.5 bg-panel">
           <div
-            className="h-full bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] transition-all duration-500"
+            className="h-full bg-gradient-to-r from-blue-deep via-positive to-accent transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -137,7 +137,7 @@ export function OnboardingShell({
                 <span
                   key={i}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                    i < safeNumber ? 'w-6 bg-[#f3a33a]' : 'w-1.5 bg-[#263241]'
+                    i < safeNumber ? 'w-6 bg-accent' : 'w-1.5 bg-line-strong'
                   }`}
                 />
               ))}
@@ -148,13 +148,13 @@ export function OnboardingShell({
             <div className="space-y-3 md:space-y-4">{children}</div>
 
             {/* Footer: Back only - onboarding is mandatory, there is no skip. */}
-            <div className="flex items-center justify-between gap-3 border-t border-[#1b2530] pt-3 md:pt-4">
+            <div className="flex items-center justify-between gap-3 border-t border-line pt-3 md:pt-4">
               <button
                 onClick={onBack}
                 disabled={!canGoBack}
                 type="button"
-                className={`inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.12em] transition ${
-                  canGoBack ? 'text-[#a8b5c2] hover:text-[#eef3f8]' : 'cursor-not-allowed text-[#3a4754]'
+                className={`inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold uppercase tracking-[0.12em] transition ${
+                  canGoBack ? 'text-ink-2 hover:text-ink' : 'cursor-not-allowed text-ink-dim'
                 }`}
               >
                 <ChevronLeft size={14} /> Back
@@ -166,8 +166,8 @@ export function OnboardingShell({
           {/* Right column: visual */}
           {visual && (
             <div
-              className={`terminal-panel items-center justify-center overflow-hidden lg:order-none lg:flex lg:h-auto lg:min-h-[420px] lg:rounded-2xl lg:p-6 ${
-                mobileVisual ? 'order-first flex h-[120px] rounded-xl p-2' : 'hidden'
+              className={`terminal-panel items-center justify-center overflow-hidden lg:order-none lg:flex lg:h-auto lg:min-h-[420px] lg:rounded-panel lg:p-6 ${
+                mobileVisual ? 'order-first flex h-[120px] rounded-panel p-2' : 'hidden'
               }`}
             >
               {visual}

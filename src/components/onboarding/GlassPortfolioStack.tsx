@@ -6,10 +6,12 @@
  */
 
 export function GlassPortfolioStack() {
+  // Per-card identity colours are design tokens, resolved via CSS variables (applied
+  // through style props because SVG presentation attributes cannot carry var()).
   const holdings = [
-    { symbol: 'NVDA', value: 12000, color: '#60a5fa' },
-    { symbol: 'AMD', value: 5000, color: '#f3a33a' },
-    { symbol: 'MSFT', value: 8500, color: '#43d18b' },
+    { symbol: 'NVDA', value: 12000, color: 'var(--lyra-blue-focus)' },
+    { symbol: 'AMD', value: 5000, color: 'var(--lyra-accent)' },
+    { symbol: 'MSFT', value: 8500, color: 'var(--lyra-positive)' },
   ];
 
   return (
@@ -41,8 +43,8 @@ export function GlassPortfolioStack() {
                 width={cardWidth}
                 height="35"
                 rx="4"
-                fill="#0d141c"
-                stroke={holding.color}
+                className="fill-panel"
+                style={{ stroke: holding.color }}
                 strokeWidth="1"
                 opacity={opacity}
                 filter="url(#stackGlow)"
@@ -55,7 +57,7 @@ export function GlassPortfolioStack() {
                 width="4"
                 height="35"
                 rx="4"
-                fill={holding.color}
+                style={{ fill: holding.color }}
                 opacity={opacity}
               />
 
@@ -64,7 +66,7 @@ export function GlassPortfolioStack() {
                 x={cardX + 12}
                 y={73 + yOffset}
                 fontSize="12"
-                fill="#eef3f8"
+                className="fill-ink"
                 fontWeight="bold"
                 fontFamily="monospace"
               >
@@ -77,7 +79,7 @@ export function GlassPortfolioStack() {
                 y={73 + yOffset}
                 textAnchor="end"
                 fontSize="11"
-                fill={holding.color}
+                style={{ fill: holding.color }}
                 fontWeight="bold"
                 fontFamily="monospace"
               >
@@ -91,7 +93,7 @@ export function GlassPortfolioStack() {
                 width={cardWidth - 24}
                 height="3"
                 rx="1.5"
-                fill="#263241"
+                className="fill-line-strong"
               />
               <rect
                 x={cardX + 12}
@@ -99,7 +101,7 @@ export function GlassPortfolioStack() {
                 width={(cardWidth - 24) * (holdings.length - idx) / holdings.length}
                 height="3"
                 rx="1.5"
-                fill={holding.color}
+                style={{ fill: holding.color }}
                 opacity={opacity}
               />
             </g>
@@ -107,7 +109,7 @@ export function GlassPortfolioStack() {
         })}
 
         {/* Title */}
-        <text x="150" y="30" textAnchor="middle" fontSize="14" fill="#dbe5ee" fontWeight="bold">
+        <text x="150" y="30" textAnchor="middle" fontSize="14" className="fill-ink-title" fontWeight="bold">
           Portfolio holdings
         </text>
       </svg>

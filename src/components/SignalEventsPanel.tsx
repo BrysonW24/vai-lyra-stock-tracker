@@ -18,9 +18,9 @@ import {
 import { formatSignedNumber, formatSignedPercent } from '@/lib/format';
 
 const TONE_CHIP: Record<'pos' | 'neg' | 'warn', string> = {
-  pos: 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]',
-  neg: 'border-[#7f1d1d] bg-[#2b1214] text-[#ff6b6b]',
-  warn: 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]',
+  pos: 'border-positive/40 bg-positive-tint text-positive',
+  neg: 'border-negative/50 bg-negative/10 text-negative',
+  warn: 'border-accent-border bg-accent-tint text-accent',
 };
 
 function ageLabel(hours: number): string {
@@ -61,51 +61,51 @@ export function SignalEventsPanel({ signals }: { signals: SignalRow[] }) {
   }, [signals]);
 
   return (
-    <section className="terminal-panel overflow-hidden rounded-md">
-      <div className="flex items-center justify-between gap-2 border-b border-[#1b2530] px-3 py-2">
+    <section className="terminal-panel overflow-hidden rounded-panel">
+      <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
         <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-[#263241] bg-[#0d141c] text-[#a78bfa]">
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-cell border border-line-strong bg-panel text-pending">
             <Zap size={14} />
           </span>
           <div>
-            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8190a0]">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-3">
               Signals
               <span className="relative flex h-1.5 w-1.5" title="Listening for MACD crosses, RSI zone breaks and band breaks">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#43d18b] opacity-60" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#43d18b]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-positive" />
               </span>
-              <span className="font-mono text-[8px] tracking-[0.14em] text-[#43d18b]">listening</span>
+              <span className="font-mono text-[8px] tracking-[0.14em] text-positive">listening</span>
             </p>
-            <p className="mt-0.5 text-[11px] leading-snug text-[#a8b5c2]">
+            <p className="mt-0.5 text-[11px] leading-snug text-ink-2">
               Major events pin here for 24h, then we track the story that follows.
             </p>
           </div>
         </div>
-        <span className="shrink-0 font-mono text-[10px] text-[#8190a0]">{stories.length} active</span>
+        <span className="shrink-0 font-mono text-[10px] text-ink-3">{stories.length} active</span>
       </div>
 
       {stories.length === 0 ? (
         <div className="px-3 py-2.5">
-          <p className="text-[11px] leading-snug text-[#8190a0]">
+          <p className="text-[11px] leading-snug text-ink-3">
             No major events in the last 24h.
             {watching ? (
               <>
                 {' '}Closest to triggering:{' '}
-                <span className="font-mono text-[#dbe5ee]">{watching.lowestRsi.symbol}</span> RSI{' '}
+                <span className="font-mono text-ink-title">{watching.lowestRsi.symbol}</span> RSI{' '}
                 {Math.round(watching.lowestRsi.rsi)} ({Math.max(0, Math.round(watching.lowestRsi.rsi - RSI_OVERSOLD))} from
                 oversold) ·{' '}
-                <span className="font-mono text-[#dbe5ee]">{watching.nearestCross.symbol}</span> MACD hist{' '}
+                <span className="font-mono text-ink-title">{watching.nearestCross.symbol}</span> MACD hist{' '}
                 {watching.nearestCross.macdHistogram.toFixed(2)} (nearest a cross).
               </>
             ) : null}
           </p>
         </div>
       ) : (
-        <div className="divide-y divide-[#141c25]">
+        <div className="divide-y divide-line/70">
           {stories.map((story) => {
             const signal = bySymbol.get(story.symbol);
             return (
-              <div key={story.id} className="px-3 py-2 transition hover:bg-[#101720]">
+              <div key={story.id} className="px-3 py-2 transition hover:bg-line/30">
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -113,15 +113,15 @@ export function SignalEventsPanel({ signals }: { signals: SignalRow[] }) {
                     className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 text-left"
                   >
                     <TickerLogo symbol={story.symbol} companyName={story.companyName} size={13} />
-                    <span className="font-mono text-[12px] font-semibold text-[#eef3f8]">{story.symbol}</span>
+                    <span className="font-mono text-[12px] font-semibold text-ink">{story.symbol}</span>
                     <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.1em] ${TONE_CHIP[story.meta.tone]}`}>
                       {story.meta.chip}
                     </span>
                     <span
                       className={`rounded border px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] ${
                         story.confirming
-                          ? 'border-[#1d4f3a] bg-[#0d251b] text-[#43d18b]'
-                          : 'border-[#9a6a1f] bg-[#2a1f0f] text-[#f3a33a]'
+                          ? 'border-positive/40 bg-positive-tint text-positive'
+                          : 'border-accent-border bg-accent-tint text-accent'
                       }`}
                     >
                       {story.confirming ? 'Confirming' : 'Diverging'}
@@ -134,10 +134,10 @@ export function SignalEventsPanel({ signals }: { signals: SignalRow[] }) {
                   onClick={() => signal && setSelected(signal)}
                   className="mt-1 block w-full text-left"
                 >
-                  <p className="text-[11px] leading-snug text-[#a8b5c2]">{story.meta.behaviour}</p>
-                  <p className="mt-0.5 font-mono text-[10px] text-[#8190a0]">
+                  <p className="text-[11px] leading-snug text-ink-2">{story.meta.behaviour}</p>
+                  <p className="mt-0.5 font-mono text-[10px] text-ink-3">
                     Since the event:{' '}
-                    <span className={story.priceMovePct >= 0 ? 'text-[#43d18b]' : 'text-[#ff6b6b]'}>
+                    <span className={story.priceMovePct >= 0 ? 'text-positive' : 'text-negative'}>
                       {formatSignedPercent(story.priceMovePct)}
                     </span>{' '}
                     price · score {formatSignedNumber(story.scoreMove, 0)} · {ageLabel(story.ageHours)} ago · {Math.ceil(story.hoursRemaining)}h left
@@ -149,7 +149,7 @@ export function SignalEventsPanel({ signals }: { signals: SignalRow[] }) {
         </div>
       )}
 
-      <p className="border-t border-[#1b2530] px-3 py-1.5 font-mono text-[10px] text-[#5e6b78]">
+      <p className="border-t border-line px-3 py-1.5 font-mono text-[10px] text-ink-dim">
         Deterministic event detection, unit-tested. Research timing context - never a buy/sell instruction.
       </p>
       <SignalDrawer signal={selected} onClose={() => setSelected(null)} />

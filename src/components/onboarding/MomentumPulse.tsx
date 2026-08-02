@@ -18,18 +18,21 @@ export function MomentumPulse() {
     <div className="relative h-full w-full overflow-hidden rounded-[inherit]">
       <svg viewBox="0 0 360 120" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
         <defs>
+          {/* Base colours are design tokens (stopColor resolves the CSS variables); the lightened
+              scan-tip and "now"-node highlights below stay artistic per TOKENS.md's glass-visual
+              allowance. */}
           <linearGradient id="mpLine" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#60a5fa" />
-            <stop offset="55%" stopColor="#43d18b" />
-            <stop offset="100%" stopColor="#f3a33a" />
+            <stop offset="0%" style={{ stopColor: 'var(--lyra-blue-focus)' }} />
+            <stop offset="55%" style={{ stopColor: 'var(--lyra-positive)' }} />
+            <stop offset="100%" style={{ stopColor: 'var(--lyra-accent)' }} />
           </linearGradient>
           <linearGradient id="mpArea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#f3a33a" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#f3a33a" stopOpacity="0" />
+            <stop offset="0%" style={{ stopColor: 'var(--lyra-accent)' }} stopOpacity="0.22" />
+            <stop offset="100%" style={{ stopColor: 'var(--lyra-accent)' }} stopOpacity="0" />
           </linearGradient>
           <linearGradient id="mpScan" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#60a5fa" stopOpacity="0" />
-            <stop offset="70%" stopColor="#60a5fa" stopOpacity="0.10" />
+            <stop offset="0%" style={{ stopColor: 'var(--lyra-blue-focus)' }} stopOpacity="0" />
+            <stop offset="70%" style={{ stopColor: 'var(--lyra-blue-focus)' }} stopOpacity="0.10" />
             <stop offset="100%" stopColor="#cfe3ff" stopOpacity="0.32" />
           </linearGradient>
           <filter id="mpGlow">
@@ -43,19 +46,19 @@ export function MomentumPulse() {
 
         {/* faint grid */}
         {[28, 58, 88].map((y) => (
-          <line key={y} x1="0" y1={y} x2="360" y2={y} stroke="#1b2530" strokeWidth="0.6" opacity="0.5" />
+          <line key={y} x1="0" y1={y} x2="360" y2={y} className="stroke-line" strokeWidth="0.6" opacity="0.5" />
         ))}
 
         <path d={area} fill="url(#mpArea)" />
         <path d={line} fill="none" stroke="url(#mpLine)" strokeWidth="2.4" strokeLinecap="round" filter="url(#mpGlow)" />
 
         {/* static glow nodes sitting on the line */}
-        <circle cx="72" cy="66" r="2.4" fill="#60a5fa" opacity="0.85" />
-        <circle cx="212" cy="63" r="2.4" fill="#43d18b" opacity="0.85" />
+        <circle cx="72" cy="66" r="2.4" className="fill-blue-focus" opacity="0.85" />
+        <circle cx="212" cy="63" r="2.4" className="fill-positive" opacity="0.85" />
 
         {/* pulsing "now" node at the leading edge */}
         <g style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: 'pulseCore 2.4s ease-in-out infinite' }}>
-          <circle cx="344" cy="20" r="6" fill="#f3a33a" opacity="0.35" />
+          <circle cx="344" cy="20" r="6" className="fill-accent" opacity="0.35" />
         </g>
         <circle cx="344" cy="20" r="3" fill="#ffce8a" filter="url(#mpGlow)" />
 

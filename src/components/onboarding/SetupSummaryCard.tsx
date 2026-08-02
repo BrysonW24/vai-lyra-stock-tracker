@@ -59,26 +59,26 @@ export function SetupSummaryCard({ state, onFinish, isSaving }: SetupSummaryCard
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-lg border border-[#263241] bg-[#0d141c]">
-        <div className="divide-y divide-[#1b2530]">
+      <div className="overflow-hidden rounded-cell border border-line-strong bg-panel">
+        <div className="divide-y divide-line">
           {rows.map((r) => (
             <div key={r.label} className="flex items-center justify-between gap-3 px-3 py-2">
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">{r.label}</span>
-              <span className="truncate font-mono text-[12px] text-[#dbe5ee]">{r.value}</span>
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">{r.label}</span>
+              <span className="truncate font-mono text-[12px] tabular-nums text-ink-title">{r.value}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="rounded-lg border border-[#f3a33a]/60 bg-[#1a130a] p-3">
+      <div className="rounded-cell border border-accent/60 bg-accent-tint/60 p-3">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f3a33a]">Setup completeness</span>
-          <span className="font-mono text-base font-bold text-[#f3a33a]">{completeness.percentage}%</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">Setup completeness</span>
+          <span className="font-mono text-base font-bold tabular-nums text-accent">{completeness.percentage}%</span>
         </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full border border-[#263241] bg-[#0d141c]">
-          <div className="h-full bg-gradient-to-r from-[#f3a33a] to-[#f8c46b]" style={{ width: `${completeness.percentage}%` }} />
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full border border-line-strong bg-panel">
+          <div className="h-full bg-gradient-to-r from-accent/70 to-accent" style={{ width: `${completeness.percentage}%` }} />
         </div>
-        <p className="mt-2 text-[11px] leading-snug text-[#a8b5c2]">
+        <p className="mt-2 text-[11px] leading-snug text-ink-2">
           {soloMode
             ? 'Ready to scan. You can add holdings and trade snapshots anytime; Solo shows signal changes when you open the console.'
             : 'Ready to scan. You can add holdings, trade snapshots and tune alerts anytime from the dashboard.'}
@@ -88,9 +88,9 @@ export function SetupSummaryCard({ state, onFinish, isSaving }: SetupSummaryCard
       <button
         onClick={onFinish}
         disabled={isSaving}
-        className="flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110 disabled:opacity-70 disabled:cursor-not-allowed"
+        className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-cell bg-[image:var(--lyra-cta-gradient)] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-white shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110 disabled:opacity-70 disabled:cursor-not-allowed"
       >
-        {isSaving && <Loader2 size={16} className="animate-spin text-[#07090c]" />}
+        {isSaving && <Loader2 size={16} className="animate-spin" />}
         {isSaving ? 'Starting scanner...' : 'Open command centre'}
       </button>
     </div>

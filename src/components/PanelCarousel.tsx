@@ -14,14 +14,14 @@ export interface CarouselSlide {
 // Each tab carries its colour at all times (muted when idle, saturated when active) so
 // Chart / Setup / Intel are instantly distinguishable. Colours are Lyra gradient stops.
 const ACCENT: Record<string, { active: string; idle: string }> = {
-  blue: { active: 'border-[#3b5bdb] bg-[#0d1530] text-[#8aa2ff]', idle: 'border-[#1b2530] bg-[#0d141c] text-[#8aa2ff]/55 hover:text-[#8aa2ff]' },
-  amber: { active: 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]', idle: 'border-[#1b2530] bg-[#0d141c] text-[#f3a33a]/55 hover:text-[#f3a33a]' },
-  green: { active: 'border-[#43d18b] bg-[#0d251b] text-[#43d18b]', idle: 'border-[#1b2530] bg-[#0d141c] text-[#43d18b]/55 hover:text-[#43d18b]' },
-  violet: { active: 'border-[#7c5cff] bg-[#15101f] text-[#a78bfa]', idle: 'border-[#1b2530] bg-[#0d141c] text-[#a78bfa]/55 hover:text-[#a78bfa]' },
+  blue: { active: 'border-blue-deep bg-blue-tint text-pending', idle: 'border-line bg-panel text-pending/55 hover:text-pending' },
+  amber: { active: 'border-accent bg-accent-tint/80 text-accent', idle: 'border-line bg-panel text-accent/55 hover:text-accent' },
+  green: { active: 'border-positive bg-positive-tint text-positive', idle: 'border-line bg-panel text-positive/55 hover:text-positive' },
+  violet: { active: 'border-pending bg-pending/10 text-pending', idle: 'border-line bg-panel text-pending/55 hover:text-pending' },
 };
 const DEFAULT_ACCENT = {
-  active: 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]',
-  idle: 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:border-[#3a4754] hover:text-[#dbe5ee]',
+  active: 'border-accent bg-accent-tint/80 text-accent',
+  idle: 'border-line-strong bg-panel text-ink-3 hover:border-line-hair hover:text-ink-title',
 };
 
 /**
@@ -67,7 +67,7 @@ export function PanelCarousel({ slides }: { slides: CarouselSlide[] }) {
               onClick={() => go(i)}
               aria-pressed={i === index}
               className={[
-                'rounded-md border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] transition',
+                'rounded-cell border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] transition',
                 (ACCENT[slide.color ?? ''] ?? DEFAULT_ACCENT)[i === index ? 'active' : 'idle'],
               ].join(' ')}
             >
@@ -81,7 +81,7 @@ export function PanelCarousel({ slides }: { slides: CarouselSlide[] }) {
             onClick={() => go(index - 1)}
             disabled={index === 0}
             aria-label="Previous panel"
-            className="rounded border border-[#263241] bg-[#0d141c] p-1 text-[#a8b5c2] transition enabled:hover:text-[#eef3f8] disabled:opacity-30"
+            className="rounded-cell border border-line-strong bg-panel p-1 text-ink-2 transition enabled:hover:text-ink disabled:opacity-30"
           >
             <ChevronLeft size={14} />
           </button>
@@ -90,7 +90,7 @@ export function PanelCarousel({ slides }: { slides: CarouselSlide[] }) {
             onClick={() => go(index + 1)}
             disabled={index === last}
             aria-label="Next panel"
-            className="rounded border border-[#263241] bg-[#0d141c] p-1 text-[#a8b5c2] transition enabled:hover:text-[#eef3f8] disabled:opacity-30"
+            className="rounded-cell border border-line-strong bg-panel p-1 text-ink-2 transition enabled:hover:text-ink disabled:opacity-30"
           >
             <ChevronRight size={14} />
           </button>

@@ -84,7 +84,7 @@ export function TickerLookupInput({
     <div className="space-y-1.5">
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5d6b79]" />
+          <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-dim" />
           <input
             value={input}
             onChange={(e) => {
@@ -114,12 +114,12 @@ export function TickerLookupInput({
               }
             }}
             placeholder={placeholder}
-            className="h-9 w-full rounded-md border border-[#263241] bg-[#0d141c] pl-8 pr-3 font-mono text-[13px] text-[#dbe5ee] placeholder:text-[#5d6b79] outline-none focus:border-[#f3a33a]/50"
+            className="h-11 w-full rounded-cell border border-line-strong bg-panel pl-8 pr-3 font-mono text-[13px] text-ink-title placeholder:text-ink-dim outline-none focus:border-accent/50"
           />
 
           {/* Type-ahead suggestions from the scanned universe */}
           {showSuggestions && (
-            <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-md border border-[#2c3a4a] bg-[#0d1117] shadow-2xl ring-1 ring-black/40">
+            <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-cell border border-line-strong bg-panel-deep shadow-2xl ring-1 ring-black/40">
               {suggestions.map((s, i) => (
                 <button
                   key={s.symbol}
@@ -129,12 +129,12 @@ export function TickerLookupInput({
                     submit(s.symbol);
                   }}
                   onMouseEnter={() => setActiveIdx(i)}
-                  className={`flex w-full items-center gap-2.5 px-2.5 py-1.5 text-left transition ${i === activeIdx ? 'bg-[#151c25]' : ''}`}
+                  className={`flex w-full items-center gap-2.5 px-2.5 py-1.5 text-left transition ${i === activeIdx ? 'bg-blue-tint' : ''}`}
                 >
                   <TickerLogo symbol={s.symbol} companyName={s.name} size={20} />
-                  <span className="font-mono text-[13px] font-semibold text-[#eef3f8]">{s.symbol}</span>
-                  <span className="truncate text-[11px] text-[#8190a0]">{s.name}</span>
-                  <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-[#43d18b]" title="Scanned hourly" />
+                  <span className="font-mono text-[13px] font-semibold text-ink">{s.symbol}</span>
+                  <span className="truncate text-[11px] text-ink-3">{s.name}</span>
+                  <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-positive" title="Scanned hourly" />
                 </button>
               ))}
             </div>
@@ -144,18 +144,18 @@ export function TickerLookupInput({
           type="button"
           onClick={() => submit()}
           disabled={loading || !input.trim()}
-          className="inline-flex min-w-[60px] items-center justify-center gap-1.5 rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-3 text-xs font-semibold text-[#07090c] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-w-[60px] items-center justify-center gap-1.5 rounded-cell bg-blue px-3 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? <Loader2 size={13} className="animate-spin" /> : ctaLabel}
         </button>
       </div>
 
       {error ? (
-        <p className="flex items-center gap-1 text-[11px] text-[#ff6b6b]">
+        <p className="flex items-center gap-1 text-[11px] text-negative">
           <X size={12} className="shrink-0" /> {error}
         </p>
       ) : showFetchHint ? (
-        <p className="text-[11px] text-[#5d6b79]">Not in our scanned list - press Add and we&apos;ll fetch it live by exact ticker.</p>
+        <p className="text-[11px] text-ink-dim">Not in our scanned list - press Add and we&apos;ll fetch it live by exact ticker.</p>
       ) : null}
     </div>
   );

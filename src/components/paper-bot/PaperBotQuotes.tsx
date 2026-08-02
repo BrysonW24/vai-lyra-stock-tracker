@@ -8,7 +8,14 @@ interface InvestorQuote {
   author: string;
   title: string;
   avatar: string; // initials
-  color: string;  // accent colour for avatar bg
+  /**
+   * Accent colour for the avatar/dots. LITERAL HEX on purpose: values are composed with alpha
+   * suffixes ("#xxxxxx22"/"33"/"44") and boxShadow strings at render time, which var() cannot do.
+   * Values are byte-copies of blue-deep / positive / accent / pending / negative (+ two decorative
+   * off-palette picks flagged in the P3 note) - a data-driven decorative palette, same accepted
+   * class as the chart palettes (P2 precedent).
+   */
+  color: string;
 }
 
 const QUOTES: InvestorQuote[] = [
@@ -201,12 +208,12 @@ export function PaperBotQuotes() {
   const dotIndex = mounted && order.length ? pos % order.length : 0;
 
   return (
-    <section className="terminal-panel rounded-2xl overflow-hidden">
+    <section className="terminal-panel rounded-panel overflow-hidden">
       {/* Header strip */}
-      <div className="flex items-center gap-2 border-b border-[#111d28] px-4 py-2.5">
-        <Quote size={12} className="text-[#8aa2ff] shrink-0" />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5e6b78]">From the Greats</span>
-        <span className="ml-auto text-[9px] text-[#3a4a5a]">tap to advance</span>
+      <div className="flex items-center gap-2 border-b border-line/70 px-4 py-2.5">
+        <Quote size={12} className="text-pending shrink-0" />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-dim">From the Greats</span>
+        <span className="ml-auto text-[9px] text-ink-dim/80">tap to advance</span>
       </div>
 
       {/* Quote body */}
@@ -224,7 +231,7 @@ export function PaperBotQuotes() {
           &ldquo;
         </div>
 
-        <p className="text-[13px] leading-relaxed text-[#c8d3de] font-medium italic mb-4">
+        <p className="text-[13px] leading-relaxed text-ink-title font-medium italic mb-4">
           &ldquo;{quote.text}&rdquo;
         </p>
 
@@ -232,14 +239,14 @@ export function PaperBotQuotes() {
         <div className="flex items-center gap-3">
           {/* Avatar */}
           <div
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[11px] font-black text-white"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-cell text-[11px] font-black"
             style={{ backgroundColor: `${quote.color}33`, border: `1px solid ${quote.color}44`, color: quote.color }}
           >
             {quote.avatar}
           </div>
           <div>
-            <p className="text-[12px] font-bold text-[#eef3f8]">{quote.author}</p>
-            <p className="text-[10px] text-[#5e6b78]">{quote.title}</p>
+            <p className="text-[12px] font-bold text-ink">{quote.author}</p>
+            <p className="text-[10px] text-ink-dim">{quote.title}</p>
           </div>
           {/* Accent dot */}
           <div
@@ -250,7 +257,7 @@ export function PaperBotQuotes() {
       </button>
 
       {/* Progress dots */}
-      <div className="flex items-center justify-center gap-1.5 border-t border-[#111d28] px-4 py-2.5">
+      <div className="flex items-center justify-center gap-1.5 border-t border-line/70 px-4 py-2.5">
         {Array.from({ length: Math.min(7, QUOTES.length) }).map((_, i) => {
           const isActive = i === dotIndex % 7;
           return (
@@ -259,27 +266,27 @@ export function PaperBotQuotes() {
               className="h-1 rounded-full transition-all duration-500"
               style={{
                 width: isActive ? '16px' : '4px',
-                backgroundColor: isActive ? quote.color : '#1d2733',
+                backgroundColor: isActive ? quote.color : 'var(--lyra-line)',
               }}
             />
           );
         })}
       </div>
 
-      {/* Community teaser */}
-      <div className="border-t border-[#111d28] bg-[#070b10] px-4 py-2.5 flex items-center gap-2">
+      {/* Community teaser. Avatar chips reuse the decorative quote palette (see InvestorQuote.color note) */}
+      <div className="border-t border-line/70 bg-well px-4 py-2.5 flex items-center gap-2">
         <div className="flex -space-x-1.5">
           {['#3b5bdb','#43d18b','#f3a33a','#e879f9'].map((c, i) => (
             <div
               key={i}
-              className="h-5 w-5 rounded-full border border-[#07090c] grid place-items-center text-[7px] font-bold text-white"
+              className="h-5 w-5 rounded-full border border-ground grid place-items-center text-[7px] font-bold text-white"
               style={{ backgroundColor: c }}
             >
               {['JL','SK','AT','MR'][i]}
             </div>
           ))}
         </div>
-        <p className="text-[10px] text-[#3a4a5a] flex-1">Community chat <span className="text-[#8aa2ff]">coming soon</span> - share trades, ideas & conviction</p>
+        <p className="text-[10px] text-ink-dim/80 flex-1">Community chat <span className="text-pending">coming soon</span> - share trades, ideas & conviction</p>
       </div>
     </section>
   );

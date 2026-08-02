@@ -31,10 +31,10 @@ export function HoldingChartCarousel({ candles, points }: { candles: Candle[]; p
             type="button"
             onClick={() => setTab(entry.key)}
             aria-pressed={tab === entry.key}
-            className={`rounded-md border px-2.5 py-1 font-mono text-[11px] transition ${
+            className={`rounded-cell border px-2.5 py-1 font-mono text-[11px] transition ${
               tab === entry.key
-                ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
-                : 'border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:border-[#3a4754]'
+                ? 'border-accent bg-accent-tint/80 text-accent'
+                : 'border-line-strong bg-panel text-ink-2 hover:border-line-hair'
             }`}
           >
             {entry.label}
@@ -49,7 +49,7 @@ export function HoldingChartCarousel({ candles, points }: { candles: Candle[]; p
           title="RSI · momentum"
           subtitle="Relative Strength Index. Below 30 is oversold, above 70 overbought; recovering off a low is an early momentum signal."
           labels={labels}
-          series={[{ label: 'RSI', values: points.map((point) => point.rsi), color: '#60a5fa' }]}
+          series={[{ label: 'RSI', values: points.map((point) => point.rsi), color: '#60a5fa' /* = --lyra-blue-focus; chart series paint, SVG attr */ }]}
           height={150}
         />
       )}

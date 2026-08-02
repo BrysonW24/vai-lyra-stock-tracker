@@ -96,32 +96,32 @@ export function TradeLogView() {
   );
 
   if (logs === null) {
-    return <p className="text-[11px] text-white/40">Loading your trade log...</p>;
+    return <p className="text-[11px] text-ink-3">Loading your trade log...</p>;
   }
 
   return (
     <div className="space-y-2">
       {error && (
-        <div className="rounded border border-rose-500/30 bg-rose-500/10 px-2.5 py-1.5 text-[11px] text-rose-200">{error}</div>
+        <div className="rounded-cell border border-negative/40 bg-negative/10 px-2.5 py-1.5 text-[11px] text-negative-soft">{error}</div>
       )}
 
       {demo && (
-        <div className="rounded border border-amber-400/30 bg-amber-400/10 px-2.5 py-1.5 text-[11px] text-amber-200">
+        <div className="rounded-cell border border-accent-border/60 bg-accent-tint/60 px-2.5 py-1.5 text-[11px] text-accent">
           Solo mode - trades you log stay on this device. No account, nothing leaves this browser.
         </div>
       )}
 
       {logs.length === 0 && (
-        <p className="text-[11px] text-white/40">
+        <p className="text-[11px] text-ink-3">
           No trades logged yet. Tell Lyra in chat, e.g. &ldquo;I bought $5,000 of NVDA&rdquo;, and it appears here with an undo.
         </p>
       )}
 
       {logs.length > 0 && (
-        <div className="overflow-hidden rounded border border-white/5">
-          <table className="w-full border-collapse text-[11px]">
+        <div className="overflow-hidden rounded-cell border border-line/70">
+          <table className="w-full border-collapse text-[11px] tabular-nums">
             <thead>
-              <tr className="bg-white/[0.03] text-[9px] uppercase tracking-[0.12em] text-white/40">
+              <tr className="bg-line/30 text-[9px] uppercase tracking-[0.12em] text-ink-3">
                 <th className="px-2.5 py-1.5 text-left font-medium">When</th>
                 <th className="px-2.5 py-1.5 text-left font-medium">Trade</th>
                 <th className="px-2.5 py-1.5 text-right font-medium">Cash out</th>
@@ -135,21 +135,21 @@ export function TradeLogView() {
                 const when = new Date(log.created_at);
                 const applied = log.status === 'applied';
                 return (
-                  <tr key={log.id} className="border-t border-white/5">
-                    <td className="px-2.5 py-1.5 align-top text-white/50">
+                  <tr key={log.id} className="border-t border-line/70">
+                    <td className="px-2.5 py-1.5 align-top text-ink-3">
                       {when.toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}{' '}
                       {when.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                     </td>
                     <td className="px-2.5 py-1.5 align-top">
-                      <span className="font-mono font-semibold text-white/90">{log.side.toUpperCase()} {log.symbol}</span>
-                      <span className="ml-1 text-white/40">
+                      <span className="font-mono font-semibold text-ink">{log.side.toUpperCase()} {log.symbol}</span>
+                      <span className="ml-1 text-ink-dim">
                         {Math.round(log.quantity_delta * 100) / 100} sh
                       </span>
                     </td>
-                    <td className="px-2.5 py-1.5 text-right align-top font-mono text-white/70">{formatCurrency(log.notional_value)}</td>
-                    <td className="px-2.5 py-1.5 text-right align-top font-mono text-white/50">{formatCurrency(log.fill_price)}</td>
+                    <td className="px-2.5 py-1.5 text-right align-top font-mono text-ink-2">{formatCurrency(log.notional_value)}</td>
+                    <td className="px-2.5 py-1.5 text-right align-top font-mono text-ink-3">{formatCurrency(log.fill_price)}</td>
                     <td className="px-2.5 py-1.5 text-right align-top">
-                      <span className={applied ? 'text-emerald-300/80' : 'text-white/35 line-through'}>{applied ? 'applied' : 'undone'}</span>
+                      <span className={applied ? 'text-positive' : 'text-ink-dim line-through'}>{applied ? 'applied' : 'undone'}</span>
                     </td>
                     <td className="px-2.5 py-1.5 text-right align-top">
                       {applied ? (
@@ -157,12 +157,12 @@ export function TradeLogView() {
                           type="button"
                           onClick={() => undo(log.id)}
                           disabled={busyId === log.id}
-                          className="rounded border border-white/10 px-2 py-0.5 text-[10px] text-white/70 transition hover:border-white/30 hover:text-white disabled:opacity-40"
+                          className="rounded-cell border border-line-strong px-2 py-0.5 text-[10px] text-ink-2 transition hover:border-line-hair hover:text-ink disabled:opacity-40"
                         >
                           {busyId === log.id ? '...' : 'Undo'}
                         </button>
                       ) : (
-                        <span className="text-[10px] text-white/20">-</span>
+                        <span className="text-[10px] text-ink-dim/60">-</span>
                       )}
                     </td>
                   </tr>
@@ -173,7 +173,7 @@ export function TradeLogView() {
         </div>
       )}
 
-      <p className="text-[10px] text-white/30">
+      <p className="text-[10px] text-ink-dim">
         {demo
           ? 'Undo restores the device-local holdings change and any saved Solo cash balance.'
           : 'Undo restores cash and your position.'}{' '}

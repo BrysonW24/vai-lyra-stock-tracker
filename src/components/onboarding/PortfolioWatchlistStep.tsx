@@ -31,14 +31,14 @@ export function PortfolioWatchlistStep({
   return (
     <div className="space-y-4">
       <section>
-        <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#f3a33a]">
+        <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
           <BriefcaseBusiness size={12} /> Your portfolio
         </p>
         <PortfolioBuilderTable portfolio={portfolio} onChange={onChangePortfolio} onNext={noop} hideContinue />
       </section>
 
-      <section className="border-t border-[#1b2530] pt-4">
-        <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#f3a33a]">
+      <section className="border-t border-line pt-4">
+        <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
           <Star size={12} /> Your watchlist
         </p>
         <WatchlistBuilder watchlist={watchlist} onChange={onChangeWatchlist} onNext={noop} hideContinue />
@@ -46,7 +46,7 @@ export function PortfolioWatchlistStep({
 
       <button
         onClick={onNext}
-        className="w-full rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
+        className="min-h-[44px] w-full rounded-cell bg-[image:var(--lyra-cta-gradient)] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-white shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
       >
         Continue
       </button>

@@ -185,8 +185,8 @@ export function OperatorProfileForm({ profile, onChange, onNext }: OperatorProfi
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] leading-snug text-[#a8b5c2]">{subtitle}</p>
-        <span className="shrink-0 font-mono text-[10px] text-[#8190a0]">{answeredCount}/{activeQuestions.length}</span>
+        <p className="text-[11px] leading-snug text-ink-2">{subtitle}</p>
+        <span className="shrink-0 font-mono text-[10px] tabular-nums text-ink-3">{answeredCount}/{activeQuestions.length}</span>
       </div>
 
       <div className="space-y-2">
@@ -194,7 +194,7 @@ export function OperatorProfileForm({ profile, onChange, onNext }: OperatorProfi
           const value = profile[q.key] as string | undefined;
           return (
             <div key={q.key}>
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">{q.prompt}</p>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-3">{q.prompt}</p>
               <div className="flex flex-wrap gap-1.5">
                 {q.options.map((o, oi) => {
                   const selected = value === o.value;
@@ -206,8 +206,8 @@ export function OperatorProfileForm({ profile, onChange, onNext }: OperatorProfi
                       onClick={() => selectOption(q.key, o.value)}
                       aria-pressed={selected}
                       style={selected ? gradientSelectedStyle(t) : undefined}
-                      className={`rounded-md border px-2.5 py-1 text-[12px] leading-tight transition ${
-                        selected ? '' : 'border-[#263241] bg-[#0d141c] text-[#cdd8e3] hover:border-[#3a4754] hover:text-[#eef3f8]'
+                      className={`rounded-cell border px-2.5 py-1 text-[12px] leading-tight transition ${
+                        selected ? '' : 'border-line-strong bg-panel text-ink-2 hover:border-line-hair hover:text-ink'
                       }`}
                     >
                       {o.label}
@@ -223,10 +223,10 @@ export function OperatorProfileForm({ profile, onChange, onNext }: OperatorProfi
       <button
         onClick={onNext}
         disabled={!allAnswered}
-        className={`w-full rounded-md border px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] transition ${
+        className={`min-h-[44px] w-full rounded-cell border px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] transition ${
           allAnswered
-            ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a] hover:bg-[#2a1f0f]'
-            : 'cursor-not-allowed border-[#1b2530] bg-[#0d141c] text-[#5d6b79]'
+            ? 'border-accent bg-accent-tint/80 text-accent hover:bg-accent-tint'
+            : 'cursor-not-allowed border-line bg-panel text-ink-dim'
         }`}
       >
         {allAnswered

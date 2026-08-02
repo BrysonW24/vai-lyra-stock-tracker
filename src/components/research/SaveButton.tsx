@@ -39,10 +39,10 @@ export function SaveButton({ symbol, kind = 'ticker', label, score, price }: Sav
       onClick={onClick}
       aria-pressed={saved}
       title={saved ? 'Saved to your research queue' : 'Save to your research queue'}
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] uppercase tracking-[0.1em] transition ${
+      className={`inline-flex items-center gap-1.5 rounded-cell border px-2 py-1 font-mono text-[11px] uppercase tracking-[0.1em] transition ${
         saved
-          ? 'border-[#f3a33a] bg-[#23180b] text-[#f3a33a]'
-          : 'border-[#263241] bg-[#0d141c] text-[#8190a0] hover:border-[#3a4754] hover:text-[#eef3f8]'
+          ? 'border-accent bg-accent-tint/80 text-accent'
+          : 'border-line-strong bg-panel text-ink-3 hover:border-line-hair hover:text-ink'
       }`}
     >
       {saved ? <BookmarkCheck size={13} /> : <Bookmark size={13} />} {saved ? 'Saved' : 'Save'}

@@ -110,8 +110,8 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
 
   return (
     <div className="space-y-3">
-      <p className="flex items-start gap-1.5 text-[11px] leading-snug text-[#a8b5c2]">
-        <Sparkles className="mt-px shrink-0 text-[#8aa2ff]" size={14} />
+      <p className="flex items-start gap-1.5 text-[11px] leading-snug text-ink-2">
+        <Sparkles className="mt-px shrink-0 text-pending" size={14} />
         <span>
           {soloMode
             ? 'Ask Lyra anything about your dashboard in plain English. Solo has no shared AI key: paste your own provider key to enable it, or continue without AI. Your key stays in this browser.'
@@ -128,35 +128,35 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
               type="button"
               onClick={() => setChoice(p.id)}
               aria-pressed={sel}
-              className={`rounded-lg border p-3 text-left transition ${
-                sel ? 'border-[#8aa2ff] bg-[#101a2e]' : 'border-[#263241] bg-[#0d141c] hover:border-[#3a4754]'
+              className={`rounded-cell border p-3 text-left transition ${
+                sel ? 'border-pending bg-blue-tint' : 'border-line-strong bg-panel hover:border-line-hair'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className={`text-sm font-semibold ${sel ? 'text-[#8aa2ff]' : 'text-[#eef3f8]'}`}>{p.label}</span>
+                <span className={`text-sm font-semibold ${sel ? 'text-pending' : 'text-ink'}`}>{p.label}</span>
                 {(p.id !== 'openai' || !soloMode) && p.tag && (
-                  <span className="shrink-0 rounded-full border border-[#1d7f55] bg-[#0d251b] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-[#43d18b]">
+                  <span className="shrink-0 rounded-full border border-positive/40 bg-positive-tint px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.1em] text-positive">
                     {p.tag}
                   </span>
                 )}
               </div>
-              <p className="mt-1 text-[11px] leading-snug text-[#a8b5c2]">{p.blurb}</p>
+              <p className="mt-1 text-[11px] leading-snug text-ink-2">{p.blurb}</p>
             </button>
           );
         })}
       </div>
 
       {selected && (
-        <div className="space-y-2 rounded-lg border border-[#8aa2ff]/25 bg-[#0b1016] p-3">
+        <div className="space-y-2 rounded-cell border border-pending/25 bg-chrome p-3">
           <div className="flex items-center justify-between">
-            <label htmlFor="onboard-ai-key" className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8190a0]">
+            <label htmlFor="onboard-ai-key" className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-3">
               <KeyRound size={12} /> {selected.label} key{selectedHosted ? ' (optional)' : ''}
             </label>
             <a
               href={selected.keyUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#8aa2ff] transition hover:text-[#aab8ff]"
+              className="inline-flex items-center gap-1 text-[10px] font-semibold text-pending transition hover:brightness-125"
             >
               {selectedHosted ? 'Use your own key from' : 'Get a key from'} {selected.keyHost} <ExternalLink size={10} />
             </a>
@@ -169,18 +169,18 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder={selected.placeholder}
-              className="min-w-0 flex-1 rounded-md border border-[#263241] bg-[#080a0d] px-3 py-2 font-mono text-[13px] text-[#eef3f8] placeholder:text-[#5d6b79] outline-none focus:border-[#8aa2ff]/50"
+              className="min-w-0 flex-1 rounded-cell border border-line-strong bg-well px-3 py-2 font-mono text-[13px] text-ink placeholder:text-ink-dim outline-none focus:border-pending/50"
             />
             <button
               type="button"
               onClick={pasteKey}
-              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-[#8aa2ff]/40 bg-[#101a2e] px-2.5 text-[11px] font-semibold text-[#8aa2ff] transition hover:bg-[#13203a]"
+              className="inline-flex shrink-0 items-center gap-1 rounded-cell border border-pending/40 bg-blue-tint/80 px-2.5 text-[11px] font-semibold text-pending transition hover:bg-blue-tint"
             >
               <ClipboardPaste size={13} /> Paste
             </button>
           </div>
-          <p className="flex items-center gap-1 text-[10px] leading-relaxed text-[#6f7d8a]">
-            <ShieldCheck size={11} className="shrink-0 text-[#43d18b]" />
+          <p className="flex items-center gap-1 text-[10px] leading-relaxed text-ink-dim">
+            <ShieldCheck size={11} className="shrink-0 text-positive" />
             {selectedHosted
               ? "Leave blank to use Lyra's hosted beta key. A pasted key stays in this browser and overrides the hosted key."
               : `Stays in this browser, only ever used for ${selected.label} requests. Paste it later in Settings if you prefer.`}
@@ -191,8 +191,8 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
       <button
         type="button"
         onClick={() => setChoice('skip')}
-        className={`w-full rounded-md border px-3 py-2 text-left text-[12px] transition ${
-          choice === 'skip' ? 'border-[#8aa2ff] bg-[#101a2e] text-[#8aa2ff]' : 'border-[#263241] bg-[#0d141c] text-[#a8b5c2] hover:border-[#3a4754]'
+        className={`min-h-[44px] w-full rounded-cell border px-3 py-2 text-left text-[12px] transition ${
+          choice === 'skip' ? 'border-pending bg-blue-tint text-pending' : 'border-line-strong bg-panel text-ink-2 hover:border-line-hair'
         }`}
       >
         {soloMode ? 'Not now - continue without AI.' : 'Not now - use the hosted beta model.'}
@@ -201,7 +201,7 @@ export function AiInsightStep({ onNext }: AiInsightStepProps) {
       <button
         onClick={handleNext}
         type="button"
-        className="w-full rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
+        className="min-h-[44px] w-full rounded-cell bg-[image:var(--lyra-cta-gradient)] px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-white shadow-[0_10px_24px_-10px_rgba(67,209,139,0.55)] transition hover:brightness-110"
       >
         {choice === 'skip' || !apiKey.trim() ? 'Finish setup' : 'Save key & finish setup'}
       </button>

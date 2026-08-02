@@ -81,24 +81,24 @@ function CheckRow({ check }: { check: PreTradeCheck }) {
     <li className="flex items-start gap-2 py-1.5">
       <span className="mt-0.5 shrink-0" aria-hidden="true">
         {check.passed ? (
-          <Check className="h-3 w-3 text-[#43d18b]" />
+          <Check className="h-3 w-3 text-positive" />
         ) : failedBlocking ? (
-          <X className="h-3 w-3 text-[#f0758a]" />
+          <X className="h-3 w-3 text-negative-soft" />
         ) : (
-          <AlertTriangle className="h-3 w-3 text-[#f3a33a]" />
+          <AlertTriangle className="h-3 w-3 text-accent" />
         )}
       </span>
       <div className="min-w-0 flex-1">
         <p
           className={`text-[11px] font-medium leading-snug ${
-            failedBlocking ? 'text-[#f0758a]' : failedWarning ? 'text-[#f3a33a]' : 'text-[#eef3f8]'
+            failedBlocking ? 'text-negative-soft' : failedWarning ? 'text-accent' : 'text-ink'
           }`}
         >
           {check.label}
         </p>
         <p
           className={`text-[10px] leading-relaxed ${
-            failedBlocking ? 'text-[#f0758a]/75' : failedWarning ? 'text-[#f3a33a]/75' : 'text-[#8190a0]'
+            failedBlocking ? 'text-negative-soft/75' : failedWarning ? 'text-accent/75' : 'text-ink-3'
           }`}
         >
           {check.detail}
@@ -107,10 +107,10 @@ function CheckRow({ check }: { check: PreTradeCheck }) {
       <span
         className={`mt-0.5 shrink-0 rounded border px-1.5 py-0.5 font-mono text-[9px] ${
           check.passed
-            ? 'border-[#43d18b]/30 bg-[#43d18b]/10 text-[#43d18b]'
+            ? 'border-positive/30 bg-positive/10 text-positive'
             : failedBlocking
-              ? 'border-[#f0758a]/40 bg-[#f0758a]/10 text-[#f0758a]'
-              : 'border-[#f3a33a]/40 bg-[#f3a33a]/10 text-[#f3a33a]'
+              ? 'border-negative-soft/40 bg-negative-soft/10 text-negative-soft'
+              : 'border-accent/40 bg-accent/10 text-accent'
         }`}
       >
         {check.passed ? 'PASS' : failedBlocking ? 'BLOCKED' : 'WARN'}
@@ -127,35 +127,35 @@ export function TradingReadiness({ report, killSwitches, demoIntent }: TradingRe
   return (
     <div className="space-y-3">
       {/* (a) Status header */}
-      <section className="terminal-panel glass-hero rounded-md p-3">
+      <section className="terminal-panel glass-hero rounded-panel p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-sm font-semibold text-[#eef3f8]">Live Bot</h1>
-          <span className="rounded border border-[#f0758a]/50 bg-[#f0758a]/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wide text-[#f0758a]">
+          <h1 className="text-sm font-semibold text-ink">Live Bot</h1>
+          <span className="rounded border border-negative-soft/50 bg-negative-soft/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wide text-negative-soft">
             LIVE TRADING: DISABLED
           </span>
         </div>
-        <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-[#a8b5c2]">
+        <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-ink-2">
           Live broker execution is intentionally not implemented in this build. Lyra is a research console
           first: every future order would have to come from deterministic strategy code, pass the pre-trade
           risk engine below, and receive explicit human approval. That gate is permanent - it does not get
           optimised away when execution eventually ships.
         </p>
         <div className="mt-2 grid grid-cols-3 gap-1.5">
-          <div className="rounded-md border border-[#263241] bg-[#0d141c] p-2">
-            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">Gates met</p>
-            <p className="numeric mt-0.5 truncate font-mono text-sm font-semibold text-[#f3a33a] md:text-base">
+          <div className="rounded-cell border border-line-strong bg-panel p-2">
+            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">Gates met</p>
+            <p className="numeric mt-0.5 truncate font-mono text-sm font-semibold text-accent md:text-base">
               0 / {REQUIRED_GATES.length}
             </p>
           </div>
-          <div className="rounded-md border border-[#263241] bg-[#0d141c] p-2">
-            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">Kill switches</p>
-            <p className="numeric mt-0.5 truncate font-mono text-sm font-semibold text-[#7fb0ff] md:text-base">
+          <div className="rounded-cell border border-line-strong bg-panel p-2">
+            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">Kill switches</p>
+            <p className="numeric mt-0.5 truncate font-mono text-sm font-semibold text-blue-info md:text-base">
               {killSwitches.length} ready
             </p>
           </div>
-          <div className="rounded-md border border-[#263241] bg-[#0d141c] p-2">
-            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">Demo intent</p>
-            <p className="numeric mt-0.5 truncate font-mono text-sm font-semibold text-[#f0758a] md:text-base">
+          <div className="rounded-cell border border-line-strong bg-panel p-2">
+            <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">Demo intent</p>
+            <p className="numeric mt-0.5 truncate font-mono text-sm font-semibold text-negative-soft md:text-base">
               BLOCKED
             </p>
           </div>
@@ -163,26 +163,26 @@ export function TradingReadiness({ report, killSwitches, demoIntent }: TradingRe
       </section>
 
       {/* (b) Required gates checklist */}
-      <section className="terminal-panel rounded-md p-3">
-        <p className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">
+      <section className="terminal-panel rounded-panel p-3">
+        <p className="text-[9px] uppercase tracking-[0.12em] text-ink-3">
           Required gates before live trading
         </p>
-        <p className="mt-1 text-[11px] leading-relaxed text-[#a8b5c2]">
+        <p className="mt-1 text-[11px] leading-relaxed text-ink-2">
           Every gate below must pass before execution is even considered. None has - this checklist is
           rendered honestly, nothing is pre-ticked.
         </p>
-        <ul className="mt-2 divide-y divide-[#1b2530]/70">
+        <ul className="mt-2 divide-y divide-line/70">
           {REQUIRED_GATES.map((gate) => (
             <li key={gate.label} className="flex items-start gap-2 py-1.5">
               <span
-                className="mt-0.5 inline-block h-3 w-3 shrink-0 rounded-full border border-[#3a4756]"
+                className="mt-0.5 inline-block h-3 w-3 shrink-0 rounded-full border border-line-hair"
                 aria-hidden="true"
               />
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-medium leading-snug text-[#eef3f8]">{gate.label}</p>
-                <p className="text-[10px] leading-relaxed text-[#8190a0]">{gate.requirement}</p>
+                <p className="text-[11px] font-medium leading-snug text-ink">{gate.label}</p>
+                <p className="text-[10px] leading-relaxed text-ink-3">{gate.requirement}</p>
               </div>
-              <span className="mt-0.5 shrink-0 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#8190a0]">
+              <span className="mt-0.5 shrink-0 rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink-3">
                 NOT MET
               </span>
             </li>
@@ -191,20 +191,20 @@ export function TradingReadiness({ report, killSwitches, demoIntent }: TradingRe
       </section>
 
       {/* (c) Kill-switch panel */}
-      <section className="terminal-panel rounded-md p-3">
-        <p className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">Kill switches - display only</p>
-        <p className="mt-1 text-[11px] leading-relaxed text-[#a8b5c2]">
+      <section className="terminal-panel rounded-panel p-3">
+        <p className="text-[9px] uppercase tracking-[0.12em] text-ink-3">Kill switches - display only</p>
+        <p className="mt-1 text-[11px] leading-relaxed text-ink-2">
           Independent halt layers that stop activity the moment anything looks wrong. All are inactive
           because there is nothing to halt - and none can be toggled from this page.
         </p>
-        <ul className="mt-2 divide-y divide-[#1b2530]/70">
+        <ul className="mt-2 divide-y divide-line/70">
           {killSwitches.map((sw) => (
             <li key={sw.id} className="flex items-start gap-2 py-1.5">
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-medium leading-snug text-[#eef3f8]">{sw.label}</p>
-                <p className="text-[10px] leading-relaxed text-[#8190a0]">{sw.description}</p>
+                <p className="text-[11px] font-medium leading-snug text-ink">{sw.label}</p>
+                <p className="text-[10px] leading-relaxed text-ink-3">{sw.description}</p>
               </div>
-              <span className="mt-0.5 shrink-0 rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#8190a0]">
+              <span className="mt-0.5 shrink-0 rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink-3">
                 INACTIVE
               </span>
             </li>
@@ -213,56 +213,56 @@ export function TradingReadiness({ report, killSwitches, demoIntent }: TradingRe
       </section>
 
       {/* (d) Pre-trade engine, live demo */}
-      <section className="terminal-panel rounded-md p-3">
-        <p className="text-[9px] uppercase tracking-[0.12em] text-[#8190a0]">Pre-trade engine - live demo</p>
-        <h2 className="mt-1 text-[13px] font-semibold text-[#f0758a]">
+      <section className="terminal-panel rounded-panel p-3">
+        <p className="text-[9px] uppercase tracking-[0.12em] text-ink-3">Pre-trade engine - live demo</p>
+        <h2 className="mt-1 text-[13px] font-semibold text-negative-soft">
           This demo intent was BLOCKED by {blockedCount} checks
         </h2>
-        <p className="mt-1 text-[11px] leading-relaxed text-[#a8b5c2]">
+        <p className="mt-1 text-[11px] leading-relaxed text-ink-2">
           A sample {demoIntent.symbol} paper intent was run through the real deterministic engine with the
           default settings (trading disabled, no limits configured). The engine refused it - exactly as
           designed. {passedCount} checks passed, {blockedCount} blocked, {warningCount}{' '}
           {warningCount === 1 ? 'warning' : 'warnings'}.
         </p>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#a8b5c2]">
+          <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink-2">
             {demoIntent.symbol}
           </span>
-          <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] uppercase text-[#a8b5c2]">
+          <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase text-ink-2">
             {demoIntent.side} {demoIntent.quantity} @ {demoIntent.orderType}
           </span>
-          <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#a8b5c2]">
+          <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink-2">
             ${demoIntent.notionalValue.toLocaleString()}
           </span>
-          <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#a8b5c2]">
+          <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink-2">
             {demoIntent.strategyId}
           </span>
-          <span className="rounded border border-[#263241] bg-[#0d141c] px-1.5 py-0.5 font-mono text-[9px] text-[#a8b5c2]">
+          <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink-2">
             {demoIntent.reasonCode}
           </span>
         </div>
-        <ul className="mt-2 divide-y divide-[#1b2530]/70">
+        <ul className="mt-2 divide-y divide-line/70">
           {report.checks.map((check) => (
             <CheckRow check={check} key={check.id} />
           ))}
         </ul>
-        <p className="mt-2 border-t border-[#1b2530] pt-2 font-mono text-[9px] text-[#8190a0]">
+        <p className="mt-2 border-t border-line pt-2 font-mono text-[9px] text-ink-3">
           Evaluated {report.evaluatedAt} · intent {report.intentId} · requires approval:{' '}
           {report.requiresApproval ? 'yes' : 'no'}
         </p>
       </section>
 
       {/* (e) AI boundary */}
-      <section className="terminal-panel rounded-md border-[#a78bfa]/30 bg-[#a78bfa]/[0.04] p-3">
-        <p className="text-[9px] uppercase tracking-[0.12em] text-[#a78bfa]">AI boundary</p>
+      <section className="terminal-panel rounded-panel border-pending/30 bg-pending/5 p-3">
+        <p className="text-[9px] uppercase tracking-[0.12em] text-pending">AI boundary</p>
         <ul className="mt-2 space-y-1.5">
           {AI_BOUNDARY_POINTS.map((point) => (
             <li className="flex items-start gap-2" key={point}>
               <span
-                className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[#a78bfa]"
+                className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-pending"
                 aria-hidden="true"
               />
-              <p className="text-[11px] leading-relaxed text-[#a8b5c2]">{point}</p>
+              <p className="text-[11px] leading-relaxed text-ink-2">{point}</p>
             </li>
           ))}
         </ul>

@@ -25,12 +25,12 @@ const HELP = {
 function Bar({ label, value, max, pct }: { label: string; value: number; max: number; pct: number }) {
   return (
     <div>
-      <div className="flex items-center justify-between font-mono text-[10px] text-[#8190a0]">
+      <div className="flex items-center justify-between font-mono text-[10px] text-ink-3">
         <span>{label}</span>
-        <span className="text-[#dbe5ee]">{value}/{max}</span>
+        <span className="text-ink-title">{value}/{max}</span>
       </div>
-      <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-[#1b2530]">
-        <div className="h-full rounded-full bg-gradient-to-r from-[#3b5bdb] to-[#43d18b]" style={{ width: `${pct}%` }} />
+      <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-line">
+        <div className="h-full rounded-full bg-gradient-to-r from-blue-deep to-positive" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -77,9 +77,9 @@ function SignalAiNarration({ symbol }: { symbol: string }) {
   if (!text) return null;
 
   return (
-    <div className="rounded-md border border-[#3a2f1d] bg-[#141009] p-2.5">
+    <div className="rounded-cell border border-accent-border/60 bg-accent-tint/60 p-2.5">
       <AiGeneratedLabel size={11} />
-      <p className="mt-1 text-[11px] leading-snug text-[#dbe5ee]">{text}</p>
+      <p className="mt-1 text-[11px] leading-snug text-ink-title">{text}</p>
     </div>
   );
 }
@@ -125,13 +125,13 @@ export function SignalDrawer({ signal: snapshot, onClose }: { signal: SignalRow 
     <div className="flex flex-wrap gap-2">
       <Link
         href={`/tickers/${signal.symbol}?view=setup`}
-        className="inline-flex items-center gap-1.5 rounded border border-[#3b5bdb] bg-[#0d1530] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#8aa2ff] transition hover:bg-[#11193a]"
+        className="inline-flex items-center gap-1.5 rounded-cell border border-blue-deep bg-blue-tint px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-pending transition hover:bg-blue-deep/30"
       >
         <LineChart size={13} /> Full setup chart
       </Link>
       <Link
         href={`/tickers/${signal.symbol}`}
-        className="inline-flex items-center gap-1 rounded border border-[#263241] bg-[#0d141c] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a8b5c2] transition hover:text-[#eef3f8]"
+        className="inline-flex items-center gap-1 rounded-cell border border-line-strong bg-panel px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-ink-2 transition hover:text-ink"
       >
         Open {signal.symbol} <ArrowUpRight size={12} />
       </Link>
@@ -152,9 +152,9 @@ export function SignalDrawer({ signal: snapshot, onClose }: { signal: SignalRow 
         </span>
       }
     >
-      <p className="text-[11px] leading-snug text-[#a8b5c2]">{HELP.score}</p>
+      <p className="text-[11px] leading-snug text-ink-2">{HELP.score}</p>
 
-      <p className="font-mono text-[10px] text-[#5a6b7d]">
+      <p className="font-mono text-[10px] text-ink-dim">
         {fresh
           ? `Refreshed ${new Date(fresh.asOf).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - live engine numbers`
           : 'As of last page load - refreshing live numbers…'}
@@ -166,9 +166,9 @@ export function SignalDrawer({ signal: snapshot, onClose }: { signal: SignalRow 
       {/* Score component breakdown - point contribution per factor (value / max),
           shared with the ticker page via buildScoreBreakdown so they never drift.
           NOT the raw indicator readings - those are in the section below. */}
-      <div className="space-y-2 rounded-md border border-[#263241] bg-[#0d141c] p-3">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">What makes the score</p>
-        <p className="-mt-1 text-[10px] leading-snug text-[#6f7d8a]">
+      <div className="space-y-2 rounded-cell border border-line-strong bg-panel p-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">What makes the score</p>
+        <p className="-mt-1 text-[10px] leading-snug text-ink-dim">
           Points each factor added, out of its max - they sum to the {signal.score} score. Your live RSI / MACD / volume are below.
         </p>
         {buildScoreBreakdown(b).map((c) => (
@@ -183,20 +183,20 @@ export function SignalDrawer({ signal: snapshot, onClose }: { signal: SignalRow 
           { k: 'MACD hist', v: `${formatNumber(signal.macdHistogram, 2)} ${trendArrow(signal.histDelta)}`, help: HELP.macd },
           { k: 'Volume', v: `${formatNumber(signal.volumeRatio, 2)}x`, help: HELP.volume },
         ].map((m) => (
-          <div key={m.k} className="rounded-md border border-[#263241] bg-[#0d141c] p-2.5">
+          <div key={m.k} className="rounded-cell border border-line-strong bg-panel p-2.5">
             <div className="flex items-center justify-between font-mono text-xs">
-              <span className="text-[#8190a0]">{m.k}</span>
-              <span className="text-[#eef3f8]">{m.v}</span>
+              <span className="text-ink-3">{m.k}</span>
+              <span className="text-ink">{m.v}</span>
             </div>
-            <p className="mt-1 text-[11px] leading-snug text-[#a8b5c2]">{m.help}</p>
+            <p className="mt-1 text-[11px] leading-snug text-ink-2">{m.help}</p>
           </div>
         ))}
       </div>
 
       {/* Plain-English read */}
       <div>
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">The read</p>
-        <div className="space-y-1.5 text-[11px] leading-snug text-[#c8d3de]">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">The read</p>
+        <div className="space-y-1.5 text-[11px] leading-snug text-ink-title">
           <p>{signal.summary.rsi}</p>
           <p>{signal.summary.macd}</p>
           <p>{signal.summary.volume}</p>
@@ -209,41 +209,41 @@ export function SignalDrawer({ signal: snapshot, onClose }: { signal: SignalRow 
       {/* Why it fired / what's missing / risks */}
       {signal.explanation.triggeredBecause.length > 0 && (
         <div>
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#43d18b]">Why this setup</p>
-          <ul className="space-y-1 text-[11px] leading-snug text-[#c8d3de]">
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-positive">Why this setup</p>
+          <ul className="space-y-1 text-[11px] leading-snug text-ink-title">
             {signal.explanation.triggeredBecause.map((t) => (
-              <li key={t} className="flex gap-1.5"><span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#43d18b]" />{t}</li>
+              <li key={t} className="flex gap-1.5"><span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-positive" />{t}</li>
             ))}
           </ul>
         </div>
       )}
       {signal.explanation.missingConfirmation.length > 0 && (
         <div>
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#f3a33a]">Still missing</p>
-          <ul className="space-y-1 text-[11px] leading-snug text-[#c8d3de]">
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">Still missing</p>
+          <ul className="space-y-1 text-[11px] leading-snug text-ink-title">
             {signal.explanation.missingConfirmation.map((t) => (
-              <li key={t} className="flex gap-1.5"><span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#f3a33a]" />{t}</li>
+              <li key={t} className="flex gap-1.5"><span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent" />{t}</li>
             ))}
           </ul>
         </div>
       )}
 
-      <div className="flex items-center justify-between rounded-md border border-[#263241] bg-[#0d141c] px-3 py-2 font-mono text-xs">
-        <span className="text-[#8190a0]">Action state</span>
-        <span className="text-[#f3a33a]">{signal.actionState.replaceAll('_', ' ')}</span>
+      <div className="flex items-center justify-between rounded-cell border border-line-strong bg-panel px-3 py-2 font-mono text-xs">
+        <span className="text-ink-3">Action state</span>
+        <span className="text-accent">{signal.actionState.replaceAll('_', ' ')}</span>
       </div>
 
       {/* How similar setups resolved - live rows are engine-measured, sample rows are illustrative; the badge says which. */}
       {fresh?.outcome && (
-        <div className="rounded-md border border-[#263241] bg-[#0d141c] p-2.5">
+        <div className="rounded-cell border border-line-strong bg-panel p-2.5">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">How setups like this resolved</p>
-            <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-[#5a6b7d]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">How setups like this resolved</p>
+            <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-ink-dim">
               {fresh.outcome.source === 'live' ? 'measured history' : 'sample data'}
             </span>
           </div>
-          <p className="mt-1 text-[11px] leading-snug text-[#c8d3de]">{fresh.outcome.summary}</p>
-          <p className="mt-1 text-[10px] leading-snug text-[#5a6b7d]">Past resolution is not a prediction. Research, not advice.</p>
+          <p className="mt-1 text-[11px] leading-snug text-ink-title">{fresh.outcome.summary}</p>
+          <p className="mt-1 text-[10px] leading-snug text-ink-dim">Past resolution is not a prediction. Research, not advice.</p>
         </div>
       )}
 
@@ -251,8 +251,8 @@ export function SignalDrawer({ signal: snapshot, onClose }: { signal: SignalRow 
           full-setup studies the ?view=setup page opens with. So you can inspect the setup
           without leaving the drawer; the links open the full interactive version. */}
       <div>
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8190a0]">Setup chart</p>
-        <div className="overflow-hidden rounded-md border border-[#263241]">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Setup chart</p>
+        <div className="overflow-hidden rounded-cell border border-line-strong">
           <TradingViewChart
             symbol={signal.symbol}
             companyName={signal.companyName}
