@@ -48,11 +48,36 @@ list - the actual product.
 **Falsifier:** if P(inflection) is unlearnable from our domains, or inflection does not lead
 price on this corpus, the two-stage thesis dies and we say so.
 
-## Target 3 - Ruin (the survival question)
+## Target 3 - Ruin (the survival question) - PROMOTED 2026-08-02
 
-**Label:** -80% first-touch or delisting within horizon. Blocked on the delisted-inclusive
-corpus (survivor bias censors the ruin class today). Until then the deterministic risk gates
-stand in; a LEARNED ruin model joins when the data can support it honestly.
+**Priority shift (founder-ratified via the strategy review):** in a consensus theme the theme
+call is free and every name gets bid, fakes included - so draining the junk is worth more than
+ranking the winners. Ruin is also the MORE learnable side: more examples (far more small caps
+die than 10x), stronger documented signals (dilution / net issuance is the best-replicated
+predictor in the whole domain set), shorter feedback loops. The ruin model is therefore the NEXT
+TRAINED MODEL after gen-3 closes, ahead of further winner-classifier work.
+
+**Two stages, honestly labelled:**
+
+- **Ruin-lite (gen-4, buildable from data already in hand):** label = -80% first-touch within
+  12 months on the existing corpus. Survivor-censored (delisting deaths absent) and stated so on
+  every number - this UNDERSTATES true ruin, making it a conservative screen, which is the safe
+  direction for a drain-the-junk gate. Features already available: EDGAR dilution/net issuance,
+  shelf-registration recency (S-3/S-1/424B forms sit in the cached submissions indexes, dated),
+  insider NET SELLING (same Form 4 backfill, S codes), realised volatility (the null becomes a
+  feature here), liquidity, cash-runway proxies from quarterly fundamentals.
+- **True ruin (gen-5):** delisting-inclusive label once the delisted corpus exists - the same
+  build that de-censors everything else. Nothing on the roadmap is wasted; Stage 3's training
+  data IS this model's training data.
+
+**Full lifecycle discipline applies:** own artifact, purged walk-forward, floors, one-shot
+holdout, paired nulls (vol is a null here too - jumpy names die more), attempt ledger. The
+deterministic M5 gates stay as the safety backbone; the trained model ANNOTATES first and may
+only replace a gate by beating it on the loop.
+
+**The effective stack this implies (order of value in a hot theme):** founder thesis picks the
+pond (no model needed) -> ruin model drains the junk -> winner-similarity ranks the survivors ->
+timing last. Same architecture as always; the update is the ORDER.
 
 ## The theme-universe problem (and its fix)
 
@@ -72,12 +97,19 @@ nulls - a theme slice gets the same discipline the tier slices got), attempt led
 log. The barrier label stays through gen-3 for comparability; Targets 1-2 enter at gen-4 as
 co-labels beside it, not as a rip-and-replace.
 
-## Sequencing
+## Sequencing (reconciled 2026-08-02 with lyra-modelling/PREDICTION-PRIORITIES.md)
 
+- Vol baseline: SHIPPED v0.117.0 (standing null in every eval, within-tier paired verdicts) -
+  the gate for everything below is already in place.
 - Gen-3 (imminent): unchanged - sponsorship lit, estimator fair fight, vol-feature arm.
-- Gen-4: theme-from-filings source + Target 1 + Target 2 co-labels; verdict grid gains a
-  per-theme axis next to the per-tier one.
-- Gen-5: Target 3 when the delisted corpus exists; live ledger begins validating everything.
+- Gen-4 window, three small independent builds: (a) mega-cap sponsorship watchlist - the ~20
+  investment-arm filers (NVIDIA, Microsoft, Amazon, Alphabet, Meta et al.) via 13F/13D/13G/8-K,
+  the highest-value slice of the sponsorship domain at a fraction of full-13F cost, tested via
+  the H1-H4 pre-registrations in PREDICTION-PRIORITIES.md (drift after disclosure, never the
+  uncapturable pop); (b) ruin-lite trained screen (Target 3 above); (c) theme-from-filings
+  source feeding Targets 1-2 co-labels; verdict grid gains a per-theme axis.
+- Gen-5: true ruin + everything de-censored when the delisted corpus exists; live ledger begins
+  validating all of it.
 
 **Pre-registered prediction (falsifiable):** within the AI theme universe, Target 2 evidence
 (insider cluster + revenue acceleration) will beat the within-theme jumpiness null where the
