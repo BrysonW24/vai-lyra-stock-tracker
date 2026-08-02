@@ -1,0 +1,67 @@
+/*
+ * LYRA DESIGN TOKENS - v1.0.0 (2026-08-02)
+ *
+ * SINGLE SOURCE OF TRUTH: lyra-ux/TOKENS.md carries the same version and the canonical table.
+ * The Tailwind theme (tailwind.config.ts) mirrors these values for utility classes; plain-CSS
+ * consumers (glass panel classes in globals.css, keyframes) read the variables here.
+ * Drift between the three is a shippable-blocking bug: run `node lyra-ux/check-tokens.mjs`.
+ *
+ * Values are the app's PROVEN de-facto palette (extracted 2026-08-02 from 40k lines of view
+ * code by usage count), not an invention. Never introduce ad-hoc hex in components - if a
+ * value is missing, add it here + TOKENS.md + tailwind.config.ts in one change with a version
+ * bump.
+ */
+:root {
+  /* Grounds and surfaces */
+  --lyra-ground: #07090c;
+  --lyra-chrome: #0b1016;
+  --lyra-panel: #0d141c;
+  --lyra-panel-deep: #0d1117;
+  --lyra-well: #0a0e13;
+
+  /* Lines and borders */
+  --lyra-line: #1b2530;
+  --lyra-line-strong: #263241;
+  --lyra-hairline: #3a4754;
+
+  /* Ink */
+  --lyra-ink: #eef3f8;
+  --lyra-ink-title: #dbe5ee;
+  --lyra-ink-2: #a8b5c2;
+  --lyra-ink-3: #8190a0;
+  --lyra-ink-dim: #5e6b78;
+
+  /* Accent (amber) */
+  --lyra-accent: #f3a33a;
+  --lyra-accent-border: #9a6a1f;
+  --lyra-accent-tint: #2a1f0f;
+
+  /* Semantics - these carry MEANING, never decoration:
+     positive/good = verified, available, gain; warn = limited, caution;
+     pending = queued, in-flight; risk = blocked, loss, danger. */
+  --lyra-positive: #43d18b;
+  --lyra-positive-tint: #0d251b;
+  --lyra-negative: #ff6b6b;
+  --lyra-negative-soft: #f0758a;
+  --lyra-pending: #8aa2ff;
+
+  /* Blues */
+  --lyra-blue: #1e63ff;
+  --lyra-blue-deep: #3b5bdb;
+  --lyra-blue-info: #7fb0ff;
+  --lyra-blue-focus: #60a5fa;
+  --lyra-blue-tint: #0e1e3a;
+
+  /* The one gradient: primary CTA only (one per view). */
+  --lyra-cta-gradient: linear-gradient(90deg, #43d18b 0%, #1e63ff 100%);
+
+  /* Shape */
+  --lyra-radius-panel: 0.75rem;   /* rounded-xl - panel cards */
+  --lyra-radius-cell: 0.5rem;     /* rounded-lg - stat cells, inputs */
+  --lyra-radius-chip: 9999px;     /* pills and chips */
+
+  /* Motion */
+  --lyra-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --lyra-dur-fast: 120ms;
+  --lyra-dur: 200ms;
+}

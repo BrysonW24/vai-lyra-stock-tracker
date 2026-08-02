@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { FlaskConical } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { ConfigurePanel } from '@/components/models/lab/ConfigurePanel';
 import { RunTimeline } from '@/components/models/lab/RunTimeline';
 import { ResultsView } from '@/components/models/lab/ResultsView';
+import { RunBoard } from '@/components/models/lab/RunBoard';
 import { PreviousRuns } from '@/components/models/lab/PreviousRuns';
 import { ModelsView } from '@/components/models/ModelsView';
 import {
@@ -20,18 +21,18 @@ import type { DashboardData } from '@/types/scanner';
 import type { EmergingWinnerQueue } from '@/lib/emerging-winner/types';
 
 /**
- * Model Lab - the /models experience. Three tabs (Run / Previous runs / Models & methods) and a
- * config -> running -> results state machine. The catalogue that used to BE this page now lives in
- * Models & methods, so the primary surface is "tell Lyra what to discover, watch it work, inspect
- * why each name surfaced" rather than a wall of architecture. All the honesty lives one layer down
- * in lab.ts: this component just orchestrates state.
+ * Model Lab - the /models experience. Three tabs (Run / Previous runs / Models & methods); the Run
+ * tab is a three-panel workbench: configure on the left, live model execution in the centre,
+ * surfaced candidates on the right, with the full run visuals underneath once a run lands. All the
+ * honesty lives one layer down in lab.ts - every number rendered anywhere on this surface is read
+ * from the run that lab.ts built over real loaded data; this component just orchestrates state.
  */
 
 type Tab = 'run' | 'previous' | 'methods';
 type Phase = 'configure' | 'running' | 'results';
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'run', label: 'Run' },
+const TABS: { key: Tab; label: string; icon?: boolean }[] = [
+  { key: 'run', label: 'Run', icon: true },
   { key: 'previous', label: 'Previous runs' },
   { key: 'methods', label: 'Models & methods' },
 ];
@@ -42,6 +43,17 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
   const [config, setConfig] = useState<LabConfig>(RECOMMENDED_CONFIG);
   const [run, setRun] = useState<RunResult | null>(null);
   const [nonce, setNonce] = useState(0);
+  const [runMeta, setRunMeta] = useState<{
+    id: string;
+    startedAt: string;
+    modelKey: string;
+    modelName: string;
+    family: 'radar' | 'ew';
+    caption: string;
+    outcomeLabel: string;
+    focus: string[];
+  } | null>(null);
+  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
 
   const runData: RunData = useMemo(
     () => ({
@@ -55,6 +67,11 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
   );
 
   const model = getModel(config.modelKey);
+  const outcome = model.outcomes.find((o) => o.key === config.outcomeKey);
+
+  // Idle preview - the real pipeline stages the current config would run, shown queued until Run.
+  // buildRun is pure and cheap; nothing here is presented as having executed.
+  const preview = useMemo(() => buildRun(config, runData), [config, runData]);
 
   function onChange(patch: Partial<LabConfig>) {
     setConfig((prev) => {
@@ -72,19 +89,29 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
   function onRun() {
     const result = buildRun(config, runData);
     setRun(result);
+    setRunMeta({
+      id: newRunId(),
+      startedAt: new Date().toISOString(),
+      modelKey: model.key,
+      modelName: model.name,
+      family: model.family,
+      caption: model.runCaption,
+      outcomeLabel: outcome?.label ?? config.outcomeKey,
+      focus: [...(config.domainFocus ?? [])],
+    });
+    setSelectedSymbol(null);
     setNonce((n) => n + 1);
     setPhase('running');
   }
 
   function onRunComplete() {
-    if (!run) return;
-    const outcome = model.outcomes.find((o) => o.key === config.outcomeKey);
+    if (!run || !runMeta) return;
     saveRun({
-      id: newRunId(),
-      at: new Date().toISOString(),
-      modelKey: model.key,
-      modelName: model.name,
-      outcomeLabel: outcome?.label ?? config.outcomeKey,
+      id: runMeta.id,
+      at: runMeta.startedAt,
+      modelKey: runMeta.modelKey,
+      modelName: runMeta.modelName,
+      outcomeLabel: runMeta.outcomeLabel,
       universeLabel: run.summary.universeLabel,
       reviewed: run.summary.reviewed,
       surfaced: run.summary.surfaced,
@@ -97,27 +124,16 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
   function onReplay(cfg: LabConfig) {
     setConfig(cfg);
     setRun(null);
+    setRunMeta(null);
+    setSelectedSymbol(null);
     setPhase('configure');
     setTab('run');
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] xl:pb-10">
-      {/* Header */}
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-xl font-semibold text-white">
-            <FlaskConical size={18} className="text-sky-400" /> Model Lab
-          </h1>
-          <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-white/60">
-            Tell Lyra what you want to discover, define where it should look, watch it investigate, and inspect exactly why
-            each company surfaced. Research only - the deterministic engine decides, models inform.
-          </p>
-        </div>
-      </header>
-
+    <div className="mx-auto w-full max-w-[100rem] px-4 pt-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] xl:pb-10">
       {/* Real-universe note - honest about capability and current data state. */}
-      <div className="mt-3 rounded-xl border border-sky-400/20 bg-sky-500/[0.06] p-3 text-[12px] leading-relaxed text-sky-200/90">
+      <div className="rounded-xl border border-sky-400/20 bg-sky-500/[0.06] p-3 text-[12px] leading-relaxed text-sky-200/90">
         The Emerging Winner engine scans the <span className="font-semibold">real SEC-listed universe</span> - every US
         company that files with the SEC (~10,400, small-caps included), refreshed dynamically so new listings are picked
         up automatically - using free public data (SEC + market data).{' '}
@@ -133,16 +149,17 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
       </div>
 
       {/* Tabs */}
-      <div className="mt-4 flex gap-1 border-b border-white/10">
+      <div className="no-scrollbar mt-4 flex gap-1 overflow-x-auto border-b border-white/10">
         {TABS.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`relative px-3 py-2 text-[13px] font-medium transition-colors ${
+            className={`relative flex shrink-0 items-center gap-1.5 px-3 py-2 text-[13px] font-medium transition-colors ${
               tab === t.key ? 'text-white' : 'text-white/45 hover:text-white/70'
             }`}
           >
+            {t.icon ? <Play size={12} className={tab === t.key ? 'text-sky-400' : 'text-white/35'} /> : null}
             {t.label}
             {tab === t.key ? <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-sky-400" /> : null}
           </button>
@@ -152,19 +169,47 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
       {/* Panels */}
       <div className="mt-5">
         {tab === 'run' ? (
-          <div className="space-y-4">
-            {phase === 'configure' ? (
-              <ConfigurePanel config={config} data={runData} onChange={onChange} onRun={onRun} />
-            ) : null}
+          <>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,21rem)_minmax(0,1fr)_minmax(0,22rem)] lg:items-start xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)_minmax(0,25rem)]">
+              <ConfigurePanel
+                config={config}
+                data={runData}
+                onChange={onChange}
+                onRun={onRun}
+                running={phase === 'running'}
+              />
 
-            {phase === 'running' && run ? (
-              <RunTimeline key={nonce} run={run} modelName={model.name} caption={model.runCaption} onDone={onRunComplete} />
-            ) : null}
+              <RunTimeline
+                key={run ? `run-${nonce}` : `idle-${config.modelKey}`}
+                run={run ?? preview}
+                mode={run ? (phase === 'results' ? 'completed' : 'live') : 'idle'}
+                modelName={runMeta && run ? runMeta.modelName : model.name}
+                family={runMeta && run ? runMeta.family : model.family}
+                caption={runMeta && run ? runMeta.caption : model.runCaption}
+                runId={runMeta?.id ?? null}
+                startedAt={runMeta?.startedAt ?? null}
+                onDone={onRunComplete}
+              />
+
+              <ResultsView
+                run={phase === 'results' ? run : null}
+                pending={phase === 'running'}
+                focus={runMeta?.focus ?? []}
+                rankLabel={runMeta?.outcomeLabel}
+                selectedSymbol={selectedSymbol}
+                onSelectSymbol={setSelectedSymbol}
+              />
+            </div>
 
             {phase === 'results' && run ? (
-              <ResultsView run={run} modelName={model.name} focus={config.domainFocus ?? []} onNewRun={() => setPhase('configure')} />
+              <RunBoard
+                run={run}
+                focus={runMeta?.focus ?? []}
+                selectedSymbol={selectedSymbol}
+                onSelect={setSelectedSymbol}
+              />
             ) : null}
-          </div>
+          </>
         ) : null}
 
         {tab === 'previous' ? <PreviousRuns onReplay={onReplay} /> : null}

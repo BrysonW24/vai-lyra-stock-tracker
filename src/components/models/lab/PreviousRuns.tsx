@@ -32,7 +32,7 @@ export function PreviousRuns({ onReplay }: { onReplay: (config: LabConfig) => vo
 
   if (runs.length === 0) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
+      <div className="terminal-panel rounded-2xl p-6 text-center">
         <p className="text-[14px] text-white/70">No runs yet.</p>
         <p className="mt-1 text-[12px] text-white/45">Runs you execute in the Run tab are saved here, on this device.</p>
       </div>
@@ -57,7 +57,7 @@ export function PreviousRuns({ onReplay }: { onReplay: (config: LabConfig) => vo
 
       <ul className="space-y-2">
         {runs.map((r) => (
-          <li key={r.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-white/8 bg-white/[0.03] p-3">
+          <li key={r.id} className="terminal-panel-soft flex flex-wrap items-center gap-3 rounded-xl p-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline gap-2">
                 <span className="text-[13px] font-semibold text-white">{r.modelName}</span>

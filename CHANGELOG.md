@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.118.0] - 2026-08-02
+
+The Model Lab becomes the design north star, and the design system becomes law.
+
+### Changed
+
+- The Model Lab is rebuilt to the founder-approved target: a three-panel command surface - configure on the left (archetype pills, data-source availability grid, one gradient CTA), live model execution in the centre (real engine stages with green completion rings, pulsing live dot, per-stage outputs and elapsed times, a four-cell stats strip), surfaced candidates on the right (expanded rank-1 card with probability, resemblance, confidence, strongest domains and the real risk-gate verdict). Every number binds to the real data flow; the reference mockup's illustrative values appear nowhere. Mobile stacks the panels with a sticky run button. A long-standing bug fell out of the rebuild: React StrictMode silently froze every dev run at "Queued" - fixed.
+- Lyra now has a versioned design system: the new lyra-ux workspace carries TOKENS.md v1.0.0 - 26 named colour, shape and motion tokens extracted from the app's proven palette - mirrored into a CSS variables file and the Tailwind theme, with a drift-check script that fails the moment spec and mirrors disagree. A dead light-mode palette from an earlier design era was removed after verifying zero usages. PATTERNS.md defines the component vocabulary (panels, stat cells, chips, status pills, the one-gradient-CTA rule) plus design-level honesty rules: provenance banners are part of the composition, status colours carry meaning, and an empty state never fakes a number.
+- An estate-wide inventory mapped all 273 view components across ~56 routes into 12 disjoint restyle packages with dependency ordering - the groundwork for converging the whole app onto the Model Lab's visual language.
+
 ## [0.117.0] - 2026-08-02
 
 The volatility null: the right chance bar arrives, and Accuracy is regraded under it.
@@ -1617,7 +1627,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.117.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.118.0...HEAD
+[0.118.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.117.0...v0.118.0
 [0.117.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.116.0...v0.117.0
 [0.116.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.1...v0.116.0
 [0.115.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.115.0...v0.115.1

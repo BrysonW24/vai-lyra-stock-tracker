@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.118.0',
+    date: '2026-08-02',
+    title: 'The Model Lab becomes the design north star, and the design system becomes law',
+    highlights: [
+      'The Model Lab is rebuilt to the founder-approved target: a three-panel command surface - configure on the left (archetype pills, data-source availability grid, one gradient CTA), live model execution in the centre (real engine stages with green completion rings, pulsing live dot, per-stage outputs and elapsed times, a four-cell stats strip), surfaced candidates on the right (expanded rank-1 card with probability, resemblance, confidence, strongest domains and the real risk-gate verdict). Every number binds to the real data flow; the reference mockup\'s illustrative values appear nowhere. Mobile stacks the panels with a sticky run button. A long-standing bug fell out of the rebuild: React StrictMode silently froze every dev run at "Queued" - fixed.',
+      'Lyra now has a versioned design system: the new lyra-ux workspace carries TOKENS.md v1.0.0 - 26 named colour, shape and motion tokens extracted from the app\'s proven palette - mirrored into a CSS variables file and the Tailwind theme, with a drift-check script that fails the moment spec and mirrors disagree. A dead light-mode palette from an earlier design era was removed after verifying zero usages. PATTERNS.md defines the component vocabulary (panels, stat cells, chips, status pills, the one-gradient-CTA rule) plus design-level honesty rules: provenance banners are part of the composition, status colours carry meaning, and an empty state never fakes a number.',
+      'An estate-wide inventory mapped all 273 view components across ~56 routes into 12 disjoint restyle packages with dependency ordering - the groundwork for converging the whole app onto the Model Lab\'s visual language.',
+    ],
+  },
+  {
     version: '0.117.0',
     date: '2026-08-02',
     title: 'The volatility null: the right chance bar arrives, and Accuracy is regraded under it',

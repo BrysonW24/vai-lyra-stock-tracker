@@ -1,29 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, ArrowRight, RotateCcw, X, LayoutGrid, List as ListIcon, Info } from 'lucide-react';
-import type { RunResult, LabResult, ResultTone, RunStage } from '@/lib/models/lab';
+import {
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  Bookmark,
+  BookmarkCheck,
+  Bot,
+  Building2,
+  ChevronDown,
+  Droplets,
+  GitCompare,
+  Info,
+  Landmark,
+  MessageSquare,
+  Network,
+  Newspaper,
+  Sparkles,
+  TrendingUp,
+  Users,
+  Wallet,
+} from 'lucide-react';
+import { LabSelect, type LabOption } from '@/components/models/lab/LabSelect';
+import { CAP_BANDS, type RunResult, type LabResult, type ResultTone } from '@/lib/models/lab';
+import { isSaved, toggleSave, QUEUE_EVENT } from '@/lib/research-queue';
 import type { SignalRow } from '@/types/scanner';
 import type { EmergingWinnerResult, EWDomain } from '@/lib/emerging-winner/types';
 import { DomainRadar } from '@/components/models/lab/viz/DomainRadar';
-import { LeaderboardHeatmap } from '@/components/models/lab/viz/LeaderboardHeatmap';
-import { OpportunityMap } from '@/components/models/lab/viz/OpportunityMap';
-import { ConvictionFunnel } from '@/components/models/lab/viz/ConvictionFunnel';
-import { DomainProfileBars } from '@/components/models/lab/viz/DomainProfileBars';
-import { RiskGateSummary } from '@/components/models/lab/viz/RiskGateSummary';
 import { fmtCap } from '@/components/models/lab/viz/scale';
 
 /**
- * State C - results as the hero, in two readable modes. BOARD is the visual half (conviction funnel,
- * opportunity map, 10-domain heatmap) so a run reads at a glance; LIST is the ranked detail. Both share
- * one finding drawer that decodes exactly why a name surfaced: its 10-domain radar, the fundamentals
- * inspected (real sub-signals), the driver breakdown, outlook, analogues and provenance. Every field is
- * real - nothing invents a percentile or a baseline; probabilities come from the engine's logged
- * real-v1 output, never recomputed here.
+ * Right panel - Surfaced candidates. The run's ranked names: rank 1 expanded with its stats, tags,
+ * strongest domains, primary risk and actions; the rest collapsed rows that expand on tap. Every
+ * field is real - winner probability is the classifier's logged probability field (never rescaled),
+ * resemblance is the logged 0-100 score, and nothing invents a percentile or a baseline. "Open
+ * finding" unfolds the full decode (radar, fundamentals inspected, outlook, analogues, provenance).
+ * Save goes to the real research queue; actions without a wired handler render disabled and say so.
  */
 
 const DRIVER_CAPS: Record<string, number> = { RSI: 25, MACD: 30, Price: 15, Trend: 15, Volume: 15 };
+
+type SortKey = 'run' | 'probability' | 'resemblance';
 
 function toneClass(t: ResultTone): string {
   if (t === 'strong') return 'text-emerald-300';
@@ -31,137 +51,201 @@ function toneClass(t: ResultTone): string {
   return 'text-white/55';
 }
 
-export function ResultsView({
-  run,
-  modelName,
-  onNewRun,
-  focus = [],
-}: {
-  run: RunResult;
-  modelName: string;
-  onNewRun: () => void;
-  focus?: string[];
-}) {
-  const [selected, setSelected] = useState<LabResult | null>(run.results[0] ?? null);
-  const [showStages, setShowStages] = useState(false);
-  const hasEw = run.results.some((r) => r.ew);
-  const [view, setView] = useState<'list' | 'board'>(hasEw ? 'board' : 'list');
-
-  const notes = run.summary.notes ?? [];
-
-  return (
-    <div className="space-y-4">
-      {/* Success strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.06] px-4 py-3">
-        <div className="text-[13px] text-emerald-100/90">
-          <span className="font-semibold">{modelName} complete</span>
-          <span className="mx-2 text-emerald-200/40">·</span>
-          {run.summary.reviewed.toLocaleString('en-US')} reviewed · {run.summary.passed.toLocaleString('en-US')} cleared ·{' '}
-          {run.summary.surfaced.toLocaleString('en-US')} surfaced
-          {run.summary.illustrative ? (
-            <span className="ml-2 rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-medium text-sky-300 ring-1 ring-sky-400/30">
-              illustrative
-            </span>
-          ) : (
-            <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-300 ring-1 ring-emerald-400/30">
-              real
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {hasEw ? (
-            <div className="flex rounded-lg border border-white/12 bg-white/[0.03] p-0.5">
-              <ViewButton active={view === 'board'} onClick={() => setView('board')} icon={<LayoutGrid size={13} />} label="Board" />
-              <ViewButton active={view === 'list'} onClick={() => setView('list')} icon={<ListIcon size={13} />} label="List" />
-            </div>
-          ) : null}
-          <button
-            type="button"
-            onClick={onNewRun}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] font-medium text-white/80 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
-          >
-            <RotateCcw size={13} /> New run
-          </button>
-        </div>
-      </div>
-
-      {/* Active scope + honest filter notes */}
-      {(run.summary.marketLabel || run.summary.capBandLabel || (run.summary.focusLabels?.length ?? 0) > 0) ? (
-        <div className="flex flex-wrap items-center gap-1.5">
-          {run.summary.marketLabel ? <ScopeChip k="Market" v={run.summary.marketLabel} /> : null}
-          {run.summary.capBandLabel ? <ScopeChip k="Cap" v={run.summary.capBandLabel} /> : null}
-          {run.summary.focusLabels?.length ? <ScopeChip k="Focus" v={run.summary.focusLabels.join(', ')} tone="sky" /> : null}
-        </div>
-      ) : null}
-      {notes.length ? (
-        <ul className="space-y-1 rounded-xl border border-amber-400/15 bg-amber-500/[0.05] px-3 py-2">
-          {notes.map((n, i) => (
-            <li key={i} className="flex items-start gap-1.5 text-[11px] leading-relaxed text-amber-200/80">
-              <Info size={12} className="mt-0.5 shrink-0" /> {n}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {/* How this run computed (collapsed, honest) - every step inspectable with its high-level logs */}
-      <div className="rounded-xl border border-white/8 bg-white/[0.02]">
-        <button
-          type="button"
-          onClick={() => setShowStages((v) => !v)}
-          className="flex w-full items-center justify-between px-3 py-2 text-left"
-        >
-          <span className="text-[12px] font-medium text-white/70">
-            How this run was computed · {run.stages.length} steps · {run.summary.version}
-          </span>
-          <ChevronDown size={14} className={`text-white/40 transition-transform ${showStages ? 'rotate-180' : ''}`} />
-        </button>
-        {showStages ? (
-          <ol className="border-t border-white/5 px-2 py-1.5">
-            {run.stages.map((s) => (
-              <StepRow key={s.id} stage={s} />
-            ))}
-          </ol>
-        ) : null}
-      </div>
-
-      {run.results.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
-          <p className="text-[14px] text-white/70">No candidates matched this run.</p>
-          <p className="mt-1 text-[12px] text-white/45">
-            Widen the market or cap band, clear the verticals/focus, or remove the ticker list and run again.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_22rem]">
-          <div className="min-w-0">
-            {view === 'board' && hasEw ? (
-              <BoardView run={run} focus={focus} selected={selected} onSelect={setSelected} />
-            ) : (
-              <RankedList results={run.results} selected={selected} onSelect={setSelected} />
-            )}
-          </div>
-
-          {/* Finding drawer */}
-          <div className="lg:sticky lg:top-4 lg:self-start">
-            {selected ? <FindingDrawer result={selected} focus={focus} onClose={() => setSelected(null)} /> : null}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+function nf(n: number): string {
+  return n.toLocaleString('en-US');
 }
 
-function ViewButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
+function pctOf(p: number): string {
+  return `${Math.round(p * 100)}%`;
+}
+
+/** The cap tier the result's REAL market cap falls in (null when cap was never sourced). */
+function capTier(cap: number | null | undefined): string | null {
+  if (cap == null) return null;
+  const band = CAP_BANDS.find(
+    (b) => b.key !== 'all' && (b.min == null || cap >= b.min) && (b.max == null || cap < b.max),
+  );
+  return band ? `${band.label} cap` : null;
+}
+
+function domainIcon(label: string) {
+  const l = label.toLowerCase();
+  if (l.includes('technical')) return Activity;
+  if (l.includes('volume') || l.includes('accumulation')) return BarChart3;
+  if (l.includes('liquidity')) return Droplets;
+  if (l.includes('theme')) return Network;
+  if (l.includes('business')) return Building2;
+  if (l.includes('capital') || l.includes('surviv')) return Wallet;
+  if (l.includes('government') || l.includes('policy')) return Landmark;
+  if (l.includes('adoption') || l.includes('traction')) return TrendingUp;
+  if (l.includes('sponsor') || l.includes('smart money')) return Users;
+  if (l.includes('narrative') || l.includes('attention')) return Newspaper;
+  return Sparkles;
+}
+
+export function ResultsView({
+  run,
+  pending = false,
+  focus = [],
+  rankLabel,
+  selectedSymbol,
+  onSelectSymbol,
+}: {
+  run: RunResult | null;
+  pending?: boolean;
+  focus?: string[];
+  rankLabel?: string;
+  selectedSymbol?: string | null;
+  onSelectSymbol?: (symbol: string | null) => void;
+}) {
+  const [sort, setSort] = useState<SortKey>('run');
+  const [showAll, setShowAll] = useState(false);
+
+  const results = useMemo(() => run?.results ?? [], [run]);
+  const hasEw = results.some((r) => r.ew);
+
+  const sorted = useMemo(() => {
+    if (sort === 'probability') return [...results].sort((a, b) => (b.ew?.probability ?? -1) - (a.ew?.probability ?? -1));
+    if (sort === 'resemblance') return [...results].sort((a, b) => (b.ew?.winner_similarity ?? -1) - (a.ew?.winner_similarity ?? -1));
+    return results;
+  }, [results, sort]);
+
+  const expandedSymbol = selectedSymbol && sorted.some((r) => r.symbol === selectedSymbol) ? selectedSymbol : sorted[0]?.symbol ?? null;
+
+  // A selection made from the full-width visuals may sit past the collapsed cut - reveal it.
+  useEffect(() => {
+    if (!selectedSymbol) return;
+    const idx = sorted.findIndex((r) => r.symbol === selectedSymbol);
+    if (idx >= 3) setShowAll(true);
+  }, [selectedSymbol, sorted]);
+
+  const visible = showAll ? sorted.slice(0, 25) : sorted.slice(0, 3);
+
+  const sortOptions: LabOption[] = hasEw
+    ? [
+        { value: 'run', label: rankLabel ? `Run ranking - ${rankLabel}` : 'Run ranking' },
+        { value: 'probability', label: 'Winner probability' },
+        { value: 'resemblance', label: 'Winner resemblance' },
+      ]
+    : [{ value: 'run', label: rankLabel ? `Run ranking - ${rankLabel}` : 'Run ranking' }];
+
+  const subtitle =
+    sort === 'probability'
+      ? 'Top results ranked by winner probability.'
+      : sort === 'resemblance'
+        ? 'Top results ranked by winner resemblance.'
+        : rankLabel
+          ? `Top results ranked by this run's outcome: ${rankLabel}.`
+          : "Top results in this run's ranking order.";
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition ${
-        active ? 'bg-sky-500/20 text-sky-200' : 'text-white/50 hover:text-white/80'
-      }`}
-    >
-      {icon} {label}
-    </button>
+    <section className="terminal-panel rounded-2xl p-4">
+      {/* Header */}
+      <div>
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
+          Surfaced candidates
+          {run ? (
+            <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-violet-300 ring-1 ring-violet-400/30">
+              {nf(results.length)}
+            </span>
+          ) : null}
+        </h2>
+        <p className="mt-1 text-[11px] text-white/45">{run ? subtitle : 'Results land here when a run completes.'}</p>
+      </div>
+
+      {run ? (
+        <>
+          {/* Provenance + scope - honest about what this run was */}
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            {run.summary.illustrative ? (
+              <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-medium text-sky-300 ring-1 ring-sky-400/30">
+                illustrative
+              </span>
+            ) : (
+              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-300 ring-1 ring-emerald-400/30">
+                real
+              </span>
+            )}
+            {run.summary.marketLabel ? <ScopeChip k="Market" v={run.summary.marketLabel} /> : null}
+            {run.summary.capBandLabel && run.summary.capBandLabel !== 'All caps' ? <ScopeChip k="Cap" v={run.summary.capBandLabel} /> : null}
+            {run.summary.focusLabels?.length ? <ScopeChip k="Focus" v={run.summary.focusLabels.join(', ')} tone="sky" /> : null}
+          </div>
+
+          {run.summary.notes?.length ? (
+            <ul className="mt-2 space-y-1 rounded-xl border border-amber-400/15 bg-amber-500/[0.05] px-3 py-2">
+              {run.summary.notes.map((n, i) => (
+                <li key={i} className="flex items-start gap-1.5 text-[11px] leading-relaxed text-amber-200/80">
+                  <Info size={12} className="mt-0.5 shrink-0" /> {n}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {results.length > 0 ? (
+            <>
+              {/* Sort */}
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-white/40">Sort by</span>
+                <div className="w-52 max-w-full">
+                  <LabSelect compact value={sort} options={sortOptions} onChange={(v) => setSort(v as SortKey)} ariaLabel="Sort candidates" />
+                </div>
+              </div>
+
+              {/* Candidate list */}
+              <ul className="mt-3 space-y-2">
+                {visible.map((r) => {
+                  const rank = sorted.indexOf(r) + 1;
+                  const expanded = r.symbol === expandedSymbol;
+                  return (
+                    <li key={r.symbol}>
+                      {expanded ? (
+                        <CandidateCard result={r} rank={rank} focus={focus} />
+                      ) : (
+                        <CollapsedRow result={r} rank={rank} onSelect={() => onSelectSymbol?.(r.symbol)} />
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {hasEw ? (
+                <p className="mt-2 text-[10px] leading-relaxed text-white/35">
+                  Winner probability is the real-v1 classifier&apos;s logged output; resemblance is the logged 0-100 score.
+                  Research only - not advice.
+                </p>
+              ) : null}
+
+              {sorted.length > 3 ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAll((v) => !v)}
+                  className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/12 bg-white/[0.03] px-3 py-2 text-[12px] font-medium text-white/70 transition hover:border-white/25 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
+                >
+                  {showAll ? 'Show top 3' : `View all surfaced candidates (${nf(sorted.length)})`}
+                  <ChevronDown size={13} className={`transition-transform ${showAll ? 'rotate-180' : ''}`} />
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-5 text-center">
+              <p className="text-[13px] text-white/70">No candidates matched this run.</p>
+              <p className="mt-1 text-[11px] text-white/45">
+                Widen the market or cap band, clear the verticals or focus, or remove the ticker list and run again.
+              </p>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="mt-4 rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
+          <p className="text-[13px] text-white/60">{pending ? 'Run in progress.' : 'No candidates yet.'}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-white/40">
+            {pending
+              ? 'Candidates appear here the moment the pipeline completes.'
+              : 'Configure a run on the left and press Run - surfaced names appear here with the full why behind each one.'}
+          </p>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -177,176 +261,284 @@ function ScopeChip({ k, v, tone }: { k: string; v: string; tone?: 'sky' }) {
   );
 }
 
-function StepRow({ stage }: { stage: RunStage }) {
-  const [open, setOpen] = useState(false);
-  const logs = stage.logs ?? [];
-  const hasDetail = logs.length > 0 || stage.sources.length > 0;
+function RankChip({ n, size = 'md' }: { n: number; size?: 'sm' | 'md' }) {
   return (
-    <li className="border-b border-white/5 last:border-b-0">
-      <button
-        type="button"
-        onClick={() => hasDetail && setOpen((v) => !v)}
-        className="flex w-full items-baseline gap-2 px-1 py-1.5 text-left"
-      >
-        <span className="shrink-0 text-[11px] font-medium text-white/70">{stage.label}</span>
-        <span className="min-w-0 flex-1 truncate text-[11px] text-white/45">{stage.output}</span>
-        {hasDetail ? (
-          <ChevronDown size={12} className={`shrink-0 text-white/30 transition-transform ${open ? 'rotate-180' : ''}`} />
+    <span
+      className={`flex shrink-0 items-center justify-center rounded-lg bg-violet-500/15 font-mono font-semibold text-violet-300 ring-1 ring-violet-400/25 ${
+        size === 'md' ? 'h-7 w-7 text-[12px]' : 'h-6 w-6 text-[11px]'
+      }`}
+    >
+      {n}
+    </span>
+  );
+}
+
+function Monogram({ symbol, size = 'md' }: { symbol: string; size?: 'sm' | 'md' }) {
+  return (
+    <span
+      className={`flex shrink-0 items-center justify-center rounded-lg bg-white/[0.07] font-semibold text-white/75 ring-1 ring-white/10 ${
+        size === 'md' ? 'h-9 w-9 text-[12px]' : 'h-7 w-7 text-[10px]'
+      }`}
+      aria-hidden
+    >
+      {symbol.slice(0, 2).toUpperCase()}
+    </span>
+  );
+}
+
+function TagPill({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/60">{children}</span>
+  );
+}
+
+/** Save to the real research queue (src/lib/research-queue.ts) - the same store the Saved page reads. */
+function SaveGhost({ result }: { result: LabResult }) {
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setSaved(isSaved(result.symbol));
+    const sync = () => setSaved(isSaved(result.symbol));
+    window.addEventListener(QUEUE_EVENT, sync);
+    return () => window.removeEventListener(QUEUE_EVENT, sync);
+  }, [result.symbol]);
+
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        setSaved(
+          toggleSave({
+            symbol: result.symbol,
+            kind: 'ticker',
+            label: result.companyName !== result.symbol ? result.companyName : undefined,
+            savedScore: result.headlineValue,
+            savedAt: new Date().toISOString(),
+          }),
+        )
+      }
+      aria-pressed={saved}
+      title={saved ? 'Saved to your research queue' : 'Save to your research queue'}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${
+        saved
+          ? 'border-amber-400/40 bg-amber-500/10 text-amber-300'
+          : 'border-white/12 bg-white/[0.03] text-white/70 hover:border-white/25 hover:text-white'
+      }`}
+    >
+      {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />} {saved ? 'Saved' : 'Save'}
+    </button>
+  );
+}
+
+function GhostLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/12 bg-white/[0.03] px-2.5 py-1.5 text-[11px] font-medium text-white/70 transition hover:border-white/25 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
+    >
+      {icon} {label}
+    </Link>
+  );
+}
+
+function GhostDisabled({ icon, label, title }: { icon: React.ReactNode; label: string; title: string }) {
+  return (
+    <button
+      type="button"
+      disabled
+      title={title}
+      className="inline-flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-white/8 bg-white/[0.02] px-2.5 py-1.5 text-[11px] font-medium text-white/30"
+    >
+      {icon} {label}
+    </button>
+  );
+}
+
+function CollapsedRow({ result, rank, onSelect }: { result: LabResult; rank: number; onSelect: () => void }) {
+  const r = result;
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="flex w-full items-center gap-2.5 rounded-xl border border-white/8 bg-white/[0.03] p-2.5 text-left transition-all duration-200 hover:border-white/20 hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
+    >
+      <RankChip n={rank} size="sm" />
+      <Monogram symbol={r.symbol} size="sm" />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-baseline gap-1.5">
+          <span className="text-[13px] font-semibold text-white">{r.symbol}</span>
+          {r.companyName !== r.symbol ? <span className="truncate text-[11px] text-white/40">{r.companyName}</span> : null}
+        </span>
+        <span className="mt-0.5 flex flex-wrap gap-1">
+          <TagPill>{r.group}</TagPill>
+          {capTier(r.marketCap) ? <TagPill>{capTier(r.marketCap)}</TagPill> : null}
+        </span>
+      </span>
+      <span className="shrink-0 text-right">
+        {r.ew ? (
+          <>
+            <span className="block text-[14px] font-bold tabular-nums text-white">{pctOf(r.ew.probability)}</span>
+            <span className="block text-[9px] uppercase tracking-wide text-white/35">Winner probability</span>
+          </>
+        ) : (
+          <>
+            <span className={`block text-[14px] font-bold tabular-nums ${toneClass(r.tone)}`}>{r.headlineValue}</span>
+            <span className="block text-[9px] uppercase tracking-wide text-white/35">{r.headlineLabel}</span>
+          </>
+        )}
+      </span>
+      <ChevronDown size={14} className="shrink-0 text-white/30" />
+    </button>
+  );
+}
+
+function CandidateCard({ result, rank, focus }: { result: LabResult; rank: number; focus: string[] }) {
+  const [detailOpen, setDetailOpen] = useState(false);
+  const r = result;
+  const ew = r.ew;
+  const tier = capTier(r.marketCap);
+  const trait = ew?.present_traits[0];
+  const strongest = ew ? ew.strongest_domains.slice(0, 4) : r.strongest;
+  const riskVerdict = ew?.risk.verdict;
+
+  return (
+    <article className="rounded-2xl border border-violet-400/35 bg-violet-500/[0.04] p-3 shadow-[0_0_28px_rgba(139,92,246,0.14)] ring-1 ring-violet-400/15">
+      {/* Identity row */}
+      <div className="flex items-start gap-2.5">
+        <RankChip n={rank} />
+        <Monogram symbol={r.symbol} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <span className="text-[16px] font-bold text-white">{r.symbol}</span>
+            {r.companyName !== r.symbol ? <span className="truncate text-[11px] text-white/45">{r.companyName}</span> : null}
+          </div>
+          <p className="truncate text-[11px] text-white/40">{r.subtitle}</p>
+        </div>
+        {r.tone === 'strong' ? (
+          <span className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/[0.06] px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+            Strong candidate
+          </span>
         ) : null}
-      </button>
-      {open && hasDetail ? (
-        <div className="px-1 pb-2 pl-2">
-          {logs.length ? (
-            <ul className="space-y-0.5">
-              {logs.map((l, i) => (
-                <li key={i} className="flex gap-1.5 text-[11px] leading-relaxed text-white/60">
-                  <span className="text-white/25">·</span>
-                  <span>{l}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          {stage.sources.length ? (
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {stage.sources.map((src) => (
-                <span key={src} className="rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-white/45">
-                  {src}
+      </div>
+
+      {/* Tags */}
+      <div className="mt-2 flex flex-wrap gap-1">
+        <TagPill>{r.group}</TagPill>
+        {tier ? <TagPill>{tier}</TagPill> : null}
+        {r.marketCap != null ? <TagPill>{fmtCap(r.marketCap)}</TagPill> : null}
+        {r.confidence ? <TagPill>{r.confidence} confidence</TagPill> : null}
+      </div>
+
+      {/* Distinguishing trait (real: the engine's present_traits) */}
+      {trait ? (
+        <p className="mt-2 w-full rounded-lg border border-emerald-400/20 bg-emerald-500/[0.07] px-2.5 py-1.5 text-[11px] text-emerald-200/85">
+          {trait}
+        </p>
+      ) : null}
+
+      {/* Stat cells */}
+      <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+        {ew ? (
+          <>
+            <StatCell big value={pctOf(ew.probability)} label="Winner probability" />
+            <StatCell value={String(Math.round(ew.winner_similarity))} label="Resemblance (0-100)" />
+            <StatCell value={r.confidence ?? '-'} label="Confidence" />
+          </>
+        ) : r.radar ? (
+          <>
+            <StatCell big value={String(r.radar.score)} label="Recovery score" />
+            <StatCell value={r.radar.rsi.toFixed(1)} label="RSI" />
+            <StatCell value={`${r.radar.volumeRatio.toFixed(2)}x`} label="Volume ratio" />
+          </>
+        ) : null}
+      </div>
+
+      {/* Strongest domains */}
+      {strongest.length ? (
+        <div className="mt-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+            {ew ? 'Strongest domains' : 'Strongest drivers'}
+          </p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {strongest.map((d) => {
+              const IconCmp = domainIcon(d);
+              return (
+                <span
+                  key={d}
+                  className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-200/80"
+                >
+                  <IconCmp size={10} /> {d}
                 </span>
-              ))}
-            </div>
-          ) : null}
+              );
+            })}
+          </div>
         </div>
       ) : null}
-    </li>
-  );
-}
 
-function VizCard({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-white/8 bg-white/[0.02] p-3">
-      <div className="mb-2 flex items-baseline justify-between gap-2">
-        <h3 className="text-[12px] font-semibold text-white/80">{title}</h3>
-        {hint ? <span className="text-[10px] text-white/35">{hint}</span> : null}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function BoardView({
-  run,
-  focus,
-  selected,
-  onSelect,
-}: {
-  run: RunResult;
-  focus: string[];
-  selected: LabResult | null;
-  onSelect: (r: LabResult) => void;
-}) {
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <VizCard title="Conviction funnel" hint="idea to realised">
-          <ConvictionFunnel summary={run.summary} results={run.results} universeNote={run.summary.universeLabel} />
-        </VizCard>
-        <VizCard title="Opportunity map" hint="resemblance x risk">
-          <OpportunityMap results={run.results} selectedSymbol={selected?.symbol} onSelect={onSelect} />
-        </VizCard>
-      </div>
-      <VizCard title="Domain heatmap" hint="every name x 10 domains">
-        <LeaderboardHeatmap results={run.results} focus={focus} selectedSymbol={selected?.symbol} onSelect={onSelect} />
-      </VizCard>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <VizCard title="Average domain profile" hint="the run's fingerprint">
-          <DomainProfileBars results={run.results} focus={focus} />
-        </VizCard>
-        <VizCard title="Risk gates" hint="how the batch cleared">
-          <RiskGateSummary results={run.results} />
-        </VizCard>
-      </div>
-    </div>
-  );
-}
-
-function RankedList({
-  results,
-  selected,
-  onSelect,
-}: {
-  results: LabResult[];
-  selected: LabResult | null;
-  onSelect: (r: LabResult) => void;
-}) {
-  return (
-    <ul className="space-y-2">
-      {results.slice(0, 25).map((r, i) => (
-        <li key={r.symbol}>
-          <button
-            type="button"
-            onClick={() => onSelect(r)}
-            className={`w-full rounded-xl border p-3 text-left transition-all duration-200 ${
-              selected?.symbol === r.symbol
-                ? 'border-sky-400/40 bg-sky-500/[0.06]'
-                : 'border-white/8 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]'
+      {/* Primary risk */}
+      <div className="mt-2.5 flex items-start justify-between gap-2 rounded-lg border border-white/8 bg-white/[0.02] px-2.5 py-1.5">
+        <span className="flex min-w-0 items-start gap-1.5 text-[11px] text-white/65">
+          <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-400" />
+          <span className="min-w-0">
+            <span className="mr-1 text-[9px] font-semibold uppercase tracking-wide text-white/35">Primary risk</span>
+            {r.primaryRisk}
+          </span>
+        </span>
+        {riskVerdict ? (
+          <span
+            className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide ${
+              riskVerdict === 'block' ? 'text-rose-300' : riskVerdict === 'review' ? 'text-amber-300' : 'text-emerald-300'
             }`}
           >
-            <div className="flex items-center gap-3">
-              <span className="w-6 shrink-0 text-center font-mono text-[11px] text-white/35">#{i + 1}</span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[14px] font-semibold text-white">{r.symbol}</span>
-                  <span className="truncate text-[11px] text-white/45">{r.companyName}</span>
-                  {r.marketCap != null ? <span className="shrink-0 font-mono text-[10px] text-white/35">{fmtCap(r.marketCap)}</span> : null}
-                </div>
-                <div className="truncate text-[11px] text-white/40">
-                  {r.subtitle} · {r.group}
-                </div>
-              </div>
-              <div className="shrink-0 text-right">
-                <div className={`text-lg font-bold tabular-nums ${toneClass(r.tone)}`}>{r.headlineValue}</div>
-                <div className="text-[10px] uppercase tracking-wide text-white/35">{r.headlineLabel}</div>
-              </div>
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              {r.strongest.map((d) => (
-                <span key={d} className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-200/80">
-                  {d}
-                </span>
-              ))}
-              <span className="text-[10px] text-white/35">{r.evidence}</span>
-            </div>
-          </button>
-        </li>
-      ))}
-    </ul>
+            {riskVerdict}
+          </span>
+        ) : null}
+      </div>
+
+      {/* Actions */}
+      <div className="mt-3 grid grid-cols-3 gap-1.5">
+        <button
+          type="button"
+          onClick={() => setDetailOpen((v) => !v)}
+          aria-expanded={detailOpen}
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:bg-violet-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+        >
+          {detailOpen ? 'Close finding' : 'Open finding'}
+        </button>
+        <SaveGhost result={r} />
+        <GhostLink href="/comparison" icon={<GitCompare size={12} />} label="Compare" />
+      </div>
+      <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+        <GhostDisabled
+          icon={<MessageSquare size={12} />}
+          label="Ask Lyra"
+          title="Ask Lyra opens from the floating launcher - a per-candidate deep link is not wired yet"
+        />
+        <GhostLink href="/paper-bot" icon={<Bot size={12} />} label="Paper Bot" />
+      </div>
+
+      {/* Full finding decode */}
+      {detailOpen ? (
+        <div className="mt-3 border-t border-white/10 pt-1">
+          {ew ? <EwDetail r={ew} focus={focus} /> : r.radar ? <RadarDetail s={r.radar} /> : null}
+        </div>
+      ) : null}
+    </article>
   );
 }
 
-function FindingDrawer({ result, focus, onClose }: { result: LabResult; focus: string[]; onClose: () => void }) {
+function StatCell({ value, label, big }: { value: string; label: string; big?: boolean }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 backdrop-blur">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h3 className="text-[15px] font-bold text-white">{result.symbol}</h3>
-          <p className="text-[11px] text-white/45">
-            {result.group}
-            {result.marketCap != null ? ` · ${fmtCap(result.marketCap)}` : ''}
-          </p>
-        </div>
-        <button type="button" onClick={onClose} aria-label="Close" className="text-white/30 transition hover:text-white/70 lg:hidden">
-          <X size={16} />
-        </button>
-      </div>
-
-      {result.ew ? <EwDetail r={result.ew} focus={focus} /> : result.radar ? <RadarDetail s={result.radar} /> : null}
+    <div className="glass-well rounded-lg px-2 py-1.5 text-center">
+      <div className={`font-bold tabular-nums text-white ${big ? 'text-[17px]' : 'text-[14px]'}`}>{value}</div>
+      <div className="mt-0.5 text-[8px] uppercase tracking-wide text-white/40">{label}</div>
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mt-3 border-t border-white/5 pt-3">
+    <div className="mt-3 border-t border-white/5 pt-3 first:mt-0 first:border-t-0 first:pt-2">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">{title}</p>
       <div className="mt-1.5">{children}</div>
     </div>
@@ -391,7 +583,10 @@ function RadarDetail({ s }: { s: SignalRow }) {
           <span>{s.distanceFromLow.toFixed(1)}% off 60-low</span>
           <span>vol {s.volumeRatio.toFixed(2)}x</span>
           <span>{s.macdState}</span>
-          <span>vs SMA200 {s.priceVsSma200 >= 0 ? '+' : ''}{s.priceVsSma200.toFixed(1)}%</span>
+          <span>
+            vs SMA200 {s.priceVsSma200 >= 0 ? '+' : ''}
+            {s.priceVsSma200.toFixed(1)}%
+          </span>
         </div>
       </Section>
 
@@ -426,9 +621,7 @@ function RadarDetail({ s }: { s: SignalRow }) {
       ) : null}
 
       <Section title="Provenance">
-        <p className="text-[11px] text-white/45">
-          Deterministic score (TS + Python golden-vector parity). Last updated {s.lastUpdated}.
-        </p>
+        <p className="text-[11px] text-white/45">Deterministic score (TS + Python golden-vector parity). Last updated {s.lastUpdated}.</p>
         <Link href={`/tickers/${s.symbol}`} className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-sky-300 hover:underline">
           Open full ticker view <ArrowRight size={12} />
         </Link>
@@ -478,7 +671,13 @@ function EwDetail({ r, focus }: { r: EmergingWinnerResult; focus: string[] }) {
       <Section title="What drove the resemblance">
         <div className="space-y-1.5">
           {r.contributions.slice(0, 6).map((c) => (
-            <Bar key={c.domain} label={c.label} value={Math.max(0, c.contribution)} cap={Math.max(1, r.contributions[0]?.contribution || 1)} tone="emerald" />
+            <Bar
+              key={c.domain}
+              label={c.label}
+              value={Math.max(0, c.contribution)}
+              cap={Math.max(1, r.contributions[0]?.contribution || 1)}
+              tone="emerald"
+            />
           ))}
         </div>
       </Section>

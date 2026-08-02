@@ -38,11 +38,14 @@ export function LabSelect({
   options,
   onChange,
   ariaLabel,
+  compact = false,
 }: {
   value: string;
   options: LabOption[];
   onChange: (value: string) => void;
   ariaLabel: string;
+  /** Tighter trigger for inline controls (e.g. a sort selector inside a panel header). */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -72,11 +75,15 @@ export function LabSelect({
         aria-expanded={open}
         aria-label={ariaLabel}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-3 py-2.5 text-left transition hover:border-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400"
+        className={`flex w-full items-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] text-left transition hover:border-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-400 ${
+          compact ? 'px-2.5 py-1.5' : 'px-3 py-2.5'
+        }`}
       >
-        <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-white/90">{selected?.label}</span>
+        <span className={`min-w-0 flex-1 truncate font-medium text-white/90 ${compact ? 'text-[12px]' : 'text-[14px]'}`}>
+          {selected?.label}
+        </span>
         {selected?.badge ? <Badge text={selected.badge.text} tone={selected.badge.tone} /> : null}
-        <ChevronDown size={16} className={`shrink-0 text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={compact ? 14 : 16} className={`shrink-0 text-white/40 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open ? (
