@@ -224,17 +224,50 @@ def compile_quarters(cache_dir: str, quarters: list[str], *, cached_only: bool =
             except (OSError, ValueError):
                 pass
         txns = sorted(merged.values(), key=lambda t: (t["filed"], t["accession"]))
-        with open(path, "w", encoding="utf-8") as fh:
-            json.dump({"cik": cik, "n": len(txns), "transactions": txns}, fh)
+        write_issuer_file(path, cik, txns)
         written += 1
     logger.info("insider bulk: compiled %d quarters -> %d issuer files (missing quarters: %s)",
                 len(done), written, missing or "none")
     return {"quarters_done": done, "quarters_missing": missing, "issuers": written}
 
 
+# Compact columnar storage. Full-fat JSON objects cost ~278 bytes per transaction, almost all of
+# it repeated key names; the whole market over 12 years is ~1.7M transactions, so the key names
+# alone would be most of a gigabyte. Rows are stored as fixed-order arrays (~95 bytes) with the
+# column order recorded IN the file, so a future column change is detectable rather than silently
+# misread. Role flags pack into one int: 1 officer | 2 director | 4 ten-percent.
+COMPACT_COLUMNS = ["filed", "trans_date", "code", "shares", "price", "usd", "owner_cik",
+                   "roles", "shares_after", "accession"]
+
+
+def _to_compact(t: dict) -> list:
+    roles = (1 if t.get("is_officer") else 0) | (2 if t.get("is_director") else 0) \
+        | (4 if t.get("is_ten_pct") else 0)
+    return [t["filed"], t.get("trans_date"), t["code"], t.get("shares"), t.get("price"),
+            t.get("usd"), t.get("owner_cik"), roles, t.get("shares_after"), t["accession"]]
+
+
+def _from_compact(row: list) -> dict:
+    d = dict(zip(COMPACT_COLUMNS, row))
+    roles = d.pop("roles", 0) or 0
+    d["is_officer"] = bool(roles & 1)
+    d["is_director"] = bool(roles & 2)
+    d["is_ten_pct"] = bool(roles & 4)
+    d["acquired"] = "A" if d.get("code") == "P" else "D"
+    return d
+
+
+def write_issuer_file(path: str, cik: str, txns: list[dict]) -> None:
+    """Write one issuer's transactions in compact columnar form (see COMPACT_COLUMNS)."""
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump({"cik": cik, "n": len(txns), "columns": COMPACT_COLUMNS,
+                   "transactions": [_to_compact(t) for t in txns]}, fh)
+
+
 def load_issuer_transactions(cik, cache_dir: str) -> Optional[list[dict]]:
     """Every cached open-market transaction for an issuer, or None when this CIK was never
-    compiled (honestly unknown, never an empty-looking zero)."""
+    compiled (honestly unknown, never an empty-looking zero). Reads compact storage, and still
+    reads the original object format so old caches keep working."""
     if cik is None:
         return None
     path = os.path.join(cache_dir, "insider-bulk", "by-cik", f"{str(cik).lstrip('0')}.json")
@@ -242,9 +275,20 @@ def load_issuer_transactions(cik, cache_dir: str) -> Optional[list[dict]]:
         return None
     try:
         with open(path, encoding="utf-8") as fh:
-            return json.load(fh).get("transactions", [])
+            blob = json.load(fh)
     except (OSError, ValueError):
         return None
+    rows = blob.get("transactions", [])
+    if not rows:
+        return []
+    if isinstance(rows[0], dict):       # legacy object format
+        return rows
+    cols = blob.get("columns")
+    if cols != COMPACT_COLUMNS:         # never silently misread a changed layout
+        logger.warning("insider bulk %s: unknown column layout %s - treating as unavailable",
+                       cik, cols)
+        return None
+    return [_from_compact(r) for r in rows]
 
 
 def insider_features_asof(cik, cache_dir: str, as_of: str, *, window_days: int = 90) -> Optional[dict]:

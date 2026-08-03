@@ -80,6 +80,22 @@ its leg is permanently untestable - do not extend the claim to three generations
 Calibration B+ (DOWN from A-) · Process A · Estimator C+ (UP from C-) · Data C+ (UP from C-) ·
 Honesty A. Process note: the refusal under temptation is the strongest process evidence to date.
 
+**DATA-QUALITY FINDING against this generation (2026-08-03, found while building the bulk
+insider source):** the per-document Form 4 path used SEC submissions indexes that are TRUNCATED
+by SEC pagination - we read `filings.recent` only, never the older paginated files. Measured:
+META's index reaches back only to 2024-05-17, JPM's to 2025-09-02, MSFT's to 2020-05-04. For any
+as-of date before a company's index start, `sponsorship_features` found no entries in the window
+and returned a REAL 0.0 ("no insider activity") when the truth was "we could not see the
+filings". Bulk data for the same META window holds 1,670 open-market transactions. So gen-3's
+"insider flow on 99.86% of rows" was true about ROW COVERAGE and false about DATA COMPLETENESS -
+the corruption is worst for the highest-volume filers and for older dates. Consequences:
+(a) gen-3's insider features were materially incomplete, (b) this is a plausible contributor to
+the LINEAR refit getting worse when insider features were added (a systematically wrong feature
+is worse than a missing one), (c) the boosted challenger's 2.13x was achieved DESPITE corrupted
+insider input, (d) gen-4 on bulk data is not just wider, it is the first generation whose insider
+signal is actually correct. Fix shipped as `insider_bulk_source` (BUILD-BACKLOG T1); the
+truncation bug in `submissions_source.compact_submissions` is recorded for the live path.
+
 **Adversarial audit of this entry (2026-08-03, run after publication):** 223 numeric claims
 checked against source; 220 verified, all four paired verdicts reproduced bit-exactly. Three
 FRAMING errors found and corrected here and in the board/report-card/evidence pack: (1) "first

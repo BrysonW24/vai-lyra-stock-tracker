@@ -35,7 +35,7 @@ the trade we want, because a tight interval is what lets anything get promoted.
 
 ## Sprint 1 - the power + representation sprint
 
-### T1 - Bulk insider ingestion (unblocks everything) · SIZE: M · STATUS: in progress
+### T1 - Bulk insider ingestion (unblocks everything) · SIZE: M · STATUS: DONE 2026-08-03
 
 Per-document Form 4 fetching does not scale past ~1,000 names (20 hours, two SEC throttle
 waves, a hard 2 req/s tail pace). The SEC publishes **quarterly bulk Insider Transactions Data
@@ -49,6 +49,43 @@ Sets** - pre-parsed Form 3/4/5 tables since 2006, ~80 zip files.
 - Acceptance: insider features resolvable for >= 5,000 CIKs without a per-document fetch;
   as-of discipline pinned (`filed <= T`); spot-agreement with the existing per-document cache
   on >= 50 sampled company-quarters.
+- **RESULT (2026-08-03): PASSED.** 10,109 issuers compiled from 49 quarters (2014q1-2026q1;
+  2026q2 not yet published by the SEC - that lag is why the live path keeps the XML parser).
+  Agreement measured on 400 company-quarters where BOTH sources genuinely cover the window:
+  **396 agree, 4 disagree (99%)**. Storage is compact columnar (~95 bytes/transaction vs 278
+  for objects) - the whole market, 12 years, in ~250 MB. 8 pins green.
+- Watch-out from the acceptance run, worth its own ticket (T1c).
+
+### T1c - Resolve the 4 bulk-vs-per-document disagreements · SIZE: S · NEW 2026-08-03
+
+Four of 400 disagreed, and one is diagnostic rather than noise:
+
+| symbol | bulk net USD | per-document net USD | reading |
+|---|---|---|---|
+| BYD | -6,958,562 | +6,958,562 | **same magnitude, opposite SIGN** - a sign-convention bug in one parser |
+| BEN | +63 | -9,999,937 | one source sees a ~$10M disposal the other does not |
+| URBN | -11,635,635 | -17,442,968 | same direction, per-doc larger |
+| KFY | -1,460,000 | -2,910,422 | same direction, per-doc ~2x |
+
+BYD is the one to chase first: identical magnitude with a flipped sign means one path is
+mis-reading the acquired/disposed code (`TRANS_ACQUIRED_DISP_CD` in bulk, the A/D element in the
+XML) for some transaction shape. A sign error on insider net-buy would invert the feature for
+affected names - worse than missing it. Decide which parser is right by reading the underlying
+filing directly, then pin the answer with a fixture.
+
+### T1b - Fix submissions-index truncation on the LIVE path · SIZE: S · NEW 2026-08-03
+
+Found while validating T1: `submissions_source.compact_submissions` reads only
+`filings.recent` from the SEC submissions JSON and ignores `filings.files` (the older paginated
+pages). High-volume filers therefore carry indexes that start recently - META 2024-05-17, JPM
+2025-09-02 - and any query before that start silently returns a REAL 0.0 instead of unavailable.
+History is now served by bulk (T1) so the corpus is fixed, but the LIVE scan still uses this
+path. Either page the `files` array or accept a documented recency horizon and return None
+(unavailable) rather than 0.0 outside it. **A wrong feature is worse than a missing one** - this
+is exactly the failure that returning "unavailable" was designed to prevent.
+
+- Acceptance: for a filer with a paginated index, a pre-horizon query returns unavailable (not
+  0.0), pinned by test.
 
 ### T2 - Widen the universe 991 -> ~8,000 names · SIZE: M · BLOCKED BY: T1
 
