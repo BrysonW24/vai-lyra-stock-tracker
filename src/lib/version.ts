@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.124.0',
+    date: '2026-08-03',
+    title: 'The build path, and the ingestion that makes it possible',
+    highlights: [
+      'Generation 3 refuted the thesis three generations had run on. Data volume was never the binding constraint: three generations of enrichment moved the deployed model by a statistically undetectable amount, while on IDENTICAL data a different model class went from failing every floor to the best result ever recorded. And the sharpest finding of all - 201,494 insider filings, 1.4 GB, twenty hours of downloading, reached the model as exactly TWO numbers. A new build backlog now orders the work by that evidence: statistical power first, then feature representation, then estimator class, then survivorship.',
+      'Ticket one is built: bulk insider ingestion. The SEC publishes the same filings as quarterly pre-parsed bundles, and a single quarter covers 4,739 companies where the entire per-document backfill covered 991 - fourteen megabytes and two seconds against twenty hours and two rate-limit bans. The new source carries what the old path threw away: buy CLUSTERS across distinct insiders (the effect the research literature actually documents - 276 companies showed a three-or-more-insider cluster in one quarter alone), officer versus director versus ten-percent-owner roles, purchase size relative to the insider\'s own stake, and recency. Filing date remains the as-of key, open-market transactions only, eight new pins.',
+      'This unblocks the real fix: widening the universe from 991 companies toward the full listing. That is what refused generation 3\'s challenger - not a weak model, but 6,165 test rows unable to separate a real margin from zero.',
+    ],
+  },
+  {
     version: '0.123.1',
     date: '2026-08-03',
     title: 'The audit corrects the release: "first ever" was false',
