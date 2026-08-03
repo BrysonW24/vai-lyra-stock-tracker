@@ -1,0 +1,5468 @@
+{
+  "corpus": {
+    "source": "historical-survivor-v1",
+    "caveat": "Survivor-biased corpus: universe = the CURRENT SEC listing, so delisted names are absent, the ruin class is censored, and precision here is an optimistic bound. A second selection bias is disclosed and quarantined: the curated emergence names were hand-picked WITH hindsight (they are in the curated set because they later won), so their rows are flagged `curated`, EXCLUDED from all training, and reported as a separate slice - the random-sample slice is the honest headline. Features are point-in-time (causal indicators; EDGAR facts filtered on filed <= entry date); labels are matured 12-month first-touch outcomes.",
+    "corpus_sha256": "a09b43107090a1c02605f9fdf8abb21c499079d18cbafdceb57fccfcbb01bc3b",
+    "n_rows": 27420,
+    "n_rows_curated": 262,
+    "n_winners": 2796,
+    "base_rate": 0.102,
+    "built_at_data_end": "2026-07-31",
+    "n_symbols_priced": 1140,
+    "n_symbols_with_rows": 991
+  },
+  "rows_filter": "holdout",
+  "holdout_start": "2024-01-01",
+  "label_diagnostics": {
+    "option4_excluded_still_listed": 0,
+    "option4_excluded_liquidity": 157,
+    "note": "option-4 = first-touch AND still-listed AND liquidity-grew; on a survivor corpus the still-listed conjunct rarely binds - never present it as survival discipline here."
+  },
+  "models": {
+    "reference_scorecard": {
+      "random_sample": {
+        "n": 6165,
+        "n_symbols": 934,
+        "n_positive_symbols": 335,
+        "base_rate": 0.1341,
+        "pr_auc": 0.1262,
+        "roc_auc": 0.4756,
+        "brier": 0.1429,
+        "ece": 0.1355,
+        "precision_at_k": 0.1201,
+        "k": 308,
+        "lift_at_k": 0.896,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.1138,
+            "k": 123,
+            "lift": 0.848
+          },
+          "0.05": {
+            "precision": 0.1201,
+            "k": 308,
+            "lift": 0.896
+          },
+          "0.1": {
+            "precision": 0.112,
+            "k": 616,
+            "lift": 0.835
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.1242,
+          "median": 0.1163,
+          "worst": 0.0233,
+          "worst_cohort": "2024Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.0952,
+              "k": 42,
+              "n": 859,
+              "base_rate": 0.1176,
+              "expected_hits_null": 4.94
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0233,
+              "k": 43,
+              "n": 872,
+              "base_rate": 0.0929,
+              "expected_hits_null": 3.99
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.0698,
+              "k": 43,
+              "n": 871,
+              "base_rate": 0.1274,
+              "expected_hits_null": 5.48
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.1163,
+              "k": 43,
+              "n": 875,
+              "base_rate": 0.1257,
+              "expected_hits_null": 5.41
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1591,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.125,
+              "expected_hits_null": 5.5
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.25,
+              "k": 44,
+              "n": 894,
+              "base_rate": 0.1767,
+              "expected_hits_null": 7.77
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1556,
+              "k": 45,
+              "n": 906,
+              "base_rate": 0.1711,
+              "expected_hits_null": 7.7
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1352,
+            "actual": 0.1623,
+            "n": 616
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1699,
+            "actual": 0.1297,
+            "n": 617
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.196,
+            "actual": 0.1331,
+            "n": 616
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.2204,
+            "actual": 0.1442,
+            "n": 617
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.2441,
+            "actual": 0.1364,
+            "n": 616
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2666,
+            "actual": 0.1394,
+            "n": 617
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2919,
+            "actual": 0.1364,
+            "n": 616
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.3208,
+            "actual": 0.1329,
+            "n": 617
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.358,
+            "actual": 0.1153,
+            "n": 616
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.4389,
+            "actual": 0.1118,
+            "n": 617
+          }
+        ],
+        "calibration_weak": {
+          "n": 6165,
+          "slope": -0.1969,
+          "intercept": -2.0793,
+          "spiegelhalter_z": -16.7917,
+          "spiegelhalter_p": 0.0
+        },
+        "ci_90": {
+          "precision_at_k": {
+            "p05": 0.0782,
+            "p50": 0.1194,
+            "p95": 0.1623,
+            "n_boot": 300
+          },
+          "lift_at_k": {
+            "p05": 0.6086,
+            "p50": 0.8772,
+            "p95": 1.2014,
+            "n_boot": 300
+          },
+          "pr_auc": {
+            "p05": 0.1131,
+            "p50": 0.1261,
+            "p95": 0.1408,
+            "n_boot": 300
+          }
+        },
+        "deployment_restatement_precision_at_3pct_base": 0.0265
+      },
+      "all": {
+        "n": 6256,
+        "n_symbols": 948,
+        "n_positive_symbols": 349,
+        "base_rate": 0.1418,
+        "pr_auc": 0.1361,
+        "roc_auc": 0.4846,
+        "brier": 0.1462,
+        "ece": 0.1303,
+        "precision_at_k": 0.1282,
+        "k": 312,
+        "lift_at_k": 0.904,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.12,
+            "k": 125,
+            "lift": 0.846
+          },
+          "0.05": {
+            "precision": 0.1282,
+            "k": 312,
+            "lift": 0.904
+          },
+          "0.1": {
+            "precision": 0.128,
+            "k": 625,
+            "lift": 0.903
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.1311,
+          "median": 0.1522,
+          "worst": 0.0227,
+          "worst_cohort": "2024Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.093,
+              "k": 43,
+              "n": 870,
+              "base_rate": 0.123,
+              "expected_hits_null": 5.29
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0227,
+              "k": 44,
+              "n": 885,
+              "base_rate": 0.0994,
+              "expected_hits_null": 4.37
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.0682,
+              "k": 44,
+              "n": 884,
+              "base_rate": 0.1369,
+              "expected_hits_null": 6.02
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.1591,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.134,
+              "expected_hits_null": 5.9
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1556,
+              "k": 45,
+              "n": 901,
+              "base_rate": 0.1299,
+              "expected_hits_null": 5.85
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.2667,
+              "k": 45,
+              "n": 908,
+              "base_rate": 0.1872,
+              "expected_hits_null": 8.42
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1522,
+              "k": 46,
+              "n": 920,
+              "base_rate": 0.1793,
+              "expected_hits_null": 8.25
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1353,
+            "actual": 0.1712,
+            "n": 625
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1703,
+            "actual": 0.1262,
+            "n": 626
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.1965,
+            "actual": 0.1392,
+            "n": 625
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.2211,
+            "actual": 0.1486,
+            "n": 626
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.2449,
+            "actual": 0.1374,
+            "n": 626
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2676,
+            "actual": 0.1536,
+            "n": 625
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2928,
+            "actual": 0.1502,
+            "n": 626
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.3218,
+            "actual": 0.136,
+            "n": 625
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.3591,
+            "actual": 0.1278,
+            "n": 626
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.4394,
+            "actual": 0.1278,
+            "n": 626
+          }
+        ],
+        "calibration_weak": {
+          "n": 6256,
+          "slope": -0.1363,
+          "intercept": -1.9479,
+          "spiegelhalter_z": -15.7886,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "curated_disclosure": {
+        "n": 91,
+        "n_symbols": 14,
+        "n_positive_symbols": 14,
+        "base_rate": 0.6593,
+        "pr_auc": 0.5843,
+        "roc_auc": 0.3866,
+        "brier": 0.3688,
+        "ece": 0.3577,
+        "precision_at_k": 0.25,
+        "k": 4,
+        "lift_at_k": 0.379,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.0,
+            "k": 1,
+            "lift": 0.0
+          },
+          "0.05": {
+            "precision": 0.25,
+            "k": 4,
+            "lift": 0.379
+          },
+          "0.1": {
+            "precision": 0.3333,
+            "k": 9,
+            "lift": 0.506
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2857,
+          "median": 0.0,
+          "worst": 0.0,
+          "worst_cohort": "2024Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.0,
+              "k": 1,
+              "n": 11,
+              "base_rate": 0.5455,
+              "expected_hits_null": 0.55,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.5385,
+              "expected_hits_null": 0.54,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.7692,
+              "expected_hits_null": 0.77,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.6923,
+              "expected_hits_null": 0.69,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.4615,
+              "expected_hits_null": 0.46,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.0,
+              "k": 1,
+              "n": 14,
+              "base_rate": 0.8571,
+              "expected_hits_null": 0.86,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.0,
+              "k": 1,
+              "n": 14,
+              "base_rate": 0.7143,
+              "expected_hits_null": 0.71,
+              "low_k": true
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1571,
+            "actual": 0.8889,
+            "n": 9
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.2113,
+            "actual": 0.6667,
+            "n": 9
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.2651,
+            "actual": 0.8889,
+            "n": 9
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.2808,
+            "actual": 0.3333,
+            "n": 9
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.2988,
+            "actual": 0.5556,
+            "n": 9
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.3202,
+            "actual": 0.7778,
+            "n": 9
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.3507,
+            "actual": 1.0,
+            "n": 9
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.378,
+            "actual": 0.5556,
+            "n": 9
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.4002,
+            "actual": 0.5556,
+            "n": 9
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.4507,
+            "actual": 0.4,
+            "n": 10
+          }
+        ],
+        "calibration_weak": {
+          "n": 91,
+          "slope": -1.0845,
+          "intercept": -0.1952,
+          "spiegelhalter_z": 8.8083,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_sample_option1_label": {
+        "n": 6165,
+        "n_symbols": 934,
+        "n_positive_symbols": 367,
+        "base_rate": 0.1588,
+        "pr_auc": 0.1426,
+        "roc_auc": 0.4557,
+        "brier": 0.1564,
+        "ece": 0.1218,
+        "precision_at_k": 0.1266,
+        "k": 308,
+        "lift_at_k": 0.797,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.122,
+            "k": 123,
+            "lift": 0.768
+          },
+          "0.05": {
+            "precision": 0.1266,
+            "k": 308,
+            "lift": 0.797
+          },
+          "0.1": {
+            "precision": 0.1201,
+            "k": 616,
+            "lift": 0.756
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.1307,
+          "median": 0.1163,
+          "worst": 0.0465,
+          "worst_cohort": "2024Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.0952,
+              "k": 42,
+              "n": 859,
+              "base_rate": 0.135,
+              "expected_hits_null": 5.67
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0465,
+              "k": 43,
+              "n": 872,
+              "base_rate": 0.1181,
+              "expected_hits_null": 5.08
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.0698,
+              "k": 43,
+              "n": 871,
+              "base_rate": 0.1412,
+              "expected_hits_null": 6.07
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.1163,
+              "k": 43,
+              "n": 875,
+              "base_rate": 0.1383,
+              "expected_hits_null": 5.95
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1591,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.1565,
+              "expected_hits_null": 6.89
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.25,
+              "k": 44,
+              "n": 894,
+              "base_rate": 0.2148,
+              "expected_hits_null": 9.45
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1778,
+              "k": 45,
+              "n": 906,
+              "base_rate": 0.2042,
+              "expected_hits_null": 9.19
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1352,
+            "actual": 0.2175,
+            "n": 616
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1699,
+            "actual": 0.154,
+            "n": 617
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.196,
+            "actual": 0.1591,
+            "n": 616
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.2204,
+            "actual": 0.175,
+            "n": 617
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.2441,
+            "actual": 0.164,
+            "n": 616
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2666,
+            "actual": 0.1637,
+            "n": 617
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2919,
+            "actual": 0.1623,
+            "n": 616
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.3208,
+            "actual": 0.1459,
+            "n": 617
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.358,
+            "actual": 0.1266,
+            "n": 616
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.4389,
+            "actual": 0.1199,
+            "n": 617
+          }
+        ],
+        "calibration_weak": {
+          "n": 6165,
+          "slope": -0.3528,
+          "intercept": -2.0552,
+          "spiegelhalter_z": -11.5769,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_micro": {
+        "n": 884,
+        "n_symbols": 194,
+        "n_positive_symbols": 103,
+        "base_rate": 0.2364,
+        "pr_auc": 0.2042,
+        "roc_auc": 0.4418,
+        "brier": 0.1962,
+        "ece": 0.1071,
+        "precision_at_k": 0.0909,
+        "k": 44,
+        "lift_at_k": 0.385,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.0588,
+            "k": 17,
+            "lift": 0.249
+          },
+          "0.05": {
+            "precision": 0.0909,
+            "k": 44,
+            "lift": 0.385
+          },
+          "0.1": {
+            "precision": 0.1477,
+            "k": 88,
+            "lift": 0.625
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.1429,
+          "median": 0.1667,
+          "worst": 0.0,
+          "worst_cohort": "2024Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.2417,
+              "expected_hits_null": 1.45
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.1833,
+              "expected_hits_null": 1.1
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 137,
+              "base_rate": 0.2409,
+              "expected_hits_null": 1.45
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 125,
+              "base_rate": 0.256,
+              "expected_hits_null": 1.54
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 127,
+              "base_rate": 0.2362,
+              "expected_hits_null": 1.42
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.5,
+              "k": 6,
+              "n": 134,
+              "base_rate": 0.2612,
+              "expected_hits_null": 1.57
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 121,
+              "base_rate": 0.2314,
+              "expected_hits_null": 1.39
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1256,
+            "actual": 0.2841,
+            "n": 88
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1614,
+            "actual": 0.2614,
+            "n": 88
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.1899,
+            "actual": 0.236,
+            "n": 89
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.2111,
+            "actual": 0.2614,
+            "n": 88
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.2314,
+            "actual": 0.3146,
+            "n": 89
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2543,
+            "actual": 0.2614,
+            "n": 88
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2795,
+            "actual": 0.2045,
+            "n": 88
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.3087,
+            "actual": 0.1798,
+            "n": 89
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.3462,
+            "actual": 0.2159,
+            "n": 88
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.4361,
+            "actual": 0.1461,
+            "n": 89
+          }
+        ],
+        "calibration_weak": {
+          "n": 884,
+          "slope": -0.4535,
+          "intercept": -1.6965,
+          "spiegelhalter_z": 2.0674,
+          "spiegelhalter_p": 0.0387
+        }
+      },
+      "random_small": {
+        "n": 1750,
+        "n_symbols": 344,
+        "n_positive_symbols": 130,
+        "base_rate": 0.1697,
+        "pr_auc": 0.1538,
+        "roc_auc": 0.454,
+        "brier": 0.166,
+        "ece": 0.127,
+        "precision_at_k": 0.1149,
+        "k": 87,
+        "lift_at_k": 0.677,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.0571,
+            "k": 35,
+            "lift": 0.337
+          },
+          "0.05": {
+            "precision": 0.1149,
+            "k": 87,
+            "lift": 0.677
+          },
+          "0.1": {
+            "precision": 0.1429,
+            "k": 175,
+            "lift": 0.842
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.1055,
+          "median": 0.0833,
+          "worst": 0.0,
+          "worst_cohort": "2024Q4",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.0833,
+              "k": 12,
+              "n": 240,
+              "base_rate": 0.1375,
+              "expected_hits_null": 1.65
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0833,
+              "k": 12,
+              "n": 240,
+              "base_rate": 0.1042,
+              "expected_hits_null": 1.25
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.0909,
+              "k": 11,
+              "n": 237,
+              "base_rate": 0.1603,
+              "expected_hits_null": 1.76
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.0,
+              "k": 12,
+              "n": 254,
+              "base_rate": 0.1417,
+              "expected_hits_null": 1.7
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1538,
+              "k": 13,
+              "n": 262,
+              "base_rate": 0.1527,
+              "expected_hits_null": 1.99
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.25,
+              "k": 12,
+              "n": 245,
+              "base_rate": 0.2449,
+              "expected_hits_null": 2.94
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.0769,
+              "k": 13,
+              "n": 272,
+              "base_rate": 0.239,
+              "expected_hits_null": 3.11
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1579,
+            "actual": 0.1943,
+            "n": 175
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.2018,
+            "actual": 0.2057,
+            "n": 175
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.2282,
+            "actual": 0.1829,
+            "n": 175
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.2504,
+            "actual": 0.1429,
+            "n": 175
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.2717,
+            "actual": 0.1771,
+            "n": 175
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2926,
+            "actual": 0.2343,
+            "n": 175
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.3158,
+            "actual": 0.1657,
+            "n": 175
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.3434,
+            "actual": 0.12,
+            "n": 175
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.3753,
+            "actual": 0.1314,
+            "n": 175
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.4492,
+            "actual": 0.1429,
+            "n": 175
+          }
+        ],
+        "calibration_weak": {
+          "n": 1750,
+          "slope": -0.3895,
+          "intercept": -1.9619,
+          "spiegelhalter_z": -7.0698,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_mid": {
+        "n": 849,
+        "n_symbols": 166,
+        "n_positive_symbols": 42,
+        "base_rate": 0.1119,
+        "pr_auc": 0.1392,
+        "roc_auc": 0.4602,
+        "brier": 0.1344,
+        "ece": 0.1899,
+        "precision_at_k": 0.2143,
+        "k": 42,
+        "lift_at_k": 1.915,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.3125,
+            "k": 16,
+            "lift": 2.793
+          },
+          "0.05": {
+            "precision": 0.2143,
+            "k": 42,
+            "lift": 1.915
+          },
+          "0.1": {
+            "precision": 0.1429,
+            "k": 84,
+            "lift": 1.277
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.1952,
+          "median": 0.1667,
+          "worst": 0.0,
+          "worst_cohort": "2024Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 125,
+              "base_rate": 0.104,
+              "expected_hits_null": 0.62
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 124,
+              "base_rate": 0.1048,
+              "expected_hits_null": 0.63
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 127,
+              "base_rate": 0.1181,
+              "expected_hits_null": 0.71
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 121,
+              "base_rate": 0.124,
+              "expected_hits_null": 0.74
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.0833,
+              "expected_hits_null": 0.5
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.2,
+              "k": 5,
+              "n": 112,
+              "base_rate": 0.125,
+              "expected_hits_null": 0.62
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.125,
+              "expected_hits_null": 0.75
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.161,
+            "actual": 0.2738,
+            "n": 84
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.2015,
+            "actual": 0.0941,
+            "n": 85
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.2269,
+            "actual": 0.0706,
+            "n": 85
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.2462,
+            "actual": 0.0824,
+            "n": 85
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.2648,
+            "actual": 0.0588,
+            "n": 85
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2862,
+            "actual": 0.1059,
+            "n": 85
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.3051,
+            "actual": 0.0706,
+            "n": 85
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.3276,
+            "actual": 0.1294,
+            "n": 85
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.3563,
+            "actual": 0.0941,
+            "n": 85
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.4179,
+            "actual": 0.1412,
+            "n": 85
+          }
+        ],
+        "calibration_weak": {
+          "n": 849,
+          "slope": -0.4323,
+          "intercept": -2.5043,
+          "spiegelhalter_z": -9.1459,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_large": {
+        "n": 875,
+        "n_symbols": 151,
+        "n_positive_symbols": 24,
+        "base_rate": 0.0491,
+        "pr_auc": 0.0481,
+        "roc_auc": 0.484,
+        "brier": 0.1096,
+        "ece": 0.2354,
+        "precision_at_k": 0.0233,
+        "k": 43,
+        "lift_at_k": 0.473,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.0,
+            "k": 17,
+            "lift": 0.0
+          },
+          "0.05": {
+            "precision": 0.0233,
+            "k": 43,
+            "lift": 0.473
+          },
+          "0.1": {
+            "precision": 0.046,
+            "k": 87,
+            "lift": 0.936
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.0,
+          "median": 0.0,
+          "worst": 0.0,
+          "worst_cohort": "2024Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.0,
+              "k": 5,
+              "n": 119,
+              "base_rate": 0.042,
+              "expected_hits_null": 0.21
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0,
+              "k": 5,
+              "n": 114,
+              "base_rate": 0.0088,
+              "expected_hits_null": 0.04
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 123,
+              "base_rate": 0.0325,
+              "expected_hits_null": 0.2
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 129,
+              "base_rate": 0.0155,
+              "expected_hits_null": 0.09
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 132,
+              "base_rate": 0.0606,
+              "expected_hits_null": 0.36
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 123,
+              "base_rate": 0.065,
+              "expected_hits_null": 0.39
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 135,
+              "base_rate": 0.1111,
+              "expected_hits_null": 0.67
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.156,
+            "actual": 0.046,
+            "n": 87
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.2004,
+            "actual": 0.0682,
+            "n": 88
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.229,
+            "actual": 0.023,
+            "n": 87
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.2503,
+            "actual": 0.0795,
+            "n": 88
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.2656,
+            "actual": 0.0575,
+            "n": 87
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2841,
+            "actual": 0.0114,
+            "n": 88
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.3069,
+            "actual": 0.069,
+            "n": 87
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.3333,
+            "actual": 0.0455,
+            "n": 88
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.3684,
+            "actual": 0.046,
+            "n": 87
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.4502,
+            "actual": 0.0455,
+            "n": 88
+          }
+        ],
+        "calibration_weak": {
+          "n": 875,
+          "slope": -0.1476,
+          "intercept": -3.1057,
+          "spiegelhalter_z": -13.2967,
+          "spiegelhalter_p": 0.0
+        }
+      }
+    },
+    "volatility_null": {
+      "random_sample": {
+        "n": 6165,
+        "n_symbols": 934,
+        "n_positive_symbols": 335,
+        "base_rate": 0.1341,
+        "pr_auc": 0.24,
+        "roc_auc": 0.7405,
+        "brier": 0.5569,
+        "ece": 0.4321,
+        "precision_at_k": 0.1883,
+        "k": 308,
+        "lift_at_k": 1.404,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.2114,
+            "k": 123,
+            "lift": 1.576
+          },
+          "0.05": {
+            "precision": 0.1883,
+            "k": 308,
+            "lift": 1.404
+          },
+          "0.1": {
+            "precision": 0.2289,
+            "k": 616,
+            "lift": 1.706
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2144,
+          "median": 0.2045,
+          "worst": 0.1591,
+          "worst_cohort": "2025Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.2619,
+              "k": 42,
+              "n": 859,
+              "base_rate": 0.1176,
+              "expected_hits_null": 4.94
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.1628,
+              "k": 43,
+              "n": 872,
+              "base_rate": 0.0929,
+              "expected_hits_null": 3.99
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.3023,
+              "k": 43,
+              "n": 871,
+              "base_rate": 0.1274,
+              "expected_hits_null": 5.48
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.2326,
+              "k": 43,
+              "n": 875,
+              "base_rate": 0.1257,
+              "expected_hits_null": 5.41
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.2045,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.125,
+              "expected_hits_null": 5.5
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.1591,
+              "k": 44,
+              "n": 894,
+              "base_rate": 0.1767,
+              "expected_hits_null": 7.77
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1778,
+              "k": 45,
+              "n": 906,
+              "base_rate": 0.1711,
+              "expected_hits_null": 7.7
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.0839,
+            "actual": 0.026,
+            "n": 616
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.19,
+            "actual": 0.0146,
+            "n": 617
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.2558,
+            "actual": 0.026,
+            "n": 616
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.3183,
+            "actual": 0.0405,
+            "n": 617
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.3837,
+            "actual": 0.0974,
+            "n": 616
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.461,
+            "actual": 0.128,
+            "n": 617
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.5588,
+            "actual": 0.2289,
+            "n": 616
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.6934,
+            "actual": 0.235,
+            "n": 617
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.9112,
+            "actual": 0.3166,
+            "n": 616
+          },
+          {
+            "bin": 0.95,
+            "predicted": 1.8057,
+            "actual": 0.2285,
+            "n": 617
+          }
+        ],
+        "calibration_weak": {
+          "n": 6165,
+          "slope": 44881206.3595,
+          "intercept": -489173960.8422,
+          "spiegelhalter_z": null,
+          "spiegelhalter_p": null
+        },
+        "ci_90": {
+          "precision_at_k": {
+            "p05": 0.1494,
+            "p50": 0.1909,
+            "p95": 0.2315,
+            "n_boot": 300
+          },
+          "lift_at_k": {
+            "p05": 1.1042,
+            "p50": 1.4178,
+            "p95": 1.6959,
+            "n_boot": 300
+          },
+          "pr_auc": {
+            "p05": 0.2195,
+            "p50": 0.2392,
+            "p95": 0.2616,
+            "n_boot": 300
+          }
+        },
+        "deployment_restatement_precision_at_3pct_base": 0.0443
+      },
+      "all": {
+        "n": 6256,
+        "n_symbols": 948,
+        "n_positive_symbols": 349,
+        "base_rate": 0.1418,
+        "pr_auc": 0.2548,
+        "roc_auc": 0.7452,
+        "brier": 0.5554,
+        "ece": 0.4301,
+        "precision_at_k": 0.1987,
+        "k": 312,
+        "lift_at_k": 1.402,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.216,
+            "k": 125,
+            "lift": 1.523
+          },
+          "0.05": {
+            "precision": 0.1987,
+            "k": 312,
+            "lift": 1.402
+          },
+          "0.1": {
+            "precision": 0.2496,
+            "k": 625,
+            "lift": 1.76
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2256,
+          "median": 0.2,
+          "worst": 0.1778,
+          "worst_cohort": "2025Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.2558,
+              "k": 43,
+              "n": 870,
+              "base_rate": 0.123,
+              "expected_hits_null": 5.29
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.1818,
+              "k": 44,
+              "n": 885,
+              "base_rate": 0.0994,
+              "expected_hits_null": 4.37
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.3182,
+              "k": 44,
+              "n": 884,
+              "base_rate": 0.1369,
+              "expected_hits_null": 6.02
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.25,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.134,
+              "expected_hits_null": 5.9
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.2,
+              "k": 45,
+              "n": 901,
+              "base_rate": 0.1299,
+              "expected_hits_null": 5.85
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.1778,
+              "k": 45,
+              "n": 908,
+              "base_rate": 0.1872,
+              "expected_hits_null": 8.42
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1957,
+              "k": 46,
+              "n": 920,
+              "base_rate": 0.1793,
+              "expected_hits_null": 8.25
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.0848,
+            "actual": 0.0256,
+            "n": 625
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1916,
+            "actual": 0.0144,
+            "n": 626
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.2581,
+            "actual": 0.0256,
+            "n": 625
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.3214,
+            "actual": 0.0463,
+            "n": 626
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.3884,
+            "actual": 0.099,
+            "n": 626
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.4677,
+            "actual": 0.136,
+            "n": 625
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.5669,
+            "actual": 0.2444,
+            "n": 626
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.7046,
+            "actual": 0.2464,
+            "n": 625
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.9236,
+            "actual": 0.3307,
+            "n": 626
+          },
+          {
+            "bin": 0.95,
+            "predicted": 1.8101,
+            "actual": 0.2492,
+            "n": 626
+          }
+        ],
+        "calibration_weak": {
+          "n": 6256,
+          "slope": 15739285.8229,
+          "intercept": -302668307.3662,
+          "spiegelhalter_z": null,
+          "spiegelhalter_p": null
+        }
+      },
+      "curated_disclosure": {
+        "n": 91,
+        "n_symbols": 14,
+        "n_positive_symbols": 14,
+        "base_rate": 0.6593,
+        "pr_auc": 0.6716,
+        "roc_auc": 0.5274,
+        "brier": 0.4544,
+        "ece": 0.3265,
+        "precision_at_k": 0.5,
+        "k": 4,
+        "lift_at_k": 0.758,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.0,
+            "k": 1,
+            "lift": 0.0
+          },
+          "0.05": {
+            "precision": 0.5,
+            "k": 4,
+            "lift": 0.758
+          },
+          "0.1": {
+            "precision": 0.6667,
+            "k": 9,
+            "lift": 1.011
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.5714,
+          "median": 1.0,
+          "worst": 0.0,
+          "worst_cohort": "2024Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.0,
+              "k": 1,
+              "n": 11,
+              "base_rate": 0.5455,
+              "expected_hits_null": 0.55,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.5385,
+              "expected_hits_null": 0.54,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.7692,
+              "expected_hits_null": 0.77,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.6923,
+              "expected_hits_null": 0.69,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.4615,
+              "expected_hits_null": 0.46,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.0,
+              "k": 1,
+              "n": 14,
+              "base_rate": 0.8571,
+              "expected_hits_null": 0.86,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 14,
+              "base_rate": 0.7143,
+              "expected_hits_null": 0.71,
+              "low_k": true
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.4756,
+            "actual": 0.6667,
+            "n": 9
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.5576,
+            "actual": 0.5556,
+            "n": 9
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.6685,
+            "actual": 0.6667,
+            "n": 9
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.7432,
+            "actual": 0.6667,
+            "n": 9
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.8265,
+            "actual": 0.6667,
+            "n": 9
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.9056,
+            "actual": 0.5556,
+            "n": 9
+          },
+          {
+            "bin": 0.65,
+            "predicted": 1.0117,
+            "actual": 0.7778,
+            "n": 9
+          },
+          {
+            "bin": 0.75,
+            "predicted": 1.1608,
+            "actual": 0.6667,
+            "n": 9
+          },
+          {
+            "bin": 0.85,
+            "predicted": 1.3131,
+            "actual": 0.6667,
+            "n": 9
+          },
+          {
+            "bin": 0.95,
+            "predicted": 1.7315,
+            "actual": 0.7,
+            "n": 10
+          }
+        ],
+        "calibration_weak": {
+          "n": 91,
+          "slope": 48869.9404,
+          "intercept": -35204.9851,
+          "spiegelhalter_z": null,
+          "spiegelhalter_p": null
+        }
+      },
+      "random_sample_option1_label": {
+        "n": 6165,
+        "n_symbols": 934,
+        "n_positive_symbols": 367,
+        "base_rate": 0.1588,
+        "pr_auc": 0.3261,
+        "roc_auc": 0.773,
+        "brier": 0.5177,
+        "ece": 0.4075,
+        "precision_at_k": 0.3442,
+        "k": 308,
+        "lift_at_k": 2.167,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.3252,
+            "k": 123,
+            "lift": 2.048
+          },
+          "0.05": {
+            "precision": 0.3442,
+            "k": 308,
+            "lift": 2.167
+          },
+          "0.1": {
+            "precision": 0.3571,
+            "k": 616,
+            "lift": 2.249
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.3616,
+          "median": 0.3721,
+          "worst": 0.2955,
+          "worst_cohort": "2025Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.381,
+              "k": 42,
+              "n": 859,
+              "base_rate": 0.135,
+              "expected_hits_null": 5.67
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.3488,
+              "k": 43,
+              "n": 872,
+              "base_rate": 0.1181,
+              "expected_hits_null": 5.08
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.3721,
+              "k": 43,
+              "n": 871,
+              "base_rate": 0.1412,
+              "expected_hits_null": 6.07
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.3023,
+              "k": 43,
+              "n": 875,
+              "base_rate": 0.1383,
+              "expected_hits_null": 5.95
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.4318,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.1565,
+              "expected_hits_null": 6.89
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.2955,
+              "k": 44,
+              "n": 894,
+              "base_rate": 0.2148,
+              "expected_hits_null": 9.45
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.4,
+              "k": 45,
+              "n": 906,
+              "base_rate": 0.2042,
+              "expected_hits_null": 9.19
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.0839,
+            "actual": 0.026,
+            "n": 616
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.19,
+            "actual": 0.0146,
+            "n": 617
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.2558,
+            "actual": 0.026,
+            "n": 616
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.3183,
+            "actual": 0.0486,
+            "n": 617
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.3837,
+            "actual": 0.0974,
+            "n": 616
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.461,
+            "actual": 0.1426,
+            "n": 617
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.5588,
+            "actual": 0.2435,
+            "n": 616
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.6934,
+            "actual": 0.2739,
+            "n": 617
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.9112,
+            "actual": 0.3588,
+            "n": 616
+          },
+          {
+            "bin": 0.95,
+            "predicted": 1.8057,
+            "actual": 0.3566,
+            "n": 617
+          }
+        ],
+        "calibration_weak": {
+          "n": 6165,
+          "slope": 41448859.7843,
+          "intercept": -225107459.7175,
+          "spiegelhalter_z": null,
+          "spiegelhalter_p": null
+        }
+      },
+      "random_micro": {
+        "n": 884,
+        "n_symbols": 194,
+        "n_positive_symbols": 103,
+        "base_rate": 0.2364,
+        "pr_auc": 0.2447,
+        "roc_auc": 0.5351,
+        "brier": 1.5477,
+        "ece": 0.8197,
+        "precision_at_k": 0.25,
+        "k": 44,
+        "lift_at_k": 1.057,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.1765,
+            "k": 17,
+            "lift": 0.746
+          },
+          "0.05": {
+            "precision": 0.25,
+            "k": 44,
+            "lift": 1.057
+          },
+          "0.1": {
+            "precision": 0.2159,
+            "k": 88,
+            "lift": 0.913
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2619,
+          "median": 0.1667,
+          "worst": 0.0,
+          "worst_cohort": "2025Q3",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.5,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.2417,
+              "expected_hits_null": 1.45
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.1833,
+              "expected_hits_null": 1.1
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 137,
+              "base_rate": 0.2409,
+              "expected_hits_null": 1.45
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.5,
+              "k": 6,
+              "n": 125,
+              "base_rate": 0.256,
+              "expected_hits_null": 1.54
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 127,
+              "base_rate": 0.2362,
+              "expected_hits_null": 1.42
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 134,
+              "base_rate": 0.2612,
+              "expected_hits_null": 1.57
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 121,
+              "base_rate": 0.2314,
+              "expected_hits_null": 1.39
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1861,
+            "actual": 0.0795,
+            "n": 88
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.4124,
+            "actual": 0.2159,
+            "n": 88
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.5553,
+            "actual": 0.2135,
+            "n": 89
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.676,
+            "actual": 0.3295,
+            "n": 88
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.7967,
+            "actual": 0.2584,
+            "n": 89
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.9124,
+            "actual": 0.2727,
+            "n": 88
+          },
+          {
+            "bin": 0.65,
+            "predicted": 1.0752,
+            "actual": 0.2955,
+            "n": 88
+          },
+          {
+            "bin": 0.75,
+            "predicted": 1.2814,
+            "actual": 0.3034,
+            "n": 89
+          },
+          {
+            "bin": 0.85,
+            "predicted": 1.6894,
+            "actual": 0.1818,
+            "n": 88
+          },
+          {
+            "bin": 0.95,
+            "predicted": 2.9606,
+            "actual": 0.2135,
+            "n": 89
+          }
+        ],
+        "calibration_weak": {
+          "n": 884,
+          "slope": 4339013.7342,
+          "intercept": -227310432.6409,
+          "spiegelhalter_z": null,
+          "spiegelhalter_p": null
+        }
+      },
+      "random_small": {
+        "n": 1750,
+        "n_symbols": 344,
+        "n_positive_symbols": 130,
+        "base_rate": 0.1697,
+        "pr_auc": 0.254,
+        "roc_auc": 0.6822,
+        "brier": 0.4778,
+        "ece": 0.4285,
+        "precision_at_k": 0.2414,
+        "k": 87,
+        "lift_at_k": 1.422,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.2,
+            "k": 35,
+            "lift": 1.178
+          },
+          "0.05": {
+            "precision": 0.2414,
+            "k": 87,
+            "lift": 1.422
+          },
+          "0.1": {
+            "precision": 0.2629,
+            "k": 175,
+            "lift": 1.549
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2129,
+          "median": 0.2308,
+          "worst": 0.0833,
+          "worst_cohort": "2024Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.3333,
+              "k": 12,
+              "n": 240,
+              "base_rate": 0.1375,
+              "expected_hits_null": 1.65
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0833,
+              "k": 12,
+              "n": 240,
+              "base_rate": 0.1042,
+              "expected_hits_null": 1.25
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.2727,
+              "k": 11,
+              "n": 237,
+              "base_rate": 0.1603,
+              "expected_hits_null": 1.76
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.1667,
+              "k": 12,
+              "n": 254,
+              "base_rate": 0.1417,
+              "expected_hits_null": 1.7
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.2308,
+              "k": 13,
+              "n": 262,
+              "base_rate": 0.1527,
+              "expected_hits_null": 1.99
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.25,
+              "k": 12,
+              "n": 245,
+              "base_rate": 0.2449,
+              "expected_hits_null": 2.94
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1538,
+              "k": 13,
+              "n": 272,
+              "base_rate": 0.239,
+              "expected_hits_null": 3.11
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1595,
+            "actual": 0.04,
+            "n": 175
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.2801,
+            "actual": 0.0343,
+            "n": 175
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.3442,
+            "actual": 0.0686,
+            "n": 175
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.4032,
+            "actual": 0.1486,
+            "n": 175
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.4656,
+            "actual": 0.1086,
+            "n": 175
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.5373,
+            "actual": 0.2571,
+            "n": 175
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.6172,
+            "actual": 0.2686,
+            "n": 175
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.7225,
+            "actual": 0.1943,
+            "n": 175
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.8912,
+            "actual": 0.3143,
+            "n": 175
+          },
+          {
+            "bin": 0.95,
+            "predicted": 1.5616,
+            "actual": 0.2629,
+            "n": 175
+          }
+        ],
+        "calibration_weak": {
+          "n": 1750,
+          "slope": 49223759.7673,
+          "intercept": -546453586.4353,
+          "spiegelhalter_z": null,
+          "spiegelhalter_p": null
+        }
+      },
+      "random_mid": {
+        "n": 849,
+        "n_symbols": 166,
+        "n_positive_symbols": 42,
+        "base_rate": 0.1119,
+        "pr_auc": 0.2898,
+        "roc_auc": 0.8036,
+        "brier": 0.2005,
+        "ece": 0.3008,
+        "precision_at_k": 0.3333,
+        "k": 42,
+        "lift_at_k": 2.979,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.1875,
+            "k": 16,
+            "lift": 1.676
+          },
+          "0.05": {
+            "precision": 0.3333,
+            "k": 42,
+            "lift": 2.979
+          },
+          "0.1": {
+            "precision": 0.3452,
+            "k": 84,
+            "lift": 3.085
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2667,
+          "median": 0.2,
+          "worst": 0.1667,
+          "worst_cohort": "2024Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 125,
+              "base_rate": 0.104,
+              "expected_hits_null": 0.62
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 124,
+              "base_rate": 0.1048,
+              "expected_hits_null": 0.63
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 127,
+              "base_rate": 0.1181,
+              "expected_hits_null": 0.71
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.5,
+              "k": 6,
+              "n": 121,
+              "base_rate": 0.124,
+              "expected_hits_null": 0.74
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.0833,
+              "expected_hits_null": 0.5
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.2,
+              "k": 5,
+              "n": 112,
+              "base_rate": 0.125,
+              "expected_hits_null": 0.62
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.125,
+              "expected_hits_null": 0.75
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1479,
+            "actual": 0.0,
+            "n": 84
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.2295,
+            "actual": 0.0118,
+            "n": 85
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.2717,
+            "actual": 0.0235,
+            "n": 85
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.309,
+            "actual": 0.0353,
+            "n": 85
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.3457,
+            "actual": 0.0588,
+            "n": 85
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.3876,
+            "actual": 0.0588,
+            "n": 85
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.4363,
+            "actual": 0.1176,
+            "n": 85
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.4947,
+            "actual": 0.2,
+            "n": 85
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.5861,
+            "actual": 0.2588,
+            "n": 85
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.915,
+            "actual": 0.3529,
+            "n": 85
+          }
+        ],
+        "calibration_weak": {
+          "n": 849,
+          "slope": 27123997.8879,
+          "intercept": -22223429.9227,
+          "spiegelhalter_z": null,
+          "spiegelhalter_p": null
+        }
+      },
+      "random_large": {
+        "n": 875,
+        "n_symbols": 151,
+        "n_positive_symbols": 24,
+        "base_rate": 0.0491,
+        "pr_auc": 0.2279,
+        "roc_auc": 0.8352,
+        "brier": 0.1673,
+        "ece": 0.2998,
+        "precision_at_k": 0.3023,
+        "k": 43,
+        "lift_at_k": 6.152,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.2353,
+            "k": 17,
+            "lift": 4.788
+          },
+          "0.05": {
+            "precision": 0.3023,
+            "k": 43,
+            "lift": 6.152
+          },
+          "0.1": {
+            "precision": 0.2414,
+            "k": 87,
+            "lift": 4.912
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2476,
+          "median": 0.2,
+          "worst": 0.1667,
+          "worst_cohort": "2024Q3",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.2,
+              "k": 5,
+              "n": 119,
+              "base_rate": 0.042,
+              "expected_hits_null": 0.21
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.2,
+              "k": 5,
+              "n": 114,
+              "base_rate": 0.0088,
+              "expected_hits_null": 0.04
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 123,
+              "base_rate": 0.0325,
+              "expected_hits_null": 0.2
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 129,
+              "base_rate": 0.0155,
+              "expected_hits_null": 0.09
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 132,
+              "base_rate": 0.0606,
+              "expected_hits_null": 0.36
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 123,
+              "base_rate": 0.065,
+              "expected_hits_null": 0.39
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.5,
+              "k": 6,
+              "n": 135,
+              "base_rate": 0.1111,
+              "expected_hits_null": 0.67
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1404,
+            "actual": 0.0,
+            "n": 87
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1876,
+            "actual": 0.0,
+            "n": 88
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.2152,
+            "actual": 0.0115,
+            "n": 87
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.241,
+            "actual": 0.0341,
+            "n": 88
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.267,
+            "actual": 0.0115,
+            "n": 87
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.3006,
+            "actual": 0.0114,
+            "n": 88
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.341,
+            "actual": 0.0115,
+            "n": 87
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.3979,
+            "actual": 0.0682,
+            "n": 88
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.4968,
+            "actual": 0.092,
+            "n": 87
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.8985,
+            "actual": 0.25,
+            "n": 88
+          }
+        ],
+        "calibration_weak": {
+          "n": 875,
+          "slope": 10978167.0933,
+          "intercept": -13965947.3818,
+          "spiegelhalter_z": null,
+          "spiegelhalter_p": null
+        }
+      }
+    },
+    "champion": {
+      "random_sample": {
+        "n": 6165,
+        "n_symbols": 934,
+        "n_positive_symbols": 335,
+        "base_rate": 0.1341,
+        "pr_auc": 0.1836,
+        "roc_auc": 0.5874,
+        "brier": 0.124,
+        "ece": 0.0843,
+        "precision_at_k": 0.2273,
+        "k": 308,
+        "lift_at_k": 1.694,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.252,
+            "k": 123,
+            "lift": 1.879
+          },
+          "0.05": {
+            "precision": 0.2273,
+            "k": 308,
+            "lift": 1.694
+          },
+          "0.1": {
+            "precision": 0.2224,
+            "k": 616,
+            "lift": 1.658
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.237,
+          "median": 0.2326,
+          "worst": 0.1778,
+          "worst_cohort": "2025Q3",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.1905,
+              "k": 42,
+              "n": 859,
+              "base_rate": 0.1176,
+              "expected_hits_null": 4.94
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.2558,
+              "k": 43,
+              "n": 872,
+              "base_rate": 0.0929,
+              "expected_hits_null": 3.99
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.2326,
+              "k": 43,
+              "n": 871,
+              "base_rate": 0.1274,
+              "expected_hits_null": 5.48
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.3023,
+              "k": 43,
+              "n": 875,
+              "base_rate": 0.1257,
+              "expected_hits_null": 5.41
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.2045,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.125,
+              "expected_hits_null": 5.5
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.2955,
+              "k": 44,
+              "n": 894,
+              "base_rate": 0.1767,
+              "expected_hits_null": 7.77
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1778,
+              "k": 45,
+              "n": 906,
+              "base_rate": 0.1711,
+              "expected_hits_null": 7.7
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1089,
+            "actual": 0.1023,
+            "n": 616
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1381,
+            "actual": 0.0891,
+            "n": 617
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.1564,
+            "actual": 0.1104,
+            "n": 616
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.173,
+            "actual": 0.1118,
+            "n": 617
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.1908,
+            "actual": 0.1071,
+            "n": 616
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2121,
+            "actual": 0.1216,
+            "n": 617
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2361,
+            "actual": 0.1396,
+            "n": 616
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.2654,
+            "actual": 0.1556,
+            "n": 617
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.3084,
+            "actual": 0.1818,
+            "n": 616
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.3947,
+            "actual": 0.222,
+            "n": 617
+          }
+        ],
+        "calibration_weak": {
+          "n": 6165,
+          "slope": 0.6195,
+          "intercept": -1.0687,
+          "spiegelhalter_z": -14.0134,
+          "spiegelhalter_p": 0.0
+        },
+        "ci_90": {
+          "precision_at_k": {
+            "p05": 0.1845,
+            "p50": 0.2288,
+            "p95": 0.2852,
+            "n_boot": 300
+          },
+          "lift_at_k": {
+            "p05": 1.3864,
+            "p50": 1.712,
+            "p95": 2.0966,
+            "n_boot": 300
+          },
+          "pr_auc": {
+            "p05": 0.1644,
+            "p50": 0.1843,
+            "p95": 0.2089,
+            "n_boot": 300
+          }
+        },
+        "deployment_restatement_precision_at_3pct_base": 0.0555
+      },
+      "all": {
+        "n": 6256,
+        "n_symbols": 948,
+        "n_positive_symbols": 349,
+        "base_rate": 0.1418,
+        "pr_auc": 0.1946,
+        "roc_auc": 0.5885,
+        "brier": 0.1279,
+        "ece": 0.0771,
+        "precision_at_k": 0.2468,
+        "k": 312,
+        "lift_at_k": 1.741,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.272,
+            "k": 125,
+            "lift": 1.918
+          },
+          "0.05": {
+            "precision": 0.2468,
+            "k": 312,
+            "lift": 1.741
+          },
+          "0.1": {
+            "precision": 0.2352,
+            "k": 625,
+            "lift": 1.659
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2541,
+          "median": 0.2727,
+          "worst": 0.186,
+          "worst_cohort": "2024Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.186,
+              "k": 43,
+              "n": 870,
+              "base_rate": 0.123,
+              "expected_hits_null": 5.29
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.2727,
+              "k": 44,
+              "n": 885,
+              "base_rate": 0.0994,
+              "expected_hits_null": 4.37
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.2727,
+              "k": 44,
+              "n": 884,
+              "base_rate": 0.1369,
+              "expected_hits_null": 6.02
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.3182,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.134,
+              "expected_hits_null": 5.9
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.2222,
+              "k": 45,
+              "n": 901,
+              "base_rate": 0.1299,
+              "expected_hits_null": 5.85
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.3111,
+              "k": 45,
+              "n": 908,
+              "base_rate": 0.1872,
+              "expected_hits_null": 8.42
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1957,
+              "k": 46,
+              "n": 920,
+              "base_rate": 0.1793,
+              "expected_hits_null": 8.25
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1084,
+            "actual": 0.1104,
+            "n": 625
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1378,
+            "actual": 0.0927,
+            "n": 626
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.1563,
+            "actual": 0.1152,
+            "n": 625
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.173,
+            "actual": 0.1182,
+            "n": 626
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.191,
+            "actual": 0.1134,
+            "n": 626
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2124,
+            "actual": 0.128,
+            "n": 625
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2364,
+            "actual": 0.1486,
+            "n": 626
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.2657,
+            "actual": 0.16,
+            "n": 625
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.3087,
+            "actual": 0.1949,
+            "n": 626
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.3953,
+            "actual": 0.2364,
+            "n": 626
+          }
+        ],
+        "calibration_weak": {
+          "n": 6256,
+          "slope": 0.6282,
+          "intercept": -0.9932,
+          "spiegelhalter_z": -12.7334,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "curated_disclosure": {
+        "n": 91,
+        "n_symbols": 14,
+        "n_positive_symbols": 14,
+        "base_rate": 0.6593,
+        "pr_auc": 0.8042,
+        "roc_auc": 0.6839,
+        "brier": 0.3938,
+        "ece": 0.4336,
+        "precision_at_k": 1.0,
+        "k": 4,
+        "lift_at_k": 1.517,
+        "k_scan": {
+          "0.02": {
+            "precision": 1.0,
+            "k": 1,
+            "lift": 1.517
+          },
+          "0.05": {
+            "precision": 1.0,
+            "k": 4,
+            "lift": 1.517
+          },
+          "0.1": {
+            "precision": 0.8889,
+            "k": 9,
+            "lift": 1.348
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.8571,
+          "median": 1.0,
+          "worst": 0.0,
+          "worst_cohort": "2024Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.0,
+              "k": 1,
+              "n": 11,
+              "base_rate": 0.5455,
+              "expected_hits_null": 0.55,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.5385,
+              "expected_hits_null": 0.54,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.7692,
+              "expected_hits_null": 0.77,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.6923,
+              "expected_hits_null": 0.69,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.4615,
+              "expected_hits_null": 0.46,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 14,
+              "base_rate": 0.8571,
+              "expected_hits_null": 0.86,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 14,
+              "base_rate": 0.7143,
+              "expected_hits_null": 0.71,
+              "low_k": true
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.0906,
+            "actual": 0.3333,
+            "n": 9
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1114,
+            "actual": 0.3333,
+            "n": 9
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.144,
+            "actual": 0.7778,
+            "n": 9
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.1712,
+            "actual": 0.7778,
+            "n": 9
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.2071,
+            "actual": 0.5556,
+            "n": 9
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2263,
+            "actual": 0.5556,
+            "n": 9
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2488,
+            "actual": 0.7778,
+            "n": 9
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.2853,
+            "actual": 0.7778,
+            "n": 9
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.3251,
+            "actual": 0.7778,
+            "n": 9
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.4252,
+            "actual": 0.9,
+            "n": 10
+          }
+        ],
+        "calibration_weak": {
+          "n": 91,
+          "slope": 1.26,
+          "intercept": 2.4194,
+          "spiegelhalter_z": 10.1867,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_sample_option1_label": {
+        "n": 6165,
+        "n_symbols": 934,
+        "n_positive_symbols": 367,
+        "base_rate": 0.1588,
+        "pr_auc": 0.219,
+        "roc_auc": 0.5931,
+        "brier": 0.1364,
+        "ece": 0.0612,
+        "precision_at_k": 0.2825,
+        "k": 308,
+        "lift_at_k": 1.779,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.3171,
+            "k": 123,
+            "lift": 1.997
+          },
+          "0.05": {
+            "precision": 0.2825,
+            "k": 308,
+            "lift": 1.779
+          },
+          "0.1": {
+            "precision": 0.2597,
+            "k": 616,
+            "lift": 1.636
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2952,
+          "median": 0.3023,
+          "worst": 0.1905,
+          "worst_cohort": "2024Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.1905,
+              "k": 42,
+              "n": 859,
+              "base_rate": 0.135,
+              "expected_hits_null": 5.67
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.3023,
+              "k": 43,
+              "n": 872,
+              "base_rate": 0.1181,
+              "expected_hits_null": 5.08
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.2326,
+              "k": 43,
+              "n": 871,
+              "base_rate": 0.1412,
+              "expected_hits_null": 6.07
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.3256,
+              "k": 43,
+              "n": 875,
+              "base_rate": 0.1383,
+              "expected_hits_null": 5.95
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.2955,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.1565,
+              "expected_hits_null": 6.89
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.3864,
+              "k": 44,
+              "n": 894,
+              "base_rate": 0.2148,
+              "expected_hits_null": 9.45
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.3333,
+              "k": 45,
+              "n": 906,
+              "base_rate": 0.2042,
+              "expected_hits_null": 9.19
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1089,
+            "actual": 0.1169,
+            "n": 616
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1381,
+            "actual": 0.1053,
+            "n": 617
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.1564,
+            "actual": 0.125,
+            "n": 616
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.173,
+            "actual": 0.1361,
+            "n": 617
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.1908,
+            "actual": 0.1266,
+            "n": 616
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2121,
+            "actual": 0.1475,
+            "n": 617
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2361,
+            "actual": 0.1672,
+            "n": 616
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.2654,
+            "actual": 0.1896,
+            "n": 617
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.3084,
+            "actual": 0.2143,
+            "n": 616
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.3947,
+            "actual": 0.2593,
+            "n": 617
+          }
+        ],
+        "calibration_weak": {
+          "n": 6165,
+          "slope": 0.6688,
+          "intercept": -0.8077,
+          "spiegelhalter_z": -9.6166,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_micro": {
+        "n": 884,
+        "n_symbols": 194,
+        "n_positive_symbols": 103,
+        "base_rate": 0.2364,
+        "pr_auc": 0.2761,
+        "roc_auc": 0.5576,
+        "brier": 0.183,
+        "ece": 0.0499,
+        "precision_at_k": 0.2727,
+        "k": 44,
+        "lift_at_k": 1.154,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.2941,
+            "k": 17,
+            "lift": 1.244
+          },
+          "0.05": {
+            "precision": 0.2727,
+            "k": 44,
+            "lift": 1.154
+          },
+          "0.1": {
+            "precision": 0.3068,
+            "k": 88,
+            "lift": 1.298
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2381,
+          "median": 0.3333,
+          "worst": 0.0,
+          "worst_cohort": "2024Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.2417,
+              "expected_hits_null": 1.45
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.1833,
+              "expected_hits_null": 1.1
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 137,
+              "base_rate": 0.2409,
+              "expected_hits_null": 1.45
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 125,
+              "base_rate": 0.256,
+              "expected_hits_null": 1.54
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 127,
+              "base_rate": 0.2362,
+              "expected_hits_null": 1.42
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 134,
+              "base_rate": 0.2612,
+              "expected_hits_null": 1.57
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 121,
+              "base_rate": 0.2314,
+              "expected_hits_null": 1.39
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.127,
+            "actual": 0.1705,
+            "n": 88
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1604,
+            "actual": 0.2386,
+            "n": 88
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.183,
+            "actual": 0.1685,
+            "n": 89
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.2084,
+            "actual": 0.1705,
+            "n": 88
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.2337,
+            "actual": 0.2584,
+            "n": 89
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2595,
+            "actual": 0.2614,
+            "n": 88
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2809,
+            "actual": 0.2727,
+            "n": 88
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.3151,
+            "actual": 0.3034,
+            "n": 89
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.3575,
+            "actual": 0.2159,
+            "n": 88
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.4405,
+            "actual": 0.3034,
+            "n": 89
+          }
+        ],
+        "calibration_weak": {
+          "n": 884,
+          "slope": 0.4015,
+          "intercept": -0.7331,
+          "spiegelhalter_z": 0.0999,
+          "spiegelhalter_p": 0.9204
+        }
+      },
+      "random_small": {
+        "n": 1750,
+        "n_symbols": 344,
+        "n_positive_symbols": 130,
+        "base_rate": 0.1697,
+        "pr_auc": 0.1838,
+        "roc_auc": 0.521,
+        "brier": 0.1491,
+        "ece": 0.0754,
+        "precision_at_k": 0.1609,
+        "k": 87,
+        "lift_at_k": 0.948,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.1714,
+            "k": 35,
+            "lift": 1.01
+          },
+          "0.05": {
+            "precision": 0.1609,
+            "k": 87,
+            "lift": 0.948
+          },
+          "0.1": {
+            "precision": 0.2,
+            "k": 175,
+            "lift": 1.178
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.1639,
+          "median": 0.1538,
+          "worst": 0.0,
+          "worst_cohort": "2024Q3",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.25,
+              "k": 12,
+              "n": 240,
+              "base_rate": 0.1375,
+              "expected_hits_null": 1.65
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.1667,
+              "k": 12,
+              "n": 240,
+              "base_rate": 0.1042,
+              "expected_hits_null": 1.25
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.0,
+              "k": 11,
+              "n": 237,
+              "base_rate": 0.1603,
+              "expected_hits_null": 1.76
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.0833,
+              "k": 12,
+              "n": 254,
+              "base_rate": 0.1417,
+              "expected_hits_null": 1.7
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1538,
+              "k": 13,
+              "n": 262,
+              "base_rate": 0.1527,
+              "expected_hits_null": 1.99
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.4167,
+              "k": 12,
+              "n": 245,
+              "base_rate": 0.2449,
+              "expected_hits_null": 2.94
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.0769,
+              "k": 13,
+              "n": 272,
+              "base_rate": 0.239,
+              "expected_hits_null": 3.11
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1117,
+            "actual": 0.1886,
+            "n": 175
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1424,
+            "actual": 0.1543,
+            "n": 175
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.1597,
+            "actual": 0.1829,
+            "n": 175
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.177,
+            "actual": 0.1257,
+            "n": 175
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.1958,
+            "actual": 0.1143,
+            "n": 175
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2176,
+            "actual": 0.1943,
+            "n": 175
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2414,
+            "actual": 0.1543,
+            "n": 175
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.2716,
+            "actual": 0.1657,
+            "n": 175
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.3126,
+            "actual": 0.2171,
+            "n": 175
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.397,
+            "actual": 0.2,
+            "n": 175
+          }
+        ],
+        "calibration_weak": {
+          "n": 1750,
+          "slope": 0.104,
+          "intercept": -1.452,
+          "spiegelhalter_z": -3.2197,
+          "spiegelhalter_p": 0.0013
+        }
+      },
+      "random_mid": {
+        "n": 849,
+        "n_symbols": 166,
+        "n_positive_symbols": 42,
+        "base_rate": 0.1119,
+        "pr_auc": 0.1774,
+        "roc_auc": 0.6165,
+        "brier": 0.1155,
+        "ece": 0.128,
+        "precision_at_k": 0.2619,
+        "k": 42,
+        "lift_at_k": 2.341,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.1875,
+            "k": 16,
+            "lift": 1.676
+          },
+          "0.05": {
+            "precision": 0.2619,
+            "k": 42,
+            "lift": 2.341
+          },
+          "0.1": {
+            "precision": 0.2024,
+            "k": 84,
+            "lift": 1.809
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2381,
+          "median": 0.1667,
+          "worst": 0.0,
+          "worst_cohort": "2025Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 125,
+              "base_rate": 0.104,
+              "expected_hits_null": 0.62
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 124,
+              "base_rate": 0.1048,
+              "expected_hits_null": 0.63
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 127,
+              "base_rate": 0.1181,
+              "expected_hits_null": 0.71
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.5,
+              "k": 6,
+              "n": 121,
+              "base_rate": 0.124,
+              "expected_hits_null": 0.74
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.0833,
+              "expected_hits_null": 0.5
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.0,
+              "k": 5,
+              "n": 112,
+              "base_rate": 0.125,
+              "expected_hits_null": 0.62
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.125,
+              "expected_hits_null": 0.75
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1251,
+            "actual": 0.0833,
+            "n": 84
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1537,
+            "actual": 0.0706,
+            "n": 85
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.1736,
+            "actual": 0.1059,
+            "n": 85
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.1944,
+            "actual": 0.0824,
+            "n": 85
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.2181,
+            "actual": 0.0353,
+            "n": 85
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.2385,
+            "actual": 0.0824,
+            "n": 85
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2621,
+            "actual": 0.1294,
+            "n": 85
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.2933,
+            "actual": 0.1059,
+            "n": 85
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.336,
+            "actual": 0.2235,
+            "n": 85
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.4029,
+            "actual": 0.2,
+            "n": 85
+          }
+        ],
+        "calibration_weak": {
+          "n": 849,
+          "slope": 0.8692,
+          "intercept": -1.0843,
+          "spiegelhalter_z": -8.1506,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_large": {
+        "n": 875,
+        "n_symbols": 151,
+        "n_positive_symbols": 24,
+        "base_rate": 0.0491,
+        "pr_auc": 0.0844,
+        "roc_auc": 0.5906,
+        "brier": 0.0748,
+        "ece": 0.1589,
+        "precision_at_k": 0.1163,
+        "k": 43,
+        "lift_at_k": 2.366,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.1765,
+            "k": 17,
+            "lift": 3.591
+          },
+          "0.05": {
+            "precision": 0.1163,
+            "k": 43,
+            "lift": 2.366
+          },
+          "0.1": {
+            "precision": 0.092,
+            "k": 87,
+            "lift": 1.871
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.1238,
+          "median": 0.1667,
+          "worst": 0.0,
+          "worst_cohort": "2024Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.2,
+              "k": 5,
+              "n": 119,
+              "base_rate": 0.042,
+              "expected_hits_null": 0.21
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0,
+              "k": 5,
+              "n": 114,
+              "base_rate": 0.0088,
+              "expected_hits_null": 0.04
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 123,
+              "base_rate": 0.0325,
+              "expected_hits_null": 0.2
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 129,
+              "base_rate": 0.0155,
+              "expected_hits_null": 0.09
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 132,
+              "base_rate": 0.0606,
+              "expected_hits_null": 0.36
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 123,
+              "base_rate": 0.065,
+              "expected_hits_null": 0.39
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 135,
+              "base_rate": 0.1111,
+              "expected_hits_null": 0.67
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.1079,
+            "actual": 0.0345,
+            "n": 87
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1334,
+            "actual": 0.0341,
+            "n": 88
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.1534,
+            "actual": 0.0575,
+            "n": 87
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.1709,
+            "actual": 0.0227,
+            "n": 88
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.1873,
+            "actual": 0.046,
+            "n": 87
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.207,
+            "actual": 0.0455,
+            "n": 88
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.2261,
+            "actual": 0.0345,
+            "n": 87
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.25,
+            "actual": 0.0909,
+            "n": 88
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.2817,
+            "actual": 0.0345,
+            "n": 87
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.3616,
+            "actual": 0.0909,
+            "n": 88
+          }
+        ],
+        "calibration_weak": {
+          "n": 875,
+          "slope": 0.8007,
+          "intercept": -1.9053,
+          "spiegelhalter_z": -11.0024,
+          "spiegelhalter_p": 0.0
+        }
+      }
+    },
+    "challenger_real_v1": {
+      "random_sample": {
+        "n": 6165,
+        "n_symbols": 934,
+        "n_positive_symbols": 335,
+        "base_rate": 0.1341,
+        "pr_auc": 0.2096,
+        "roc_auc": 0.6359,
+        "brier": 0.1153,
+        "ece": 0.0488,
+        "precision_at_k": 0.2857,
+        "k": 308,
+        "lift_at_k": 2.13,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.2927,
+            "k": 123,
+            "lift": 2.182
+          },
+          "0.05": {
+            "precision": 0.2857,
+            "k": 308,
+            "lift": 2.13
+          },
+          "0.1": {
+            "precision": 0.2744,
+            "k": 616,
+            "lift": 2.045
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2768,
+          "median": 0.2619,
+          "worst": 0.2,
+          "worst_cohort": "2025Q3",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.2619,
+              "k": 42,
+              "n": 859,
+              "base_rate": 0.1176,
+              "expected_hits_null": 4.94
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.2326,
+              "k": 43,
+              "n": 872,
+              "base_rate": 0.0929,
+              "expected_hits_null": 3.99
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.3256,
+              "k": 43,
+              "n": 871,
+              "base_rate": 0.1274,
+              "expected_hits_null": 5.48
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.3721,
+              "k": 43,
+              "n": 875,
+              "base_rate": 0.1257,
+              "expected_hits_null": 5.41
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.25,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.125,
+              "expected_hits_null": 5.5
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.2955,
+              "k": 44,
+              "n": 894,
+              "base_rate": 0.1767,
+              "expected_hits_null": 7.77
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.2,
+              "k": 45,
+              "n": 906,
+              "base_rate": 0.1711,
+              "expected_hits_null": 7.7
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.0259,
+            "actual": 0.0714,
+            "n": 616
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.04,
+            "actual": 0.0762,
+            "n": 617
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.0505,
+            "actual": 0.0779,
+            "n": 616
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.0585,
+            "actual": 0.1102,
+            "n": 617
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.0663,
+            "actual": 0.1218,
+            "n": 616
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.0779,
+            "actual": 0.1053,
+            "n": 617
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.0932,
+            "actual": 0.1445,
+            "n": 616
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.11,
+            "actual": 0.1718,
+            "n": 617
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.1369,
+            "actual": 0.1867,
+            "n": 616
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.1941,
+            "actual": 0.2755,
+            "n": 617
+          }
+        ],
+        "calibration_weak": {
+          "n": 6165,
+          "slope": 0.7805,
+          "intercept": 0.0247,
+          "spiegelhalter_z": 14.3948,
+          "spiegelhalter_p": 0.0
+        },
+        "ci_90": {
+          "precision_at_k": {
+            "p05": 0.2248,
+            "p50": 0.2774,
+            "p95": 0.3366,
+            "n_boot": 300
+          },
+          "lift_at_k": {
+            "p05": 1.7306,
+            "p50": 2.0737,
+            "p95": 2.4909,
+            "n_boot": 300
+          },
+          "pr_auc": {
+            "p05": 0.1868,
+            "p50": 0.2089,
+            "p95": 0.236,
+            "n_boot": 300
+          }
+        },
+        "deployment_restatement_precision_at_3pct_base": 0.074
+      },
+      "all": {
+        "n": 6256,
+        "n_symbols": 948,
+        "n_positive_symbols": 349,
+        "base_rate": 0.1418,
+        "pr_auc": 0.2158,
+        "roc_auc": 0.6297,
+        "brier": 0.1217,
+        "ece": 0.0565,
+        "precision_at_k": 0.2949,
+        "k": 312,
+        "lift_at_k": 2.08,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.304,
+            "k": 125,
+            "lift": 2.144
+          },
+          "0.05": {
+            "precision": 0.2949,
+            "k": 312,
+            "lift": 2.08
+          },
+          "0.1": {
+            "precision": 0.28,
+            "k": 625,
+            "lift": 1.975
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2898,
+          "median": 0.2558,
+          "worst": 0.2174,
+          "worst_cohort": "2025Q3",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.2558,
+              "k": 43,
+              "n": 870,
+              "base_rate": 0.123,
+              "expected_hits_null": 5.29
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.25,
+              "k": 44,
+              "n": 885,
+              "base_rate": 0.0994,
+              "expected_hits_null": 4.37
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.3636,
+              "k": 44,
+              "n": 884,
+              "base_rate": 0.1369,
+              "expected_hits_null": 6.02
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.3864,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.134,
+              "expected_hits_null": 5.9
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.2444,
+              "k": 45,
+              "n": 901,
+              "base_rate": 0.1299,
+              "expected_hits_null": 5.85
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.3111,
+              "k": 45,
+              "n": 908,
+              "base_rate": 0.1872,
+              "expected_hits_null": 8.42
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.2174,
+              "k": 46,
+              "n": 920,
+              "base_rate": 0.1793,
+              "expected_hits_null": 8.25
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.0258,
+            "actual": 0.08,
+            "n": 625
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.0399,
+            "actual": 0.0879,
+            "n": 626
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.0505,
+            "actual": 0.0784,
+            "n": 625
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.0585,
+            "actual": 0.1198,
+            "n": 626
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.0664,
+            "actual": 0.1262,
+            "n": 626
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.078,
+            "actual": 0.112,
+            "n": 625
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.0932,
+            "actual": 0.155,
+            "n": 626
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.11,
+            "actual": 0.1824,
+            "n": 625
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.1367,
+            "actual": 0.1949,
+            "n": 626
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.1941,
+            "actual": 0.2812,
+            "n": 626
+          }
+        ],
+        "calibration_weak": {
+          "n": 6256,
+          "slope": 0.7341,
+          "intercept": -0.0167,
+          "spiegelhalter_z": 16.8329,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "curated_disclosure": {
+        "n": 91,
+        "n_symbols": 14,
+        "n_positive_symbols": 14,
+        "base_rate": 0.6593,
+        "pr_auc": 0.7142,
+        "roc_auc": 0.5755,
+        "brier": 0.553,
+        "ece": 0.5754,
+        "precision_at_k": 0.75,
+        "k": 4,
+        "lift_at_k": 1.137,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.0,
+            "k": 1,
+            "lift": 0.0
+          },
+          "0.05": {
+            "precision": 0.75,
+            "k": 4,
+            "lift": 1.137
+          },
+          "0.1": {
+            "precision": 0.6667,
+            "k": 9,
+            "lift": 1.011
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.7143,
+          "median": 1.0,
+          "worst": 0.0,
+          "worst_cohort": "2024Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.0,
+              "k": 1,
+              "n": 11,
+              "base_rate": 0.5455,
+              "expected_hits_null": 0.55,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.5385,
+              "expected_hits_null": 0.54,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.7692,
+              "expected_hits_null": 0.77,
+              "low_k": true
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.6923,
+              "expected_hits_null": 0.69,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.0,
+              "k": 1,
+              "n": 13,
+              "base_rate": 0.4615,
+              "expected_hits_null": 0.46,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 14,
+              "base_rate": 0.8571,
+              "expected_hits_null": 0.86,
+              "low_k": true
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 1.0,
+              "k": 1,
+              "n": 14,
+              "base_rate": 0.7143,
+              "expected_hits_null": 0.71,
+              "low_k": true
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.0197,
+            "actual": 0.4444,
+            "n": 9
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.0322,
+            "actual": 0.6667,
+            "n": 9
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.0457,
+            "actual": 0.5556,
+            "n": 9
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.0599,
+            "actual": 0.7778,
+            "n": 9
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.072,
+            "actual": 0.7778,
+            "n": 9
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.0828,
+            "actual": 0.4444,
+            "n": 9
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.096,
+            "actual": 0.5556,
+            "n": 9
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.1082,
+            "actual": 0.7778,
+            "n": 9
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.124,
+            "actual": 0.8889,
+            "n": 9
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.1877,
+            "actual": 0.7,
+            "n": 10
+          }
+        ],
+        "calibration_weak": {
+          "n": 91,
+          "slope": -121537772.9922,
+          "intercept": -178346839.7367,
+          "spiegelhalter_z": 21.209,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_sample_option1_label": {
+        "n": 6165,
+        "n_symbols": 934,
+        "n_positive_symbols": 367,
+        "base_rate": 0.1588,
+        "pr_auc": 0.2622,
+        "roc_auc": 0.6513,
+        "brier": 0.134,
+        "ece": 0.0735,
+        "precision_at_k": 0.3766,
+        "k": 308,
+        "lift_at_k": 2.372,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.3984,
+            "k": 123,
+            "lift": 2.509
+          },
+          "0.05": {
+            "precision": 0.3766,
+            "k": 308,
+            "lift": 2.372
+          },
+          "0.1": {
+            "precision": 0.349,
+            "k": 616,
+            "lift": 2.198
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.362,
+          "median": 0.3333,
+          "worst": 0.2889,
+          "worst_cohort": "2025Q3",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.3333,
+              "k": 42,
+              "n": 859,
+              "base_rate": 0.135,
+              "expected_hits_null": 5.67
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.3256,
+              "k": 43,
+              "n": 872,
+              "base_rate": 0.1181,
+              "expected_hits_null": 5.08
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.3256,
+              "k": 43,
+              "n": 871,
+              "base_rate": 0.1412,
+              "expected_hits_null": 6.07
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.4651,
+              "k": 43,
+              "n": 875,
+              "base_rate": 0.1383,
+              "expected_hits_null": 5.95
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.3864,
+              "k": 44,
+              "n": 888,
+              "base_rate": 0.1565,
+              "expected_hits_null": 6.89
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.4091,
+              "k": 44,
+              "n": 894,
+              "base_rate": 0.2148,
+              "expected_hits_null": 9.45
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.2889,
+              "k": 45,
+              "n": 906,
+              "base_rate": 0.2042,
+              "expected_hits_null": 9.19
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.0259,
+            "actual": 0.0795,
+            "n": 616
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.04,
+            "actual": 0.0875,
+            "n": 617
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.0505,
+            "actual": 0.0909,
+            "n": 616
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.0585,
+            "actual": 0.1264,
+            "n": 617
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.0663,
+            "actual": 0.1429,
+            "n": 616
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.0779,
+            "actual": 0.1199,
+            "n": 617
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.0932,
+            "actual": 0.1688,
+            "n": 616
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.11,
+            "actual": 0.1945,
+            "n": 617
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.1369,
+            "actual": 0.2273,
+            "n": 616
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.1941,
+            "actual": 0.3501,
+            "n": 617
+          }
+        ],
+        "calibration_weak": {
+          "n": 6165,
+          "slope": 0.8881,
+          "intercept": 0.4778,
+          "spiegelhalter_z": 21.168,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_micro": {
+        "n": 884,
+        "n_symbols": 194,
+        "n_positive_symbols": 103,
+        "base_rate": 0.2364,
+        "pr_auc": 0.2806,
+        "roc_auc": 0.5834,
+        "brier": 0.1841,
+        "ece": 0.0739,
+        "precision_at_k": 0.2727,
+        "k": 44,
+        "lift_at_k": 1.154,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.1176,
+            "k": 17,
+            "lift": 0.498
+          },
+          "0.05": {
+            "precision": 0.2727,
+            "k": 44,
+            "lift": 1.154
+          },
+          "0.1": {
+            "precision": 0.3068,
+            "k": 88,
+            "lift": 1.298
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.2857,
+          "median": 0.3333,
+          "worst": 0.1667,
+          "worst_cohort": "2024Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.2417,
+              "expected_hits_null": 1.45
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.1833,
+              "expected_hits_null": 1.1
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 137,
+              "base_rate": 0.2409,
+              "expected_hits_null": 1.45
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 125,
+              "base_rate": 0.256,
+              "expected_hits_null": 1.54
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 127,
+              "base_rate": 0.2362,
+              "expected_hits_null": 1.42
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.5,
+              "k": 6,
+              "n": 134,
+              "base_rate": 0.2612,
+              "expected_hits_null": 1.57
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 121,
+              "base_rate": 0.2314,
+              "expected_hits_null": 1.39
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.0896,
+            "actual": 0.1705,
+            "n": 88
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.1115,
+            "actual": 0.1705,
+            "n": 88
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.1272,
+            "actual": 0.191,
+            "n": 89
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.1421,
+            "actual": 0.1705,
+            "n": 88
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.1549,
+            "actual": 0.2247,
+            "n": 89
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.1659,
+            "actual": 0.3182,
+            "n": 88
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.1763,
+            "actual": 0.2045,
+            "n": 88
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.1913,
+            "actual": 0.2809,
+            "n": 89
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.2122,
+            "actual": 0.3295,
+            "n": 88
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.2535,
+            "actual": 0.3034,
+            "n": 89
+          }
+        ],
+        "calibration_weak": {
+          "n": 884,
+          "slope": 0.7318,
+          "intercept": 0.0403,
+          "spiegelhalter_z": 6.1913,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_small": {
+        "n": 1750,
+        "n_symbols": 344,
+        "n_positive_symbols": 130,
+        "base_rate": 0.1697,
+        "pr_auc": 0.2035,
+        "roc_auc": 0.557,
+        "brier": 0.1458,
+        "ece": 0.0737,
+        "precision_at_k": 0.1954,
+        "k": 87,
+        "lift_at_k": 1.151,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.1714,
+            "k": 35,
+            "lift": 1.01
+          },
+          "0.05": {
+            "precision": 0.1954,
+            "k": 87,
+            "lift": 1.151
+          },
+          "0.1": {
+            "precision": 0.2229,
+            "k": 175,
+            "lift": 1.313
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.205,
+          "median": 0.1667,
+          "worst": 0.0769,
+          "worst_cohort": "2025Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.25,
+              "k": 12,
+              "n": 240,
+              "base_rate": 0.1375,
+              "expected_hits_null": 1.65
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0833,
+              "k": 12,
+              "n": 240,
+              "base_rate": 0.1042,
+              "expected_hits_null": 1.25
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.4545,
+              "k": 11,
+              "n": 237,
+              "base_rate": 0.1603,
+              "expected_hits_null": 1.76
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.1667,
+              "k": 12,
+              "n": 254,
+              "base_rate": 0.1417,
+              "expected_hits_null": 1.7
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.0769,
+              "k": 13,
+              "n": 262,
+              "base_rate": 0.1527,
+              "expected_hits_null": 1.99
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.25,
+              "k": 12,
+              "n": 245,
+              "base_rate": 0.2449,
+              "expected_hits_null": 2.94
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.1538,
+              "k": 13,
+              "n": 272,
+              "base_rate": 0.239,
+              "expected_hits_null": 3.11
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.0462,
+            "actual": 0.1314,
+            "n": 175
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.0594,
+            "actual": 0.1943,
+            "n": 175
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.0685,
+            "actual": 0.1257,
+            "n": 175
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.0787,
+            "actual": 0.1314,
+            "n": 175
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.0867,
+            "actual": 0.1371,
+            "n": 175
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.0957,
+            "actual": 0.1371,
+            "n": 175
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.105,
+            "actual": 0.2,
+            "n": 175
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.1154,
+            "actual": 0.1543,
+            "n": 175
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.1317,
+            "actual": 0.2629,
+            "n": 175
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.1725,
+            "actual": 0.2229,
+            "n": 175
+          }
+        ],
+        "calibration_weak": {
+          "n": 1750,
+          "slope": 0.4001,
+          "intercept": -0.6717,
+          "spiegelhalter_z": 10.9665,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_mid": {
+        "n": 849,
+        "n_symbols": 166,
+        "n_positive_symbols": 42,
+        "base_rate": 0.1119,
+        "pr_auc": 0.143,
+        "roc_auc": 0.5284,
+        "brier": 0.1014,
+        "ece": 0.0492,
+        "precision_at_k": 0.1667,
+        "k": 42,
+        "lift_at_k": 1.489,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.25,
+            "k": 16,
+            "lift": 2.234
+          },
+          "0.05": {
+            "precision": 0.1667,
+            "k": 42,
+            "lift": 1.489
+          },
+          "0.1": {
+            "precision": 0.1071,
+            "k": 84,
+            "lift": 0.958
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.1476,
+          "median": 0.1667,
+          "worst": 0.0,
+          "worst_cohort": "2024Q2",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 125,
+              "base_rate": 0.104,
+              "expected_hits_null": 0.62
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 124,
+              "base_rate": 0.1048,
+              "expected_hits_null": 0.63
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 127,
+              "base_rate": 0.1181,
+              "expected_hits_null": 0.71
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 121,
+              "base_rate": 0.124,
+              "expected_hits_null": 0.74
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.0833,
+              "expected_hits_null": 0.5
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.2,
+              "k": 5,
+              "n": 112,
+              "base_rate": 0.125,
+              "expected_hits_null": 0.62
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.3333,
+              "k": 6,
+              "n": 120,
+              "base_rate": 0.125,
+              "expected_hits_null": 0.75
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.022,
+            "actual": 0.131,
+            "n": 84
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.0339,
+            "actual": 0.1529,
+            "n": 85
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.0433,
+            "actual": 0.0471,
+            "n": 85
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.0526,
+            "actual": 0.0706,
+            "n": 85
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.0607,
+            "actual": 0.0941,
+            "n": 85
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.0699,
+            "actual": 0.0824,
+            "n": 85
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.0808,
+            "actual": 0.1294,
+            "n": 85
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.0946,
+            "actual": 0.2,
+            "n": 85
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.1108,
+            "actual": 0.1059,
+            "n": 85
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.1437,
+            "actual": 0.1059,
+            "n": 85
+          }
+        ],
+        "calibration_weak": {
+          "n": 849,
+          "slope": 0.1543,
+          "intercept": -1.6575,
+          "spiegelhalter_z": 5.0426,
+          "spiegelhalter_p": 0.0
+        }
+      },
+      "random_large": {
+        "n": 875,
+        "n_symbols": 151,
+        "n_positive_symbols": 24,
+        "base_rate": 0.0491,
+        "pr_auc": 0.0532,
+        "roc_auc": 0.5357,
+        "brier": 0.0473,
+        "ece": 0.0234,
+        "precision_at_k": 0.0233,
+        "k": 43,
+        "lift_at_k": 0.473,
+        "k_scan": {
+          "0.02": {
+            "precision": 0.0588,
+            "k": 17,
+            "lift": 1.197
+          },
+          "0.05": {
+            "precision": 0.0233,
+            "k": 43,
+            "lift": 0.473
+          },
+          "0.1": {
+            "precision": 0.0345,
+            "k": 87,
+            "lift": 0.702
+          }
+        },
+        "by_cohort": {
+          "n_cohorts": 7,
+          "mean": 0.0238,
+          "median": 0.0,
+          "worst": 0.0,
+          "worst_cohort": "2024Q1",
+          "per_cohort": [
+            {
+              "cohort": "2024Q1",
+              "precision_at_k": 0.0,
+              "k": 5,
+              "n": 119,
+              "base_rate": 0.042,
+              "expected_hits_null": 0.21
+            },
+            {
+              "cohort": "2024Q2",
+              "precision_at_k": 0.0,
+              "k": 5,
+              "n": 114,
+              "base_rate": 0.0088,
+              "expected_hits_null": 0.04
+            },
+            {
+              "cohort": "2024Q3",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 123,
+              "base_rate": 0.0325,
+              "expected_hits_null": 0.2
+            },
+            {
+              "cohort": "2024Q4",
+              "precision_at_k": 0.1667,
+              "k": 6,
+              "n": 129,
+              "base_rate": 0.0155,
+              "expected_hits_null": 0.09
+            },
+            {
+              "cohort": "2025Q1",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 132,
+              "base_rate": 0.0606,
+              "expected_hits_null": 0.36
+            },
+            {
+              "cohort": "2025Q2",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 123,
+              "base_rate": 0.065,
+              "expected_hits_null": 0.39
+            },
+            {
+              "cohort": "2025Q3",
+              "precision_at_k": 0.0,
+              "k": 6,
+              "n": 135,
+              "base_rate": 0.1111,
+              "expected_hits_null": 0.67
+            }
+          ]
+        },
+        "calibration": [
+          {
+            "bin": 0.05,
+            "predicted": 0.0171,
+            "actual": 0.0,
+            "n": 87
+          },
+          {
+            "bin": 0.15,
+            "predicted": 0.022,
+            "actual": 0.0682,
+            "n": 88
+          },
+          {
+            "bin": 0.25,
+            "predicted": 0.0269,
+            "actual": 0.0345,
+            "n": 87
+          },
+          {
+            "bin": 0.35,
+            "predicted": 0.0321,
+            "actual": 0.0568,
+            "n": 88
+          },
+          {
+            "bin": 0.45,
+            "predicted": 0.0358,
+            "actual": 0.069,
+            "n": 87
+          },
+          {
+            "bin": 0.55,
+            "predicted": 0.0412,
+            "actual": 0.0682,
+            "n": 88
+          },
+          {
+            "bin": 0.65,
+            "predicted": 0.0466,
+            "actual": 0.046,
+            "n": 87
+          },
+          {
+            "bin": 0.75,
+            "predicted": 0.0546,
+            "actual": 0.0455,
+            "n": 88
+          },
+          {
+            "bin": 0.85,
+            "predicted": 0.0652,
+            "actual": 0.069,
+            "n": 87
+          },
+          {
+            "bin": 0.95,
+            "predicted": 0.0977,
+            "actual": 0.0341,
+            "n": 88
+          }
+        ],
+        "calibration_weak": {
+          "n": 875,
+          "slope": 0.2225,
+          "intercept": -2.255,
+          "spiegelhalter_z": 0.9553,
+          "spiegelhalter_p": 0.3394
+        }
+      }
+    }
+  },
+  "k_frac": 0.05,
+  "null_note": "volatility_null = parameter-free trailing 63-day realised sigma, the correct chance bar for a barrier-touch label (random selection is too easy). Its per-tier slices are the WITHIN-TIER nulls: a pick only counts as skill if it beats the jumpiness-sort of its own weight class. Its ECE is meaningless by construction (sigma is not a probability).",
+  "within_tier_paired_champion_minus_volatility_null": {
+    "micro": {
+      "n": 884,
+      "champion_minus_vol_lift": {
+        "p05": -0.5825,
+        "p50": 0.1096,
+        "p95": 0.9778,
+        "n_boot": 300,
+        "ci_excludes_zero": false
+      }
+    },
+    "small": {
+      "n": 1750,
+      "champion_minus_vol_lift": {
+        "p05": -0.9232,
+        "p50": -0.3746,
+        "p95": 0.2005,
+        "n_boot": 300,
+        "ci_excludes_zero": false
+      }
+    },
+    "mid": {
+      "n": 849,
+      "champion_minus_vol_lift": {
+        "p05": -2.2104,
+        "p50": -0.7143,
+        "p95": 0.9116,
+        "n_boot": 300,
+        "ci_excludes_zero": false
+      }
+    },
+    "large": {
+      "n": 875,
+      "champion_minus_vol_lift": {
+        "p05": -6.4357,
+        "p50": -3.431,
+        "p95": -0.5301,
+        "n_boot": 300,
+        "ci_excludes_zero": true
+      }
+    }
+  },
+  "champion": {
+    "version": "emerging-winner-classifier-real-v1",
+    "dataset": "historical-survivor-v1",
+    "path": "/Users/brysonwalter/Developer/vai-lyra-stock-tracker/src/lib/generated/emerging-winner-model.json"
+  },
+  "paired_vs_champion": {
+    "challenger_real_v1": {
+      "lift_at_k": {
+        "p05": -0.0889,
+        "p50": 0.331,
+        "p95": 0.8398,
+        "n_boot": 300,
+        "ci_excludes_zero": false
+      },
+      "precision_at_k": {
+        "p05": -0.0129,
+        "p50": 0.0453,
+        "p95": 0.1129,
+        "n_boot": 300,
+        "ci_excludes_zero": false
+      },
+      "pr_auc": {
+        "p05": 0.0036,
+        "p50": 0.0237,
+        "p95": 0.045,
+        "n_boot": 300,
+        "ci_excludes_zero": true
+      },
+      "point_delta_lift_at_k": 0.4357,
+      "direction": "B_minus_A",
+      "note": "Paired symbol-clustered bootstrap on identical rows. The difference verdict is ci_excludes_zero on lift_at_k - never overlap of two marginal CIs."
+    }
+  }
+}

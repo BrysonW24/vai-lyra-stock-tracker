@@ -25,6 +25,23 @@ only moves on evidence.
 | **Sophistication - data** | **C-** (was D) | 7 of 10 domains now carry real data in the corpus: technical, accumulation, liquidity, business quality (now QUARTERLY EDGAR revenue growth, matching live semantics), capital, theme (SEC SIC, outcome-independent - 80 hot-theme members, 2,316 rows), narrative (benchmark regime, all rows). Sponsorship is live in production (real Form 4 net-buy) with the historical fill running. Still survivor-biased, still no delisted names - the binding constraint stands. |
 | **Honesty of presentation** | **A** | Every caveat travels with every number: provenance in the artifact, survivorship + curation caveats in corpus meta and reports, the in-app Evidence surface renders it all from the generated evidence pack, shadow-live gating intact, surfacing not earned and said so. |
 
+> **GEN-3 UPDATE (2026-08-03, corpus a09b4310) - read this first.** The one-shot gen-3 holdout
+> produced the project's defining moment: the boosted challenger (frozen pre-committed config)
+> scored **2.13x CI90[1.73, 2.49]** - the highest honest number ever, and the FIRST model in any
+> generation to separate from the volatility null with the interval clear of zero (+0.67,
+> [+0.27, +1.11]) - and the system **REFUSED to promote it** because the paired must-beat against
+> the incumbent was a statistical tie (+0.33, [-0.09, +0.84]; a tie keeps the incumbent, and the
+> force-reason case did not hold). The champion stays at 1.69x [1.39, 2.10]; the first
+> cross-generation paired test proved its apparent decline from gen-2's 1.94x is noise
+> (delta -0.18 [-0.57, +0.20]). Insider flow reached 99.86% of training rows; federal awards lit
+> for 20.9% of names; the naive linear refit got WORSE with more features (failed both floors) -
+> the insider signal lives in interactions only trees can read. **Grades after gen 3:**
+> Accuracy C+ · Calibration B+ (DOWN - champion ECE proved feature-generation-sensitive,
+> 0.017 -> 0.084) · Process A · Estimator C+ (UP) · Data C+ (UP - nine of ten domains) ·
+> Honesty A. Full detail: `lyra-evals/generations/GENERATION-LOG.md` (Generation 3) and the
+> v3-vs-v2 board. The per-dimension table below reflects gen-2 and is superseded where it
+> disagrees with this block and the generated evidence pack (`model-evidence.json`).
+
 **Overall: B- predictive power on an A process, now capped at C- data.** Gen-2 proved the grade
 thesis empirically: the accuracy jump came entirely from lighting data domains, not from tuning -
 and the gates correctly refused a retrained challenger that did not beat the incumbent on the

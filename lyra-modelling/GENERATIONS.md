@@ -13,7 +13,7 @@ Maintained by `/model-generation-eval` - a new section lands here every time a g
 |---|---|---|---|---|
 | 1 | 2026-08-01 | `ef1b5c52` | 1.72x (promoted) | Real outcomes refute the hand-built models; real training wins |
 | 2 | 2026-08-02 | `a297e8ad` | 1.94x (confirmed) | Same frozen model, richer data; retrained challenger refused |
-| 3 | in flight | pending | pending | Insider flow lights up; two estimator families fight fair |
+| 3 | 2026-08-03 | `a09b4310` | 1.69x (kept; challenger REFUSED at 2.13x) | The system refuses its best-ever number; the refused model shows the first real skill-beyond-jumpiness |
 
 ---
 
@@ -179,7 +179,43 @@ estimator bake-off ran (depth-2 boosted trees beat the linear retrain on dev, 1.
 
 ---
 
-## Generation 3 - "Does insider conviction predict?" (IN FLIGHT - design locked, results pending)
+## Generation 3 - "Does insider conviction predict?" (2026-08-03, corpus a09b4310)
+
+**THE RESULT, up front:** yes - but only the nonlinear model can read it, and the system REFUSED
+to promote it anyway. The boosted challenger scored **2.13x [1.73, 2.49]** on the fresh one-shot
+holdout - the highest honest number this project has ever produced, and the FIRST model in any
+generation to separate from the jumpiness null with the interval clear of zero (+0.67 vs vol,
+CI [+0.27, +1.11]). But paired against the incumbent champion on identical rows the margin was a
+statistical tie (+0.33, CI [-0.09, +0.84]), and the pre-committed must-beat rule keeps the
+incumbent on a tie. **The system declined its own best headline because the evidence did not
+clear the bar it swore to.** That refusal is the proof the discipline is real.
+
+| Model | Holdout lift | CI90 | Fate |
+|---|---|---|---|
+| Boosted challenger (frozen config) | 2.13x | [1.73, 2.49] | REFUSED - paired tie vs champion |
+| Champion (weights frozen since gen 1) | 1.69x | [1.39, 2.10] | stays champion |
+| Volatility null (the chance bar) | 1.40x | [1.10, 1.70] | beaten, with CI clearance, by the challenger only |
+| Reference scorecard | 0.90x | [0.61, 1.20] | still refuted |
+
+Other verdicts: insider data reached 99.86% of training rows (205k filings); federal awards lit
+(207/991 names); the naive linear refit got WORSE with more features (failed both floors) - the
+insider signal appears to live in interactions (insider x illiquidity x theme) only trees can
+read; and the first cross-generation paired test proved the champion's apparent 1.94 -> 1.69
+"decline" is noise (delta -0.18 [-0.57, +0.20]) - the champion is statistically unchanged across
+all three generations.
+
+**Grades after gen 3 (mixed, honest):** Accuracy C+ · Calibration B+ (DOWN - champion ECE proved
+feature-generation-sensitive, 0.017 -> 0.084) · Process A (the refusal is the best process
+evidence yet) · Estimator C+ (UP - the nonlinear family found what the linear cannot) ·
+Data C+ (UP - nine of ten domains lit) · Honesty A.
+
+**What gen 4 inherits:** the rematch. At n=6,165 a +0.33 median cannot statistically separate;
+the wider corpus (SEC bulk insider datasets, ~10k names) gives the paired test real power. Plus:
+ruin-lite (insider SELLING is now fully cached), the theme-from-filings AI universe, the mega-cap
+sponsorship watchlist, and the slope-corrected calibration artifact fit on the challenger's
+walk-forward predictions.
+
+### The original locked design (preserved as pre-registered)
 
 **The question:** the sponsorship domain (are insiders putting their own money in?) has been an
 honest zero through two generations. A 205,189-document backfill of SEC Form 4 filings (991

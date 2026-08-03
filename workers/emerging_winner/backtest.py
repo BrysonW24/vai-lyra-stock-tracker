@@ -1133,36 +1133,42 @@ MODEL_EVIDENCE = os.path.join(
 # Editorial grades - regraded per cycle alongside lyra-evals/MODEL-REPORT-CARD.md (the prose home).
 # They ride in the evidence export so the product surface and the report card can never disagree.
 EVIDENCE_GRADES = {
-    "graded_at_corpus": "a297e8ad",  # gen-2 (theme via SEC SIC + market regime lit)
+    "graded_at_corpus": "a09b4310",  # gen-3 (insider flow on 99.9% of rows + federal awards lit)
     "dimensions": [
         {"dimension": "Accuracy (real, out-of-time)", "grade": "C+",
-         "why": "Regraded 2026-08-02 under the volatility-only null - the honest chance bar for a "
-                "barrier label (random was too easy: pure jumpiness scores 1.41x pooled). The "
-                "champion's 1.94x beats it paired (+0.48, CI90[+0.05, +0.92]) - real skill beyond "
-                "volatility, but the floor is thin. Within-tier: unproven everywhere (micro/small "
-                "lean positive, underpowered); the large-tier 2.84x was the null in disguise "
-                "(6.15x). Survivor-biased bound; research-queue edge only."},
-        {"dimension": "Calibration", "grade": "A-",
-         "why": "ECE 0.017 on the untouched gen-2 holdout; level near-perfect (calibration-in-the-"
-                "large -0.05) and the 3%-base restatement transfers (median ECE 0.006 across 50 "
-                "prevalence-shift draws). Measured gap to A: recalibration slope 0.755 CI90[0.57, "
-                "0.98] - the spread is mildly overconfident; a slope-corrected artifact rides the "
-                "gen-3 standing loop, and live-ledger validation remains."},
+         "why": "Gen-3 one-shot holdout: deployed champion 1.69x CI90[1.39, 2.10] - clears chance "
+                "solidly, does not separate from the volatility null this generation (+0.29, CI "
+                "includes 0). The first cross-generation PAIRED test shows the gen-2 -> gen-3 "
+                "change is noise (delta -0.18 [-0.57, +0.20]) - the champion is statistically "
+                "unchanged across feature generations. The REFUSED boosted challenger delivered "
+                "the system's first CI-clear skill-beyond-jumpiness (2.13x, +0.67 vs vol "
+                "[+0.27, +1.11]) - system evidence, seat unearned. Survivor-biased bound stands."},
+        {"dimension": "Calibration", "grade": "B+",
+         "why": "Honest DOWN-grade: champion ECE 0.084 on the gen-3 holdout (was 0.017 on gen-2 "
+                "features) - calibration is feature-generation-sensitive, which the gen-2 grade "
+                "did not know. The refused challenger sits at 0.049. Slope-corrected artifact "
+                "deferred to gen-4 (no clean calibration-fit set existed this generation); "
+                "live-ledger validation remains the path to A."},
         {"dimension": "Process sophistication", "grade": "A",
          "why": "Purged walk-forward, one-shot holdout per corpus generation, symbol-clustered CIs, "
-                "drift fixtures, corpus integrity hashes, audited promotion, the nightly outcome-"
-                "maturation loop-closer, and a scheduled monthly re-eval cadence."},
-        {"dimension": "Estimator sophistication", "grade": "C-",
-         "why": "Two families now run the full honest lifecycle. On gen-2 dev walk-forward the "
-                "depth-2 boosted trees beat the linear retrain (lift 1.34x vs 1.27x, ROC 0.585 vs "
-                "0.548, no zero-hit cohorts) but failed the 1.5x floor and never threatened the "
-                "frozen champion - the seat is unearned until a gen-3 fair fight is won."},
-        {"dimension": "Data depth", "grade": "C-",
-         "why": "7 of 10 domains now carry real data in the corpus (theme via SEC SIC, market regime, "
-                "quarterly EDGAR fundamentals); Form 4 insider flow is live and its historical fill is "
-                "running. Still survivor-biased with no delisted names - the binding constraint."},
+                "paired difference gates, drift fixtures, corpus integrity hashes, the attempt "
+                "ledger, and the strongest evidence yet: the gen-3 promotion REFUSAL - the system "
+                "declined its best-ever headline (2.13x) because the paired must-beat was a tie."},
+        {"dimension": "Estimator sophistication", "grade": "C+",
+         "why": "The boosted depth-2 family (frozen pre-committed config) won the family fight in "
+                "both generations and produced the system's only CI-clear vol-null separation on "
+                "a fresh holdout (2.13x, ECE 0.049, best worst-quarter 0.20). Seat still unearned: "
+                "the paired must-beat vs the incumbent was a statistical tie ([-0.09, +0.84]). "
+                "Gen-4's wider corpus is the rematch with real power."},
+        {"dimension": "Data depth", "grade": "C+",
+         "why": "Nine of ten domains now carry real point-in-time history: insider flow on 99.9% of "
+                "training rows (205k Form 4 filings, same parser as live), federal awards bridged "
+                "for 20.9% of names (action-date disciplined), quarterly fundamentals, SIC theme, "
+                "market regime. Adoption stays dark (paywalled). Survivor bias remains the binding "
+                "constraint and this grade's ceiling until the delisted corpus lands."},
         {"dimension": "Honesty of presentation", "grade": "A",
-         "why": "Every caveat travels with every number; surfacing stays gated."},
+         "why": "Every caveat travels with every number; the refused 2.13x challenger is reported "
+                "with the same prominence a promotion would have received; surfacing stays gated."},
     ],
 }
 

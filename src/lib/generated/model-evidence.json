@@ -1,6 +1,6 @@
 {
   "generatedFromCorpus": {
-    "sha256": "a297e8adc5e0d1505f7cde4af7ef5946753f01b11ab96a7759204a7a05d78bb4",
+    "sha256": "a09b43107090a1c02605f9fdf8abb21c499079d18cbafdceb57fccfcbb01bc3b",
     "dataEnd": "2026-07-31",
     "rows": 27420,
     "curatedRows": 262,
@@ -16,31 +16,14 @@
       "label": "deployed champion (emerging-winner-classifier-real-v1)",
       "split": "holdout",
       "status": "promoted",
-      "lift": 1.936,
+      "lift": 1.694,
       "ci90": [
-        1.5524,
-        2.2872
+        1.3864,
+        2.0966
       ],
-      "rocAuc": 0.5923,
-      "ece": 0.0165,
-      "precisionAtK": 0.2597,
-      "baseRate": 0.1341,
-      "n": 6165,
-      "worstCohort": 0.2
-    },
-    {
-      "model": "challenger",
-      "label": "latest challenger (this cycle's retrain)",
-      "split": "holdout",
-      "status": "challenger_not_promoted",
-      "lift": 1.912,
-      "ci90": [
-        1.5911,
-        2.321
-      ],
-      "rocAuc": 0.6053,
-      "ece": 0.0477,
-      "precisionAtK": 0.2565,
+      "rocAuc": 0.5874,
+      "ece": 0.0843,
+      "precisionAtK": 0.2273,
       "baseRate": 0.1341,
       "n": 6165,
       "worstCohort": 0.1778
@@ -48,16 +31,33 @@
     {
       "model": "challenger",
       "label": "latest challenger (this cycle's retrain)",
+      "split": "holdout",
+      "status": "challenger_not_promoted",
+      "lift": 2.13,
+      "ci90": [
+        1.7306,
+        2.4909
+      ],
+      "rocAuc": 0.6359,
+      "ece": 0.0488,
+      "precisionAtK": 0.2857,
+      "baseRate": 0.1341,
+      "n": 6165,
+      "worstCohort": 0.2
+    },
+    {
+      "model": "challenger",
+      "label": "latest challenger (this cycle's retrain)",
       "split": "dev_walk_forward",
       "status": "challenger_not_promoted",
-      "lift": 1.27,
+      "lift": 1.233,
       "ci90": [
-        1.0665,
-        1.4972
+        1.0411,
+        1.4697
       ],
-      "rocAuc": 0.5476,
-      "ece": 0.0492,
-      "precisionAtK": 0.1178,
+      "rocAuc": 0.538,
+      "ece": 0.051,
+      "precisionAtK": 0.1144,
       "baseRate": 0.0928,
       "n": 17495,
       "worstCohort": 0.0
@@ -67,14 +67,14 @@
       "label": "reference scorecard (hand-designed)",
       "split": "holdout",
       "status": "refuted_as_ranker",
-      "lift": 0.678,
+      "lift": 0.896,
       "ci90": [
-        0.4871,
-        0.9155
+        0.6086,
+        1.2014
       ],
-      "rocAuc": 0.466,
-      "ece": 0.2477,
-      "precisionAtK": 0.0909,
+      "rocAuc": 0.4756,
+      "ece": 0.1355,
+      "precisionAtK": 0.1201,
       "baseRate": 0.1341,
       "n": 6165,
       "worstCohort": 0.0233
@@ -84,14 +84,14 @@
       "label": "reference scorecard (hand-designed)",
       "split": "dev",
       "status": "refuted_as_ranker",
-      "lift": 0.689,
+      "lift": 0.764,
       "ci90": [
-        0.53,
-        0.8309
+        0.6002,
+        0.9184
       ],
-      "rocAuc": 0.4547,
-      "ece": 0.2857,
-      "precisionAtK": 0.061,
+      "rocAuc": 0.4658,
+      "ece": 0.1682,
+      "precisionAtK": 0.0677,
       "baseRate": 0.0886,
       "n": 20993,
       "worstCohort": 0.0
@@ -99,81 +99,81 @@
   ],
   "kScan": {
     "0.02": {
-      "precision": 0.2602,
+      "precision": 0.252,
       "k": 123,
-      "lift": 1.939
+      "lift": 1.879
     },
     "0.05": {
-      "precision": 0.2597,
+      "precision": 0.2273,
       "k": 308,
-      "lift": 1.936
+      "lift": 1.694
     },
     "0.1": {
-      "precision": 0.2338,
+      "precision": 0.2224,
       "k": 616,
-      "lift": 1.743
+      "lift": 1.658
     }
   },
   "calibration": {
     "real_v1": [
       {
         "bin": 0.05,
-        "predicted": 0.07,
-        "actual": 0.0877,
+        "predicted": 0.1089,
+        "actual": 0.1023,
         "n": 616
       },
       {
         "bin": 0.15,
-        "predicted": 0.0896,
-        "actual": 0.0989,
+        "predicted": 0.1381,
+        "actual": 0.0891,
         "n": 617
       },
       {
         "bin": 0.25,
-        "predicted": 0.1017,
-        "actual": 0.0958,
+        "predicted": 0.1564,
+        "actual": 0.1104,
         "n": 616
       },
       {
         "bin": 0.35,
-        "predicted": 0.1122,
-        "actual": 0.1378,
+        "predicted": 0.173,
+        "actual": 0.1118,
         "n": 617
       },
       {
         "bin": 0.45,
-        "predicted": 0.1231,
-        "actual": 0.1039,
+        "predicted": 0.1908,
+        "actual": 0.1071,
         "n": 616
       },
       {
         "bin": 0.55,
-        "predicted": 0.1344,
-        "actual": 0.1232,
+        "predicted": 0.2121,
+        "actual": 0.1216,
         "n": 617
       },
       {
         "bin": 0.65,
-        "predicted": 0.1495,
-        "actual": 0.138,
+        "predicted": 0.2361,
+        "actual": 0.1396,
         "n": 616
       },
       {
         "bin": 0.75,
-        "predicted": 0.168,
-        "actual": 0.1442,
+        "predicted": 0.2654,
+        "actual": 0.1556,
         "n": 617
       },
       {
         "bin": 0.85,
-        "predicted": 0.1931,
-        "actual": 0.1769,
+        "predicted": 0.3084,
+        "actual": 0.1818,
         "n": 616
       },
       {
         "bin": 0.95,
-        "predicted": 0.2598,
-        "actual": 0.235,
+        "predicted": 0.3947,
+        "actual": 0.222,
         "n": 617
       }
     ],
@@ -183,7 +183,7 @@
     "dev": [
       {
         "cohort": "2017Q2",
-        "precision_at_k": 0.1333,
+        "precision_at_k": 0.2,
         "k": 15,
         "n": 316,
         "base_rate": 0.0791,
@@ -191,7 +191,7 @@
       },
       {
         "cohort": "2017Q4",
-        "precision_at_k": 0.0714,
+        "precision_at_k": 0.0357,
         "k": 28,
         "n": 564,
         "base_rate": 0.0709,
@@ -199,7 +199,7 @@
       },
       {
         "cohort": "2018Q1",
-        "precision_at_k": 0.0714,
+        "precision_at_k": 0.1071,
         "k": 28,
         "n": 567,
         "base_rate": 0.0494,
@@ -207,7 +207,7 @@
       },
       {
         "cohort": "2018Q2",
-        "precision_at_k": 0.1071,
+        "precision_at_k": 0.0357,
         "k": 28,
         "n": 576,
         "base_rate": 0.0486,
@@ -215,7 +215,7 @@
       },
       {
         "cohort": "2018Q3",
-        "precision_at_k": 0.1071,
+        "precision_at_k": 0.0714,
         "k": 28,
         "n": 577,
         "base_rate": 0.0468,
@@ -223,7 +223,7 @@
       },
       {
         "cohort": "2018Q4",
-        "precision_at_k": 0.1034,
+        "precision_at_k": 0.069,
         "k": 29,
         "n": 582,
         "base_rate": 0.043,
@@ -239,7 +239,7 @@
       },
       {
         "cohort": "2019Q2",
-        "precision_at_k": 0.0,
+        "precision_at_k": 0.069,
         "k": 29,
         "n": 597,
         "base_rate": 0.0369,
@@ -247,7 +247,7 @@
       },
       {
         "cohort": "2019Q3",
-        "precision_at_k": 0.2333,
+        "precision_at_k": 0.3,
         "k": 30,
         "n": 610,
         "base_rate": 0.0656,
@@ -255,7 +255,7 @@
       },
       {
         "cohort": "2019Q4",
-        "precision_at_k": 0.1667,
+        "precision_at_k": 0.2667,
         "k": 30,
         "n": 618,
         "base_rate": 0.1084,
@@ -263,7 +263,7 @@
       },
       {
         "cohort": "2020Q1",
-        "precision_at_k": 0.3226,
+        "precision_at_k": 0.2581,
         "k": 31,
         "n": 630,
         "base_rate": 0.1302,
@@ -271,7 +271,7 @@
       },
       {
         "cohort": "2020Q2",
-        "precision_at_k": 0.4839,
+        "precision_at_k": 0.5161,
         "k": 31,
         "n": 629,
         "base_rate": 0.3466,
@@ -279,7 +279,7 @@
       },
       {
         "cohort": "2020Q3",
-        "precision_at_k": 0.2812,
+        "precision_at_k": 0.25,
         "k": 32,
         "n": 653,
         "base_rate": 0.2389,
@@ -295,7 +295,7 @@
       },
       {
         "cohort": "2021Q2",
-        "precision_at_k": 0.0571,
+        "precision_at_k": 0.0286,
         "k": 35,
         "n": 702,
         "base_rate": 0.0499,
@@ -303,7 +303,7 @@
       },
       {
         "cohort": "2021Q3",
-        "precision_at_k": 0.0571,
+        "precision_at_k": 0.0286,
         "k": 35,
         "n": 708,
         "base_rate": 0.0424,
@@ -319,7 +319,7 @@
       },
       {
         "cohort": "2022Q2",
-        "precision_at_k": 0.0513,
+        "precision_at_k": 0.0,
         "k": 39,
         "n": 782,
         "base_rate": 0.0243,
@@ -327,7 +327,7 @@
       },
       {
         "cohort": "2022Q3",
-        "precision_at_k": 0.1899,
+        "precision_at_k": 0.1772,
         "k": 79,
         "n": 1583,
         "base_rate": 0.079,
@@ -335,7 +335,7 @@
       },
       {
         "cohort": "2022Q4",
-        "precision_at_k": 0.1951,
+        "precision_at_k": 0.122,
         "k": 41,
         "n": 831,
         "base_rate": 0.1047,
@@ -343,7 +343,7 @@
       },
       {
         "cohort": "2023Q1",
-        "precision_at_k": 0.1429,
+        "precision_at_k": 0.119,
         "k": 42,
         "n": 843,
         "base_rate": 0.0925,
@@ -351,7 +351,7 @@
       },
       {
         "cohort": "2023Q2",
-        "precision_at_k": 0.0714,
+        "precision_at_k": 0.0952,
         "k": 42,
         "n": 847,
         "base_rate": 0.0826,
@@ -369,7 +369,7 @@
     "holdout": [
       {
         "cohort": "2024Q1",
-        "precision_at_k": 0.2143,
+        "precision_at_k": 0.1905,
         "k": 42,
         "n": 859,
         "base_rate": 0.1176,
@@ -377,7 +377,7 @@
       },
       {
         "cohort": "2024Q2",
-        "precision_at_k": 0.2093,
+        "precision_at_k": 0.2558,
         "k": 43,
         "n": 872,
         "base_rate": 0.0929,
@@ -385,7 +385,7 @@
       },
       {
         "cohort": "2024Q3",
-        "precision_at_k": 0.3256,
+        "precision_at_k": 0.2326,
         "k": 43,
         "n": 871,
         "base_rate": 0.1274,
@@ -393,7 +393,7 @@
       },
       {
         "cohort": "2024Q4",
-        "precision_at_k": 0.3488,
+        "precision_at_k": 0.3023,
         "k": 43,
         "n": 875,
         "base_rate": 0.1257,
@@ -401,7 +401,7 @@
       },
       {
         "cohort": "2025Q1",
-        "precision_at_k": 0.2273,
+        "precision_at_k": 0.2045,
         "k": 44,
         "n": 888,
         "base_rate": 0.125,
@@ -409,7 +409,7 @@
       },
       {
         "cohort": "2025Q2",
-        "precision_at_k": 0.2727,
+        "precision_at_k": 0.2955,
         "k": 44,
         "n": 894,
         "base_rate": 0.1767,
@@ -417,7 +417,7 @@
       },
       {
         "cohort": "2025Q3",
-        "precision_at_k": 0.2,
+        "precision_at_k": 0.1778,
         "k": 45,
         "n": 906,
         "base_rate": 0.1711,
@@ -497,7 +497,7 @@
   ],
   "deploymentRestatement": {
     "base": 0.03,
-    "precision": 0.0655,
+    "precision": 0.0555,
     "note": "Odds-rescaled top-pick precision at a realistic ~3% deployment base rate."
   },
   "labelDiagnostics": {
@@ -511,37 +511,37 @@
     "promoted_over": "incumbent champion artifact (see git history)"
   },
   "grades": {
-    "graded_at_corpus": "a297e8ad",
+    "graded_at_corpus": "a09b4310",
     "dimensions": [
       {
         "dimension": "Accuracy (real, out-of-time)",
         "grade": "C+",
-        "why": "Regraded 2026-08-02 under the volatility-only null - the honest chance bar for a barrier label (random was too easy: pure jumpiness scores 1.41x pooled). The champion's 1.94x beats it paired (+0.48, CI90[+0.05, +0.92]) - real skill beyond volatility, but the floor is thin. Within-tier: unproven everywhere (micro/small lean positive, underpowered); the large-tier 2.84x was the null in disguise (6.15x). Survivor-biased bound; research-queue edge only."
+        "why": "Gen-3 one-shot holdout: deployed champion 1.69x CI90[1.39, 2.10] - clears chance solidly, does not separate from the volatility null this generation (+0.29, CI includes 0). The first cross-generation PAIRED test shows the gen-2 -> gen-3 change is noise (delta -0.18 [-0.57, +0.20]) - the champion is statistically unchanged across feature generations. The REFUSED boosted challenger delivered the system's first CI-clear skill-beyond-jumpiness (2.13x, +0.67 vs vol [+0.27, +1.11]) - system evidence, seat unearned. Survivor-biased bound stands."
       },
       {
         "dimension": "Calibration",
-        "grade": "A-",
-        "why": "ECE 0.017 on the untouched gen-2 holdout; level near-perfect (calibration-in-the-large -0.05) and the 3%-base restatement transfers (median ECE 0.006 across 50 prevalence-shift draws). Measured gap to A: recalibration slope 0.755 CI90[0.57, 0.98] - the spread is mildly overconfident; a slope-corrected artifact rides the gen-3 standing loop, and live-ledger validation remains."
+        "grade": "B+",
+        "why": "Honest DOWN-grade: champion ECE 0.084 on the gen-3 holdout (was 0.017 on gen-2 features) - calibration is feature-generation-sensitive, which the gen-2 grade did not know. The refused challenger sits at 0.049. Slope-corrected artifact deferred to gen-4 (no clean calibration-fit set existed this generation); live-ledger validation remains the path to A."
       },
       {
         "dimension": "Process sophistication",
         "grade": "A",
-        "why": "Purged walk-forward, one-shot holdout per corpus generation, symbol-clustered CIs, drift fixtures, corpus integrity hashes, audited promotion, the nightly outcome-maturation loop-closer, and a scheduled monthly re-eval cadence."
+        "why": "Purged walk-forward, one-shot holdout per corpus generation, symbol-clustered CIs, paired difference gates, drift fixtures, corpus integrity hashes, the attempt ledger, and the strongest evidence yet: the gen-3 promotion REFUSAL - the system declined its best-ever headline (2.13x) because the paired must-beat was a tie."
       },
       {
         "dimension": "Estimator sophistication",
-        "grade": "C-",
-        "why": "Two families now run the full honest lifecycle. On gen-2 dev walk-forward the depth-2 boosted trees beat the linear retrain (lift 1.34x vs 1.27x, ROC 0.585 vs 0.548, no zero-hit cohorts) but failed the 1.5x floor and never threatened the frozen champion - the seat is unearned until a gen-3 fair fight is won."
+        "grade": "C+",
+        "why": "The boosted depth-2 family (frozen pre-committed config) won the family fight in both generations and produced the system's only CI-clear vol-null separation on a fresh holdout (2.13x, ECE 0.049, best worst-quarter 0.20). Seat still unearned: the paired must-beat vs the incumbent was a statistical tie ([-0.09, +0.84]). Gen-4's wider corpus is the rematch with real power."
       },
       {
         "dimension": "Data depth",
-        "grade": "C-",
-        "why": "7 of 10 domains now carry real data in the corpus (theme via SEC SIC, market regime, quarterly EDGAR fundamentals); Form 4 insider flow is live and its historical fill is running. Still survivor-biased with no delisted names - the binding constraint."
+        "grade": "C+",
+        "why": "Nine of ten domains now carry real point-in-time history: insider flow on 99.9% of training rows (205k Form 4 filings, same parser as live), federal awards bridged for 20.9% of names (action-date disciplined), quarterly fundamentals, SIC theme, market regime. Adoption stays dark (paywalled). Survivor bias remains the binding constraint and this grade's ceiling until the delisted corpus lands."
       },
       {
         "dimension": "Honesty of presentation",
         "grade": "A",
-        "why": "Every caveat travels with every number; surfacing stays gated."
+        "why": "Every caveat travels with every number; the refused 2.13x challenger is reported with the same prominence a promotion would have received; surfacing stays gated."
       }
     ]
   },

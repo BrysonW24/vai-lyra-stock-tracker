@@ -19,6 +19,67 @@ Rules:
 
 ---
 
+## Generation 3 - 2026-08-03 - corpus `a09b4310`
+
+**What changed vs gen 2 (data + the fair fight):** insider flow entered training history - 99.86%
+of rows (27,381 of 27,420) carry real Form 4 net-buy features from the 205,189-document backfill
+(19 persistent failures documented, 0.009%); federal-contract awards lit via the USAspending
+bridge (207 of 991 names matched, action-date <= T); same windows and labels as gen 1/2. Both
+estimator families retrained; the boosted family ran its FROZEN pre-committed config
+(rounds 200, n_thresholds 32).
+
+**Results (fresh one-shot holdout, n=6,165, base 13.4%):**
+
+| model | lift@5% | CI90 | ECE | worst qtr | verdict |
+|---|---|---|---|---|---|
+| boosted challenger (frozen config) | **2.13x** | [1.73, 2.49] | 0.049 | 0.20 | **REFUSED - see below** |
+| champion (real-v1, frozen since gen 1) | 1.69x | [1.39, 2.10] | 0.084 | 0.178 | stays champion |
+| volatility null | 1.40x | [1.10, 1.70] | - | - | the chance bar |
+| reference scorecard | 0.90x | [0.61, 1.20] | - | - | still refuted |
+
+Dev walk-forward (family fight): boosted 1.356x / ROC 0.586 beat logistic 1.233x / ROC 0.538
+(logistic FAILED both floors - adding insider features to a naive linear refit made it worse).
+
+**The promotion decision - REFUSED, and that is the story.** Paired on identical holdout rows:
+challenger minus champion = +0.33, CI90 [-0.09, +0.84] - DOES NOT exclude zero. The pre-committed
+must-beat rule keeps the incumbent on a tie, and the force-reason path's intended case (incumbent
+refuted with CI separation) does not hold. The system declined its best-ever headline because the
+evidence did not clear the bar it swore to. Ledger-logged as promotion_decision/REFUSED.
+
+**What the challenger DID earn - the first CI-clear skill-beyond-jumpiness ever recorded:**
+challenger minus volatility null = +0.67, CI90 [+0.27, +1.11] - EXCLUDES ZERO. No model in any
+generation had previously separated from the vol null on a fresh holdout (champion this gen:
++0.29 [-0.17, +0.79], not separated). The nonlinear family, reading insider-enriched data, found
+real signal the linear family cannot see. Credited to Estimator (C- -> C+) and Data (C- -> C+).
+
+**First cross-generation PAIRED test (versus-scores, the tool built for this moment):** the
+frozen champion on gen-3 features vs gen-2 features, 6,165 rows aligned, 0 label mismatches:
+delta = -0.18, CI90 [-0.57, +0.20] - the apparent 1.94 -> 1.69 decline is NOISE, exactly as the
+apparent gen-1 -> gen-2 improvement (+0.22) was directional-only. The champion is statistically
+unchanged across three feature generations.
+
+**Watch-outs recorded:**
+
+- Champion calibration is feature-generation-sensitive: ECE 0.017 (gen-2 features) -> 0.084
+  (gen-3 features) with weights frozen. Calibration honestly DOWN-graded A- -> B+. The
+  slope-corrected artifact was deferred (no clean calibration-fit set existed this generation:
+  champion has no honest OOS dev predictions, challenger was not promoted); gen-4 fits it on the
+  challenger's walk-forward predictions if that family takes the seat.
+- Within-tier vs the vol null: still unproven everywhere for the champion (large-tier
+  significantly negative again). The standing no-tier-claim rule holds.
+- Gen-4 power need: +0.33 medians cannot separate at n=6,165 with ~830 winners; the wider corpus
+  (bulk Insider Transactions Data Sets, ~10k names) is the rematch with real power.
+
+**Grades (regraded 2026-08-03, mixed movement - honest measurement):** Accuracy C+ ·
+Calibration B+ (DOWN from A-) · Process A · Estimator C+ (UP from C-) · Data C+ (UP from C-) ·
+Honesty A. Process note: the refusal under temptation is the strongest process evidence to date.
+
+**Evidence:** `gen-003/` (holdout + dev + compare reports, scores-holdout.jsonl incl. vol
+column) · metrics history record 4 · attempt ledger promotion_decision entry ·
+board `lyra-evals/boards/model-eval-board-v3-vs-v2.html`.
+
+---
+
 ## Generation 2 - 2026-08-01/02 - corpus `a297e8ad`
 
 **What changed vs gen 1** (data only; the deployed model's weights stayed frozen):

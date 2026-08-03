@@ -9,6 +9,7 @@ generation, so the whole history of "what changed and what it did" stays walkabl
 |---|---|---|---|
 | `model-eval-board-v1.html` | generation 1 state | `ef1b5c52` | real-v1 promoted at holdout 1.72x; synthetic champion + reference refuted |
 | `model-eval-board-v2-vs-v1.html` | generation 2 vs 1 head-to-head | `ef1b5c52` -> `a297e8ad` | frozen champion 1.72x -> 1.94x on richer data; retrained challenger refused |
+| `model-eval-board-v3-vs-v2.html` | generation 3 vs 2 head-to-head | `a297e8ad` -> `a09b4310` | insider flow lit (99.86% of rows); boosted challenger hits 2.13x and is the first model ever to clear the volatility null, yet promotion is REFUSED on a paired tie; first cross-generation paired test shows the champion statistically unchanged across three generations |
 
 ## Conventions
 
