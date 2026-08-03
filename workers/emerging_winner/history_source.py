@@ -507,6 +507,7 @@ def assemble_features_asof(
     theme: Optional[dict] = None,
     market_context: Optional[dict] = None,
     sponsorship: Optional[dict] = None,
+    government: Optional[dict] = None,
 ) -> Optional[dict]:
     """The live feature dict as it was assemblable at bar `idx` (bars[idx].day). `snapshots` must be
     the indicator snapshots computed over the SAME bars (one per bar, causal maths only) - snapshot i
@@ -560,6 +561,16 @@ def assemble_features_asof(
     # (form4_source with cached_only) - all-or-nothing per window, filed-date disciplined.
     if sponsorship is not None:
         feats["sponsorship"] = sponsorship
+
+    # Government domain: point-in-time federal-contract flow from the pre-fetched USAspending
+    # cache (usaspending_source with cached_only) - action_date <= T disciplined; an unmatched
+    # or uncached name stays absent so the domain reads honestly unavailable. v1 totals are a
+    # FLOOR (subsidiary booking) - the domain scorer sees presence + magnitude, never a ceiling.
+    if government is not None and government.get("available"):
+        feats["government"] = {
+            "award_count": government.get("award_count_2y"),
+            "contract_value_usd": government.get("obligations_2y_usd"),
+        }
 
     if edgar_bundle and as_of:
         for section, vals in edgar_features_asof(edgar_bundle, as_of).items():

@@ -395,6 +395,41 @@ def cik_by_symbol(*, timeout: int = 30) -> dict[str, int]:
     return out
 
 
+def company_names_by_symbol(cache_dir: str, *, timeout: int = 30) -> dict[str, dict]:
+    """Symbol -> {"cik", "title"} from the SEC's static ticker file, cached on disk under
+    `cache_dir/company-names.json` (same artifact the corpus fill writes). ONE network read
+    ever per cache dir; offline/failed fetch returns {} so the government domain degrades to
+    honestly-unavailable rather than guessing an identity."""
+    path = os.path.join(cache_dir, "company-names.json")
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                return json.load(fh)
+        except (OSError, ValueError):
+            pass
+    try:
+        req = urllib.request.Request(
+            SEC_TICKERS_URL,
+            headers={"User-Agent": os.environ.get("SEC_USER_AGENT", DEFAULT_UA)},
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - fixed, trusted SEC host
+            data = json.load(resp)
+    except Exception:  # noqa: BLE001 - offline: no names, government stays unavailable
+        return {}
+    out = {
+        str(r.get("ticker", "")).upper(): {"cik": r.get("cik_str"), "title": r.get("title")}
+        for r in data.values()
+        if r.get("ticker") and isinstance(r.get("cik_str"), int) and r.get("title")
+    }
+    try:
+        os.makedirs(cache_dir, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(out, fh)
+    except OSError:
+        pass
+    return out
+
+
 def theme_by_symbol() -> dict[str, dict]:
     """Theme context for the curated names we actually know a theme for (from the scanner category). Names
     without a known theme get no theme_context, so the theme domain reads `unavailable` rather than guessing."""

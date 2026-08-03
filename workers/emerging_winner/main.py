@@ -109,10 +109,21 @@ def load_real_candidates(*, limit: int) -> list[tuple[str, dict]]:
     if market_context:
         logger.info("market regime: %s (benchmark %s)", market_context["regime"], market_context["benchmark"])
     form4_on = os.environ.get("EW_FORM4", "1") != "0"
+    usaspending_on = os.environ.get("EW_USASPENDING", "1") != "0"
     today = _dt.datetime.now(_dt.timezone.utc).date().isoformat()
+    # Symbol -> {cik, title} for the USAspending name bridge (one static-file read, cached).
+    company_names: dict = {}
+    if usaspending_on:
+        try:
+            from .usaspending_source import government_features
+            from .universe_source import company_names_by_symbol
+
+            company_names = company_names_by_symbol(source_cache)
+        except Exception:  # noqa: BLE001 - no names -> government stays honestly unavailable
+            company_names = {}
 
     out: list[tuple[str, dict]] = []
-    themed = with_sponsorship = 0
+    themed = with_sponsorship = with_government = 0
     for sym in symbols:
         try:
             cik = ciks.get(sym.upper())
@@ -129,6 +140,15 @@ def load_real_candidates(*, limit: int) -> list[tuple[str, dict]]:
                     sponsorship = sponsorship_features(cik, bundle, source_cache, as_of=today)
                 except Exception:  # noqa: BLE001 - insider read failure never fails the name
                     sponsorship = None
+            government = None
+            name_ent = company_names.get(sym.upper()) if usaspending_on else None
+            if name_ent:
+                try:
+                    government = government_features(
+                        name_ent["cik"], name_ent["title"], source_cache, as_of=today,
+                    )
+                except Exception:  # noqa: BLE001 - award read failure never fails the name
+                    government = None
             feats = assemble_features(
                 sym,
                 provider=provider,
@@ -137,18 +157,20 @@ def load_real_candidates(*, limit: int) -> list[tuple[str, dict]]:
                 currency=currency_for_symbol(sym),
                 market_context=market_context,
                 sponsorship=sponsorship,
+                government=government,
             )
             if feats:
                 themed += 1 if "theme_context" in feats else 0
                 with_sponsorship += 1 if "sponsorship" in feats else 0
+                with_government += 1 if "government" in feats else 0
         except Exception:  # noqa: BLE001 - a single bad symbol never fails the run
             feats = None
         if feats:
             out.append((sym, feats))
     logger.info(
         "real universe: assembled features for %d of %d scanned symbols (%d with a CIK for EDGAR; "
-        "%d themed via SIC/curated, %d with insider flow, regime=%s)",
-        len(out), len(symbols), len(ciks), themed, with_sponsorship,
+        "%d themed via SIC/curated, %d with insider flow, %d with federal awards, regime=%s)",
+        len(out), len(symbols), len(ciks), themed, with_sponsorship, with_government,
         market_context["regime"] if market_context else "unavailable",
     )
     return out

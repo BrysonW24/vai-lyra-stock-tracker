@@ -152,6 +152,16 @@ def build_corpus(
     if max_symbols:
         syms = syms[:max_symbols]
     ciks = cik_by_symbol()
+    # Symbol -> {cik, title} for the USAspending name bridge (written by the fill-usaspending
+    # job from the SEC's static ticker file). Absent = government domain stays unavailable.
+    company_names: dict = {}
+    names_path = os.path.join(cache_dir, "company-names.json")
+    if os.path.exists(names_path):
+        try:
+            with open(names_path, encoding="utf-8") as fh:
+                company_names = json.load(fh)
+        except (OSError, ValueError):
+            company_names = {}
     # Theme in the corpus comes ONLY from the SEC SIC classification (submissions_source) - an
     # administrative identity independent of outcomes, honest for history. The CURATED theme map
     # stays banned from training forever: those labels exist only for names picked BECAUSE they
@@ -217,6 +227,7 @@ def build_corpus(
     # Pass 3: submissions bundles (SIC identity for the theme domain; also the Form 4 index the
     # sponsorship reads walk). One cached fetch per CIK.
     from .form4_source import sponsorship_features
+    from .usaspending_source import government_features
     from .submissions_source import load_submissions_bundle, theme_context_from_sic
 
     sic_themes: dict[str, Optional[dict]] = {}
@@ -294,11 +305,22 @@ def build_corpus(
                 ciks.get(sym.upper()), subs_bundles.get(sym), cache_dir,
                 as_of=t_entry, cached_only=True,
             )
+            # Government from the PRE-FETCHED USAspending cache only (fill-usaspending job):
+            # bridge + raw transactions cached immutably; aggregates computed offline at any
+            # as_of (action_date <= T). Unfilled or unmatched stays None -> domain unavailable.
+            government = None
+            name_ent = company_names.get(sym.upper())
+            if name_ent:
+                government = government_features(
+                    name_ent["cik"], name_ent["title"], cache_dir,
+                    as_of=t_entry, cached_only=True,
+                )
             feats = hs.assemble_features_asof(
                 bars, snapshots, idx,
                 edgar_bundle=bundles.get(sym), as_of=t_entry, theme=sic_themes.get(sym),
                 market_context={"regime": regime, "source": "benchmark_trend_drawdown"} if regime else None,
                 sponsorship=sponsorship,
+                government=government,
             )
             if not feats:
                 skipped["no_features"] += 1

@@ -120,6 +120,7 @@ def assemble_features(
     currency: Optional[str] = None,
     market_context: Optional[dict] = None,
     sponsorship: Optional[dict] = None,
+    government: Optional[dict] = None,
 ) -> Optional[dict]:
     """Real feature dict for `symbol` from live market data, or None if the series is unusable.
 
@@ -190,6 +191,14 @@ def assemble_features(
     # nothing" - genuinely different from absent.
     if sponsorship is not None:
         feats["sponsorship"] = sponsorship
+
+    # Government: same shape as the corpus assembler (history_source) - award presence +
+    # magnitude from USAspending, v1 totals are a documented floor (subsidiary booking).
+    if government is not None and government.get("available"):
+        feats["government"] = {
+            "award_count": government.get("award_count_2y"),
+            "contract_value_usd": government.get("obligations_2y_usd"),
+        }
 
     # Real fundamentals (market cap, float, revenue growth, debt) light up the liquidity, business-quality
     # and capital domains - the quality-discriminating layer. Best-effort: absent for names yfinance has no

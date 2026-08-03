@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.121.0',
+    date: '2026-08-03',
+    title: 'The government domain lights up: federal contract flow, point-in-time honest',
+    highlights: [
+      'A ninth data domain comes alive: USAspending federal-contract awards, bridged to public companies by CIK-anchored exact-name matching with the guards the feasibility probe ratified (UEI required, generic-name rejection, awards fetched by recipient id - never by fuzzy name search). Every aggregate is point-in-time disciplined (only transactions dated on or before the scoring date count), totals are documented as a floor (subsidiaries book separately), and an unmatched company stays honestly unavailable rather than guessed.',
+      'Wired end to end with train/serve parity: the historical corpus assembler and the live scanner embed identical shapes, pinned by a test that fails if the two mappings ever drift. 30 new tests cover the source (as-of discipline, cache semantics, name-normalization traps like CELSIUS, truncation labelling) and the seams. The bridge cache for all 991 corpus companies is filling now against USAspending - a different host entirely from the throttle-sensitive SEC backfill - and generation 3 picks the domain up automatically if the cache lands in time, generation 4 otherwise.',
+      'Live-verified before shipping: Lockheed Martin resolves to $1.16B in trailing-2-year obligations, Kratos rolls up its subsidiary bookings through the SAM parent hierarchy, and the Celsius Holdings control correctly refuses to match.',
+    ],
+  },
+  {
     version: '0.120.1',
     date: '2026-08-03',
     title: 'The threshold sweep lands: the model knows quality, not touches',
