@@ -91,6 +91,45 @@ per-row WF score archiving is a gen-3 protocol addition) but fails the 1.5x abso
 does not threaten the frozen champion. Estimator regraded D+ -> C- on this evidence; the seat
 still requires winning gen-3's fresh one-shot holdout. The attempt self-logged to the ledger.
 
+**Threshold sweep - protocol pre-committed 2026-08-03 BEFORE any result was seen:** barriers
++10/20/30/50/100/200/300 percent, CLOSE-based plain first-touch within 252 forward trading bars
+(ruin and conjuncts ignored - identical treatment across thresholds so cells are comparable;
+rows without 252 forward bars excluded identically). Per (tier x threshold) cell on the gen-2
+corpus: n positives, within-tier base rate, champion lift and vol-null lift at the top-5%
+within-tier cut, SEDI for both (rare-event-stable comparison across thresholds), paired
+champion-minus-vol delta (300 symbol-clustered boots) only where n_pos >= 30 - thinner cells
+report insufficient-evidence, never a number. Dev split = power context; the HOLDOUT grid is the
+verdict (single pre-registered look, ledger-logged) against the standing predictions recorded in
+lyra-modelling/THRESHOLD-SWEEP-EXPERIMENT.md and task #18: skill peaks ~+30-50% in micro/small;
++10% collapses to market direction; +200/300% too thin to claim. Results appended below when
+the sweep lands.
+
+**Threshold sweep RESULTS (2026-08-03, single pre-registered holdout look, 27,007 usable rows,
+grid archived at gen-002/threshold-sweep-grid.json):**
+
+- **Headline discovery: the champion's edge lives in the QUALITY CONJUNCTS, not the touch.**
+  Under the sweep's plain first-touch label the champion beats the within-tier jumpiness sort
+  NOWHERE in the tier x threshold grid (micro leans +0.06..+0.08 at +10-30%, insignificant;
+  everywhere else neutral to significantly negative; vol wins outright at +50/+100% in every
+  tier, e.g. micro +100%: vol lift 1.55 vs champion 1.25). Yesterday's within-tier positive
+  leans at +100% used the CORPUS label (first-touch AND still-listed AND liquidity-grew) - so
+  what the model actually knows is which risers STAY REAL, not which prices touch a barrier.
+  Raw barrier-touching is volatility physics; the conjunct label is where skill can exist.
+- Pre-registered predictions scored: "+10% collapses to market direction" CONFIRMED (base rates
+  81-83%, SEDI ~0 for both models); "+200/300% too thin" CONFIRMED (n_pos 4-26 per tier-cell);
+  "vol-neutralised sweet spot at +30-50%" REFUTED - there is no threshold where champion
+  significantly clears the vol null under plain touch.
+- Base-rate reality for the slider: plain-touch bases are huge (micro: 81% touch +10%, 31%
+  touch +100% within a year) - a slider showing P(touch +X%) is mostly showing volatility, and
+  the UI must say so. Honest product split: "chance it touches +X%" (one conditional model,
+  vol-dominated, fine to show) vs "chance it is a real emerging winner" (the conjunct label,
+  the only place the model's skill claim attaches).
+- Mid/large: champion significantly LOSES to vol at multiple thresholds (mid +100%: delta
+  -2.09, CI excludes zero) - reinforcing the standing no-claim rule outside micro/small.
+- Gen-3 implication: the flagship label (conjunct +100%) SURVIVES as the right target; the
+  sweep argues for adding the conjunct treatment to any future threshold arm rather than
+  re-aiming at a lower plain-touch barrier.
+
 **The volatility null (2026-08-02) - the finding that regraded Accuracy B- -> C+:** a barrier
 label is mostly a volatility measurement (reflection principle: a driftless wild stock touches
 +100% far more often than a calm one, no information involved), so random selection was the wrong

@@ -1367,9 +1367,9 @@ def fill_form4(cache_dir: str, *, since: str = "2015-06-01", max_docs_total: Opt
             failed += 1
         else:
             fetched += 1
-        hs.polite_sleep(0.25)  # backed off from the 10 req/s ceiling: hours at sustained max drew
-        # SEC throttling (failures 1 -> 754, throughput collapsed ~50x at 2026-08-02 15:00). ~4 req/s
-        # sustained is the empirically safe long-job pace; transient failures are not cached and are
+        hs.polite_sleep(0.5)  # twice throttled (10 req/s on 2026-08-02, then a harder wave at 4 req/s
+        # on 2026-08-03 after ~18h sustained). 2 req/s is the tail-pace for multi-day jobs; pair any
+        # restart after a block with a 45-minute cool-down. Transient failures are not cached and are
         # retried on resume.
         if (fetched + failed) % 500 == 0 and (fetched + failed):
             logger.info("form4 fill: %d/%d indexed docs (fetched %d, cached %d, failed %d)",

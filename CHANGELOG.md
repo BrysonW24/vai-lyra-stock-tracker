@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.120.1] - 2026-08-03
+
+The threshold sweep lands: the model knows quality, not touches.
+
+### Changed
+
+- The pre-registered tier-by-barrier sweep (+10% to +300%, 27,007 rows, single holdout look) delivered its verdict: under a plain "did the price touch +X%" label, the model beats the jumpiness baseline NOWHERE - raw barrier-touching is volatility physics at every threshold. But yesterday's within-tier edge used the quality label (doubled AND stayed listed AND liquidity grew) - so the discovery is that the model's real skill is knowing which risers STAY REAL, not which prices spike. The flagship label survives; the slider UI must present touch probabilities as mostly-volatility and attach the skill claim only to the quality outcome. Two of three pre-registered predictions confirmed (+10% is a market-direction question at 81% base rates; +200/300% too thin to claim), one refuted (no +30-50% sweet spot exists under plain touch).
+- Form 4 backfill: a second, harder SEC throttle wave was caught and stopped mid-burn (nearly all requests failing); the job resumed after a 45-minute cool-down at the 2 req/s multi-day tail pace, now recorded in code. Coverage ~89%, all failures retryable, generation 3 expected this evening.
+
 ## [0.120.0] - 2026-08-02
 
 The convergence completes: one visual language across the entire app.
@@ -1646,7 +1655,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.120.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.120.1...HEAD
+[0.120.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.120.0...v0.120.1
 [0.120.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.119.0...v0.120.0
 [0.119.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.118.0...v0.119.0
 [0.118.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.117.0...v0.118.0
