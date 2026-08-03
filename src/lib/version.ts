@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.124.1',
+    date: '2026-08-03',
+    title: 'Bulk insider ingestion passes its acceptance gate',
+    highlights: [
+      'The bulk insider store is complete and verified: 10,109 companies across 49 quarters (2014 to early 2026), against 991 companies for the entire twenty-hour per-document backfill. Agreement was measured properly - only on company-quarters where BOTH sources genuinely cover the window - and came in at 396 of 400, or 99%. Four disagreements are filed rather than waved through, one of them diagnostic: a company where both parsers report the same dollar magnitude with opposite signs, which is a sign-convention bug in one of them and would invert the feature for affected names.',
+      'Storage was rewritten to compact columnar rows after the first attempt filled the disk - roughly 95 bytes per transaction instead of 278, since JSON key names were most of the weight. The whole market over twelve years now fits in about 250 MB, and the column order is recorded in each file so a future layout change is detected rather than silently misread.',
+    ],
+  },
+  {
     version: '0.124.0',
     date: '2026-08-03',
     title: 'The build path, and the ingestion that makes it possible',

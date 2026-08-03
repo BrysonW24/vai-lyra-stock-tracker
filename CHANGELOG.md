@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.124.1] - 2026-08-03
+
+Bulk insider ingestion passes its acceptance gate.
+
+### Changed
+
+- The bulk insider store is complete and verified: 10,109 companies across 49 quarters (2014 to early 2026), against 991 companies for the entire twenty-hour per-document backfill. Agreement was measured properly - only on company-quarters where BOTH sources genuinely cover the window - and came in at 396 of 400, or 99%. Four disagreements are filed rather than waved through, one of them diagnostic: a company where both parsers report the same dollar magnitude with opposite signs, which is a sign-convention bug in one of them and would invert the feature for affected names.
+- Storage was rewritten to compact columnar rows after the first attempt filled the disk - roughly 95 bytes per transaction instead of 278, since JSON key names were most of the weight. The whole market over twelve years now fits in about 250 MB, and the column order is recorded in each file so a future layout change is detected rather than silently misread.
+
 ## [0.124.0] - 2026-08-03
 
 The build path, and the ingestion that makes it possible.
@@ -1704,7 +1713,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.124.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.124.1...HEAD
+[0.124.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.124.0...v0.124.1
 [0.124.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.123.1...v0.124.0
 [0.123.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.123.0...v0.123.1
 [0.123.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.122.0...v0.123.0
