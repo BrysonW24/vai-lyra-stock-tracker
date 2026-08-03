@@ -8,6 +8,7 @@ import { ResultsView } from '@/components/models/lab/ResultsView';
 import { RunBoard } from '@/components/models/lab/RunBoard';
 import { PreviousRuns } from '@/components/models/lab/PreviousRuns';
 import { ModelsView } from '@/components/models/ModelsView';
+import { ModelVerdict } from '@/components/models/ModelVerdict';
 import {
   buildRun,
   getModel,
@@ -202,12 +203,17 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
             </div>
 
             {phase === 'results' && run ? (
-              <RunBoard
-                run={run}
-                focus={runMeta?.focus ?? []}
-                selectedSymbol={selectedSymbol}
-                onSelect={setSelectedSymbol}
-              />
+              <>
+                <RunBoard
+                  run={run}
+                  focus={runMeta?.focus ?? []}
+                  selectedSymbol={selectedSymbol}
+                  onSelect={setSelectedSymbol}
+                />
+                {/* The reveal: does this engine actually predict success? Backtest evidence for the
+                    model just run - light-glass verdict surface, every number from model-evidence.json. */}
+                <ModelVerdict />
+              </>
             ) : null}
           </>
         ) : null}
