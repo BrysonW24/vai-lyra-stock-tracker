@@ -35,10 +35,12 @@ estimator families retrained; the boosted family ran its FROZEN pre-committed co
 | boosted challenger (frozen config) | **2.13x** | [1.73, 2.49] | 0.049 | 0.20 | **REFUSED - see below** |
 | champion (real-v1, frozen since gen 1) | 1.69x | [1.39, 2.10] | 0.084 | 0.178 | stays champion |
 | volatility null | 1.40x | [1.10, 1.70] | - | - | the chance bar |
-| reference scorecard | 0.90x | [0.61, 1.20] | - | - | still refuted |
+| reference scorecard | 0.90x | [0.61, 1.20] | - | - | UNPROVEN this gen (interval spans 1.0; gen-2's [0.49, 0.92] did refute it) |
 
-Dev walk-forward (family fight): boosted 1.356x / ROC 0.586 beat logistic 1.233x / ROC 0.538
-(logistic FAILED both floors - adding insider features to a naive linear refit made it worse).
+Dev walk-forward (family fight): boosted 1.356x / ROC 0.586 beat logistic 1.233x / ROC 0.538.
+BOTH failed their floors: the logistic missed AUC and lift; the boosted cleared AUC but missed
+the 1.5x lift floor and reached the holdout on the documented forced-promotion path. Neither is
+a floor-passing model - adding insider features to a naive linear refit made it strictly worse.
 
 **The promotion decision - REFUSED, and that is the story.** Paired on identical holdout rows:
 challenger minus champion = +0.33, CI90 [-0.09, +0.84] - DOES NOT exclude zero. The pre-committed
@@ -46,17 +48,21 @@ must-beat rule keeps the incumbent on a tie, and the force-reason path's intende
 refuted with CI separation) does not hold. The system declined its best-ever headline because the
 evidence did not clear the bar it swore to. Ledger-logged as promotion_decision/REFUSED.
 
-**What the challenger DID earn - the first CI-clear skill-beyond-jumpiness ever recorded:**
-challenger minus volatility null = +0.67, CI90 [+0.27, +1.11] - EXCLUDES ZERO. No model in any
-generation had previously separated from the vol null on a fresh holdout (champion this gen:
-+0.29 [-0.17, +0.79], not separated). The nonlinear family, reading insider-enriched data, found
+**What the challenger DID earn - the LARGEST CI-clear skill-beyond-jumpiness on record**
+(CORRECTED 2026-08-03 after an adversarial audit: this was first written as "first ever", which
+is FALSE - the gen-2 champion separated at +0.48 CI90[+0.05, +0.92], recorded in this same log.
+The true claims are: largest separation yet, and the first by a challenger):
+challenger minus volatility null = +0.67, CI90 [+0.27, +1.11] - EXCLUDES ZERO, and larger than
+the gen-2 champion's +0.48 [+0.05, +0.92]. The gen-3 champion did NOT separate (+0.29 [-0.17,
++0.79]) - gen-2's separation did not recur on gen-3 features. The nonlinear family, reading insider-enriched data, found
 real signal the linear family cannot see. Credited to Estimator (C- -> C+) and Data (C- -> C+).
 
 **First cross-generation PAIRED test (versus-scores, the tool built for this moment):** the
 frozen champion on gen-3 features vs gen-2 features, 6,165 rows aligned, 0 label mismatches:
 delta = -0.18, CI90 [-0.57, +0.20] - the apparent 1.94 -> 1.69 decline is NOISE, exactly as the
 apparent gen-1 -> gen-2 improvement (+0.22) was directional-only. The champion is statistically
-unchanged across three feature generations.
+unchanged BETWEEN THE TWO GENERATIONS THAT CAN BE PAIRED (gen-1 archived no per-row scores, so
+its leg is permanently untestable - do not extend the claim to three generations).
 
 **Watch-outs recorded:**
 
@@ -73,6 +79,19 @@ unchanged across three feature generations.
 **Grades (regraded 2026-08-03, mixed movement - honest measurement):** Accuracy C+ ·
 Calibration B+ (DOWN from A-) · Process A · Estimator C+ (UP from C-) · Data C+ (UP from C-) ·
 Honesty A. Process note: the refusal under temptation is the strongest process evidence to date.
+
+**Adversarial audit of this entry (2026-08-03, run after publication):** 223 numeric claims
+checked against source; 220 verified, all four paired verdicts reproduced bit-exactly. Three
+FRAMING errors found and corrected here and in the board/report-card/evidence pack: (1) "first
+CI-clear vol-null separation ever" was FALSE - gen-2's champion did it at +0.48 (this log's own
+gen-2 entry records it); the true claim is LARGEST, and first by a challenger. (2) "no prior model
+cleared both bars" was false - both gen-2 models did. (3) the boosted challenger ALSO missed the
+1.5x lift floor (only the linear's failure had been stated). Lower-severity: deployment
+restatement rounds to 5.5% not 5.6%; the reference scorecard is unproven not refuted this
+generation; "unchanged across three generations" overreached to a leg that cannot be paired.
+OPEN: the >2x leakage-decomposition trigger fired on 2.13x and is only partially discharged
+(three known leak classes structurally impossible + as-of pins, but no ablation waterfall) -
+a gen-4 blocker.
 
 **Evidence:** `gen-003/` (holdout + dev + compare reports, scores-holdout.jsonl incl. vol
 column) · metrics history record 4 · attempt ledger promotion_decision entry ·

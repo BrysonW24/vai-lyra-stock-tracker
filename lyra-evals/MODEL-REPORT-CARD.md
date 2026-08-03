@@ -27,9 +27,9 @@ only moves on evidence.
 
 > **GEN-3 UPDATE (2026-08-03, corpus a09b4310) - read this first.** The one-shot gen-3 holdout
 > produced the project's defining moment: the boosted challenger (frozen pre-committed config)
-> scored **2.13x CI90[1.73, 2.49]** - the highest honest number ever, and the FIRST model in any
-> generation to separate from the volatility null with the interval clear of zero (+0.67,
-> [+0.27, +1.11]) - and the system **REFUSED to promote it** because the paired must-beat against
+> scored **2.13x CI90[1.73, 2.49]** - the highest honest number ever, and the LARGEST separation from the
+> volatility null on record (+0.67, [+0.27, +1.11]; the gen-2 champion managed +0.48, [+0.05,
+> +0.92]) - first by a challenger, not first ever - and the system **REFUSED to promote it** because the paired must-beat against
 > the incumbent was a statistical tie (+0.33, [-0.09, +0.84]; a tie keeps the incumbent, and the
 > force-reason case did not hold). The champion stays at 1.69x [1.39, 2.10]; the first
 > cross-generation paired test proved its apparent decline from gen-2's 1.94x is noise

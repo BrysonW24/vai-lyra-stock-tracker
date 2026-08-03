@@ -13,7 +13,7 @@ Maintained by `/model-generation-eval` - a new section lands here every time a g
 |---|---|---|---|---|
 | 1 | 2026-08-01 | `ef1b5c52` | 1.72x (promoted) | Real outcomes refute the hand-built models; real training wins |
 | 2 | 2026-08-02 | `a297e8ad` | 1.94x (confirmed) | Same frozen model, richer data; retrained challenger refused |
-| 3 | 2026-08-03 | `a09b4310` | 1.69x (kept; challenger REFUSED at 2.13x) | The system refuses its best-ever number; the refused model shows the first real skill-beyond-jumpiness |
+| 3 | 2026-08-03 | `a09b4310` | 1.69x (kept; challenger REFUSED at 2.13x) | The system refuses its best-ever number; the refused model shows the largest skill-beyond-jumpiness on record |
 
 ---
 
@@ -183,9 +183,9 @@ estimator bake-off ran (depth-2 boosted trees beat the linear retrain on dev, 1.
 
 **THE RESULT, up front:** yes - but only the nonlinear model can read it, and the system REFUSED
 to promote it anyway. The boosted challenger scored **2.13x [1.73, 2.49]** on the fresh one-shot
-holdout - the highest honest number this project has ever produced, and the FIRST model in any
-generation to separate from the jumpiness null with the interval clear of zero (+0.67 vs vol,
-CI [+0.27, +1.11]). But paired against the incumbent champion on identical rows the margin was a
+holdout - the highest honest number this project has ever produced, and the LARGEST separation from the
+jumpiness null on record (+0.67 vs vol, CI [+0.27, +1.11]; gen-2's champion managed +0.48,
+[+0.05, +0.92]) - the first by a challenger, and the gen-3 champion did not separate at all. But paired against the incumbent champion on identical rows the margin was a
 statistical tie (+0.33, CI [-0.09, +0.84]), and the pre-committed must-beat rule keeps the
 incumbent on a tie. **The system declined its own best headline because the evidence did not
 clear the bar it swore to.** That refusal is the proof the discipline is real.
@@ -194,7 +194,7 @@ clear the bar it swore to.** That refusal is the proof the discipline is real.
 |---|---|---|---|
 | Boosted challenger (frozen config) | 2.13x | [1.73, 2.49] | REFUSED - paired tie vs champion |
 | Champion (weights frozen since gen 1) | 1.69x | [1.39, 2.10] | stays champion |
-| Volatility null (the chance bar) | 1.40x | [1.10, 1.70] | beaten, with CI clearance, by the challenger only |
+| Volatility null (the chance bar) | 1.40x | [1.10, 1.70] | beaten with CI clearance by the challenger only (the gen-3 champion did not separate) |
 | Reference scorecard | 0.90x | [0.61, 1.20] | still refuted |
 
 Other verdicts: insider data reached 99.86% of training rows (205k filings); federal awards lit

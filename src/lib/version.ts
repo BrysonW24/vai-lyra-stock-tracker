@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.123.1',
+    date: '2026-08-03',
+    title: 'The audit corrects the release: "first ever" was false',
+    highlights: [
+      'An adversarial audit of the generation-3 evidence checked 223 numeric claims against source and found 220 correct - every paired verdict reproduced bit-exactly, so the refusal decision stands unchanged. But three FRAMING claims were wrong and are now corrected everywhere they appeared (board, generation log, report card, in-app evidence pack, release notes): the challenger\'s separation from the volatility null was called "the first in any generation" when generation 2\'s champion had already done it at +0.48 - the true claim is the LARGEST on record (+0.67), and the first by a challenger. A claim that no prior model cleared both the chance line and the volatility null was also false (both generation-2 models did), and the boosted challenger ALSO missed the 1.5x lift floor, where only the linear model\'s failure had been stated.',
+      'Smaller corrections: the champion\'s deployment restatement rounds to 5.5% not 5.6%; the reference scorecard is unproven this generation rather than refuted (its interval now spans 1.0); and "statistically unchanged across three generations" overreached to a leg that can never be paired, since generation 1 archived no per-row scores. One item is left open rather than papered over: the standing rule that any lift above 2x triggers a leakage decomposition fired on the 2.13x result and is only partially discharged - the three known leak classes are structurally impossible now, but no ablation waterfall was run. It is recorded as a generation-4 blocker.',
+      'The append-only attempt ledger keeps its original entry; a correction record was appended beside it rather than rewriting history. Grades are unchanged - the errors were in superlatives, not measurements.',
+    ],
+  },
+  {
     version: '0.123.0',
     date: '2026-08-03',
     title: 'Generation 3: the system refuses its best-ever number',

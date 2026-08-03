@@ -1141,8 +1141,9 @@ EVIDENCE_GRADES = {
                 "includes 0). The first cross-generation PAIRED test shows the gen-2 -> gen-3 "
                 "change is noise (delta -0.18 [-0.57, +0.20]) - the champion is statistically "
                 "unchanged across feature generations. The REFUSED boosted challenger delivered "
-                "the system's first CI-clear skill-beyond-jumpiness (2.13x, +0.67 vs vol "
-                "[+0.27, +1.11]) - system evidence, seat unearned. Survivor-biased bound stands."},
+                "the LARGEST CI-clear skill-beyond-jumpiness on record (2.13x, +0.67 vs vol "
+                "[+0.27, +1.11]; gen-2's champion managed +0.48) - system evidence, seat "
+                "unearned. Survivor-biased bound stands."},
         {"dimension": "Calibration", "grade": "B+",
          "why": "Honest DOWN-grade: champion ECE 0.084 on the gen-3 holdout (was 0.017 on gen-2 "
                 "features) - calibration is feature-generation-sensitive, which the gen-2 grade "
@@ -1156,8 +1157,9 @@ EVIDENCE_GRADES = {
                 "declined its best-ever headline (2.13x) because the paired must-beat was a tie."},
         {"dimension": "Estimator sophistication", "grade": "C+",
          "why": "The boosted depth-2 family (frozen pre-committed config) won the family fight in "
-                "both generations and produced the system's only CI-clear vol-null separation on "
-                "a fresh holdout (2.13x, ECE 0.049, best worst-quarter 0.20). Seat still unearned: "
+                "both generations and produced the largest CI-clear vol-null separation on record "
+                "(2.13x, ECE 0.049, best worst-quarter 0.20) - though it too missed the 1.5x lift "
+                "floor on dev. Seat still unearned: "
                 "the paired must-beat vs the incumbent was a statistical tie ([-0.09, +0.84]). "
                 "Gen-4's wider corpus is the rematch with real power."},
         {"dimension": "Data depth", "grade": "C+",
