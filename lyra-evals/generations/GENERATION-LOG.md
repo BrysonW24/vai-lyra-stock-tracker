@@ -91,6 +91,12 @@ per-row WF score archiving is a gen-3 protocol addition) but fails the 1.5x abso
 does not threaten the frozen champion. Estimator regraded D+ -> C- on this evidence; the seat
 still requires winning gen-3's fresh one-shot holdout. The attempt self-logged to the ledger.
 
+**Gen-3 data preamble (2026-08-03): government domain cache complete.** USAspending bridge fill
+finished for all 991 corpus symbols: 207 matched to UEI-bearing federal recipients (20.9%, inside
+the feasibility probe's predicted 15-30% band), 784 honest no-matches, 0 failures. Raw award
+transactions cached immutably per recipient; gen-3's corpus build reads them via cached_only with
+action_date <= T discipline. v1 totals remain a documented floor (subsidiary booking).
+
 **Threshold sweep - protocol pre-committed 2026-08-03 BEFORE any result was seen:** barriers
 +10/20/30/50/100/200/300 percent, CLOSE-based plain first-touch within 252 forward trading bars
 (ruin and conjuncts ignored - identical treatment across thresholds so cells are comparable;
