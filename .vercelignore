@@ -11,3 +11,13 @@ node_modules
 coverage
 playwright-report
 test-results
+# Build output + local caches - Vercel rebuilds .next itself; the backtest cache is local-only.
+# (.vercelignore REPLACES .gitignore for CLI uploads, so these gitignored artifacts must be
+# re-listed here or `vercel deploy` uploads gigabytes and hits the 10mb request-body limit.)
+.next
+.next-verify
+.turbo
+.vercel
+.ew-backtest-cache
+.EW-BACKTEST-CACHE.json
+*.log
