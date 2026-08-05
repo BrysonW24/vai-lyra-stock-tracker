@@ -1,7 +1,8 @@
-import { KeyRound, SlidersHorizontal } from 'lucide-react';
+import { KeyRound, Palette, SlidersHorizontal } from 'lucide-react';
 import { pageTitleClass } from '@/lib/ui';
 import type { DashboardData } from '@/types/scanner';
 import { TickerLogo } from '@/components/TickerLogo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface SettingsPanelProps {
   data: DashboardData;
@@ -60,6 +61,19 @@ export function SettingsPanel({ data }: SettingsPanelProps) {
       </div>
 
       <aside className="space-y-3">
+        <div className="terminal-panel p-3">
+          <div className="flex items-center gap-2">
+            <Palette size={16} className="text-accent" />
+            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">Appearance</h2>
+          </div>
+          <p className="mt-2 text-xs leading-5 text-ink-3">
+            Lyra is dark by nature. Switch the whole app to the light theme - it applies everywhere and is remembered on this device.
+          </p>
+          <div className="mt-3">
+            <ThemeToggle />
+          </div>
+        </div>
+
         <div className="terminal-panel p-3">
           <div className="flex items-center gap-2">
             <KeyRound size={16} className="text-accent" />

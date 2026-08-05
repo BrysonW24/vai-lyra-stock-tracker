@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.125.0',
+    date: '2026-08-05',
+    title: 'A light theme, app-wide - dark stays the default',
+    highlights: [
+      'Lyra is dark by nature, and stays that way by default - but you can now switch the whole app to a light theme from Settings > Appearance. It is a real app-wide theme, not a one-off surface: every panel, chip, chart, control and the Model Verdict re-theme together into a pearl-and-emerald light-glass palette, and the choice is remembered on your device. A tiny script applies it before first paint, so a light-theme user never sees a dark flash.',
+      'Under the hood the design-token system (lyra-ux v1.1.0) was upgraded to carry both themes: every colour token gained an RGB-channel form so the Tailwind utilities reference `rgb(var(--token) / <alpha-value>)` - opacity modifiers keep working AND the whole utility layer re-themes when the light palette overrides the variables. The glass panel primitives got explicit light values (frosted white on pearl). The Model Verdict surface, previously a fixed light-glass card, now themes with the app: dark on dark, and the full light-glass render in light. Drift-checked (TOKENS.md / CSS / Tailwind agree across both themes), type-clean, 1186 tests green.',
+    ],
+  },
+  {
     version: '0.124.1',
     date: '2026-08-03',
     title: 'Bulk insider ingestion passes its acceptance gate',

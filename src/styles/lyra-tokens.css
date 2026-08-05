@@ -1,56 +1,65 @@
 /*
- * LYRA DESIGN TOKENS - v1.0.0 (2026-08-02)
+ * LYRA DESIGN TOKENS - v1.1.0 (2026-08-05)
  *
  * SINGLE SOURCE OF TRUTH: lyra-ux/TOKENS.md carries the same version and the canonical table.
  * The Tailwind theme (tailwind.config.ts) mirrors these values for utility classes; plain-CSS
  * consumers (glass panel classes in globals.css, keyframes) read the variables here.
  * Drift between the three is a shippable-blocking bug: run `node lyra-ux/check-tokens.mjs`.
  *
- * Values are the app's PROVEN de-facto palette (extracted 2026-08-02 from 40k lines of view
- * code by usage count), not an invention. Never introduce ad-hoc hex in components - if a
- * value is missing, add it here + TOKENS.md + tailwind.config.ts in one change with a version
- * bump.
+ * THEMING (v1.1.0): Lyra is dark by nature - dark is the :root default. A light theme is applied
+ * app-wide by setting data-theme="light" on <html> (Settings > Appearance; persisted; no-FOUC
+ * script in layout.tsx sets it before paint). Every token carries TWO forms:
+ *   --lyra-x       the hex value, for direct var() consumers (glass panels, keyframes, inline SVG)
+ *   --lyra-x-rgb   the "R G B" channel triplet, so Tailwind's `rgb(var(--x-rgb) / <alpha-value>)`
+ *                  colours keep working with opacity modifiers (bg-panel/60) AND re-theme.
+ * The light block below overrides BOTH forms. Values are the light-glass palette (pearl grounds,
+ * dark ink, deep-emerald accent) ratified against the Model Verdict render. Never introduce ad-hoc
+ * hex in components - add a token here + TOKENS.md + tailwind.config.ts in one change with a bump.
  */
+
+/* ============================ DARK (default, "Lyra is dark by nature") ============================ */
 :root {
+  color-scheme: dark;
+
   /* Grounds and surfaces */
-  --lyra-ground: #07090c;
-  --lyra-chrome: #0b1016;
-  --lyra-panel: #0d141c;
-  --lyra-panel-deep: #0d1117;
-  --lyra-well: #0a0e13;
+  --lyra-ground: #07090c;        --lyra-ground-rgb: 7 9 12;
+  --lyra-chrome: #0b1016;        --lyra-chrome-rgb: 11 16 22;
+  --lyra-panel: #0d141c;         --lyra-panel-rgb: 13 20 28;
+  --lyra-panel-deep: #0d1117;    --lyra-panel-deep-rgb: 13 17 23;
+  --lyra-well: #0a0e13;          --lyra-well-rgb: 10 14 19;
 
   /* Lines and borders */
-  --lyra-line: #1b2530;
-  --lyra-line-strong: #263241;
-  --lyra-hairline: #3a4754;
+  --lyra-line: #1b2530;          --lyra-line-rgb: 27 37 48;
+  --lyra-line-strong: #263241;   --lyra-line-strong-rgb: 38 50 65;
+  --lyra-hairline: #3a4754;      --lyra-hairline-rgb: 58 71 84;
 
   /* Ink */
-  --lyra-ink: #eef3f8;
-  --lyra-ink-title: #dbe5ee;
-  --lyra-ink-2: #a8b5c2;
-  --lyra-ink-3: #8190a0;
-  --lyra-ink-dim: #5e6b78;
+  --lyra-ink: #eef3f8;           --lyra-ink-rgb: 238 243 248;
+  --lyra-ink-title: #dbe5ee;     --lyra-ink-title-rgb: 219 229 238;
+  --lyra-ink-2: #a8b5c2;         --lyra-ink-2-rgb: 168 181 194;
+  --lyra-ink-3: #8190a0;         --lyra-ink-3-rgb: 129 144 160;
+  --lyra-ink-dim: #5e6b78;       --lyra-ink-dim-rgb: 94 107 120;
 
   /* Accent (amber) */
-  --lyra-accent: #f3a33a;
-  --lyra-accent-border: #9a6a1f;
-  --lyra-accent-tint: #2a1f0f;
+  --lyra-accent: #f3a33a;        --lyra-accent-rgb: 243 163 58;
+  --lyra-accent-border: #9a6a1f; --lyra-accent-border-rgb: 154 106 31;
+  --lyra-accent-tint: #2a1f0f;   --lyra-accent-tint-rgb: 42 31 15;
 
   /* Semantics - these carry MEANING, never decoration:
      positive/good = verified, available, gain; warn = limited, caution;
      pending = queued, in-flight; risk = blocked, loss, danger. */
-  --lyra-positive: #43d18b;
-  --lyra-positive-tint: #0d251b;
-  --lyra-negative: #ff6b6b;
-  --lyra-negative-soft: #f0758a;
-  --lyra-pending: #8aa2ff;
+  --lyra-positive: #43d18b;      --lyra-positive-rgb: 67 209 139;
+  --lyra-positive-tint: #0d251b; --lyra-positive-tint-rgb: 13 37 27;
+  --lyra-negative: #ff6b6b;      --lyra-negative-rgb: 255 107 107;
+  --lyra-negative-soft: #f0758a; --lyra-negative-soft-rgb: 240 117 138;
+  --lyra-pending: #8aa2ff;       --lyra-pending-rgb: 138 162 255;
 
   /* Blues */
-  --lyra-blue: #1e63ff;
-  --lyra-blue-deep: #3b5bdb;
-  --lyra-blue-info: #7fb0ff;
-  --lyra-blue-focus: #60a5fa;
-  --lyra-blue-tint: #0e1e3a;
+  --lyra-blue: #1e63ff;          --lyra-blue-rgb: 30 99 255;
+  --lyra-blue-deep: #3b5bdb;     --lyra-blue-deep-rgb: 59 91 219;
+  --lyra-blue-info: #7fb0ff;     --lyra-blue-info-rgb: 127 176 255;
+  --lyra-blue-focus: #60a5fa;    --lyra-blue-focus-rgb: 96 165 250;
+  --lyra-blue-tint: #0e1e3a;     --lyra-blue-tint-rgb: 14 30 58;
 
   /* The one gradient: primary CTA only (one per view). */
   --lyra-cta-gradient: linear-gradient(90deg, #43d18b 0%, #1e63ff 100%);
@@ -64,4 +73,50 @@
   --lyra-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --lyra-dur-fast: 120ms;
   --lyra-dur: 200ms;
+}
+
+/* ============================ LIGHT (opt-in, app-wide via data-theme) ============================ */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  /* Grounds and surfaces - pearl, frosted white panels */
+  --lyra-ground: #f4f7fa;        --lyra-ground-rgb: 244 247 250;
+  --lyra-chrome: #eef2f7;        --lyra-chrome-rgb: 238 242 247;
+  --lyra-panel: #ffffff;         --lyra-panel-rgb: 255 255 255;
+  --lyra-panel-deep: #f2f5f9;    --lyra-panel-deep-rgb: 242 245 249;
+  --lyra-well: #e9eef4;          --lyra-well-rgb: 233 238 244;
+
+  /* Lines and borders - soft slate hairlines */
+  --lyra-line: #e2e8f0;          --lyra-line-rgb: 226 232 240;
+  --lyra-line-strong: #cdd7e3;   --lyra-line-strong-rgb: 205 215 227;
+  --lyra-hairline: #94a3b8;      --lyra-hairline-rgb: 148 163 184;
+
+  /* Ink - deep slate on pearl (inverted) */
+  --lyra-ink: #12222a;           --lyra-ink-rgb: 18 34 42;
+  --lyra-ink-title: #0f1d24;     --lyra-ink-title-rgb: 15 29 36;
+  --lyra-ink-2: #46575f;         --lyra-ink-2-rgb: 70 87 95;
+  --lyra-ink-3: #5c6b73;         --lyra-ink-3-rgb: 92 107 115;
+  --lyra-ink-dim: #8a97a0;       --lyra-ink-dim-rgb: 138 151 160;
+
+  /* Accent (amber) - darkened for AA on light; tint becomes a pale fill */
+  --lyra-accent: #b45309;        --lyra-accent-rgb: 180 83 9;
+  --lyra-accent-border: #cf9640; --lyra-accent-border-rgb: 207 150 64;
+  --lyra-accent-tint: #fef3e2;   --lyra-accent-tint-rgb: 254 243 226;
+
+  /* Semantics - deep hues for AA on light; tints become pale fills */
+  --lyra-positive: #047857;      --lyra-positive-rgb: 4 120 87;
+  --lyra-positive-tint: #d1fae5; --lyra-positive-tint-rgb: 209 250 229;
+  --lyra-negative: #dc2626;      --lyra-negative-rgb: 220 38 38;
+  --lyra-negative-soft: #e11d48; --lyra-negative-soft-rgb: 225 29 72;
+  --lyra-pending: #4f46e5;       --lyra-pending-rgb: 79 70 229;
+
+  /* Blues - deepened for AA on light; tint becomes a pale fill */
+  --lyra-blue: #2563eb;          --lyra-blue-rgb: 37 99 235;
+  --lyra-blue-deep: #1d4ed8;     --lyra-blue-deep-rgb: 29 78 216;
+  --lyra-blue-info: #1d4ed8;     --lyra-blue-info-rgb: 29 78 216;
+  --lyra-blue-focus: #2563eb;    --lyra-blue-focus-rgb: 37 99 235;
+  --lyra-blue-tint: #dbeafe;     --lyra-blue-tint-rgb: 219 234 254;
+
+  /* The one gradient - emerald->teal on light (the light-glass CTA) */
+  --lyra-cta-gradient: linear-gradient(90deg, #047857 0%, #0e7490 100%);
 }

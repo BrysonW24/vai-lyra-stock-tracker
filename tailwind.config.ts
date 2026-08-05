@@ -1,40 +1,62 @@
 import type { Config } from 'tailwindcss';
 
 /*
- * Tailwind mirror of the LYRA DESIGN TOKENS - v1.0.0 (2026-08-02).
+ * Tailwind mirror of the LYRA DESIGN TOKENS - v1.1.0 (2026-08-05).
  * Source of truth: lyra-ux/TOKENS.md + src/styles/lyra-tokens.css (same version).
- * Hex values are duplicated here (not var() references) so Tailwind opacity modifiers
- * like `bg-panel/60` keep working; `node lyra-ux/check-tokens.mjs` enforces the mirror.
- * The pre-2026-08-02 "warm paper" palette (cream/paper/light-ink/cobalt/mint/slate) was
- * dead code with zero usages and was removed at v1.0.0.
+ * v1.1.0 THEMING: colours reference the token RGB-channel vars via
+ * `rgb(var(--lyra-x-rgb) / <alpha-value>)` - this keeps opacity modifiers (bg-panel/60)
+ * working AND lets a light theme re-theme every utility by overriding the vars under
+ * :root[data-theme="light"]. `node lyra-ux/check-tokens.mjs` enforces the mirror.
+ * The pre-2026-08-02 "warm paper" palette was removed at v1.0.0; the real light palette
+ * lives in lyra-tokens.css (light block), not here.
  */
 const config: Config = {
   content: ['./src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        ground: '#07090c',
-        chrome: '#0b1016',
-        panel: { DEFAULT: '#0d141c', deep: '#0d1117' },
-        well: '#0a0e13',
-        line: { DEFAULT: '#1b2530', strong: '#263241', hair: '#3a4754' },
-        ink: {
-          DEFAULT: '#eef3f8',
-          title: '#dbe5ee',
-          '2': '#a8b5c2',
-          '3': '#8190a0',
-          dim: '#5e6b78',
+        // rgb(var(--lyra-x-rgb) / <alpha-value>): opacity modifiers work AND the token re-themes
+        // when :root[data-theme="light"] overrides the channel vars. Var names are spelled out (not
+        // built from a helper) so lyra-ux/check-tokens.mjs can verify each reference in the file text.
+        ground: 'rgb(var(--lyra-ground-rgb) / <alpha-value>)',
+        chrome: 'rgb(var(--lyra-chrome-rgb) / <alpha-value>)',
+        panel: {
+          DEFAULT: 'rgb(var(--lyra-panel-rgb) / <alpha-value>)',
+          deep: 'rgb(var(--lyra-panel-deep-rgb) / <alpha-value>)',
         },
-        accent: { DEFAULT: '#f3a33a', border: '#9a6a1f', tint: '#2a1f0f' },
-        positive: { DEFAULT: '#43d18b', tint: '#0d251b' },
-        negative: { DEFAULT: '#ff6b6b', soft: '#f0758a' },
-        pending: '#8aa2ff',
+        well: 'rgb(var(--lyra-well-rgb) / <alpha-value>)',
+        line: {
+          DEFAULT: 'rgb(var(--lyra-line-rgb) / <alpha-value>)',
+          strong: 'rgb(var(--lyra-line-strong-rgb) / <alpha-value>)',
+          hair: 'rgb(var(--lyra-hairline-rgb) / <alpha-value>)',
+        },
+        ink: {
+          DEFAULT: 'rgb(var(--lyra-ink-rgb) / <alpha-value>)',
+          title: 'rgb(var(--lyra-ink-title-rgb) / <alpha-value>)',
+          '2': 'rgb(var(--lyra-ink-2-rgb) / <alpha-value>)',
+          '3': 'rgb(var(--lyra-ink-3-rgb) / <alpha-value>)',
+          dim: 'rgb(var(--lyra-ink-dim-rgb) / <alpha-value>)',
+        },
+        accent: {
+          DEFAULT: 'rgb(var(--lyra-accent-rgb) / <alpha-value>)',
+          border: 'rgb(var(--lyra-accent-border-rgb) / <alpha-value>)',
+          tint: 'rgb(var(--lyra-accent-tint-rgb) / <alpha-value>)',
+        },
+        positive: {
+          DEFAULT: 'rgb(var(--lyra-positive-rgb) / <alpha-value>)',
+          tint: 'rgb(var(--lyra-positive-tint-rgb) / <alpha-value>)',
+        },
+        negative: {
+          DEFAULT: 'rgb(var(--lyra-negative-rgb) / <alpha-value>)',
+          soft: 'rgb(var(--lyra-negative-soft-rgb) / <alpha-value>)',
+        },
+        pending: 'rgb(var(--lyra-pending-rgb) / <alpha-value>)',
         blue: {
-          DEFAULT: '#1e63ff',
-          deep: '#3b5bdb',
-          info: '#7fb0ff',
-          focus: '#60a5fa',
-          tint: '#0e1e3a',
+          DEFAULT: 'rgb(var(--lyra-blue-rgb) / <alpha-value>)',
+          deep: 'rgb(var(--lyra-blue-deep-rgb) / <alpha-value>)',
+          info: 'rgb(var(--lyra-blue-info-rgb) / <alpha-value>)',
+          focus: 'rgb(var(--lyra-blue-focus-rgb) / <alpha-value>)',
+          tint: 'rgb(var(--lyra-blue-tint-rgb) / <alpha-value>)',
         },
       },
       borderRadius: {
