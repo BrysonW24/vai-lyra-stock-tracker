@@ -332,7 +332,7 @@ export function AppShell({ data, children }: AppShellProps) {
                     ? 'Solo mode - device-local book and settings; market scores refresh from public prices when available'
                     : 'Demo data - illustrative sample signals, not a live market scan'
                 }
-                className="hidden items-center gap-1.5 rounded-cell border border-accent-border/60 bg-accent-tint px-2 py-1.5 font-mono text-[11px] text-accent sm:flex"
+                className="hidden items-center gap-1.5 rounded-cell border border-accent-border/60 bg-accent-tint px-2 py-1.5 text-[11px] font-medium text-accent sm:flex"
               >
                 <span className="inline-flex h-2 w-2 rounded-full bg-accent" />
                 {soloMode ? 'SOLO' : 'DEMO'}
@@ -349,7 +349,7 @@ export function AppShell({ data, children }: AppShellProps) {
                         ? `Last scan ${data.latestRun.status} - data may be incomplete (${relativeTime(data.latestRun.finishedAt)})`
                         : `Stale - last scan ${relativeTime(data.latestRun.finishedAt)}, older than the ${STALE_AFTER_HOURS}h freshness window`
                     }
-                    className={`hidden items-center gap-1.5 rounded-cell border px-2 py-1.5 font-mono text-[11px] sm:flex ${
+                    className={`hidden items-center gap-1.5 rounded-cell border px-2 py-1.5 text-[11px] font-medium sm:flex ${
                       failed
                         ? 'border-negative/40 bg-negative/10 text-negative'
                         : 'border-accent-border/60 bg-accent-tint text-accent'
@@ -365,7 +365,7 @@ export function AppShell({ data, children }: AppShellProps) {
               return (
                 <span
                   title={`Live · Last scan ${relativeTime(data.latestRun.finishedAt)} · ${data.latestRun.timeframe.toUpperCase()} timeframe`}
-                  className="hidden items-center gap-1.5 rounded-cell border border-positive/40 bg-positive-tint px-2 py-1.5 font-mono text-[11px] text-positive sm:flex"
+                  className="hidden items-center gap-1.5 rounded-cell border border-positive/40 bg-positive-tint px-2 py-1.5 text-[11px] font-medium text-positive sm:flex"
                 >
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />

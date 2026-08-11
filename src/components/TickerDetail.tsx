@@ -1,17 +1,16 @@
-import type { ScorePoint, SignalRow } from '@/types/scanner';
-import { MacdHistogramChart, ScoreHeatBars } from '@/components/ChartPrimitives';
+import type { SignalRow } from '@/types/scanner';
 import { StatusBadge } from '@/components/StatusBadge';
 import { OutcomeHistoryPanel } from '@/components/tickers/OutcomeHistoryPanel';
 import { TickerInsightsPanel } from '@/components/tickers/TickerInsightsPanel';
+import { SetupScorecard } from '@/components/tickers/SetupScorecard';
+import { ScanDeltaPanel } from '@/components/tickers/ScanDeltaPanel';
 import { SaveButton } from '@/components/research/SaveButton';
 import { ShareButton } from '@/components/native/ShareButton';
 import { MetricHelp } from '@/components/education/MetricHelp';
-import { buildScoreBreakdown } from '@/lib/score-breakdown';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, formatSignedPercent, relativeTime, toneClass, trendArrow } from '@/lib/format';
 
 interface TickerDetailProps {
   signal: SignalRow;
-  scoreHistory: ScorePoint[];
 }
 
 function MetricBar({ label, value }: { label: string; value: number }) {
@@ -45,9 +44,7 @@ function ExplanationList({ title, items, tone }: { title: string; items: string[
   );
 }
 
-export function TickerDetail({ signal, scoreHistory }: TickerDetailProps) {
-  const scoreBreakdown = buildScoreBreakdown(signal.scoreBreakdown);
-
+export function TickerDetail({ signal }: TickerDetailProps) {
   return (
     <section className="space-y-3">
       <div className="terminal-panel rounded-panel px-3 py-3">
@@ -94,11 +91,11 @@ export function TickerDetail({ signal, scoreHistory }: TickerDetailProps) {
 
       <div className="grid gap-3 xl:grid-cols-[1.3fr_0.7fr]">
         <TickerInsightsPanel signal={signal} />
-        <ScoreHeatBars points={scoreHistory} reconstructed />
+        <SetupScorecard signal={signal} />
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[0.85fr_1.15fr]">
-        <MacdHistogramChart points={scoreHistory} reconstructed />
+        <ScanDeltaPanel signal={signal} />
 
         <section className="terminal-panel rounded-panel p-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -130,33 +127,13 @@ export function TickerDetail({ signal, scoreHistory }: TickerDetailProps) {
         </section>
       </div>
 
-      <div className="grid gap-3 xl:grid-cols-[0.72fr_1.28fr]">
-        <section className="terminal-panel rounded-panel p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Score breakdown</p>
-          <p className="mt-1 text-[10px] leading-snug text-ink-dim">Points each factor added, out of its max - they sum to the {signal.score} score.</p>
-          <div className="mt-3 space-y-3">
-            {scoreBreakdown.map(({ label, value, max, pct }) => (
-              <div key={label}>
-                <div className="flex justify-between font-mono text-xs">
-                  <span className="text-ink-2">{label}</span>
-                  <span className="text-ink-title">{value}/{max}</span>
-                </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-sm bg-line/70">
-                  <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="terminal-panel rounded-panel p-4">
-          <div className="grid gap-5 md:grid-cols-3">
-            <ExplanationList title="Triggered because" items={signal.explanation.triggeredBecause} tone="text-positive" />
-            <ExplanationList title="Missing confirmation" items={signal.explanation.missingConfirmation} tone="text-accent" />
-            <ExplanationList title="Risk notes" items={signal.explanation.riskNotes} tone="text-negative" />
-          </div>
-        </section>
-      </div>
+      <section className="terminal-panel rounded-panel p-4">
+        <div className="grid gap-5 md:grid-cols-3">
+          <ExplanationList title="Triggered because" items={signal.explanation.triggeredBecause} tone="text-positive" />
+          <ExplanationList title="Missing confirmation" items={signal.explanation.missingConfirmation} tone="text-accent" />
+          <ExplanationList title="Risk notes" items={signal.explanation.riskNotes} tone="text-negative" />
+        </div>
+      </section>
 
       <OutcomeHistoryPanel signalType={signal.signalType} signalStatus={signal.status} />
     </section>

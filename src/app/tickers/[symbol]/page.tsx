@@ -4,7 +4,6 @@ import { TickerChartView } from '@/components/TickerChartView';
 import { TickerNotScanned } from '@/components/TickerNotScanned';
 import { TwinCaptureBeacon } from '@/components/twin/TwinCaptureBeacon';
 import { getDashboardData } from '@/lib/data';
-import { buildScoreHistory } from '@/lib/score-history';
 
 interface TickerPageProps {
   params: Promise<{
@@ -47,19 +46,7 @@ export default async function TickerPage({ params, searchParams }: TickerPagePro
           companyName={signal.companyName}
           fullSetup={view === 'setup'}
         />
-        <TickerDetail
-          signal={signal}
-          scoreHistory={buildScoreHistory({
-            symbol: signal.symbol,
-            score: signal.score,
-            rsi: signal.rsi,
-            macdHistogram: signal.macdHistogram,
-            scoreDelta: signal.scoreDelta,
-            rsiDelta: signal.rsiDelta,
-            histDelta: signal.histDelta,
-            macdState: signal.macdState,
-          })}
-        />
+        <TickerDetail signal={signal} />
       </div>
     </AppShell>
   );
