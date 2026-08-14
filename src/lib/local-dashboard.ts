@@ -129,7 +129,10 @@ export function buildLocalPortfolioHoldings(
         signalStatus,
         actionState: (signal?.actionState ?? 'hold') as ActionState,
         rsi,
-        macdState: signal?.macdState ?? 'Tracked',
+        // Outside the scanned universe there is no engine read at all - the zeros above
+        // are structural placeholders and PortfolioView renders "not scanned" instead.
+        scanned: signal != null,
+        macdState: signal?.macdState ?? 'Not scanned',
         riskState,
         suggestedAction: SOLO_RISK_SUGGESTION[riskState],
         brokerageFee: holding.brokerageFee ?? null,
@@ -156,7 +159,9 @@ export function buildLocalWatchlistRows(
   signals: SignalRow[],
 ): WatchlistRow[] {
   const signalBySymbol = new Map(signals.map((signal) => [signal.symbol, signal]));
-  const targetSignalScore = 70;
+  // The form's stated default. Rows saved before the threshold was persisted fall back to
+  // it; a hardcoded 70 here used to make the board narrate a target the user never set.
+  const DEFAULT_TARGET_SIGNAL_SCORE = 60;
 
   return local.flatMap((item) => {
     if (
@@ -168,6 +173,7 @@ export function buildLocalWatchlistRows(
     }
 
     const signal = signalBySymbol.get(item.symbol);
+    const targetSignalScore = item.targetSignalScore ?? DEFAULT_TARGET_SIGNAL_SCORE;
     const currentPrice =
       signal && signal.close > 0 ? signal.close : item.targetBuyPrice;
     const distanceToTarget =

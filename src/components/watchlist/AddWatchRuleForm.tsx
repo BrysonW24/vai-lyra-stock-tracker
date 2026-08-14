@@ -71,6 +71,9 @@ export function AddWatchRuleForm() {
         const saved = addLocalWatchItem({
           symbol: formData.symbol,
           targetBuyPrice: Number(formData.targetPrice) || undefined,
+          // Persist the user's threshold - dropping it made the trigger board narrate a
+          // "your 70 target" the user never set (2026-08-11 audit finding).
+          targetSignalScore: Number(formData.targetSignalScore) || undefined,
           notes: formData.notes || undefined,
         });
         if (!saved) {
@@ -97,11 +100,11 @@ export function AddWatchRuleForm() {
         });
       }
 
-      // Reset form
+      // Reset form (back to the same stated default the form opens with)
       setFormData({
         symbol: '',
         targetPrice: '',
-        targetSignalScore: '0',
+        targetSignalScore: '60',
         rsiMin: '0',
         rsiMax: '100',
         requireMacdHistogramRising: false,

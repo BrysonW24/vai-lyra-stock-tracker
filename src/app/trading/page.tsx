@@ -38,13 +38,13 @@ export default async function TradingPage() {
     limitPrice: 185,
     timeInForce: 'day',
     reasonCode: 'momentum_recovery_entry',
-    signalSnapshot: { rsi: 41.2, macdHistogram: 0.61, score: 78, volumeRatio: 1.8 },
-    riskSnapshot: { atrPct: 3.1, stopDistancePct: 4.0, positionPctAfter: 3.7 },
-    evidenceSnapshot: [
-      'RSI recovered from oversold with rising slope',
-      'MACD histogram turned positive on the hourly',
-      'Volume 1.8x the 20-day average',
-    ],
+    // Intentionally empty: this page demos the ENGINE REFUSING the intent - nothing
+    // renders these snapshots, and stuffing them with invented indicator readings
+    // (rsi 41.2, "Volume 1.8x the 20-day average"...) left fabricated numbers waiting
+    // to leak the day a surface starts rendering them (2026-08-11 audit).
+    signalSnapshot: {},
+    riskSnapshot: {},
+    evidenceSnapshot: [],
     status: 'drafted',
     idempotencyKey: buildIdempotencyKey(strategyId, symbol, side, isoDay),
     createdAt: now.toISOString(),

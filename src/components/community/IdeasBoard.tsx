@@ -54,6 +54,9 @@ export function IdeasBoard() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [signedIn, setSignedIn] = useState(false);
   const [maintainer, setMaintainer] = useState(false);
+  // Unconfigured deployments serve bundled demo ideas - badge them like ScoutFeed does,
+  // instead of declaring the flag in the response type and never reading it.
+  const [demo, setDemo] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,6 +78,7 @@ export function IdeasBoard() {
       setIdeas(data.ideas ?? []);
       setSignedIn(Boolean(data.signedIn));
       setMaintainer(Boolean(data.maintainer));
+      setDemo(Boolean(data.demo));
       if (!data.ok) setError(data.error ?? 'Could not load ideas.');
     } catch {
       setError('Could not reach the ideas board.');
@@ -194,7 +198,7 @@ export function IdeasBoard() {
        * of repeating the same sentence a third time.
        */}
       <div className="flex items-center justify-between gap-2 border-b border-line/70 px-3 py-2">
-        <p className="min-w-0 truncate text-[11px] text-ink-3">
+        <p className="flex min-w-0 items-center gap-1.5 truncate text-[11px] text-ink-3">
           {sorted.length > 0 ? (
             <>
               <span className="font-mono text-ink-title">{sorted.length}</span> {sorted.length === 1 ? 'idea' : 'ideas'}
@@ -202,6 +206,11 @@ export function IdeasBoard() {
             </>
           ) : (
             'Suggest what to build next'
+          )}
+          {demo && (
+            <span className="shrink-0 rounded-full border border-line-hair bg-panel px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-ink-3">
+              Demo preview
+            </span>
           )}
         </p>
         <button

@@ -668,17 +668,23 @@ function EwDetail({ r, focus }: { r: EmergingWinnerResult; focus: string[] }) {
         <DomainRadar domains={r.domains} focus={focus} size={220} />
       </Section>
 
-      <Section title="What drove the resemblance">
+      {/* Positive drivers only - the old Math.max(0, ...) clamp drew a detractor as an
+          empty bar labelled "0", misrepresenting a score DRAG as neutral. Negatives render
+          signed and red on EmergingWinnerView; here the section is scoped to what added. */}
+      <Section title="What drove the resemblance (positive drivers)">
         <div className="space-y-1.5">
-          {r.contributions.slice(0, 6).map((c) => (
-            <Bar
-              key={c.domain}
-              label={c.label}
-              value={Math.max(0, c.contribution)}
-              cap={Math.max(1, r.contributions[0]?.contribution || 1)}
-              tone="emerald"
-            />
-          ))}
+          {r.contributions
+            .filter((c) => c.contribution > 0)
+            .slice(0, 6)
+            .map((c) => (
+              <Bar
+                key={c.domain}
+                label={c.label}
+                value={c.contribution}
+                cap={Math.max(1, r.contributions[0]?.contribution || 1)}
+                tone="emerald"
+              />
+            ))}
         </div>
       </Section>
 

@@ -62,7 +62,9 @@ export default async function IpoDetailPage({ params }: { params: Promise<{ symb
             ['Offer price', formatCurrency(ipo.offerPrice)],
             [ipo.currentPrice ? 'Current price' : 'Est. reference', formatCurrency(ref)],
             ['Shares offered', `${formatNumber(ipo.sharesOfferedM, 1)}M`],
-            ['First-day close', ipo.firstDayClosePct !== undefined ? formatSignedPercent(ipo.firstDayClosePct) : '-'],
+            // "not tracked" beats a bare dash: live-synced rows don't carry this column
+            // yet, and an unexplained '-' reads as "flat" rather than "missing".
+            ['First-day close', ipo.firstDayClosePct !== undefined ? formatSignedPercent(ipo.firstDayClosePct) : 'not tracked'],
           ].map(([k, v]) => (
             <div className="terminal-panel rounded-panel p-2" key={k}>
               <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">{k}</p>

@@ -6,13 +6,17 @@ import { TickerLogo } from '@/components/TickerLogo';
 import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
 import { pageTitleClass } from '@/lib/ui';
 
+// Authored-editorial framing on purpose: these scores are hand-set in the theme research
+// (content/themes.jsonl) when it is written or revised - they are NOT computed by the
+// scan engine and carry no live as-of instant. Describing them as live market readings
+// was the 2026-08-11 audit finding; every definition now says what the number IS.
 const THEME_RADAR_TERMS: HelpTerm[] = [
-  { term: 'Momentum', what: 'How strongly the theme is moving right now - price and participation building across its names. Higher is stronger.' },
-  { term: 'Capital', what: 'Capital-flow score - how much money is rotating into the theme (funds, capex, deals). Strong inflows tend to sustain a move.' },
-  { term: 'Policy', what: 'Policy-support score - whether government funding, subsidies or regulation are tailwinds (high) or headwinds (low) for the theme.' },
-  { term: 'SmallCap', what: 'Small-cap opportunity score - how much of the upside still sits in smaller, less-crowded names rather than the mega-caps.', moduleId: 'market-cap' },
-  { term: 'Crowding', what: 'Crowding-risk score - how consensus the trade already is. This one runs red when hot (>=60): a crowded theme has less edge left and more downside if sentiment turns.' },
-  { term: 'News', what: 'News-velocity score - how fast headlines and attention are accelerating around the theme.' },
+  { term: 'Momentum', what: 'Analyst-scored read of how strongly the theme is moving - price and participation building across its names. Higher is stronger.' },
+  { term: 'Capital', what: 'Analyst-scored capital-flow read - how much money is rotating into the theme (funds, capex, deals). Strong inflows tend to sustain a move.' },
+  { term: 'Policy', what: 'Analyst-scored policy read - whether government funding, subsidies or regulation are tailwinds (high) or headwinds (low) for the theme.' },
+  { term: 'SmallCap', what: 'Analyst-scored small-cap opportunity read - how much of the upside still sits in smaller, less-crowded names rather than the mega-caps.', moduleId: 'market-cap' },
+  { term: 'Crowding', what: 'Analyst-scored crowding-risk read - how consensus the trade already is. This one runs red when hot (>=60): a crowded theme has less edge left and more downside if sentiment turns.' },
+  { term: 'News', what: 'Analyst-scored news-velocity read - how fast headlines and attention have been accelerating around the theme.' },
   { term: 'maturity', what: 'Where the theme sits in its life cycle - emerging, growing, mature - which shapes how much room and how much risk is left.' },
   { term: 'Bottlenecks', what: 'The hardest-to-replace links the theme depends on, where pricing power tends to concentrate. The supply-chain map drills into these.' },
 ];
@@ -59,7 +63,8 @@ function themeStats(t: Theme): StatDef[] {
 
 /**
  * World Radar - the theme grid. Every card is a tappable doorway into a theme's
- * supply chain (/themes/[slug]); the deterministic engine owns every number shown.
+ * supply chain (/themes/[slug]). The six scores are authored research context from
+ * content/themes.jsonl - set when the theme research is written, not engine-computed.
  */
 export function ThemeRadar({ themes, topBySlug, latestEventBySlug }: ThemeRadarProps) {
   const sorted = [...themes].sort((a, b) => b.momentum - a.momentum);
@@ -70,15 +75,15 @@ export function ThemeRadar({ themes, topBySlug, latestEventBySlug }: ThemeRadarP
         <h1 className={pageTitleClass}>World Radar</h1>
         <span className="font-mono text-[10px] text-ink-3">{sorted.length} themes</span>
         <p className="text-[10px] text-ink-dim">
-          Themes mapped from first principles - follow the bottlenecks, not the noise
+          Themes mapped from first principles - follow the bottlenecks, not the noise. Scores are authored research, updated with content releases.
         </p>
         <HelpDrawer
           title="What the scores mean"
           subtitle="The six theme scores, maturity and bottlenecks"
           ariaLabel="What the World Radar scores mean"
-          intro="Every theme card carries six deterministic 0-100 scores plus a maturity tag. Here is what each one reads."
+          intro="Every theme card carries six analyst-authored 0-100 scores plus a maturity tag - set when the theme research is written or revised, updated with content releases, not computed per scan. Here is what each one reads."
           terms={THEME_RADAR_TERMS}
-          footnote="Theme scores are deterministic research context mapped from first principles. Lyra surfaces where the energy and the bottlenecks are - it never tells you to buy or sell. Research only."
+          footnote="Theme scores are authored research context mapped from first principles - they update with content releases, not with the market tick. Lyra surfaces where the energy and the bottlenecks are - it never tells you to buy or sell. Research only."
         />
       </div>
 

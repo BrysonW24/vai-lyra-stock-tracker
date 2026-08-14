@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.128.0',
+    date: '2026-08-14',
+    title: 'Honesty audit closed out: the last 12 findings patched, none deferred',
+    highlights: [
+      'Every remaining finding from the 47-item visualisation audit is now fixed - including the ones 0.127.0 deferred as "needs backend work". Your Solo watchlist threshold is finally yours: the add-rule form saves the signal-score trigger you type on this device, and the trigger board narrates YOUR target instead of a hardcoded 70 you never set. A Solo holding outside the scanned universe now says "not scanned" instead of rendering RSI 0.0 and Signal 0 as if the engine measured an extreme reading.',
+      'Provenance chips reached the last unlabelled corners. Every sample calendar row now carries its own Sample chip - on the agenda, the month grid, and the Event Risk Alert countdown - not just one 9px footnote. The Command countdown shows the importance word (high/medium) for calendar moments instead of a pseudo-precise "heat 88" that looked like the curated blended score. The community Ideas board badges demo content the way the Scout feed always did, and speculative IPO records for real private companies (Stripe, Databricks, SpaceX and eight more) are titled "(illustrative)" like their fictional siblings.',
+      'Colour and copy stopped overclaiming. The track-record win rate is no longer tinted by a different metric (a sub-50% win rate could render green) - the sign colour sits on the average return it measures. Model Lab resemblance bars are scoped to positive drivers, so a score DETRACTOR can no longer draw as an innocent empty "0" bar. World Radar copy now says its theme scores are authored research updated with content releases, not live engine readings. The IPO explorer explains WHY its Return column is empty on live deploys and hides the Return sort instead of ranking on missing data; the unrendered fabricated indicator snapshot on the trading demo intent is deleted; the onboarding portfolio illustration drops its meaningless progress bars.',
+    ],
+  },
+  {
     version: '0.127.0',
     date: '2026-08-11',
     title: 'The honesty audit: every fabricated visual in the app, found and removed',

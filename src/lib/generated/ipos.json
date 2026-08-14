@@ -1114,7 +1114,7 @@
   },
   {
     "symbol": "DBRX",
-    "companyName": "Databricks",
+    "companyName": "Databricks (illustrative)",
     "ipoDate": "2026-09-15",
     "exchange": "NASDAQ",
     "category": "cloud_data",
@@ -1150,7 +1150,7 @@
   },
   {
     "symbol": "STRP",
-    "companyName": "Stripe",
+    "companyName": "Stripe (illustrative)",
     "ipoDate": "2026-11-01",
     "exchange": "NYSE",
     "category": "fintech_tech",
@@ -1186,7 +1186,7 @@
   },
   {
     "symbol": "CNVA",
-    "companyName": "Canva",
+    "companyName": "Canva (illustrative)",
     "ipoDate": "2026-10-20",
     "exchange": "NASDAQ",
     "category": "software",
@@ -1220,7 +1220,7 @@
   },
   {
     "symbol": "CBRS",
-    "companyName": "Cerebras Systems",
+    "companyName": "Cerebras Systems (illustrative)",
     "ipoDate": "2026-08-12",
     "exchange": "NASDAQ",
     "category": "semiconductor",
@@ -1255,7 +1255,7 @@
   },
   {
     "symbol": "DISC",
-    "companyName": "Discord",
+    "companyName": "Discord (illustrative)",
     "ipoDate": "2026-12-05",
     "exchange": "NYSE",
     "category": "consumer_internet",
@@ -1290,7 +1290,7 @@
   },
   {
     "symbol": "CHYM",
-    "companyName": "Chime",
+    "companyName": "Chime (illustrative)",
     "ipoDate": "2026-07-30",
     "exchange": "NASDAQ",
     "category": "fintech_tech",
@@ -1324,7 +1324,7 @@
   },
   {
     "symbol": "REVO",
-    "companyName": "Revolut",
+    "companyName": "Revolut (illustrative)",
     "ipoDate": "2027-01-20",
     "exchange": "NASDAQ",
     "category": "fintech_tech",
@@ -1359,7 +1359,7 @@
   },
   {
     "symbol": "PLAI",
-    "companyName": "Plaid",
+    "companyName": "Plaid (illustrative)",
     "ipoDate": "2026-11-18",
     "exchange": "NASDAQ",
     "category": "fintech_tech",
@@ -1428,7 +1428,7 @@
   },
   {
     "symbol": "GENS",
-    "companyName": "Genesys",
+    "companyName": "Genesys (illustrative)",
     "ipoDate": "2026-09-30",
     "exchange": "NASDAQ",
     "category": "software",
@@ -1462,7 +1462,7 @@
   },
   {
     "symbol": "NETS",
-    "companyName": "Netskope",
+    "companyName": "Netskope (illustrative)",
     "ipoDate": "2026-10-08",
     "exchange": "NASDAQ",
     "category": "cybersecurity",
@@ -1795,7 +1795,7 @@
   },
   {
     "symbol": "SPCX",
-    "companyName": "SpaceX",
+    "companyName": "SpaceX (illustrative)",
     "ipoDate": "2027-10-15",
     "exchange": "NASDAQ",
     "category": "ai_infrastructure",

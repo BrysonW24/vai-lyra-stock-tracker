@@ -45,7 +45,12 @@ interface LiveMoment {
   title: string;
   category: CatalystCategory;
   targetMs: number;
+  /** Sort weight. Curated moments carry the blended 0-100 heat score; calendar rows a
+   *  fixed importance mapping - which is why the chip shows `heatLabel`, not this. */
   heat: number;
+  /** What the chip renders: "heat NN" for curated (blended score), the importance word
+   *  for calendar rows - one look must never carry two different quantities unlabelled. */
+  heatLabel: string;
   href: string;
 }
 
@@ -71,6 +76,7 @@ function liveMoments(events: CalendarEvent[], nowMs: number): LiveMoment[] {
         category,
         targetMs,
         heat: event.importance === 'high' ? 88 : event.importance === 'medium' ? 68 : 50,
+        heatLabel: event.importance,
         href: '/calendar',
       };
     })
@@ -162,6 +168,7 @@ export function CatalystCountdown({
       category: catalyst.category,
       targetMs: new Date(`${catalyst.date}T00:00:00`).getTime(),
       heat: catalyst.heat,
+      heatLabel: `heat ${catalyst.heat}`,
       href: '#catalyst-radar',
     }));
   const featured: LiveMoment[] = [...curated, ...(useCalendar ? liveMoments(events, nowMs) : [])]
@@ -229,7 +236,7 @@ export function CatalystCountdown({
                 <span className="rounded border border-line-strong bg-chrome px-1 py-0.5 font-mono text-[8px] uppercase tracking-[0.12em] text-ink-2">
                   {catalyst.category}
                 </span>
-                <span className="ml-auto font-mono text-[9px] text-ink-3">heat {catalyst.heat}</span>
+                <span className="ml-auto font-mono text-[9px] text-ink-3">{catalyst.heatLabel}</span>
               </div>
               <p className="truncate text-[12px] font-semibold leading-snug text-ink">{catalyst.title}</p>
               <div className="flex items-end gap-1.5">

@@ -40,11 +40,14 @@ function HorizonCell({ stat }: { stat: HorizonStat }) {
   }
   return (
     <td className="px-3 py-2 text-center">
-      <div className={`font-mono text-[13px] font-semibold ${returnColour(stat.avgReturnPct)}`}>
+      {/* The win rate stays neutral - the old code tinted it by the SIGN OF AVG RETURN,
+          so a sub-50% win rate could render green (2026-08-11 audit). The sign colour
+          belongs on the avg figure it actually measures. */}
+      <div className="font-mono text-[13px] font-semibold text-ink">
         {stat.winRatePct === null ? 'n/a' : `${stat.winRatePct.toFixed(0)}%`}
       </div>
       <div className="font-mono text-[10px] text-ink-3">
-        avg {formatPct(stat.avgReturnPct)} · med {formatPct(stat.medianReturnPct)}
+        avg <span className={returnColour(stat.avgReturnPct)}>{formatPct(stat.avgReturnPct)}</span> · med {formatPct(stat.medianReturnPct)}
       </div>
     </td>
   );

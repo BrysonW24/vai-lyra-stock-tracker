@@ -11,6 +11,9 @@
 export interface LocalWatchItem {
   symbol: string;
   targetBuyPrice?: number;
+  /** The user's own signal-score trigger threshold. Absent on rows saved before it was
+   *  persisted - buildLocalWatchlistRows falls back to the form's stated default (60). */
+  targetSignalScore?: number;
   notes?: string;
 }
 
@@ -39,9 +42,13 @@ function normaliseWatchItem(input: unknown): LocalWatchItem | null {
   const symbol = String(raw.symbol ?? '').toUpperCase().trim();
   if (!SYMBOL_RE.test(symbol)) return null;
   const target = raw.targetBuyPrice === undefined ? undefined : Number(raw.targetBuyPrice);
+  const score = raw.targetSignalScore === undefined ? undefined : Number(raw.targetSignalScore);
   return {
     symbol,
     ...(target !== undefined && Number.isFinite(target) && target > 0 ? { targetBuyPrice: target } : {}),
+    ...(score !== undefined && Number.isFinite(score) && score > 0 && score <= 100
+      ? { targetSignalScore: Math.round(score) }
+      : {}),
     ...(typeof raw.notes === 'string' ? { notes: raw.notes.slice(0, 500) } : {}),
   };
 }

@@ -190,7 +190,10 @@ export function IpoExplorer({ ipos: all, source, updatedAt }: IpoExplorerProps) 
             <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)} className="h-11 min-w-0 flex-1 rounded-cell border border-line-strong bg-panel px-1.5 text-[10px] text-ink-title outline-none sm:h-6 sm:flex-none">
               <option value="valuationUsdM">Sort: Valuation</option>
               <option value="proceedsUsdM">Sort: Raised</option>
-              <option value="returnSinceIpoPct">Sort: Return</option>
+              {/* Live-synced rows don't carry return columns yet (the nightly worker doesn't
+                  compute them) - offering the sort when every value is missing produced an
+                  arbitrary order dressed as a ranking (2026-08-11 audit). */}
+              {withReturns.length > 0 && <option value="returnSinceIpoPct">Sort: Return</option>}
               <option value="revenueGrowthPct">Sort: Rev growth</option>
               <option value="ipoDate">Sort: Date</option>
             </select>
@@ -263,6 +266,15 @@ export function IpoExplorer({ ipos: all, source, updatedAt }: IpoExplorerProps) 
             </button>
           ))}
         </div>
+
+        {/* Honest empty-column note: on live deploys the nightly sync doesn't compute
+            return columns yet, so every Return cell is a dash. Say why, once, instead of
+            leaving a wall of unexplained dashes (2026-08-11 audit). */}
+        {withReturns.length === 0 && rows.length > 0 && (
+          <p className="border-t border-line px-3 py-2 text-[10px] text-ink-dim">
+            Returns not tracked live yet - the nightly sync does not compute first-day or since-IPO returns, so the Return column stays empty rather than showing an invented number.
+          </p>
+        )}
       </section>
 
       <IpoDrawer ipo={selected} onClose={() => setSelected(null)} />

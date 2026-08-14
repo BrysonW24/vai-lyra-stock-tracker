@@ -73,7 +73,17 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
       {/* Event Risk Callout */}
       {elevatedRiskTickers.length > 0 && (
         <section className="terminal-panel rounded-panel border-l-4 border-negative p-3">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-negative">⚠ Event Risk Alert</h2>
+          <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-negative">
+            ⚠ Event Risk Alert
+            {/* The "in Nd" chips below count down to re-anchored seed dates when the
+                calendar is the sample set - a risk alert must never imply a confirmed
+                date it does not have (2026-08-11 audit). */}
+            {source === 'sample' && (
+              <span className="rounded-full border border-accent-border bg-accent-tint px-1.5 py-0.5 font-mono text-[9px] normal-case tracking-[0.12em] text-accent">
+                Sample dates
+              </span>
+            )}
+          </h2>
           <p className="mt-2 text-xs text-ink-2">
             {elevatedRiskTickers.length} ticker
             {elevatedRiskTickers.length !== 1 ? 's have' : ' has'} active signals with upcoming high-importance
@@ -216,7 +226,17 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
                             <div className={`rounded-cell border px-2 py-1 font-mono text-xs font-semibold ${importanceClass(event.importance)}`}>
                               {event.importance}
                             </div>
-                            <div className="font-mono text-xs text-ink-2">in {days}d</div>
+                            {/* Per-row provenance: the one 9px footnote in the toolbar was
+                                the only sample tell on the whole board - each row a trader
+                                might act on carries its own chip (2026-08-11 audit). */}
+                            <div className="flex items-center gap-1.5">
+                              {source === 'sample' && (
+                                <span className="rounded-full border border-accent-border bg-accent-tint px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-accent">
+                                  Sample
+                                </span>
+                              )}
+                              <span className="font-mono text-xs text-ink-2">in {days}d</span>
+                            </div>
                           </div>
                         </button>
                       ))}
@@ -230,7 +250,7 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
       )}
 
       {/* Month View */}
-      {viewMode === 'month' && <MonthCalendar events={filteredEvents} todayIso={todayIso} onSelectEvent={setSelectedEvent} />}
+      {viewMode === 'month' && <MonthCalendar events={filteredEvents} source={source} todayIso={todayIso} onSelectEvent={setSelectedEvent} />}
 
 
       {/* Event detail drawer (reusable right-slide explainer) */}
@@ -244,10 +264,12 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
  */
 function MonthCalendar({
   events,
+  source,
   todayIso,
   onSelectEvent,
 }: {
   events: CalendarEvent[];
+  source: 'live' | 'sample';
   todayIso: string;
   onSelectEvent: (event: CalendarEvent) => void;
 }) {
@@ -291,7 +313,14 @@ function MonthCalendar({
     <section className="terminal-panel rounded-panel overflow-hidden">
       <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">Calendar grid</h2>
+          <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">
+            Calendar grid
+            {source === 'sample' && (
+              <span className="rounded-full border border-accent-border bg-accent-tint px-1.5 py-0.5 font-mono text-[9px] normal-case tracking-[0.12em] text-accent">
+                Sample dates
+              </span>
+            )}
+          </h2>
           <p className="mt-0.5 font-mono text-xs text-ink-3">{monthLabel}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">

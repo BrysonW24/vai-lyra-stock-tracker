@@ -86,24 +86,8 @@ export function GlassPortfolioStack() {
                 ${(holding.value / 1000).toFixed(1)}k
               </text>
 
-              {/* Progress bar */}
-              <rect
-                x={cardX + 12}
-                y={82 + yOffset}
-                width={cardWidth - 24}
-                height="3"
-                rx="1.5"
-                className="fill-line-strong"
-              />
-              <rect
-                x={cardX + 12}
-                y={82 + yOffset}
-                width={(cardWidth - 24) * (holdings.length - idx) / holdings.length}
-                height="3"
-                rx="1.5"
-                style={{ fill: holding.color }}
-                opacity={opacity}
-              />
+              {/* No progress bars: the old ones encoded (count - idx) / count - a shape
+                  that looked like allocation data but meant nothing (2026-08-11 audit). */}
             </g>
           );
         })}

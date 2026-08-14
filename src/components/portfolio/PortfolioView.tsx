@@ -218,13 +218,25 @@ export function PortfolioView({ data }: { data: DashboardData }) {
                             );
                           })()}
                         </td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <span>{holding.signalScore} <span className={toneClass(holding.scoreDelta)}>{formatSignedNumber(holding.scoreDelta, 0)}</span></span>
-                            <StatusBadge status={holding.signalStatus} />
-                          </div>
-                        </td>
-                        <td className="px-3 py-2">{formatNumber(holding.rsi)}</td>
+                        {/* Unscanned Solo holdings have no engine read - a placeholder 0
+                            renders as a measured value (RSI 0.0 = extreme oversold), so
+                            those rows say "not scanned" instead (2026-08-11 audit). */}
+                        {holding.scanned === false ? (
+                          <>
+                            <td className="px-3 py-2 text-ink-dim">- <span className="text-[10px]">not scanned</span></td>
+                            <td className="px-3 py-2 text-ink-dim">-</td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-2">
+                                <span>{holding.signalScore} <span className={toneClass(holding.scoreDelta)}>{formatSignedNumber(holding.scoreDelta, 0)}</span></span>
+                                <StatusBadge status={holding.signalStatus} />
+                              </div>
+                            </td>
+                            <td className="px-3 py-2">{formatNumber(holding.rsi)}</td>
+                          </>
+                        )}
                         <td className="px-3 py-2">{holding.macdState}</td>
                         <td className="px-3 py-2">{holding.riskState.replaceAll('_', ' ')}</td>
                         <td className="px-3 py-2 text-accent">{holding.actionState.replaceAll('_', ' ')}</td>

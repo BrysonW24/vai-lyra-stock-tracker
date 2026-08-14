@@ -128,6 +128,11 @@ export interface PortfolioHolding {
   actionState: ActionState;
   rsi: number;
   macdState: string;
+  /** False when the symbol sits outside the scanned universe (Solo rows only). The
+   *  signal-derived fields above are then structural placeholders, and every surface
+   *  must render them as "not scanned" - never as a measured 0 (RSI 0.0 reads as an
+   *  extreme oversold reading; 2026-08-11 audit). Absent = scanned (account rows). */
+  scanned?: boolean;
   riskState: 'low_risk' | 'neutral' | 'watch' | 'elevated_risk' | 'invalidated' | 'overextended' | 'opportunity';
   suggestedAction: string;
   explanation: SignalExplanation;
