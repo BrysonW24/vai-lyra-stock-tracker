@@ -3,12 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import type { DashboardData, SignalRow } from '@/types/scanner';
-import { MiniSparkline } from '@/components/ChartPrimitives';
 import { TickerLogo } from '@/components/TickerLogo';
 import { PortfolioDonut } from '@/components/charts/PortfolioDonut';
 import { ChartsTabs } from '@/components/charts/ChartsTabs';
-import { buildScoreHistory } from '@/lib/score-history';
-import { formatCurrency, formatSignedPercent } from '@/lib/format';
+import { buildScoreBreakdown } from '@/lib/score-breakdown';
+import { formatCurrency, formatSignedNumber, formatSignedPercent } from '@/lib/format';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import {
   loadLocalHoldings,
@@ -24,39 +23,47 @@ import {
   buildLocalWatchlistRows,
 } from '@/lib/local-dashboard';
 
-function scoreSeries(signal: SignalRow): number[] {
-  return buildScoreHistory({
-    symbol: signal.symbol,
-    score: signal.score,
-    rsi: signal.rsi,
-    macdHistogram: signal.macdHistogram,
-    scoreDelta: signal.scoreDelta,
-    rsiDelta: signal.rsiDelta,
-    histDelta: signal.histDelta,
-    macdState: signal.macdState,
-  }).map((p) => p.score);
-}
-
-function SparkCard({ signal }: { signal: SignalRow }) {
+/**
+ * Real factor card - replaces the fabricated 7-point score sparkline (2026-08-11 audit).
+ * The five mini bars ARE the score: each factor's server-computed points as a share of its
+ * max (R=RSI, M=MACD, P=price location, T=trend, V=volume), plus the real scan-over-scan
+ * delta. Nothing here is interpolated or invented.
+ */
+function FactorCard({ signal }: { signal: SignalRow }) {
   const up = signal.scoreDelta >= 0;
+  const factors = buildScoreBreakdown(signal.scoreBreakdown);
   return (
     <Link
       href={`/tickers/${signal.symbol}`}
-      className="flex min-w-0 flex-col gap-1 rounded-cell border border-line bg-panel p-2 transition hover:border-line-hair"
+      className="flex min-w-0 flex-col gap-1.5 rounded-cell border border-line bg-panel p-2 transition hover:border-line-hair"
     >
       <div className="flex items-center gap-1.5">
         <TickerLogo symbol={signal.symbol} companyName={signal.companyName} size={14} />
         <span className="truncate font-mono text-[11px] font-semibold text-ink">{signal.symbol}</span>
-        <span className={`ml-auto shrink-0 font-mono text-[10px] ${up ? 'text-positive' : 'text-negative'}`}>{signal.score}</span>
+        <span className={`ml-auto shrink-0 font-mono text-[10px] tabular-nums ${up ? 'text-positive' : 'text-negative'}`}>
+          {signal.score} {formatSignedNumber(signal.scoreDelta, 0)}
+        </span>
       </div>
-      <MiniSparkline values={scoreSeries(signal)} color={up ? '#43d18b' : '#ff6b6b'} height={26} />
+      <div className="flex h-7 items-end gap-1" title={factors.map((f) => `${f.label} ${f.value}/${f.max}`).join(' · ')}>
+        {factors.map((f) => (
+          <div key={f.key} className="flex min-w-0 flex-1 flex-col items-center gap-0.5">
+            <div className="flex h-5 w-full items-end overflow-hidden rounded-[2px] bg-line/60">
+              <div
+                className={`w-full ${f.pct >= 66 ? 'bg-positive' : f.pct >= 33 ? 'bg-accent' : 'bg-negative/70'}`}
+                style={{ height: `${Math.max(6, f.pct)}%` }}
+              />
+            </div>
+            <span className="font-mono text-[8px] leading-none text-ink-dim">{f.label.charAt(0)}</span>
+          </div>
+        ))}
+      </div>
     </Link>
   );
 }
 
 /**
  * Charts hub - a dedicated, RBA-chart-pack-style visual space. The Portfolio tab condenses
- * everything you own + watch (composition donut, sector exposure, momentum sparkline walls);
+ * everything you own + watch (composition donut, sector exposure, score factor walls);
  * the Economy / Markets / Commodities tabs give the macro backdrop. This component builds
  * the Portfolio tab from real data and hands the rest to ChartsTabs. Research only.
  */
@@ -162,10 +169,10 @@ export function ChartsView({ data }: { data: DashboardData }) {
 
       {holdingSignals.length > 0 && (
         <section className="terminal-panel rounded-panel p-3">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Holdings momentum</p>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Holdings - score factors</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
             {holdingSignals.map((s) => (
-              <SparkCard key={s.symbol} signal={s} />
+              <FactorCard key={s.symbol} signal={s} />
             ))}
           </div>
         </section>
@@ -173,10 +180,10 @@ export function ChartsView({ data }: { data: DashboardData }) {
 
       {watchSignals.length > 0 && (
         <section className="terminal-panel rounded-panel p-3">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Watchlist momentum</p>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Watchlist - score factors</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
             {watchSignals.map((s) => (
-              <SparkCard key={s.symbol} signal={s} />
+              <FactorCard key={s.symbol} signal={s} />
             ))}
           </div>
         </section>

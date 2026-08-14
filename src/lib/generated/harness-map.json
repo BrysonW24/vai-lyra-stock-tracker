@@ -5,7 +5,7 @@
   ],
   "stats": {
     "sections": 31,
-    "chains": 15,
+    "chains": 16,
     "gates": 9,
     "layers": 5
   },
@@ -99,6 +99,12 @@
       "file": ".claude/commands/emerging-winner.md",
       "runWhen": "Winner-model change, new domain/gate/analogue, scoring drift, before promoting from shadow-live",
       "job": "Domain scorecard -> classifier -> analogues -> archetype+rank -> risk gates -> immutable ledger; shadow-live + calibrated, engine owns numbers, research never advice"
+    },
+    {
+      "id": "model-generation-eval",
+      "file": ".claude/commands/model-generation-eval.md",
+      "runWhen": "A model generation completes (build -> retrain -> compare -> eval -> holdout -> record + promotion)",
+      "job": "Archive + visualise the cycle: head-to-head board, generation-log entry, report snapshot"
     }
   ],
   "sections": [
@@ -114,12 +120,10 @@
     {
       "section": "Signal + scoring libs",
       "paths": [
-        "src/lib/candle-series.ts",
         "src/lib/live-signals.ts",
         "src/lib/outcomes.ts",
         "src/lib/prime-setups.ts",
         "src/lib/score-breakdown.ts",
-        "src/lib/score-history.ts",
         "src/lib/score-model.ts",
         "src/lib/track-record.ts",
         "src/lib/signal-events.ts",
@@ -526,7 +530,6 @@
         "src/lib/calculators.ts",
         "src/lib/chart-pack.ts",
         "src/lib/command-layout.ts",
-        "src/lib/comparison.ts",
         "src/lib/education.ts",
         "src/lib/flags.ts",
         "src/lib/focus-trap.ts",
@@ -536,6 +539,7 @@
         "src/lib/research-queue.ts",
         "src/lib/scan-freshness.ts",
         "src/lib/surfaces.ts",
+        "src/lib/theme.ts",
         "src/lib/ticker-logos.ts",
         "src/lib/ui.ts",
         "src/lib/usage.ts",

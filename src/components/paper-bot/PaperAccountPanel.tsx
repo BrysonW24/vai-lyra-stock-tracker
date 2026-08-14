@@ -1,7 +1,7 @@
 'use client';
 
 import { Wallet, TrendingUp, Loader2 } from 'lucide-react';
-import { MiniSparkline, MiniCandlestick } from '@/components/ChartPrimitives';
+import { MiniSparkline } from '@/components/ChartPrimitives';
 import { TickerLogo } from '@/components/TickerLogo';
 import { SaaSTooltip } from './SaaSTooltip';
 import { PaperAccountCharts } from './PaperAccountCharts';
@@ -10,8 +10,6 @@ import type { Account } from './paper-bot-types';
 interface PaperAccountPanelProps {
   account: Account | null;
   tourStep: number;
-  chartType: 'line' | 'candle';
-  onChartTypeChange: (type: 'line' | 'candle') => void;
   closing: string | null;
   onClosePosition: (symbol: string) => void;
   onTourDismiss: () => void;
@@ -22,8 +20,6 @@ interface PaperAccountPanelProps {
 export function PaperAccountPanel({
   account,
   tourStep,
-  chartType,
-  onChartTypeChange,
   closing,
   onClosePosition,
   onTourDismiss,
@@ -35,7 +31,7 @@ export function PaperAccountPanel({
       {tourStep === 4 && (
         <SaaSTooltip
           title="Track it live"
-          body="Your simulated trade is now an open position! It tracks live P/L based on real market prices. Tour complete! 🎉"
+          body="That was a scripted walkthrough fill - it is not recorded in your account. When you approve a real paper trade, it lands here as an open position tracking live P/L. Tour complete! 🎉"
           position="bottom"
           onDismiss={onTourDismiss}
           onReplay={onTourReplay}
@@ -93,65 +89,30 @@ export function PaperAccountPanel({
             </div>
           </div>
 
-          {/* Equity curve chart */}
+          {/* Equity curve chart. No derived calendar dates on the axis: curve points are
+              snapshots (per trade / poll), not one-per-day - the old "(Aug 3)" start label
+              invented a date from the point count (2026-08-11 audit). */}
           {account.equityCurve && account.equityCurve.length >= 2 && (() => {
-            const days = account.equityCurve.length;
-            const startDate = new Date(Date.now() - (days - 1) * 86400000);
-            const startLabel = startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-            const nowLabel = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
             return (
               <div className="mb-3 rounded-cell border border-line bg-well p-3">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[9px] uppercase tracking-[0.12em] text-ink-dim">Portfolio Value Over Time</span>
-                  <div className="flex items-center gap-2">
-                    <div className="flex rounded-cell bg-panel p-0.5 border border-line">
-                      <button
-                        type="button"
-                        onClick={() => onChartTypeChange('line')}
-                        className={`min-h-[44px] rounded px-2 py-0.5 text-[8px] font-medium uppercase tracking-wider transition-colors sm:min-h-0 ${
-                          chartType === 'line'
-                            ? 'bg-line-strong text-ink'
-                            : 'text-ink-dim hover:text-ink-3'
-                        }`}
-                      >
-                        Line
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onChartTypeChange('candle')}
-                        className={`min-h-[44px] rounded px-2 py-0.5 text-[8px] font-medium uppercase tracking-wider transition-colors sm:min-h-0 ${
-                          chartType === 'candle'
-                            ? 'bg-line-strong text-ink'
-                            : 'text-ink-dim hover:text-ink-3'
-                        }`}
-                      >
-                        Candle
-                      </button>
-                    </div>
-                    <span className={`text-[9px] font-semibold tabular-nums ${account.equity >= account.startingEquity ? 'text-positive' : 'text-negative'}`}>
-                      {account.equity >= account.startingEquity ? '▲' : '▼'} {Math.abs(((account.equity - account.startingEquity) / account.startingEquity) * 100).toFixed(2)}%
-                    </span>
-                  </div>
+                  <span className={`text-[9px] font-semibold tabular-nums ${account.equity >= account.startingEquity ? 'text-positive' : 'text-negative'}`}>
+                    {account.equity >= account.startingEquity ? '▲' : '▼'} {Math.abs(((account.equity - account.startingEquity) / account.startingEquity) * 100).toFixed(2)}%
+                  </span>
                 </div>
                 {/* SVG paint props (ChartPrimitives): byte-copies of the positive/negative tokens -
-                    fill=/stroke= attributes cannot resolve var(), and gain/loss IS the meaning (P2 ruling). */}
-                {chartType === 'line' ? (
-                  <MiniSparkline
-                    values={account.equityCurve}
-                    color={account.equity >= account.startingEquity ? '#43d18b' : '#ff6b6b'}
-                    className="h-14 w-full"
-                  />
-                ) : (
-                  <MiniCandlestick
-                    values={account.equityCurve}
-                    positiveColor="#43d18b"
-                    negativeColor="#ff6b6b"
-                    className="h-14 w-full"
-                  />
-                )}
+                    fill=/stroke= attributes cannot resolve var(), and gain/loss IS the meaning (P2 ruling).
+                    Line only: the old Candle toggle drew invented OHLC wicks on real daily equity
+                    marks - fabricated intrabar detail, removed in the 2026-08-11 honesty audit. */}
+                <MiniSparkline
+                  values={account.equityCurve}
+                  color={account.equity >= account.startingEquity ? '#43d18b' : '#ff6b6b'}
+                  className="h-14 w-full"
+                />
                 <div className="mt-1 flex justify-between tabular-nums">
-                  <span className="text-[8px] text-ink-dim">Start ({startLabel}) ${account.startingEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                  <span className="text-[8px] text-ink-dim">Now ({nowLabel}) ${account.equity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  <span className="text-[8px] text-ink-dim">Start ${account.startingEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  <span className="text-[8px] text-ink-dim">Now ${account.equity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                 </div>
               </div>
             );

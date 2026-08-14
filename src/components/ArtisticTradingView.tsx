@@ -73,6 +73,11 @@ export function ArtisticTradingView() {
             <p className="font-mono text-[13px] font-semibold text-[#0E1E3A]">NVDA <span className="ml-1 text-[#1FA971]">▲ 2.1%</span></p>
             <p className="font-mono text-[9px] uppercase tracking-wider text-[#5A6B82]">1H · momentum recovery</p>
           </div>
+          {/* Honesty chip: the candles, percent, score and RSI on this panel are an authored
+              illustration of the product, not a live NVDA reading (2026-08-11 audit). */}
+          <span className="ml-auto rounded-full border border-[#B7893B]/40 bg-[#F5E9D2]/80 px-2 py-0.5 font-mono text-[8px] uppercase tracking-[0.12em] text-[#8A6420]">
+            Illustrative
+          </span>
         </div>
 
         {/* chart */}

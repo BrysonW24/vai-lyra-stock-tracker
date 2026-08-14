@@ -110,7 +110,7 @@ export function GlassPortfolioStack() {
 
         {/* Title */}
         <text x="150" y="30" textAnchor="middle" fontSize="14" className="fill-ink-title" fontWeight="bold">
-          Portfolio holdings
+          Example portfolio
         </text>
       </svg>
     </div>

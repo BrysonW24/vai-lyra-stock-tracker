@@ -8,7 +8,7 @@ import { TickerLogo } from '@/components/TickerLogo';
 import { TradingViewChart, DEFAULT_CHART_INDICATORS, type ChartIndicators } from '@/components/TradingViewChart';
 import { PanelCarousel } from '@/components/PanelCarousel';
 import { HoldingSetupSlide } from '@/components/HoldingSetupSlide';
-import { HoldingIntelSlide } from '@/components/HoldingIntelSlide';
+import { HoldingIntelSlide, type HoldingIntel } from '@/components/HoldingIntelSlide';
 import { formatCompactCurrency, formatCurrency, formatSignedNumber, formatSignedPercent, toneClass } from '@/lib/format';
 import { loadLocalHoldings } from '@/lib/local-portfolio';
 
@@ -16,6 +16,10 @@ interface HoldingsMomentumBoardProps {
   holdings: PortfolioHolding[];
   signals: SignalRow[];
   tickers: TickerSetting[];
+  /** Resolved news dataset + provenance for the intel slide; null = no feed resolved. */
+  intel?: HoldingIntel | null;
+  /** The page's data mode - the intel slide may only show sample rows on the demo tour. */
+  pageMode?: 'demo' | 'solo' | 'supabase';
 }
 
 const SLOT_COUNT = 4;
@@ -33,7 +37,7 @@ function readLine(scoreDelta: number, histDelta: number): string {
   return 'Holding steady - little change since the last scan.';
 }
 
-export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMomentumBoardProps) {
+export function HoldingsMomentumBoard({ holdings, signals, tickers, intel = null, pageMode = 'demo' }: HoldingsMomentumBoardProps) {
   const signalBySymbol = useMemo(() => new Map(signals.map((s) => [s.symbol, s])), [signals]);
   const holdingBySymbol = useMemo(() => new Map(holdings.map((h) => [h.symbol, h])), [holdings]);
   // Symbol -> TradingView exchange prefix, mirroring the ticker-detail page so
@@ -333,7 +337,7 @@ export function HoldingsMomentumBoard({ holdings, signals, tickers }: HoldingsMo
                       key: 'intel',
                       label: 'Intel',
                       color: 'green',
-                      node: <HoldingIntelSlide symbol={signal.symbol} />,
+                      node: <HoldingIntelSlide symbol={signal.symbol} intel={intel} pageMode={pageMode} />,
                     },
                   ]}
                 />

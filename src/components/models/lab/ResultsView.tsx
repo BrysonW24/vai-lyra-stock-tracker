@@ -759,7 +759,7 @@ function EwDetail({ r, focus }: { r: EmergingWinnerResult; focus: string[] }) {
       <Section title="Provenance">
         <p className="text-[11px] leading-relaxed text-white/45">{r.analogues.provenance}</p>
         <p className="mt-1 text-[10px] text-white/35">
-          {r.engine_version} · {r.generated_at}
+          {r.engine_version} · {Number.isNaN(new Date(r.generated_at).getTime()) ? r.generated_at : new Date(r.generated_at).toLocaleString()}
         </p>
         <Link href="/emerging-winners" className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-sky-300 hover:underline">
           Open the full card in Emerging Winners <ArrowRight size={12} />

@@ -63,6 +63,7 @@ export function ModelLab({ data, ew }: { data: DashboardData; ew: EmergingWinner
       ew,
       watchlist: data.watchlist,
       portfolio: data.portfolio,
+      generatedFrom: data.generatedFrom,
     }),
     [data, ew],
   );

@@ -70,7 +70,8 @@ function ByokViz() {
         <img className="ug-prov ug-p2" src="/logos/anthropic-claude.svg" alt="Anthropic Claude" width={24} height={24} />
       </div>
       <p className="ug-chips">OPENAI · ANTHROPIC · GEMINI · +MORE</p>
-      <div className="ug-typing"><i>&quot;NVDA scores 84: RSI turning up.&quot;</i></div>
+      {/* Neutral placeholder - never a real ticker with an invented score (2026-08-11 audit). */}
+      <div className="ug-typing"><i>&quot;Your ticker scores 84: RSI turning up.&quot;</i></div>
       <p className="ug-cap">THE ENGINE OWNS EVERY NUMBER</p>
     </div>
   );
@@ -78,7 +79,7 @@ function ByokViz() {
 
 function AlertsViz() {
   const pills: Array<{ logo: string; label: string; ml: number; delay: string }> = [
-    { logo: '/logos/telegram.svg', label: 'Strong setup · NVDA 84', ml: 0, delay: '0s' },
+    { logo: '/logos/telegram.svg', label: 'Strong setup · your ticker 84', ml: 0, delay: '0s' },
     { logo: '/logos/slack.svg', label: 'Feedback -> #lyra', ml: 26, delay: '.45s' },
     { logo: '/logos/whatsapp.svg', label: 'Hourly summary (soon)', ml: 12, delay: '.9s' },
   ];

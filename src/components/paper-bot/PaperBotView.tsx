@@ -53,7 +53,6 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
   const [cliInput, setCliInput] = useState('');
   const [cliBusy, setCliBusy] = useState(false);
   const [closing, setClosing] = useState<string | null>(null);
-  const [chartType, setChartType] = useState<'line' | 'candle'>('line');
   const cliEndRef = useRef<HTMLDivElement>(null);
 
   const loadAccount = useCallback(async () => {
@@ -247,8 +246,6 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
       <PaperAccountPanel
         account={account}
         tourStep={tourStep}
-        chartType={chartType}
-        onChartTypeChange={setChartType}
         closing={closing}
         onClosePosition={closePosition}
         onTourDismiss={() => {

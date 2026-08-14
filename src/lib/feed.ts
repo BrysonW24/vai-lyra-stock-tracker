@@ -51,6 +51,14 @@ export function buildLiveWire(
    * shows demo headlines as real market news - the /wire half of the 2026-07-27 audit fix.
    */
   intelligenceIsSample = true,
+  /**
+   * True when the calendar events are the re-anchored sample seeds. Flags every event
+   * item `sample` - the footer promises sample items are tagged, and calendar rows were
+   * the one stream that broke that contract (2026-08-11 audit).
+   */
+  calendarIsSample = true,
+  /** True when the signal changes come from the bundled demo dataset, not the live engine. */
+  signalChangesAreSample = false,
 ): FeedItem[] {
   const items: FeedItem[] = [];
 
@@ -63,6 +71,7 @@ export function buildLiveWire(
       text: `${c.label}${c.change ? ` (${c.change > 0 ? '+' : ''}${c.change})` : ''}`,
       tone: signalTone(c.status),
       source: 'Signal engine',
+      sample: signalChangesAreSample || undefined,
     });
   });
 
@@ -96,6 +105,7 @@ export function buildLiveWire(
       text: e.title,
       tone: e.importance === 'high' ? 'warn' : 'neutral',
       source: eventTypeLabel(e.type),
+      sample: calendarIsSample,
     });
   });
 

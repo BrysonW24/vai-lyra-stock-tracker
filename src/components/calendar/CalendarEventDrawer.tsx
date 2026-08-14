@@ -114,8 +114,10 @@ export function CalendarEventDrawer({
             <span className="rounded-full border border-accent-border bg-accent-tint px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-accent">Sample</span>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-xs">
+            {/* Timing is not asserted until the live earnings feed carries it - "After market
+                close" was an invented per-event fact, wrong for pre-market reporters (2026-08-11). */}
             <span className="text-ink-3">Reports</span>
-            <span className="text-right text-ink-title">After market close</span>
+            <span className="text-right text-ink-3">live next</span>
             <span className="text-ink-3">Consensus EPS</span>
             <span className="text-right text-ink-3">live next</span>
             <span className="text-ink-3">Last quarter</span>

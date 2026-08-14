@@ -325,16 +325,18 @@ function BenchmarkChart({
                 </div>
               );
             })}
-            <p className="mt-1 text-center font-mono text-[8px] text-ink-dim/80">
-              {new Date(Date.now() - (days - 1 - hovered.idx) * 86400000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-            </p>
+            {/* No derived calendar date here: the Session series is not one-point-per-day, so an
+                index-times-86400000 date was invented for it (2026-08-11 audit). The series share
+                an index, not a calendar - the footer says so. */}
           </div>
         )}
       </div>
 
       {/* X-axis labels */}
       <div className="mt-1 flex justify-between px-1">
-        <span className="font-mono text-[8px] text-ink-dim/80">{new Date(Date.now() - 30 * 86400000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+        {/* "30d ago" is true only for the daily benchmark series; the Session line spans its own
+            shorter window - so the axis names the window class, not a hard calendar date. */}
+        <span className="font-mono text-[8px] text-ink-dim/80">benchmarks: 30d ago · session: first snapshot</span>
         <span className="font-mono text-[8px] text-ink-dim/80">Today</span>
       </div>
 

@@ -36,7 +36,6 @@ import {
 import { computeGoalProgress } from '@/lib/goal';
 import { computePortfolioActions } from '@/lib/portfolio-actions';
 import { computeOrientation } from '@/lib/orientation';
-import { demoIntelligenceFeed } from '@/lib/intelligence';
 import {
   formatCurrency,
   formatPercent,
@@ -305,8 +304,11 @@ export function SoloCommandLayout({
     maxPositionPct: capital?.maxPositionSizePct ?? null,
     goalBehind: goal.pace === 'behind',
   });
+  // Honesty rule (2026-08-11 audit): Solo holdings are the user's REAL positions, and
+  // Solo has no live news feed - so the orientation gets an empty news flow (and the
+  // cockpit hides the section) rather than orienting a real book on fabricated headlines.
   const orientation = computeOrientation({
-    news: demoIntelligenceFeed,
+    news: [],
     heldSymbols: holdings.map((holding) => holding.symbol),
     watchedSymbols: localWatchlist.map((item) => item.symbol),
   });
@@ -355,6 +357,8 @@ export function SoloCommandLayout({
         holdings={holdings}
         signals={sourceData.signals}
         tickers={sourceData.tickers}
+        intel={null}
+        pageMode="solo"
       />,
     ],
     [

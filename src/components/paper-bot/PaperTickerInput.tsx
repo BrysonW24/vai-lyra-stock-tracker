@@ -178,10 +178,8 @@ export function PaperTickerInput({
                       <span className="truncate text-[10px] text-ink-dim">{s.name}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="h-1.5 w-1.5 rounded-full bg-positive animate-pulse" />
-                    <span className="text-[8px] text-positive/50">Live</span>
-                  </div>
+                  {/* No badge here: universe membership is not a verified live quote - the old
+                      pulsing "Live" dot asserted data status before any fetch (2026-08-11 audit). */}
                 </button>
               ))}
             </div>

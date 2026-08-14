@@ -440,7 +440,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     // arrays if the user is signed in.
     let portfolio = userId ? ([] as PortfolioHolding[]) : demoDashboardData.portfolio;
     let watchlist = userId ? ([] as WatchlistRow[]) : demoDashboardData.watchlist;
-    let signalChanges = liveSignals.length > 0 ? deriveSignalChanges(liveSignals) : demoDashboardData.signalChanges;
+    // Live path: signal changes are derived from live signals or honestly EMPTY. The old
+    // demo-substitution here put fabricated "NVDA score dropped" rows into the Live Wire
+    // of real deployments with no sample tag (2026-08-11 audit) - empty is the truth.
+    const signalChanges = liveSignals.length > 0 ? deriveSignalChanges(liveSignals) : [];
 
     try {
       // RLS already scopes private rows to the signed-in user; the explicit user_id
@@ -490,8 +493,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     } catch {
       /* keep per-field demo fallback for portfolio/watchlist */
     }
-
-    if (signalChanges.length === 0) signalChanges = demoDashboardData.signalChanges;
 
     return {
       generatedFrom: 'supabase',

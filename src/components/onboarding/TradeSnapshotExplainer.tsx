@@ -30,7 +30,13 @@ export function TradeSnapshotExplainer({ onNext }: TradeSnapshotExplainerProps) 
         ].map(({ label, snap, accent }) => (
           <div className="terminal-panel rounded-cell p-2.5" key={snap.id}>
             <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-[13px] font-semibold text-ink">{snap.symbol}</span>
+              <span className="flex items-center gap-1.5 font-mono text-[13px] font-semibold text-ink">
+                {snap.symbol}
+                {/* Worked example, not a reconstructed real trade (2026-08-11 audit). */}
+                <span className="rounded border border-accent-border/60 bg-accent-tint px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-accent">
+                  Example
+                </span>
+              </span>
               <span
                 className="rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em]"
                 style={{ borderColor: accent, color: accent }}

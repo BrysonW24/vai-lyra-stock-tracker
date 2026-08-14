@@ -2,8 +2,10 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import type { SignalStatus } from '@/types/scanner';
 
 export function formatNumber(value: number, digits = 1): string {
+  // Non-finite input reads as MISSING, never as a plausible zero - '0.0' masked upstream
+  // data errors as real readings (RSI 0.0 looks like extreme oversold; 2026-08-11 audit).
   if (!Number.isFinite(value)) {
-    return '0.0';
+    return '-';
   }
 
   return value.toLocaleString('en-US', {
@@ -26,6 +28,10 @@ export function formatSignedPercent(value: number, digits = 1): string {
 }
 
 export function formatCurrency(value: number, currency = 'USD'): string {
+  if (!Number.isFinite(value)) {
+    return '-';
+  }
+
   return value.toLocaleString('en-US', {
     style: 'currency',
     currency,
@@ -50,7 +56,14 @@ export function relativeTime(isoDate: string | null): string {
     return 'Not sent yet';
   }
 
-  return `${formatDistanceToNowStrict(new Date(isoDate))} ago`;
+  const date = new Date(isoDate);
+  // Future instants read "in 10 hours", not "10 hours ago" - the unconditional suffix
+  // inverted calendar events admitted by the wire's grace window (2026-08-11 audit).
+  if (date.getTime() > Date.now()) {
+    return `in ${formatDistanceToNowStrict(date)}`;
+  }
+
+  return `${formatDistanceToNowStrict(date)} ago`;
 }
 
 export function statusLabel(status: SignalStatus): string {

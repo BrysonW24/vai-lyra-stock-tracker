@@ -170,6 +170,10 @@ export async function POST(request: NextRequest) {
       // The tour flag is signed into the capability, so this branch is authentic - a real approved
       // intent (tour=false) can never be diverted into the fixed-price mock fill.
       if (tour) {
+        // Tour fills are a SCRIPTED demonstration at a placeholder price - they are returned
+        // for the tour UI only and are NEVER recorded or persisted into the paper account.
+        // (Previously this branch wrote a $150 AAPL fill into the user's durable track record
+        // - fabricated P/L in real analytics, removed in the 2026-08-11 audit.)
         const fill = {
           symbol: intent.symbol,
           side: intent.side,
@@ -181,13 +185,6 @@ export async function POST(request: NextRequest) {
           fillTimestamp: new Date().toISOString(),
           sourceOrderIntentId: intent.id
         };
-        const { recordPaperFill } = await import('@/lib/trading/paper-account-store');
-        recordPaperFill(fill);
-
-        // Persist it if authed so the 15-second polling doesn't erase the mock trade
-        const { persistFillIfAuthed } = await import('@/lib/trading/paper-account-repo');
-        await persistFillIfAuthed(fill, intent);
-
         const run = {
           status: 'paper_executed' as const,
           intent: { ...intent, status: 'paper_executed' as const },

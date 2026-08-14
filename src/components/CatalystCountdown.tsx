@@ -120,9 +120,24 @@ function Colon() {
  * are still ahead with a second-by-second countdown so Command feels alive and the
  * "set up before it lands" window is impossible to miss. Research framing only.
  */
-export function CatalystCountdown({ events = [] }: { events?: CalendarEvent[] }) {
+export function CatalystCountdown({
+  events = [],
+  calendarSource = 'sample',
+  pageMode = 'demo',
+}: {
+  events?: CalendarEvent[];
+  /** Provenance of the calendar rows - sample seeds carry re-anchored, invented dates. */
+  calendarSource?: 'live' | 'sample';
+  /** The page's data mode - sample dates may only tick on the demo tour. */
+  pageMode?: 'demo' | 'solo' | 'supabase';
+}) {
   const [mounted, setMounted] = useState(false);
   const [nowMs, setNowMs] = useState(0);
+  // Honesty rule (2026-08-11 audit): a countdown is a trade-around instant, so calendar
+  // rows may only tick when they are LIVE - or on the demo tour, clearly chipped. A real
+  // deployment with no live calendar shows the curated editorial list alone.
+  const useCalendar = calendarSource === 'live' || pageMode === 'demo';
+  const calendarIsSample = useCalendar && calendarSource !== 'live';
 
   // Tick every second, client-only, to avoid any server/client hydration mismatch.
   useEffect(() => {
@@ -149,7 +164,7 @@ export function CatalystCountdown({ events = [] }: { events?: CalendarEvent[] })
       heat: catalyst.heat,
       href: '#catalyst-radar',
     }));
-  const featured: LiveMoment[] = [...curated, ...liveMoments(events, nowMs)]
+  const featured: LiveMoment[] = [...curated, ...(useCalendar ? liveMoments(events, nowMs) : [])]
     .sort((a, b) => (b.heat !== a.heat ? b.heat - a.heat : a.targetMs - b.targetMs))
     .slice(0, 3);
 
@@ -185,6 +200,11 @@ export function CatalystCountdown({ events = [] }: { events?: CalendarEvent[] })
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
           </span>
           <span className="font-mono text-[8px] tracking-[0.14em] text-accent">counting down</span>
+          {calendarIsSample ? (
+            <span className="rounded border border-accent-border/60 bg-accent-tint px-1.5 py-0.5 text-[8px] font-medium tracking-[0.1em] text-accent">
+              Sample dates
+            </span>
+          ) : null}
         </p>
         <a href="#catalyst-radar" className="shrink-0 font-mono text-[10px] text-ink-3 transition hover:text-ink-title">
           All catalysts →

@@ -52,7 +52,10 @@ export const DATA_SOURCES: Record<string, DataSource> = {
   signals: { key: 'signals', label: 'Lyra deterministic signals', state: 'connected' },
   themes: { key: 'themes', label: 'Theme and supply-chain mappings', state: 'connected' },
   fundamentals: { key: 'fundamentals', label: 'Company fundamentals', state: 'connected' },
-  government: { key: 'government', label: 'Government and contract evidence', state: 'connected' },
+  // NOT 'connected': the engine's own weights carry government at exactly zero (pipeline
+  // unbuilt) and the surface banner names it as part of the data gate - the green
+  // "Available" check contradicted both (2026-08-11 audit).
+  government: { key: 'government', label: 'Government and contract evidence', state: 'limited' },
   insider: { key: 'insider', label: 'Insider / smart-money activity', state: 'limited' },
   hiring: { key: 'hiring', label: 'Hiring history', state: 'not-connected' },
 };
@@ -384,6 +387,8 @@ export interface RunData {
   ew: EmergingWinnerQueue;
   watchlist: WatchlistRow[];
   portfolio: PortfolioHolding[];
+  /** Dataset provenance - 'demo' means the bundled sample book, so every run over it is illustrative. */
+  generatedFrom: 'supabase' | 'demo';
 }
 
 export type StageState = 'queued' | 'running' | 'complete' | 'warning';
@@ -587,7 +592,9 @@ function buildRadarRun(config: LabConfig, data: RunData): RunResult {
       passed: results.length,
       surfaced: Math.min(results.length, 25),
       universeLabel,
-      illustrative: data.signals.length > 0 ? false : true,
+      // Demo-dataset runs are ALWAYS illustrative - signals merely existing proved nothing,
+      // since the bundled sample book has signals too (2026-08-11 audit).
+      illustrative: data.generatedFrom !== 'supabase' || data.signals.length === 0,
       version: model.version,
       marketLabel: marketFor(config.market).label,
       capBandLabel: capBandFor(config.capBand).label,

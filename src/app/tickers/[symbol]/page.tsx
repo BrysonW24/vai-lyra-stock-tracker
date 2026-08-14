@@ -4,6 +4,8 @@ import { TickerChartView } from '@/components/TickerChartView';
 import { TickerNotScanned } from '@/components/TickerNotScanned';
 import { TwinCaptureBeacon } from '@/components/twin/TwinCaptureBeacon';
 import { getDashboardData } from '@/lib/data';
+import { getIntelligenceLive } from '@/lib/intelligence-live';
+import { getCalendarEventsLive } from '@/lib/calendar-live';
 
 interface TickerPageProps {
   params: Promise<{
@@ -15,7 +17,11 @@ interface TickerPageProps {
 export default async function TickerPage({ params, searchParams }: TickerPageProps) {
   const { symbol } = await params;
   const { view } = await searchParams;
-  const data = await getDashboardData();
+  const [data, intel, calendar] = await Promise.all([
+    getDashboardData(),
+    getIntelligenceLive(),
+    getCalendarEventsLive(),
+  ]);
   const signal = data.signals.find((candidate) => candidate.symbol.toLowerCase() === symbol.toLowerCase());
 
   // Not a bare 404: a name the user typed but Lyra has not scanned gets an honest destination -
@@ -46,7 +52,16 @@ export default async function TickerPage({ params, searchParams }: TickerPagePro
           companyName={signal.companyName}
           fullSetup={view === 'setup'}
         />
-        <TickerDetail signal={signal} />
+        <TickerDetail
+          signal={signal}
+          intel={{
+            news: intel.feed,
+            newsSource: intel.source,
+            events: calendar.events,
+            eventsSource: calendar.source,
+            pageMode: data.mode,
+          }}
+        />
       </div>
     </AppShell>
   );

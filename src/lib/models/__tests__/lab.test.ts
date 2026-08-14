@@ -109,6 +109,7 @@ function data(over: Partial<RunData> = {}): RunData {
     ew: queue([]),
     watchlist: [],
     portfolio: [],
+    generatedFrom: 'supabase',
     ...over,
   };
 }

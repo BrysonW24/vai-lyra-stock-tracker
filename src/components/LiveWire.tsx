@@ -32,13 +32,19 @@ const FILTERS: Array<{ key: 'all' | FeedKind; label: string }> = [
 export function LiveWire({
   items,
   intelligenceIsSample = true,
+  hasLiveSignalChanges = false,
 }: {
   items: FeedItem[];
   /** True when the ticker-news stream is the bundled illustrative sample (no live worker rows). */
   intelligenceIsSample?: boolean;
+  /** True when at least one signal-change row genuinely came from the live engine. */
+  hasLiveSignalChanges?: boolean;
 }) {
   const [filter, setFilter] = useState<'all' | FeedKind>('all');
   const shown = filter === 'all' ? items : items.filter((i) => i.kind === filter);
+  // The badge asserts only what the stream actually contains: a pulsing Live needs at
+  // least one genuinely live row; an all-sample stream says Sample (2026-08-11 audit).
+  const isLive = hasLiveSignalChanges || !intelligenceIsSample;
 
   return (
     <section className="terminal-panel overflow-hidden rounded-panel">
@@ -47,13 +53,20 @@ export function LiveWire({
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-3">Live wire</p>
           <p className="mt-0.5 text-[10px] text-ink-2">Every signal change + market headlines, newest first</p>
         </div>
-        <span className="inline-flex shrink-0 items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-positive">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-positive" />
+        {isLive ? (
+          <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-positive">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-positive" />
+            </span>
+            Live
           </span>
-          Live
-        </span>
+        ) : (
+          <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-accent">
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+            Sample
+          </span>
+        )}
       </div>
 
       {/* Small minimal filters */}
@@ -98,9 +111,11 @@ export function LiveWire({
       </div>
 
       <p className="border-t border-line px-3 py-1.5 font-mono text-[10px] text-ink-dim">
-        {intelligenceIsSample
-          ? 'Signal changes are live from the engine. The news + macro/policy wire is an illustrative sample until live newsflow (Finnhub + AI) lands - sample items are tagged "· sample".'
-          : 'Signal changes and ticker news are live; the macro/policy wire is a sample until it wires in - sample items are tagged "· sample".'}
+        {hasLiveSignalChanges
+          ? intelligenceIsSample
+            ? 'Signal changes are live from the engine. The news + macro/policy wire is an illustrative sample until live newsflow (Finnhub + AI) lands - sample items are tagged "· sample".'
+            : 'Signal changes and ticker news are live; the macro/policy wire is a sample until it wires in - sample items are tagged "· sample".'
+          : 'No live signal changes recorded yet. Everything tagged "· sample" is illustrative - nothing untagged is invented.'}
       </p>
     </section>
   );

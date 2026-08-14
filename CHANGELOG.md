@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.127.0] - 2026-08-11
+
+The honesty audit: every fabricated visual in the app, found and removed.
+
+### Changed
+
+- A full-app audit (8 parallel reviewers plus a manual sweep) hunted the same crime the ticker page had: invented data drawn as if measured. 47 findings, 13 of them critical, all triaged. The Comparison Lab was the worst - its entire 30-hour multi-ticker "history" was a Math.random walk regenerated on every server restart, with a hover scrubber over fabricated timestamps. It is rebuilt on real scanned signals: real current values per metric, ranked bars, and a full side-by-side table - no time series is drawn because none is recorded, and none is invented.
+- Fabricated context could reach your REAL holdings, and no longer can. The Command page fed hardcoded demo headlines (fake Goldman/Reuters stories) into the "Across your names" orientation and the holdings intel slides on live deployments; the countdown hero ticked second-by-second toward sample earnings dates a trader could position around; the Live Wire substituted demo signal changes under a pulsing green "Live" pill and a footer claiming they came from the engine. All of it now follows one rule: live rows render as intelligence, sample rows render only on the demo tour (clearly chipped), and a live page with no feed says so instead of faking one. The paper-bot guided tour also stops writing its scripted $150 fill into your durable paper account - tour fills are display-only now.
+- Dozens of smaller crimes fixed in the same pass: the DCA calculator no longer adds random noise to its price path (same inputs, same answer, every time); NaN can no longer render as a plausible "0.0"; future events read "in 10 hours" not "10 hours ago"; the Model Lab stops showing invented per-stage execution times and relabels its reveal as the staged replay it is; zero-count funnel bars draw nothing; fake community-member avatars, invented "Live" badges on unfetched quotes, and the dead fabricated-OHLC/score-history chart code are all gone. The IPO deep-dive now banners sample records. What could not be fixed without backend work is labelled honestly instead.
+
 ## [0.126.0] - 2026-08-11
 
 The ticker page stops faking history and shows the real decision.
@@ -1732,7 +1742,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.126.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.127.0...HEAD
+[0.127.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.126.0...v0.127.0
 [0.126.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.125.0...v0.126.0
 [0.125.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.124.1...v0.125.0
 [0.124.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.124.0...v0.124.1

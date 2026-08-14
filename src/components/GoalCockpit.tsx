@@ -55,6 +55,8 @@ interface Props {
   actions: PortfolioAction[];
   /** Two-sided news read across held + watched names. Omitted when there is nothing to show. */
   orientation?: Orientation;
+  /** True when the orientation news is the bundled sample feed (demo tour only) - chips the section. */
+  orientationSample?: boolean;
   baseCurrency?: string;
   /** The user's own saved target (null = milestone ladder). */
   currentTarget?: number | null;
@@ -64,7 +66,7 @@ interface Props {
   isEmptyState?: boolean;
 }
 
-export function GoalCockpit({ goal, actions, orientation, baseCurrency = 'USD', currentTarget = null, canSetTarget, isEmptyState }: Props) {
+export function GoalCockpit({ goal, actions, orientation, orientationSample = false, baseCurrency = 'USD', currentTarget = null, canSetTarget, isEmptyState }: Props) {
   const cur = (n: number) => formatCurrency(n, baseCurrency);
   const pace = PACE_META[goal.pace];
   const returnPositive = goal.totalReturnDollars >= 0;
@@ -149,9 +151,14 @@ export function GoalCockpit({ goal, actions, orientation, baseCurrency = 'USD', 
         {/* Orientation - a true two-sided read across the names you hold AND watch: good and bad. */}
         {orientation && (orientation.opportunities.length > 0 || orientation.risks.length > 0) && (
           <div className="mt-3 border-t border-line pt-2.5">
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-3">
+            <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-3">
               Across your names - <span className="text-positive">{orientation.opportunities.length} good</span>,{' '}
               <span className="text-negative-soft">{orientation.risks.length} bad</span>
+              {orientationSample ? (
+                <span className="rounded border border-accent-border/60 bg-accent-tint px-1.5 py-0.5 text-[9px] font-medium tracking-[0.1em] text-accent">
+                  Sample
+                </span>
+              ) : null}
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               <div>

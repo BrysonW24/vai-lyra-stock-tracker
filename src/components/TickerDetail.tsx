@@ -1,7 +1,7 @@
 import type { SignalRow } from '@/types/scanner';
 import { StatusBadge } from '@/components/StatusBadge';
 import { OutcomeHistoryPanel } from '@/components/tickers/OutcomeHistoryPanel';
-import { TickerInsightsPanel } from '@/components/tickers/TickerInsightsPanel';
+import { TickerInsightsPanel, type TickerIntelProps } from '@/components/tickers/TickerInsightsPanel';
 import { SetupScorecard } from '@/components/tickers/SetupScorecard';
 import { ScanDeltaPanel } from '@/components/tickers/ScanDeltaPanel';
 import { SaveButton } from '@/components/research/SaveButton';
@@ -11,6 +11,8 @@ import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, format
 
 interface TickerDetailProps {
   signal: SignalRow;
+  /** Live-or-sample news + calendar context, resolved server-side by the page. */
+  intel: Omit<TickerIntelProps, 'signal'>;
 }
 
 function MetricBar({ label, value }: { label: string; value: number }) {
@@ -44,7 +46,7 @@ function ExplanationList({ title, items, tone }: { title: string; items: string[
   );
 }
 
-export function TickerDetail({ signal }: TickerDetailProps) {
+export function TickerDetail({ signal, intel }: TickerDetailProps) {
   return (
     <section className="space-y-3">
       <div className="terminal-panel rounded-panel px-3 py-3">
@@ -90,7 +92,7 @@ export function TickerDetail({ signal }: TickerDetailProps) {
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[1.3fr_0.7fr]">
-        <TickerInsightsPanel signal={signal} />
+        <TickerInsightsPanel signal={signal} {...intel} />
         <SetupScorecard signal={signal} />
       </div>
 

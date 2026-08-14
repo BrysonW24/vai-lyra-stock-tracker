@@ -134,10 +134,16 @@ export async function getIposLive(now: Date = new Date()): Promise<IpoDataset> {
 }
 
 /** Single IPO by symbol: live row when available, sample fallback, undefined when unknown. */
-export async function getIpoBySymbolLive(symbol: string, now: Date = new Date()): Promise<IpoCompany | undefined> {
-  const fallback = () => {
+export interface IpoLookup {
+  ipo: IpoCompany;
+  /** 'live' = row from the nightly sync; 'sample' = bundled editorial seed record. */
+  source: 'live' | 'sample';
+}
+
+export async function getIpoBySymbolLive(symbol: string, now: Date = new Date()): Promise<IpoLookup | undefined> {
+  const fallback = (): IpoLookup | undefined => {
     const ipo = getIpoBySymbol(symbol);
-    return ipo ? withEffectiveStatus([ipo], now)[0] : undefined;
+    return ipo ? { ipo: withEffectiveStatus([ipo], now)[0], source: 'sample' } : undefined;
   };
 
   const supabase = await createSupabaseServerClient();
@@ -147,7 +153,7 @@ export async function getIpoBySymbolLive(symbol: string, now: Date = new Date())
     const { data, error } = await supabase.from('ipos').select('*').ilike('symbol', symbol).limit(1);
     if (error || !data || data.length === 0) return fallback();
     const mapped = mapIpoRow(data[0] as IpoRow);
-    return mapped ? withEffectiveStatus([mapped], now)[0] : fallback();
+    return mapped ? { ipo: withEffectiveStatus([mapped], now)[0], source: 'live' } : fallback();
   } catch {
     return fallback();
   }

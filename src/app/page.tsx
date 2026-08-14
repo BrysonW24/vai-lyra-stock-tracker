@@ -30,7 +30,7 @@ import { GoalCockpit } from '@/components/GoalCockpit';
 import { computeGoalProgress } from '@/lib/goal';
 import { computePortfolioActions } from '@/lib/portfolio-actions';
 import { computeOrientation } from '@/lib/orientation';
-import { demoIntelligenceFeed } from '@/lib/intelligence';
+import { getIntelligenceLive } from '@/lib/intelligence-live';
 import { getUserConstraints } from '@/lib/ai/user-context';
 import { getDashboardData } from '@/lib/data';
 import { getMarketContextLive, getMacroContextLive } from '@/lib/market-context-live';
@@ -51,7 +51,7 @@ export default async function OverviewPage() {
   );
   // These four are independent - fetch them concurrently instead of one-after-another
   // so the server render waits on the slowest, not the sum.
-  const [data, marketContext, macroContext, setupStatus, paperAccount, twinAffinity, constraints, calendar] = await Promise.all([
+  const [data, marketContext, macroContext, setupStatus, paperAccount, twinAffinity, constraints, calendar, intel] = await Promise.all([
     getDashboardData(),
     getMarketContextLive(),
     getMacroContextLive(),
@@ -62,6 +62,9 @@ export default async function OverviewPage() {
     // Live calendar feeds the countdown hero (RBA/FOMC/IPO/earnings). Degrades to the
     // sample set inside getCalendarEventsLive; a hard failure just means no live moments.
     getCalendarEventsLive().catch(() => null),
+    // Live news feeds the orientation + holdings intel; source 'sample' means the bundled
+    // demo feed, which may only render on the demo tour - never against a real book.
+    getIntelligenceLive().catch(() => null),
   ]);
 
   // Goal cockpit inputs: standing (equity = holdings + cash), return basis, and the risk/goal profile
@@ -87,11 +90,16 @@ export default async function OverviewPage() {
     goalBehind: goal.pace === 'behind',
   });
   // Two-sided orientation: the news flow (good and bad) across the names you hold AND watch.
+  // Honesty rule (2026-08-11 audit): LIVE news orients; the bundled sample feed may only
+  // orient the demo tour's sample book - fabricated headlines never touch a real holding.
+  const intelIsLive = intel?.source === 'live';
+  const orientationNews = intelIsLive || data.mode === 'demo' ? (intel?.feed ?? []) : [];
   const orientation = computeOrientation({
-    news: demoIntelligenceFeed,
+    news: orientationNews,
     heldSymbols: data.portfolio.map((h) => h.symbol),
     watchedSymbols: data.watchlist.map((w) => w.symbol),
   });
+  const orientationSample = !intelIsLive && orientationNews.length > 0;
   const cockpitEmpty = data.portfolio.length === 0 && cashAvailable <= 0;
   const cockpitCurrency = constraints?.baseCurrency ?? 'USD';
   // Strongest setups: real strong_setup rows when they exist; otherwise fall back to
@@ -137,7 +145,7 @@ export default async function OverviewPage() {
   // Section order here is the DEFAULT layout; the user can reorder / hide via Customise. The goal
   // cockpit leads: where you stand against your goal and what your money needs from you, first.
   const sections: CommandSectionNode[] = [
-    { id: 'goal-cockpit', node: <GoalCockpit goal={goal} actions={portfolioActions} orientation={orientation} baseCurrency={cockpitCurrency} currentTarget={constraints?.goalTargetAmount ?? null} canSetTarget={setupStatus.signedIn} isEmptyState={cockpitEmpty} /> },
+    { id: 'goal-cockpit', node: <GoalCockpit goal={goal} actions={portfolioActions} orientation={orientation} orientationSample={orientationSample} baseCurrency={cockpitCurrency} currentTarget={constraints?.goalTargetAmount ?? null} canSetTarget={setupStatus.signedIn} isEmptyState={cockpitEmpty} /> },
     { id: 'runners', node: <ExecutiveStrip panels={stripPanels} /> },
     { id: 'metrics', node: <MetricStrip data={data} /> },
     { id: 'paper-bot', node: <PaperBotStrip account={paperAccount} /> },
@@ -156,8 +164,8 @@ export default async function OverviewPage() {
     { id: 'daily-brief', node: <DailyBriefCard data={data} market={marketContext} /> },
     { id: 'next-best', node: <NextBestActions signals={data.signals} portfolio={data.portfolio} watchlist={data.watchlist} /> },
     { id: 'prime', node: <PrimeSetupsBoard signals={data.signals} /> },
-    { id: 'countdown', node: <CatalystCountdown events={calendar?.events ?? []} /> },
-    { id: 'charts', node: <HoldingsMomentumBoard holdings={data.portfolio} signals={data.signals} tickers={data.tickers} /> },
+    { id: 'countdown', node: <CatalystCountdown events={calendar?.events ?? []} calendarSource={calendar?.source ?? 'sample'} pageMode={data.mode} /> },
+    { id: 'charts', node: <HoldingsMomentumBoard holdings={data.portfolio} signals={data.signals} tickers={data.tickers} intel={intel ? { feed: intel.feed, hypeMap: intel.hypeMap, source: intel.source } : null} pageMode={data.mode} /> },
     { id: 'signals', node: <SignalEventsPanel signals={data.signals} /> },
     { id: 'catalysts', node: <CatalystRadar /> },
     { id: 'watchlist', node: <WatchlistTriggerBoard rows={watchlistNearTrigger} /> },

@@ -107,7 +107,6 @@ export function RunTimeline({
   const [states, setStates] = useState<StageState[]>(() =>
     run.stages.map((s) => (mode === 'completed' ? finalState(s.state) : 'queued')),
   );
-  const [doneAt, setDoneAt] = useState<(number | null)[]>(() => run.stages.map(() => null));
   const [elapsed, setElapsed] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
   const [allLogsOpen, setAllLogsOpen] = useState(false);
@@ -122,7 +121,6 @@ export function RunTimeline({
   useEffect(() => {
     if (mode !== 'live') return;
     setStates(run.stages.map(() => 'queued'));
-    setDoneAt(run.stages.map(() => null));
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     run.stages.forEach((stage, i) => {
@@ -135,7 +133,6 @@ export function RunTimeline({
         setTimeout(
           () => {
             setStates((prev) => prev.map((s, idx) => (idx === i ? finalState(stage.state) : s)));
-            setDoneAt((prev) => prev.map((v, idx) => (idx === i ? (i * STEP_MS + STEP_MS * 0.62) / 1000 : v)));
           },
           i * STEP_MS + STEP_MS * 0.62,
         ),
@@ -195,8 +192,11 @@ export function RunTimeline({
     <section className="terminal-panel rounded-2xl p-4">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-2">
+        {/* The run computes synchronously before this animation begins - so the badge and
+            timer describe a staged REPLAY of the completed pipeline, never live execution
+            time (2026-08-11 audit). */}
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-white">Live model execution</h2>
+          <h2 className="text-sm font-semibold text-white">Model execution</h2>
           {idle ? (
             <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/50">Idle</span>
           ) : finished ? (
@@ -205,10 +205,10 @@ export function RunTimeline({
             </span>
           ) : (
             <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-300 ring-1 ring-emerald-400/30">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" /> Live
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" /> Replaying
             </span>
           )}
-          {active ? <span className="font-mono text-[11px] tabular-nums text-white/40">{(elapsed / 1000).toFixed(1)}s</span> : null}
+          {active ? <span className="font-mono text-[11px] tabular-nums text-white/40">replay {(elapsed / 1000).toFixed(1)}s</span> : null}
         </div>
         <div className="glass-well rounded-xl px-3 py-1.5 text-right">
           <div className="text-[9px] uppercase tracking-wide text-white/40">Universe</div>
@@ -228,7 +228,6 @@ export function RunTimeline({
             key={stage.id}
             stage={stage}
             state={states[i]}
-            doneAt={doneAt[i]}
             last={i === run.stages.length - 1}
             open={allLogsOpen || open === stage.id}
             onToggle={() => setOpen((cur) => (cur === stage.id ? null : stage.id))}
@@ -288,24 +287,24 @@ function StatCell({ label, value, tone }: { label: string; value: number | null;
 function StageRow({
   stage,
   state,
-  doneAt,
   last,
   open,
   onToggle,
 }: {
   stage: RunStage;
   state: StageState;
-  doneAt: number | null;
   last: boolean;
   open: boolean;
   onToggle: () => void;
 }) {
   const revealed = state === 'complete' || state === 'warning' || state === 'running';
+  // No per-stage second counts: doneAt was the REPLAY animation's timing, not a measured
+  // pipeline duration - an unmeasured number rendered as one (2026-08-11 audit).
   const statusLine =
     state === 'complete'
-      ? `Completed${doneAt != null ? ` · ${doneAt.toFixed(1)}s` : ''}`
+      ? 'Completed'
       : state === 'warning'
-        ? `Completed with warnings${doneAt != null ? ` · ${doneAt.toFixed(1)}s` : ''}`
+        ? 'Completed with warnings'
         : state === 'running'
           ? 'Running'
           : 'Queued';

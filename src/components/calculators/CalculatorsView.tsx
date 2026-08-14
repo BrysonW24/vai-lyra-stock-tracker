@@ -170,12 +170,13 @@ export function CalculatorsView() {
   };
 
   const handleDCA = () => {
-    // Generate prices array for DCA
+    // Deterministic price path: straight interpolation from average to current price.
+    // (Previously each price carried Math.random() noise, so the SAME inputs produced a
+    // different result on every click - a calculator must be reproducible. 2026-08-11 audit.)
     const prices: number[] = [];
     for (let i = 0; i < dcaPeriods; i++) {
-      // Interpolate between average price and current price
       const t = dcaPeriods > 1 ? i / (dcaPeriods - 1) : 0;
-      prices.push(dcaAveragePrice + t * (dcaCurrentPrice - dcaAveragePrice) + (Math.random() - 0.5) * 2);
+      prices.push(dcaAveragePrice + t * (dcaCurrentPrice - dcaAveragePrice));
     }
     const result = calculateDCA(dcaAmount, dcaPeriods, prices, dcaCurrentPrice);
     setDcaResult(result);
@@ -565,10 +566,9 @@ export function CalculatorsView() {
                   <p className="text-xs text-ink-3">Risk $ per Trade</p>
                   <p className="mt-1 font-semibold text-negative">{formatCurrency(posResult.riskDollars)}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-ink-3">Risk:Reward Ratio</p>
-                  <p className="mt-1 font-semibold text-ink-title">1R per {posResult.rMultiple.toFixed(2)} shares</p>
-                </div>
+                {/* The old "Risk:Reward Ratio" row duplicated the Shares figure under a wrong
+                    label (rMultiple = riskDollars / distanceToStop = the same expression) - removed
+                    rather than renamed, it added nothing (2026-08-11 audit). */}
                 <div>
                   <p className="text-xs text-ink-3">Max Shares (100% account)</p>
                   <p className="mt-1 font-semibold text-ink-title">{formatNumber(posResult.maxShares, 0)}</p>

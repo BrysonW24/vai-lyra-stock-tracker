@@ -9,7 +9,7 @@ export default async function ComparisonPage() {
 
   return (
     <AppShell data={data}>
-      <ComparisonLab />
+      <ComparisonLab data={data} />
     </AppShell>
   );
 }

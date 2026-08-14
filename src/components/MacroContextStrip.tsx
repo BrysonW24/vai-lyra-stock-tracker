@@ -27,7 +27,10 @@ export function MacroContextStrip({ data }: { data: MacroSnapshot }) {
       label: 'Read',
       value: '',
       change: '',
-      implication: `${data.stanceLabel} into a soft but stable economy - a supportive backdrop for risk.`,
+      // No editorial judgement hardcoded here: the strip states the stance and lets each
+      // indicator carry its own note - "a supportive backdrop for risk" was an authored
+      // opinion that would survive any data change (2026-08-11 audit).
+      implication: `${data.stanceLabel}. Each indicator carries its own read below.`,
     },
     ...data.indicators.map((indicator) => ({
       key: indicator.label,

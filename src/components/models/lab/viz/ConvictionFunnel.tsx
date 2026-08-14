@@ -50,7 +50,9 @@ export function ConvictionFunnel({
 
       <div className="space-y-1.5">
         {filled.map((s) => {
-          const pct = Math.max(6, Math.round((s.value / base) * 100));
+          // Zero draws NOTHING - the old 6% visibility floor painted a filled bar for a
+          // count of 0, showing signal where there was none (2026-08-11 audit).
+          const pct = s.value === 0 ? 0 : Math.max(6, Math.round((s.value / base) * 100));
           return (
             <div key={s.label} className="flex items-center gap-2">
               <span className="w-24 shrink-0 text-[11px] text-white/55">{s.label}</span>

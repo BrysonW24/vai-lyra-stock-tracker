@@ -16,11 +16,12 @@ function billions(usdM: number): string {
 
 export default async function IpoDetailPage({ params }: { params: Promise<{ symbol: string }> }) {
   const { symbol } = await params;
-  const ipo = await getIpoBySymbolLive(symbol);
-  if (!ipo) {
+  const lookup = await getIpoBySymbolLive(symbol);
+  if (!lookup) {
     notFound();
   }
 
+  const { ipo, source } = lookup;
   const data = await getDashboardData();
   const est = ipo.modelEstimate;
   const ref = ipo.currentPrice ?? ipo.offerPrice;
@@ -31,6 +32,13 @@ export default async function IpoDetailPage({ params }: { params: Promise<{ symb
         <Link href="/ipos" className="inline-flex items-center gap-1 font-mono text-xs text-ink-3 transition hover:text-ink">
           <ArrowLeft size={12} /> IPO radar
         </Link>
+
+        {source === 'sample' ? (
+          <div className="rounded-cell border border-accent-border/60 bg-accent-tint px-3 py-2 text-[11px] leading-snug text-accent">
+            Sample record - editorial research content, not a live listing. Dates, terms and figures are
+            illustrative until the live IPO sync covers this name.
+          </div>
+        ) : null}
 
         <section className="terminal-panel rounded-panel p-4">
           <div className="flex flex-wrap items-center gap-3">

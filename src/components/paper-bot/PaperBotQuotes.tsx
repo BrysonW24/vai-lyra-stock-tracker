@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Quote } from 'lucide-react';
+import { MessageCircle, Quote } from 'lucide-react';
 
 interface InvestorQuote {
   text: string;
@@ -273,19 +273,10 @@ export function PaperBotQuotes() {
         })}
       </div>
 
-      {/* Community teaser. Avatar chips reuse the decorative quote palette (see InvestorQuote.color note) */}
+      {/* Community teaser - no invented member avatars as social proof for a community that
+          does not exist yet (2026-08-11 audit). */}
       <div className="border-t border-line/70 bg-well px-4 py-2.5 flex items-center gap-2">
-        <div className="flex -space-x-1.5">
-          {['#3b5bdb','#43d18b','#f3a33a','#e879f9'].map((c, i) => (
-            <div
-              key={i}
-              className="h-5 w-5 rounded-full border border-ground grid place-items-center text-[7px] font-bold text-white"
-              style={{ backgroundColor: c }}
-            >
-              {['JL','SK','AT','MR'][i]}
-            </div>
-          ))}
-        </div>
+        <MessageCircle size={14} className="shrink-0 text-ink-dim/80" />
         <p className="text-[10px] text-ink-dim/80 flex-1">Community chat <span className="text-pending">coming soon</span> - share trades, ideas & conviction</p>
       </div>
     </section>
