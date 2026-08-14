@@ -25,7 +25,10 @@ export type IpoCategory =
   | 'cloud_data'
   | 'cybersecurity'
   | 'consumer_internet'
-  | 'fintech_tech';
+  | 'fintech_tech'
+  /** Live rows the nightly sync could not classify (Finnhub carries no sector) -
+   *  rendered honestly as 'Not categorised', never defaulted to Software (2026-08-14). */
+  | 'uncategorised';
 
 export type IpoStatus = 'upcoming' | 'priced' | 'recent';
 
@@ -69,7 +72,9 @@ export interface IpoCompany {
   keyPeople: IpoKeyPerson[];
   description: string;
   domain: string;
-  modelEstimate: IpoModelEstimate;
+  /** Absent when no reference price exists (live rows with missing offer price) -
+   *  the model cannot seed a scenario from nothing (2026-08-14 audit). */
+  modelEstimate?: IpoModelEstimate;
 }
 
 export type IpoSeed = Omit<IpoCompany, 'modelEstimate'>;
@@ -83,8 +88,11 @@ function round2(n: number): number {
  * Derives a bear/base/bull range from the reference price, nudged by revenue
  * growth and profitability. Pure function - same input always yields same output.
  */
-function buildEstimate(s: IpoSeed): IpoModelEstimate {
+function buildEstimate(s: IpoSeed): IpoModelEstimate | undefined {
   const ref = s.currentPrice ?? s.offerPrice;
+  // No reference price -> no scenario: seeding from 0/NaN produced a $0.00 bear/base/
+  // bull range presented as research (2026-08-14 audit).
+  if (!Number.isFinite(ref) || ref <= 0) return undefined;
   const growthPct = s.revenueGrowthPct ?? 0;
   const g = Math.max(-0.3, Math.min(0.6, growthPct / 100));
   const profBonus = s.profitable ? 0.05 : 0;
@@ -107,7 +115,7 @@ function buildEstimate(s: IpoSeed): IpoModelEstimate {
     s.profitable
       ? 'Profitable on a TTM basis, which narrows the modelled downside.'
       : 'Not yet profitable, so the model widens the bear case.',
-    `Implied valuation at IPO ≈ $${(s.valuationUsdM / 1000).toFixed(1)}B; ${s.employees ? `${s.employees.toLocaleString()} staff.` : 'headcount undisclosed.'}`,
+    `${Number.isFinite(s.valuationUsdM) && s.valuationUsdM > 0 ? `Implied valuation at IPO ≈ $${(s.valuationUsdM / 1000).toFixed(1)}B` : 'Implied IPO valuation not tracked'}; ${s.employees ? `${s.employees.toLocaleString()} staff.` : 'headcount undisclosed.'}`,
     'Bear/base/bull is a deterministic research range over ~12 months - not a forecast, target, or recommendation.',
   ];
 
@@ -190,6 +198,7 @@ export function ipoCategoryLabel(category: IpoCategory): string {
     cybersecurity: 'Cybersecurity',
     consumer_internet: 'Consumer Internet',
     fintech_tech: 'Fintech',
+    uncategorised: 'Not categorised',
   };
   return labels[category];
 }

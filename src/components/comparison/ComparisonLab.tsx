@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { DashboardData, SignalRow } from '@/types/scanner';
 import { loadLocalHoldings } from '@/lib/local-portfolio';
-import { formatNumber, formatSignedPercent, formatSignedNumber, statusLabel } from '@/lib/format';
+import { formatNumber, formatSignedPercent, formatSignedNumber, statusLabel, toneClass } from '@/lib/format';
 
 /**
  * Comparison Lab - side-by-side read of REAL scanned signals. Rebuilt in the 2026-08-11
@@ -266,13 +266,13 @@ function ComparisonTable({ rows }: { rows: SignalRow[] }) {
                 <td className="px-3 py-2 font-semibold text-ink">{s.symbol}</td>
                 <td className="px-3 py-2 text-ink-2">{statusLabel(s.status)}</td>
                 <td className="px-3 py-2">
-                  {s.score} <span className={s.scoreDelta >= 0 ? 'text-positive' : 'text-negative'}>{formatSignedNumber(s.scoreDelta, 0)}</span>
+                  {s.score} <span className={toneClass(s.scoreDelta)}>{formatSignedNumber(s.scoreDelta, 0)}</span>
                 </td>
-                <td className={`px-3 py-2 ${s.priceChange1d >= 0 ? 'text-positive' : 'text-negative'}`}>
+                <td className={`px-3 py-2 ${toneClass(s.priceChange1d)}`}>
                   {formatSignedPercent(s.priceChange1d)}
                 </td>
                 <td className="px-3 py-2">{formatNumber(s.rsi, 1)}</td>
-                <td className={`px-3 py-2 ${s.macdHistogram >= 0 ? 'text-positive' : 'text-negative'}`}>
+                <td className={`px-3 py-2 ${toneClass(s.macdHistogram)}`}>
                   {formatSignedNumber(s.macdHistogram, 2)}
                 </td>
                 <td className="px-3 py-2">{formatNumber(s.volumeRatio, 2)}x</td>
@@ -295,12 +295,12 @@ function ComparisonTable({ rows }: { rows: SignalRow[] }) {
               <p className="flex justify-between text-xs text-ink-title">
                 <span>Score</span>
                 <span>
-                  {s.score} <span className={s.scoreDelta >= 0 ? 'text-positive' : 'text-negative'}>{formatSignedNumber(s.scoreDelta, 0)}</span>
+                  {s.score} <span className={toneClass(s.scoreDelta)}>{formatSignedNumber(s.scoreDelta, 0)}</span>
                 </span>
               </p>
               <p className="flex justify-between text-xs text-ink-title">
                 <span>1D</span>
-                <span className={s.priceChange1d >= 0 ? 'text-positive' : 'text-negative'}>{formatSignedPercent(s.priceChange1d)}</span>
+                <span className={toneClass(s.priceChange1d)}>{formatSignedPercent(s.priceChange1d)}</span>
               </p>
               <p className="flex justify-between text-xs text-ink-2">
                 <span>RSI / Hist</span>

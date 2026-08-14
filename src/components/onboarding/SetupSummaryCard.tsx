@@ -40,7 +40,9 @@ export function SetupSummaryCard({ state, onFinish, isSaving }: SetupSummaryCard
 
   const rows: { label: string; value: string }[] = [
     { label: 'Profile', value: profileStr },
-    { label: 'Coverage', value: 'US + ASX equities · hourly' },
+    // The hourly universe is US-only tech; ASX (or any other) symbols are fetched live
+    // on demand - "US + ASX equities · hourly" overclaimed coverage (2026-08-14 audit).
+    { label: 'Coverage', value: 'US tech hourly · your tickers live on demand' },
     {
       label: 'Watchlist',
       value: state.watchlist.length ? `${state.watchlist.length} ticker${state.watchlist.length === 1 ? '' : 's'}` : 'none yet',

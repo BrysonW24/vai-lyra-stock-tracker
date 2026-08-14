@@ -362,9 +362,12 @@ export function IntelligenceFeed({ feed, hypeMap, source = 'sample', updatedAt =
                               {item.sentiment}
                             </p>
                           </div>
+                          {/* Only authored sample items carry a confidence - live rows have
+                              no per-item scoring yet, so the cell says so instead of dressing
+                              a constant as a measurement (2026-08-14 audit). */}
                           <div className="rounded-cell bg-well p-2">
                             <p className="text-[10px] uppercase tracking-[0.1em] text-ink-3">Confidence</p>
-                            <p className="mt-1 text-xs text-ink">{item.confidence}</p>
+                            <p className={`mt-1 text-xs ${item.confidence ? 'text-ink' : 'text-ink-dim'}`}>{item.confidence ?? 'not scored'}</p>
                           </div>
                           <div className="rounded-cell bg-well p-2">
                             <p className="text-[10px] uppercase tracking-[0.1em] text-ink-3">Hype impact</p>

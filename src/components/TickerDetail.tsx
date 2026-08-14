@@ -16,7 +16,10 @@ interface TickerDetailProps {
 }
 
 function MetricBar({ label, value }: { label: string; value: number }) {
-  const width = Math.min(100, Math.max(0, 50 + value));
+  // Diverging bar from a visible centre line - the old left-anchored `50 + value` fill
+  // made -2% draw LONGER than -45%, ranking the mild dip as worse (2026-08-14 audit).
+  // Bar length is |value| from the centre, capped at the half-track.
+  const halfWidth = Math.min(50, Math.abs(value));
 
   return (
     <div className="space-y-1">
@@ -24,8 +27,12 @@ function MetricBar({ label, value }: { label: string; value: number }) {
         <span className="text-ink-3">{label}</span>
         <span className={toneClass(value)}>{formatSignedPercent(value)}</span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-sm bg-line/70">
-        <div className={value >= 0 ? 'h-full bg-positive' : 'h-full bg-negative'} style={{ width: `${width}%` }} />
+      <div className="relative h-1.5 overflow-hidden rounded-sm bg-line/70">
+        <div className="absolute inset-y-0 left-1/2 w-px bg-ink-dim/50" />
+        <div
+          className={`absolute inset-y-0 ${value >= 0 ? 'bg-positive' : 'bg-negative'}`}
+          style={value >= 0 ? { left: '50%', width: `${halfWidth}%` } : { right: '50%', width: `${halfWidth}%` }}
+        />
       </div>
     </div>
   );

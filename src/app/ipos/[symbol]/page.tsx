@@ -11,6 +11,7 @@ import { formatCurrency, formatPercent, formatSignedPercent, formatNumber, toneC
 export const revalidate = 3600;
 
 function billions(usdM: number): string {
+  if (!Number.isFinite(usdM)) return '-';
   return `$${(usdM / 1000).toFixed(1)}B`;
 }
 
@@ -96,25 +97,35 @@ export default async function IpoDetailPage({ params }: { params: Promise<{ symb
             </div>
           </div>
 
-          <div className="terminal-panel rounded-panel border border-pending/40 bg-pending/10 p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-pending">Model scenario · {est.horizonMonths}m</h2>
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3">confidence: {est.confidence}</span>
+          {est ? (
+            <div className="terminal-panel rounded-panel border border-pending/40 bg-pending/10 p-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-pending">Model scenario · {est.horizonMonths}m</h2>
+                <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3">confidence: {est.confidence}</span>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-center font-mono">
+                <div><p className="text-[10px] uppercase text-ink-3">Bear</p><p className="text-base text-negative">{formatCurrency(est.bearPrice)}</p></div>
+                <div><p className="text-[10px] uppercase text-ink-3">Base</p><p className="text-base text-ink-title">{formatCurrency(est.basePrice)}</p></div>
+                <div><p className="text-[10px] uppercase text-ink-3">Bull</p><p className="text-base text-positive">{formatCurrency(est.bullPrice)}</p></div>
+              </div>
+              <ul className="mt-3 space-y-1">
+                {est.rationale.map((r, i) => (
+                  <li key={i} className="text-xs leading-5 text-ink-2">• {r}</li>
+                ))}
+              </ul>
+              <p className="mt-3 rounded border border-pending/40 bg-well px-2 py-1 text-[10px] leading-4 text-ink-3">
+                This is a deterministic research range, not a forecast, price target, or recommendation. Vivacity is not a financial adviser.
+              </p>
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center font-mono">
-              <div><p className="text-[10px] uppercase text-ink-3">Bear</p><p className="text-base text-negative">{formatCurrency(est.bearPrice)}</p></div>
-              <div><p className="text-[10px] uppercase text-ink-3">Base</p><p className="text-base text-ink-title">{formatCurrency(est.basePrice)}</p></div>
-              <div><p className="text-[10px] uppercase text-ink-3">Bull</p><p className="text-base text-positive">{formatCurrency(est.bullPrice)}</p></div>
+          ) : (
+            <div className="terminal-panel rounded-panel p-4">
+              {/* No reference price -> no modelled range: never a $0.00 scenario (2026-08-14). */}
+              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">Model scenario</h2>
+              <p className="mt-2 text-xs leading-5 text-ink-dim">
+                No tracked reference price for this listing yet, so no bear/base/bull range is modelled. The range appears once the live sync carries an offer or market price.
+              </p>
             </div>
-            <ul className="mt-3 space-y-1">
-              {est.rationale.map((r, i) => (
-                <li key={i} className="text-xs leading-5 text-ink-2">• {r}</li>
-              ))}
-            </ul>
-            <p className="mt-3 rounded border border-pending/40 bg-well px-2 py-1 text-[10px] leading-4 text-ink-3">
-              This is a deterministic research range, not a forecast, price target, or recommendation. Vivacity is not a financial adviser.
-            </p>
-          </div>
+          )}
         </section>
 
         <section className="grid gap-3 md:grid-cols-3">

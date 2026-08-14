@@ -4,6 +4,7 @@ import { ArrowRight, Bell, ListChecks, ShieldCheck, Target, Wallet } from 'lucid
 import { BrandLogo } from '@/components/BrandLogo';
 import { BRAND_NAME } from '@/lib/brand';
 import type { OnboardingState } from '@/lib/onboarding';
+import { getStrategyById } from '@/lib/strategy';
 
 /**
  * Post-signup fast-path beat. A visitor who explored the read-only demo tour and then created an
@@ -12,16 +13,12 @@ import type { OnboardingState } from '@/lib/onboarding';
  * "Review & edit" drops them into the normal (prefilled) questionnaire if they want to change it.
  */
 
-const STRATEGY_LABELS: Record<string, string> = {
-  'momentum-recovery': 'Momentum recovery',
-  'breakout': 'Breakout',
-  'trend-follow': 'Trend following',
-  'mean-reversion': 'Mean reversion',
-};
-
+// Resolve the label from the strategy registry - the old hardcoded map here named the
+// flagship 'Momentum recovery' after its pre-rename identity ('Oversold Recovery' is the
+// real name) and carried three ids that match no real strategy (2026-08-14 audit).
 function strategyLabel(id?: string): string {
   if (!id) return 'Your strategy';
-  return STRATEGY_LABELS[id] ?? id.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return getStrategyById(id)?.name ?? id.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function DemoCarryoverConfirm({

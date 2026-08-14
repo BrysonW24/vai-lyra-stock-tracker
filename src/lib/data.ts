@@ -1,5 +1,6 @@
 import { demoDashboardData } from '@/lib/demo-data';
 import { applyLiveSignals } from '@/lib/live-signals';
+import { DEFAULT_TARGET_SIGNAL_SCORE } from '@/lib/watchlist-rule';
 import { buildSoloMarketDashboard } from '@/lib/local-dashboard';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import type {
@@ -297,7 +298,9 @@ function mapPortfolio(
       const action = (overlay?.action_state ?? 'hold') as ActionState;
 
       const currentPrice = overlay?.current_price ?? signal?.close ?? position.average_buy_price;
-      const cost = position.average_buy_price * position.quantity;
+      // Fee-inclusive, matching the worker overlay and the Solo builder - the fee-free
+      // fallback overstated P/L until the overlay landed (2026-08-14 audit).
+      const cost = position.average_buy_price * position.quantity + (position.brokerage_fee ?? 0);
       const marketValue = overlay?.market_value ?? currentPrice * position.quantity;
       const unrealisedPnl = overlay?.unrealised_pl ?? marketValue - cost;
       const unrealisedPnlPercent = overlay?.unrealised_pl_pct ?? (cost > 0 ? (unrealisedPnl / cost) * 100 : 0);
@@ -353,21 +356,29 @@ function mapWatchlist(
       const ticker = tickerBySymbol.get(item.symbol);
       const triggerState = (overlay?.watchlist_trigger_state ?? 'not_ready') as WatchlistRow['triggerState'];
 
+      // No overlay row AND no fetched signal = nothing has been measured for this
+      // symbol yet. The old zero defaults rendered '$0.00' as a quote and 'RSI 0.0' as
+      // a reading on the account watchlist (2026-08-14 audit).
+      const scanned = overlay != null || signal != null;
       return {
         symbol: item.symbol,
         companyName: ticker?.companyName ?? signal?.companyName ?? item.symbol,
         category: ticker?.category ?? ticker?.sector ?? 'Tracked',
         targetBuyZone: item.target_price ?? null,
-        currentPrice: overlay?.current_price ?? signal?.close ?? 0,
-        distanceToTarget: overlay?.distance_to_target_price_pct ?? 0,
+        currentPrice: overlay?.current_price ?? signal?.close ?? Number.NaN,
+        distanceToTarget: overlay?.distance_to_target_price_pct ?? Number.NaN,
         signalScore: Math.round(overlay?.signal_score ?? signal?.score ?? 0),
         scoreDelta: signal?.scoreDelta ?? 0,
         signalStatus: (overlay?.signal_status ?? signal?.status ?? 'watchlist_setup') as SignalStatus,
         triggerState,
-        targetSignalScore: item.target_signal_score ?? 0,
-        rsi: signal?.rsi ?? 0,
-        macdHistogram: signal?.macdHistogram ?? 0,
-        volumeRatio: signal?.volumeRatio ?? 0,
+        // NULL target -> the stated default (60), matching the Solo builder. 0 means
+        // "triggered on every scan" per watchlist-rule.ts doctrine - a target the user
+        // never set (2026-08-14 audit).
+        targetSignalScore: item.target_signal_score ?? DEFAULT_TARGET_SIGNAL_SCORE,
+        scanned,
+        rsi: signal?.rsi ?? Number.NaN,
+        macdHistogram: signal?.macdHistogram ?? Number.NaN,
+        volumeRatio: signal?.volumeRatio ?? Number.NaN,
         alertStatus: TRIGGER_ALERT_STATUS[triggerState] ?? 'Dormant',
         notes: item.notes ?? '',
         explanation: explanationFromPayload(overlay?.explanation ?? null, 'watch'),
@@ -401,7 +412,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     // Solo mode still uses the public market snapshot, but it must never inherit the
     // sample user's private-looking portfolio, watchlist, alert history, or overlay
     // counts. Client surfaces layer this device's real local data over these signals.
-    const signals = await applyLiveSignals(demoDashboardData.signals);
+    const signals = await applyLiveSignals(demoDashboardData.signals, 'demo');
     return buildSoloMarketDashboard(demoDashboardData, signals);
   }
 
@@ -431,7 +442,11 @@ export async function getDashboardData(): Promise<DashboardData> {
     // everything downstream (the signal table, the changes board, and the portfolio/watchlist
     // overlays). Deriving any of them from the raw DB signals instead would let boards disagree
     // with the table on the same symbol's score/delta.
-    const liveSignals = await applyLiveSignals(signals.length > 0 ? signals : demoDashboardData.signals);
+    // Never substitute the demo base on the live path: an empty stock_signals table
+    // (fresh deploy, pre-first-scan, retention wipe) used to render fully-authored demo
+    // rows under the green LIVE badge and feed the wire "live" change rows derived from
+    // them (2026-08-14 audit). Empty is the truth; surfaces carry the empty state.
+    const liveSignals = await applyLiveSignals(signals);
     const signalsBySymbol = new Map(liveSignals.map((signal) => [signal.symbol, signal]));
 
     // Portfolio + watchlist live in separate tables. Fetch them in their own guarded

@@ -1,6 +1,13 @@
 # 2026-08-14 honesty re-audit - remaining findings (next wave)
 
-Source: 6-reviewer post-implementation audit (workflow wf_e33cd364-ee7) after v0.128.0 closed out all 47 original findings. The audit re-verified 45 prior fixes as holding, surfaced 42 new findings; the 3 P0s and 4 fix-regressions shipped immediately in v0.129.0/0.129.1. The items below are the still-open remainder, most-severe first. None is a fabricated number a trader could act on; all are provenance, formatting, or copy honesty.
+> **REGISTER CLOSED - all 35 findings fixed in v0.130.0 (2026-08-14).** Items 4 and 8
+> were already dead at time of triage (their root cause, the data.ts signed-out
+> demo-book substitution, shipped in v0.129.0); the other 33 were patched individually.
+> Gates green: type-check, lint, check:chains, 1178/1178 tests, clean build. The one
+> remaining item is the data-ops row at the bottom (prod `ipos` table content), which
+> needs founder Supabase credentials and is NOT a code defect.
+
+Source: 6-reviewer post-implementation audit (workflow wf_e33cd364-ee7) after v0.128.0 closed out all 47 original findings. The audit re-verified 45 prior fixes as holding, surfaced 42 new findings; the 3 P0s and 4 fix-regressions shipped immediately in v0.129.0/0.129.1. The items below were the still-open remainder, most-severe first. None was a fabricated number a trader could act on; all were provenance, formatting, or copy honesty.
 
 ## 1. [P1] src/components/paper-bot/PaperBotView.tsx:184 (fabricated-data)
 - Issue: The tour mock-account overwrite is gated on the isTour URL param alone, not on an active tour. On /paper-bot?tour=true with the tour already dismissed (tourStep -1, the state every returning visitor from the dashboard 'Start your first trade' link lands in), a REAL executed fill (the call() body sends tour:false, so the server records it durably) triggers setAccount with a fabricated snapshot: equity and equityCurve reset to DEFAULT_PAPER_STARTING_CASH, all prior positions dropped, fillCount 1, winRate 0. The fabricated Buying Power / equity / curve stand in for the real account (labelled 'Session' by the chip, since dataSource 'demo' has no distinct rendering) until the next 15s poll replaces it.

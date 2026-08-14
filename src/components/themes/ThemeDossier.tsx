@@ -14,6 +14,7 @@ import {
   type ScoredCompany,
   type SupplyChainNode,
   type Theme,
+  scoreTone,
 } from '@/lib/world-radar';
 
 interface ThemeDossierProps {
@@ -31,12 +32,6 @@ const MOVE_TONE: Record<InvestorAction, string> = {
   exit: 'border-negative/40 bg-negative/10 text-negative-soft',
   hold: 'border-line-hair bg-panel text-ink-2',
 };
-
-function scoreTone(total: number): string {
-  if (total >= 70) return 'text-positive';
-  if (total >= 55) return 'text-accent';
-  return 'text-ink-2';
-}
 
 function formatUsdM(amount?: number): string | null {
   if (amount === undefined) return null;

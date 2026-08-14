@@ -42,6 +42,8 @@ interface IdeasResponse {
   ok: boolean;
   ideas?: ScoutIdea[];
   maintainer?: boolean;
+  /** True when the serving deployment answered with the bundled demo scout proposal. */
+  demo?: boolean;
   error?: string;
 }
 
@@ -72,6 +74,9 @@ const KIND_LABEL: Record<string, string> = {
 export function ScoutProposals() {
   const [ideas, setIdeas] = useState<ScoutIdea[]>([]);
   const [maintainer, setMaintainer] = useState(false);
+  // Badge demo payloads like IdeasBoard/ScoutFeed do - the flag used to be dropped, so a
+  // fabricated demo proposal could render as a real filed one (2026-08-14 audit).
+  const [demo, setDemo] = useState(false);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState<string | null>(null);
   const [expandedEvidence, setExpandedEvidence] = useState<Set<string>>(new Set());
@@ -97,6 +102,7 @@ export function ScoutProposals() {
         if (cancelled) return;
         setIdeas(data.ideas ?? []);
         setMaintainer(Boolean(data.maintainer));
+        setDemo(Boolean(data.demo));
       } catch {
         // The feed below still renders; proposals are additive.
       } finally {
@@ -207,6 +213,7 @@ export function ScoutProposals() {
       <div className="border-b border-line/70 px-3 py-2">
         <p className="text-[11px] text-ink-3">
           <span className="font-semibold text-blue-info">Scout proposals</span>
+          {demo && <span className="rounded-full border border-line-hair bg-panel px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-ink-3">Demo preview</span>}
           <span className="text-ink-dim"> · </span>signals strong enough to file - nothing changes unless a human accepts one
         </p>
       </div>

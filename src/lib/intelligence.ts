@@ -34,7 +34,9 @@ export interface IntelligenceItem {
   sentiment: Sentiment;
   relevance: Relevance;
   hypeImpact: HypeImpact;
-  confidence: Confidence;
+  /** Editorial assessment on authored sample items. ABSENT on live rows - no per-item
+   *  scoring exists yet, and a hardcoded 'medium' rendered as if measured (2026-08-14). */
+  confidence?: Confidence;
 }
 
 export interface TickerHype {

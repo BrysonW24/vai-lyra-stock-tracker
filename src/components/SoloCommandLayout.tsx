@@ -277,8 +277,9 @@ export function SoloCommandLayout({
   );
 
   const capital = summary?.capital;
+  // Unscanned holdings carry NaN market fields - exclude, don't poison the equity sum.
   const holdingsMarketValue = holdings.reduce(
-    (sum, holding) => sum + holding.marketValue,
+    (sum, holding) => sum + (Number.isFinite(holding.marketValue) ? holding.marketValue : 0),
     0,
   );
   const investedBasis = holdings.reduce(

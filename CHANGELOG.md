@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.130.0] - 2026-08-14
+
+The final sweep: all 35 remaining audit findings closed.
+
+### Changed
+
+- Every finding left on the honesty-audit register is now fixed - provenance, labels, colour, and placeholder zeros across the whole app. The biggest class: unmeasured values no longer render as measurements. A Solo holding or watch rule outside the scanned universe says "not scanned" instead of showing your own buy price as the market price, RSI 0.0 as a reading, or your target as the live quote; the account watchlist does the same; the ticker header renders "-" for the hourly change this feed cannot measure instead of a flat-looking +0.0%; and live IPO rows with unsynced columns show "-" and "Not categorised" rather than $0.0B raises and an asserted Software sector - with no bear/base/bull range modelled from a missing price.
+- Sample data is now demo-tour-only everywhere, chipped per tile. The Economy / Markets / Commodities chart-pack boards - authored sample series that rendered on live pages with institution favicons implying RBA/Fed provenance - only render on the demo tour, every tile chipped Sample, with rates linking out as "check the live rate" instead of claiming attribution; live pages say the feeds are not connected. The IPO drawer carries the same Sample banner as the detail page; scout proposals badge demo payloads; a fresh live deploy with an empty signals table now shows honest empty states instead of the authored demo book under the LIVE badge; and the paper-bot tour can no longer replace a real executed account snapshot when revisited with a stale tour URL.
+- Labels and colours now say exactly what the number is. The simulation lab computes EV at YOUR win-rate assumption (the old tile was $0.00 by construction) and labels its inputs as bull/bear scenario P&Ls; the win-rate strip shows "-" until a trade closes; risk:reward is tinted by threshold, zero deltas render neutral everywhere, theme totals share one tone scale, and the ticker page MetricBar diverges from a visible zero line so -2% can never draw longer than -45%. Onboarding stops overclaiming: coverage reads "US tech hourly - your tickers live on demand" (no phantom ASX/ETF hourly scanning), alerts "fire with each hourly scan" not "in real time", strategy names resolve from the registry, and fresh Solo reads carry their real computation time instead of a months-old demo stamp.
+
 ## [0.129.1] - 2026-08-14
 
 Sample headlines no longer ship in the live page source at all.
@@ -1770,7 +1780,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.129.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.130.0...HEAD
+[0.130.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.129.1...v0.130.0
 [0.129.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.129.0...v0.129.1
 [0.129.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.128.0...v0.129.0
 [0.128.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.127.0...v0.128.0

@@ -15,15 +15,20 @@ export function formatNumber(value: number, digits = 1): string {
 }
 
 export function formatPercent(value: number, digits = 1): string {
+  // '-' not '-%': unmeasured reads as missing, never as a unit with no number.
+  if (!Number.isFinite(value)) return '-';
   return `${formatNumber(value, digits)}%`;
 }
 
 export function formatSignedNumber(value: number, digits = 1): string {
+  // Unmeasured reads as missing, not as a signed zero-ish artefact ("+-" / "--").
+  if (!Number.isFinite(value)) return '-';
   const formatted = formatNumber(Math.abs(value), digits);
   return `${value >= 0 ? '+' : '-'}${formatted}`;
 }
 
 export function formatSignedPercent(value: number, digits = 1): string {
+  if (!Number.isFinite(value)) return '-';
   return `${formatSignedNumber(value, digits)}%`;
 }
 

@@ -69,22 +69,31 @@ function strArray(v: unknown): string[] {
 }
 
 /** Map a snake_case table row to the frontend shape; null when required fields are missing. */
+/** Positive value or NaN: the nightly worker writes literal 0.0 placeholders, and a
+ *  zero raise/valuation/offer price is not a measurement - NaN renders '-' and is
+ *  excluded from sums/rankings (2026-08-14 audit). */
+function posNum(v: number | string | null | undefined): number {
+  const n = num(v);
+  return n !== undefined && n > 0 ? n : Number.NaN;
+}
+
 export function mapIpoRow(row: IpoRow): IpoCompany | null {
   if (!row.symbol || !row.company_name || !row.ipo_date) return null;
-  const offerPrice = num(row.offer_price);
-  if (offerPrice === undefined) return null;
+  const offerPrice = posNum(row.offer_price);
 
   const seed: IpoSeed = {
     symbol: row.symbol,
     companyName: row.company_name,
     ipoDate: row.ipo_date,
     exchange: row.exchange ?? '-',
-    category: (CATEGORIES.has(row.category ?? '') ? row.category : 'software') as IpoCategory,
+    // Unknown live categories (the worker writes 'pending' - Finnhub has no sector)
+    // render honestly as uncategorised, never asserted as Software (2026-08-14 audit).
+    category: (CATEGORIES.has(row.category ?? '') ? row.category : 'uncategorised') as IpoCategory,
     status: (STATUSES.has(row.status ?? '') ? row.status : 'upcoming') as IpoStatus,
     offerPrice,
-    sharesOfferedM: num(row.shares_offered_m) ?? 0,
-    proceedsUsdM: num(row.proceeds_usd_m) ?? 0,
-    valuationUsdM: num(row.valuation_usd_m) ?? 0,
+    sharesOfferedM: posNum(row.shares_offered_m),
+    proceedsUsdM: posNum(row.proceeds_usd_m),
+    valuationUsdM: posNum(row.valuation_usd_m),
     revenueTtmUsdM: num(row.revenue_ttm_usd_m),
     revenueGrowthPct: num(row.revenue_growth_pct),
     grossMarginPct: num(row.gross_margin_pct),

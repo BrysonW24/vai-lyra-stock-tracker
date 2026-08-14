@@ -155,6 +155,11 @@ export interface WatchlistRow {
   signalStatus: SignalStatus;
   triggerState: 'not_ready' | 'approaching' | 'triggered' | 'missed' | 'invalidated';
   targetSignalScore: number;
+  /** False when the symbol has no overlay row and no fetched signal - the numeric
+   *  fields are then structural placeholders (NaN price/metrics) and every surface
+   *  must render "not scanned" instead of measured-looking zeros (2026-08-14 audit).
+   *  Absent = scanned. */
+  scanned?: boolean;
   rsi: number;
   macdHistogram: number;
   volumeRatio: number;

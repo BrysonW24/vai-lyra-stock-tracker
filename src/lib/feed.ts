@@ -97,10 +97,11 @@ export function buildLiveWire(
   });
 
   // The wire is what has ALREADY happened, newest first - so drop UPCOMING calendar
-  // events (those belong in the Calendar, not the "what just changed" stream). nowRef =
-  // the latest REAL activity already in the stream - computed before any sample wire is
-  // appended, so invented timestamps can never define the reference clock.
-  const nowRef = items.reduce((max, it) => Math.max(max, new Date(it.time).getTime()), 0);
+  // events (those belong in the Calendar, not the "what just changed" stream). nowRef
+  // is the REQUEST clock: deriving it from item timestamps let stale (or sample)
+  // timestamps define "now", hiding genuinely past calendar events as "future" and
+  // leaving the Events filter permanently empty (2026-08-14 audit).
+  const nowRef = Date.now();
 
   if (pageIsDemo) items.push(...SAMPLE_WIRE);
   events.forEach((e, i) => {

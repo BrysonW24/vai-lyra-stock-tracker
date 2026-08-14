@@ -333,7 +333,10 @@ export async function buildLiveSignal(symbol: string): Promise<Partial<SignalRow
       volumeScore: score.volumeScore,
     },
     close: snap.close,
-    priceChange1h: 0, // daily series - intraday change isn't available from this feed
+    // NaN, not 0: this daily feed cannot measure an hourly change, and a placeholder 0
+    // rendered as a measured flat hour ("+0.0%"). NaN renders '-' via the signed
+    // formatters; the supabase merge restores the DB's real hourly value (2026-08-14).
+    priceChange1h: Number.NaN,
     priceChange1d: prevClose ? ((snap.close - prevClose) / prevClose) * 100 : 0,
     rsi: snap.rsi14,
     previousRsi: rsi[i - 1],
@@ -343,11 +346,17 @@ export async function buildLiveSignal(symbol: string): Promise<Partial<SignalRow
     histDelta: snap.histD1,
     macdState: snap.hist >= 0 ? (macdImproving ? 'Above signal, rising' : 'Above signal, fading') : (macdImproving ? 'Below signal, improving' : 'Below signal, weakening'),
     histogramSlope: snap.histD1,
-    volumeRatio: snap.volumeRatio ?? 0,
-    distanceFromLow: snap.distFrom60Low ?? 0,
-    priceVsSma20: snap.priceVsSma20 ?? 0,
-    priceVsSma50: snap.priceVsSma50 ?? 0,
-    priceVsSma200: snap.priceVsSma200 ?? 0,
+    // NaN for unmeasured, never 0: "0.0% above the 60-day low" and "0.00x volume" are
+    // specific readings the feed did not take (2026-08-14 audit). Formatters render '-'.
+    volumeRatio: snap.volumeRatio ?? Number.NaN,
+    distanceFromLow: snap.distFrom60Low ?? Number.NaN,
+    priceVsSma20: snap.priceVsSma20 ?? Number.NaN,
+    priceVsSma50: snap.priceVsSma50 ?? Number.NaN,
+    priceVsSma200: snap.priceVsSma200 ?? Number.NaN,
+    // The instant these values were actually computed - without it the demo base's
+    // authored '2026-06-02' stamp survived the merge and fresh reads claimed to be
+    // months stale (2026-08-14 audit).
+    lastUpdated: new Date().toISOString(),
     explanation: explanationFor(snap, action),
     summary: summaryFor(snap),
   };
@@ -361,7 +370,16 @@ export async function buildLiveSignal(symbol: string): Promise<Partial<SignalRow
 /** Max simultaneous upstream OHLCV fetches, so a cold cache can't fan out N calls at once. */
 const LIVE_FETCH_CONCURRENCY = 8;
 
-export async function applyLiveSignals(signals: SignalRow[]): Promise<SignalRow[]> {
+export async function applyLiveSignals(
+  signals: SignalRow[],
+  /**
+   * Provenance of the BASE rows. 'db' rows carry the hourly worker's real
+   * price_change_1h, which must survive the merge (the live recompute cannot measure
+   * it); 'demo' rows carry an AUTHORED 1h that must NOT survive - it renders '-'
+   * instead (2026-08-14 audit).
+   */
+  base: 'db' | 'demo' = 'db',
+): Promise<SignalRow[]> {
   if (signals.length === 0) return signals;
 
   // Bounded worker pool: at most LIVE_FETCH_CONCURRENCY Yahoo requests in flight regardless of how
@@ -374,7 +392,16 @@ export async function applyLiveSignals(signals: SignalRow[]): Promise<SignalRow[
       const index = cursor++;
       const signal = signals[index];
       const computed = await buildLiveSignal(signal.symbol);
-      out[index] = computed ? { ...signal, ...computed } : signal;
+      out[index] = computed
+        ? {
+            ...signal,
+            ...computed,
+            priceChange1h:
+              base === 'db' && Number.isFinite(signal.priceChange1h)
+                ? signal.priceChange1h
+                : (computed.priceChange1h ?? Number.NaN),
+          }
+        : signal;
     }
   }
   await Promise.all(Array.from({ length: Math.min(LIVE_FETCH_CONCURRENCY, signals.length) }, worker));

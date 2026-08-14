@@ -133,12 +133,20 @@ export function SimulationLab({ portfolio, signals, soloMode = false }: Simulati
     return calculateCompoundingProjection(availableCash, monthlyTargetPercent, numberOfTrades);
   }, [availableCash, monthlyTargetPercent, numberOfTrades]);
 
-  // Win rate analysis (using avg win = targetProfit, avg loss = riskAmount)
+  // Win rate analysis. The inputs are the BULL/BEAR SCENARIO P&Ls (not the trade plan's
+  // target/stop exits) - the tiles are labelled as scenario figures so the label matches
+  // the number (2026-08-14 audit).
   const winRateAnalysis = useMemo(() => {
     const avgWin = scenarios[0]?.pnlDollar ?? 0; // Bull scenario profit
     const avgLoss = Math.abs(scenarios[2]?.pnlDollar ?? 0); // Bear scenario loss (absolute)
     return calculateWinRate(avgWin, avgLoss);
   }, [scenarios]);
+  // EV at the USER'S win-rate assumption. calculateWinRate's expectedValuePerTrade is
+  // evaluated AT the breakeven rate - identically $0 by construction - so rendering it
+  // as "EV per trade" showed a permanent $0.00 as if measured (2026-08-14 audit).
+  const assumptionEv =
+    (winRateAnalysis.avgWinDollar * winRateAssumption) / 100 -
+    winRateAnalysis.avgLossDollar * (1 - winRateAssumption / 100);
 
   return (
     <div className="space-y-3 pb-20 md:pb-0">
@@ -424,10 +432,10 @@ export function SimulationLab({ portfolio, signals, soloMode = false }: Simulati
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">Win rate analysis</h2>
             <div className="mt-3 grid grid-cols-2 gap-1.5 md:grid-cols-4">
               {[
-                [`Avg win (${activeCurrency})`, cur(winRateAnalysis.avgWinDollar), toneClass(1)],
-                [`Avg loss (${activeCurrency})`, cur(winRateAnalysis.avgLossDollar), toneClass(-1)],
+                [`Bull scenario P&L (${activeCurrency})`, cur(winRateAnalysis.avgWinDollar), toneClass(1)],
+                [`Bear scenario P&L (${activeCurrency})`, cur(winRateAnalysis.avgLossDollar), toneClass(-1)],
                 ['Breakeven win %', formatPercent(winRateAnalysis.requiredWinRatePercent, 1), 'text-ink-title'],
-                [`EV per trade (${activeCurrency})`, cur(winRateAnalysis.expectedValuePerTrade), toneClass(winRateAnalysis.expectedValuePerTrade)],
+                [`EV per trade (${activeCurrency})`, cur(assumptionEv), toneClass(assumptionEv)],
               ].map(([label, value, tone]) => (
                 <div key={label}>
                   <p className="truncate text-[9px] uppercase tracking-[0.12em] text-ink-3">{label}</p>
@@ -436,11 +444,9 @@ export function SimulationLab({ portfolio, signals, soloMode = false }: Simulati
               ))}
             </div>
             <p className="mt-3 text-xs leading-5 text-ink-2">
-              If win rate assumption is {formatPercent(winRateAssumption, 0)}, expected value per trade is{' '}
-              <span className={toneClass((winRateAnalysis.avgWinDollar * winRateAssumption) / 100 - (winRateAnalysis.avgLossDollar * (1 - winRateAssumption / 100)))}>
-                {cur((winRateAnalysis.avgWinDollar * winRateAssumption) / 100 - (winRateAnalysis.avgLossDollar * (1 - winRateAssumption / 100)))}
-              </span>
-              .
+              Win/loss figures are your bull and bear scenario P&Ls, not the plan&apos;s target/stop exits. At your{' '}
+              {formatPercent(winRateAssumption, 0)} win-rate assumption, expected value per trade is{' '}
+              <span className={toneClass(assumptionEv)}>{cur(assumptionEv)}</span>.
             </p>
           </div>
             </>

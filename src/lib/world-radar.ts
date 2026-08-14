@@ -144,6 +144,17 @@ export const THEME_COMPANIES: ThemeCompany[] = companiesData as ThemeCompany[];
 export const CAPITAL_EVENTS: CapitalEvent[] = eventsData as CapitalEvent[];
 export const INVESTORS: Investor[] = investorsData as Investor[];
 
+/**
+ * Threshold tone for a company opportunity total (0-100) - one scale everywhere.
+ * The radar cards used to hardcode green for every total while the dossier toned by
+ * band, so 45 read strong on one surface and neutral on the next (2026-08-14 audit).
+ */
+export function scoreTone(total: number): string {
+  if (total >= 70) return 'text-positive';
+  if (total >= 55) return 'text-accent';
+  return 'text-ink-2';
+}
+
 export function getThemes(): Theme[] {
   return THEMES;
 }

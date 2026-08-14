@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { MATURITY_TONE, type Theme } from '@/lib/world-radar';
+import { MATURITY_TONE, scoreTone, type Theme } from '@/lib/world-radar';
 import { TickerLogo } from '@/components/TickerLogo';
 import { HelpDrawer, type HelpTerm } from '@/components/education/HelpDrawer';
 import { pageTitleClass } from '@/lib/ui';
@@ -152,7 +152,7 @@ export function ThemeRadar({ themes, topBySlug, latestEventBySlug }: ThemeRadarP
                       >
                         <TickerLogo symbol={c.symbol} size={13} />
                         <span className="font-mono text-[10px] font-semibold text-ink">{c.symbol}</span>
-                        <span className="font-mono text-[10px] text-positive">{c.total}</span>
+                        <span className={`font-mono text-[10px] ${scoreTone(c.total)}`}>{c.total}</span>
                       </span>
                     ))}
                   </div>

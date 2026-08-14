@@ -9,10 +9,15 @@ import { formatCurrency, formatPercent, formatSignedPercent, formatNumber, toneC
 
 interface IpoDrawerProps {
   ipo: IpoCompany | null;
+  /** Provenance of the explorer's dataset - sample rows carry editorial/invented terms
+   *  and the drawer must say so, not just the 9px toolbar footnote it covers
+   *  (2026-08-14 audit; same defect class as the calendar drawer fix). */
+  source?: 'live' | 'sample';
   onClose: () => void;
 }
 
 function billions(usdM: number): string {
+  if (!Number.isFinite(usdM)) return '-';
   return `$${(usdM / 1000).toFixed(1)}B`;
 }
 
@@ -22,7 +27,7 @@ function billions(usdM: number): string {
  * backdrop close, body scroll lock, dialog semantics, and safe-area padding instead
  * of maintaining a diverging copy of the overlay plumbing.
  */
-export function IpoDrawer({ ipo, onClose }: IpoDrawerProps) {
+export function IpoDrawer({ ipo, source = 'sample', onClose }: IpoDrawerProps) {
   if (!ipo) return <DetailDrawer open={false} onClose={onClose} title="">{null}</DetailDrawer>;
 
   const est = ipo.modelEstimate;
@@ -30,6 +35,11 @@ export function IpoDrawer({ ipo, onClose }: IpoDrawerProps) {
 
   return (
     <DetailDrawer open onClose={onClose} title={ipo.companyName} subtitle={`${ipo.symbol} · ${ipo.exchange}`}>
+      {source === 'sample' && (
+        <div className="rounded-cell border border-accent-border/60 bg-accent-tint px-3 py-2 text-[11px] leading-snug text-accent">
+          Sample record - editorial research content, not a live listing. Dates, terms and figures are illustrative.
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <SourceFavicon domain={ipo.domain} sourceName={ipo.companyName} />
         <span className={`rounded-full border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] ${ipoStatusClass(ipo.status)}`}>{ipo.status}</span>
@@ -105,19 +115,26 @@ export function IpoDrawer({ ipo, onClose }: IpoDrawerProps) {
         </div>
       </div>
 
-      {/* Model scenario - research only */}
-      <div className="rounded-cell border border-pending/40 bg-pending/10 p-3">
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-pending">Model scenario · 12m</p>
-          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3">confidence: {est.confidence}</span>
+      {/* Model scenario - research only. Absent when no reference price exists: the
+          model never seeds a $0.00 range from a missing offer price (2026-08-14). */}
+      {est ? (
+        <div className="rounded-cell border border-pending/40 bg-pending/10 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-pending">Model scenario · 12m</p>
+            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3">confidence: {est.confidence}</span>
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-2 text-center font-mono text-xs">
+            <div><p className="text-[10px] uppercase text-ink-3">Bear</p><p className="text-negative">{formatCurrency(est.bearPrice)}</p></div>
+            <div><p className="text-[10px] uppercase text-ink-3">Base</p><p className="text-ink-title">{formatCurrency(est.basePrice)}</p></div>
+            <div><p className="text-[10px] uppercase text-ink-3">Bull</p><p className="text-positive">{formatCurrency(est.bullPrice)}</p></div>
+          </div>
+          <p className="mt-2 text-[10px] leading-4 text-ink-3">Research scenario only - a deterministic range, not a forecast, price target, or recommendation. Not financial advice.</p>
         </div>
-        <div className="mt-2 grid grid-cols-3 gap-2 text-center font-mono text-xs">
-          <div><p className="text-[10px] uppercase text-ink-3">Bear</p><p className="text-negative">{formatCurrency(est.bearPrice)}</p></div>
-          <div><p className="text-[10px] uppercase text-ink-3">Base</p><p className="text-ink-title">{formatCurrency(est.basePrice)}</p></div>
-          <div><p className="text-[10px] uppercase text-ink-3">Bull</p><p className="text-positive">{formatCurrency(est.bullPrice)}</p></div>
-        </div>
-        <p className="mt-2 text-[10px] leading-4 text-ink-3">Research scenario only - a deterministic range, not a forecast, price target, or recommendation. Not financial advice.</p>
-      </div>
+      ) : (
+        <p className="rounded-cell border border-line-strong bg-panel px-3 py-2 text-[11px] text-ink-dim">
+          No model scenario - this listing has no tracked reference price yet, so no range is modelled.
+        </p>
+      )}
 
       <Link href={`/ipos/${ipo.symbol}`} className="inline-flex min-h-[44px] items-center gap-1 rounded-cell border border-line-strong bg-panel px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-ink-2 transition hover:text-ink">
         Full deep-dive <ArrowUpRight size={12} />

@@ -34,7 +34,14 @@ function IpoFaceBlock({ face }: { face: IpoFace }) {
 type SortKey = 'valuationUsdM' | 'proceedsUsdM' | 'returnSinceIpoPct' | 'revenueGrowthPct' | 'ipoDate';
 
 function billions(usdM: number): string {
+  // '-' for unmeasured - the live sync writes placeholder zeros which map to NaN, and
+  // '$0.0B' read as a measured raise/valuation (2026-08-14 audit).
+  if (!Number.isFinite(usdM)) return '-';
   return `$${(usdM / 1000).toFixed(1)}B`;
+}
+/** Sort/sum guard: NaN (untracked) ranks last and adds nothing. */
+function fin(v: number): number {
+  return Number.isFinite(v) ? v : 0;
 }
 
 interface IpoExplorerProps {
@@ -60,8 +67,10 @@ export function IpoExplorer({ ipos: all, source, updatedAt }: IpoExplorerProps) 
     const now = new Date();
     return [...filtered].sort((a, b) => {
       if (sortKey === 'ipoDate') return compareIpoDates(a, b, now);
-      const av = (a[sortKey] ?? -Infinity) as number;
-      const bv = (b[sortKey] ?? -Infinity) as number;
+      const avRaw = (a[sortKey] ?? Number.NaN) as number;
+      const bvRaw = (b[sortKey] ?? Number.NaN) as number;
+      const av = Number.isFinite(avRaw) ? avRaw : -Infinity;
+      const bv = Number.isFinite(bvRaw) ? bvRaw : -Infinity;
       return bv - av;
     });
   }, [all, statusFilter, categoryFilter, sortKey]);
@@ -79,17 +88,17 @@ export function IpoExplorer({ ipos: all, source, updatedAt }: IpoExplorerProps) 
   const sectorCount = new Set(all.map((i) => i.category)).size;
   const topIpo = all[0];
   const nextUp = [...upcomingIpos].sort((a, b) => a.ipoDate.localeCompare(b.ipoDate))[0];
-  const biggestUpcoming = [...upcomingIpos].sort((a, b) => b.valuationUsdM - a.valuationUsdM)[0];
+  const biggestUpcoming = [...upcomingIpos].sort((a, b) => fin(b.valuationUsdM) - fin(a.valuationUsdM))[0];
   const withReturns = all.filter((i) => i.returnSinceIpoPct !== undefined);
   const bestReturn = [...withReturns].sort((a, b) => (b.returnSinceIpoPct ?? 0) - (a.returnSinceIpoPct ?? 0))[0];
   const worstReturn = [...withReturns].sort((a, b) => (a.returnSinceIpoPct ?? 0) - (b.returnSinceIpoPct ?? 0))[0];
-  const largestRaise = [...all].sort((a, b) => b.proceedsUsdM - a.proceedsUsdM)[0];
-  const totalRaisedM = all.reduce((s, i) => s + i.proceedsUsdM, 0);
+  const largestRaise = [...all].sort((a, b) => fin(b.proceedsUsdM) - fin(a.proceedsUsdM))[0];
+  const totalRaisedM = all.reduce((s, i) => s + fin(i.proceedsUsdM), 0);
   const fastestGrowth = [...all]
     .filter((i) => i.revenueGrowthPct !== undefined)
     .sort((a, b) => (b.revenueGrowthPct ?? 0) - (a.revenueGrowthPct ?? 0))[0];
-  const top5ValM = all.slice(0, 5).reduce((s, i) => s + i.valuationUsdM, 0);
-  const medianValM = [...all].sort((a, b) => a.valuationUsdM - b.valuationUsdM)[Math.floor(all.length / 2)]?.valuationUsdM ?? 0;
+  const top5ValM = all.slice(0, 5).reduce((s, i) => s + fin(i.valuationUsdM), 0);
+  const medianValM = [...all].sort((a, b) => fin(a.valuationUsdM) - fin(b.valuationUsdM))[Math.floor(all.length / 2)]?.valuationUsdM ?? 0;
 
   const statTiles: { key: string; faces: IpoFace[] }[] = [
     {
@@ -277,7 +286,7 @@ export function IpoExplorer({ ipos: all, source, updatedAt }: IpoExplorerProps) 
         )}
       </section>
 
-      <IpoDrawer ipo={selected} onClose={() => setSelected(null)} />
+      <IpoDrawer ipo={selected} source={source} onClose={() => setSelected(null)} />
     </div>
   );
 }

@@ -222,7 +222,9 @@ export function TradingReadiness({ report, killSwitches, demoIntent }: TradingRe
           A sample {demoIntent.symbol} paper intent was run through the real deterministic engine with the
           default settings (trading disabled, no limits configured). The engine refused it - exactly as
           designed. {passedCount} checks passed, {blockedCount} blocked, {warningCount}{' '}
-          {warningCount === 1 ? 'warning' : 'warnings'}.
+          {warningCount === 1 ? 'warning' : 'warnings'}. The engine logic is real; the context readings in
+          the check details (quote age, drawdown, liquidity, spread) are illustrative inputs for this demo,
+          not live measurements.
         </p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           <span className="rounded border border-line-strong bg-panel px-1.5 py-0.5 font-mono text-[9px] text-ink-2">

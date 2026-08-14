@@ -39,10 +39,11 @@ interface MarketUniverseSelectorProps {
 }
 
 /**
- * "Your market universe" - a read-only statement, not a choice. Lyra scans a fixed
- * universe (top US + ASX equities), so we show the sectors covered as context
- * rather than toggles. The names the user actually cares about are captured in the
- * portfolio + watchlist steps that follow (any ticker, fetched live on demand).
+ * "Your market universe" - a read-only statement, not a choice. Lyra's hourly scan
+ * covers a fixed ~100-name US (NASDAQ/NYSE) tech universe - no ASX rows, no ETFs
+ * (workers/stock_scanner/universe.py; the old "US + ASX equities and ETFs" copy
+ * overclaimed coverage, 2026-08-14 audit). The names the user actually cares about
+ * are captured in the portfolio + watchlist steps (any ticker, fetched live on demand).
  */
 export function MarketUniverseSelector({ onNext }: MarketUniverseSelectorProps) {
   const categories = Object.entries(MARKET_CATEGORIES) as [MarketCategory, (typeof MARKET_CATEGORIES)[MarketCategory]][];
@@ -50,8 +51,8 @@ export function MarketUniverseSelector({ onNext }: MarketUniverseSelectorProps) 
   return (
     <div className="space-y-4">
       <p className="text-[12px] leading-snug text-ink-2">
-        Lyra continuously scans the top US &amp; ASX equities and ETFs - hourly. Next you&apos;ll add the names that are
-        actually yours - any ticker, fetched live.
+        Lyra continuously scans ~100 top US (NASDAQ/NYSE) tech names - hourly. Next you&apos;ll add the names that are
+        actually yours - any ticker, US or ASX, fetched live on demand.
       </p>
 
       <div>
@@ -82,9 +83,9 @@ export function MarketUniverseSelector({ onNext }: MarketUniverseSelectorProps) 
       </div>
 
       <p className="text-[11px] leading-snug text-ink-dim">
-        <span className="font-semibold text-ink-3">How it works:</span> ~100 of the top US (NASDAQ) and ASX names are
-        scanned hourly out of the box. Anything else you add - your holdings or watchlist - is fetched live on demand via
-        Lyra&apos;s market API.
+        <span className="font-semibold text-ink-3">How it works:</span> ~100 of the top US (NASDAQ/NYSE) tech names are
+        scanned hourly out of the box. Anything else you add - your holdings or watchlist, US or ASX - is fetched live on
+        demand via Lyra&apos;s market API, not scanned hourly.
       </p>
 
       <button

@@ -7,7 +7,7 @@ import { TickerLogo } from '@/components/TickerLogo';
 import { PortfolioDonut } from '@/components/charts/PortfolioDonut';
 import { ChartsTabs } from '@/components/charts/ChartsTabs';
 import { buildScoreBreakdown } from '@/lib/score-breakdown';
-import { formatCurrency, formatSignedNumber, formatSignedPercent } from '@/lib/format';
+import { formatCurrency, formatSignedNumber, formatSignedPercent, toneClass } from '@/lib/format';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import {
   loadLocalHoldings,
@@ -30,7 +30,6 @@ import {
  * delta. Nothing here is interpolated or invented.
  */
 function FactorCard({ signal }: { signal: SignalRow }) {
-  const up = signal.scoreDelta >= 0;
   const factors = buildScoreBreakdown(signal.scoreBreakdown);
   return (
     <Link
@@ -40,7 +39,7 @@ function FactorCard({ signal }: { signal: SignalRow }) {
       <div className="flex items-center gap-1.5">
         <TickerLogo symbol={signal.symbol} companyName={signal.companyName} size={14} />
         <span className="truncate font-mono text-[11px] font-semibold text-ink">{signal.symbol}</span>
-        <span className={`ml-auto shrink-0 font-mono text-[10px] tabular-nums ${up ? 'text-positive' : 'text-negative'}`}>
+        <span className={`ml-auto shrink-0 font-mono text-[10px] tabular-nums ${toneClass(signal.scoreDelta)}`}>
           {signal.score} {formatSignedNumber(signal.scoreDelta, 0)}
         </span>
       </div>
@@ -104,17 +103,24 @@ export function ChartsView({ data }: { data: DashboardData }) {
     [activeData.signals],
   );
 
-  const bookValue = activeData.portfolio.reduce((sum, h) => sum + h.marketValue, 0);
-  const bookPnl = activeData.portfolio.reduce((sum, h) => sum + h.unrealisedPnl, 0);
-  const bookPnlPct = activeData.portfolio.reduce((sum, h) => sum + h.unrealisedPnlPercent * (h.portfolioWeight / 100), 0);
+  // Finite guards: unscanned Solo rows carry NaN market fields (2026-08-14 audit).
+  const priced = activeData.portfolio.filter((h) => Number.isFinite(h.marketValue));
+  const bookValue = priced.reduce((sum, h) => sum + h.marketValue, 0);
+  const bookPnl = priced.reduce((sum, h) => sum + h.unrealisedPnl, 0);
+  // TRUE book return from cost basis - the old market-value-weighted average of
+  // per-holding percents overstated the book (winners gain weight as they rise; a flat
+  // book could read +50%), disagreeing with the $ figure beside it (2026-08-14 audit).
+  const bookCost = priced.reduce((sum, h) => sum + (Number.isFinite(h.unrealisedPnlPercent) && 1 + h.unrealisedPnlPercent / 100 !== 0 ? h.marketValue / (1 + h.unrealisedPnlPercent / 100) : 0), 0);
+  const bookPnlPct = bookCost > 0 ? (bookPnl / bookCost) * 100 : 0;
   const pnlTone = bookPnl >= 0 ? 'text-positive' : 'text-negative';
 
-  const donutSlices = activeData.portfolio.map((h) => ({ label: h.symbol, value: h.marketValue }));
+  const donutSlices = priced.map((h) => ({ label: h.symbol, value: h.marketValue }));
 
   const sectorOf = new Map(activeData.tickers.map((t) => [t.symbol, t.sector]));
   const sectorTotals = new Map<string, number>();
   for (const h of activeData.portfolio) {
     const sector = sectorOf.get(h.symbol) ?? 'Other';
+    if (!Number.isFinite(h.marketValue)) continue;
     sectorTotals.set(sector, (sectorTotals.get(sector) ?? 0) + h.marketValue);
   }
   const sectors = [...sectorTotals.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
@@ -191,5 +197,5 @@ export function ChartsView({ data }: { data: DashboardData }) {
     </div>
   );
 
-  return <ChartsTabs portfolio={portfolio} />;
+  return <ChartsTabs portfolio={portfolio} pageMode={data.mode} />;
 }

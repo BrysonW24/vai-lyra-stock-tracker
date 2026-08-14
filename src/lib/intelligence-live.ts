@@ -14,7 +14,6 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   demoIntelligenceFeed,
   demoTickerHypeMap,
-  type Confidence,
   type HypeImpact,
   type IntelligenceCategory,
   type IntelligenceItem,
@@ -179,7 +178,8 @@ export async function getIntelligenceLive(): Promise<IntelligenceDataset> {
         sentiment: asSentiment(row.sentiment),
         relevance: asRelevance(row.relevance),
         hypeImpact: hypeMap[tickers[0]]?.trend ?? 'steady',
-        confidence: 'medium' as Confidence,
+        // No confidence field: live rows carry no per-item scoring yet - the old
+        // hardcoded 'medium' rendered as a per-item measurement (2026-08-14 audit).
       });
     }
 

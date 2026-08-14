@@ -181,7 +181,12 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
     setRun(r);
     if (r.intent) setIntent(r.intent);
     if (r.status === 'paper_executed') {
-      if ((isTour || intent.reasonCode === 'tour_mode') && r.fill) {
+      // Gate the mock on the SCRIPTED fill only - the server stamps reasonCode
+      // 'tour_mode' exclusively in the signed tour-propose branch. The old bare
+      // `isTour ||` matched the URL param alone, so a REAL durable fill executed on
+      // /paper-bot?tour=true with the tour dismissed got its account snapshot replaced
+      // by a fabricated reset until the next poll (2026-08-14 audit).
+      if (intent.reasonCode === 'tour_mode' && r.fill) {
         // Force the UI to immediately show the "track it live" layout by mocking the account.
         // Equity is the real small-account default (DEFAULT_PAPER_STARTING_CASH), not the old
         // $100k fantasy balance that contradicted the app's $5k default (2026-07-27 audit V13 fix).
@@ -450,7 +455,7 @@ export function PaperBotView({ isTour }: { isTour?: boolean }) {
                       {tourStep === 3 && (
                         <SaaSTooltip
                           title="Simulate Fill"
-                          body="Push it through the risk engine one last time and simulate a fill at the real price."
+                          body="Push it through the risk engine one last time and simulate a walkthrough fill at a scripted illustrative price - real trades fill at the live quote."
                           position="top"
                           align="left"
                         />

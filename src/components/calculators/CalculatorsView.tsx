@@ -874,7 +874,9 @@ export function CalculatorsView() {
                   </div>
                   <div>
                     <p className="text-xs text-ink-3">Risk:Reward</p>
-                    <p className="mt-1 text-lg font-semibold text-positive">1:{profitResult.riskRewardRatio.toFixed(2)}</p>
+                    {/* Tinted by a stated threshold (>= 1 favourable) - hardcoded green
+                        painted a 1:0.01 setup as favourable (2026-08-14 audit). */}
+                    <p className={`mt-1 text-lg font-semibold ${profitResult.riskRewardRatio >= 1 ? 'text-positive' : 'text-ink-title'}`}>1:{profitResult.riskRewardRatio.toFixed(2)}</p>
                   </div>
                 </div>
                 <div>

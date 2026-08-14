@@ -7,6 +7,7 @@ import type {
   WatchlistRow,
 } from '@/types/scanner';
 import type { LocalHolding } from '@/lib/local-portfolio';
+import { DEFAULT_TARGET_SIGNAL_SCORE } from '@/lib/watchlist-rule';
 import type { LocalWatchItem } from '@/lib/local-watchlist';
 
 /**
@@ -85,14 +86,17 @@ export function buildLocalPortfolioHoldings(
   const signalBySymbol = new Map(signals.map((signal) => [signal.symbol, signal]));
   const rows = local.map((holding) => {
     const signal = signalBySymbol.get(holding.symbol);
-    const currentPrice =
-      signal && signal.close > 0 ? signal.close : holding.averageBuyPrice;
+    // Outside the scanned universe there is NO market price. The old fallback echoed
+    // the user's own buy price as 'Current', so cost rendered as market value and P/L
+    // as a measured $0.00 (2026-08-14 audit). NaN renders '-' via the formatters and
+    // is excluded from the totals below.
+    const scanned = signal != null && signal.close > 0;
+    const currentPrice = scanned ? signal.close : Number.NaN;
     const fee = typeof holding.brokerageFee === 'number' && holding.brokerageFee > 0 ? holding.brokerageFee : 0;
     const cost = holding.averageBuyPrice * holding.quantity + fee;
-    const marketValue = currentPrice * holding.quantity;
-    const unrealisedPnl = marketValue - cost;
-    const unrealisedPnlPercent =
-      cost > 0 ? (unrealisedPnl / cost) * 100 : 0;
+    const marketValue = scanned ? currentPrice * holding.quantity : Number.NaN;
+    const unrealisedPnl = scanned ? marketValue - cost : Number.NaN;
+    const unrealisedPnlPercent = scanned && cost > 0 ? (unrealisedPnl / cost) * 100 : scanned ? 0 : Number.NaN;
     return {
       holding,
       signal,
@@ -102,7 +106,7 @@ export function buildLocalPortfolioHoldings(
       unrealisedPnlPercent,
     };
   });
-  const totalValue = rows.reduce((sum, row) => sum + row.marketValue, 0);
+  const totalValue = rows.reduce((sum, row) => sum + (Number.isFinite(row.marketValue) ? row.marketValue : 0), 0);
 
   return rows.map(
     ({
@@ -127,7 +131,7 @@ export function buildLocalPortfolioHoldings(
         unrealisedPnl,
         unrealisedPnlPercent,
         portfolioWeight:
-          totalValue > 0 ? (marketValue / totalValue) * 100 : 0,
+          Number.isFinite(marketValue) && totalValue > 0 ? (marketValue / totalValue) * 100 : Number.isFinite(marketValue) ? 0 : Number.NaN,
         signalScore: signal?.score ?? 0,
         scoreDelta: signal?.scoreDelta ?? 0,
         signalStatus,
@@ -163,9 +167,6 @@ export function buildLocalWatchlistRows(
   signals: SignalRow[],
 ): WatchlistRow[] {
   const signalBySymbol = new Map(signals.map((signal) => [signal.symbol, signal]));
-  // The form's stated default. Rows saved before the threshold was persisted fall back to
-  // it; a hardcoded 70 here used to make the board narrate a target the user never set.
-  const DEFAULT_TARGET_SIGNAL_SCORE = 60;
 
   return local.flatMap((item) => {
     if (
@@ -178,13 +179,17 @@ export function buildLocalWatchlistRows(
 
     const signal = signalBySymbol.get(item.symbol);
     const targetSignalScore = item.targetSignalScore ?? DEFAULT_TARGET_SIGNAL_SCORE;
-    const currentPrice =
-      signal && signal.close > 0 ? signal.close : item.targetBuyPrice;
-    const distanceToTarget =
-      ((currentPrice - item.targetBuyPrice) / item.targetBuyPrice) * 100;
+    // Never substitute the user's TARGET as the live price - an unscanned symbol used
+    // to render its target as 'Current' with distance 0.0% and a full 'price into
+    // zone' bar (2026-08-14 audit).
+    const scanned = signal != null && signal.close > 0;
+    const currentPrice = scanned ? signal.close : Number.NaN;
+    const distanceToTarget = scanned
+      ? ((currentPrice - item.targetBuyPrice) / item.targetBuyPrice) * 100
+      : Number.NaN;
     const invalidated =
       signal?.status === 'invalidated' || signal?.status === 'weakening';
-    const priceGateMet = currentPrice <= item.targetBuyPrice;
+    const priceGateMet = scanned && currentPrice <= item.targetBuyPrice;
     const scoreGateMet = (signal?.score ?? 0) >= targetSignalScore;
     const triggerState: WatchlistRow['triggerState'] = invalidated
       ? 'invalidated'
@@ -207,9 +212,10 @@ export function buildLocalWatchlistRows(
         signalStatus: (signal?.status ?? 'no_signal') as SignalStatus,
         triggerState,
         targetSignalScore,
-        rsi: signal?.rsi ?? 0,
-        macdHistogram: signal?.macdHistogram ?? 0,
-        volumeRatio: signal?.volumeRatio ?? 0,
+        scanned,
+        rsi: signal?.rsi ?? Number.NaN,
+        macdHistogram: signal?.macdHistogram ?? Number.NaN,
+        volumeRatio: signal?.volumeRatio ?? Number.NaN,
         alertStatus: 'Device only',
         notes: item.notes ?? '',
         explanation: signal?.explanation ?? {

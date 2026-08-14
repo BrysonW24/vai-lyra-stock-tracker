@@ -107,9 +107,12 @@ export function PortfolioView({ data }: { data: DashboardData }) {
     }
   }
 
-  const totalValue = holdings.reduce((sum, h) => sum + h.marketValue, 0);
-  const totalPnl = holdings.reduce((sum, h) => sum + h.unrealisedPnl, 0);
-  const costBasis = holdings.reduce((sum, h) => sum + h.averagePrice * h.quantity, 0);
+  // Unscanned Solo rows carry NaN market fields (no price exists) - exclude them from
+  // the totals rather than letting one unpriced symbol NaN-poison the headline tiles.
+  const totalValue = holdings.reduce((sum, h) => sum + (Number.isFinite(h.marketValue) ? h.marketValue : 0), 0);
+  const totalPnl = holdings.reduce((sum, h) => sum + (Number.isFinite(h.unrealisedPnl) ? h.unrealisedPnl : 0), 0);
+  // Fee-inclusive, matching the worker overlay and the Solo builder (2026-08-14 audit).
+  const costBasis = holdings.reduce((sum, h) => sum + h.averagePrice * h.quantity + (h.brokerageFee ?? 0), 0);
   const dailyRisk = holdings.filter((h) => ['elevated_risk', 'invalidated', 'overextended'].includes(h.riskState)).length;
   const strongInHoldings = holdings.filter((h) => h.signalStatus === 'strong_setup').length;
 
@@ -124,7 +127,9 @@ export function PortfolioView({ data }: { data: DashboardData }) {
     ['Risky', formatNumber(dailyRisk, 0), dailyRisk > 0 ? 'text-negative' : 'text-ink-3'],
     ['Cost basis', formatCurrency(costBasis), 'text-ink-2'],
     ['Last trade', lastTrade, 'text-ink-2'],
-    ['Last scan', data.latestRun.timeframe.toUpperCase(), 'text-ink-2'],
+    // Labelled by what it IS: the scan timeframe constant. The old 'Last scan' label
+    // read as permanent freshness even with a dead scanner (2026-08-14 audit).
+    ['Scan timeframe', data.latestRun.timeframe.toUpperCase(), 'text-ink-2'],
   ];
 
   return (
@@ -152,7 +157,13 @@ export function PortfolioView({ data }: { data: DashboardData }) {
         <div className="terminal-panel overflow-hidden rounded-panel">
           <div className="border-b border-line px-3 py-3">
             <h1 className="text-sm font-semibold uppercase tracking-[0.14em] text-ink-title">Portfolio holdings</h1>
-            <p className="mt-1 font-mono text-xs text-ink-3">Values, risk states, and action states are middleware overlay outputs.</p>
+            {/* Provenance copy matches the mode - Solo rows are computed on-device, not
+                middleware overlay outputs (2026-08-14 audit). */}
+            <p className="mt-1 font-mono text-xs text-ink-3">
+              {data.mode === 'supabase'
+                ? 'Values, risk states, and action states are middleware overlay outputs.'
+                : 'Values, risk states, and action states are computed on this device from the latest market snapshot, using the same engine rules.'}
+            </p>
           </div>
 
           {removeError && (

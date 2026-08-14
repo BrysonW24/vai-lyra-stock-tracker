@@ -64,7 +64,9 @@ export function PaperBotStrip({ account }: { account: PaperAccountSummary }) {
           <div className="hidden h-6 w-px bg-line sm:block" />
           <div className="hidden sm:block">
             <p className="font-mono text-[10px] text-ink-dim">Win rate</p>
-            <p className="font-mono text-[13px] font-semibold text-ink">{account.winRate}%</p>
+            {/* '-' until a trade has CLOSED - the store's defined-zero placeholder read
+                as "every trade lost" with only open positions (2026-08-14 audit). */}
+            <p className="font-mono text-[13px] font-semibold text-ink">{account.closedTrades > 0 ? `${account.winRate}%` : '-'}</p>
           </div>
         </div>
         <div className="flex items-center gap-4 font-mono text-[10px] text-ink-3">

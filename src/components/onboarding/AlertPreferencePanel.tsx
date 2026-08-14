@@ -256,7 +256,7 @@ export function AlertPreferencePanel({ alerts, onChange, onNext }: AlertPreferen
           ))}
         </div>
         <p className="mt-1.5 text-[11px] leading-snug text-ink-dim">
-          Setups, risk, triggers &amp; invalidations fire in real time. Hourly digest is hourly; daily at your chosen time.
+          Setups, risk, triggers &amp; invalidations fire with each hourly scan. Hourly digest is hourly; daily at your chosen time.
         </p>
       </div>
 

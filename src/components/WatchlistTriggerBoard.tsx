@@ -84,10 +84,14 @@ export function WatchlistTriggerBoard({ rows }: { rows: WatchlistRow[] }) {
           <p className="px-3 py-4 text-center text-[11px] text-ink-3">No watchlist names yet. Add targets to track setups here.</p>
         ) : (
           rows.map((item) => {
+            // Unscanned rows (no overlay, no fetched signal) have no price and no engine
+            // read - gates render empty and the metrics line says so instead of dressing
+            // structural zeros as measurements (2026-08-14 audit).
+            const scanned = item.scanned !== false;
             const dist = Math.abs(item.distanceToTarget);
-            const priceProgress = 100 - dist * 12; // at the zone = full; ~8% away = near empty
-            const signalProgress = (item.signalScore / Math.max(1, item.targetSignalScore)) * 100;
-            const signalConfirmed = item.signalScore >= item.targetSignalScore;
+            const priceProgress = scanned ? 100 - dist * 12 : 0; // at the zone = full; ~8% away = near empty
+            const signalProgress = scanned ? (item.signalScore / Math.max(1, item.targetSignalScore)) * 100 : 0;
+            const signalConfirmed = scanned && item.signalScore >= item.targetSignalScore;
             return (
               <div className="px-3 py-2.5" key={item.symbol}>
                 <div className="flex items-center gap-2">
@@ -111,16 +115,22 @@ export function WatchlistTriggerBoard({ rows }: { rows: WatchlistRow[] }) {
                   />
                   <Gate
                     label="Signal confirm"
-                    current={item.signalScore.toString()}
+                    current={scanned ? item.signalScore.toString() : '-'}
                     target={item.targetSignalScore.toString()}
                     pct={signalProgress}
                     tone={signalConfirmed ? 'bg-positive' : 'bg-accent'}
                   />
                 </div>
-                <p className="mt-1.5 font-mono text-[10px] text-ink-3">
-                  RSI {Math.round(item.rsi)} · MACD hist {item.macdHistogram.toFixed(2)} · Vol {item.volumeRatio.toFixed(1)}x · score{' '}
-                  {formatSignedNumber(item.scoreDelta, 0)} since scan
-                </p>
+                {scanned ? (
+                  <p className="mt-1.5 font-mono text-[10px] text-ink-3">
+                    RSI {Math.round(item.rsi)} · MACD hist {item.macdHistogram.toFixed(2)} · Vol {item.volumeRatio.toFixed(1)}x · score{' '}
+                    {formatSignedNumber(item.scoreDelta, 0)} since scan
+                  </p>
+                ) : (
+                  <p className="mt-1.5 font-mono text-[10px] text-ink-dim">
+                    Not scanned - this symbol is outside the hourly universe and has no live reads yet.
+                  </p>
+                )}
               </div>
             );
           })
