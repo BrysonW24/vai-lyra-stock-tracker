@@ -88,6 +88,11 @@ export function LiveWire({
       </div>
 
       <div className="divide-y divide-line">
+        {shown.length === 0 && (
+          <p className="px-3 py-4 text-[11px] text-ink-dim">
+            Nothing on the wire yet - rows appear as the engine records signal changes and the live news + calendar feeds sync. Nothing is invented to fill the gap.
+          </p>
+        )}
         {shown.map((item) => {
           const Icon = KIND_ICON[item.kind];
           return (

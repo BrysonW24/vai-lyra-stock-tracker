@@ -27,6 +27,10 @@ export function buildSoloMarketDashboard(
     portfolio: [],
     watchlist: [],
     alerts: [],
+    // The '...source' spread used to carry the AUTHORED demo signal-change rows into
+    // Solo's Live Wire (2026-08-14 audit). Solo has no recorded change history - empty
+    // is the truth, same ruling as the live path in data.ts.
+    signalChanges: [],
     latestRun: {
       ...source.latestRun,
       portfolioOverlaysCreated: 0,

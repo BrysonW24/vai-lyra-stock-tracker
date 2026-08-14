@@ -1,13 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { demoIntelligenceFeed, type IntelligenceItem, type Sentiment } from '@/lib/intelligence';
+import { type IntelligenceItem, type Sentiment } from '@/lib/intelligence';
 import { TickerLogo } from '@/components/TickerLogo';
 
 /**
  * Intelligence ticker-tape - a continuous right-to-left marquee of ticker-tagged
  * market intelligence, sitting under the market-regime bar so signals stream over
  * the data. Pauses on hover. Honours prefers-reduced-motion (static, scrollable).
+ *
+ * Honesty rule (2026-08-14 audit): the tape takes the resolved feed + provenance as
+ * props - it used to hardcode the bundled demo feed and stream fabricated Goldman/
+ * Reuters headlines under a pulsing green dot on live pages. Live rows stream as
+ * intelligence; sample rows stream only on the demo tour under a Sample chip; a
+ * live/solo page with no feed renders an honest "not connected" strip.
  */
 
 const SENTIMENT_DOT: Record<Sentiment, string> = {
@@ -31,15 +37,43 @@ function TapeItem({ item }: { item: IntelligenceItem }) {
   );
 }
 
-export function IntelligenceTicker() {
-  const items = demoIntelligenceFeed;
+export function IntelligenceTicker({
+  feed,
+  source = 'sample',
+  pageMode = 'demo',
+}: {
+  feed?: IntelligenceItem[] | null;
+  /** Provenance of the feed - 'sample' is the bundled demo set. */
+  source?: 'live' | 'sample';
+  /** The page's data mode - sample headlines may only stream on the demo tour. */
+  pageMode?: 'demo' | 'solo' | 'supabase';
+}) {
+  const isLive = source === 'live';
+  const items = feed && (isLive || pageMode === 'demo') ? feed : [];
+
+  if (items.length === 0) {
+    return (
+      <div className="terminal-panel flex items-center gap-2 rounded-panel px-3 py-1.5">
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ink-dim" />
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-3">Intel</span>
+        <span className="text-[11px] text-ink-dim">
+          Live news feed not connected - nothing streams here rather than sample headlines.
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="intel-marquee terminal-panel relative flex items-center overflow-hidden rounded-panel">
       {/* Fixed left label - the tape scrolls behind it */}
       <div className="z-20 flex shrink-0 items-center gap-1.5 border-r border-line bg-chrome px-3 py-1.5">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-positive" />
+        <span className={`h-1.5 w-1.5 rounded-full ${isLive ? 'animate-pulse bg-positive' : 'bg-accent'}`} />
         <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-pending">Intel</span>
+        {!isLive && (
+          <span className="rounded-full border border-accent-border bg-accent-tint px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-accent">
+            Sample
+          </span>
+        )}
       </div>
 
       {/* Scrolling track (items duplicated for a seamless loop) */}

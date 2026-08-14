@@ -6,6 +6,16 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.129.0] - 2026-08-14
+
+The re-audit verdict: every fix verified holding, and the three leaks it found are dead.
+
+### Changed
+
+- A fresh 6-reviewer audit re-checked all 47 original findings against the shipped code and confirmed every fix genuinely holds - then went deeper and found three critical leaks the first pass missed. All three are fixed. The intelligence ticker-tape on Command was still streaming fabricated Goldman/Reuters headlines under a pulsing green dot on live pages: it now takes the resolved feed with its provenance, streams live rows as live, sample rows only on the demo tour under a Sample chip, and says "Live news feed not connected" otherwise.
+- Signed-out visitors on a live deployment no longer inherit the authored demo book as "Your book". The demo NVDA/AMD portfolio and watchlist rendered under the green LIVE badge with real trigger-zone narration ("price is in your $128.00 buy zone... Your move.") - an anonymous visitor now gets an honestly empty book with the app's real empty states. And the hype meter can no longer mix provenance: when the nightly hype sync has no rows, it says so instead of quietly substituting sample buzz scores under the Live banner.
+- Two small dishonesties introduced by earlier fixes are also corrected: the calendar drawer now carries the same Sample-dates provenance chip as the board behind it (and its earnings box says "Not wired yet" instead of mislabelling live events as Sample), and the wire only carries the illustrative macro/policy headlines on the demo tour - a live or Solo wire with no newsflow is honestly empty, with Solo no longer inheriting the authored demo signal-change rows. The remaining 36 medium/polish findings from the re-audit are logged for the next wave - none is a fabricated number a trader could act on.
+
 ## [0.128.0] - 2026-08-14
 
 Honesty audit closed out: the last 12 findings patched, none deferred.
@@ -1752,7 +1762,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.128.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.129.0...HEAD
+[0.129.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.128.0...v0.129.0
 [0.128.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.127.0...v0.128.0
 [0.127.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.126.0...v0.127.0
 [0.126.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.125.0...v0.126.0

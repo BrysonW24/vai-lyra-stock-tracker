@@ -156,7 +156,7 @@ export default async function OverviewPage() {
         <div className="space-y-3">
           <MarketContextStrip data={marketContext} />
           <MacroContextStrip data={macroContext} />
-          <IntelligenceTicker />
+          <IntelligenceTicker feed={intel?.feed} source={intel?.source ?? 'sample'} pageMode={data.mode} />
           <Insight />
         </div>
       ),

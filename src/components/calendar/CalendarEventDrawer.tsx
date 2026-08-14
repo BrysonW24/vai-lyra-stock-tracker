@@ -31,6 +31,7 @@ export function CalendarEventDrawer({
   event,
   signals,
   events,
+  source = 'sample',
   todayIso,
   onClose,
 }: {
@@ -38,6 +39,9 @@ export function CalendarEventDrawer({
   signals: SignalRow[];
   /** The board's event set so the drawer's risk read matches it (live or sample). */
   events?: CalendarEvent[];
+  /** Provenance of the board's events - sample rows carry re-anchored, invented dates,
+   *  and the drawer's Date/When facts must say so (2026-08-14 audit). */
+  source?: 'live' | 'sample';
   /** The board's clock - without it the drawer disagrees with the agenda near UTC midnight. */
   todayIso?: string;
   onClose: () => void;
@@ -65,8 +69,15 @@ export function CalendarEventDrawer({
       title={event.title}
       subtitle={event.ticker ? `${event.ticker} · ${exchangeFor(event.ticker)}` : eventTypeLabel(event.type)}
       badge={
-        <span className={`mb-1 inline-block rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${eventTypeClass(event.type)}`}>
-          {eventBadgeLabel(event)}
+        <span className="mb-1 inline-flex items-center gap-1.5">
+          <span className={`inline-block rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] ${eventTypeClass(event.type)}`}>
+            {eventBadgeLabel(event)}
+          </span>
+          {source === 'sample' && (
+            <span className="inline-block rounded-full border border-accent-border bg-accent-tint px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-accent">
+              Sample dates
+            </span>
+          )}
         </span>
       }
     >
@@ -111,7 +122,9 @@ export function CalendarEventDrawer({
         <div className="rounded-cell border border-line-strong bg-panel p-3">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">Earnings detail</p>
-            <span className="rounded-full border border-accent-border bg-accent-tint px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-accent">Sample</span>
+            {/* Every row below is a "live next" placeholder, not sample DATA - the old
+                unconditional "Sample" chip mislabelled live events (2026-08-14 audit). */}
+            <span className="rounded-full border border-line-hair bg-panel px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-ink-3">Not wired yet</span>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-xs">
             {/* Timing is not asserted until the live earnings feed carries it - "After market

@@ -102,6 +102,13 @@ export function IntelligenceFeed({ feed, hypeMap, source = 'sample', updatedAt =
           Hype sits beside technical score, never replaces it.
           {source === 'sample' ? ' Sample values shown - not a live measurement.' : ' Buzz intensity from the nightly news sync.'}
         </p>
+        {/* A live feed with no hype rows means the nightly hype computation has not run -
+            say so rather than substituting the demo map (2026-08-14 audit). */}
+        {topHypeTickers.length === 0 && (
+          <p className="mt-3 text-xs text-ink-dim">
+            Hype scores not synced yet - the nightly job has not computed them, so nothing is shown rather than sample values.
+          </p>
+        )}
         <div className="mt-3 space-y-2">
           {topHypeTickers.map((ticker) => (
             <div className="flex items-center justify-between gap-2 border-b border-line pb-2 last:border-b-0 last:pb-0" key={ticker.ticker}>

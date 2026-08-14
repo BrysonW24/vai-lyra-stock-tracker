@@ -13,13 +13,21 @@ export default async function WirePage() {
     getIntelligenceLive(),
     getCalendarEventsLive(),
   ]);
+  // Sample rows render ONLY on the demo tour (standing honesty rule): a live/solo wire
+  // whose news or calendar degraded to the bundled sample carries those streams empty
+  // rather than tagged-but-fabricated. The per-item "· sample" tagging in buildLiveWire
+  // stays as the second line of defence for the demo tour itself.
+  const isDemoTour = data.mode === 'demo';
+  const wireNews = intel.source === 'live' || isDemoTour ? intel.feed : [];
+  const wireEvents = calendar.source === 'live' || isDemoTour ? calendar.events : [];
   const items = buildLiveWire(
     data.signalChanges,
-    intel.feed,
-    calendar.events,
+    wireNews,
+    wireEvents,
     intel.source === 'sample',
     calendar.source === 'sample',
     data.generatedFrom !== 'supabase',
+    isDemoTour,
   );
   // Signal changes are live-derived on a supabase deploy (data.ts no longer substitutes
   // demo rows); on demo/solo datasets the change rows come from the bundled sample book.

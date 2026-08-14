@@ -2,7 +2,8 @@
  * Live Wire - one rolling stream that captures every signal change plus market/policy
  * headlines, newest first. A fast "what's changing right now" surface. Composes data we
  * already have (signal changes + intelligence + calendar events); a small illustrative
- * macro/policy wire (Trump / Fed / AI labs) is flagged sample until live newsflow lands.
+ * macro/policy wire (flagged sample) renders ONLY on the demo tour - a live wire with
+ * no macro newsflow is honestly empty.
  */
 
 import type { SignalChange } from '@/types/scanner';
@@ -59,6 +60,13 @@ export function buildLiveWire(
   calendarIsSample = true,
   /** True when the signal changes come from the bundled demo dataset, not the live engine. */
   signalChangesAreSample = false,
+  /**
+   * True ONLY when the page itself is the demo tour. The authored macro/policy
+   * SAMPLE_WIRE used to append unconditionally, so five invented June-2026 headlines
+   * rendered on live and solo wires outside the demo tour (2026-08-14 audit). Sample
+   * rows render only on the demo tour - a live wire with no macro newsflow is empty.
+   */
+  pageIsDemo = false,
 ): FeedItem[] {
   const items: FeedItem[] = [];
 
@@ -88,12 +96,13 @@ export function buildLiveWire(
     });
   });
 
-  items.push(...SAMPLE_WIRE);
-
   // The wire is what has ALREADY happened, newest first - so drop UPCOMING calendar
   // events (those belong in the Calendar, not the "what just changed" stream). nowRef =
-  // the latest real activity already in the stream.
+  // the latest REAL activity already in the stream - computed before any sample wire is
+  // appended, so invented timestamps can never define the reference clock.
   const nowRef = items.reduce((max, it) => Math.max(max, new Date(it.time).getTime()), 0);
+
+  if (pageIsDemo) items.push(...SAMPLE_WIRE);
   events.forEach((e, i) => {
     const time = new Date(`${e.date}T00:00:00Z`).getTime();
     if (time > nowRef + 86_400_000) return; // skip future events (one-day grace)

@@ -254,7 +254,7 @@ export function CalendarView({ signals, events: allEvents, source, todayIso }: C
 
 
       {/* Event detail drawer (reusable right-slide explainer) */}
-      <CalendarEventDrawer event={selectedEvent} signals={signals} events={allEvents} todayIso={todayIso} onClose={() => setSelectedEvent(null)} />
+      <CalendarEventDrawer event={selectedEvent} signals={signals} events={allEvents} source={source} todayIso={todayIso} onClose={() => setSelectedEvent(null)} />
     </div>
   );
 }

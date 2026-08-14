@@ -435,11 +435,15 @@ export async function getDashboardData(): Promise<DashboardData> {
     const signalsBySymbol = new Map(liveSignals.map((signal) => [signal.symbol, signal]));
 
     // Portfolio + watchlist live in separate tables. Fetch them in their own guarded
-    // block so a missing/empty overlay table never breaks the core dashboard - each
-    // field independently falls back to demo data if not signed in, but allows empty
-    // arrays if the user is signed in.
-    let portfolio = userId ? ([] as PortfolioHolding[]) : demoDashboardData.portfolio;
-    let watchlist = userId ? ([] as WatchlistRow[]) : demoDashboardData.watchlist;
+    // block so a missing/empty overlay table never breaks the core dashboard. Both start
+    // EMPTY: the old signed-out fallback substituted the authored demo book under
+    // mode:'supabase', so every sample gate stayed dark and a fabricated NVDA/AMD book
+    // rendered as "Your book" with real trigger-zone narration (2026-08-14 audit). The
+    // demo book belongs to the demo tour; an anonymous visitor's honest book is empty.
+    // Legacy single-user (no-auth) deploys still get their real rows below via the
+    // unscoped reads + `mapped.length > 0` replacement.
+    let portfolio: PortfolioHolding[] = [];
+    let watchlist: WatchlistRow[] = [];
     // Live path: signal changes are derived from live signals or honestly EMPTY. The old
     // demo-substitution here put fabricated "NVDA score dropped" rows into the Live Wire
     // of real deployments with no sample tag (2026-08-11 audit) - empty is the truth.
@@ -491,7 +495,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         if (userId || mapped.length > 0) watchlist = mapped;
       }
     } catch {
-      /* keep per-field demo fallback for portfolio/watchlist */
+      /* portfolio/watchlist stay honestly empty when the overlay reads fail */
     }
 
     return {

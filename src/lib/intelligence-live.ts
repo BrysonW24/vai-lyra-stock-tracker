@@ -191,9 +191,14 @@ export async function getIntelligenceLive(): Promise<IntelligenceDataset> {
         .sort()
         .at(-1) ?? null;
 
+    // Never mix provenance inside one dataset: an empty/errored hype read used to
+    // substitute the DEMO hype map while source stayed 'live', so fabricated buzz
+    // scores (NVDA 92 rising...) rendered under the green Live banner as "from the
+    // nightly news sync" (2026-08-14 audit). Empty is the truth; the feed renders an
+    // honest not-synced state for the hype meter instead.
     return {
       feed,
-      hypeMap: Object.keys(hypeMap).length > 0 ? hypeMap : demoTickerHypeMap,
+      hypeMap,
       source: 'live',
       updatedAt,
     };

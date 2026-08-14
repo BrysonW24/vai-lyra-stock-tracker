@@ -12,6 +12,7 @@ import {
 } from '@/lib/activation/activationSteps';
 import { TickerLogo } from '@/components/TickerLogo';
 import { IntelligenceTicker } from '@/components/IntelligenceTicker';
+import { demoIntelligenceFeed } from '@/lib/intelligence';
 
 interface CommandCentreAnimationProps {
   onComplete?: () => void;
@@ -138,7 +139,9 @@ export function CommandCentreAnimation({
         className={`pointer-events-none mb-2 transition-all duration-500 ${alertVisible ? 'opacity-100' : 'opacity-0'}`}
         style={{ transform: alertVisible ? 'translateY(0)' : 'translateY(12px)' }}
       >
-        <IntelligenceTicker />
+        {/* Walkthrough animation - the sample feed is the point here, and it streams
+            under the ticker's own Sample chip so even the showcase is labelled. */}
+        <IntelligenceTicker feed={demoIntelligenceFeed} source="sample" pageMode="demo" />
       </div>
 
       {/* Telegram-style alert */}
