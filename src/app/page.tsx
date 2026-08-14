@@ -156,7 +156,10 @@ export default async function OverviewPage() {
         <div className="space-y-3">
           <MarketContextStrip data={marketContext} />
           <MacroContextStrip data={macroContext} />
-          <IntelligenceTicker feed={intel?.feed} source={intel?.source ?? 'sample'} pageMode={data.mode} />
+          {/* orientationNews is already the rule's gate (live feed, or sample on the demo
+              tour only) - passing the raw sample feed here serialized fabricated Goldman
+              headlines into the live page payload even though the tape never drew them. */}
+          <IntelligenceTicker feed={orientationNews} source={intel?.source ?? 'sample'} pageMode={data.mode} />
           <Insight />
         </div>
       ),
@@ -165,7 +168,7 @@ export default async function OverviewPage() {
     { id: 'next-best', node: <NextBestActions signals={data.signals} portfolio={data.portfolio} watchlist={data.watchlist} /> },
     { id: 'prime', node: <PrimeSetupsBoard signals={data.signals} /> },
     { id: 'countdown', node: <CatalystCountdown events={calendar?.events ?? []} calendarSource={calendar?.source ?? 'sample'} pageMode={data.mode} /> },
-    { id: 'charts', node: <HoldingsMomentumBoard holdings={data.portfolio} signals={data.signals} tickers={data.tickers} intel={intel ? { feed: intel.feed, hypeMap: intel.hypeMap, source: intel.source } : null} pageMode={data.mode} /> },
+    { id: 'charts', node: <HoldingsMomentumBoard holdings={data.portfolio} signals={data.signals} tickers={data.tickers} intel={intel && (intelIsLive || data.mode === 'demo') ? { feed: intel.feed, hypeMap: intel.hypeMap, source: intel.source } : null} pageMode={data.mode} /> },
     { id: 'signals', node: <SignalEventsPanel signals={data.signals} /> },
     { id: 'catalysts', node: <CatalystRadar /> },
     { id: 'watchlist', node: <WatchlistTriggerBoard rows={watchlistNearTrigger} /> },

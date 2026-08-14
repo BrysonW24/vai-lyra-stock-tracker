@@ -23,6 +23,14 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.129.1',
+    date: '2026-08-14',
+    title: 'Sample headlines no longer ship in the live page source at all',
+    highlights: [
+      'Live verification of 0.129.0 caught a last subtlety: the Command page passed the raw sample news feed to the ticker-tape and momentum board as props, so even though neither ever DREW a fabricated headline on a live page, the headlines still sat serialized in the page source for anyone reading view-source. Both call sites now gate the data itself - what may not render is never sent to the browser.',
+    ],
+  },
+  {
     version: '0.129.0',
     date: '2026-08-14',
     title: 'The re-audit verdict: every fix verified holding, and the three leaks it found are dead',

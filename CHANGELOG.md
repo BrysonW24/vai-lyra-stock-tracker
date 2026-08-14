@@ -6,6 +6,14 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.129.1] - 2026-08-14
+
+Sample headlines no longer ship in the live page source at all.
+
+### Changed
+
+- Live verification of 0.129.0 caught a last subtlety: the Command page passed the raw sample news feed to the ticker-tape and momentum board as props, so even though neither ever DREW a fabricated headline on a live page, the headlines still sat serialized in the page source for anyone reading view-source. Both call sites now gate the data itself - what may not render is never sent to the browser.
+
 ## [0.129.0] - 2026-08-14
 
 The re-audit verdict: every fix verified holding, and the three leaks it found are dead.
@@ -1762,7 +1770,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.129.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.129.1...HEAD
+[0.129.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.129.0...v0.129.1
 [0.129.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.128.0...v0.129.0
 [0.128.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.127.0...v0.128.0
 [0.127.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.126.0...v0.127.0
