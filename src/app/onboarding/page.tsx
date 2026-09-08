@@ -42,6 +42,19 @@ import { DemoCarryoverConfirm } from '@/components/onboarding/DemoCarryoverConfi
 import { saveDemoCarryover, loadDemoCarryover, clearDemoCarryover } from '@/lib/demo-carryover';
 
 /** Fire-and-forget activation beacon (closed slug set; server no-ops in demo/anon). */
+/**
+ * Deep-linkable beats, by the name the Simple-view checklist uses. Step numbers are the
+ * questionnaire's own case labels (2 Operator Profile, 4 Watchlist, 5 Holdings, 7 Capital,
+ * 8 Alerts) - keep this map in step with those cases if they are ever renumbered.
+ */
+const BEAT_STEPS: Record<string, number> = {
+  profile: 2,
+  watchlist: 4,
+  holdings: 5,
+  capital: 7,
+  alerts: 8,
+};
+
 function logActivation(event: string, detail: { step?: number; path?: string } = {}): void {
   try {
     void fetch('/api/activation', {
@@ -63,6 +76,12 @@ export default function OnboardingPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  /**
+   * Single-beat mode: the user came from the Simple-view setup checklist to answer ONE
+   * thing, not to replay the whole flow (founder brief 2026-09-09 - stop front-loading;
+   * offer the beats "once they've had a look around"). Saves that beat and returns home.
+   */
+  const [singleBeat, setSingleBeat] = useState<string | null>(null);
 
   // Mount: resume from a saved checkpoint if one exists (so a returning user picks up where they
   // left off), otherwise start a fresh setup. Done in an effect (client-only) to avoid an SSR/
@@ -84,6 +103,20 @@ export default function OnboardingPage() {
       setHydrated(true);
       return;
     }
+    // Checklist deep-links: ?beat=profile|watchlist|holdings jump straight to that beat,
+    // carrying any saved answers so the user never re-enters what they already gave.
+    const beat = params?.get('beat');
+    const beatStep = beat ? BEAT_STEPS[beat] : undefined;
+    if (beatStep !== undefined) {
+      const resumed = loadOnboardingProgress();
+      setState(resumed?.state ?? createInitialOnboardingState('full_setup'));
+      setCurrentStep(beatStep);
+      setPhase('questionnaire');
+      setSingleBeat(beat as string);
+      setHydrated(true);
+      return;
+    }
+
     const saved = loadOnboardingProgress();
     const carried = isSupabaseConfigured() ? loadDemoCarryover() : null;
     if (saved) {
@@ -188,6 +221,12 @@ export default function OnboardingPage() {
 
     setState({ ...state, completedSteps: Array.from(new Set([...state.completedSteps, currentStep])) });
     logActivation('step_completed', { step: currentStep, path: state.path });
+    // One beat, one answer, straight back to the app - never roll on into the rest of the
+    // questionnaire the user deliberately deferred.
+    if (singleBeat) {
+      void handleFinish();
+      return;
+    }
     if (next !== null) {
       setCurrentStep(next);
     }
@@ -445,6 +484,14 @@ export default function OnboardingPage() {
         clearDemoCarryover();
       }
       logActivation('onboarding_finished', { path: state.path });
+
+      // Single beat: the user answered one deferred question - drop them straight back on
+      // the home page they came from, no Add-to-Home-Screen lesson, no success interstitial.
+      if (singleBeat) {
+        logActivation('beat_completed', { step: currentStep });
+        router.replace('/');
+        return;
+      }
 
       // Saves done - one last beat teaches Add-to-Home-Screen (alerts on iPhone depend on it),
       // then the success beat hands off to the command centre.

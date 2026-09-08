@@ -64,7 +64,12 @@ export async function middleware(request: NextRequest) {
     ) {
       return NextResponse.redirect(new URL('/', request.url));
     }
-    if (!onboarded && !isPublic && !pathname.startsWith('/onboarding')) {
+    // "Look around first" (founder brief 2026-09-09: stop front-loading the whole setup).
+    // A visitor who chose to explore gets the app immediately - Simple view's setup
+    // checklist carries the deferred beats, each deep-linking back into onboarding. The
+    // beats themselves are unchanged; only the moment we ask for them moved.
+    const exploring = request.cookies.get('lyra_explore')?.value === '1';
+    if (!onboarded && !exploring && !isPublic && !pathname.startsWith('/onboarding')) {
       return NextResponse.redirect(new URL('/welcome', request.url));
     }
     return response;

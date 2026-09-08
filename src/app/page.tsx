@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { Suspense } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { AppShell } from '@/components/AppShell';
@@ -41,10 +42,63 @@ import { applyAffinityTiebreak, affinityFor } from '@/lib/twin/ranking';
 import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneClass, trendArrow } from '@/lib/format';
 import { PaperBotStrip } from '@/components/paper-bot/PaperBotStrip';
 import { SoloCommandLayout } from '@/components/SoloCommandLayout';
+import { SimpleHome } from '@/components/simple/SimpleHome';
+import { parseViewMode, VIEW_MODE_COOKIE } from '@/lib/view-mode';
+import { resolveGovAwards } from '@/lib/ingestion/usaspending';
+import { buildEmergenceShortlist } from '@/lib/small-cap-lifecycle';
+import { getThemes } from '@/lib/world-radar';
 
 export const metadata = { title: 'Command' };
 
+/**
+ * SIMPLE VIEW - the calm front door (founder brief 2026-09-09: the dense desk is a wall,
+ * "I'm not drawn to use it at the moment, and I think that's due to the complexity").
+ *
+ * Fetches only the five things this page shows, so the calm view is also the CHEAP view -
+ * it does not pay for the dense Command's market context, twin affinity, paper account,
+ * calendar or goal maths just to throw them away.
+ */
+async function SimpleCommandPage() {
+  const [data, intel, awards, setupStatus] = await Promise.all([
+    getDashboardData(),
+    getIntelligenceLive().catch(() => null),
+    resolveGovAwards().catch(() => null),
+    getSetupStatus(),
+  ]);
+
+  // Small caps whose backing profile names a GOVERNMENT body - the join the founder
+  // asked for ("small caps that are taking advantage of that"). Derived from the same
+  // deterministic lifecycle engine /small-caps uses, filtered, never re-scored here.
+  const momentumBySymbol = Object.fromEntries(data.signals.map((s) => [s.symbol, s.score]));
+  const govBackedCaps = buildEmergenceShortlist(momentumBySymbol, 24).filter((c) => c.backing.government);
+
+  // Themes ranked by their authored research scores, strongest first. These are analyst-set
+  // in content/themes.jsonl (NOT engine-computed) - the copy says so, per the honesty audit.
+  const allThemes = getThemes();
+  const themes = [...allThemes].sort((a, b) => b.momentum + b.capitalFlow - (a.momentum + a.capitalFlow)).slice(0, 5);
+
+  return (
+    <AppShell data={data} viewMode="simple">
+      <SimpleHome
+        data={data}
+        news={intel?.feed ?? []}
+        newsSource={intel?.source ?? 'sample'}
+        awards={awards?.awards ?? []}
+        awardsSource={awards?.source ?? 'sample'}
+        govBackedCaps={govBackedCaps}
+        themes={themes}
+        themeCount={allThemes.length}
+        setupStatus={setupStatus}
+      />
+    </AppShell>
+  );
+}
+
 export default async function OverviewPage() {
+  // Cookie-read so the SERVER picks the shell - no flash of the dense app first.
+  const viewMode = parseViewMode((await cookies()).get(VIEW_MODE_COOKIE)?.value);
+  if (viewMode === 'simple') return <SimpleCommandPage />;
+
   const soloMode = !(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

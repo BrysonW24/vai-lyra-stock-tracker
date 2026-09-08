@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
+import { ExploreFirstLink } from '@/components/simple/ExploreFirstLink';
 import { ArrowRight, BellRing, Gauge, Newspaper, ShieldCheck, Wallet } from 'lucide-react';
 import { BrandLogo } from '@/components/BrandLogo';
 import { VersionBadge } from '@/components/VersionBadge';
@@ -119,6 +120,9 @@ export default async function WelcomePage() {
               <Link href={setupHref} className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#3b5bdb] via-[#43d18b] to-[#f3a33a] px-5 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-[#07090c] shadow-[0_12px_30px_-10px_rgba(67,209,139,0.6)] transition hover:brightness-110">
                 {setupLabel} <ArrowRight size={16} />
               </Link>
+              {/* Deferred onboarding: see the app first, answer the setup beats after -
+                  Simple view's checklist carries them (founder brief, 2026-09-09). */}
+              <ExploreFirstLink />
               {supabaseConfigured && (
                 <Link href="/auth/login" className="inline-flex items-center gap-2 rounded-md border border-[#0E1E3A]/10 bg-white/70 px-5 py-3 text-sm font-medium text-[#0E1E3A] backdrop-blur transition hover:border-[#1E63FF]/30">
                   Sign in

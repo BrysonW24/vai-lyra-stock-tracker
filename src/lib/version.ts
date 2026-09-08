@@ -23,6 +23,16 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.131.0',
+    date: '2026-09-09',
+    title: 'Simple view - a calm front door, and setup that waits until you have looked around',
+    highlights: [
+      'Lyra grew to 56 pages and 40 nav entries, and that density had become the reason not to open it. Simple view is the new default: one calm page with your book, what moved, where government money actually went, the small caps already backed by that money, and which themes are running - then a quiet link into each. No charts, no carousels, no countdowns, nothing sliding. The nav shrinks to those same six places, and there is nothing to configure. Flip to Full view any time from the header (or the Explore drawer on mobile) and the whole dense desk is exactly where you left it - the switch is remembered.',
+      'Setup no longer blocks the door. You can choose "Look around first" on the welcome screen and land straight in the app; the onboarding beats you skipped become a "Finish setting up" checklist on the home page, each one deep-linking into the same questions as before and saving to your account when you answer it. Nothing was removed from onboarding - only the moment it asks. The checklist reads your real state (holdings, watchlist, profile, alerts), so it ticks itself off and disappears when you are done, and it can never claim you are set up when you are not.',
+      'Everything in Simple view obeys the same honesty rules as the rest of the app: government awards show the real contract description straight from USAspending with a provenance chip when any row is sample, theme scores say they are analyst-authored rather than live readings, unscanned holdings read "not scanned" instead of a fabricated price, and the news block says the feed is not connected rather than showing sample headlines. A drift guard in the test suite fails the build if any Simple-view destination stops existing.',
+    ],
+  },
+  {
     version: '0.130.0',
     date: '2026-08-14',
     title: 'The final sweep: all 35 remaining audit findings closed',

@@ -12,6 +12,22 @@ opens a live **Setup Companion** page in the developer's browser so they can wat
 understand every stage, and hands over a working console - demo in minutes, live and
 deployed if they choose.
 
+## Entry model: deferred, not front-loaded (v0.131.0, 2026-09-09)
+
+Onboarding is no longer a wall in front of the app. The beats themselves are unchanged -
+same questions, same persistence, same contract gate - but the moment they are asked moved:
+
+- `/welcome` offers **"Look around first"**, which sets the `lyra_explore` cookie the
+  middleware honours and drops the visitor straight on the home page.
+- Simple view's **"Finish setting up"** checklist carries the deferred beats. Each row
+  deep-links to `/onboarding?beat=<name>` (`BEAT_STEPS` in `src/app/onboarding/page.tsx`
+  maps `profile|watchlist|holdings|capital|alerts` to their step numbers), answers that ONE
+  beat, saves, and returns home.
+- Checklist state is DERIVED from `getSetupStatus()` plus Solo's browser-local book - never
+  a "completed" flag - so it self-heals and can never claim a user is set up when they are not.
+
+Keep `BEAT_STEPS` in step with the questionnaire's `case` labels if they are ever renumbered.
+
 ## Asset register
 
 | Asset | Audience | What it delivers |

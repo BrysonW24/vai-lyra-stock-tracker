@@ -65,6 +65,9 @@ import { TickerQuickSearch } from '@/components/TickerQuickSearch';
 import { captureInteraction } from '@/lib/twin/capture';
 import { NavCustomizer } from '@/components/NavCustomizer';
 import { getPrimaryHrefs, setPrimaryHrefs, clearPrimaryHrefs, sanitizePrimaries } from '@/lib/nav-prefs';
+import { useViewMode } from '@/components/simple/ViewModeProvider';
+import { ViewModeToggle } from '@/components/simple/ViewModeToggle';
+import { SIMPLE_NAV_HREFS, type ViewMode } from '@/lib/view-mode';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 // The full section map, grouped BY JOB (what you're trying to do), not by data type. A slim set of
@@ -164,10 +167,15 @@ function rampColor(index: number): string {
 interface AppShellProps {
   data: DashboardData;
   children: ReactNode;
+  /** Server-read on the home page; every other route inherits it from ViewModeProvider. */
+  viewMode?: ViewMode;
 }
 
-export function AppShell({ data, children }: AppShellProps) {
+export function AppShell({ data, children, viewMode: viewModeProp }: AppShellProps) {
   const pathname = usePathname();
+  const contextViewMode = useViewMode();
+  const viewMode = viewModeProp ?? contextViewMode;
+  const isSimple = viewMode === 'simple';
   const soloMode = !isSupabaseConfigured();
   // Boundary-aware: /paper-bot must not also light up /paper (startsWith without the '/' boundary).
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/'));
@@ -194,7 +202,8 @@ export function AppShell({ data, children }: AppShellProps) {
     }
   }, []);
 
-  const primaryHrefs = customPrimaries ?? DEFAULT_PRIMARY_HREFS;
+  // Simple view pins its own six; the user's custom bar belongs to Full view.
+  const primaryHrefs = isSimple ? [...SIMPLE_NAV_HREFS] : (customPrimaries ?? DEFAULT_PRIMARY_HREFS);
   const primaryItems = primaryHrefs.map((href) => NAV_BY_HREF.get(href)).filter((i): i is NavItem => Boolean(i));
 
   // Persist an edited bar. Landing exactly on the defaults clears the override, so a future change to the
@@ -376,6 +385,13 @@ export function AppShell({ data, children }: AppShellProps) {
               );
             })()}
 
+            {/* The one switch between the calm front door and the full desk. Hidden on the
+                narrowest screens where the header has no room - the Explore drawer carries
+                it there instead. */}
+            <span className="hidden sm:inline-flex">
+              <ViewModeToggle mode={viewMode} />
+            </span>
+
             <AlertStatusBadge />
 
             {/* Live Wire shortcut - signals first; the live feed is one tap from anywhere.
@@ -497,6 +513,13 @@ export function AppShell({ data, children }: AppShellProps) {
                 {customizing ? 'Drag to reorder, add or remove' : 'everything behind your desk'}
               </span>
               <div className="ml-auto flex items-center gap-2">
+                {/* Mobile home for the density switch - the header hides it under sm. */}
+                <span className="inline-flex sm:hidden">
+                  <ViewModeToggle mode={viewMode} />
+                </span>
+                {/* Customising the bar is a Full-view power: Simple pins its own six and has
+                    nothing to configure, which is the point of it. */}
+                {!isSimple && (
                 <button
                   type="button"
                   onClick={() => setCustomizing((c) => !c)}
@@ -509,6 +532,7 @@ export function AppShell({ data, children }: AppShellProps) {
                   <Pin size={12} />
                   {customizing ? 'Done' : 'Customise'}
                 </button>
+                )}
                 <button
                   type="button"
                   autoFocus

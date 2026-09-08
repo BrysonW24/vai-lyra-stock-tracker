@@ -8,6 +8,9 @@ import { UsageTracker } from '@/components/UsageTracker';
 import { NotificationEngagementBeacon } from '@/components/NotificationEngagementBeacon';
 import ExternalLinkBoundary from '@/components/native/ExternalLinkBoundary';
 import { THEME_INIT_SCRIPT } from '@/lib/theme';
+import { cookies } from 'next/headers';
+import { ViewModeProvider } from '@/components/simple/ViewModeProvider';
+import { parseViewMode, VIEW_MODE_COOKIE } from '@/lib/view-mode';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://lyra.vivacityai.com.au'),
@@ -53,7 +56,10 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // Read ONCE on the server so every AppShell below renders the right nav in the first
+  // byte of HTML - no dense-then-simple flash on any of the 56 routes.
+  const viewMode = parseViewMode((await cookies()).get(VIEW_MODE_COOKIE)?.value);
   return (
     <html lang="en">
       <head>
@@ -63,7 +69,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body>
         <PinGate />
-        {children}
+        <ViewModeProvider mode={viewMode}>{children}</ViewModeProvider>
         <NotificationEngagementBeacon />
         <UsageTracker />
         <ExternalLinkBoundary />
