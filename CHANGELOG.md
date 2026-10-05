@@ -6,6 +6,20 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.132.0] - 2026-10-05
+
+The plumbing audit: faster pages, a scanner that cannot starve the database, and alarms that actually ring.
+
+### Changed
+
+- Pages load far faster. The database is in Sydney but every page was being built in Washington DC, and the main signal query read the whole table on every visit (1.5 seconds in the database). Pages are now built in Sydney beside the data, and that query uses an index - about 3 milliseconds.
+- Nineteen scanned stocks were missing from every dashboard. The signal list asked for the newest 80 rows; the universe had grown to 99, so the rest silently fell off - including holdings, which then read as "not scanned". Every scanned stock now shows.
+- Found and fixed the cause of the late-September outage. For four days every scan failed because the scanner re-sent six months of price history on every run and received all of it back, which used up the monthly data-transfer allowance of the database. It now stores only what changed.
+- The public track record now counts every result. It had been built from the newest 1,000 outcomes while 1,587 existed.
+- Three security holes closed before anyone used them: an account could grant itself the hosted AI key, an account could publish a forged "AI scout" card, and an anonymous caller could fill the database through the AI audit log. Request bodies (which can contain your own AI key) are no longer sent to the error tracker, and a feedback email is never written to a public issue.
+- Failures now reach a person. The automated checks had been red on every release since late July and the nightly job since mid-July, and none of it was reported - the alerts pointed at credentials that were never set. Every job now pages on failure, and says so loudly when it cannot.
+- Privacy, terms and support are static pages again (the last release accidentally made every page render on demand), and the Emerging Winners engine can no longer write illustrative, made-up candidates to its permanent record.
+
 ## [0.131.0] - 2026-09-09
 
 Simple view - a calm front door, and setup that waits until you have looked around.
@@ -1790,7 +1804,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.131.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.0...HEAD
+[0.132.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.131.0...v0.132.0
 [0.131.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.130.0...v0.131.0
 [0.130.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.129.1...v0.130.0
 [0.129.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.129.0...v0.129.1

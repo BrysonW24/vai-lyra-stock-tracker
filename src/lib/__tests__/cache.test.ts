@@ -76,6 +76,32 @@ describe('cache', () => {
       expect(cacheBackendName()).toBe('upstash');
     });
 
+    it('gives every Upstash call a deadline, so a slow Redis cannot hold a request open', async () => {
+      // "A broken Redis must never break a request" was only true for a Redis that FAILS. One that
+      // hangs would hang the page (cache read) or the AI route (rate-limit increment) with it.
+      const deadlines: boolean[] = [];
+      stubUpstash((async (_url: string, init: RequestInit) => {
+        deadlines.push(init.signal instanceof AbortSignal && !init.signal.aborted);
+        return new Response(JSON.stringify({ result: null }));
+      }) as unknown as typeof fetch);
+
+      await cacheGet('k');
+      await cacheSet('k', { v: 1 }, 30);
+      const { upstashCommand } = await import('@/lib/cache');
+      await upstashCommand(['INCR', 'rl:test']);
+
+      expect(deadlines).toEqual([true, true, true]);
+    });
+
+    it('treats a call that times out as a miss, never an error', async () => {
+      stubUpstash((async () => {
+        throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+      }) as unknown as typeof fetch);
+
+      await expect(cacheGet('k')).resolves.toBeNull();
+      await expect(cacheSet('k', 1, 30)).resolves.toBeUndefined();
+    });
+
     it('accepts the legacy Vercel KV env names too', () => {
       vi.stubEnv('KV_REST_API_URL', 'https://example-kv.upstash.io');
       vi.stubEnv('KV_REST_API_TOKEN', 'kv-token');

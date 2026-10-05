@@ -1,0 +1,17 @@
+# One definition of "a runner that can run a Python worker", used by every workflow that runs one.
+# The interpreter version lives HERE and nowhere else - five workflows used to pin it separately and
+# had already drifted (3.11 in four, 3.12 in one), so CI tested a different Python from the one a
+# scheduled job ran on.
+name: Set up the Python worker
+description: Python plus the cached worker dependencies.
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v7
+      with:
+        python-version: '3.12'
+        cache: pip
+        cache-dependency-path: requirements.txt
+    - name: Install worker dependencies
+      shell: bash
+      run: pip install -r requirements.txt

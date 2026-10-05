@@ -106,8 +106,10 @@ class SupabaseAiRunWriter implements AiRunWriter {
       id: record.id,
       user_id: userId,
       agent_name: record.agentName,
-      model_provider: record.provider,
-      model_name: record.model,
+      // Clamped at the write, whatever the caller passed: this insert runs with the service
+      // role, so it is the last place an oversized client string can be stopped.
+      model_provider: String(record.provider).slice(0, 32),
+      model_name: String(record.model).slice(0, 96),
       input_hash: record.inputHash,
       output_payload: {
         outputHash: record.outputHash,

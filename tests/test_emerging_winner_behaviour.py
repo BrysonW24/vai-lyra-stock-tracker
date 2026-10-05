@@ -222,3 +222,48 @@ def test_shipped_universe_is_honestly_illustrative():
     assert candidates is ew_main.ILLUSTRATIVE_CANDIDATES, "load_candidates drifted from the illustrative set silently"
     assert "illustrative" in ew_main.RUN_NOTE.lower()
     assert "shadow-live" in ENGINE_VERSION
+
+
+class _RecordingLedger:
+    """A repo that is 'enabled' and records every write the worker attempts."""
+
+    enabled = True
+
+    def __init__(self) -> None:
+        self.writes: list[str] = []
+
+    def create_run(self, _engine_version: str) -> str:
+        self.writes.append("create_run")
+        return "run-1"
+
+    def save_predictions(self, _run_id: str, results: list) -> int:
+        self.writes.append(f"save_predictions:{len(results)}")
+        return len(results)
+
+    def finish_run(self, _run_id, _results) -> None:
+        self.writes.append("finish_run")
+
+
+def test_illustrative_candidates_are_never_written_to_the_ledger(monkeypatch):
+    """The ledger is append-only and the app reads the newest run back as live output (`demo: false`).
+    The illustrative set is three invented tickers with invented government contracts and insider
+    buys - writing it would publish fiction that can never be deleted. The worker must score it for
+    shape and persist nothing, exactly like every other worker's sample path."""
+    ledger = _RecordingLedger()
+    monkeypatch.delenv("EW_REAL_UNIVERSE", raising=False)
+    monkeypatch.setattr(ew_main, "EmergingWinnerRepo", lambda: ledger)
+
+    assert ew_main.main() == 0
+    assert ledger.writes == []
+
+
+def test_real_candidates_are_written_to_the_ledger(monkeypatch):
+    """The gate must not swallow the real path: real-universe candidates still persist."""
+    ledger = _RecordingLedger()
+    real = [(symbol, features) for symbol, features in ew_main.ILLUSTRATIVE_CANDIDATES]  # same shape, NOT the sentinel object
+    monkeypatch.setenv("EW_REAL_UNIVERSE", "1")
+    monkeypatch.setattr(ew_main, "EmergingWinnerRepo", lambda: ledger)
+    monkeypatch.setattr(ew_main, "load_real_candidates", lambda *, limit: real)
+
+    assert ew_main.main() == 0
+    assert ledger.writes == ["create_run", f"save_predictions:{len(real)}", "finish_run"]

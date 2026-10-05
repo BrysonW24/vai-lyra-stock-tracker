@@ -58,6 +58,19 @@ def test_market_hours_window_tracks_dst() -> None:
 
 
 def test_market_hours_guard_blocks_after_close() -> None:
-    # 21:00 UTC is 17:00 EDT in summer - after the 16:30 ET buffer.
-    after_close = datetime(2026, 6, 1, 21, 0, tzinfo=timezone.utc)
+    # 22:00 UTC is 18:00 EDT in summer - after the 17:30 ET end of the band.
+    after_close = datetime(2026, 6, 1, 22, 0, tzinfo=timezone.utc)
     assert should_run_now(settings(), after_close) is False
+
+
+def test_guard_stays_open_until_the_closing_bar_can_be_scored() -> None:
+    # The closing hourly bar opens 15:30 ET and only counts as complete at 16:30 ET, and the cron
+    # fires at :17 and :47. A band ending at 16:30 admitted 16:17 (bar still incomplete) and refused
+    # 16:47 - so the close of every session went unscored until the next morning. Both firings that
+    # can actually see the completed closing bar must be allowed, in summer and in winter.
+    summer_first_chance = datetime(2026, 6, 1, 20, 47, tzinfo=timezone.utc)  # 16:47 EDT Monday
+    summer_second_chance = datetime(2026, 6, 1, 21, 17, tzinfo=timezone.utc)  # 17:17 EDT Monday
+    winter_first_chance = datetime(2026, 1, 5, 21, 47, tzinfo=timezone.utc)  # 16:47 EST Monday
+    assert should_run_now(settings(), summer_first_chance) is True
+    assert should_run_now(settings(), summer_second_chance) is True
+    assert should_run_now(settings(), winter_first_chance) is True

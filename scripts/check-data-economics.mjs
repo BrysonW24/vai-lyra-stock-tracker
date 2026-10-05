@@ -161,20 +161,22 @@ try {
   process.exit(1);
 }
 
+// Drift is a FAILURE, but it is not a reason to stop looking. This used to exit here, before a
+// single size was measured - so while three tables were missing from production (the Emerging
+// Winner ledger, for ten weeks) the gate never once reported that the database itself had grown
+// from 87 MB to 287 MB and crossed its own 250 MB warning line. A red gate must not hide the next
+// red: measure everything that can be measured, then fail at the end with all of it.
 const drift = [];
+const measurable = [];
 for (const m of MONITORED) {
   if (!live[m.table]) drift.push(`${m.table}: table missing from live schema`);
   else if (!live[m.table].includes(m.ageColumn)) drift.push(`${m.table}.${m.ageColumn}: age column missing`);
-}
-if (drift.length) {
-  console.error('[data-economics] FAIL - manifest drift (fix MONITORED in this script or apply the missing migration):');
-  for (const d of drift) console.error(`  - ${d}`);
-  process.exit(1);
+  else measurable.push(m);
 }
 
 // ---------------------------------------------------------------------------------------------
 // 3. Measure. One query, one JSON blob.
-const parts = MONITORED.map((m) => {
+const parts = measurable.map((m) => {
   const past = m.horizonDays
     ? `(select count(*) from "${m.table}" where "${m.ageColumn}" < now() - make_interval(days => ${m.horizonDays}))`
     : 'null';
@@ -188,14 +190,16 @@ const parts = MONITORED.map((m) => {
 const report = JSON.parse(
   sql(`select json_build_object(
          'db_bytes', pg_database_size(current_database()),
-         'tables', json_build_array(${parts.join(',')}))::text;`)
+         'tables', ${parts.length ? `json_build_array(${parts.join(',')})` : `'[]'::json`})::text;`)
 );
 
 // ---------------------------------------------------------------------------------------------
 // 4. Judge.
 const MB = 1024 * 1024;
 const dbMb = report.db_bytes / MB;
-const failures = [];
+const failures = drift.map(
+  (d) => `manifest drift - ${d} (fix MONITORED in this script or apply the missing migration)`
+);
 const warnings = [];
 const rows = report.tables.map((t) => {
   const m = MONITORED.find((x) => x.table === t.table);

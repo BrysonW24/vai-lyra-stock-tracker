@@ -77,7 +77,7 @@ Important: you create **your own** Supabase project. The founder's project is se
 
 ## See it in two minutes (demo, zero keys)
 
-Prerequisite: Node.js 20+ and npm 10+ (`package.json` engines).
+Prerequisite: Node.js 22.22+ (24 recommended - it is what production and CI run) and npm 10+ (`package.json` engines).
 
 ```bash
 node -v
@@ -174,7 +174,7 @@ Real failure modes, derived from the code:
 
 **Port 3000 already in use.** Run on another port: `npm run dev -- -p 3042` (the repo's own [QUICKSTART.md](../../QUICKSTART.md) uses 3042, matching the `NEXT_PUBLIC_APP_URL` default in `.env.example`).
 
-**Doctor prints a red Node line.** `Node X - Next 15 needs Node 18+` means your Node is too old; install Node 20+ to match the `engines` field in `package.json`.
+**Doctor prints a red Node line.** `Node X - this repo needs Node 22.22+` means your Node is too old; install Node 24 (what production runs) or 22.22+ to match the `engines` field in `package.json`.
 
 ## Where to next
 

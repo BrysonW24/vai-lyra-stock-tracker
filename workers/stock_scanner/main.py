@@ -8,6 +8,7 @@ from workers.stock_scanner.alert_engine import (
     signal_alert_decision,
     watchlist_alert_decisions,
 )
+from workers.stock_scanner.candle_persistence import candles_to_persist, previous_signal_time
 from workers.stock_scanner.config import load_settings
 from workers.stock_scanner.indicators import calculate_indicators
 from workers.stock_scanner.logger import get_logger
@@ -234,9 +235,10 @@ def main() -> None:
                 LOGGER.warning("No candles returned for %s", ticker.symbol)
                 continue
 
-            candles_saved += repository.save_candles(candles)
             indicators = calculate_indicators(candles)
             if len(indicators) < 3:
+                # Too little history to score yet - still store what exists so the baseline accrues.
+                candles_saved += repository.save_candles(candles)
                 LOGGER.warning("Not enough indicators for %s", ticker.symbol)
                 continue
 
@@ -245,8 +247,13 @@ def main() -> None:
             two_periods_ago = indicators[-3]
             latest_by_symbol[ticker.symbol] = latest
 
-            indicators_saved += repository.save_indicator(latest)
+            # The indicators need the whole lookback; the database only needs what changed since
+            # the last scan. See candle_persistence for the rule (and the outage that forced it).
             previous_signal = repository.get_previous_signal(ticker.symbol, timeframe, latest.candle_time)
+            candles_saved += repository.save_candles(
+                candles_to_persist(candles, previous_signal_time(previous_signal))
+            )
+            indicators_saved += repository.save_indicator(latest)
             score, signal = calculate_signal(ticker, latest, previous, two_periods_ago, settings, previous_signal)
             repository.save_signal_score(score)
             signal_id = repository.save_signal(signal)

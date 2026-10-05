@@ -4,7 +4,7 @@ import { complete, type AiProvider } from '@/lib/ai/gateway';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, composeSystem } from '@/lib/ai/system-prompt';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { guardProse } from '@/lib/ai/guardrails/prose';
-import { chargeHostedBudget } from '@/lib/ai/budget-tracker';
+import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 import { PUBLIC_CORS_HEADERS, corsPreflight } from '@/lib/api/cors';
@@ -80,10 +80,12 @@ async function handlePost(request: NextRequest) {
     // Ground on the card's own server-side row - the client only names the id.
     const { data: idea, error } = await supabase
       .from('community_ideas')
-      .select('id, title, origin, evidence, confidence')
+      .select('id, title, origin, evidence, confidence, user_id')
       .eq('id', ideaId)
       .maybeSingle();
-    if (error || !idea || idea.origin !== 'scout') {
+    // Authorless + scout = written by the worker. A user-authored row claiming to be scout is
+    // forged (see the listing route) - its "evidence" must never reach the model or the cache.
+    if (error || !idea || idea.origin !== 'scout' || idea.user_id !== null) {
       return NextResponse.json({ ok: false, reason: 'not_scout' });
     }
     const evidence = (Array.isArray(idea.evidence) ? idea.evidence : []) as EvidenceRow[];
@@ -102,7 +104,8 @@ async function handlePost(request: NextRequest) {
     const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded });
     if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
     if (creds.source !== 'user') {
-      const budget = chargeHostedBudget(creds.source, 200);
+      // Shared counter, like every other AI route - the in-process one resets on every cold start.
+      const budget = await chargeHostedBudgetShared(creds.source, 200);
       if (budget.decision === 'block') return NextResponse.json({ ok: false, reason: 'budget' });
     }
 
@@ -127,7 +130,10 @@ async function handlePost(request: NextRequest) {
     const guarded = guardProse(text, [prompt]);
     if (!guarded.ok) return NextResponse.json({ ok: false, reason: 'guardrail' });
 
-    await cacheSet(cacheKey, guarded.text, CACHE_TTL_SECONDS);
+    // Only a generation from Lyra's own pinned model is shared with every visitor. A caller's
+    // bring-your-own-key model can be anything - including one tuned to say something - so its
+    // output is theirs alone and never becomes "Lyra's read" for everyone else.
+    if (creds.source !== 'user') await cacheSet(cacheKey, guarded.text, CACHE_TTL_SECONDS);
     return NextResponse.json({ ok: true, text: guarded.text });
   } catch {
     // Provider errors never surface - the deterministic template always renders.

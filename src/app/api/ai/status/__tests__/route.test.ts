@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 interface MockUser {
   id: string;
+  email?: string;
   created_at?: string;
 }
 
@@ -54,6 +55,7 @@ const RUNTIME = {
 describe('GET /api/ai/status', () => {
   afterEach(() => {
     hoisted.client = null;
+    vi.unstubAllEnvs();
   });
 
   it('treats a Solo runtime with no auth stack as anonymous, exposing only whether a hosted mode exists', async () => {
@@ -67,8 +69,17 @@ describe('GET /api/ai/status', () => {
     expect(await response.json()).toEqual({ hostedAvailable: true, authenticated: false });
   });
 
+  it('does NOT treat profiles.ai_included as a grant - a user can write their own profile row', async () => {
+    // Until migration 058 any signed-in account could set this flag on itself and keep the hosted
+    // key forever. The flag is no longer read: only the server's own allowlist grants.
+    hoisted.client = signedInClient({ id: 'u-self', email: 'self@example.com' }, true);
+    const body = (await (await GET()).json()) as { aiIncluded: boolean; granted: boolean; hostedAvailable: boolean };
+    expect(body).toMatchObject({ aiIncluded: false, granted: false, hostedAvailable: false });
+  });
+
   it('gives a GRANTED signed-in user the hosted mode (per-user)', async () => {
-    hoisted.client = signedInClient({ id: 'u1' }, true);
+    vi.stubEnv('AI_INCLUDED_EMAILS', 'owner@example.com');
+    hoisted.client = signedInClient({ id: 'u1', email: 'owner@example.com' }, null);
     const response = await GET();
     expect(await response.json()).toEqual({
       ...RUNTIME,

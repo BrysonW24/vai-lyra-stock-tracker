@@ -247,6 +247,12 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await getDashboardData();
+    // On a configured deployment `mode: 'demo'` means one thing: the live read FAILED and the
+    // loader fell back to the authored sample book (with no database at all it returns 'solo').
+    // Grounding on that would narrate invented holdings and P/L as the user's own, and every
+    // sample figure would pass the prose guard because it is "in the context". Say the data is
+    // unavailable instead.
+    if (data.mode === 'demo') return NextResponse.json({ ok: false, reason: 'provider_unavailable' });
     const market = await getMarketContextLive();
     const constraints = await getUserConstraints();
     const constraintsBlock = constraints ? buildConstraintsBlock(constraints) : '';

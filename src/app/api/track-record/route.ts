@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { aggregateTrackRecord, type OutcomeRow, type TrackRecord } from '@/lib/track-record';
 import { rateLimitShared } from '@/lib/ratelimit';
 import { clientIp } from '@/lib/api/ai-guard';
+import { fetchAllRows } from '@/lib/supabase/paging';
 
 /**
  * Public, read-only measured track record of Lyra's live signals, aggregated from real
@@ -16,9 +17,9 @@ import { clientIp } from '@/lib/api/ai-guard';
 
 export const dynamic = 'force-dynamic';
 
-// signal_outcomes is bounded (hundreds of rows today, grows slowly); pull a generous cap so
-// the aggregate is the whole history, not a page of it. Raise if the table ever gets large.
-const MAX_ROWS = 5000;
+// The record is ALL-TIME, so it must be built from every row. One request cannot do that:
+// PostgREST returns at most 1000 rows whatever the limit says (see lib/supabase/paging). This
+// route asked for 5000, silently received 1000 of 1,587, and reported that as the whole history.
 
 interface WindowRow extends OutcomeRow {
   signal_candle_time: string | null;
@@ -31,7 +32,10 @@ export async function GET(request: NextRequest) {
     windowMs: 60_000,
   });
   if (!limited.allowed) {
-    return NextResponse.json({ ok: false, error: 'Rate limit exceeded.' }, { status: 429 });
+    return NextResponse.json(
+      { ok: false, error: 'Rate limit exceeded.' },
+      { status: 429, headers: { 'Retry-After': String(limited.retryAfterSec) } },
+    );
   }
 
   const empty: TrackRecord & { window: null } = {
@@ -46,15 +50,19 @@ export async function GET(request: NextRequest) {
   if (!supabase) return NextResponse.json({ ok: true, demo: true, ...empty });
 
   try {
-    const { data, error } = await supabase
-      .from('signal_outcomes')
-      .select('signal_type, signal_status, return_1d, return_5d, return_20d, return_60d, signal_candle_time')
-      .order('signal_candle_time', { ascending: false })
-      .limit(MAX_ROWS);
+    // `id` breaks ties so a page boundary can never repeat or skip a row (many outcomes share a
+    // candle time).
+    const { rows, complete } = await fetchAllRows<WindowRow>((from, to) =>
+      supabase
+        .from('signal_outcomes')
+        .select('signal_type, signal_status, return_1d, return_5d, return_20d, return_60d, signal_candle_time')
+        .order('signal_candle_time', { ascending: false })
+        .order('id', { ascending: true })
+        .range(from, to),
+    );
 
-    if (error || !data) return NextResponse.json({ ok: true, demo: true, ...empty });
-
-    const rows = data as WindowRow[];
+    // Part of the history is not the history: never publish a partial aggregate as the record.
+    if (!complete) return NextResponse.json({ ok: true, demo: true, ...empty });
     const record = aggregateTrackRecord(rows);
 
     // Honest window: the first/last labelled signal this aggregate covers.

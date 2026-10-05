@@ -6,12 +6,26 @@ name: Nightly Maintenance
 # (weekly report on Fridays), and sweep the notification delivery log (release
 # held events, retry-once failed sends). Every job is demo-safe: with no secrets
 # configured each step no-ops cleanly.
+#
+# Four jobs, on purpose. Each one answers a different question, and one being red must never
+# stop another from being asked:
+#   schema-drift     does production match the migrations, and is the database inside its budgets?
+#   maintain         did tonight's data loops run (workers, outcome labels, digest, delivery sweep)?
+#   emerging-winner  did the model's shadow-live loop run (score, mature outcomes, monitor)?
+#   notify           if anything above failed, did a person hear about it?
+# Before this split one known failure (three unapplied tables) kept the whole run red for
+# 59 nights, and that single red hid a database 12 MB from its act-now line.
 
 on:
   schedule:
     # 22:05 UTC = after the US close year-round (20:00 EDT / 21:00 EST close).
     - cron: '5 22 * * 1-5'
   workflow_dispatch: {}
+
+# Least privilege. `actions: write` is only for the keepalive step (see its action for why).
+permissions:
+  contents: read
+  actions: write
 
 concurrency:
   group: nightly-maintenance
@@ -34,26 +48,47 @@ jobs:
     environment: Production
     env:
       SUPABASE_POOLER_URL: ${{ secrets.SUPABASE_POOLER_URL }}
+    outputs:
+      summary: ${{ steps.summary.outputs.text }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Live schema vs migrations
         # --require-db so a missing secret FAILS instead of skipping quietly. A check that silently
         # skips is the same lie as a check that always passes.
-        run: node scripts/check-schema-drift.mjs --require-db
+        # `shell: bash` is explicit because it turns on pipefail - without it the tee below would
+        # report success for a failing check.
+        shell: bash
+        run: node scripts/check-schema-drift.mjs --require-db 2>&1 | tee "$RUNNER_TEMP/schema-drift.log"
 
       # Same doctrine, different axis: is the database still on course to stay FREE forever?
       # Measures DB size vs the DATA-ECONOMICS.md tripwires (warn 250 MB / fail 300 MB of the
       # 500 MB free tier), each table vs its declared budget, and how many rows sit past their
       # benefit horizon (sunk weight - reporting only, nothing is ever deleted by a check).
+      #
+      # Runs even when the drift check above failed. It used to be skipped whenever drift was
+      # red, which is every night since 2026-07-17 - so the budget gate never ran at all.
       - name: Data economics vs budgets (free-tier runway)
-        run: node scripts/check-data-economics.mjs --require-db
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: node scripts/check-data-economics.mjs --require-db 2>&1 | tee "$RUNNER_TEMP/data-economics.log"
+
+      # One line for the failure page, so it names the problem instead of just saying "failed".
+      - name: Summarise for the failure page
+        id: summary
+        if: failure()
+        shell: bash
+        run: |
+          missing=$(grep -cE '^\s+- [a-z_]+\s*$' "$RUNNER_TEMP/schema-drift.log" 2>/dev/null || true)
+          breaches=$(grep -cE '^\s+FAIL: ' "$RUNNER_TEMP/data-economics.log" 2>/dev/null || true)
+          size=$(grep -oE 'database: [0-9.]+ MB of [0-9]+ MB' "$RUNNER_TEMP/data-economics.log" 2>/dev/null | head -1 || true)
+          echo "text=schema drift items: ${missing:-0}; budget breaches: ${breaches:-0}; ${size:-database size not measured}" >> "$GITHUB_OUTPUT"
 
   maintain:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     environment: Production
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -61,19 +96,19 @@ jobs:
       DEFAULT_USER_ID: ${{ secrets.DEFAULT_USER_ID }}
       APP_BASE_URL: ${{ vars.APP_BASE_URL || secrets.APP_BASE_URL }}
       NOTIFICATION_DISPATCH_SECRET: ${{ secrets.NOTIFICATION_DISPATCH_SECRET }}
+      # Lights up the news / fundamentals / events workers. Until this secret exists HERE (it has
+      # only ever been set on the web host, which runs none of them) those three run on the demo
+      # provider and persist nothing. Calls are paced to the free tier (workers/finnhub_http.py),
+      # which is why this job allows 25 minutes.
       FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    outputs:
+      failed: ${{ steps.report.outputs.failed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install worker dependencies
-        run: pip install -r requirements.txt
+      - uses: ./.github/actions/setup-worker
 
       # Horizon-2 workers first so tonight's digest can see today's events/fundamentals.
       # Each is best-effort: one failing source must not block outcome labeling OR the digest.
@@ -95,23 +130,6 @@ jobs:
       - name: Scout worker (broad signal -> ideas board)
         run: python -m workers.scout.main || echo "scout" >> "$RUNNER_TEMP/worker-failures"
 
-      # Emerging Winner Engine (shadow-live): score the candidate universe end to end and append to the
-      # immutable ledger (migration 056). Best-effort but visible - it fails the run if enabled and it
-      # stored nothing (main.py exits 1), so a broken pipeline can never masquerade as a green tick.
-      - name: Emerging Winner Engine (shadow-live scoring -> immutable ledger)
-        run: python -m workers.emerging_winner.main || echo "emerging_winner" >> "$RUNNER_TEMP/worker-failures"
-
-      # Outcome maturation: the loop-closer. Walks the predictions ledger and writes matured
-      # 12-month first-touch outcomes (with the option-4 conjuncts, migration 057) - every matured
-      # pair is a real live training row and a real calibration point for the surfacing gate.
-      - name: Emerging Winner outcome maturation (ledger -> matured outcomes)
-        run: python -m workers.emerging_winner.outcome_job || echo "emerging_winner_outcomes" >> "$RUNNER_TEMP/worker-failures"
-
-      # Model monitoring: drift-guard (frozen artifact == deployed inference) + live calibration/precision
-      # from the ledger. Reports the shadow-live model's health; how surfacing gets earned, slowly + honestly.
-      - name: Emerging Winner model monitor (drift guard + live calibration)
-        run: python -m workers.emerging_winner.monitor || echo "emerging_winner_monitor" >> "$RUNNER_TEMP/worker-failures"
-
       - name: Label signal outcomes + send follow-ups
         run: python -m workers.stock_scanner.outcome_job
 
@@ -124,7 +142,7 @@ jobs:
       - name: Sweep notification deliveries (release held, retry failed)
         if: env.APP_BASE_URL != '' && env.NOTIFICATION_DISPATCH_SECRET != ''
         run: |
-          STATUS=$(curl -s -o "$RUNNER_TEMP/sweep-body" -D "$RUNNER_TEMP/sweep-headers" \
+          STATUS=$(curl -s -m 120 -o "$RUNNER_TEMP/sweep-body" -D "$RUNNER_TEMP/sweep-headers" \
             -w '%{http_code}' -X POST "$APP_BASE_URL/api/notifications/dispatch" \
             -H "content-type: application/json" \
             -H "x-notification-secret: $NOTIFICATION_DISPATCH_SECRET" \
@@ -139,35 +157,99 @@ jobs:
 
       # Best-effort must not mean invisible. Every step above has run by now (including the digest),
       # so failing here loses nothing - it just makes a failed worker impossible to miss, and lets
-      # the "Notify on failure" step below actually fire. Before this, a worker could fail nightly
+      # the notify job below actually fire. Before this, a worker could fail nightly
       # forever and the run stayed green.
       - name: Report worker failures (a green that cannot go red is not a signal)
+        id: report
         if: always()
         run: |
           if [ -s "$RUNNER_TEMP/worker-failures" ]; then
             FAILED=$(tr '\n' ' ' < "$RUNNER_TEMP/worker-failures")
+            echo "failed=${FAILED}" >> "$GITHUB_OUTPUT"
             echo "::error::Nightly workers FAILED: ${FAILED}- see the step logs above for the traceback."
             exit 1
           fi
           echo "All nightly workers completed successfully."
 
-      - name: Notify on failure
-        if: failure()
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_FEEDBACK_WEBHOOK_URL }}
-        run: |
-          MSG="Lyra nightly maintenance FAILED - run ${{ github.run_id }} on ${{ github.repository }}. https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
-            curl -sf -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-              -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode text="$MSG" > /dev/null || true
-          fi
-          if [ -n "$SLACK_WEBHOOK" ]; then
-            curl -sf -X POST -H 'Content-type: application/json' \
-              --data "{\"text\":\":rotating_light: $MSG\"}" "$SLACK_WEBHOOK" > /dev/null || true
-          fi
-
       - name: Keepalive (reset the 60-day cron auto-disable clock)
         if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/nightly-maintenance.yml/enable" || true
+        uses: ./.github/actions/keepalive
+        with:
+          token: ${{ github.token }}
+
+  # The Emerging Winner Engine's own loop, in its own job: its failures must not tint the data
+  # loops above, and a long real-universe scan must never be able to starve the digest by
+  # spending the shared timeout.
+  #
+  # It only writes when EW_REAL_UNIVERSE is 1 (a repository variable). Without it the engine scores
+  # a small illustrative set and persists nothing - the ledger is append-only and the app reads it
+  # back as live output, so invented candidates must never be written (see workers/emerging_winner/
+  # main.py). Turn the variable on only AFTER migrations 056 + 057 are applied: that is the moment
+  # the immutable shadow-live track record begins, and it should begin with real names.
+  emerging-winner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: Production
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      EW_REAL_UNIVERSE: ${{ vars.EW_REAL_UNIVERSE || '0' }}
+      EW_UNIVERSE_LIMIT: ${{ vars.EW_UNIVERSE_LIMIT || '300' }}
+      # SEC EDGAR requires a declared User-Agent with a contact address; set it as a repository
+      # variable before turning the real universe on.
+      SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+      USASPENDING_USER_AGENT: ${{ vars.USASPENDING_USER_AGENT }}
+    outputs:
+      failed: ${{ steps.report.outputs.failed }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-worker
+
+      # Score the candidate universe end to end and append to the immutable ledger (migration 056).
+      # Fails if it had real candidates and stored nothing (main.py exits 1).
+      - name: Emerging Winner Engine (shadow-live scoring -> immutable ledger)
+        run: python -m workers.emerging_winner.main || echo "emerging_winner" >> "$RUNNER_TEMP/worker-failures"
+
+      # Outcome maturation: the loop-closer. Walks the predictions ledger and writes matured
+      # 12-month first-touch outcomes (with the option-4 conjuncts, migration 057) - every matured
+      # pair is a real live training row and a real calibration point for the surfacing gate.
+      - name: Emerging Winner outcome maturation (ledger -> matured outcomes)
+        run: python -m workers.emerging_winner.outcome_job || echo "emerging_winner_outcomes" >> "$RUNNER_TEMP/worker-failures"
+
+      # Model monitoring: drift-guard (frozen artifact == deployed inference) + live calibration/precision
+      # from the ledger. Reports the shadow-live model's health; how surfacing gets earned, slowly + honestly.
+      - name: Emerging Winner model monitor (drift guard + live calibration)
+        run: python -m workers.emerging_winner.monitor || echo "emerging_winner_monitor" >> "$RUNNER_TEMP/worker-failures"
+
+      - name: Report worker failures (a green that cannot go red is not a signal)
+        id: report
+        if: always()
+        run: |
+          if [ -s "$RUNNER_TEMP/worker-failures" ]; then
+            FAILED=$(tr '\n' ' ' < "$RUNNER_TEMP/worker-failures")
+            echo "failed=${FAILED}" >> "$GITHUB_OUTPUT"
+            echo "::error::Emerging Winner steps FAILED: ${FAILED}- see the step logs above for the traceback."
+            exit 1
+          fi
+          echo "Emerging Winner loop completed successfully."
+
+  # One page per failed night, naming what failed. The old step lived inside `maintain` only -
+  # so a schema-drift failure never paged at all - and read secrets that were never set.
+  notify:
+    needs: [schema-drift, maintain, emerging-winner]
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/notify-failure
+        with:
+          title: Lyra nightly maintenance FAILED
+          detail: >-
+            schema-drift=${{ needs.schema-drift.result }} (${{ needs.schema-drift.outputs.summary || 'no detail' }});
+            maintain=${{ needs.maintain.result }} (failed workers: ${{ needs.maintain.outputs.failed || 'none' }});
+            emerging-winner=${{ needs.emerging-winner.result }} (failed steps: ${{ needs.emerging-winner.outputs.failed || 'none' }})
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}

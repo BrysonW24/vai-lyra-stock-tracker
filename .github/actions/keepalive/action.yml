@@ -1,0 +1,32 @@
+# GitHub disables a scheduled workflow after 60 days without repository activity. Re-enabling it
+# through the API resets that clock, so a quiet development stretch cannot silently stop the crons.
+#
+# This step existed before in three workflows and failed in every one of them on every run
+# ("Resource not accessible by integration", HTTP 403): the default token cannot enable a workflow
+# without `actions: write`, and the failure was hidden behind `|| true`. So the calling job MUST
+# grant `permissions: actions: write`, and a refusal is now a visible warning.
+#
+# It re-enables EVERY scheduled workflow, not just the caller, so any one surviving cron revives
+# the rest (the monthly model-eval job has no hope of keeping itself alive on its own).
+name: Keep scheduled workflows alive
+description: Reset the 60-day cron auto-disable clock for every scheduled workflow in the repo.
+inputs:
+  token:
+    description: A token with actions:write (pass github.token).
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ github.repository }}
+      run: |
+        for file in $(grep -lE '^\s*schedule:' .github/workflows/*.yml); do
+          name=$(basename "$file")
+          if gh api -X PUT "repos/${REPO}/actions/workflows/${name}/enable" > /dev/null 2>"$RUNNER_TEMP/keepalive-error"; then
+            echo "kept alive: ${name}"
+          else
+            echo "::warning::Could not re-enable ${name} - the cron auto-disable clock was NOT reset. $(tr '\n' ' ' < "$RUNNER_TEMP/keepalive-error")"
+          fi
+        done

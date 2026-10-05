@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AI_TRIAL_DAYS, aiTrialDaysLeft, isAiIncluded } from '@/lib/ai/entitlement';
+import * as entitlement from '@/lib/ai/entitlement';
+
+/** Env stubs must not leak between tests. */
+function afterEachEnv(): void {
+  afterEach(() => vi.unstubAllEnvs());
+}
 
 const DAY = 86_400_000;
 const signup = '2026-07-01T00:00:00.000Z';
@@ -31,5 +37,34 @@ describe('AI entitlement - free trial + grant', () => {
     expect(aiTrialDaysLeft({ accountCreatedAt: signup, now: t0 + 14 * DAY })).toBe(0);
     expect(aiTrialDaysLeft({ accountCreatedAt: signup, now: t0 + 20 * DAY })).toBe(0);
     expect(aiTrialDaysLeft({ accountCreatedAt: null, now: t0 })).toBe(0);
+  });
+});
+
+describe('resolveHostedEntitlement - the whole decision, from server-held facts only', () => {
+  const NOW = Date.parse('2026-10-05T00:00:00Z');
+  afterEachEnv();
+
+  it('includes an account inside its trial and counts the days left', () => {
+    const result = entitlement.resolveHostedEntitlement({ email: 'new@example.com', created_at: '2026-10-01T00:00:00Z' }, NOW);
+    expect(result).toEqual({ included: true, granted: false, trialDaysLeft: 10 });
+  });
+
+  it('excludes an account past its trial with no grant', () => {
+    const result = entitlement.resolveHostedEntitlement({ email: 'old@example.com', created_at: '2026-06-14T00:00:00Z' }, NOW);
+    expect(result).toEqual({ included: false, granted: false, trialDaysLeft: 0 });
+  });
+
+  it('includes an allowlisted account indefinitely, whatever its age', () => {
+    vi.stubEnv('AI_INCLUDED_EMAILS', 'owner@example.com, Comp@Example.com');
+    expect(entitlement.resolveHostedEntitlement({ email: 'OWNER@example.com', created_at: '2026-06-14T00:00:00Z' }, NOW)).toEqual({
+      included: true, granted: true, trialDaysLeft: 0,
+    });
+  });
+
+  it('takes nothing but the session facts - there is no parameter a profile row could reach', () => {
+    // The hole this closes: a user could set profiles.ai_included = true on their own row and keep
+    // the house key forever. The resolver has no input for that flag; a self-granted row is inert.
+    const selfGranted = { email: 'old@example.com', created_at: '2026-06-14T00:00:00Z', ai_included: true };
+    expect(entitlement.resolveHostedEntitlement(selfGranted, NOW).included).toBe(false);
   });
 });

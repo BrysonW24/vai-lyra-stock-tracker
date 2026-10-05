@@ -39,6 +39,7 @@ class EmergingWinnerRepo:
         res = (
             self.client.table("emerging_winner_runs")
             .insert({"engine_version": engine_version})
+            .select("id")
             .execute()
         )
         return str(res.data[0]["id"]) if res.data else None
@@ -72,10 +73,16 @@ class EmergingWinnerRepo:
                 "payload": d,
             })
         # Insert in chunks to stay well under any request-size limit; announce if we ever cap.
+        # No echo: each row carries its full payload (several KB), nothing reads the response,
+        # and Supabase egress is the quota that has already taken this project down once.
+        from postgrest.types import ReturnMethod
+
         written = 0
         for i in range(0, len(rows), 200):
             chunk = rows[i:i + 200]
-            self.client.table("emerging_winner_predictions").insert(chunk).execute()
+            self.client.table("emerging_winner_predictions").insert(
+                chunk, returning=ReturnMethod.minimal
+            ).execute()
             written += len(chunk)
         return written
 
@@ -85,11 +92,16 @@ class EmergingWinnerRepo:
         surfaced = sum(1 for r in results if r.surfaced)
         blocked = sum(1 for r in results if not r.surfaced)
         # The runs header is mutable (only the ledger of predictions is immutable).
-        self.client.table("emerging_winner_runs").update({
-            "candidate_count": len(results),
-            "surfaced_count": surfaced,
-            "blocked_count": blocked,
-        }).eq("id", run_id).execute()
+        from postgrest.types import ReturnMethod
+
+        self.client.table("emerging_winner_runs").update(
+            {
+                "candidate_count": len(results),
+                "surfaced_count": surfaced,
+                "blocked_count": blocked,
+            },
+            returning=ReturnMethod.minimal,
+        ).eq("id", run_id).execute()
 
     def save_outcomes(self, rows: list[dict]) -> int:
         """Upsert matured outcomes (one per prediction x horizon). Returns the count written (0 in
@@ -98,11 +110,13 @@ class EmergingWinnerRepo:
         is final the numbers stop changing forever."""
         if not self.client or not rows:
             return 0
+        from postgrest.types import ReturnMethod
+
         written = 0
         for i in range(0, len(rows), 200):
             chunk = rows[i:i + 200]
             (self.client.table("emerging_winner_outcomes")
-             .upsert(chunk, on_conflict="prediction_id,horizon_days")
+             .upsert(chunk, on_conflict="prediction_id,horizon_days", returning=ReturnMethod.minimal)
              .execute())
             written += len(chunk)
         return written

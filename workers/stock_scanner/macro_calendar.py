@@ -31,25 +31,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from workers.stock_scanner.config import Settings
 from workers.stock_scanner.logger import get_logger
 from workers.stock_scanner.notification_dispatch import dispatch_notification
+from workers.stock_scanner.rba_schedule import RBA_DECISION_DATES, SYDNEY
 from workers.stock_scanner.supabase_repo import SupabaseRepository
 
 LOGGER = get_logger("stock_scanner.macro_calendar")
 
-SYDNEY = ZoneInfo("Australia/Sydney")
-
-# Decision-announcement dates = meeting day 2. Verified 2026-07-17 (see module docstring).
-RBA_DECISION_DATES: tuple[str, ...] = (
-    "2026-02-03", "2026-03-17", "2026-05-05", "2026-06-16",
-    "2026-08-11", "2026-09-29", "2026-11-03", "2026-12-08",
-    "2027-02-09", "2027-03-23", "2027-05-04", "2027-06-22",
-    "2027-08-10", "2027-09-28", "2027-11-02", "2027-12-14",
-)
-
+# The RBA dates live in rba_schedule (standard library only) so the alert cron can gate on them
+# before installing anything. Re-exported here: this module is still where the calendar is built.
 FOMC_DECISION_DATES: tuple[str, ...] = (
     "2026-01-28", "2026-03-18", "2026-04-29", "2026-06-17",
     "2026-07-29", "2026-09-16", "2026-10-28", "2026-12-09",

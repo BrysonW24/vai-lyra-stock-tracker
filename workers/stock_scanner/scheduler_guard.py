@@ -8,12 +8,18 @@ from workers.stock_scanner.config import Settings
 # The scanner tracks US-listed stocks, so "market hours" is New York time. Evaluating the window in
 # America/New_York (not a fixed UTC band) means DST is handled correctly - the real 9:30-16:00 ET
 # session maps to 13:30-20:00 UTC in summer but 14:30-21:00 UTC in winter, and a fixed UTC window
-# would drift by an hour twice a year. We use a slightly widened 9:00-16:30 ET band so the twice-hourly
-# cron (fires at :17 and :47 - see .github/workflows/hourly-stock-scanner.yml) reliably catches both
-# the open and the close.
+# would drift by an hour twice a year.
+#
+# The band is 9:00-17:30 ET, wider than the 9:30-16:00 session on purpose. The END is the part that
+# matters: the scanner only scores COMPLETE bars, and an hourly bar counts as complete one hour after
+# it opens (market_data.drop_incomplete_last_candle), so the closing bar (opens 15:30 ET) is not
+# scoreable until 16:30 ET. The cron fires at :17 and :47 (see hourly-stock-scanner.yml) and GitHub
+# starts scheduled runs late, so a band that ended AT 16:30 let the last firing in (16:17) see an
+# incomplete closing bar and skipped the next one (16:47) - the close of every session went unscored
+# until the following morning. Ending at 17:30 gives the closing bar two firings (16:47, 17:17).
 _MARKET_TZ = ZoneInfo("America/New_York")
 _SESSION_START = time(hour=9, minute=0)
-_SESSION_END = time(hour=16, minute=30)
+_SESSION_END = time(hour=17, minute=30)
 
 
 def should_run_now(settings: Settings, now: datetime | None = None) -> bool:

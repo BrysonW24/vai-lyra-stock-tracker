@@ -18,6 +18,8 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from postgrest.types import ReturnMethod
+
 from workers.scout.attach import attach
 from workers.scout.cluster import IdeaCandidate, cluster_unmapped, drumbeats
 from workers.scout.outcomes import load_attach_exceptions, load_stoplist, stamp_outcomes
@@ -254,7 +256,10 @@ def _persist_items(repo: SupabaseRepository, items: list[ScoutItem], attachments
                 }
             )
         if records:
-            repo.client.table("scout_items").upsert(records, on_conflict="id").execute()
+            # No echo: nothing reads the ~400 rows back, and Supabase egress is the scarce quota.
+            repo.client.table("scout_items").upsert(
+                records, on_conflict="id", returning=ReturnMethod.minimal
+            ).execute()
         return len(records)
     except Exception as exc:  # noqa: BLE001
         logger.error("persist scout_items failed: %s", exc)

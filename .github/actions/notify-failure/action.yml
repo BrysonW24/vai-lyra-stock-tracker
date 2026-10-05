@@ -1,0 +1,64 @@
+# Page the operator when a workflow fails.
+#
+# Every workflow used to carry its own copy of this step, and every copy read secrets that were
+# never set - so for two and a half months the nightly job failed every night, CI failed on every
+# push, and the scanner was down for four days, and none of it reached anyone. A page that cannot
+# be delivered must say so: with no channel configured this step now raises a visible warning on
+# the run instead of exiting quietly.
+#
+# Secrets cannot be read inside a composite action, so the caller passes them in. They are handed
+# to the script through the environment, never interpolated into it.
+name: Notify on failure
+description: Send a failure message to Telegram and/or Slack; warn loudly when neither is configured.
+inputs:
+  title:
+    description: Headline, e.g. "Lyra hourly scanner FAILED".
+    required: true
+  detail:
+    description: Optional extra line (which worker, which table).
+    required: false
+    default: ''
+  telegram-bot-token:
+    required: false
+    default: ''
+  telegram-chat-id:
+    required: false
+    default: ''
+  slack-webhook:
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        TITLE: ${{ inputs.title }}
+        DETAIL: ${{ inputs.detail }}
+        TG_TOKEN: ${{ inputs.telegram-bot-token }}
+        TG_CHAT: ${{ inputs.telegram-chat-id }}
+        SLACK_WEBHOOK: ${{ inputs.slack-webhook }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        MSG="$TITLE"
+        if [ -n "$DETAIL" ]; then MSG="$MSG"$'\n'"$DETAIL"; fi
+        MSG="$MSG"$'\n'"$RUN_URL"
+        delivered=0
+        if [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ]; then
+          if curl -sf -m 20 -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+              -d chat_id="$TG_CHAT" --data-urlencode text="$MSG" > /dev/null; then
+            echo "Failure page delivered to Telegram."; delivered=1
+          else
+            echo "::warning::Telegram failure page was NOT delivered (the API call failed)."
+          fi
+        fi
+        if [ -n "$SLACK_WEBHOOK" ]; then
+          if jq -n --arg text ":rotating_light: $MSG" '{text: $text}' \
+              | curl -sf -m 20 -X POST -H 'Content-type: application/json' --data @- "$SLACK_WEBHOOK" > /dev/null; then
+            echo "Failure page delivered to Slack."; delivered=1
+          else
+            echo "::warning::Slack failure page was NOT delivered (the webhook call failed)."
+          fi
+        fi
+        if [ "$delivered" -eq 0 ]; then
+          echo "::warning::This failure reached NOBODY - no alert channel is configured. Set OPS_TELEGRAM_BOT_TOKEN + OPS_TELEGRAM_CHAT_ID and/or OPS_SLACK_WEBHOOK_URL in the repository secrets."
+        fi

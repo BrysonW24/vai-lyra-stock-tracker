@@ -51,8 +51,10 @@ console.log(`\n${BOLD}Lyra setup doctor${RESET}\n`);
 
 // 1. Runtime
 const major = Number(process.versions.node.split('.')[0]);
-if (major >= 18) ok(`Node ${process.versions.node}`);
-else bad(`Node ${process.versions.node} - Next 15 needs Node 18+`);
+// The floor is 22: the test stack (jsdom 30, undici 8) and supabase-js no longer run on 20, and
+// CI sat red for 59 pushes proving it. Production and CI run 24 (package.json `engines`).
+if (major >= 22) ok(`Node ${process.versions.node}`);
+else bad(`Node ${process.versions.node} - this repo needs Node 22.22+ (24 is what production runs)`);
 
 // 1b. Guardrail self-integrity - the doctor should also verify the rails protecting this
 // repo, not just the env. An unwired hooksPath means the version guard never runs locally.

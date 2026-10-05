@@ -217,7 +217,7 @@ Copy [`.env.example`](./.env.example) to `.env.local` and fill in only what you 
 
 ## ⏱️ How long setup takes
 
-Lyra installs in tiers - stop wherever you want. Times assume you already have Node 20+, npm 10+, and git on the machine.
+Lyra installs in tiers - stop wherever you want. Times assume you already have Node 22.22+ (24 is what production runs), npm 10+, and git on the machine.
 
 | Tier | You end up with | Fresh time |
 |------|-----------------|------------|
@@ -430,6 +430,35 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.132.0  2026-10-05  The plumbing audit: faster pages, a scanner that cannot starve the database, and alarms that actually ring
+0.131.0  2026-09-09  Simple view - a calm front door, and setup that waits until you have looked around
+0.130.0  2026-08-14  The final sweep: all 35 remaining audit findings closed
+0.129.1  2026-08-14  Sample headlines no longer ship in the live page source at all
+0.129.0  2026-08-14  The re-audit verdict: every fix verified holding, and the three leaks it found are dead
+0.128.0  2026-08-14  Honesty audit closed out: the last 12 findings patched, none deferred
+0.127.0  2026-08-11  The honesty audit: every fabricated visual in the app, found and removed
+0.126.0  2026-08-11  The ticker page stops faking history and shows the real decision
+0.125.0  2026-08-05  A light theme, app-wide - dark stays the default
+0.124.1  2026-08-03  Bulk insider ingestion passes its acceptance gate
+0.124.0  2026-08-03  The build path, and the ingestion that makes it possible
+0.123.1  2026-08-03  The audit corrects the release: "first ever" was false
+0.123.0  2026-08-03  Generation 3: the system refuses its best-ever number
+0.122.0  2026-08-03  The verdict comes into the app: run a model, see whether it actually predicts success
+0.121.0  2026-08-03  The government domain lights up: federal contract flow, point-in-time honest
+0.120.1  2026-08-03  The threshold sweep lands: the model knows quality, not touches
+0.120.0  2026-08-02  The convergence completes: one visual language across the entire app
+0.119.0  2026-08-02  The convergence, round one: most of the app now speaks the Model Lab language
+0.118.0  2026-08-02  The Model Lab becomes the design north star, and the design system becomes law
+0.117.0  2026-08-02  The volatility null: the right chance bar arrives, and Accuracy is regraded under it
+0.116.0  2026-08-02  The cross-generation paired test exists before generation 3 needs it
+0.115.1  2026-08-02  Backfill at the ceiling
+0.115.0  2026-08-02  Tuning under discipline: a pre-committed sweep picks the gen-3 challenger config
+0.114.0  2026-08-02  The evidence sprint: first estimator bake-off, calibration measured to its edges
+0.113.0  2026-08-02  Valid statistics for the fight: paired tests, weak calibration, an attempt ledger
+0.112.0  2026-08-02  Model evaluation operationalized: generation vs generation, forever
+0.111.0  2026-08-01  The estimator seam is real: a nonlinear challenger family joins the lifecycle
+0.110.0  2026-08-01  Evidence in the product, three dark domains lit, and the live loop finally closes
+0.109.0  2026-08-01  The models face real history - and the one trained on real outcomes takes the champion seat
 0.108.0  2026-08-01  Plain English: the "Shadow-live" badge is now "Beta"
 0.107.0  2026-08-01  Global ingestion - the dynamic pool goes multi-market, small caps to mega caps, still $0/mo
 0.106.0  2026-08-01  Coverage-honesty fixes from an adversarial audit - a data gap never reads as a low value
@@ -555,7 +584,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(124 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(153 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

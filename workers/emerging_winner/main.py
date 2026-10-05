@@ -5,12 +5,12 @@ results to the immutable shadow-live ledger (migration 056).
     npm run worker:emerging-winner        # once, now
     python -m workers.emerging_winner.main
 
-SHADOW-LIVE + HONEST: the small-cap point-in-time FEATURE pipeline (SEC EDGAR, USAspending, Form 4/13F,
-the small-cap universe with delisted names) is Phase 1 and not built yet, so there is no real small-cap
-feature source to score. Until it lands, this worker proves the pipeline end to end over an ILLUSTRATIVE
-candidate set and logs it to the ledger clearly labelled - so the loop (score -> persist -> read back)
-is demonstrably live in production, without pretending the universe is real. When the feature pipeline
-lands, swap `load_candidates` to read real point-in-time features and the rest is unchanged.
+SHADOW-LIVE + HONEST: with EW_REAL_UNIVERSE=1 the worker scans the real listed universe and appends
+the scored candidates to the ledger. Without it (or when the real scan returns nothing) it scores a
+small ILLUSTRATIVE candidate set to prove the pipeline runs end to end - and persists NOTHING. The
+ledger is append-only and the app reads it back as live output, so invented tickers must never be
+written to it (they were, by design, until 2026-10; the only reason none reached production is that
+migration 056 had not been applied).
 
 Demo mode (no Supabase env): prints the ranked queue, persists nothing.
 """
@@ -206,6 +206,19 @@ def main() -> int:
 
     if not repo.enabled:
         logger.info("Supabase not configured - demo mode, nothing persisted.")
+        return 0
+
+    # The illustrative set is three invented tickers with invented fundamentals. It exists to prove
+    # the scoring pipeline runs, and it must never reach the ledger: the ledger is append-only (a
+    # trigger blocks UPDATE and DELETE), the app reads the newest run back as `demo: false`, and the
+    # run note that was meant to label it is only ever logged, never stored. Persisting it would
+    # put fiction on a live page permanently. Same rule every other worker follows: sample data is
+    # scored for shape and NOT persisted. Real candidates only (EW_REAL_UNIVERSE=1).
+    if candidates is ILLUSTRATIVE_CANDIDATES:
+        logger.info(
+            "illustrative candidate universe (EW_REAL_UNIVERSE is not 1, or the real scan returned "
+            "nothing) - scored for shape, NOT persisted to the immutable ledger"
+        )
         return 0
 
     run_id = repo.create_run(ENGINE_VERSION)

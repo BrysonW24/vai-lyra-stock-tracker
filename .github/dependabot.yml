@@ -1,0 +1,21 @@
+# Keeps the GitHub Actions used by the workflows current.
+#
+# Why this exists: every workflow sat on actions/checkout@v4 and friends until three majors behind
+# (v7), still declaring a Node 20 runtime that GitHub had deprecated - each run carried the warning
+# and nobody was looking. One grouped pull request a month is cheap, and CI runs on it.
+#
+# Deliberately NOT enabled for npm or pip: those bumps need a human reading the changelog (a
+# yfinance or Next.js major is a decision, not a chore), and this repo ships by direct push.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/*
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
+    commit-message:
+      prefix: ci

@@ -20,6 +20,8 @@ async function lastScanAt(): Promise<string | null> {
     const { data } = await supabase
       .from('stock_scanner_runs')
       .select('finished_at')
+      // The scanner's runs only - the nightly digest/outcome jobs log here too and are not scans.
+      .eq('job_name', 'hourly_stock_scanner')
       .order('started_at', { ascending: false })
       .limit(1)
       .maybeSingle();

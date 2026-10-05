@@ -39,6 +39,22 @@ export function coerceFeedbackType(raw: unknown): FeedbackType {
   return raw === 'bug' ? 'bug' : raw === 'other' ? 'other' : 'idea';
 }
 
+/** Outbound sink calls are bounded - a slow GitHub or Slack must not hold the request open. */
+const SINK_TIMEOUT_MS = 8_000;
+
+/**
+ * Text bound for a GitHub issue. `@name` would ping that GitHub user from the maintainer's token,
+ * so every `@` gets a zero-width joiner after it: it reads the same and mentions no one.
+ */
+export function forGitHubIssue(text: string): string {
+  return text.replace(/@/g, '@\u200d');
+}
+
+/** Slack reads `&`, `<` and `>` as markup - `<!channel>` typed into the box would ping the channel. */
+export function forSlack(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 async function fileGitHubIssue(item: FeedbackItem): Promise<{ ok: boolean; url: string | null }> {
   const token = process.env.GITHUB_FEEDBACK_TOKEN;
   const repo = process.env.GITHUB_FEEDBACK_REPO; // "owner/repo"
@@ -55,11 +71,15 @@ async function fileGitHubIssue(item: FeedbackItem): Promise<{ ok: boolean; url: 
         'Content-Type': 'application/json',
         'User-Agent': 'lyra-feedback',
       },
+      // The contact email is NEVER sent here: the default target is this repository, which is
+      // public, so an address typed into "email (optional - if you'd like a reply)" would have
+      // been published in an indexable issue. The Slack sink (private) carries the contact.
       body: JSON.stringify({
-        title: `${tag}: ${snippet}${item.message.length > 60 ? '…' : ''}`,
-        body: `${item.message}\n\n---\n_Submitted via in-app feedback${item.email ? ` · contact: ${item.email}` : ''}._`,
+        title: forGitHubIssue(`${tag}: ${snippet}${item.message.length > 60 ? '…' : ''}`),
+        body: `${forGitHubIssue(item.message)}\n\n---\n_Submitted via in-app feedback${item.email ? ' · the sender left a contact address (see the private feedback channel)' : ''}._`,
         labels: [label],
       }),
+      signal: AbortSignal.timeout(SINK_TIMEOUT_MS),
     });
     if (!res.ok) {
       console.warn('[feedback] GitHub issue failed:', res.status, await res.text());
@@ -75,8 +95,8 @@ async function fileGitHubIssue(item: FeedbackItem): Promise<{ ok: boolean; url: 
 
 function slackText(item: FeedbackItem, issueUrl: string | null): string {
   const { name, emoji } = TAGS[item.type];
-  const lines = [`${emoji} *${name}* via in-app feedback`, '', item.message];
-  if (item.email) lines.push('', `Contact: ${item.email}`);
+  const lines = [`${emoji} *${name}* via in-app feedback`, '', forSlack(item.message)];
+  if (item.email) lines.push('', `Contact: ${forSlack(item.email)}`);
   if (issueUrl) lines.push('', `GitHub issue: ${issueUrl}`);
   return lines.join('\n');
 }
@@ -92,6 +112,7 @@ async function postToSlack(item: FeedbackItem, issueUrl: string | null): Promise
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: slackText(item, issueUrl) }),
+        signal: AbortSignal.timeout(SINK_TIMEOUT_MS),
       });
       if (res.ok) return true;
       console.warn('[feedback] Slack webhook failed:', res.status, await res.text());
@@ -105,6 +126,7 @@ async function postToSlack(item: FeedbackItem, issueUrl: string | null): Promise
           'Content-Type': 'application/json; charset=utf-8',
         },
         body: JSON.stringify({ channel, text: slackText(item, issueUrl) }),
+        signal: AbortSignal.timeout(SINK_TIMEOUT_MS),
       });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
       if (res.ok && data.ok) return true;

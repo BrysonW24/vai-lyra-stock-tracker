@@ -55,24 +55,16 @@ class FinnhubNewsProvider:
     def fetch_company_news(self, symbol: str, days: int = 7) -> list[NewsItem]:
         """Fetch news from Finnhub. Returns empty list on error."""
         try:
-            import requests
+            from workers.finnhub_http import finnhub_get
 
             # Calculate date range
             now = datetime.now(timezone.utc)
             from_date = (now - __import__("datetime").timedelta(days=days)).strftime("%Y-%m-%d")
             to_date = now.strftime("%Y-%m-%d")
 
-            url = f"{self.base_url}/company-news"
-            params = {
-                "symbol": symbol,
-                "from": from_date,
-                "to": to_date,
-                "token": self.api_key,
-            }
-
-            resp = requests.get(url, params=params, timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
+            data = finnhub_get(
+                "company-news", {"symbol": symbol, "from": from_date, "to": to_date}, self.api_key
+            )
 
             items = []
             for article in data:

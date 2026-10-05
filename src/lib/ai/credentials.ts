@@ -1,4 +1,4 @@
-import { DEFAULT_MODELS, type AiProvider } from '@/lib/ai/gateway';
+import { DEFAULT_MODELS, SUPPORTED_PROVIDERS, type AiProvider } from '@/lib/ai/gateway';
 
 type AiMode = 'free' | 'byo' | 'off' | 'hosted';
 
@@ -31,9 +31,22 @@ export interface ResolvedAiCredentials {
   source: 'user' | 'hosted_openai' | 'shared_google' | 'none';
 }
 
-function clean(value: string | undefined): string {
-  return value?.trim() ?? '';
+/** `value` arrives from a request body: trust nothing about its type. */
+function clean(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
 }
+
+/**
+ * A model id as any provider writes one: `gpt-5.5`, `anthropic/claude-3.5-sonnet:beta`,
+ * `models/gemini-2.5-pro`, `ft:gpt-4o-mini-2024-07-18:org::id`. Bounded and character-limited
+ * because this string is client-supplied and travels into the audit log - before this check an
+ * anonymous caller could put ~31 KB of anything in it and have the server store it, 30 times a
+ * minute, through the service role (see the 2026-10-05 API audit).
+ */
+const MODEL_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,95}$/;
+
+/** No real provider key is anywhere near this long; a longer "key" is not a key. */
+const MAX_API_KEY_CHARS = 512;
 
 export function getAiRuntimeStatus() {
   const hostedOpenAiModel = clean(process.env.LYRA_HOSTED_OPENAI_MODEL) || DEFAULT_MODELS.openai;
@@ -58,11 +71,16 @@ export function resolveAiCredentials(
   opts: ResolveOptions,
   defaultProvider: AiProvider = 'openai',
 ): ResolvedAiCredentials {
-  const provider = input?.provider ?? defaultProvider;
-  const userKey = clean(input?.apiKey);
+  // The provider is one of the five the gateway speaks, or the default - never a client string.
+  const provider = SUPPORTED_PROVIDERS.includes(input?.provider as AiProvider)
+    ? (input!.provider as AiProvider)
+    : defaultProvider;
+  const rawKey = clean(input?.apiKey);
+  const userKey = rawKey.length <= MAX_API_KEY_CHARS ? rawKey : '';
   if (userKey) {
-    // The user's own key: honour their model choice too.
-    return { provider, apiKey: userKey, model: clean(input?.model) || undefined, source: 'user' };
+    // The user's own key: honour their model choice too - when it is shaped like a model id.
+    const rawModel = clean(input?.model);
+    return { provider, apiKey: userKey, model: MODEL_ID_RE.test(rawModel) ? rawModel : undefined, source: 'user' };
   }
 
   // Server-key fallback requires an authenticated session AND an AI-included entitlement

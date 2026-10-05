@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [main]
 
+# Least privilege: every job here only reads the repository.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -22,12 +26,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Enforce version bump on shippable changes
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -42,10 +46,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      # Node 24 = the major production runs on (Vercel project setting + package.json engines).
+      # This job sat on Node 20 while the lockfile moved to packages that need >= 22 (jsdom 30,
+      # undici 8, supabase-js 2.110): every DOM test crashed at worker start and CI was red for
+      # 59 consecutive pushes (2026-07-28 to 2026-09-08). Test on what you ship on.
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
@@ -71,18 +79,15 @@ jobs:
           # Build must succeed with NO secrets - the app falls back to demo mode. This proves a
           # fresh clone builds green before any keys exist.
           NEXT_TELEMETRY_DISABLED: '1'
+      - name: Static routes stayed static (public pages are served from the edge, not a function)
+        run: npm run check:static-routes
 
   worker:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-      - name: Install worker dependencies
-        run: pip install -r requirements.txt
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-worker
       - name: Worker tests
         run: python -m pytest tests -q
 
@@ -106,8 +111,27 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Apply every migration + reconcile against an empty database
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/lyra_zero
         run: bash scripts/migrate-from-zero.sh
+
+  # Nothing blocks a push to main here (no branch protection - the flow is direct push behind a
+  # local pre-push gate), so a red CI on main has to reach a person some other way. It did not:
+  # 59 consecutive red runs shipped without anyone being told. Pull requests are left alone -
+  # their author is already looking at the checks.
+  notify:
+    needs: [version-guard, frontend, worker, migrations-from-zero]
+    if: failure() && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/notify-failure
+        with:
+          title: "Lyra CI is RED on main (${{ github.sha }})"
+          detail: "version-guard=${{ needs.version-guard.result }} frontend=${{ needs.frontend.result }} worker=${{ needs.worker.result }} migrations=${{ needs.migrations-from-zero.result }}"
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}

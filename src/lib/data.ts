@@ -46,7 +46,27 @@ type TickerRecord = {
   category: string | null;
   exchange: string | null;
   is_active: boolean | null;
+  scan_timeframe?: string | null;
+  /** The ticker's newest signal, embedded by the dashboard read (0 or 1 rows). */
+  stock_signals?: SignalRecord[] | null;
 };
+
+/** The timeframe the hourly scanner writes; a ticker with no `scan_timeframe` is scanned on it. */
+const DEFAULT_SCAN_TIMEFRAME = '1h';
+
+const TICKER_COLUMNS = 'symbol, company_name, sector, industry, category, exchange, is_active, scan_timeframe';
+
+const SIGNAL_COLUMNS =
+  'symbol, timeframe, candle_time, signal_score, signal_type, signal_status, previous_signal_score, ' +
+  'signal_score_delta, action_state, lifecycle_state, explanation, rsi_summary, macd_summary, ' +
+  'volume_summary, trend_summary, price_summary, raw_payload';
+
+const RUN_COLUMNS =
+  'job_name, timeframe, started_at, finished_at, status, tickers_scanned, candles_saved, indicators_saved, ' +
+  'signals_created, portfolio_overlays_created, watchlist_overlays_created, alerts_sent';
+
+/** The job whose runs are "the scan". The digest and outcome jobs log to the same table. */
+export const SCANNER_JOB_NAME = 'hourly_stock_scanner';
 
 type PortfolioPositionRecord = {
   id: string;
@@ -404,6 +424,98 @@ function deriveSignalChanges(signals: SignalRow[]): SignalChange[] {
     }));
 }
 
+type DashboardClient = NonNullable<Awaited<ReturnType<typeof createSupabaseServerClient>>>;
+
+/**
+ * A ticker's newest signal stops counting as "its signal" once it trails the freshest signal in
+ * the universe by this much. Long enough to ride out a long weekend or a few failed fetches for
+ * one name; short enough that a delisted ticker (still flagged active, last scored months ago)
+ * is not ranked beside live ones.
+ */
+const STALE_SIGNAL_DAYS = 5;
+
+/**
+ * Every ticker with its newest signal, in one index-backed request.
+ *
+ * This replaced `stock_signals ... order by candle_time desc limit 80`, which was wrong twice:
+ *
+ *  - It dropped tickers. Every scan writes one signal per ticker at the same candle time, so the
+ *    80 newest rows are 80 of that batch - and the universe had grown to 99. Nineteen scanned
+ *    tickers were missing from every render, including holdings, which then read as "not scanned".
+ *  - It was slow. No index leads with candle_time, so it scanned and sorted the whole table
+ *    (69 MB, 1.5 s in the database) on every page that draws the shell.
+ *
+ * Asking per ticker instead rides the (symbol, timeframe, candle_time desc) index: one probe per
+ * ticker, about 3 ms for the whole universe, and nothing can fall off the end of a limit.
+ */
+export async function loadTickersWithLatestSignal(
+  supabase: DashboardClient,
+): Promise<{ tickers: TickerRecord[]; signals: SignalRecord[]; failed: boolean }> {
+  const embedded = (timeframe: string, symbols?: string[]) => {
+    const base = supabase
+      .from('stock_tickers')
+      .select(`${TICKER_COLUMNS}, stock_signals(${SIGNAL_COLUMNS})`)
+      .eq('stock_signals.timeframe', timeframe);
+    return (symbols ? base.in('symbol', symbols) : base)
+      .order('symbol', { ascending: true })
+      .order('candle_time', { referencedTable: 'stock_signals', ascending: false })
+      .limit(1, { referencedTable: 'stock_signals' })
+      .limit(500);
+  };
+
+  const primary = await embedded(DEFAULT_SCAN_TIMEFRAME);
+  if (primary.error) return loadTickersAndSignalsWithoutEmbed(supabase);
+
+  const tickers = (primary.data ?? []) as unknown as TickerRecord[];
+  const signals = tickers.flatMap((ticker) => ticker.stock_signals ?? []);
+
+  // Tickers scanned on another timeframe (none today) get the same one-probe read for theirs.
+  const covered = new Set(signals.map((signal) => signal.symbol));
+  const byOtherTimeframe = new Map<string, string[]>();
+  for (const ticker of tickers) {
+    const timeframe = ticker.scan_timeframe || DEFAULT_SCAN_TIMEFRAME;
+    if (timeframe === DEFAULT_SCAN_TIMEFRAME || covered.has(ticker.symbol)) continue;
+    byOtherTimeframe.set(timeframe, [...(byOtherTimeframe.get(timeframe) ?? []), ticker.symbol]);
+  }
+  for (const [timeframe, symbols] of byOtherTimeframe) {
+    const extra = await embedded(timeframe, symbols);
+    if (extra.error) continue;
+    for (const ticker of (extra.data ?? []) as unknown as TickerRecord[]) signals.push(...(ticker.stock_signals ?? []));
+  }
+
+  return { tickers, signals: dropStaleSignals(signals), failed: false };
+}
+
+/**
+ * The pre-embed shape, kept for a database whose API has no stock_signals -> stock_tickers
+ * relationship to embed through (the legacy sql/ schema created the table without the foreign
+ * key). Sized from the universe so it cannot silently drop tickers the way a fixed limit did.
+ */
+async function loadTickersAndSignalsWithoutEmbed(
+  supabase: DashboardClient,
+): Promise<{ tickers: TickerRecord[]; signals: SignalRecord[]; failed: boolean }> {
+  const tickersResult = await supabase.from('stock_tickers').select(TICKER_COLUMNS).order('symbol', { ascending: true }).limit(500);
+  if (tickersResult.error) return { tickers: [], signals: [], failed: true };
+  const tickers = (tickersResult.data ?? []) as unknown as TickerRecord[];
+  const signalsResult = await supabase
+    .from('stock_signals')
+    .select(SIGNAL_COLUMNS)
+    .order('candle_time', { ascending: false })
+    .limit(Math.max(200, tickers.length * 2));
+  if (signalsResult.error) return { tickers, signals: [], failed: true };
+  return { tickers, signals: dropStaleSignals((signalsResult.data ?? []) as unknown as SignalRecord[]), failed: false };
+}
+
+/** Keep signals within STALE_SIGNAL_DAYS of the freshest one; newest first, as the mappers expect. */
+export function dropStaleSignals<T extends { candle_time: string }>(signals: T[]): T[] {
+  const times = signals.map((signal) => new Date(signal.candle_time).getTime()).filter(Number.isFinite);
+  if (times.length === 0) return [];
+  const cutoff = Math.max(...times) - STALE_SIGNAL_DAYS * 86_400_000;
+  return signals
+    .filter((signal) => new Date(signal.candle_time).getTime() >= cutoff)
+    .sort((a, b) => new Date(b.candle_time).getTime() - new Date(a.candle_time).getTime());
+}
+
 export async function getDashboardData(): Promise<DashboardData> {
   // Cookie-aware server client: RLS scopes private rows to the signed-in user. When
   // Supabase isn't configured we stay in demo mode.
@@ -420,23 +532,35 @@ export async function getDashboardData(): Promise<DashboardData> {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id ?? null;
 
-    const [tickersResult, signalsResult, runsResult, alertsResult] = await Promise.all([
-      // Bounded like the sibling queries - the universe is a few hundred names at most, and an
-      // unbounded select grows with every ticker added and runs on each dashboard render.
-      supabase.from('stock_tickers').select('*').order('symbol', { ascending: true }).limit(500),
-      supabase.from('stock_signals').select('*').order('candle_time', { ascending: false }).limit(80),
-      supabase.from('stock_scanner_runs').select('*').order('started_at', { ascending: false }).limit(1),
-      supabase.from('stock_alerts').select('*').order('created_at', { ascending: false }).limit(20),
+    // Named columns, not `*`: these run on every page that draws the shell, and every byte they
+    // return is Supabase egress - the quota that has already taken this project down once.
+    const alertsQuery = supabase
+      .from('stock_alerts')
+      .select('symbol, channel, alert_type, message, payload, sent_status, sent_at, created_at');
+    const [universe, runsResult, alertsResult] = await Promise.all([
+      loadTickersWithLatestSignal(supabase),
+      // Only the scanner's own runs: the nightly digest and outcome jobs log to this table too,
+      // and for a few minutes after each of them "the latest run" used to be a job that scans
+      // nothing - so the header reported 0 tickers scanned.
+      supabase
+        .from('stock_scanner_runs')
+        .select(RUN_COLUMNS)
+        .eq('job_name', SCANNER_JOB_NAME)
+        .order('started_at', { ascending: false })
+        .limit(1),
+      // The explicit owner filter changes nothing a signed-in user can see (RLS is owner-only) -
+      // it lets the read use the (user_id, created_at) index instead of sorting the whole table.
+      (userId ? alertsQuery.eq('user_id', userId) : alertsQuery).order('created_at', { ascending: false }).limit(20),
     ]);
 
-    if (tickersResult.error || signalsResult.error || runsResult.error || alertsResult.error) {
+    if (universe.failed || runsResult.error || alertsResult.error) {
       return demoDashboardData;
     }
 
-    const tickers = mapTickers((tickersResult.data ?? []) as TickerRecord[]);
-    const signals = latestSignals((signalsResult.data ?? []) as SignalRecord[], tickers);
-    const latestRun = mapRun(((runsResult.data ?? []) as RunRecord[])[0] ?? null);
-    const alerts = mapAlerts((alertsResult.data ?? []) as AlertRecord[]);
+    const tickers = mapTickers(universe.tickers);
+    const signals = latestSignals(universe.signals, tickers);
+    const latestRun = mapRun(((runsResult.data ?? []) as unknown as RunRecord[])[0] ?? null);
+    const alerts = mapAlerts((alertsResult.data ?? []) as unknown as AlertRecord[]);
 
     // Recompute the signal brain from live prices ONCE, up front, and thread the SAME array into
     // everything downstream (the signal table, the changes board, and the portfolio/watchlist

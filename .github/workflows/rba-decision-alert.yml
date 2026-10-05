@@ -1,12 +1,21 @@
 name: RBA Decision Alert
 
-# The 2:30pm Sydney cash rate call, in the user's channels minutes later. Fires at
-# 2:31pm Sydney year-round via two month-gated cron lines (Sydney is AEST UTC+10
-# Apr-Oct and AEDT UTC+11 Nov-Mar; a fixed UTC offset would drift an hour for half
-# the year). The job itself is gated by the seeded decision calendar
-# (workers/stock_scanner/macro_calendar.RBA_DECISION_DATES, verified from the RBA's
-# published schedule) and exits clean in seconds on every non-decision day - 8 real
-# runs a year, ~250 cheap no-ops.
+# The 2:30pm Sydney cash rate call, in the user's channels minutes later.
+#
+# The job is gated by Sydney wall-clock time (workers/stock_scanner/rba_schedule.py): it only acts
+# on a seeded decision day, at or after 2:30pm Sydney. That gate - not the cron - is what makes it
+# correct, so the cron's only job is to make sure one firing lands just after 2:30pm Sydney
+# whatever the UTC offset is. Sydney is UTC+11 from the first Sunday of October to the first Sunday
+# of April and UTC+10 otherwise, so April and October each contain both offsets: both crons fire in
+# those two months. The early firing exits at the gate; the alert's dedupe key makes the late one a
+# no-op when the early one already sent.
+#
+# (The crons used to be split Apr-Oct / Nov-Mar, which put the alert an hour late for most of
+# October and the first days of April. Nothing was missed only because no 2026-2027 decision falls
+# in that window.)
+#
+# ~250 weekdays a year are not decision days. The gate step answers that from the standard library
+# before anything is installed, so those runs cost seconds.
 #
 # Known risk, by design: rba.gov.au 403s some datacenter IPs (documented in
 # docs/messaging-roadmap.md). If the runner is blocked, the alert still fires from
@@ -16,11 +25,16 @@ name: RBA Decision Alert
 
 on:
   schedule:
-    # 2:31pm AEST (Apr-Oct) = 04:31 UTC
+    # 2:31pm Sydney when Sydney is UTC+10 (first Sunday of April -> first Sunday of October)
     - cron: '31 4 * 4-10 1-5'
-    # 2:31pm AEDT (Nov-Mar) = 03:31 UTC
-    - cron: '31 3 * 1-3,11,12 1-5'
+    # 2:31pm Sydney when Sydney is UTC+11 (first Sunday of October -> first Sunday of April)
+    - cron: '31 3 * 1-4,10-12 1-5'
   workflow_dispatch: {}
+
+# Least privilege. `actions: write` is only for the keepalive step (see its action for why).
+permissions:
+  contents: read
+  actions: write
 
 concurrency:
   group: rba-decision-alert
@@ -38,21 +52,33 @@ jobs:
       APP_BASE_URL: ${{ vars.APP_BASE_URL || secrets.APP_BASE_URL }}
       NOTIFICATION_DISPATCH_SECRET: ${{ secrets.NOTIFICATION_DISPATCH_SECRET }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
+      # Standard library only - runs on the runner's own Python, before any install.
+      - name: Is a decision due right now? (Sydney time)
+        id: gate
+        run: python3 -m workers.stock_scanner.rba_schedule >> "$GITHUB_OUTPUT"
 
-      - name: Install worker dependencies
-        run: pip install -r requirements.txt
+      - uses: ./.github/actions/setup-worker
+        if: steps.gate.outputs.due == 'true'
 
       - name: RBA decision alert (calendar-gated)
+        if: steps.gate.outputs.due == 'true'
         run: python -m workers.stock_scanner.rba_decision_job
+
+      # This job runs for real eight times a year. If one of those eight crashes, someone has to
+      # hear about it - there was no failure page here at all.
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          title: Lyra RBA decision alert FAILED
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}
 
       - name: Keepalive (reset the 60-day cron auto-disable clock)
         if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/rba-decision-alert.yml/enable" || true
+        uses: ./.github/actions/keepalive
+        with:
+          token: ${{ github.token }}

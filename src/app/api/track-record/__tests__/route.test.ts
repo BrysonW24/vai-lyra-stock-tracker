@@ -24,12 +24,15 @@ function request(): NextRequest {
   return new NextRequest('http://localhost/api/track-record');
 }
 
-/** A Supabase-like client whose query chain resolves to the given rows. */
-function clientWithRows(rows: unknown[]) {
+/**
+ * A Supabase-like client that behaves like PostgREST where it matters here: it serves the
+ * requested `.range()`, and never more than `cap` rows in one response whatever was asked for.
+ */
+function clientWithRows(rows: unknown[], cap = 1000) {
   const chain = {
     select: () => chain,
     order: () => chain,
-    limit: () => Promise.resolve({ data: rows, error: null }),
+    range: (from: number, to: number) => Promise.resolve({ data: rows.slice(from, Math.min(to + 1, from + cap)), error: null }),
   };
   return { from: () => chain };
 }
@@ -70,6 +73,21 @@ describe('GET /api/track-record', () => {
     const h20 = data.groups[0].horizons.find((h) => h.horizon === '20d')!;
     expect(h20.n).toBe(3);
     expect(h20.winRatePct).toBeCloseTo(33.333, 2); // 1 of 3 beats the 0.3% floor
+  });
+
+  it('builds the record from EVERY outcome, not the first 1000 the API will return in one response', async () => {
+    // The route used to ask for 5000 rows in one request. PostgREST answered with 1000 and a 200,
+    // and the "all-time" record was published from 1000 of 1,587 rows. Nothing errored.
+    const rows = Array.from({ length: 1587 }, (_, i) => ({
+      signal_type: 'momentum_recovery_v1',
+      signal_status: 'strong_setup',
+      return_20d: 1,
+      signal_candle_time: new Date(Date.UTC(2026, 5, 16) + i * 3_600_000).toISOString(),
+    }));
+    hoisted.client = clientWithRows(rows);
+    const data = (await (await GET(request())).json()) as { totalOutcomes: number; window: { from: string; to: string } };
+    expect(data.totalOutcomes).toBe(1587);
+    expect(data.window.from).toBe('2026-06-16'); // the whole history, back to the first labelled signal
   });
 
   it('falls back to empty (not a crash) when the query errors', async () => {

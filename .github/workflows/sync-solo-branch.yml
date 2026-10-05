@@ -1,11 +1,17 @@
 # Keep the `solo` branch in lockstep with main.
 #
 # Lyra Solo is not a fork of the product - it is the SAME code where the deployment env
-# decides the mode: the solo branch deploys as a Vercel preview with no Supabase env in
-# scope, so middleware runs the app open (no accounts), persistence lives in the
-# browser's local twins, and AI is BYOK-only (resolveAiCredentials refuses server keys
-# to unauthenticated callers). The moment solo trails main it starts accumulating the
-# exact class of drift a second codebase would have, so a machine keeps them equal.
+# decides the mode: Solo runs with no Supabase env in scope, so middleware runs the app
+# open (no accounts), persistence lives in the browser's local twins, and AI is BYOK-only
+# (resolveAiCredentials refuses server keys to unauthenticated callers). The moment solo
+# trails main it starts accumulating the exact class of drift a second codebase would
+# have, so a machine keeps them equal.
+#
+# This keeps the BRANCH equal. It does not deploy anything: the Vercel project is
+# deliberately not connected to git, so the Solo site only moves when someone runs
+# `npm run deploy:solo` after a release. (For six weeks the comment here still said the
+# branch "deploys as a Vercel preview"; it had stopped doing so, and Solo sat a release
+# behind production without anything noticing.)
 #
 # Fast-forward only: if this ever fails, someone committed directly to solo - that is
 # drift by definition. Do not merge it; move the change to main and let this catch it up.
@@ -28,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -40,3 +46,13 @@ jobs:
             echo "::error::  git push origin main:solo --force-with-lease"
             exit 1
           }
+
+      # A diverged solo is drift by definition - somebody should hear about it.
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          title: Lyra solo branch could not be fast-forwarded to main
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}

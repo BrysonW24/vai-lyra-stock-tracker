@@ -81,7 +81,7 @@ multiple owning chains per row are allowed; a parent path claims everything unde
 | Ingest workers (horizon 2) | `workers/events_worker/` `workers/fundamentals_worker/` `workers/intelligence_worker/` | data-integrity |
 | Scout worker (broad signal -> ideas board) | `workers/scout/` | scout-intel |
 | Scout feed surface (what the scout saw + its proposal cards) | `src/app/api/scout/` `src/components/community/ScoutFeed.tsx` `src/components/community/ScoutProposals.tsx` | scout-intel |
-| Auth, env, abuse, account | `src/lib/auth/` `src/lib/env.ts` `src/lib/ratelimit.ts` `src/lib/account.ts` `src/app/api/account/` `SECURITY.md` `PRIVACY.md` `docs/security/` | security-sweep |
+| Auth, env, abuse, account | `src/lib/auth/` `src/lib/env.ts` `src/lib/ratelimit.ts` `src/lib/account.ts` `src/lib/sentry-scrub.ts` `src/app/api/account/` `SECURITY.md` `PRIVACY.md` `docs/security/` | security-sweep |
 | Findings + GenUI | `src/lib/findings/` `src/lib/next-best-actions.ts` `src/lib/goal.ts` `src/lib/portfolio-actions.ts` `src/lib/orientation.ts` `src/app/findings/` `src/app/api/findings/` | logs-to-genui |
 | Feedback intake + community board | `src/lib/feedback.ts` `src/lib/community.ts` `src/lib/community-contract.ts` `src/lib/community-key.ts` `src/app/api/feedback/` `src/app/api/community/` | feedback-loop |
 | Release + health plumbing | `src/lib/version.ts` `src/app/whats-new/` `src/app/api/health/` `scripts/` `tests/` `src/lib/__tests__/` `.githooks/` `.github/` `CHANGELOG.md` | production-keeper |

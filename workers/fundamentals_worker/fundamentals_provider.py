@@ -68,17 +68,9 @@ class FinnhubFundamentalsProvider:
     def fetch_fundamentals(self, symbol: str) -> Fundamentals | None:
         """Fetch fundamentals from Finnhub. Returns None on error."""
         try:
-            import requests
+            from workers.finnhub_http import finnhub_get
 
-            url = f"{self.base_url}/company-basic-financials"
-            params = {
-                "symbol": symbol,
-                "token": self.api_key,
-            }
-
-            resp = requests.get(url, params=params, timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
+            data = finnhub_get("company-basic-financials", {"symbol": symbol}, self.api_key)
 
             if "series" not in data:
                 logger.warning(f"No financial series data for {symbol}")

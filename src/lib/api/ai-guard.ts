@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getSessionUser, createSupabaseServerClient } from '@/lib/supabase/server';
+import { getSessionUser } from '@/lib/supabase/server';
 import { rateLimitShared } from '@/lib/ratelimit';
-import { isAiIncluded, isOwnerGranted } from '@/lib/ai/entitlement';
+import { resolveHostedEntitlement } from '@/lib/ai/entitlement';
 
 /**
  * Shared guard for the AI + paper-bot API surface. It exists to close the class of holes the
@@ -44,28 +44,6 @@ export interface AiGuardOk<T> {
   aiIncluded: boolean;
   /** Stable identity used for rate limiting (user id or IP). */
   identity: string;
-}
-
-/**
- * Resolve whether the session user gets the hosted key: granted (profiles.ai_included) OR still
- * inside the free trial (isAiIncluded from the account created_at). The profile read is
- * best-effort - if the column is absent (pre-migration) or the read fails, we fall back to
- * trial-only, so this is safe to ship before or after the migration.
- */
-async function resolveAiIncluded(user: { id: string; created_at?: string; email?: string }): Promise<boolean> {
-  // Owner/comp allowlist wins outright - indefinite hosted access, no trial clock, no DB read.
-  if (isOwnerGranted(user.email)) return true;
-  let granted = false;
-  try {
-    const supabase = await createSupabaseServerClient();
-    if (supabase) {
-      const { data } = await supabase.from('profiles').select('ai_included').eq('id', user.id).maybeSingle();
-      granted = (data as { ai_included?: boolean } | null)?.ai_included === true;
-    }
-  } catch {
-    // profiles.ai_included absent (pre-055) or read failed -> trial entitlement still applies.
-  }
-  return isAiIncluded({ accountCreatedAt: user.created_at, granted, now: Date.now() });
 }
 
 export interface AiGuardBlocked {
@@ -127,8 +105,9 @@ export async function guardAiRoute<T>(
   // 2. Identity - a signed-in user is rate-limited by id; everyone else by IP.
   const user = await getSessionUser().catch(() => null);
   const identity = user?.id ?? `ip:${clientIp(request)}`;
-  // Per-user hosted-key entitlement (trial or granted); anonymous callers are never included.
-  const aiIncluded = user ? await resolveAiIncluded(user) : false;
+  // Per-user hosted-key entitlement (trial or env-granted); anonymous callers are never included.
+  // Decided from the verified session and the server's env alone - never from a profiles row.
+  const aiIncluded = user ? resolveHostedEntitlement(user, Date.now()).included : false;
 
   // 3. Rate limit - SHARED (Upstash) so the budget holds across every serverless instance.
   // On Vercel each request can hit a different lambda; the old in-process limiter reset per

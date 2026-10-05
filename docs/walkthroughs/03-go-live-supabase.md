@@ -14,7 +14,7 @@ Back to the index: [README.md](./README.md).
 ## What you need before starting
 
 - The repo cloned and `npm install` done (the app already runs in demo mode with `npm run dev -- -p 3042`).
-- Node 20+ (`package.json` requires `node >= 20`), Python 3.11 or newer (the hourly workflow pins 3.11), and a terminal.
+- Node 22.22+ or 24 (`package.json` `engines`), Python 3.11 or newer (the workflows run 3.12, pinned once in `.github/actions/setup-worker`), and a terminal.
 - A free account at [supabase.com](https://supabase.com) and a GitHub account (for the hourly automation later).
 
 ## Step 1 - create your Supabase project

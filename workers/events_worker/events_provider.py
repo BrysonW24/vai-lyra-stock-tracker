@@ -84,23 +84,14 @@ class FinnhubEventsProvider:
     def fetch_events(self, days: int = 30) -> list[CalendarEvent]:
         """Fetch calendar events from Finnhub. Returns empty list on error."""
         try:
-            import requests
+            from workers.finnhub_http import finnhub_get
 
             now = datetime.now(timezone.utc)
             from_date = now.strftime("%Y-%m-%d")
             to_date = (now + __import__("datetime").timedelta(days=days)).strftime("%Y-%m-%d")
 
             # Fetch earnings calendar
-            url = f"{self.base_url}/calendar/earnings"
-            params = {
-                "from": from_date,
-                "to": to_date,
-                "token": self.api_key,
-            }
-
-            resp = requests.get(url, params=params, timeout=10)
-            resp.raise_for_status()
-            data = resp.json() or {}
+            data = finnhub_get("calendar/earnings", {"from": from_date, "to": to_date}, self.api_key) or {}
 
             events = []
             for item in data.get("earningsCalendar", []):
@@ -126,16 +117,9 @@ class FinnhubEventsProvider:
     def fetch_ipos(self) -> list[IpoCompany]:
         """Fetch IPO calendar from Finnhub. Returns empty list on error."""
         try:
-            import requests
+            from workers.finnhub_http import finnhub_get
 
-            url = f"{self.base_url}/calendar/ipo"
-            params = {
-                "token": self.api_key,
-            }
-
-            resp = requests.get(url, params=params, timeout=10)
-            resp.raise_for_status()
-            data = resp.json() or {}
+            data = finnhub_get("calendar/ipo", {}, self.api_key) or {}
 
             ipos = []
             for item in data.get("ipoCalendar", []):

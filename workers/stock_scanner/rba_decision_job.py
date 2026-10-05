@@ -27,19 +27,17 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional
-from zoneinfo import ZoneInfo
 
 import requests
 
 from workers.stock_scanner.config import load_settings
 from workers.stock_scanner.logger import get_logger
-from workers.stock_scanner.macro_calendar import RBA_DECISION_DATES
 from workers.stock_scanner.notification_dispatch import dispatch_notification
+from workers.stock_scanner.rba_schedule import DECISION_TIME, RBA_DECISION_DATES, SYDNEY
 from workers.stock_scanner.supabase_repo import SupabaseRepository
 
 LOGGER = get_logger("stock_scanner.rba_decision_job")
 
-SYDNEY = ZoneInfo("Australia/Sydney")
 BROWSER_HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
 TIMEOUT = 15
 
@@ -192,6 +190,15 @@ def run(now: datetime | None = None, sleep=None) -> int:
 
     if today_iso not in RBA_DECISION_DATES:
         LOGGER.info("Not an RBA decision day (%s Sydney) - exiting clean", today_iso)
+        return 0
+    if now_sydney.time() < DECISION_TIME:
+        # Too early: the fallback below alerts even when the statement cannot be read, and that is
+        # only honest once the decision has actually been announced. The cron fires at both UTC
+        # candidates in the daylight-saving boundary months; the later firing does the work.
+        LOGGER.info(
+            "RBA decision day, but it is %s Sydney - before the 2:30pm announcement. Exiting clean.",
+            now_sydney.strftime("%H:%M"),
+        )
         return 0
 
     settings = load_settings()

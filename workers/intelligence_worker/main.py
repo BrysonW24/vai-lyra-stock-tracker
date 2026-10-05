@@ -63,6 +63,18 @@ def run_intelligence_worker(settings: Settings, repo: SupabaseRepository) -> dic
 
         summary["news_items_fetched"] = len(all_news)
         if not all_news:
+            # A live provider that returns nothing for the whole universe over a week has not
+            # found a quiet news week - its calls are failing (bad key, rate limit, outage). The
+            # per-ticker errors are already logged above; make the run say so instead of
+            # reporting a harmless-looking "no_news".
+            if getattr(provider, "is_live", False):
+                summary["status"] = "failed"
+                summary["error"] = (
+                    f"the live news provider returned 0 items for all {len(tickers)} tickers - "
+                    "every call failed or came back empty (see the warnings above)"
+                )
+                logger.error(summary["error"])
+                return summary
             logger.warning("No news items fetched")
             summary["status"] = "no_news"
             return summary

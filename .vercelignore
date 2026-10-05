@@ -7,6 +7,11 @@ tests/__pycache__
 .env
 .env.local
 .env.*.local
+# The Sentry wizard's token file. It was being uploaded with every CLI deploy (the build log said
+# "Using environment variables configured in .env.sentry-build-plugin") - a second copy of a
+# secret, sitting in deployment source, when the project already has SENTRY_AUTH_TOKEN as a
+# proper environment variable. The build reads the env var; the file stays on this machine.
+.env.sentry-build-plugin
 node_modules
 coverage
 playwright-report

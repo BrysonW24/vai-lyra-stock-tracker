@@ -25,6 +25,16 @@ interface CacheBackend {
 /** Namespace every key so a shared Redis can host more than one app safely. */
 const PREFIX = 'lyra:';
 
+/**
+ * Every Upstash call is bounded. "A broken Redis must never break a request" is only true if a
+ * SLOW Redis cannot hold one open: without a deadline, a cache read or a rate-limit increment
+ * that hangs would hang the page or the AI route waiting on it until the platform killed the
+ * function. Past the deadline the call throws, and every caller already treats a throw as a miss
+ * (cache) or falls back to the in-memory limiter (rate limit). Redis sits in the same region as
+ * the functions, so a healthy call is single-digit milliseconds - this only bites when it is not.
+ */
+const UPSTASH_TIMEOUT_MS = 1_500;
+
 // --- Upstash REST backend ------------------------------------------------------------------
 
 function upstashConfig(): { url: string; token: string } | null {
@@ -41,7 +51,7 @@ function upstashBackend(cfg: { url: string; token: string }): CacheBackend {
       headers: { Authorization: `Bearer ${cfg.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(cmd),
       cache: 'no-store',
-      signal,
+      signal: signal ?? AbortSignal.timeout(UPSTASH_TIMEOUT_MS),
     });
     if (!res.ok) throw new Error(`upstash ${res.status}`);
     const json = (await res.json()) as { result?: unknown; error?: string };
@@ -77,6 +87,7 @@ export async function upstashCommand(cmd: (string | number)[]): Promise<unknown 
     headers: { Authorization: `Bearer ${cfg.token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(cmd),
     cache: 'no-store',
+    signal: AbortSignal.timeout(UPSTASH_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`upstash ${res.status}`);
   const json = (await res.json()) as { result?: unknown; error?: string };

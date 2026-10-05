@@ -121,10 +121,15 @@ export async function GET(request: NextRequest) {
   // columns are missing so the board never 400s on an unapplied migration. Pre-043
   // every row is human, so a scout listing is just empty there.
   let scoutColumns = true;
-  const first = await supabase
+  const listing = supabase
     .from('community_ideas')
     .select('id, title, description, status, vote_count, created_at, origin, kind, evidence, confidence')
-    .eq('origin', originFilter)
+    .eq('origin', originFilter);
+  // A scout proposal is written by the worker (service role), so it has no author. A row that
+  // CLAIMS origin = 'scout' but carries a user_id was inserted by that user: until migration 058
+  // tightened the insert policy, any signed-in account could forge one, evidence links and all.
+  // Never list it as Lyra's work.
+  const first = await (originFilter === 'scout' ? listing.is('user_id', null) : listing)
     .order('vote_count', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(200);

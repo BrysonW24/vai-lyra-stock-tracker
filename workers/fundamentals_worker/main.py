@@ -106,6 +106,19 @@ def run_fundamentals_worker(settings: Settings, repo: SupabaseRepository) -> dic
         # _persist_snapshot logged a warning and returned 0, and this function still reported
         # "success" to a green workflow step while the table sat at zero rows. Only holds for a
         # LIVE provider: a demo run deliberately persists nothing (see persist_live above).
+        # And a LIVE provider that produced nothing for ANY ticker has failed too. Zero fetched used
+        # to fall straight through to "success" - so a wrong endpoint, a revoked key, or a rate
+        # limit on every call would have looked like a clean night forever. An empty universe is
+        # handled above (no_tickers); this is "we asked about N names and learned nothing".
+        if persist_live and len(tickers) > 0 and fundamentals_fetched == 0:
+            summary["status"] = "failed"
+            summary["error"] = (
+                f"the live provider returned fundamentals for 0 of {len(tickers)} tickers - every "
+                "call failed or came back empty (see the warnings above for the provider error)"
+            )
+            logger.error(summary["error"])
+            return summary
+
         if persist_live and fundamentals_fetched > 0 and snapshots_persisted == 0:
             summary["status"] = "failed"
             summary["error"] = (

@@ -71,17 +71,11 @@ def fetch_finnhub_general(source: ScoutSource, max_items: int = 100) -> list[Sco
     if not api_key:
         return []
     try:
-        import requests
+        from workers.finnhub_http import finnhub_get
 
-        resp = requests.get(
-            "https://finnhub.io/api/v1/news",
-            params={"category": "general", "token": api_key},
-            timeout=TIMEOUT_S,
-            headers={"User-Agent": USER_AGENT},
-        )
-        resp.raise_for_status()
+        rows = finnhub_get("news", {"category": "general"}, api_key, timeout=TIMEOUT_S)
         items: list[ScoutItem] = []
-        for row in resp.json()[:max_items]:
+        for row in rows[:max_items]:
             published = None
             if row.get("datetime"):
                 published = datetime.fromtimestamp(int(row["datetime"]), tz=timezone.utc)

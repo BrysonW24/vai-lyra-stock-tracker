@@ -14,8 +14,8 @@ The app checks two environment variables at startup: `NEXT_PUBLIC_SUPABASE_URL` 
 
 | Requirement | Version | Why |
 |---|---|---|
-| Node.js | >= 20 | Enforced by the `engines` field in `package.json` (`node >= 20.0.0`) |
-| npm | >= 10 | Also enforced by `engines` (`npm >= 10.0.0`); ships with current Node 20 LTS releases (Node 20.9+). Very early Node 20.x carried npm 9 - if `npm -v` shows 9.x, update Node to the latest 20.x or run `npm install -g npm@10` |
+| Node.js | 22.22+ or 24 | Enforced by the `engines` field in `package.json` (`^22.22.2 \|\| ^24.15.0`). 24 is what production and CI run; the test stack no longer runs on 20 |
+| npm | >= 10 | Also enforced by `engines` (`npm >= 10.0.0`); ships with every supported Node release. If `npm -v` shows 9.x, update Node or run `npm install -g npm@10` |
 | git | any recent | To clone the repo |
 
 Check what you have:
@@ -102,7 +102,7 @@ npm run doctor
 This is a dependency-free script (`scripts/doctor.mjs`) that reads your environment and reports what is configured. With zero keys you will see mostly yellow `•` warnings - that is expected and correct for demo mode:
 
 ```
-✓ Node 20.x.x
+✓ Node 24.x.x
 • Frontend Supabase not set - dashboard runs on demo data
 • Worker Supabase not set - the scanner cannot persist results
 • Telegram not configured - alerts are off (optional)
@@ -163,7 +163,7 @@ npm run test         # runs the frontend Vitest suite
 
 ### "Unsupported engine" warning or weird syntax errors on startup
 
-Your Node is too old. The repo requires Node >= 20 (`engines` in `package.json`). Check with `node -v`. Install Node 20+ via [nodejs.org](https://nodejs.org) or a version manager (`nvm install 20 && nvm use 20`). Note: `npm run doctor` only flags Node below 18 (Next 15's hard floor), but match the repo's declared 20+ to stay off the unsupported path.
+Your Node is outside the supported range. The repo requires Node 22.22+ or 24 (`engines` in `package.json`). Check with `node -v`. Install Node 24 via [nodejs.org](https://nodejs.org) or a version manager (`nvm install 24 && nvm use` - the repo ships an `.nvmrc`). `npm run doctor` flags anything below 22.
 
 ### Port already in use (`EADDRINUSE`)
 

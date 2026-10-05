@@ -16,21 +16,19 @@ on:
   schedule:
     - cron: "17 6 1 * *" # 06:17 UTC on the 1st - monthly, off-peak for the free data sources
 
+# Least privilege. `actions: write` is only for the keepalive step: a monthly cron is the one most
+# exposed to GitHub's 60-day auto-disable, and until now it had no keepalive at all.
 permissions:
   contents: read
+  actions: write
 
 jobs:
   eval:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install worker deps
-        run: pip install -r requirements.txt
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-worker
       - name: Build bounded corpus (free sources, as-of discipline)
         run: python -m workers.emerging_winner.backtest build --sample 250 --prefer yfinance
       - name: Retrain challenger (dev split, floor-gated)
@@ -42,7 +40,8 @@ jobs:
       - name: Record metrics history + regenerate evidence
         run: python -m workers.emerging_winner.backtest record
       - name: Upload eval reports
-        uses: actions/upload-artifact@v4
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
           name: model-eval-reports
           path: |
@@ -50,3 +49,19 @@ jobs:
             .ew-backtest-cache/corpus-meta.json
             src/lib/generated/model-evidence.json
           retention-days: 90
+          if-no-files-found: warn
+
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          title: Lyra monthly model eval FAILED
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}
+
+      - name: Keepalive (reset the 60-day cron auto-disable clock)
+        if: always()
+        uses: ./.github/actions/keepalive
+        with:
+          token: ${{ github.token }}

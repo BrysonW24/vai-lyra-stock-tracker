@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
+from postgrest.types import ReturnMethod
 from supabase import Client, create_client
 
 from workers.stock_scanner.config import Settings
@@ -21,6 +22,13 @@ from workers.stock_scanner.models import (
 from workers.stock_scanner.universe import NASDAQ_TECH_UNIVERSE, universe_by_symbol
 
 logger = logging.getLogger("stock_scanner.supabase_repo")
+
+# PostgREST echoes every written row back unless told not to (`Prefer: return=representation` is
+# the client default). Nothing here reads those echoes except to pull an id, and the candle echo
+# alone was ~40 MB a run - it exhausted the Supabase free-tier egress quota and got the project
+# restricted (2026-09-26 to 2026-09-30, every scan 402'd). So: every write whose response is unused
+# asks for `return=minimal`, and the two writes that need an id ask for the id column only.
+_NO_ECHO = ReturnMethod.minimal
 
 
 class SupabaseRepository:
@@ -59,7 +67,7 @@ class SupabaseRepository:
             }
             for ticker in NASDAQ_TECH_UNIVERSE
         ]
-        self.client.table("stock_tickers").upsert(records, on_conflict="symbol").execute()
+        self.client.table("stock_tickers").upsert(records, on_conflict="symbol", returning=_NO_ECHO).execute()
 
     def create_run(self, job_name: str, timeframe: str) -> str | None:
         if not self.client:
@@ -68,6 +76,7 @@ class SupabaseRepository:
         result = (
             self.client.table("stock_scanner_runs")
             .insert({"job_name": job_name, "timeframe": timeframe, "status": "running"})
+            .select("id")
             .execute()
         )
         if result.data:
@@ -104,7 +113,8 @@ class SupabaseRepository:
                 "alerts_sent": alerts_sent,
                 "error_message": error_message,
                 "payload": payload,
-            }
+            },
+            returning=_NO_ECHO,
         ).eq("id", run_id).execute()
 
     def load_active_tickers(self) -> list[Ticker]:
@@ -151,7 +161,11 @@ class SupabaseRepository:
         if not self.client or not candles:
             return 0
         records = [candle.to_record() for candle in candles]
-        self.client.table("stock_candles").upsert(records, on_conflict="symbol,timeframe,candle_time").execute()
+        self.client.table("stock_candles").upsert(
+            records,
+            on_conflict="symbol,timeframe,candle_time",
+            returning=_NO_ECHO,
+        ).execute()
         return len(records)
 
     def save_indicator(self, indicator: IndicatorSnapshot) -> int:
@@ -160,6 +174,7 @@ class SupabaseRepository:
         self.client.table("stock_indicators").upsert(
             indicator.to_record(),
             on_conflict="symbol,timeframe,candle_time",
+            returning=_NO_ECHO,
         ).execute()
         return 1
 
@@ -169,7 +184,7 @@ class SupabaseRepository:
         result = self.client.table("stock_signal_scores").upsert(
             score.to_record(),
             on_conflict="symbol,timeframe,candle_time",
-        ).execute()
+        ).select("id").execute()
         if result.data:
             return str(result.data[0].get("id"))
         return None
@@ -180,7 +195,7 @@ class SupabaseRepository:
         result = self.client.table("stock_signals").upsert(
             signal.to_record(),
             on_conflict="symbol,timeframe,candle_time,signal_type",
-        ).execute()
+        ).select("id").execute()
         if result.data:
             return str(result.data[0].get("id"))
         return None
@@ -296,6 +311,7 @@ class SupabaseRepository:
         self.client.table("portfolio_signal_overlay").upsert(
             [overlay.to_record() for overlay in overlays],
             on_conflict="position_id,candle_time",
+            returning=_NO_ECHO,
         ).execute()
         return len(overlays)
 
@@ -305,6 +321,7 @@ class SupabaseRepository:
         self.client.table("watchlist_signal_overlay").upsert(
             [overlay.to_record() for overlay in overlays],
             on_conflict="watchlist_item_id,candle_time",
+            returning=_NO_ECHO,
         ).execute()
         return len(overlays)
 
@@ -359,7 +376,8 @@ class SupabaseRepository:
                 "error_message": error_message,
                 "payload": payload,
                 "user_id": user_id,
-            }
+            },
+            returning=_NO_ECHO,
         ).execute()
 
     def load_user_alert_preferences(self, user_id: str) -> dict[str, Any]:
@@ -462,7 +480,9 @@ class SupabaseRepository:
         unique constraint - migration 044 doctrine: never target a partial index)."""
         if not self.client or not rows:
             return 0
-        self.client.table("market_calendar_events").upsert(rows, on_conflict="event_id").execute()
+        self.client.table("market_calendar_events").upsert(
+            rows, on_conflict="event_id", returning=_NO_ECHO
+        ).execute()
         return len(rows)
 
     def load_snapshot_value_at_or_after(self, key: str, start: datetime) -> float | None:
@@ -528,7 +548,8 @@ class SupabaseRepository:
                 "regime": regime,
                 "fear_greed": fear_greed,
                 "vix": vix,
-            }
+            },
+            returning=_NO_ECHO,
         ).execute()
         return 1
 
@@ -650,6 +671,7 @@ class SupabaseRepository:
         self.client.table("signal_outcomes").upsert(
             records,
             on_conflict="symbol,signal_candle_time,signal_type,signal_status",
+            returning=_NO_ECHO,
         ).execute()
         return len(records)
 

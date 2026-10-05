@@ -109,8 +109,8 @@ Notes:
 | Resource | Today | Burn rate | Runs out | Tripwire -> action |
 |---|---|---|---|---|
 | Supabase 500 MB DB | 87 MB | ~33 MB/mo unmanaged; ~5 MB/mo once section-6 horizons are enforced | **~mid-2027 unmanaged; ~2029+ with retention; forever with the rollup lever** | At **300 MB**: ship the pruning jobs for the ratified section-6 horizons (candles 380d - NOT 180d, that corrupts the yearly review; alerts 31d; signals 120d; indicators 30d). At 450 MB: Supabase Pro US$25/mo |
-| Supabase 5 GB egress/mo | well under 1 GB (est - not SQL-measurable; read the Supabase dashboard Reports -> Egress) | scales with page views, not crons (workers mostly write) | not soon | At 3 GB/mo: cache candle/chart reads (Upstash free tier is pre-wired as an optional dependency) |
-| Supabase idle pause (7 days) | impossible - nightly + hourly crons write continuously | - | never while crons live | GHA keepalive steps already reset the 60-day workflow auto-disable clock |
+| Supabase 5 GB egress/mo | **EXCEEDED once - the project was restricted 2026-09-26 to 2026-09-30** (every API call returned HTTP 402 `exceed_egress_quota`; every scan failed). The earlier estimate here ("well under 1 GB - workers mostly write") was wrong: a write is also a download unless it says otherwise | Measured cause: each scan re-upserted ~120,000 candle rows and PostgREST echoed all of them back (~40 MB of JSON a run, 48 runs a day). Fixed in v0.132.0: the scanner writes only the bars that changed and asks for no echo, and the dashboard reads named columns (see section 9) | Not while the fix holds. **Not SQL-measurable - confirm in the Supabase dashboard (Reports -> Egress) a week after v0.132.0** | Egress is the binding free-tier quota, ahead of database size. Any new worker write must pass `returning=minimal` unless it reads the response; any new hot read must name its columns |
+| Supabase idle pause (7 days) | impossible - nightly + hourly crons write continuously | - | never while crons live | The GHA keepalive step resets the 60-day workflow auto-disable clock. (It was refused with HTTP 403 on every run until v0.132.0 - the token lacked `actions: write` - so the clock was in fact running; fixed and now warns loudly if refused) |
 | Vercel Hobby | tiny fraction of 100 GB / 1M invocations | scales with audience | volume: not soon | The binding constraint is **licensing**: first paying user -> Vercel Pro (US$20/mo) or Coolify (~US$13/mo) |
 | GitHub Actions | $0 (public) | ~4,000 min/mo | never while public | Going private -> ~US$12-20/mo at current cadence |
 | Hosted AI budget | ≈ $0 | hard ceiling 250k tokens/day | can't overrun - budget verdict blocks, fallback stands | Raise `LYRA_HOSTED_TOKENS_PER_DAY` only with a costed reason |
@@ -220,3 +220,39 @@ for wf in hourly-stock-scanner nightly-maintenance ci deploy-smoke; do gh run li
 Re-measure quarterly, or whenever a new writer joins the nightly (a new accumulator, a new worker) -
 then update the measured-at date at the top. If a number in this file and a fresh measurement
 disagree, the measurement wins and this file gets corrected.
+
+## 9. The 2026-10-05 correction - what the first version of this document got wrong
+
+This document was written to be the free-tier runway. Two of its load-bearing claims were false,
+and the gate that should have caught the drift was not running. Recorded here so the numbers above
+are read with the right amount of trust.
+
+**Egress was the binding constraint, and it was blown.** Section 4 said egress was "well under
+1 GB" and scaled "with page views, not crons (workers mostly write)". A PostgREST write returns
+every written row by default, so the scanner - which re-upserted the whole 180-day candle history
+for every ticker on every run - downloaded about 40 MB of its own data 48 times a day. Supabase
+restricted the project from 2026-09-26 to 2026-09-30 (HTTP 402 on every call) and all 188 scans in
+that window failed. Nobody was paged: the failure alert read secrets that had never been set.
+
+**The database is much bigger than section 3 says.** Measured 2026-10-05: **288 MB** (not 87), past
+the 250 MB warning line and 12 MB short of the 300 MB act-now line. Four tables are over their
+declared budget: `stock_signals` 77.5 MB (budget 40), `stock_alerts` 51.5 MB (30), `stock_indicators`
+16.6 MB (10), `notification_events` 16.5 MB (15). About 58 MB sits past its audited benefit horizon
+(`stock_alerts` 45.8 MB past 31 days, `stock_indicators` 12.1 MB past 30 days) - the pruning this
+document asks the founder to ratify at 300 MB is now due. Growth is ~2.5 MB a trading day, almost
+all of it `stock_signals` rows at ~2.5 KB each.
+
+**The gate was masked for ten weeks.** `check:data-economics` rode in the same job as the schema
+drift check and was skipped whenever drift failed - which was every night from 2026-07-17, because
+three tables had never been applied. When it did get to run it exited at the first manifest
+mismatch, before measuring anything. Both are fixed: it runs regardless, and it measures everything
+it can before failing.
+
+**Two reads were doing table scans on every page.** With no index leading on `candle_time`, the
+dashboard's `stock_signals ... order by candle_time desc limit 80` scanned and sorted the whole
+69 MB table - 1.5 s in the database on every page that draws the shell - and, because the universe
+had grown to 99 names, silently dropped 19 of them. It now asks per ticker through the
+`(symbol, timeframe, candle_time desc)` index: about 3 ms, and nothing can fall off a limit.
+
+**Region.** The database and Redis are in Sydney; the functions ran in Washington DC (`iad1`), so
+every query crossed the Pacific twice. `vercel.json` now pins `syd1`.

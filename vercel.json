@@ -4,7 +4,7 @@
   "installCommand": "npm install",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "regions": ["iad1"],
+  "regions": ["syd1"],
   "crons": [
     {
       "path": "/api/ingestion/gov-awards",

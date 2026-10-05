@@ -13,7 +13,7 @@ Companions: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (structure - what exists),
 
 | # | Loop | Trigger | Ledger it writes | Who reads it back | Standing gate |
 |---|---|---|---|---|---|
-| 1 | Hourly scan | GHA cron `:17`/`:47`, market-hours gated | candles, signals, scores, indicators, alerts | dashboard, loop 2, loop 4 | CI worker tests, `check:schema-drift` |
+| 1 | Hourly scan | GHA cron `:17`/`:47`, around the clock (the market-hours guard exists but is OFF in production - the app's freshness badge is not market-aware yet; see the workflow header) | candles, signals, scores, indicators, alerts | dashboard, loop 2, loop 4 | CI worker tests, `check:schema-drift` |
 | 2 | Outcome learning | nightly 22:05 UTC | `signal_outcomes`, `component_efficacy` | track record, `/signal-quality` retune | efficacy saturation ERROR |
 | 3 | Digest + reviews | nightly / period-end | notification events | you, on your phone | worker tests |
 | 4 | Notification delivery | every event + nightly sweep | `notification_deliveries`, `notification_engagements` | sweep, relevance tuning | `/notification-health` chain |
@@ -240,7 +240,8 @@ each in-session scan:    market_context_snapshots (regime + payload)  workers/st
                            -> review + weekly baselines [loop 3]       so US-session hours only)
                               (earliest row at/after period start)
 
-seasonal weekday crons:  RBA decision alert (rba-decision-alert.yml, AEST/AEDT month split)
+seasonal weekday crons:  RBA decision alert (rba-decision-alert.yml; gated on Sydney wall-clock
+                           time by rba_schedule.py, so the cron need not track daylight saving)
                            -> statement fetched + parsed by regex; if no number parses, the
                               alert DEGRADES to "decision out, read it here" - never invents
 

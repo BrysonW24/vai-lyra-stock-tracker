@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { buildLiveSignal } from '@/lib/live-signals';
 import { getOutcomeDistribution, formatOutcomeSummary } from '@/lib/outcomes';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { fetchAllRows } from '@/lib/supabase/paging';
 import { rateLimitShared } from '@/lib/ratelimit';
 import { clientIp } from '@/lib/api/ai-guard';
 
@@ -39,14 +40,19 @@ async function liveOutcomeSummary(status: string): Promise<{ summary: string; sa
   const supabase = await createSupabaseServerClient();
   if (!supabase) return null;
   try {
-    const { data, error } = await supabase
-      .from('signal_outcomes')
-      .select('return_20d, return_5d')
-      .eq('signal_status', status)
-      .limit(500);
-    if (error || !data) return null;
+    // Every labelled outcome for this status - not an arbitrary 500 of them. The sentence below
+    // states the sample size, so the sample has to be the whole population (see lib/supabase/paging).
+    const { rows: all, complete } = await fetchAllRows<OutcomeRow>((from, to) =>
+      supabase
+        .from('signal_outcomes')
+        .select('return_20d, return_5d')
+        .eq('signal_status', status)
+        .order('id', { ascending: true })
+        .range(from, to),
+    );
+    if (!complete) return null;
 
-    const rows = (data as OutcomeRow[]).filter((r) => r.return_20d !== null);
+    const rows = all.filter((r) => r.return_20d !== null);
     if (rows.length < MIN_LIVE_SAMPLE) return null;
 
     const returns = rows.map((r) => r.return_20d as number);

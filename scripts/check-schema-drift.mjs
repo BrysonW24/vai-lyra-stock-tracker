@@ -304,15 +304,51 @@ try {
   process.exit(1);
 }
 
+// Authority guards. A migration that only creates a trigger or rewrites a policy adds no table
+// and no column, so everything above this line is blind to whether it was ever applied - and
+// "applied by hand, someone forgot" is the normal failure here. These are the objects whose
+// absence silently re-opens a privilege hole; each must exist in the live database.
+const AUTHORITY_GUARDS = [
+  {
+    name: 'profiles authority trigger (migration 058)',
+    sql: `select count(*) from pg_trigger t join pg_class c on c.oid = t.tgrelid
+          where c.relname = 'profiles' and t.tgname = 'trg_guard_profile_authority' and not t.tgisinternal;`,
+    why: 'without it any signed-in user can grant themselves the hosted AI key (profiles.ai_included) or maintainer rights (profiles.role)',
+  },
+  {
+    name: 'community_ideas insert policy pins origin (migration 058)',
+    sql: `select count(*) from pg_policies where schemaname = 'public' and tablename = 'community_ideas'
+          and policyname = 'community_ideas_insert_own' and with_check ilike '%origin%';`,
+    why: 'without it any signed-in user can publish a forged "AI scout" card with their own evidence links',
+  },
+];
+let missingGuards = [];
+try {
+  for (const guard of AUTHORITY_GUARDS) {
+    const count = Number(
+      execFileSync('psql', [dbUrl, '-X', '-A', '-t', '-v', 'ON_ERROR_STOP=1', '-c', guard.sql], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }).trim(),
+    );
+    if (!(count > 0)) missingGuards.push(`${guard.name} - ${guard.why}`);
+  }
+} catch (err) {
+  const detail = String(err.stderr || err.message || err).replace(/postgres(ql)?:\/\/\S+/g, 'postgresql://***');
+  console.error(`\x1b[31m[schema-drift] FAIL - could not audit the authority guards.\x1b[0m\n  ${detail.trim().split('\n')[0]}`);
+  process.exit(1);
+}
+
 const ok =
   missingTables.length === 0 &&
   missingColumns.length === 0 &&
   nullableDrift.length === 0 &&
   typeDrift.length === 0 &&
-  rlsViolations.length === 0;
+  rlsViolations.length === 0 &&
+  missingGuards.length === 0;
 
 if (jsonMode) {
-  console.log(JSON.stringify({ ok, missingTables, missingColumns, nullableDrift, typeDrift, rlsViolations, tablesChecked: expected.size }, null, 2));
+  console.log(JSON.stringify({ ok, missingTables, missingColumns, nullableDrift, typeDrift, rlsViolations, missingGuards, tablesChecked: expected.size }, null, 2));
 } else if (ok) {
   console.log(`[schema-drift] ok - live database matches the migrations (${expected.size} tables checked, RLS invariant holds).`);
 } else {
@@ -336,6 +372,10 @@ if (jsonMode) {
   if (rlsViolations.length) {
     console.error(`\n  RLS VIOLATIONS (${rlsViolations.length}) - a user-keyed table is exposed. This is the cross-user leak class:`);
     for (const v of rlsViolations.sort()) console.error(`    - ${v}`);
+  }
+  if (missingGuards.length) {
+    console.error(`\n  MISSING AUTHORITY GUARDS (${missingGuards.length}) - a privilege hole is open until the migration is applied:`);
+    for (const g of missingGuards) console.error(`    - ${g}`);
   }
   console.error(
     '\nEvery one of these fails SILENTLY at runtime: the query 400s or leaks, the code swallows it, and the feature quietly does the wrong thing.',
