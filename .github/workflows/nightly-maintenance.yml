@@ -43,7 +43,7 @@ jobs:
   # Its OWN job on purpose: drift must be visible without ever blocking the digest below. It runs in
   # parallel and turns the run red on its own.
   schema-drift:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     environment: Production
     env:
@@ -93,7 +93,7 @@ jobs:
           echo "text=schema drift items: ${missing:-0}; budget breaches: ${breaches:-0}; ${size:-database size not measured}" >> "$GITHUB_OUTPUT"
 
   maintain:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     environment: Production
     env:
@@ -193,7 +193,7 @@ jobs:
   # main.py). Turn the variable on only AFTER migrations 056 + 057 are applied: that is the moment
   # the immutable shadow-live track record begins, and it should begin with real names.
   emerging-winner:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: Production
     env:
@@ -245,7 +245,7 @@ jobs:
   notify:
     needs: [schema-drift, maintain, emerging-winner]
     if: ${{ failure() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7

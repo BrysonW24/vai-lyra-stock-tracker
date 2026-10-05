@@ -37,7 +37,10 @@ concurrency:
 
 jobs:
   scan:
-    runs-on: ubuntu-latest
+    # A named image, not `ubuntu-latest`, in every workflow here. `latest` moves on GitHub's
+    # schedule (it becomes Ubuntu 26 from 2026-10-19), and these jobs lean on what the image
+    # ships with - psql, jq, gh, python3. Move the pin deliberately, when someone is watching.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     # Pull SUPABASE_* secrets + ENABLE_MARKET_HOURS_GUARD etc. from the "Production"
     # GitHub environment so they don't have to be duplicated as repo-level secrets/vars.
