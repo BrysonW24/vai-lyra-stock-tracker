@@ -278,6 +278,7 @@
         "src/lib/supabase/",
         "src/lib/cache.ts",
         "src/lib/data.ts",
+        "src/lib/dashboard-columns.json",
         "src/lib/demo-data.ts",
         "src/lib/ingestion/",
         "src/lib/market/",

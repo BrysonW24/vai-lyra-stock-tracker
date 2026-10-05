@@ -116,6 +116,13 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/lyra_zero
         run: bash scripts/migrate-from-zero.sh
+      # The schema is now built - so this is the one place CI can check that every column the app
+      # NAMES in a read actually exists. v0.132.0 named five that did not; nothing else in CI knows
+      # what columns a table has, and the dashboard served demo data to every user until caught.
+      - name: Every column the app names exists in the schema
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/lyra_zero
+        run: node scripts/check-app-columns.mjs
 
   # Nothing blocks a push to main here (no branch protection - the flow is direct push behind a
   # local pre-push gate), so a red CI on main has to reach a person some other way. It did not:

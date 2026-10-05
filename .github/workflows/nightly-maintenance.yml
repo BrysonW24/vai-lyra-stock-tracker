@@ -75,6 +75,12 @@ jobs:
         shell: bash
         run: node scripts/check-data-economics.mjs --require-db 2>&1 | tee "$RUNNER_TEMP/data-economics.log"
 
+      # And the read side of drift: a column the app names that production does not have turns
+      # every dashboard read into a 400 and the app into its demo dataset.
+      - name: Every column the app names exists in production
+        if: ${{ !cancelled() }}
+        run: node scripts/check-app-columns.mjs
+
       # One line for the failure page, so it names the problem instead of just saying "failed".
       - name: Summarise for the failure page
         id: summary

@@ -265,6 +265,31 @@ have alerted early under the obvious "fix" (now gated on Sydney time); the marke
 if enabled, never scored the closing bar until the next morning (window extended); every Upstash
 call now has a deadline; the Sentry token file was being uploaded with each deploy.
 
+## The release that fixed these broke something - recorded, not buried
+
+**F23 (P0, caused by v0.132.0, fixed in v0.132.1 about 30 minutes later) - the dashboard served
+the sample dataset to every user.** F8 replaced `select('*')` with named columns, and the names
+were taken from a TypeScript type. Five of them (`rsi_summary`, `macd_summary`, `volume_summary`,
+`trend_summary`, `price_summary`) had never existed as columns - `select('*')` had simply returned
+them as undefined. Naming them made PostgREST refuse the whole read, the fallback read named the
+same columns, and the loader did what it does on any failed read: returned the demo book under a
+DEMO badge (open item O6, demonstrated on the day it was written down).
+
+It shipped through type-check, lint, 1,222 unit tests, a production build and a clean deploy
+health probe, because none of those knows what columns a table has, and the health probe does not
+look at whether the data is live. It was caught by loading a real page and reading what it
+rendered - not by any gate.
+
+What changed so it cannot recur:
+- `npm run check:app-columns` - every column the app names must exist in the schema. Runs in CI
+  against a database built from the migrations, and nightly against production. Proven to fail on
+  exactly this bug.
+- The named columns live in one file (`src/lib/dashboard-columns.json`) that the gate reads.
+
+What it does not yet cover: the deploy health probe still passes while the app is serving demo
+data. A probe that asserts the live site is in live mode AND rendering live rows is the missing
+piece (it belongs with O6).
+
 ## Open - not fixed in this release
 
 Logged with evidence for a next wave. None is exploitable without an account.

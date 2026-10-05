@@ -3,6 +3,7 @@ import { applyLiveSignals } from '@/lib/live-signals';
 import { DEFAULT_TARGET_SIGNAL_SCORE } from '@/lib/watchlist-rule';
 import { buildSoloMarketDashboard } from '@/lib/local-dashboard';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import dashboardColumns from '@/lib/dashboard-columns.json';
 import type {
   ActionState,
   AlertRow,
@@ -30,11 +31,13 @@ type SignalRecord = {
   action_state: ActionState | null;
   lifecycle_state: LifecycleState | null;
   explanation: Record<string, unknown> | null;
-  rsi_summary: string | null;
-  macd_summary: string | null;
-  volume_summary: string | null;
-  trend_summary: string | null;
-  price_summary: string | null;
+  // These five have never existed as columns (see the note on SIGNAL_COLUMNS). Optional, so the
+  // mapper's fallback copy is what renders - exactly as it always has.
+  rsi_summary?: string | null;
+  macd_summary?: string | null;
+  volume_summary?: string | null;
+  trend_summary?: string | null;
+  price_summary?: string | null;
   raw_payload: Record<string, unknown> | null;
 };
 
@@ -54,16 +57,20 @@ type TickerRecord = {
 /** The timeframe the hourly scanner writes; a ticker with no `scan_timeframe` is scanned on it. */
 const DEFAULT_SCAN_TIMEFRAME = '1h';
 
-const TICKER_COLUMNS = 'symbol, company_name, sector, industry, category, exchange, is_active, scan_timeframe';
-
-const SIGNAL_COLUMNS =
-  'symbol, timeframe, candle_time, signal_score, signal_type, signal_status, previous_signal_score, ' +
-  'signal_score_delta, action_state, lifecycle_state, explanation, rsi_summary, macd_summary, ' +
-  'volume_summary, trend_summary, price_summary, raw_payload';
-
-const RUN_COLUMNS =
-  'job_name, timeframe, started_at, finished_at, status, tickers_scanned, candles_saved, indicators_saved, ' +
-  'signals_created, portfolio_overlays_created, watchlist_overlays_created, alerts_sent';
+/**
+ * The columns each hot-path read names, kept in one JSON file so a gate can check them against the
+ * real schema (`npm run check:app-columns`, run in CI against a database built from the migrations).
+ *
+ * Why a gate: v0.132.0 replaced `select('*')` with named columns taken from the TypeScript record
+ * types - and five of the fields on `SignalRecord` (the `*_summary` ones) had never existed as
+ * columns. `select('*')` had quietly returned them as undefined; naming them made every signal read
+ * a 400, and the app fell back to the demo dataset for every user until it was caught. A type is a
+ * claim about a row. Only the schema knows what columns exist.
+ */
+const TICKER_COLUMNS = dashboardColumns.stock_tickers.join(', ');
+const SIGNAL_COLUMNS = dashboardColumns.stock_signals.join(', ');
+const RUN_COLUMNS = dashboardColumns.stock_scanner_runs.join(', ');
+const ALERT_COLUMNS = dashboardColumns.stock_alerts.join(', ');
 
 /** The job whose runs are "the scan". The digest and outcome jobs log to the same table. */
 export const SCANNER_JOB_NAME = 'hourly_stock_scanner';
@@ -218,11 +225,11 @@ function latestSignals(records: SignalRecord[], tickers: TickerSetting[]): Signa
       lastUpdated: record.candle_time,
       explanation: explanationFromPayload(record.explanation, record.action_state ?? 'hold'),
       summary: {
-        rsi: textOrFallback(record.rsi_summary, 'RSI evidence has not been summarized yet.'),
-        macd: textOrFallback(record.macd_summary, 'MACD evidence has not been summarized yet.'),
-        volume: textOrFallback(record.volume_summary, 'Volume evidence has not been summarized yet.'),
-        trend: textOrFallback(record.trend_summary, 'Trend evidence has not been summarized yet.'),
-        price: textOrFallback(record.price_summary, 'Price location evidence has not been summarized yet.'),
+        rsi: textOrFallback(record.rsi_summary ?? null, 'RSI evidence has not been summarized yet.'),
+        macd: textOrFallback(record.macd_summary ?? null, 'MACD evidence has not been summarized yet.'),
+        volume: textOrFallback(record.volume_summary ?? null, 'Volume evidence has not been summarized yet.'),
+        trend: textOrFallback(record.trend_summary ?? null, 'Trend evidence has not been summarized yet.'),
+        price: textOrFallback(record.price_summary ?? null, 'Price location evidence has not been summarized yet.'),
       },
     });
   }
@@ -534,9 +541,7 @@ export async function getDashboardData(): Promise<DashboardData> {
 
     // Named columns, not `*`: these run on every page that draws the shell, and every byte they
     // return is Supabase egress - the quota that has already taken this project down once.
-    const alertsQuery = supabase
-      .from('stock_alerts')
-      .select('symbol, channel, alert_type, message, payload, sent_status, sent_at, created_at');
+    const alertsQuery = supabase.from('stock_alerts').select(ALERT_COLUMNS);
     const [universe, runsResult, alertsResult] = await Promise.all([
       loadTickersWithLatestSignal(supabase),
       // Only the scanner's own runs: the nightly digest and outcome jobs log to this table too,

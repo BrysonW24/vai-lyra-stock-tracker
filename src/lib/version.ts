@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.132.1',
+    date: '2026-10-05',
+    title: 'Hotfix: the dashboard was showing sample data to everyone for about half an hour',
+    highlights: [
+      'For roughly 30 minutes after 0.132.0 went live, every page showed the built-in sample dataset under a DEMO badge instead of live signals. The new, faster signal query asked the database for five columns that have never existed, the database refused the whole request, and the app fell back to sample data. Live data is back.',
+      'A new check now runs before every release: every column the app asks for by name must exist in the database. The release that broke passed every existing check, because none of them knows what columns a table has - this one does.',
+    ],
+  },
+  {
     version: '0.132.0',
     date: '2026-10-05',
     title: 'The plumbing audit: faster pages, a scanner that cannot starve the database, and alarms that actually ring',

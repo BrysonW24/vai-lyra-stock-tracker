@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.132.1] - 2026-10-05
+
+Hotfix: the dashboard was showing sample data to everyone for about half an hour.
+
+### Changed
+
+- For roughly 30 minutes after 0.132.0 went live, every page showed the built-in sample dataset under a DEMO badge instead of live signals. The new, faster signal query asked the database for five columns that have never existed, the database refused the whole request, and the app fell back to sample data. Live data is back.
+- A new check now runs before every release: every column the app asks for by name must exist in the database. The release that broke passed every existing check, because none of them knows what columns a table has - this one does.
+
 ## [0.132.0] - 2026-10-05
 
 The plumbing audit: faster pages, a scanner that cannot starve the database, and alarms that actually ring.
@@ -1804,7 +1813,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.1...HEAD
+[0.132.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.0...v0.132.1
 [0.132.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.131.0...v0.132.0
 [0.131.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.130.0...v0.131.0
 [0.130.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.129.1...v0.130.0
