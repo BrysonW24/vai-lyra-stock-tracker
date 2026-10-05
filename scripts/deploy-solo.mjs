@@ -62,8 +62,25 @@ if (!url.startsWith('https://')) url = `https://${url}`;
 console.log(`[deploy-solo] pointing ${DOMAIN} at ${url} ...`);
 vercel(['alias', 'set', url, DOMAIN]);
 
-const health = await (await fetch(`https://${DOMAIN}/api/health`, { cache: 'no-store' })).json();
-const trades = await (await fetch(`https://${DOMAIN}/api/trades`, { cache: 'no-store' })).json().catch(() => ({}));
+// A domain that has just been re-pointed can refuse or stall for a little while (edge
+// propagation plus a cold start - 20 seconds has been observed). Ask patiently before judging.
+async function getJson(path) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= 10; attempt++) {
+    try {
+      const response = await fetch(`https://${DOMAIN}${path}`, { cache: 'no-store', signal: AbortSignal.timeout(30_000) });
+      return await response.json();
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 6_000));
+    }
+  }
+  console.error(`[deploy-solo] FAIL - ${DOMAIN}${path} did not answer after 10 attempts: ${String(lastError?.cause?.message ?? lastError?.message ?? lastError)}`);
+  process.exit(1);
+}
+
+const health = await getJson('/api/health');
+const trades = await getJson('/api/trades');
 
 const problems = [];
 if (health.version !== expected) problems.push(`version is ${health.version}, expected ${expected}`);
