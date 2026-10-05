@@ -263,7 +263,9 @@ runtime (now v7, with Dependabot for actions only); Python pinned in five places
 drifted (now one); the RBA alert cron was an hour late for part of April and October and would
 have alerted early under the obvious "fix" (now gated on Sydney time); the market-hours guard,
 if enabled, never scored the closing bar until the next morning (window extended); every Upstash
-call now has a deadline; the Sentry token file was being uploaded with each deploy.
+call now has a deadline; the Sentry token file was being uploaded with each deploy; every job runs
+on a named runner image (`ubuntu-latest` becomes Ubuntu 26 from 2026-10-19, and these jobs lean on
+what the image ships with - move the pin on purpose).
 
 ## The release that fixed these broke something - recorded, not buried
 
