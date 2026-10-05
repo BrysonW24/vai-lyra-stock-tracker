@@ -18,29 +18,48 @@
  * variables, this build would silently become an accounted site on the Solo domain - so the script
  * fails unless /api/health reports the demo/no-database mode and /api/trades answers as Solo does.
  */
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const DOMAIN = process.env.SOLO_DOMAIN || 'solo.lyra.vivacityai.com.au';
 const expected = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 
+/** Run the Vercel CLI, show its output, and hand back everything it printed (both streams). */
 function vercel(args) {
-  return execFileSync('npx', ['vercel', ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }).trim();
+  const result = spawnSync('npx', ['vercel', ...args], { encoding: 'utf8' });
+  const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+  process.stdout.write(output.trim() ? `${output.trim()}\n` : '');
+  if (result.status !== 0) {
+    console.error(`[deploy-solo] FAIL - \`vercel ${args.join(' ')}\` exited ${result.status}.`);
+    process.exit(1);
+  }
+  return output;
 }
 
-console.log(`[deploy-solo] building a preview deployment of v${expected} ...`);
-// NEXT_PUBLIC_* is inlined at build time, so the flag has to be a build variable too.
-const output = vercel([
-  'deploy', '--yes',
-  '--build-env', 'NEXT_PUBLIC_SOLO_UPGRADE_CTA=1',
-  '--env', 'NEXT_PUBLIC_SOLO_UPGRADE_CTA=1',
-]);
-const url = output.split('\n').map((line) => line.trim()).filter((line) => line.startsWith('https://')).pop();
+// `--url <deployment>` points the Solo domain at a preview that is already built (a retry, or a
+// preview you want to promote) instead of building a new one.
+const urlFlag = process.argv.indexOf('--url');
+let url = urlFlag > -1 ? process.argv[urlFlag + 1] : null;
+
+if (!url) {
+  console.log(`[deploy-solo] building a preview deployment of v${expected} ...`);
+  // NEXT_PUBLIC_* is inlined at build time, so the flag has to be a build variable too.
+  const output = vercel([
+    'deploy', '--yes',
+    '--build-env', 'NEXT_PUBLIC_SOLO_UPGRADE_CTA=1',
+    '--env', 'NEXT_PUBLIC_SOLO_UPGRADE_CTA=1',
+  ]);
+  // The CLI reports the deployment differently by mode (a bare URL, a "Preview https://..." line,
+  // or JSON with no scheme), so match the hostname itself and take the last one it printed.
+  const hosts = output.match(/[a-z0-9][a-z0-9-]*\.vercel\.app/g) ?? [];
+  url = hosts.length ? `https://${hosts[hosts.length - 1]}` : null;
+}
 if (!url) {
   console.error('[deploy-solo] FAIL - could not read the deployment URL from the Vercel CLI output.');
   process.exit(1);
 }
-console.log(`[deploy-solo] built ${url} - pointing ${DOMAIN} at it ...`);
+if (!url.startsWith('https://')) url = `https://${url}`;
+console.log(`[deploy-solo] pointing ${DOMAIN} at ${url} ...`);
 vercel(['alias', 'set', url, DOMAIN]);
 
 const health = await (await fetch(`https://${DOMAIN}/api/health`, { cache: 'no-store' })).json();

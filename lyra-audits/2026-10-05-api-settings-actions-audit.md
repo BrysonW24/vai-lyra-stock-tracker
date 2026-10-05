@@ -93,7 +93,7 @@ Names only. "-" means not set there. Bold marks a gap.
 | Sentry | Errors + traces | `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN` | set | - | Request bodies were being attached to events - F11 |
 | In-app feedback | Where the feedback box goes | `SLACK_FEEDBACK_WEBHOOK_URL`, `GITHUB_FEEDBACK_TOKEN` | **-** | - | **Feedback currently reaches only the server log.** See F13 before wiring it |
 | Founder-only views | AI insights | `FOUNDER_EMAILS` | **-** | - | Route fails closed (403) until set |
-| Failure paging | Tells you a workflow failed | `OPS_TELEGRAM_BOT_TOKEN`, `OPS_TELEGRAM_CHAT_ID`, `OPS_SLACK_WEBHOOK_URL` | n/a | see the release notes for status | New in this release |
+| Failure paging | Tells you a workflow failed | `OPS_TELEGRAM_BOT_TOKEN`, `OPS_TELEGRAM_CHAT_ID`, `OPS_SLACK_WEBHOOK_URL` | n/a | set 2026-10-05 | New in this release. Test it any time: Actions -> "Ops alert test" -> Run workflow |
 | WhatsApp, Firecrawl, Google AI | Not live | `WHATSAPP_*`, `FIRECRAWL_API_KEY`, `GOOGLE_AI_KEY` | - | - | Correctly dormant |
 
 **Set but read by nothing** (safe to remove): in `.env.local` - `ELEVENLABS_API_KEY`,

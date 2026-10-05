@@ -1,0 +1,34 @@
+name: Ops alert test
+
+# Manual only. Sends ONE clearly-labelled message through the same action and the same secrets
+# every other workflow uses when it fails - so you can know the pager works before the night it is
+# needed, instead of finding out the way this repository did (ten weeks of failures, none
+# delivered, because the alert secrets had never been set).
+#
+# Unlike a real failure page, this run goes RED if the message reached nobody.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  page:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - id: notify
+        uses: ./.github/actions/notify-failure
+        with:
+          title: "Lyra alert channel TEST - nothing is wrong. If you can read this, failure paging works."
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}
+      - name: The test fails if nobody was reached
+        env:
+          DELIVERED: ${{ steps.notify.outputs.delivered }}
+        run: |
+          echo "channels that accepted the message: ${DELIVERED:-0}"
+          [ "${DELIVERED:-0}" -ge 1 ]

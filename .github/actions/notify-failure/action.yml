@@ -27,10 +27,15 @@ inputs:
   slack-webhook:
     required: false
     default: ''
+outputs:
+  delivered:
+    description: How many channels accepted the message (0 = it reached nobody).
+    value: ${{ steps.send.outputs.delivered }}
 runs:
   using: composite
   steps:
-    - shell: bash
+    - id: send
+      shell: bash
       env:
         TITLE: ${{ inputs.title }}
         DETAIL: ${{ inputs.detail }}
@@ -46,7 +51,7 @@ runs:
         if [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ]; then
           if curl -sf -m 20 -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
               -d chat_id="$TG_CHAT" --data-urlencode text="$MSG" > /dev/null; then
-            echo "Failure page delivered to Telegram."; delivered=1
+            echo "Failure page delivered to Telegram."; delivered=$((delivered + 1))
           else
             echo "::warning::Telegram failure page was NOT delivered (the API call failed)."
           fi
@@ -54,11 +59,12 @@ runs:
         if [ -n "$SLACK_WEBHOOK" ]; then
           if jq -n --arg text ":rotating_light: $MSG" '{text: $text}' \
               | curl -sf -m 20 -X POST -H 'Content-type: application/json' --data @- "$SLACK_WEBHOOK" > /dev/null; then
-            echo "Failure page delivered to Slack."; delivered=1
+            echo "Failure page delivered to Slack."; delivered=$((delivered + 1))
           else
             echo "::warning::Slack failure page was NOT delivered (the webhook call failed)."
           fi
         fi
+        echo "delivered=${delivered}" >> "$GITHUB_OUTPUT"
         if [ "$delivered" -eq 0 ]; then
           echo "::warning::This failure reached NOBODY - no alert channel is configured. Set OPS_TELEGRAM_BOT_TOKEN + OPS_TELEGRAM_CHAT_ID and/or OPS_SLACK_WEBHOOK_URL in the repository secrets."
         fi
