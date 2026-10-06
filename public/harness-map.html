@@ -73,7 +73,7 @@
   about the rails, because it is built from them.</p>
 
   <div class="stats">
-    <span class="stat"><b>31</b> mapped sections</span>
+    <span class="stat"><b>32</b> mapped sections</span>
     <span class="stat"><b>16</b> skill chains</span>
     <span class="stat"><b>9</b> deterministic gates</span>
     <span class="stat"><b>5</b> enforcement layers</span>
@@ -192,6 +192,11 @@
         <div class="apaths"><code>workers/stock_scanner/notification_dispatch.py</code> <code>workers/stock_scanner/digest_job.py</code></div>
         <div class="aowners"><button class="badge" data-chain="notification-health" type="button">/notification-health</button> <button class="badge" data-chain="signal-quality" type="button">/signal-quality</button></div>
       </div>
+      <div class="area" data-chains="ai-quality notification-health" data-text="hourly read (engine facts, claude prose, guard, budget) workers/stock_scanner/hourly_summary.py workers/stock_scanner/ai_read_guard.py workers/stock_scanner/summary_columns.json ai-quality notification-health">
+        <div class="aname">Hourly read (engine facts, Claude prose, guard, budget)</div>
+        <div class="apaths"><code>workers/stock_scanner/hourly_summary.py</code> <code>workers/stock_scanner/ai_read_guard.py</code> <code>workers/stock_scanner/summary_columns.json</code></div>
+        <div class="aowners"><button class="badge" data-chain="ai-quality" type="button">/ai-quality</button> <button class="badge" data-chain="notification-health" type="button">/notification-health</button></div>
+      </div>
       <div class="area" data-chains="ai-quality" data-text="ai layer src/lib/ai/ src/lib/knowledge/ src/lib/api/ src/lib/daily-brief.ts src/lib/saved-prompts.ts content/ ai-quality">
         <div class="aname">AI layer</div>
         <div class="apaths"><code>src/lib/ai/</code> <code>src/lib/knowledge/</code> <code>src/lib/api/</code> <code>src/lib/daily-brief.ts</code> <code>src/lib/saved-prompts.ts</code> <code>content/</code></div>
@@ -202,9 +207,9 @@
         <div class="apaths"><code>src/app/api/ai/</code> <code>src/app/ai-ops/</code></div>
         <div class="aowners"><button class="badge" data-chain="ai-quality" type="button">/ai-quality</button></div>
       </div>
-      <div class="area" data-chains="notification-health" data-text="notification spine + channels src/lib/notifications/ src/lib/push/ src/lib/alert-prefs.ts contracts/ notification-health">
+      <div class="area" data-chains="notification-health" data-text="notification spine + channels src/lib/notifications/ src/lib/push/ src/lib/alert-prefs.ts src/lib/alert-health.ts contracts/ notification-health">
         <div class="aname">Notification spine + channels</div>
-        <div class="apaths"><code>src/lib/notifications/</code> <code>src/lib/push/</code> <code>src/lib/alert-prefs.ts</code> <code>contracts/</code></div>
+        <div class="apaths"><code>src/lib/notifications/</code> <code>src/lib/push/</code> <code>src/lib/alert-prefs.ts</code> <code>src/lib/alert-health.ts</code> <code>contracts/</code></div>
         <div class="aowners"><button class="badge" data-chain="notification-health" type="button">/notification-health</button></div>
       </div>
       <div class="area" data-chains="notification-health" data-text="notification routes src/app/api/notifications/ src/app/api/push/ src/app/api/webhooks/ notification-health">

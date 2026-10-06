@@ -65,9 +65,10 @@ multiple owning chains per row are allowed; a parent path claims everything unde
 | Signal + scoring libs | `src/lib/live-signals.ts` `src/lib/outcomes.ts` `src/lib/prime-setups.ts` `src/lib/score-breakdown.ts` `src/lib/score-model.ts` `src/lib/track-record.ts` `src/lib/signal-events.ts` `src/lib/signal-intelligence.ts` `src/lib/simulation.ts` `src/lib/strategy.ts` `src/lib/trade-snapshots.ts` `src/lib/universe.ts` `src/lib/watchlist-rule.ts` `src/lib/twin/` | signal-quality |
 | Pine mirror + recovery model + paper spine + edge/plan math | `src/lib/pine/` `src/lib/ml/` `src/lib/trading/` `src/lib/edge/` | signal-quality |
 | Worker dispatch seam | `workers/stock_scanner/notification_dispatch.py` `workers/stock_scanner/digest_job.py` | notification-health, signal-quality |
+| Hourly read (engine facts, Claude prose, guard, budget) | `workers/stock_scanner/hourly_summary.py` `workers/stock_scanner/ai_read_guard.py` `workers/stock_scanner/summary_columns.json` | ai-quality, notification-health |
 | AI layer | `src/lib/ai/` `src/lib/knowledge/` `src/lib/api/` `src/lib/daily-brief.ts` `src/lib/saved-prompts.ts` `content/` | ai-quality |
 | AI routes + founder ops surface | `src/app/api/ai/` `src/app/ai-ops/` | ai-quality |
-| Notification spine + channels | `src/lib/notifications/` `src/lib/push/` `src/lib/alert-prefs.ts` `contracts/` | notification-health |
+| Notification spine + channels | `src/lib/notifications/` `src/lib/push/` `src/lib/alert-prefs.ts` `src/lib/alert-health.ts` `contracts/` | notification-health |
 | Notification routes | `src/app/api/notifications/` `src/app/api/push/` `src/app/api/webhooks/` | notification-health |
 | Onboarding + activation libs | `src/lib/onboarding.ts` `src/lib/onboarding-save.ts` `src/lib/onboarding-progress.ts` `src/lib/onboarding-summary.ts` `src/lib/sync-onboarding.ts` `src/lib/setup-status.ts` `src/lib/install-platform.ts` `src/lib/welcome-entry.ts` `src/lib/product-tour.ts` `src/lib/local-dashboard.ts` `src/lib/local-watchlist.ts` `src/lib/local-portfolio.ts` `src/lib/local-trades.ts` `src/lib/demo-carryover.ts` `src/lib/activation/` | onboarding-funnel |
 | Funnel pages + routes | `src/app/welcome/` `src/app/onboarding/` `src/app/auth/` `src/app/api/activation/` `src/app/api/onboarding/` `src/app/api/demo/` `src/middleware.ts` | onboarding-funnel |

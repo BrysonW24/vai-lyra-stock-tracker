@@ -247,7 +247,7 @@ def run(now: datetime | None = None, sleep=None) -> int:
             notification_type="macro_event",
             url="/calendar",
         )
-        if result.ok and not result.deduped:
+        if result.reached_someone:
             sent += 1
     LOGGER.info("RBA decision alert: parsed=%s sent=%s", decision is not None, sent)
     return sent

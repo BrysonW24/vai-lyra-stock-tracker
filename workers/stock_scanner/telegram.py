@@ -60,10 +60,14 @@ def build_invalidation_message(signal: SignalResult, ticker: Ticker, previous_sc
     )
 
 
-def send_telegram_message(message: str, settings: Settings, chat_id: str | None = None) -> TelegramResult:
+def send_telegram_message(
+    message: str, settings: Settings, chat_id: str | None = None, *, silent: bool = False
+) -> TelegramResult:
     """Send a Telegram message to a specific chat_id.
 
     If chat_id is not provided, falls back to settings.telegram_chat_id (single-operator mode).
+    `silent` delivers without a sound or vibration (Telegram's disable_notification) - the
+    message still arrives and is still unread; it just does not wake anyone.
     """
     if not settings.telegram_bot_token:
         return TelegramResult(sent_status="skipped", error_message="Telegram bot token missing")
@@ -82,6 +86,7 @@ def send_telegram_message(message: str, settings: Settings, chat_id: str | None 
                 "chat_id": target_chat_id,
                 "text": message[:4000],
                 "disable_web_page_preview": True,
+                "disable_notification": silent,
             },
             timeout=10,
         )

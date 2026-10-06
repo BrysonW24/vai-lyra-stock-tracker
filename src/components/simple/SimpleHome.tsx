@@ -10,6 +10,7 @@ import { relativeTime } from '@/lib/format';
 import { SimpleSection, SimpleEmpty, SimpleChip } from '@/components/simple/SimpleSection';
 import { SimpleBook } from '@/components/simple/SimpleBook';
 import { SimpleSetup } from '@/components/simple/SimpleSetup';
+import { AlertsMutedNotice } from '@/components/simple/AlertsMutedNotice';
 import { SourceFavicon } from '@/components/SourceFavicon';
 
 /**
@@ -58,6 +59,7 @@ export function SimpleHome({
 
   return (
     <div className="mx-auto max-w-2xl space-y-3 pb-28 xl:pb-6">
+      <AlertsMutedNotice alerts={setupStatus.alerts} />
       <SimpleSetup status={setupStatus} />
 
       <SimpleSection title="Your book" hint="What you own and how it is doing." href="/portfolio" linkLabel="Open portfolio">

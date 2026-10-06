@@ -22,7 +22,9 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-YAHOO_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{}?interval=1d&range=2d"
+# Five daily bars, not two: the change is computed from the bars (see _session_change), and a
+# holiday or a null forming bar must still leave two real sessions in the window.
+YAHOO_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{}?interval=1d&range=5d"
 YAHOO_HEADERS = {"User-Agent": "Mozilla/5.0"}
 COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true"
 FEAR_GREED_URL = "https://api.alternative.me/fng/?limit=1"
@@ -61,10 +63,15 @@ class MarketSnapshot:
     fear_greed_index: Optional[int]
     fear_greed_label: Optional[str]
     regime: str  # 'risk_on', 'neutral', 'risk_off'
+    # The US session the index changes belong to (exchange-local date of the S&P 500's latest
+    # daily bar). Lets a reader pair this snapshot with the right trading day instead of guessing
+    # from captured_at - after the close, and all weekend, the changes describe the last session.
+    us_session_date: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "captured_at": self.captured_at.isoformat(),
+            "us_session_date": self.us_session_date,
             "sp500_price": self.sp500_price,
             "sp500_change_pct": self.sp500_change_pct,
             "nasdaq_price": self.nasdaq_price,
@@ -91,8 +98,44 @@ class MarketSnapshot:
         }
 
 
-def _fetch_yahoo(symbol: str) -> dict[str, Optional[float]]:
-    """Fetch price and daily % change for a Yahoo Finance symbol. Returns None values on failure."""
+def _session_change(result: dict[str, Any]) -> dict[str, Any]:
+    """Price, one-session % change and the session's date from a Yahoo v8 chart result.
+
+    The change is the latest session's close (or live price) against the close of the session
+    before it, read from the daily bars. It is NOT taken from `meta.chartPreviousClose`: with a
+    multi-day range that field is the close before the whole range, so outside market hours the
+    "daily" change was really a two-session change (measured 2026-10-05: S&P 500 stored +0.93%
+    against a true +0.73%) - wrong for the entire Australian day, every day. Bars with a null
+    close (a forming bar, a holiday placeholder) are skipped, and the previous session is found
+    by exchange-local date so a duplicated live bar for today is never mistaken for yesterday.
+    """
+    meta = result.get("meta") or {}
+    price = meta.get("regularMarketPrice")
+    offset = timedelta(seconds=int(meta.get("gmtoffset") or 0))
+    timestamps = result.get("timestamp") or []
+    quote = ((result.get("indicators") or {}).get("quote") or [{}])[0]
+    closes = quote.get("close") or []
+    bars = [
+        ((datetime.fromtimestamp(ts, tz=timezone.utc) + offset).date(), close)
+        for ts, close in zip(timestamps, closes)
+        if ts is not None and close is not None
+    ]
+    if price is None or not bars:
+        return {"price": price, "change_pct": None, "session_date": None}
+    session_date = bars[-1][0]
+    previous = next((close for day, close in reversed(bars) if day < session_date), None)
+    if not previous:
+        return {"price": price, "change_pct": None, "session_date": session_date.isoformat()}
+    return {
+        "price": price,
+        "change_pct": ((price - previous) / previous) * 100,
+        "session_date": session_date.isoformat(),
+    }
+
+
+def _fetch_yahoo(symbol: str) -> dict[str, Any]:
+    """Fetch price, one-session % change and session date for a Yahoo Finance symbol.
+    Returns None values on failure."""
     try:
         resp = requests.get(
             YAHOO_URL.format(symbol),
@@ -101,16 +144,10 @@ def _fetch_yahoo(symbol: str) -> dict[str, Optional[float]]:
         )
         resp.raise_for_status()
         data = resp.json()
-        meta = data["chart"]["result"][0]["meta"]
-        price = meta.get("regularMarketPrice")
-        prev = meta.get("chartPreviousClose")
-        if price is None or prev is None or prev == 0:
-            return {"price": None, "change_pct": None}
-        change_pct = ((price - prev) / prev) * 100
-        return {"price": price, "change_pct": change_pct}
+        return _session_change(data["chart"]["result"][0])
     except Exception as e:
         logger.warning(f"Failed to fetch {symbol}: {e}")
-        return {"price": None, "change_pct": None}
+        return {"price": None, "change_pct": None, "session_date": None}
 
 
 def _fetch_crypto_btc() -> dict[str, Optional[float]]:
@@ -245,4 +282,5 @@ def build_market_context() -> MarketSnapshot:
         fear_greed_index=fear_greed,
         fear_greed_label=fear_label,
         regime=regime,
+        us_session_date=sp500.get("session_date"),
     )

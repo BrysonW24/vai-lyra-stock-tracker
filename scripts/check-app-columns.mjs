@@ -22,7 +22,15 @@ if (!dbUrl) {
   process.exit(2);
 }
 
-const named = JSON.parse(readFileSync(new URL('../src/lib/dashboard-columns.json', import.meta.url), 'utf8'));
+// Every column manifest in the repo: the dashboard's and the hourly summary worker's. A reader that
+// names columns anywhere else should add its manifest here rather than trust a type.
+const MANIFESTS = ['../src/lib/dashboard-columns.json', '../workers/stock_scanner/summary_columns.json'];
+const named = {};
+for (const manifest of MANIFESTS) {
+  for (const [table, columns] of Object.entries(JSON.parse(readFileSync(new URL(manifest, import.meta.url), 'utf8')))) {
+    named[table] = [...new Set([...(named[table] || []), ...columns])];
+  }
+}
 let live;
 try {
   live = JSON.parse(
@@ -58,7 +66,7 @@ if (problems.length) {
   console.error(`[app-columns] FAIL - the app names ${problems.length} thing(s) the schema does not have:`);
   for (const problem of problems) console.error(`  - ${problem}`);
   console.error('  PostgREST answers 400 for the whole read when one named column is missing - the app then shows demo data.');
-  console.error('  Fix src/lib/dashboard-columns.json, or add the migration that creates the column.');
+  console.error('  Fix the manifest that names it (src/lib/dashboard-columns.json or workers/stock_scanner/summary_columns.json), or add the migration that creates the column.');
   process.exit(1);
 }
-console.log(`[app-columns] ok - all ${checked} named columns exist across ${Object.keys(named).length} tables.`);
+console.log(`[app-columns] ok - all ${checked} named columns exist across ${Object.keys(named).length} tables (${MANIFESTS.length} manifests).`);

@@ -1,0 +1,9 @@
+{
+  "stock_tickers": ["symbol", "company_name", "category", "is_active", "scan_enabled"],
+  "stock_signals": ["timeframe", "candle_time", "signal_score", "previous_signal_score", "signal_status", "raw_payload"],
+  "stock_candles": ["timeframe", "candle_time", "close"],
+  "stock_scanner_runs": ["job_name", "status", "started_at", "payload"],
+  "market_context_snapshots": ["captured_at", "payload"],
+  "portfolio_signal_overlay": ["user_id", "symbol", "candle_time", "unrealised_pl", "unrealised_pl_pct", "market_value"],
+  "watchlist_signal_overlay": ["user_id", "symbol", "candle_time", "watchlist_trigger_state"]
+}

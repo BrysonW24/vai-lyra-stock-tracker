@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.132.2',
+    date: '2026-10-06',
+    title: 'The hourly read: every completed hour of the US tech session, explained on your phone',
+    highlights: [
+      'A new message arrives after every completed hourly bar of the US session: a four-to-six-sentence read of what the hour meant, written by Claude Opus 5.5 at high effort from figures the engine computed - breadth, leaders and laggards, group moves, which names became or stopped being setups, how your own holdings and watchlist fared, and the market backdrop. The figures sit under the read, signed, so nothing is taken on trust.',
+      'The read is checked before it is sent. Every figure the model quotes must be one the engine stated, about the same ticker, with the same direction; a sentence that fails is removed, and anything resembling advice stops the read entirely. If the model is unavailable or the month\'s budget (US$10, enforced from the run ledger before every call) is spent, the figures still arrive, labelled as figures only. Measured cost: about 3 to 5 cents a read.',
+      'Why you were not getting alerts: your account has been muted since 2:39am on 18 July, fourteen seconds after the one alert that woke you, and no screen said so. The Simple home now shows "Your alerts are muted" with the date and a one-tap unmute. Overnight reads arrive silently (22:00 to 07:00 Sydney) so the same thing cannot happen again.',
+      'The scanner no longer records an alert as "sent" when the router accepted it and then suppressed it - 19,736 rows had claimed deliveries nobody received. Suppressed is now recorded as suppressed.',
+      'The market strip\'s "today" change for the S&P 500 and Nasdaq was a two-session change whenever the US market was closed - which, from Australia, is all day. It is now the latest session against the one before it, measured from the daily bars.',
+    ],
+  },
+  {
     version: '0.132.1',
     date: '2026-10-05',
     title: 'Hotfix: the dashboard was showing sample data to everyone for about half an hour',

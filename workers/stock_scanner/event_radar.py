@@ -177,6 +177,6 @@ def send_event_notices(
                 notification_type="capital_event",
                 url="/calendar",
             )
-            if result.ok and not result.deduped:
+            if result.reached_someone:
                 sent += 1
     return sent

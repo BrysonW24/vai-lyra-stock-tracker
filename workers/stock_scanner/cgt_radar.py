@@ -176,6 +176,6 @@ def send_cgt_notices(
                 notification_type="cgt_anniversary",
                 url="/portfolio",
             )
-            if result.ok and not result.deduped:
+            if result.reached_someone:
                 sent += 1
     return sent

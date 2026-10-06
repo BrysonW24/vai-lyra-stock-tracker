@@ -1,8 +1,10 @@
 # API, settings and GitHub Actions audit - 2026-10-05
 
-Audited at v0.131.0 (`1ddaa12`), fixes shipped as v0.132.0. Scope: every third-party API and
+Audited at v0.131.0 (`1ddaa12`), fixes shipped as v0.132.0 and v0.132.1; the alerts investigation
+and the hourly read (F24-F28) shipped as v0.132.2 on 2026-10-06. Scope: every third-party API and
 credential the app uses and where each is configured, the 48 API routes, the deployment settings,
-and the seven GitHub Actions workflows.
+and the seven GitHub Actions workflows - and then, at the founder's question "why have I never
+received these messages", the whole alert path from the scanner to the phone.
 
 Evidence standard: every finding below was confirmed against a real artefact - a workflow run log,
 a live response header, a read-only query against the production database, or the line of code -
@@ -25,6 +27,8 @@ reason that had nothing to do with its design.
 | Page speed | Health check 1.3-1.7 s from Sydney; dashboard spent 1.5 s in one query | Functions moved beside the database; that query is ~3 ms |
 | Dashboard | 19 of 99 scanned tickers silently missing | All shown |
 | Hosted AI | Reachable by nobody, including the owner (all trials lapsed, no grant configured) | Needs one env var (see "Needs you") |
+| Alerts to the founder | **None delivered since 2026-07-17.** His account has been muted for eleven weeks; 3,414 alerts suppressed, 19,736 ledger rows said "sent" to nobody; the "hourly digest" he switched on in onboarding was wired to nothing | The hourly read exists and is live (v0.132.2, F28); suppressed is now recorded as suppressed; the Simple home shows the mute with a one-tap unmute (F24-F26) |
+| Macro figures | The S&P 500 / Nasdaq "today" change was a **two-session change** whenever the US market was closed - i.e. all day, every day, in Sydney | Computed from the daily bars (F27) |
 
 ## Needs you
 
@@ -53,6 +57,11 @@ These are the things only you can do, most valuable first. None of them is code.
 6. **Optional - turn Emerging Winners on for real.** After step 1, set the repository variables
    `EW_REAL_UNIVERSE=1` and `SEC_USER_AGENT="Your Name you@example.com"`. That is the moment the
    immutable track record starts, so it is your call when.
+7. **Unmute your account if you want in-app alerts again** (added 2026-10-06). Open the Simple
+   home: it now shows "Your alerts are muted" with the date and a one-tap unmute. This is separate
+   from the hourly read, which goes to your Telegram directly and does not depend on it. If you
+   want the hourly read to make a sound overnight, set the repository variable
+   `SUMMARY_QUIET_HOURS=off` (default `22-7`, Sydney time: it arrives silently through the night).
 
 ## Method and coverage
 
@@ -292,6 +301,66 @@ What it does not yet cover: the deploy health probe still passes while the app i
 data. A probe that asserts the live site is in live mode AND rendering live rows is the missing
 piece (it belongs with O6).
 
+## The alerts investigation and the hourly read (v0.132.2, 2026-10-06)
+
+Prompted by the founder: "is there a reason why I haven't been getting these messages every single
+day? I was supposed to get them every hour." Everything below was read from the production ledgers
+(read-only), then fixed in code.
+
+**F24 (P0) - the founder's account had been muted since 2026-07-17 16:39:39 UTC**, which is
+2:39am on 18 July in Sydney, fourteen seconds after the last alert that reached him. `user_alert_preferences.mute_all`
+has been `true` since; 3,414 alerts were suppressed as "muted all" and 5,902 as "below relevance
+floor" in the weeks after. Nothing in the app said so: the alert-mode control is a per-device
+setting in localStorage that is synced upward on change and never read back, so the account-level
+mute was invisible on every device. Fixed: `readAlertHealth()` reads the account's mute and last
+delivery; the Simple home renders `AlertsMutedNotice` with the date and a one-tap unmute
+(`PATCH /api/notifications` with `muteAll: false`). The lesson is in the loop's design: the one
+message that woke him at 2:39am is why every message after it was silenced.
+
+**F25 (P1) - "sent" meant "handed to the router".** The scanner logged 19,736 `stock_alerts` rows
+as `sent` whose router response said `deliveredChannels: []` - accepted, then suppressed by the
+mute or the relevance floor. `notification_dispatch.py` now parses the response and the nine call
+sites log `suppressed` or `sent` from it; dedupe considers both. The ledger no longer claims a
+delivery nobody received.
+
+**F26 (P1) - the "Hourly digest" toggle was wired to nothing.** Onboarding persists
+`hourly_digest_enabled` / `frequency`; no reader existed. The worker flag `ENABLE_HOURLY_DIGEST`
+existed in `config.py` and was read by nothing. No Telegram channel had ever been created for the
+founder's user (one Slack channel, two push subscriptions). The founder had set up a product that
+could not have sent him what he asked it for.
+
+**F27 (P1) - the macro "today" change was a two-session change outside market hours.**
+`market_context._fetch_yahoo` divided `regularMarketPrice` by `meta.chartPreviousClose` from a
+`range=2d` chart. That field is the close before the *range*, so once the session had closed (and
+all weekend, and all of the Australian day) the figure spanned two sessions. Measured 2026-10-05:
+stored S&P 500 +0.93%, true Friday change +0.73%; Nasdaq stored +1.23%, true +1.19%. The same
+figure feeds the regime classifier and the daily digest. Fixed: the change is computed from the
+daily bars (latest session's close or live price against the previous exchange-local session's
+close; null and duplicated live bars skipped; `range=5d` so holidays still leave two sessions), and
+the snapshot now records `us_session_date` so a reader can pair it with the right trading day.
+Four recorded-payload tests. Historical snapshots keep the old values. Also noted, not changed:
+the "Fear & Greed" the regime uses is alternative.me's **crypto** index, not CNN's equity index; the
+hourly read leaves it out.
+
+**F28 - the hourly read exists.** `workers/stock_scanner/hourly_summary.py`, a step after each
+scan in the hourly workflow. Design: the engine computes every figure (hour and day moves from the
+stored candles with reference bars agreed across the universe, breadth, leaders and laggards, group
+averages, status transitions from `previous_signal_score` against the thresholds, the operator's
+book as percentages, the macro snapshot only when its `us_session_date` matches the bar); Claude
+Opus 5.5 at `high` effort writes four to six sentences from a fact sheet in which every figure is
+registered to its owner; `ai_read_guard.py` deletes any sentence whose figure the facts did not
+state, or stated about a different ticker, or with the opposite direction, and blocks the read on
+advice; one message per completed bar, deduplicated and budgeted (US$10/month ceiling, measured
+cost, effort steps down before the ceiling) through the `stock_scanner_runs` ledger; delivered
+silently between 22:00 and 07:00 Sydney; an undelivered read exits non-zero and pages. Measured on
+2026-10-06 against the real Friday-close rows: three reads at US$0.046, US$0.030 and US$0.032
+(about 2,000 input and 1,100-1,900 output tokens, 12-20 s), every figure correct, one sentence
+removed across the three. Projected US$4.50-6.80 a month. 21 tests on the pipeline (fake database,
+no network), 14 on the guard, and a test that the column manifest the schema gate reads is exactly
+what the code names. What the guard cannot see is written in its docstring: a true figure quoted
+for the wrong measure, and causes the model supplies from memory - the prompt forbids both and the
+figures block under every read shows the truth.
+
 ## Open - not fixed in this release
 
 Logged with evidence for a next wave. None is exploitable without an account.
@@ -309,3 +378,5 @@ Logged with evidence for a next wave. None is exploitable without an account.
 | O9 | The CSP is report-only with nowhere to report to, so it can never graduate to enforcing | Needs a report endpoint |
 | O10 | Several anonymous GETs (`scout/feed`, `track-record`, `emerging-winners`) do uncached work per request; `small-caps/research` has no caller | Add `s-maxage`, delete the dead route |
 | O11 | No branch protection on `main`: nothing blocks a push on a red check | Fits the direct-push flow; the new failure page is the mitigation |
+| O12 | The onboarding "Hourly digest" toggle (`hourly_digest_enabled`) is still read by nothing; the hourly read goes to the operator's Telegram only | Multi-user delivery through the router needs a decision on whose key pays for the model |
+| O13 | The regime classifier (`risk_off` when Fear & Greed < 30) runs on alternative.me's crypto index | Needs a decision on an equity sentiment source, or dropping the term |

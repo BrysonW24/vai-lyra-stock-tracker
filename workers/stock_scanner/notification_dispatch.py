@@ -16,6 +16,32 @@ class DispatchResult:
     deduped: bool = False
     error_message: str | None = None
     response: dict | None = None
+    # Whether at least one channel actually delivered. None = the router did not say (an older
+    # response shape), in which case an accepted dispatch is taken as delivered.
+    delivered: bool | None = None
+
+    @property
+    def reached_someone(self) -> bool:
+        """True only when this dispatch put a message in front of a person.
+
+        `ok` is not that. The router answers ok=True when it ACCEPTS an event and then suppresses
+        it - the account is muted, the alert is under the user's relevance floor, no channel is
+        connected. Every caller used to count `ok and not deduped` as "sent", so for eleven weeks
+        (2026-07-17 to 2026-10-05) the operator's account sat on "mute all", not one alert was
+        delivered, and the alert log recorded 19,736 of them as sent while the dashboard reported
+        hundreds of alerts sent a week.
+        """
+        if not self.ok or self.deduped:
+            return False
+        return True if self.delivered is None else self.delivered
+
+    @property
+    def log_status(self) -> str:
+        """What to record in the alert log: 'sent' (reached someone), 'suppressed' (accepted, then
+        held back by the user's own settings), or 'failed' (the dispatch itself errored)."""
+        if not self.ok:
+            return "failed"
+        return "suppressed" if self.delivered is False else "sent"
 
 
 def alert_type_to_notification_type(alert_type: str) -> str:
@@ -95,12 +121,14 @@ def dispatch_notification(
         with urlopen(req, timeout=8) as response:
             raw = response.read().decode("utf-8")
             parsed = json.loads(raw) if raw else {}
+            delivered_channels = parsed.get("deliveredChannels")
             return DispatchResult(
                 attempted=True,
                 ok=bool(parsed.get("ok", response.status < 400)),
                 deduped=bool(parsed.get("deduped")),
                 error_message="; ".join(parsed.get("errors") or []) or parsed.get("error"),
                 response=parsed,
+                delivered=bool(delivered_channels) if isinstance(delivered_channels, list) else None,
             )
     except HTTPError as exc:
         body_text = exc.read().decode("utf-8", errors="replace")[:300]

@@ -4,7 +4,7 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 31,
+    "sections": 32,
     "chains": 16,
     "gates": 9,
     "layers": 5
@@ -163,6 +163,18 @@
       ]
     },
     {
+      "section": "Hourly read (engine facts, Claude prose, guard, budget)",
+      "paths": [
+        "workers/stock_scanner/hourly_summary.py",
+        "workers/stock_scanner/ai_read_guard.py",
+        "workers/stock_scanner/summary_columns.json"
+      ],
+      "chains": [
+        "ai-quality",
+        "notification-health"
+      ]
+    },
+    {
       "section": "AI layer",
       "paths": [
         "src/lib/ai/",
@@ -192,6 +204,7 @@
         "src/lib/notifications/",
         "src/lib/push/",
         "src/lib/alert-prefs.ts",
+        "src/lib/alert-health.ts",
         "contracts/"
       ],
       "chains": [

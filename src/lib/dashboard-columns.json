@@ -2,5 +2,7 @@
   "stock_tickers": ["symbol", "company_name", "sector", "industry", "category", "exchange", "is_active", "scan_timeframe"],
   "stock_signals": ["symbol", "timeframe", "candle_time", "signal_score", "signal_type", "signal_status", "previous_signal_score", "signal_score_delta", "action_state", "lifecycle_state", "explanation", "raw_payload"],
   "stock_scanner_runs": ["job_name", "timeframe", "started_at", "finished_at", "status", "tickers_scanned", "candles_saved", "indicators_saved", "signals_created", "portfolio_overlays_created", "watchlist_overlays_created", "alerts_sent"],
-  "stock_alerts": ["symbol", "channel", "alert_type", "message", "payload", "sent_status", "sent_at", "created_at"]
+  "stock_alerts": ["symbol", "channel", "alert_type", "message", "payload", "sent_status", "sent_at", "created_at"],
+  "user_alert_preferences": ["user_id", "mute_all", "alert_mode", "updated_at", "timezone"],
+  "notification_deliveries": ["user_id", "status", "error_message", "created_at"]
 }

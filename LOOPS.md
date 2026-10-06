@@ -16,6 +16,7 @@ Companions: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (structure - what exists),
 | 1 | Hourly scan | GHA cron `:17`/`:47`, around the clock (the market-hours guard exists but is OFF in production - the app's freshness badge is not market-aware yet; see the workflow header) | candles, signals, scores, indicators, alerts | dashboard, loop 2, loop 4 | CI worker tests, `check:schema-drift` |
 | 2 | Outcome learning | nightly 22:05 UTC | `signal_outcomes`, `component_efficacy` | track record, `/signal-quality` retune | efficacy saturation ERROR |
 | 3 | Digest + reviews | nightly / period-end | notification events | you, on your phone | worker tests |
+| 3b | Hourly read (AI) | after every successful scan; sends once per completed hourly bar | `stock_scanner_runs` rows with `job_name = hourly_summary` (bar sent, model, effort, tokens, cost, guard removals) | the operator's Telegram; the next firing (dedupe + budget pacing) | `test_hourly_summary.py`, `test_ai_read_guard.py`, `check:app-columns` (summary manifest), the scan workflow's failure pager |
 | 4 | Notification delivery | every event + nightly sweep | `notification_deliveries`, `notification_engagements` | sweep, relevance tuning | `/notification-health` chain |
 | 5 | Scout (notice-create-learn) | nightly 22:05 UTC | `scout_items`, `scout_runs`, ideas, source scores, stoplist | Scout-tab proposals, next night's clustering | zero-writes guards, saturation flags |
 | 6 | Macro + calendar | hourly snap + seasonal crons | `market_context_snapshots`, calendar events | dashboard strips, loop 3 baselines | RBA no-number degradation |
@@ -130,6 +131,44 @@ portfolio purchase dates)
 What closes it: nothing writes back - these are read-out loops. Their retention needs are what
 bind loop 10's horizons (the yearly review baseline is WHY candles keep 380 days, not 180 -
 audited in [`DATA-ECONOMICS.md`](./DATA-ECONOMICS.md) section 6).
+
+### 3b. The hourly read - the engine's figures, Claude's prose, one message per bar
+
+```text
+scan step succeeds (loop 1)
+      |
+      v
+hourly_summary.py: newest scored bar == last bar on the ledger?  --yes--> exit 0 (nothing sent)
+      | no (and >=60% of scored names are on that bar)
+      v
+build_facts(): hour/day moves from the stored candles (reference bars agreed across the
+universe), breadth, leaders/laggards, group averages, heavy volume, status transitions from
+previous_signal_score vs the thresholds, the operator's book (percentages only), the macro
+snapshot IF payload.us_session_date == the bar's NY date
+      |
+      v
+build_sheet(): the facts as sentences, each figure registered to its owner (ticker / general)
+      |                                   month-to-date spend from the ledger >= budget? -> figures only
+      v                                   measured cost x reads left in month > budget left? -> effort - 1
+Claude (SUMMARY_MODEL, SUMMARY_EFFORT, server-side refusal fallback) writes 4-6 sentences
+      |
+      v
+ai_read_guard: unknown figure / wrong owner / wrong direction / unknown ticker -> sentence out;
+advice -> read out; < 2 sentences left -> read out (figures still sent)
+      |
+      v
+ledger row (status running, cost on it) -> Telegram (silent inside SUMMARY_QUIET_HOURS)
+      -> ledger row (success + bar) | (failed, bar NULL -> retried next firing, job exits 1 -> pages)
+```
+
+What closes it: the ledger. `last_summarised_bar()` is read from `stock_scanner_runs` on every
+firing, so a delivered bar is never re-sent and an undelivered one always is; `month_spend()` and
+`choose_effort()` read the same rows, so the US$ ceiling (`SUMMARY_MONTHLY_BUDGET_USD`, default 10)
+holds without any other store. The guard's removal count is on every row - a rising count is the
+signal that the prompt or the fact sheet has drifted. Known open half-loop: the onboarding "Hourly
+digest" toggle (`hourly_digest_enabled`) is still read by nothing; this read goes to the operator's
+chat only. The message text is not stored anywhere (the ledger table is globally readable; the
+text names the operator's holdings).
 
 ## 4. The notification loop - deliver, hold, sweep, learn
 

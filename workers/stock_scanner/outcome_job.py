@@ -190,12 +190,12 @@ def send_followups(
             alert_type="signal_followup",
             channel="multi_channel",
             message=body,
-            sent_status="sent" if result.ok else "failed",
+            sent_status=result.log_status,
             error_message=result.error_message,
             payload={"signal_candle_time": signal_time_iso, "deduped": result.deduped},
             user_id=user_id,
         )
-        if result.ok and not result.deduped:
+        if result.reached_someone:
             sent += 1
     return sent
 

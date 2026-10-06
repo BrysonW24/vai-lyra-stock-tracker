@@ -12,3 +12,5 @@ python-dotenv>=1.0,<2
 pydantic>=2.5,<3
 pytz>=2024.1
 pytest>=8,<9
+# The hourly read (workers/stock_scanner/hourly_summary.py) - official Claude SDK, imported lazily.
+anthropic>=1,<2

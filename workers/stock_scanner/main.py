@@ -154,14 +154,13 @@ def _route_signal_alert(repository, settings, signal_id, ticker, signal, decisio
             repository.save_alert(
                 signal_id=signal_id, symbol=decision.symbol, alert_type=decision.alert_type,
                 channel="multi_channel", message=message,
-                sent_status="sent" if dispatch_result.ok else "failed",
+                sent_status=dispatch_result.log_status,
                 error_message=dispatch_result.error_message,
                 payload={**rich_payload, "dispatch_response": dispatch_result.response, "deduped": False},
                 user_id=user_id,
             )
-        if dispatch_result.ok:
-            return 0 if dispatch_result.deduped else 1
-        return 0
+        # Counted only when it reached someone - an accepted-then-suppressed alert is not "sent".
+        return 1 if dispatch_result.reached_someone else 0
 
     # Legacy fallback: single-operator Telegram (dispatch unconfigured).
     return _send_and_log_alert(
@@ -372,7 +371,7 @@ def main() -> None:
                         alert_type=decision.alert_type,
                         channel="multi_channel",
                         message=message,
-                        sent_status="sent" if dispatch_result.ok else "failed",
+                        sent_status=dispatch_result.log_status,
                         error_message=dispatch_result.error_message,
                         payload={
                             "reason": decision.reason,
@@ -383,7 +382,7 @@ def main() -> None:
                         user_id=decision.user_id,
                     )
                 if dispatch_result.ok:
-                    alerts_sent += 0 if dispatch_result.deduped else 1
+                    alerts_sent += 1 if dispatch_result.reached_someone else 0
                     continue
 
             alerts_sent += _send_and_log_alert(

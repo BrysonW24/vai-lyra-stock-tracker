@@ -389,12 +389,12 @@ def send_periodic_reviews(
                 alert_type=target.notification_type,
                 channel="multi_channel",
                 message=title,
-                sent_status="sent" if result.ok else "failed",
+                sent_status=result.log_status,
                 error_message=result.error_message,
                 payload={"deduped": result.deduped, **payload},
                 user_id=user_id,
             )
-            if result.ok and not result.deduped:
+            if result.reached_someone:
                 sent += 1
                 LOGGER.info(
                     "Review sent: type=%s period=%s user=%s", target.notification_type, target.period_key, user_id

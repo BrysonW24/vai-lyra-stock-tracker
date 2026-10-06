@@ -153,3 +153,64 @@ class TestRegimeClassification:
         )
         # Fear & Greed < 30 is the trigger, so exactly 30 should be neutral
         assert regime == "neutral"
+
+
+class TestSessionChange:
+    """The one-session change comes from the daily bars, never from chartPreviousClose."""
+
+    @staticmethod
+    def _result(meta: dict, bars: list[tuple[str, float | None]]) -> dict:
+        from datetime import datetime, timezone
+
+        timestamps = [int(datetime.fromisoformat(stamp).replace(tzinfo=timezone.utc).timestamp()) for stamp, _ in bars]
+        return {
+            "meta": meta,
+            "timestamp": timestamps,
+            "indicators": {"quote": [{"close": [close for _, close in bars]}]},
+        }
+
+    def test_closed_market_uses_the_previous_session_not_the_range_start(self):
+        """Recorded 2026-10-05 (Monday pre-market): chartPreviousClose was the Sep 30 close, so the
+        old code reported +0.93% for a session that moved +0.73%."""
+        from workers.stock_scanner.market_context import _session_change
+
+        result = self._result(
+            {"regularMarketPrice": 7722.72, "chartPreviousClose": 7651.54, "gmtoffset": -14400},
+            [("2026-09-30T13:30", 7651.54), ("2026-10-01T13:30", 7666.4502), ("2026-10-02T13:30", 7722.7202)],
+        )
+        change = _session_change(result)
+        assert change["price"] == 7722.72
+        assert round(change["change_pct"], 3) == round((7722.72 / 7666.4502 - 1) * 100, 3)
+        assert change["session_date"] == "2026-10-02"
+
+    def test_in_session_measures_against_yesterday(self):
+        from workers.stock_scanner.market_context import _session_change
+
+        result = self._result(
+            {"regularMarketPrice": 16.12, "gmtoffset": -14400},
+            [("2026-10-01T07:00", 16.39), ("2026-10-02T07:00", 15.31), ("2026-10-05T07:00", 16.12)],
+        )
+        change = _session_change(result)
+        assert round(change["change_pct"], 3) == round((16.12 / 15.31 - 1) * 100, 3)
+        assert change["session_date"] == "2026-10-05"
+
+    def test_null_and_duplicate_bars_for_today_are_not_mistaken_for_yesterday(self):
+        """Recorded for ^AXJO: a null placeholder bar at the local open plus a live bar later the
+        same local day. Both are 'today'; the previous session is the bar before them."""
+        from workers.stock_scanner.market_context import _session_change
+
+        result = self._result(
+            {"regularMarketPrice": 8686.4, "gmtoffset": 39600},
+            [("2026-10-01T00:00", 8614.4), ("2026-10-02T00:00", 8682.0996), ("2026-10-04T23:00", None), ("2026-10-05T05:50", 8686.4004)],
+        )
+        change = _session_change(result)
+        assert change["session_date"] == "2026-10-05"
+        assert round(change["change_pct"], 3) == round((8686.4 / 8682.0996 - 1) * 100, 3)
+
+    def test_missing_price_or_history_yields_no_change(self):
+        from workers.stock_scanner.market_context import _session_change
+
+        assert _session_change({"meta": {}, "timestamp": [], "indicators": {"quote": [{}]}})["change_pct"] is None
+        only_today = self._result({"regularMarketPrice": 10.0, "gmtoffset": 0}, [("2026-10-05T13:30", 10.0)])
+        assert _session_change(only_today)["change_pct"] is None
+        assert _session_change(only_today)["session_date"] == "2026-10-05"

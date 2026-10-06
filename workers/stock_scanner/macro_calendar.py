@@ -264,6 +264,6 @@ def send_macro_companions(
                 notification_type="macro_event",
                 url=companion.url,
             )
-            if result.ok and not result.deduped:
+            if result.reached_someone:
                 sent += 1
     return sent
