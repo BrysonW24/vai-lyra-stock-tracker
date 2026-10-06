@@ -22,12 +22,7 @@ on:
     # workers/stock_scanner/candle_persistence.py), and that is fixed at the source.
     - cron: '17 * * * *'
     - cron: '47 * * * *'
-  workflow_dispatch:
-    inputs:
-      resend_summary:
-        description: Send the hourly read for the newest bar again, even if it was already sent
-        type: boolean
-        default: false
+  workflow_dispatch: {}
 
 # Least privilege. `actions: write` exists only so the keepalive step can re-enable the
 # scheduled workflows - without it that call is refused (HTTP 403) and the crons quietly
@@ -46,7 +41,7 @@ jobs:
     # schedule (it becomes Ubuntu 26 from 2026-10-19), and these jobs lean on what the image
     # ships with - psql, jq, gh, python3. Move the pin deliberately, when someone is watching.
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 15
     # Pull SUPABASE_* secrets + ENABLE_MARKET_HOURS_GUARD etc. from the "Production"
     # GitHub environment so they don't have to be duplicated as repo-level secrets/vars.
     environment: Production
@@ -56,7 +51,6 @@ jobs:
       - uses: ./.github/actions/setup-worker
 
       - name: Run scanner
-        id: scan
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -76,31 +70,6 @@ jobs:
           ENABLE_MARKET_HOURS_GUARD: ${{ vars.ENABLE_MARKET_HOURS_GUARD || 'true' }}
         run: python -m workers.stock_scanner.main
 
-      # The hourly read: one AI-written, engine-grounded message per completed hourly bar to the
-      # operator's Telegram (workers/stock_scanner/hourly_summary.py). Runs only after a successful
-      # scan, sends nothing when no new bar has completed, and sends the figures alone when the
-      # model cannot run. Its own timeout so a slow model call can never take the scan job with it.
-      - name: Hourly read
-        id: summary
-        timeout-minutes: 6
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          DEFAULT_USER_ID: ${{ secrets.DEFAULT_USER_ID }}
-          DEFAULT_TIMEFRAME: ${{ vars.DEFAULT_TIMEFRAME || '1h' }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Its own SUMMARY_TELEGRAM_* secrets when set, otherwise the ops pager chat.
-          SUMMARY_TELEGRAM_BOT_TOKEN: ${{ secrets.SUMMARY_TELEGRAM_BOT_TOKEN || secrets.OPS_TELEGRAM_BOT_TOKEN }}
-          SUMMARY_TELEGRAM_CHAT_ID: ${{ secrets.SUMMARY_TELEGRAM_CHAT_ID || secrets.OPS_TELEGRAM_CHAT_ID }}
-          ENABLE_HOURLY_DIGEST: ${{ vars.ENABLE_HOURLY_DIGEST || 'true' }}
-          SUMMARY_MODEL: ${{ vars.SUMMARY_MODEL || 'claude-opus-5-5' }}
-          SUMMARY_EFFORT: ${{ vars.SUMMARY_EFFORT || 'high' }}
-          SUMMARY_MONTHLY_BUDGET_USD: ${{ vars.SUMMARY_MONTHLY_BUDGET_USD || '10' }}
-          SUMMARY_TIMEZONE: ${{ vars.SUMMARY_TIMEZONE || 'Australia/Sydney' }}
-          SUMMARY_QUIET_HOURS: ${{ vars.SUMMARY_QUIET_HOURS || '22-7' }}
-          SUMMARY_FORCE: ${{ inputs.resend_summary && 'true' || 'false' }}
-        run: python -m workers.stock_scanner.hourly_summary
-
       # A silent scanner death was invisible except as a stale badge in the app header -
       # and for four days in September 2026 that is all there was. The paging credentials
       # are their own OPS_* secrets so that wiring them cannot change what the scanner
@@ -109,7 +78,7 @@ jobs:
         if: failure()
         uses: ./.github/actions/notify-failure
         with:
-          title: ${{ steps.summary.outcome == 'failure' && 'Lyra hourly read FAILED (the scan itself succeeded)' || 'Lyra hourly scanner FAILED' }}
+          title: Lyra hourly scanner FAILED
           telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
           telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
           slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}
