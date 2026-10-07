@@ -342,8 +342,15 @@ Four recorded-payload tests. Historical snapshots keep the old values. Also note
 the "Fear & Greed" the regime uses is alternative.me's **crypto** index, not CNN's equity index; the
 hourly read leaves it out.
 
-**F28 - the hourly read exists.** `workers/stock_scanner/hourly_summary.py`, a step after each
-scan in the hourly workflow. Design: the engine computes every figure (hour and day moves from the
+**F28 - the read exists.** Shipped hourly in v0.132.2 (`hourly_summary.py`, a step after each
+scan); on 2026-10-07 the founder asked for one a day at 8pm, and v0.132.3 reshaped it into
+`workers/stock_scanner/daily_read.py` on its own workflow (`daily-read.yml`, 09:05 and 10:05 UTC
+so 8pm Sydney holds through daylight saving; the worker sends at or after `SUMMARY_SEND_AT` and
+once per session). The daily version reads the whole session: its shape from the first hour to the
+close, breadth, leaders and laggards, group moves, status at the close against the previous close,
+names invalidated during the session and still out, the biggest score moves, every active position
+(scanned or not) and the session's backdrop; the message is Telegram HTML with bold sections and
+one emoji each, at the founder's request. Original hourly design: the engine computes every figure (hour and day moves from the
 stored candles with reference bars agreed across the universe, breadth, leaders and laggards, group
 averages, status transitions from `previous_signal_score` against the thresholds, the operator's
 book as percentages, the macro snapshot only when its `us_session_date` matches the bar); Claude

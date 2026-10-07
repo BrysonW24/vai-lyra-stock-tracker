@@ -102,7 +102,7 @@ def test_markdown_noise_is_stripped_and_long_reads_are_capped():
     verdict = guard_ai_read(text, _sheet())
     assert verdict.ok
     assert verdict.text.startswith("NVDA led")
-    assert verdict.text.count(". ") + 1 == 8
+    assert verdict.text.count(". ") + 1 == 10
 
 
 def test_holdings_figures_attach_to_the_holding():
@@ -111,3 +111,15 @@ def test_holdings_figures_attach_to_the_holding():
     assert ok.ok and ok.removed == []
     wrong = guard_ai_read("NVDA is up 14.2% overall. SNOW lagged, down 1.9%.", sheet)
     assert wrong.removed == ["NVDA is up 14.2% overall."]
+
+
+def test_paragraph_breaks_survive_and_empty_paragraphs_vanish():
+    text = (
+        "NVDA led at up 2.1%. SNOW lagged, down 1.9%.\n\n"
+        "AMD gained 4.5% on heavy volume.\n\n"
+        "COIN became a strong setup with its score at 95.   \n  \n  Breadth was broad with 61 names up."
+    )
+    verdict = guard_ai_read(text, _sheet())
+    assert verdict.ok
+    assert verdict.text == "NVDA led at up 2.1%. SNOW lagged, down 1.9%.\n\nCOIN became a strong setup with its score at 95.\n\nBreadth was broad with 61 names up."
+    assert verdict.removed == ["AMD gained 4.5% on heavy volume."]

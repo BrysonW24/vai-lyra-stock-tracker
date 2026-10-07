@@ -127,6 +127,12 @@ def split_sentences(text: str) -> list[str]:
     return [part for part in re.split(r"(?<=[.!?])\s+", text.strip()) if part.strip()]
 
 
+def split_paragraphs(text: str) -> list[str]:
+    """Paragraphs are blank-line separated; markdown emphasis is stripped, other whitespace folded."""
+    cleaned = text.replace("*", "").replace("_", " ").strip().strip('"')
+    return [" ".join(part.split()) for part in re.split(r"\n\s*\n", cleaned) if part.strip()]
+
+
 def advice_findings(text: str) -> list[str]:
     findings = [why for pattern, why in _ADVICE_PATTERNS if pattern.search(text)]
     # "financial advice" is a finding unless it is the disclaimer form ("... not financial advice").
@@ -201,7 +207,7 @@ class GuardResult:
 
 # A read that loses most of itself to the guard is not a read worth sending.
 MIN_SENTENCES = 2
-MAX_SENTENCES = 8
+MAX_SENTENCES = 10
 
 
 def _mentions(sentence: str, symbols: set[str]) -> set[str]:
@@ -217,57 +223,65 @@ def _unknown_tickers(sentence: str, known: set[str]) -> list[str]:
 
 
 def guard_ai_read(text: str, sheet: FactSheet) -> GuardResult:
-    """Check a model-written read against the fact sheet it was written from."""
-    cleaned = " ".join(text.replace("*", "").replace("_", " ").split()).strip().strip('"')
-    if not cleaned:
+    """Check a model-written read against the fact sheet it was written from. Paragraph breaks
+    survive (the reader sees short paragraphs); a paragraph that loses every sentence disappears."""
+    paragraphs = split_paragraphs(text)
+    if not paragraphs:
         return GuardResult(ok=False, text="", reasons=["empty"], categories=["empty"])
 
-    kept: list[str] = []
+    kept: list[list[str]] = []
     removed: list[str] = []
     reasons: list[str] = []
     categories: list[str] = []
     context_symbols: set[str] = set()  # tickers named by the previous kept sentence, for pronouns
+    total = 0
 
-    for sentence in split_sentences(cleaned):
-        mentioned = _mentions(sentence, sheet.symbols)
-        scope = mentioned or context_symbols
-        problems: list[tuple[str, str]] = []
+    for paragraph in paragraphs:
+        kept.append([])
+        for sentence in split_sentences(paragraph):
+            if total >= MAX_SENTENCES:
+                break
+            mentioned = _mentions(sentence, sheet.symbols)
+            scope = mentioned or context_symbols
+            problems: list[tuple[str, str]] = []
 
-        allowed = set(sheet.general_figures)
-        for symbol in scope:
-            allowed |= sheet.by_symbol.get(symbol, set())
-        for figure in figures_in(sentence):
-            if figure.token not in allowed:
-                problems.append(("figure not in the facts for this subject", figure.token))
+            allowed = set(sheet.general_figures)
+            for symbol in scope:
+                allowed |= sheet.by_symbol.get(symbol, set())
+            for figure in figures_in(sentence):
+                if figure.token not in allowed:
+                    problems.append(("figure not in the facts for this subject", figure.token))
+                    continue
+                if figure.direction is not None:
+                    stated = sheet.allowed_directions(figure.token, scope)
+                    if stated and figure.direction not in stated:
+                        problems.append(("direction contradicts the facts", figure.token))
+
+            spelled = _SPELLED_FIGURE_RE.search(sentence)
+            if spelled:
+                problems.append(("spelled-out figure", spelled.group(0)))
+            for ticker in _unknown_tickers(sentence, sheet.symbols):
+                problems.append(("ticker not in the facts", ticker))
+
+            if problems:
+                removed.append(sentence)
+                for category, detail in problems:
+                    reasons.append(f"{category}: {detail}")
+                    categories.append(category)
                 continue
-            if figure.direction is not None:
-                stated = sheet.allowed_directions(figure.token, scope)
-                if stated and figure.direction not in stated:
-                    problems.append(("direction contradicts the facts", figure.token))
+            kept[-1].append(sentence)
+            total += 1
+            if mentioned:
+                context_symbols = mentioned
 
-        spelled = _SPELLED_FIGURE_RE.search(sentence)
-        if spelled:
-            problems.append(("spelled-out figure", spelled.group(0)))
-        for ticker in _unknown_tickers(sentence, sheet.symbols):
-            problems.append(("ticker not in the facts", ticker))
-
-        if problems:
-            removed.append(sentence)
-            for category, detail in problems:
-                reasons.append(f"{category}: {detail}")
-                categories.append(category)
-            continue
-        kept.append(sentence)
-        if mentioned:
-            context_symbols = mentioned
-
-    kept = kept[:MAX_SENTENCES]
-    survivor = " ".join(kept)
+    survivor = "\n\n".join(" ".join(sentences) for sentences in kept if sentences)
     advice = advice_findings(survivor)
     if advice:
         return GuardResult(ok=False, text="", removed=removed, reasons=reasons + advice, categories=categories + ["advice"])
-    if len(kept) < MIN_SENTENCES:
+    if total < MIN_SENTENCES:
         return GuardResult(
             ok=False, text="", removed=removed, reasons=reasons + ["too little survived the checks"], categories=categories + ["too short"]
         )
     return GuardResult(ok=True, text=survivor, removed=removed, reasons=reasons, categories=categories)
+
+

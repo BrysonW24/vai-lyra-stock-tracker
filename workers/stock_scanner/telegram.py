@@ -61,13 +61,14 @@ def build_invalidation_message(signal: SignalResult, ticker: Ticker, previous_sc
 
 
 def send_telegram_message(
-    message: str, settings: Settings, chat_id: str | None = None, *, silent: bool = False
+    message: str, settings: Settings, chat_id: str | None = None, *, silent: bool = False, parse_mode: str | None = None
 ) -> TelegramResult:
     """Send a Telegram message to a specific chat_id.
 
     If chat_id is not provided, falls back to settings.telegram_chat_id (single-operator mode).
     `silent` delivers without a sound or vibration (Telegram's disable_notification) - the
-    message still arrives and is still unread; it just does not wake anyone.
+    message still arrives and is still unread; it just does not wake anyone. `parse_mode`
+    ("HTML") lets a caller send bold section headings; the caller owns escaping `<`, `>`, `&`.
     """
     if not settings.telegram_bot_token:
         return TelegramResult(sent_status="skipped", error_message="Telegram bot token missing")
@@ -78,18 +79,17 @@ def send_telegram_message(
         return TelegramResult(sent_status="skipped", error_message="No chat_id provided and no default configured")
 
     endpoint = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
+    body: dict[str, object] = {
+        "chat_id": target_chat_id,
+        "text": message[:4000],
+        "disable_web_page_preview": True,
+        "disable_notification": silent,
+    }
+    if parse_mode:
+        body["parse_mode"] = parse_mode
 
     try:
-        response = requests.post(
-            endpoint,
-            json={
-                "chat_id": target_chat_id,
-                "text": message[:4000],
-                "disable_web_page_preview": True,
-                "disable_notification": silent,
-            },
-            timeout=10,
-        )
+        response = requests.post(endpoint, json=body, timeout=10)
         response.raise_for_status()
     except requests.HTTPError as exc:
         # NEVER store str(exc): the requests error string embeds the full endpoint URL, which

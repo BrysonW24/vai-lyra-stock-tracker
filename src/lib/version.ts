@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.132.3',
+    date: '2026-10-07',
+    title: 'The read is now daily, at 8pm, and laid out to be scanned on a phone',
+    highlights: [
+      'One read a day instead of one an hour: at 8pm Sydney, a read of the US session that closed that morning - how it opened and how it finished, breadth, the biggest movers and groups, which names became or stopped being setups over the session (measured from the previous close, so a name that failed at 11am and was strong again by the close is not called invalidated), the biggest score moves, and your book.',
+      'The message is laid out in short sections with bold headings and one emoji each - the read in three short paragraphs, then market, session, setups and your book as scannable lines - instead of one block of text.',
+      'Every active position is listed, scanned or not: a holding the scanner does not cover now says "not scanned" rather than quietly disappearing.',
+      'The 8pm send holds through daylight-saving changes (two firings a day, the worker picks the one that is past 8pm local), is sent once per session, and still obeys the US$10 monthly ceiling - at one read a day that is about a dollar a month.',
+    ],
+  },
+  {
     version: '0.132.2',
     date: '2026-10-06',
     title: 'The hourly read: every completed hour of the US tech session, explained on your phone',

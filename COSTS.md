@@ -83,17 +83,18 @@ strictly bring-your-own-key.
 > whose lineup is gpt-5.4-mini / gpt-5.4-nano / gpt-5.6-sol. Its per-token price is therefore
 > not listed above; if it is ever retired, switch with `LYRA_HOSTED_OPENAI_MODEL`.
 
-#### The hourly read (operator's Telegram, Claude on the repo's own key)
+#### The daily read (operator's Telegram, Claude on the repo's own key)
 
 | Service | Model | Price per 1M tokens | Measured per read | Projected per month |
 |---|---|---|---|---|
-| Anthropic Claude API | `claude-opus-5-5` at `high` effort (thinking always on, billed as output) | US$4.00 in / US$20.00 out (list, read 2026-10-05) | **US$0.030-0.046** (3 real reads on 2026-10-06: ~2,000 input, 1,100-1,900 output tokens, 12-20 s) | **~US$4.50-6.80** at 7 bars x ~21 trading days |
+| Anthropic Claude API | `claude-opus-5-5` at `high` effort (thinking always on, billed as output) | US$4.00 in / US$20.00 out (list, read 2026-10-05) | **US$0.030-0.046** (5 real reads on 2026-10-06/07: ~2,000 input, 1,100-1,900 output tokens, 12-20 s) | **~US$0.70-1.00** at one read per US session (~22 a month) |
 
 Bounded by code, not by hope: `SUMMARY_MONTHLY_BUDGET_USD` (default **US$10**) is checked against
 the ledger before every call; when the measured cost at the configured effort would not last the
 month the next read runs one effort level lower, and once the budget is spent the figures go out
 with no model call. Set `SUMMARY_MODEL` / `SUMMARY_EFFORT` as repository variables to change the
-trade; an unknown model is priced at the dearest row so the ceiling still holds.
+trade; an unknown model is priced at the dearest row so the ceiling still holds. (It ran hourly
+for one day, 2026-10-06, at ~US$5-7 a month before the founder chose once a day.)
 
 ### Domain (optional)
 

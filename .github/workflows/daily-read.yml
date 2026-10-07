@@ -1,0 +1,68 @@
+name: Daily Read
+
+# One AI-written, engine-grounded read of the last completed US session, delivered to the
+# operator's Telegram at the reader's hour (workers/stock_scanner/daily_read.py). The founder asked
+# for "once a day at 8pm" (2026-10-07): the US session closes at 7am Sydney, so the 8pm read covers
+# the session that closed that morning and lands before the next one opens.
+#
+# Cron is UTC and does not move for daylight saving, so two firings cover both halves of the year:
+# 09:05 UTC is 20:05 Sydney in AEDT (October to April) and 19:05 in AEST; 10:05 UTC is 21:05 in
+# AEDT and 20:05 in AEST. The worker sends only at or after SUMMARY_SEND_AT in SUMMARY_TIMEZONE
+# and only for a session not already on its ledger, so exactly one message goes out per session
+# whichever firing is first past the hour. Tuesday to Saturday, because Monday's session is the
+# first of the week and is read on Tuesday evening; a US holiday simply has no new session.
+on:
+  schedule:
+    - cron: '5 9 * * 2-6'
+    - cron: '5 10 * * 2-6'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Send the read for the newest session now, even if it was already sent or it is not yet the send time
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-read
+  cancel-in-progress: false
+
+jobs:
+  read:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-worker
+
+      - name: Daily read
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEFAULT_USER_ID: ${{ secrets.DEFAULT_USER_ID }}
+          DEFAULT_TIMEFRAME: ${{ vars.DEFAULT_TIMEFRAME || '1h' }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Its own SUMMARY_TELEGRAM_* secrets when set, otherwise the ops pager chat.
+          SUMMARY_TELEGRAM_BOT_TOKEN: ${{ secrets.SUMMARY_TELEGRAM_BOT_TOKEN || secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          SUMMARY_TELEGRAM_CHAT_ID: ${{ secrets.SUMMARY_TELEGRAM_CHAT_ID || secrets.OPS_TELEGRAM_CHAT_ID }}
+          ENABLE_DAILY_READ: ${{ vars.ENABLE_DAILY_READ || 'true' }}
+          SUMMARY_MODEL: ${{ vars.SUMMARY_MODEL || 'claude-opus-5-5' }}
+          SUMMARY_EFFORT: ${{ vars.SUMMARY_EFFORT || 'high' }}
+          SUMMARY_MONTHLY_BUDGET_USD: ${{ vars.SUMMARY_MONTHLY_BUDGET_USD || '10' }}
+          SUMMARY_TIMEZONE: ${{ vars.SUMMARY_TIMEZONE || 'Australia/Sydney' }}
+          SUMMARY_SEND_AT: ${{ vars.SUMMARY_SEND_AT || '20:00' }}
+          SUMMARY_QUIET_HOURS: ${{ vars.SUMMARY_QUIET_HOURS || '22-7' }}
+          SUMMARY_FORCE: ${{ inputs.force && 'true' || 'false' }}
+        run: python -m workers.stock_scanner.daily_read
+
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          title: Lyra daily read FAILED
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}

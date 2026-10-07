@@ -430,6 +430,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.132.3  2026-10-07  The read is now daily, at 8pm, and laid out to be scanned on a phone
 0.132.2  2026-10-06  The hourly read: every completed hour of the US tech session, explained on your phone
 0.132.1  2026-10-05  Hotfix: the dashboard was showing sample data to everyone for about half an hour
 0.132.0  2026-10-05  The plumbing audit: faster pages, a scanner that cannot starve the database, and alarms that actually ring
@@ -586,7 +587,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(155 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(156 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

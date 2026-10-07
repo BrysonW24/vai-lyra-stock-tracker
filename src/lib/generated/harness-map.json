@@ -163,9 +163,9 @@
       ]
     },
     {
-      "section": "Hourly read (engine facts, Claude prose, guard, budget)",
+      "section": "Daily read (engine facts, Claude prose, guard, budget)",
       "paths": [
-        "workers/stock_scanner/hourly_summary.py",
+        "workers/stock_scanner/daily_read.py",
         "workers/stock_scanner/ai_read_guard.py",
         "workers/stock_scanner/summary_columns.json"
       ],
