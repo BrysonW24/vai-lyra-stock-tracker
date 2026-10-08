@@ -226,6 +226,7 @@ Either way, set `TELEGRAM_WEBHOOK_SECRET` in `.env.local` first - the route 401s
 
 - [ ] Bot created via BotFather; token stored only in the deployment secret store
 - [ ] `TELEGRAM_WEBHOOK_SECRET` generated with `openssl rand -hex 32` and set server-side
+- [ ] `TELEGRAM_BOT_USERNAME` set server-side and equal to what `getMe` returns - every `t.me/<username>?start=...` deep link (Connect Telegram, /subscribe) targets it
 - [ ] `setWebhook` called with `secret_token`, `allowed_updates: ["message"]`, `drop_pending_updates: true`
 - [ ] `getWebhookInfo` shows the correct URL and `last_error_message` is empty
 - [ ] Confirmed a request WITHOUT the secret header gets 401
