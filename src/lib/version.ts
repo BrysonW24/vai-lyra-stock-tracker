@@ -23,6 +23,12 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.134.1',
+    date: '2026-10-08',
+    title: 'The subscribe page footer no longer puts a gap before its full stop',
+    highlights: ['A cosmetic fix on /subscribe: the closing line read "See the app ." because its link and punctuation were laid out as separate flex items.'],
+  },
+  {
     version: '0.134.0',
     date: '2026-10-08',
     title: 'Subscribe to the evening AI briefing with one link - Telegram or email, no account',

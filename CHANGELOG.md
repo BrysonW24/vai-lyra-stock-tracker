@@ -6,6 +6,14 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.134.1] - 2026-10-08
+
+The subscribe page footer no longer puts a gap before its full stop.
+
+### Changed
+
+- A cosmetic fix on /subscribe: the closing line read "See the app ." because its link and punctuation were laid out as separate flex items.
+
 ## [0.134.0] - 2026-10-08
 
 Subscribe to the evening AI briefing with one link - Telegram or email, no account.
@@ -1869,7 +1877,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.134.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.134.1...HEAD
+[0.134.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.134.0...v0.134.1
 [0.134.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.1...v0.134.0
 [0.133.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.0...v0.133.1
 [0.133.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.3...v0.133.0

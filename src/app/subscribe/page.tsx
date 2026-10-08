@@ -97,8 +97,10 @@ export default async function SubscribePage({ searchParams }: SubscribePageProps
             ))}
           </div>
 
-          <p className="mt-6 flex items-center gap-1.5 text-[11px] text-[#5A6B82]">
-            <ShieldCheck size={12} /> Research only - not financial advice. {BRAND_NAME} never trades for you. Want the full console?{' '}
+          {/* Inline, not flex: a flex row would space the link and the full stop as separate items ("See the app ."). */}
+          <p className="mt-6 text-[11px] text-[#5A6B82]">
+            <ShieldCheck size={12} className="mr-1.5 inline-block align-[-2px]" />
+            Research only - not financial advice. {BRAND_NAME} never trades for you. Want the full console?{' '}
             <Link href="/welcome" className="text-[#1E63FF] hover:underline">
               See the app
             </Link>
