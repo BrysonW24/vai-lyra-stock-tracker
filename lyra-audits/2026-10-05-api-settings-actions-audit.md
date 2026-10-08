@@ -41,13 +41,24 @@ a one-line note, both of which now say exactly this. The briefing costs about US
 current settings (F29, COSTS.md), so size the top-up to the ceiling you want, and the two jobs'
 ceilings (`SUMMARY_MONTHLY_BUDGET_USD` 10, `BRIEFING_MONTHLY_BUDGET_USD` 40) will hold under it.
 
-1. **Apply three migrations in the Supabase SQL editor**, in order:
+1. **Apply four migrations in the Supabase SQL editor**, in order:
    `supabase/migrations/056_emerging_winner.sql`, `057_emerging_winner_outcome_conjuncts.sql`,
-   `058_close_self_grant_holes.sql`. The first two are why the nightly job is red (three tables
-   missing since they were written). The third closes two privilege holes at the database (F9,
-   F10) - the app is already protected in code, this makes it structural. All three are
-   idempotent, and 058 was built from zero and behaviour-tested locally (forged writes rejected,
-   ordinary writes still allowed).
+   `058_close_self_grant_holes.sql`, `059_briefing_subscribers.sql`. The first two are why the
+   nightly job is red (three tables missing since they were written). The third closes two
+   privilege holes at the database (F9, F10) - the app is already protected in code, this makes it
+   structural. The fourth (added 2026-10-08, v0.134.0) is the subscribe-by-link table: until it
+   exists, `lyra.vivacityai.com.au/subscribe` answers "Subscriptions open shortly" and the
+   briefing worker skips subscribers with a warning - everything else about the briefing is
+   unaffected. All four are idempotent, and 058 was built from zero and behaviour-tested locally
+   (forged writes rejected, ordinary writes still allowed).
+
+   *Addendum 2026-10-08 (v0.134.0):* the Telegram webhook is now registered on
+   `@viva_lyra_trading_bot` with a secret (so O-row "webhook secret -" above is closed), Settings >
+   Notifications has a one-tap **Connect Telegram**, and email (Resend, from
+   `briefing@send.vivacityai.com.au`, proven with a live send) is a channel for the first time.
+   Once 059 is in, open `/subscribe` on your phone, choose Telegram, press Start in the bot: the
+   page should flip to "You're in" by itself and the next evening's briefing should land in that
+   chat with your holdings first.
 2. **Ratify pruning.** The database is at **288 MB of 500 MB** - past the 250 MB warning and 12 MB
    short of the 300 MB act-now line in `DATA-ECONOMICS.md`. About 58 MB sits past its audited
    benefit horizon (`stock_alerts` 45.8 MB past 31 days, `stock_indicators` 12.1 MB past 30 days).
