@@ -787,23 +787,38 @@ def run(now: datetime | None = None) -> int:
             if result.reached_someone:
                 users_reached += 1
 
-    delivered = operator_delivered or users_reached > 0
     briefing_exists = bool(kept)
+    briefing_delivered = briefing_exists and (operator_delivered or users_reached > 0)
+    researched = research_result.reason in ("ok", "resend")
+    # The day is done when a briefing went out, when the research ran and genuinely found nothing,
+    # when the month's budget is spent, or when the model itself gave up (a refusal is not retried
+    # at this price). A night the model could not run at all - no key, no credit, the API down -
+    # stays open so the later firing tries again: the first forced run (2026-10-08) claimed the
+    # day on a billing failure, which would have silenced that evening's real attempt after the
+    # top-up. A briefing that exists but reached nobody also stays open (resent, not re-researched).
+    external_failure = research_result.reason in ("billing", "no_key", "no_library", "connection", "rate_limit") or research_result.reason.startswith("api_")
+    day_done = not external_failure and (briefing_delivered or not briefing_exists)
+    if briefing_delivered or (researched and not briefing_exists):
+        status, error = "success", None
+    elif research_result.reason == "budget":
+        status, error = "skipped", research_result.note
+    else:
+        status, error = "failed", (operator_error if briefing_exists else research_result.note) or "no channel delivered the briefing"
     record_run(
         client,
         run_id,
-        "success" if (delivered or not briefing_exists) else "failed",
+        status,
         {
             **ledger,
-            "date": today.isoformat() if (delivered or not briefing_exists) else None,
+            "date": today.isoformat() if day_done else None,
             "silent": silent,
             "operator_delivered": operator_delivered,
             "users_attempted": users_attempted,
             "users_reached": users_reached,
         },
         # alerts_sent counts a delivered briefing; a "nothing tonight" note is not one.
-        delivered=delivered and briefing_exists,
-        error=None if delivered or not briefing_exists else (operator_error or "no channel delivered the briefing"),
+        delivered=briefing_delivered,
+        error=error,
     )
     LOGGER.info(
         "ai briefing for %s: items=%d removed=%d reasons=%s operator=%s users=%d/%d ai=%s reason=%s model=%s effort=%s searches=%d fetches=%d continuations=%d tokens=%d in (%d cached) / %d out cost=$%.4f month=$%.2f of $%.0f",
@@ -811,7 +826,7 @@ def run(now: datetime | None = None) -> int:
         ledger["ai"], research_result.reason, research_result.model, research_result.effort, research_result.searches, research_result.fetches,
         research_result.continuations, research_result.input_tokens, research_result.cache_read_tokens, research_result.output_tokens, research_result.cost_usd, spent_after, budget,
     )
-    if briefing_exists and not delivered:
+    if briefing_exists and not briefing_delivered:
         LOGGER.error("The briefing was NOT delivered anywhere: %s", operator_error or "no channel reached anyone")
         return 1
     return 0

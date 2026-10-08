@@ -443,7 +443,26 @@ def test_run_sends_only_a_note_when_nothing_passes_and_stops_at_the_budget(harne
     assert ab.run(now=EVENING + timedelta(days=1)) == 0
     assert len(harness.research_calls) == 1, "over budget: no research"
     assert "No briefing tonight: this month&#x27;s $40 briefing budget is used up." in harness.sent[-1]["message"]
-    assert harness.db["stock_scanner_runs"][-1]["payload"]["reason"] == "budget"
+    assert harness.db["stock_scanner_runs"][-1]["payload"]["reason"] == "budget" and harness.db["stock_scanner_runs"][-1]["status"] == "skipped"
+    assert harness.db["stock_scanner_runs"][-1]["payload"]["date"] == "2026-10-08", "a spent budget will not change by the next firing - the day is done"
+
+
+def test_a_night_the_model_could_not_run_stays_open_for_the_next_firing(harness):
+    """The first forced run (2026-10-08) hit an empty Anthropic balance and claimed the day, which
+    would have silenced that evening's real attempt after the top-up."""
+    harness.research_overrides = {"reason": "billing", "note": "the Anthropic account's credit balance is too low - top up under Plans & Billing", "searches": 0, "fetches": 0, "cost_usd": 0.0}
+    harness.items = []
+    assert ab.run(now=EVENING) == 0
+    assert len(harness.sent) == 1 and "top up under Plans &amp; Billing" in harness.sent[0]["message"] and harness.dispatched == []
+    row = harness.db["stock_scanner_runs"][0]
+    assert row["status"] == "failed" and row["payload"]["date"] is None and row["payload"]["reason"] == "billing" and row["alerts_sent"] == 0
+    assert row["error_message"].startswith("the Anthropic account's credit balance is too low")
+
+    harness.research_overrides = {}
+    harness.items = [_item()]
+    assert ab.run(now=EVENING + timedelta(hours=1)) == 0
+    assert len(harness.research_calls) == 2 and len(harness.sent) == 2 and "Constellation (Nasdaq: CEG)" in harness.sent[1]["message"], "credit back by the second firing: the briefing goes out"
+    assert harness.db["stock_scanner_runs"][1]["payload"]["date"] == "2026-10-07"
 
 
 def test_recent_briefings_feed_the_repeat_checks(harness):

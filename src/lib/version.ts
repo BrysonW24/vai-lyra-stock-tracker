@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.133.1',
+    date: '2026-10-08',
+    title: 'A night the AI briefing could not run no longer counts as done',
+    highlights: [
+      'If the briefing cannot be researched at all (no API credit, the API down), the evening stays open and the later firing tries again - previously the first attempt claimed the day, so a top-up made after it would not have produced that night\'s briefing.',
+      'The briefing and the daily read now say plainly when the Anthropic credit balance has run out, instead of "error 400".',
+    ],
+  },
+  {
     version: '0.133.0',
     date: '2026-10-07',
     title: 'The AI briefing: what moved in AI for investors, every evening, checked against its sources',

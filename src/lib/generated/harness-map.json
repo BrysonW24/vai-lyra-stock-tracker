@@ -179,6 +179,7 @@
       "paths": [
         "workers/stock_scanner/ai_briefing.py",
         "workers/stock_scanner/briefing_guard.py",
+        "src/lib/briefing.ts",
         "src/lib/briefing-live.ts",
         "src/app/briefing/page.tsx"
       ],

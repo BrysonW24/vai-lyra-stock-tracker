@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.133.1] - 2026-10-08
+
+A night the AI briefing could not run no longer counts as done.
+
+### Changed
+
+- If the briefing cannot be researched at all (no API credit, the API down), the evening stays open and the later firing tries again - previously the first attempt claimed the day, so a top-up made after it would not have produced that night's briefing.
+- The briefing and the daily read now say plainly when the Anthropic credit balance has run out, instead of "error 400".
+
 ## [0.133.0] - 2026-10-07
 
 The AI briefing: what moved in AI for investors, every evening, checked against its sources.
@@ -1848,7 +1857,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.1...HEAD
+[0.133.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.0...v0.133.1
 [0.133.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.3...v0.133.0
 [0.132.3]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.2...v0.132.3
 [0.132.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.1...v0.132.2

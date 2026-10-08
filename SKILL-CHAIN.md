@@ -66,7 +66,7 @@ multiple owning chains per row are allowed; a parent path claims everything unde
 | Pine mirror + recovery model + paper spine + edge/plan math | `src/lib/pine/` `src/lib/ml/` `src/lib/trading/` `src/lib/edge/` | signal-quality |
 | Worker dispatch seam | `workers/stock_scanner/notification_dispatch.py` `workers/stock_scanner/digest_job.py` | notification-health, signal-quality |
 | Daily read (engine facts, Claude prose, guard, budget) | `workers/stock_scanner/daily_read.py` `workers/stock_scanner/ai_read_guard.py` `workers/stock_scanner/summary_columns.json` | ai-quality, notification-health |
-| AI briefing (web research, source checks, router fan-out, in-app page) | `workers/stock_scanner/ai_briefing.py` `workers/stock_scanner/briefing_guard.py` `src/lib/briefing-live.ts` `src/app/briefing/page.tsx` | ai-quality, notification-health |
+| AI briefing (web research, source checks, router fan-out, in-app page) | `workers/stock_scanner/ai_briefing.py` `workers/stock_scanner/briefing_guard.py` `src/lib/briefing.ts` `src/lib/briefing-live.ts` `src/app/briefing/page.tsx` | ai-quality, notification-health |
 | AI layer | `src/lib/ai/` `src/lib/knowledge/` `src/lib/api/` `src/lib/daily-brief.ts` `src/lib/saved-prompts.ts` `content/` | ai-quality |
 | AI routes + founder ops surface | `src/app/api/ai/` `src/app/ai-ops/` | ai-quality |
 | Notification spine + channels | `src/lib/notifications/` `src/lib/push/` `src/lib/alert-prefs.ts` `src/lib/alert-health.ts` `contracts/` | notification-health |
