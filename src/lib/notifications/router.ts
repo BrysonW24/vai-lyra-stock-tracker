@@ -294,6 +294,7 @@ export function routeNotification(
       event.type === 'portfolio_risk' ||
       (event.type === 'signal_alert' && event.relevanceScore >= QUIET_MIN_SIGNAL_RELEVANCE) ||
       event.type === 'daily_digest' ||
+      event.type === 'ai_briefing' ||
       PERIODIC_REPORT_TYPES.has(event.type);
     if (!quietAllowed) {
       return { deliver: false, reason: DROP_REASONS.quietMode };
@@ -330,8 +331,10 @@ export function routeNotification(
 
   // 7. Digest types only route when the matching digest pref is on. They are never
   // deferred-to-digest themselves (they ARE the digest); the digest scheduler is
-  // responsible for choosing a send time outside quiet hours.
-  if (event.type === 'daily_digest') {
+  // responsible for choosing a send time outside quiet hours. The AI briefing is a scheduled
+  // daily summary too and rides the same preference - a separate toggle would need a schema
+  // change for a user who turned the digest off and still wanted the briefing, which nobody has.
+  if (event.type === 'daily_digest' || event.type === 'ai_briefing') {
     if (!prefs.dailyDigest) {
       return { deliver: false, reason: DROP_REASONS.dailyDigestDisabled };
     }

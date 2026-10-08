@@ -267,6 +267,9 @@ const TEXT_FALLBACK_EVENT_TYPES: ReadonlySet<NotificationEvent['type']> = new Se
   'yearly_review',
   'macro_event',
   'cgt_anniversary',
+  // The AI briefing has no registered template and carries no score - the digest template's
+  // "top movers" slots would have to be invented, so it goes as honest text.
+  'ai_briefing',
 ]);
 
 /** Symbol slot from the event, or a neutral label when the event is not symbol-scoped. */

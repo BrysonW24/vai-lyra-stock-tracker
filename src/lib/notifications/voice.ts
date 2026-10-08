@@ -42,6 +42,8 @@ const FAMILY_BY_TYPE: Record<NotificationType, EventFamily> = {
   order_rejected: 'orders',
   kill_switch_enabled: 'orders',
   daily_digest: 'digest',
+  // The AI briefing is researched from the web, not the user's book: it reads as research.
+  ai_briefing: 'research',
   weekly_report: 'digest',
   monthly_review: 'digest',
   quarterly_review: 'digest',

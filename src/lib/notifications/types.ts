@@ -40,6 +40,7 @@ export type NotificationType =
   | 'order_rejected'
   | 'kill_switch_enabled'
   | 'daily_digest'
+  | 'ai_briefing'
   | 'weekly_report'
   | 'monthly_review'
   | 'quarterly_review'
@@ -80,6 +81,7 @@ const NOTIFICATION_TYPE_ROSTER: Record<NotificationType, true> = {
   order_rejected: true,
   kill_switch_enabled: true,
   daily_digest: true,
+  ai_briefing: true,
   weekly_report: true,
   monthly_review: true,
   quarterly_review: true,

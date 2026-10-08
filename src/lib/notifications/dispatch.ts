@@ -539,7 +539,7 @@ async function countRecentInstantEvents(supabase: SupabaseLike, userId: string, 
 
 /** True when the rate cap applies to this event type - safety-critical and scheduled digests never rate-limit. */
 function rateCapApplies(type: NotificationType): boolean {
-  return !SAFETY_CRITICAL_TYPES.has(type) && type !== 'daily_digest' && !PERIODIC_REPORT_TYPES.has(type);
+  return !SAFETY_CRITICAL_TYPES.has(type) && type !== 'daily_digest' && type !== 'ai_briefing' && !PERIODIC_REPORT_TYPES.has(type);
 }
 
 const RETRYABLE_CHAT_CHANNELS = ['telegram', 'whatsapp', 'slack'] as const;

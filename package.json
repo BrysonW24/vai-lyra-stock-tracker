@@ -1,6 +1,6 @@
 {
   "name": "vai-lyra-stock-tracker",
-  "version": "0.132.3",
+  "version": "0.133.0",
   "private": true,
   "license": "MIT",
   "description": "Hourly tech stock momentum scanner dashboard and Python worker.",
@@ -26,6 +26,7 @@
     "check:data-economics": "node scripts/check-data-economics.mjs",
     "worker:digest": "node scripts/py.mjs -m workers.stock_scanner.digest_job",
     "worker:read": "node scripts/py.mjs -m workers.stock_scanner.daily_read",
+    "worker:briefing": "node scripts/py.mjs -m workers.stock_scanner.ai_briefing",
     "worker:test": "node scripts/py.mjs -m pytest tests",
     "train:recovery": "node scripts/py.mjs -m workers.stock_scanner.ml.recovery_model",
     "content:build": "node scripts/build-content.mjs",

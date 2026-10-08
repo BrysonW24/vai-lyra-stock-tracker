@@ -1,0 +1,76 @@
+name: AI Briefing
+
+# One source-checked briefing a day on what moved in AI for investors - AI releases, AI-related
+# investment events, infrastructure, emerging companies - researched by Claude with web search and
+# web fetch, checked by Lyra against the pages it opened, then sent to the operator's Telegram and to
+# every user through the notification router (workers/stock_scanner/ai_briefing.py). The founder
+# asked for this style of update for everyone who has the app (2026-10-07).
+#
+# Fires a quarter of an hour after the daily read so the two arrive as separate messages. Cron is
+# UTC and does not move for daylight saving, so two firings cover both halves of the year: 09:20 UTC
+# is 20:20 Sydney in AEDT and 19:20 in AEST; 10:20 UTC is 21:20 in AEDT and 20:20 in AEST. The worker
+# sends only at or after BRIEFING_SEND_AT in SUMMARY_TIMEZONE and only once per local day, so exactly
+# one briefing goes out whichever firing is first past the hour. Tuesday to Saturday, covering the
+# five US business days; the research runs once and is stored before any send, so a failed send is
+# retried from the ledger on the next firing without paying for the research again.
+on:
+  schedule:
+    - cron: '20 9 * * 2-6'
+    - cron: '20 10 * * 2-6'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Research and send tonight's briefing now, even if one already went out today or it is not yet the send time
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-briefing
+  cancel-in-progress: false
+
+jobs:
+  briefing:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment: Production
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-worker
+
+      - name: AI briefing
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEFAULT_USER_ID: ${{ secrets.DEFAULT_USER_ID }}
+          DEFAULT_TIMEFRAME: ${{ vars.DEFAULT_TIMEFRAME || '1h' }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # The user fan-out goes through the app's notification router, like the nightly digest.
+          APP_BASE_URL: ${{ vars.APP_BASE_URL || secrets.APP_BASE_URL }}
+          NOTIFICATION_DISPATCH_SECRET: ${{ secrets.NOTIFICATION_DISPATCH_SECRET }}
+          # Its own SUMMARY_TELEGRAM_* secrets when set, otherwise the ops pager chat (same as the read).
+          SUMMARY_TELEGRAM_BOT_TOKEN: ${{ secrets.SUMMARY_TELEGRAM_BOT_TOKEN || secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          SUMMARY_TELEGRAM_CHAT_ID: ${{ secrets.SUMMARY_TELEGRAM_CHAT_ID || secrets.OPS_TELEGRAM_CHAT_ID }}
+          ENABLE_AI_BRIEFING: ${{ vars.ENABLE_AI_BRIEFING || 'true' }}
+          BRIEFING_MODEL: ${{ vars.BRIEFING_MODEL || 'claude-opus-5-5' }}
+          BRIEFING_EFFORT: ${{ vars.BRIEFING_EFFORT || 'high' }}
+          BRIEFING_MONTHLY_BUDGET_USD: ${{ vars.BRIEFING_MONTHLY_BUDGET_USD || '40' }}
+          BRIEFING_MAX_SEARCHES: ${{ vars.BRIEFING_MAX_SEARCHES || '16' }}
+          BRIEFING_MAX_FETCHES: ${{ vars.BRIEFING_MAX_FETCHES || '10' }}
+          SUMMARY_TIMEZONE: ${{ vars.SUMMARY_TIMEZONE || 'Australia/Sydney' }}
+          BRIEFING_SEND_AT: ${{ vars.BRIEFING_SEND_AT || '20:00' }}
+          SUMMARY_QUIET_HOURS: ${{ vars.SUMMARY_QUIET_HOURS || '22-7' }}
+          BRIEFING_FORCE: ${{ inputs.force && 'true' || 'false' }}
+        run: python -m workers.stock_scanner.ai_briefing
+
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          title: Lyra AI briefing FAILED
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}

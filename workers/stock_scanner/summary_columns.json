@@ -52,5 +52,8 @@
     "user_id",
     "symbol",
     "is_active"
+  ],
+  "profiles": [
+    "id"
   ]
 }

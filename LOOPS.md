@@ -17,6 +17,7 @@ Companions: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (structure - what exists),
 | 2 | Outcome learning | nightly 22:05 UTC | `signal_outcomes`, `component_efficacy` | track record, `/signal-quality` retune | efficacy saturation ERROR |
 | 3 | Digest + reviews | nightly / period-end | notification events | you, on your phone | worker tests |
 | 3b | Daily read (AI) | `daily-read.yml` at 09:05 + 10:05 UTC Tue-Sat; sends once per completed US session, at or after 8pm Sydney | `stock_scanner_runs` rows with `job_name = daily_read` (session sent, bars, model, effort, tokens, cost, guard removals) | the operator's Telegram; the next firing (dedupe + budget pacing) | `test_daily_read.py`, `test_ai_read_guard.py`, `check:app-columns` (summary manifest), the workflow's failure pager |
+| 3c | AI briefing (web research) | `ai-briefing.yml` at 09:20 + 10:20 UTC Tue-Sat; once per reader-local day, at or after 8pm Sydney | `stock_scanner_runs` rows with `job_name = ai_briefing` (the checked items with their sources, how many were removed and why, model, searches, pages opened, tokens, cost, who was reached) | the operator's Telegram; every account through the notification router (`ai_briefing` events); the `/briefing` page; the next firing (dedupe, resend of an undelivered briefing, budget pacing, the repeat check) | `test_ai_briefing.py`, `check:app-columns` (both manifests), the workflow's failure pager |
 | 4 | Notification delivery | every event + nightly sweep | `notification_deliveries`, `notification_engagements` | sweep, relevance tuning | `/notification-health` chain |
 | 5 | Scout (notice-create-learn) | nightly 22:05 UTC | `scout_items`, `scout_runs`, ideas, source scores, stoplist | Scout-tab proposals, next night's clustering | zero-writes guards, saturation flags |
 | 6 | Macro + calendar | hourly snap + seasonal crons | `market_context_snapshots`, calendar events | dashboard strips, loop 3 baselines | RBA no-number degradation |
@@ -175,6 +176,51 @@ removal count is on every row - a rising count is the signal that the prompt or 
 drifted. Known open half-loop: the onboarding "Hourly digest" toggle (`hourly_digest_enabled`) is
 still read by nothing; this read goes to the operator's chat only. The message text is not stored
 anywhere (the ledger table is globally readable; the text names the operator's holdings).
+
+### 3c. The AI briefing - the web's facts, checked against the pages they came from, for everyone
+
+```text
+ai-briefing.yml fires 09:20 and 10:20 UTC (Tue-Sat)   <- a quarter hour after the read, same DST trick
+      |
+      v
+ai_briefing.py: local time >= BRIEFING_SEND_AT (20:00 Sydney)?  --no--> exit 0
+      | yes
+      v
+today's date on the ledger (payload.date)?  --yes--> exit 0 (nothing sent)
+      | no
+      v
+today's research stored but undelivered (payload.date NULL, items present)?  --yes--> resend it, no model call
+      | no                                  month-to-date spend >= BRIEFING_MONTHLY_BUDGET_USD? -> note only
+      v                                     measured cost x weekdays left > budget left? -> effort - 1
+research(): Claude (BRIEFING_MODEL, BRIEFING_EFFORT) with web_search (max BRIEFING_MAX_SEARCHES)
+and web_fetch (max BRIEFING_MAX_FETCHES, capped page size), briefed with the last US business day,
+the last 7 days' items (do not repeat) and the scanned universe (symbol tags); the server-side tool
+loop is resumed across pause_turn; the turn ends with the publish_briefing tool call
+      |
+      v
+briefing_guard: every cited source must have been returned by a search or opened by a fetch; at
+least one opened as text; every figure in the item must appear in the item's own sources; no
+advice; listed = ticker, private = no ticker; a source cited in the last 7 days = a repeat -> item out
+      |
+      v
+ledger row (status running, the kept items + cost on it) -> operator's Telegram (HTML, split at
+item boundaries; silent inside SUMMARY_QUIET_HOURS) -> one `ai_briefing` event per account through
+the notification router (push / chat where connected; gated by the digest preference)
+-> ledger row (success + date, who was reached) | (failed, date NULL -> resent next firing, exit 1)
+      |
+      v
+/briefing reads the newest ledger rows: tonight in full, earlier evenings folded
+```
+
+What closes it: the same ledger, with one more row type. `last_date_sent()` stops a second send,
+`pending_items()` turns a delivery failure into a resend rather than a second research bill,
+`covered_from_runs()` feeds both repeat checks (the model's list and the guard's URL set), and
+`month_spend()` / `choose_effort()` are the daily read's, applied to this job's own rows and its own
+ceiling (`BRIEFING_MONTHLY_BUDGET_USD`, default 40 - the research is twenty to forty times the cost
+of a read because every search iteration re-reads the whole context). The ledger row carries the
+items themselves, on purpose: the table is globally readable and the briefing is for everyone, so
+the page reads what was sent. The count removed by the guard and its reason categories are on every
+row - a rising "figure not in source" count means the model has started converting units again.
 
 ## 4. The notification loop - deliver, hold, sweep, learn
 

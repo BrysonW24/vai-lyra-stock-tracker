@@ -4,7 +4,7 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 32,
+    "sections": 33,
     "chains": 16,
     "gates": 9,
     "layers": 5
@@ -168,6 +168,19 @@
         "workers/stock_scanner/daily_read.py",
         "workers/stock_scanner/ai_read_guard.py",
         "workers/stock_scanner/summary_columns.json"
+      ],
+      "chains": [
+        "ai-quality",
+        "notification-health"
+      ]
+    },
+    {
+      "section": "AI briefing (web research, source checks, router fan-out, in-app page)",
+      "paths": [
+        "workers/stock_scanner/ai_briefing.py",
+        "workers/stock_scanner/briefing_guard.py",
+        "src/lib/briefing-live.ts",
+        "src/app/briefing/page.tsx"
       ],
       "chains": [
         "ai-quality",
@@ -495,6 +508,7 @@
       "paths": [
         "src/app/account/",
         "src/app/awards/",
+        "src/app/briefing/",
         "src/app/calculators/",
         "src/app/calendar/",
         "src/app/charts/",

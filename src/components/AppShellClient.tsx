@@ -31,6 +31,7 @@ import {
   Microscope,
   Network,
   Newspaper,
+  Radio,
   PieChart,
   Pin,
   Radar,
@@ -96,6 +97,7 @@ const navItems: NavItem[] = [
   { href: '/wire', label: 'Live Wire', short: 'Wire', icon: Rss, bucket: 'discover' },
   { href: '/findings', label: 'Findings', short: 'Find', icon: Telescope, bucket: 'discover' },
   // RESEARCH - dig into the evidence
+  { href: '/briefing', label: 'AI Briefing', short: 'Brief', icon: Radio, bucket: 'research' },
   { href: '/intelligence', label: 'Intelligence', short: 'Intel', icon: Newspaper, bucket: 'research' },
   { href: '/filings', label: 'Filings & Evidence', short: 'Filings', icon: FileText, bucket: 'research' },
   { href: '/fundamentals', label: 'Fundamentals', short: 'Fundies', icon: BarChart3, bucket: 'research' },

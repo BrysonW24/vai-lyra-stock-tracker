@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.133.0',
+    date: '2026-10-07',
+    title: 'The AI briefing: what moved in AI for investors, every evening, checked against its sources',
+    highlights: [
+      'A new evening briefing for everyone with the app: AI releases, AI-related deals, filings and listings, infrastructure (chips, memory, data centres, power) and emerging companies - researched from the web at 8pm Sydney, Tuesday to Saturday, from the original announcements and filings rather than headlines.',
+      'Each item says what happened with the figures exactly as the source gives them, the investment angle, the risks, what was not disclosed, and links to the original; a private company is called private and not a listed investment, a listed one carries its exchange and ticker.',
+      'Lyra checks every item before anyone sees it: a source must be a page the research actually opened, every figure must appear in that source, nothing may read as advice, and nothing cited in the last week is repeated - items that fail are dropped and the briefing says how many.',
+      'It arrives as a push or chat notification where you have one connected, and always on the new AI Briefing page in the app (under Research), where earlier evenings stay readable.',
+      'Spend is bounded in code: a monthly ceiling checked against the ledger before every run, effort stepping down when the month would not last, and a briefing that could not be delivered is resent from the ledger rather than researched twice. Research, not advice.',
+    ],
+  },
+  {
     version: '0.132.3',
     date: '2026-10-07',
     title: 'The read is now daily, at 8pm, and laid out to be scanned on a phone',

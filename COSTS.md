@@ -96,6 +96,25 @@ with no model call. Set `SUMMARY_MODEL` / `SUMMARY_EFFORT` as repository variabl
 trade; an unknown model is priced at the dearest row so the ceiling still holds. (It ran hourly
 for one day, 2026-10-06, at ~US$5-7 a month before the founder chose once a day.)
 
+#### The AI briefing (every account through the router + the operator's Telegram, Claude with web search on the repo's own key)
+
+| Service | Model and tools | Price | Measured per briefing | Projected per month |
+|---|---|---|---|---|
+| Anthropic Claude API | `claude-opus-5-5` at `high` effort with `web_search_20260209` + `web_fetch_20260209` | US$4.00 in / US$20.00 out per 1M tokens (cache reads US$0.40, cache writes US$5.00); **US$10 per 1,000 searches**; fetches cost tokens only (list, read 2026-10-07) | **US$2.24** on the one complete real run (2026-10-07: 14 searches, 10 pages opened, 493k input tokens, 6.7k output, 167 s) - every input token priced at the full rate because that run predates the cache split now on the ledger, so the true bill is lower by whatever the API served from cache | **~US$30-50** at one briefing per US business day (~22 a month) before tuning; the ceiling `BRIEFING_MONTHLY_BUDGET_USD` (default **US$40**) holds regardless |
+
+Where the money goes: not the searches (14 cents) but the input tokens - a server-side tool loop
+re-reads its whole context on every search iteration, so one long turn with large fetched pages
+costs forty to fifty daily reads. The levers, in order: `BRIEFING_MAX_FETCHES` and the per-page cap
+(`FETCH_CONTENT_TOKENS`, 6,000 tokens in code), `BRIEFING_MAX_SEARCHES`, `BRIEFING_EFFORT`, and
+`BRIEFING_MODEL=claude-sonnet-5-5` at half the token price. Bounded like the read: the month's
+spend is read from the ledger before every run, effort steps down when the measured cost would not
+last the month, a briefing that was researched but not delivered is resent from the ledger rather
+than researched twice, and once the ceiling is reached the evening gets a one-line note instead.
+The two runs meant to measure the tuned prompt on 2026-10-07 did not complete: the Anthropic
+account's prepaid credit ran out mid-turn (the API answers 400 "credit balance is too low"), which
+also stops the daily read's prose until the balance is topped up - both jobs now say so in their
+message rather than "error 400".
+
 ### Domain (optional)
 
 | Service | Price | Notes |

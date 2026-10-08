@@ -737,6 +737,16 @@ def billable_tokens(usage: Any) -> tuple[int, int]:
     return max(top_in, total_in), max(top_out, total_out)
 
 
+def api_failure(exc: Any) -> tuple[str, str]:
+    """(reason, note) for an Anthropic API status error. An exhausted prepaid balance comes back as
+    a 400 like any bad request; it is the one failure the operator can fix in a minute, so it is
+    named - "error 400" sent a founder hunting through code for a billing problem (2026-10-07)."""
+    status = getattr(exc, "status_code", None)
+    if status == 400 and "credit balance" in str(exc).lower():
+        return "billing", "the Anthropic account's credit balance is too low - top up under Plans & Billing"
+    return f"api_{status}", f"the Anthropic API returned an error ({status})"
+
+
 def narrate(sheet: FactSheet, *, model: str, effort: str) -> Narration:
     """One Claude call. Any failure returns a Narration with no text and the reason - never raises."""
     try:
@@ -767,7 +777,8 @@ def narrate(sheet: FactSheet, *, model: str, effort: str) -> Narration:
     except anthropic.RateLimitError:
         return Narration(None, model, effort, note="the Anthropic API was rate limited", reason="rate_limit")
     except anthropic.APIStatusError as exc:
-        return Narration(None, model, effort, note=f"the Anthropic API returned an error ({exc.status_code})", reason=f"api_{exc.status_code}")
+        reason, note = api_failure(exc)
+        return Narration(None, model, effort, note=note, reason=reason)
     except anthropic.APIConnectionError:
         return Narration(None, model, effort, note="the Anthropic API could not be reached", reason="connection")
 

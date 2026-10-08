@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.133.0] - 2026-10-07
+
+The AI briefing: what moved in AI for investors, every evening, checked against its sources.
+
+### Changed
+
+- A new evening briefing for everyone with the app: AI releases, AI-related deals, filings and listings, infrastructure (chips, memory, data centres, power) and emerging companies - researched from the web at 8pm Sydney, Tuesday to Saturday, from the original announcements and filings rather than headlines.
+- Each item says what happened with the figures exactly as the source gives them, the investment angle, the risks, what was not disclosed, and links to the original; a private company is called private and not a listed investment, a listed one carries its exchange and ticker.
+- Lyra checks every item before anyone sees it: a source must be a page the research actually opened, every figure must appear in that source, nothing may read as advice, and nothing cited in the last week is repeated - items that fail are dropped and the briefing says how many.
+- It arrives as a push or chat notification where you have one connected, and always on the new AI Briefing page in the app (under Research), where earlier evenings stay readable.
+- Spend is bounded in code: a monthly ceiling checked against the ledger before every run, effort stepping down when the month would not last, and a briefing that could not be delivered is resent from the ledger rather than researched twice. Research, not advice.
+
 ## [0.132.3] - 2026-10-07
 
 The read is now daily, at 8pm, and laid out to be scanned on a phone.
@@ -1836,7 +1848,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.3...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.0...HEAD
+[0.133.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.3...v0.133.0
 [0.132.3]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.2...v0.132.3
 [0.132.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.1...v0.132.2
 [0.132.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.0...v0.132.1

@@ -34,6 +34,13 @@ reason that had nothing to do with its design.
 
 These are the things only you can do, most valuable first. None of them is code.
 
+**Since 2026-10-07, before any of the below: top up the Anthropic credit balance** (console,
+Plans & Billing). The API has answered 400 "Your credit balance is too low" since the evening of
+2026-10-07 - until it is topped up the daily read goes out as figures only and the AI briefing as
+a one-line note, both of which now say exactly this. The briefing costs about US$2 a run at the
+current settings (F29, COSTS.md), so size the top-up to the ceiling you want, and the two jobs'
+ceilings (`SUMMARY_MONTHLY_BUDGET_USD` 10, `BRIEFING_MONTHLY_BUDGET_USD` 40) will hold under it.
+
 1. **Apply three migrations in the Supabase SQL editor**, in order:
    `supabase/migrations/056_emerging_winner.sql`, `057_emerging_winner_outcome_conjuncts.sql`,
    `058_close_self_grant_holes.sql`. The first two are why the nightly job is red (three tables
@@ -368,6 +375,32 @@ what the code names. What the guard cannot see is written in its docstring: a tr
 for the wrong measure, and causes the model supplies from memory - the prompt forbids both and the
 figures block under every read shows the truth.
 
+**F29 - the AI briefing (2026-10-07, v0.133.0).** The founder asked for the "AI evening briefing"
+style of update - AI releases, AI-related investment events, infrastructure, emerging companies,
+each checked against the original announcement or filing - for everyone who has the app. Production
+had four accounts, one with push, none with a chat channel connected, and 891 router suppressions
+in the preceding week with nothing delivered, so "everyone gets it" needed an in-app surface, not
+only a fan-out. Shipped: `workers/stock_scanner/ai_briefing.py` (Claude Opus 5.5 with
+`web_search_20260209` + `web_fetch_20260209` in one server-side tool loop, resumed across
+`pause_turn`, ending in a `publish_briefing` tool call; a turn that dies mid-stream is tried once
+more after a pause), `briefing_guard.py` (an item is kept only when every cited source was returned
+by a search or opened by a fetch, at least one was opened as text, every figure in the item appears
+in the item's own sources, nothing reads as advice, a listed name carries a ticker and a private one
+does not, and no source was cited in the last seven days), the `ai_briefing` notification type
+through the existing router (gated by `digest_enabled`, allowed through quiet mode, never
+rate-capped, honest text on WhatsApp), the `/briefing` page reading the same ledger rows (nav:
+Research > AI Briefing), `.github/workflows/ai-briefing.yml` (09:20 + 10:20 UTC Tue-Sat, once per
+Sydney day at or after 8pm, the research stored on the ledger before any send and resent from it if
+undelivered), and a separate ceiling `BRIEFING_MONTHLY_BUDGET_USD` (default 40) with cache reads
+priced at the cache rate. Measured on the one complete real run: 14 searches, 10 pages opened, 493k
+input tokens, 167 s, US$2.24 at the full input price; two items published and both passed every
+check - but seven of the ten page opens went to newsroom indexes and roundups, so the prompt now
+forbids those and states the open budget. The two runs meant to measure the tuned prompt could not
+complete: the Anthropic account's prepaid credit ran out (400 "credit balance is too low" - a
+founder action; until then the daily read also goes out without its prose, and both jobs now say
+"top up" instead of "error 400"). 24 tests on the worker (fake SDK and database, no network), the
+guard and the messages; 9 vitest on the type, the routing and the page's mapping.
+
 ## Open - not fixed in this release
 
 Logged with evidence for a next wave. None is exploitable without an account.
@@ -385,5 +418,5 @@ Logged with evidence for a next wave. None is exploitable without an account.
 | O9 | The CSP is report-only with nowhere to report to, so it can never graduate to enforcing | Needs a report endpoint |
 | O10 | Several anonymous GETs (`scout/feed`, `track-record`, `emerging-winners`) do uncached work per request; `small-caps/research` has no caller | Add `s-maxage`, delete the dead route |
 | O11 | No branch protection on `main`: nothing blocks a push on a red check | Fits the direct-push flow; the new failure page is the mitigation |
-| O12 | The onboarding "Hourly digest" toggle (`hourly_digest_enabled`) is still read by nothing; the hourly read goes to the operator's Telegram only | Multi-user delivery through the router needs a decision on whose key pays for the model |
+| O12 | The onboarding "Hourly digest" toggle (`hourly_digest_enabled`) is still read by nothing; the daily read goes to the operator's Telegram only | Partly answered 2026-10-07: the AI briefing (v0.133.0) is the first AI-written message delivered to every account through the router, on the repository's own key, gated by the existing `digest_enabled` preference - the hourly toggle itself remains unwired and the read remains the operator's |
 | O13 | The regime classifier (`risk_off` when Fear & Greed < 30) runs on alternative.me's crypto index | Needs a decision on an equity sentiment source, or dropping the term |

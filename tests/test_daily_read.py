@@ -493,8 +493,14 @@ def test_every_column_the_code_names_is_in_the_manifest():
     dr.load_active(client, "portfolio_positions", "user-1")
     dr.load_active(client, "watchlist_items", "user-1")
     dr._record(client, "run-1", "success", {}, delivered=True)
+    # The AI briefing (ai_briefing.py) shares this manifest; its reads count towards the same check.
+    import workers.stock_scanner.ai_briefing as ab
+
+    ab.load_briefing_runs(client, EVENING)
+    ab.load_universe_symbols(client)
+    ab.load_user_ids(client, SimpleNamespace(load_active_user_ids=lambda: []), "user-1")
     named = {table: columns - {"id", "finished_at", "alerts_sent", "error_message"} for table, columns in client.log.items()}
     missing = {table: sorted(columns - set(dr.COLUMNS.get(table, []))) for table, columns in named.items()}
     missing = {table: columns for table, columns in missing.items() if columns}
     assert missing == {}, f"named in code but not in summary_columns.json: {missing}"
-    assert set(named) == set(dr.COLUMNS), "the manifest lists a table the code never reads"
+    assert set(named) == set(dr.COLUMNS), "the manifest lists a table neither the read nor the briefing reads"

@@ -45,6 +45,7 @@ class Settings:
     # The daily read (workers/stock_scanner/daily_read.py): one AI-written, engine-grounded message
     # on the last completed US session, at the reader's hour. Off unless the workflow turns it on.
     enable_daily_read: bool = False
+    enable_ai_briefing: bool = False
 
     @property
     def supabase_enabled(self) -> bool:
@@ -90,4 +91,5 @@ def load_settings() -> Settings:
         notification_dispatch_secret=os.getenv("NOTIFICATION_DISPATCH_SECRET", ""),
         default_user_id=os.getenv("DEFAULT_USER_ID", ""),
         enable_daily_read=_bool_env("ENABLE_DAILY_READ", False),
+        enable_ai_briefing=_bool_env("ENABLE_AI_BRIEFING", False),
     )
