@@ -54,6 +54,14 @@ jobs:
           # Its own SUMMARY_TELEGRAM_* secrets when set, otherwise the ops pager chat (same as the read).
           SUMMARY_TELEGRAM_BOT_TOKEN: ${{ secrets.SUMMARY_TELEGRAM_BOT_TOKEN || secrets.OPS_TELEGRAM_BOT_TOKEN }}
           SUMMARY_TELEGRAM_CHAT_ID: ${{ secrets.SUMMARY_TELEGRAM_CHAT_ID || secrets.OPS_TELEGRAM_CHAT_ID }}
+          # The subscribe-by-link audience (no account): Telegram through the app's own bot - the one
+          # /subscribe deep-links to - and email through Resend, with unsubscribe links signed on the
+          # app's URL (SUBSCRIBE_LINK_SECRET, falling back to the dispatch secret the app shares).
+          # Unset = those subscribers are skipped tonight; everything else still goes out.
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          BRIEFING_FROM_EMAIL: ${{ vars.BRIEFING_FROM_EMAIL || 'Lyra <briefing@send.vivacityai.com.au>' }}
+          SUBSCRIBE_LINK_SECRET: ${{ secrets.SUBSCRIBE_LINK_SECRET }}
           ENABLE_AI_BRIEFING: ${{ vars.ENABLE_AI_BRIEFING || 'true' }}
           BRIEFING_MODEL: ${{ vars.BRIEFING_MODEL || 'claude-opus-5-5' }}
           BRIEFING_EFFORT: ${{ vars.BRIEFING_EFFORT || 'high' }}

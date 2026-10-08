@@ -46,6 +46,13 @@ class Settings:
     # on the last completed US session, at the reader's hour. Off unless the workflow turns it on.
     enable_daily_read: bool = False
     enable_ai_briefing: bool = False
+    # The briefing's subscribe-by-link audience (workers/stock_scanner/briefing_subscribers.py):
+    # email through Resend, signed unsubscribe links built on the app's public URL. The link secret
+    # falls back to the dispatch secret, which the API routes share, so no new secret is required.
+    app_base_url: str = ""
+    resend_api_key: str = ""
+    briefing_from_email: str = ""
+    subscribe_link_secret: str = ""
 
     @property
     def supabase_enabled(self) -> bool:
@@ -92,4 +99,8 @@ def load_settings() -> Settings:
         default_user_id=os.getenv("DEFAULT_USER_ID", ""),
         enable_daily_read=_bool_env("ENABLE_DAILY_READ", False),
         enable_ai_briefing=_bool_env("ENABLE_AI_BRIEFING", False),
+        app_base_url=app_base_url,
+        resend_api_key=os.getenv("RESEND_API_KEY", ""),
+        briefing_from_email=os.getenv("BRIEFING_FROM_EMAIL", ""),
+        subscribe_link_secret=os.getenv("SUBSCRIBE_LINK_SECRET", ""),
     )

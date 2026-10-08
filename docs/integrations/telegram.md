@@ -23,8 +23,9 @@ Hard boundaries, grounded in code:
 | Secured inbound webhook (secret header, Zod validation, rate limit, command parsing, stub replies) | Built - `src/app/api/webhooks/telegram/route.ts` |
 | Server-only sender with DeliveryRecord results and idempotency dedupe | Built - `src/lib/notifications/telegram.ts` |
 | Pairing code generation helper (`buildPairingCode`) | Built - `src/lib/notifications/telegram.ts` |
-| `channel_pairing_codes` table + pairing completion (`/start <code>` linking a chat to a user) | Future - not in `supabase/migrations/` yet; the webhook honestly replies that pairing is not enabled |
-| Per-user routed notifications through `notification_channels` (`supabase/migrations/009_alerts_notifications.sql`) | Partial - channel save API exists (`src/app/api/notifications/route.ts`); webhook does not yet resolve chats to users |
+| `channel_pairing_codes` table + pairing completion (`/start p<code>` linking a chat to a user) | Built - table in `supabase/migrations/020_trading_foundations.sql`; completion shipped in v0.134.0 (`src/lib/notifications/telegram-pairing.ts`) behind the Settings > Notifications "Connect Telegram" deep link (`POST /api/notifications/telegram/pair`) |
+| Per-user routed notifications through `notification_channels` (`supabase/migrations/009_alerts_notifications.sql`) | Built - the channel save API (`src/app/api/notifications/route.ts`) and the webhook resolving chats to users (`pairedUserForChat`); STOP from a paired chat retires the channel |
+| Subscribe-by-link briefing audience with no account (`/start s<token>` from the `/subscribe` deep link, STOP to end) | Built in v0.134.0 - `src/lib/subscribe-store.ts`, `briefing_subscribers` (migration 059); the worker sends each subscriber their copy through this bot |
 | Live broker execution and order approvals over Telegram | Future-only by design - deterministic gates must pass first (see `docs/PATH-TO-PRODUCTION.md`) |
 
 ## 3. Architecture
@@ -64,7 +65,8 @@ All server-side, set in `.env.local` (never committed) or the deployment platfor
 |---|---|---|
 | `TELEGRAM_BOT_TOKEN` | Worker + web sender | Bot API credential for sendMessage. Server-side only. When unset, sends become honest `demo_logged` no-ops. |
 | `TELEGRAM_WEBHOOK_SECRET` | Webhook route | Secret echoed back by Telegram in the `X-Telegram-Bot-Api-Secret-Token` header. When unset, the route rejects ALL inbound requests with 401 (fail closed). |
-| `TELEGRAM_CHAT_ID` | Worker (legacy) | Single-operator destination chat for worker alerts. Superseded by per-user `notification_channels` rows once pairing lands. |
+| `TELEGRAM_CHAT_ID` | Worker (legacy) | Single-operator destination chat for worker alerts. Superseded by per-user `notification_channels` rows and the subscriber table. |
+| `TELEGRAM_BOT_USERNAME` | Web (pair API, /subscribe) | The bot's @username without the @ - the target of every `t.me/<username>?start=...` deep link. Not a secret, but it must be THIS bot: the one whose webhook is registered below. |
 | `ENABLE_TELEGRAM_ALERTS` | Worker | Toggle for worker outbound alerts. |
 
 Rules:
@@ -130,17 +132,18 @@ flowchart LR
     F --> G[Chat is paired - account-scoped commands unlock]
 ```
 
-Shipped today:
+Shipped (v0.134.0) - nobody types a code; the deep link carries it:
 
-- `buildPairingCode()` and `hashPairingCode()` in `src/lib/notifications/telegram.ts` - 6 chars from an unambiguous alphabet, `crypto.randomInt` randomness, sha256 hash, 10-minute expiry. The returned shape mirrors the `channel_pairing_codes` columns (`code_hash`, `created_at`, `expires_at`).
-- The webhook recognises `/start` and `/start <code>` and replies honestly that pairing completion is not enabled in this build and nothing was stored.
+- `buildPairingCode(now, length)` and `hashPairingCode()` in `src/lib/notifications/telegram.ts` - an unambiguous alphabet, `crypto.randomInt` randomness, sha256 hash, 10-minute expiry. The deep-link form is 20 characters (`PAIRING_TOKEN_LENGTH`), unguessable rather than merely short-lived.
+- `POST /api/notifications/telegram/pair` (signed-in): stores the hash in `channel_pairing_codes` and returns `https://t.me/<TELEGRAM_BOT_USERNAME>?start=p<code>`. Settings > Notifications shows it as "Connect Telegram"; the page re-reads `/api/notifications` every few seconds until the channel is verified.
+- The webhook's `/start p<code>` (`completeTelegramPairing`): hash lookup for an unused, unexpired row -> other Telegram channels for that user retired -> `notification_channels` upserted with the chat id as a VERIFIED channel (`channel_label` "Telegram (connected from the app)") -> `user_alert_preferences.telegram_enabled = true` -> `used_at` stamped. The chat id is never typed and never trusted from text: Telegram delivered the update from that chat.
+- `/stop` or the bare word STOP from a paired chat retires the channel (`disconnectChat`) and switches the preference off.
 
-Not yet shipped (do not claim otherwise):
+The typed chat-ID path (save a chat ID, then a probe message verifies it) remains as the fallback for a deployment without the webhook, folded under "Or paste a chat ID".
 
-- The `channel_pairing_codes` migration (not present in `supabase/migrations/`).
-- The webhook-side lookup that matches the hash, marks the code used, and writes the chat id into `notification_channels` (`supabase/migrations/009_alerts_notifications.sql` already has the destination table).
+### 8b. The subscribe-by-link audience (no account)
 
-Until those land, every chat is unpaired and account-scoped commands answer with pairing instructions.
+`/subscribe` (public) creates a `briefing_subscribers` row (migration 059, RLS with no policies - service role only) and shows `https://t.me/<bot>?start=s<token>`. The webhook's `/start s<token>` (`activateTelegramSubscriber` in `src/lib/subscribe-store.ts`) writes the chat id and activates the row, superseding any other live row for the same chat; the page polls `GET /api/subscribe?token=` until it flips. Every evening the briefing worker (`workers/stock_scanner/briefing_subscribers.py`) sends each active subscriber their own reorder of the checked items through this bot (HTML, split under the limit), stamps the row with the date, and retires a row on HTTP 403 (bot blocked). STOP ends it. Email subscribers never touch Telegram: a signed confirmation link activates them and every briefing email carries a signed one-click unsubscribe.
 
 ## 9. Command table
 
@@ -159,7 +162,10 @@ Parsing lives in `parseMessage` in the webhook route. Commands map to the closed
 | `/reject` | `reject` | Same refusal shape as `/approve` |
 | `/killswitch` | `killswitch` | Records the user kill switch request (in-memory until persistence lands); the risk engine treats the `user` switch as hard-blocking (`isHardKilled` in `src/lib/trading/risk-engine.ts`) |
 | `/help` | `help` | Command list |
-| `/start [code]` | (special) | Pairing entry point - replies that completion is not enabled yet |
+| `/stop`, `/unsubscribe`, or the bare word STOP / UNSUBSCRIBE / CANCEL | `stop` | Ends the chat's briefing subscription and disconnects a paired account channel; says so honestly when there was nothing to end |
+| `/start s<token>` | (special) | The `/subscribe` deep link: activates that briefing subscription for this chat |
+| `/start p<code>` | (special) | The Settings > Notifications "Connect Telegram" deep link: pairs this chat to the code's account as a verified channel |
+| `/start` (no argument) | (special) | A hello that points to `/subscribe` and to Settings > Notifications |
 | anything else | `unknown` | "Unknown command" + reminder that messages are data, not instructions |
 
 ## 10. Rate limits

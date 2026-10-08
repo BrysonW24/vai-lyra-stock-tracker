@@ -192,8 +192,16 @@ curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe"
 
 ### 3b - get your chat id and pair the two
 
-A Telegram bot cannot message you until you message it first - so open your new bot in Telegram
-and send it anything (`/start` is traditional). Then read your chat id:
+**The one-tap way (v0.134.0).** Set `TELEGRAM_BOT_USERNAME` (the bot's @username without the @)
+next to `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` in the deployed app and register the
+webhook (section 6 of the integration doc). Then in Lyra open Settings > Notifications and tap
+**Connect Telegram**: it opens your bot with a one-time link, pressing **Start** is the whole
+connection, and the page shows "Telegram connected" by itself - no chat id, no code. Friends
+without an account get the same one-tap path at `/subscribe` for the evening AI briefing. If that
+worked, skip the by-hand way below (the worker path still wants `TELEGRAM_CHAT_ID`).
+
+**The by-hand way.** A Telegram bot cannot message you until you message it first - so open your
+new bot in Telegram and send it anything (`/start` is traditional). Then read your chat id:
 
 ```bash
 curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates"

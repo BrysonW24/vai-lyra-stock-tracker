@@ -140,6 +140,16 @@ export default async function WelcomePage() {
                 </Link>
               )}
             </div>
+            {supabaseConfigured && (
+              // The lightest way in: the evening AI briefing on Telegram or by email, no account at all.
+              <p className="mt-3 text-sm text-[#5A6B82]">
+                Just want the evening AI briefing?{' '}
+                <Link href="/subscribe" className="font-medium text-[#1E63FF] hover:underline">
+                  Subscribe with one link - no account needed
+                </Link>
+                .
+              </p>
+            )}
             <p className="mt-4 flex items-center gap-1.5 text-[11px] text-[#5A6B82]">
               <ShieldCheck size={12} /> Research only - not financial advice. {BRAND_NAME} never trades for you.
             </p>

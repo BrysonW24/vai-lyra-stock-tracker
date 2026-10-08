@@ -227,7 +227,8 @@ export interface DeliveryRecord {
   createdAt: string;
 }
 
-/** High-risk inbound commands require an exact pending-approval match - never free-form. */
+/** High-risk inbound commands require an exact pending-approval match - never free-form.
+ * 'stop' (also the bare word STOP) ends a briefing subscription for the chat. */
 export type InboundCommand =
   | 'status'
   | 'portfolio'
@@ -235,6 +236,7 @@ export type InboundCommand =
   | 'today'
   | 'mute'
   | 'unmute'
+  | 'stop'
   | 'paper'
   | 'approve'
   | 'reject'

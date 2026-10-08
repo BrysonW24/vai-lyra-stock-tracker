@@ -430,6 +430,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.134.0  2026-10-08  Subscribe to the evening AI briefing with one link - Telegram or email, no account
 0.133.1  2026-10-08  A night the AI briefing could not run no longer counts as done
 0.133.0  2026-10-07  The AI briefing: what moved in AI for investors, every evening, checked against its sources
 0.132.3  2026-10-07  The read is now daily, at 8pm, and laid out to be scanned on a phone
@@ -589,7 +590,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(158 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(159 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

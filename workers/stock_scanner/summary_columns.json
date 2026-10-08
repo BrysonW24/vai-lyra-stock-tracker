@@ -55,5 +55,22 @@
   ],
   "profiles": [
     "id"
+  ],
+  "briefing_subscribers": [
+    "id",
+    "token",
+    "channel",
+    "email",
+    "telegram_chat_id",
+    "topics",
+    "holdings",
+    "status",
+    "unsubscribe_reason",
+    "last_sent_date",
+    "sent_count",
+    "last_error",
+    "unsubscribed_at",
+    "created_at",
+    "updated_at"
   ]
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, BellRing, Check, ExternalLink, Save, Smartphone, X } from 'lucide-react';
 import { DEFAULT_NOTIFICATION_PREFERENCES, type NotificationPreferences } from '@/lib/notifications/types';
 import {
@@ -173,6 +173,11 @@ export function PushNotificationSetup() {
   const [error, setError] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<NotificationTestResult | null>(null);
   const [telegramVerified, setTelegramVerified] = useState(false);
+  // "Connect Telegram": the deep link the pair API minted; while it is set and the channel is not yet
+  // verified, the component re-reads /api/notifications every few seconds until the bot's webhook
+  // has written the chat id (the person pressed Start) - no chat ID typed, no code pasted.
+  const [connectUrl, setConnectUrl] = useState<string | null>(null);
+  const connectStartedAt = useRef(0);
   const [whatsappVerified, setWhatsappVerified] = useState(false);
   const [slackVerified, setSlackVerified] = useState(false);
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
@@ -239,6 +244,42 @@ export function PushNotificationSetup() {
   useEffect(() => {
     void loadState();
   }, []);
+
+  useEffect(() => {
+    if (!connectUrl) return;
+    if (telegramVerified) {
+      setConnectUrl(null);
+      setChannelNotice({ channel: 'telegram', verified: true, message: 'Telegram connected - alerts and the evening briefing will arrive in that chat.' });
+      return;
+    }
+    const timer = setInterval(() => {
+      if (Date.now() - connectStartedAt.current > 10 * 60_000) {
+        clearInterval(timer);
+        setConnectUrl(null);
+        return;
+      }
+      void loadState();
+    }, 3_000);
+    return () => clearInterval(timer);
+  }, [connectUrl, telegramVerified]);
+
+  async function connectTelegram() {
+    setBusy('telegram');
+    setError(null);
+    setChannelNotice(null);
+    setConnectUrl(null);
+    try {
+      const response = await fetch('/api/notifications/telegram/pair', { method: 'POST' });
+      const data = (await response.json().catch(() => ({}))) as { ok?: boolean; url?: string; error?: string };
+      if (!response.ok || !data.ok || !data.url) throw new Error(data.error || 'Could not start the Telegram connection.');
+      connectStartedAt.current = Date.now();
+      setConnectUrl(data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start the Telegram connection.');
+    } finally {
+      setBusy(null);
+    }
+  }
 
   function updatePrefs(patch: Partial<NotificationPreferences>) {
     setPrefs((current) => {
@@ -495,18 +536,37 @@ export function PushNotificationSetup() {
 
       <section className="grid gap-2 border-t border-line pt-3 md:grid-cols-2">
         <div>
-          <label className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-ink-3" htmlFor="tg-id">
-            <TelegramLogo size={12} /> Telegram chat ID
-          </label>
-          <div className="flex gap-2">
-            <input id="tg-id" inputMode="numeric" className={inputClass} value={telegramChatId} placeholder="123456789" onChange={(event) => setTelegramChatId(event.target.value.trim())} />
-            <button type="button" onClick={() => saveChannel('telegram')} disabled={busy !== null} className={secondaryButton} aria-label="Save Telegram chat ID">
-              <TelegramLogo size={14} />
-            </button>
-          </div>
-          <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] text-blue-info hover:underline">
-            Get chat ID <ExternalLink size={11} />
-          </a>
+          <p className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-ink-3">
+            <TelegramLogo size={12} /> Telegram
+          </p>
+          {/* One tap, no chat ID: the pair API mints a deep link, Telegram sends /start from the
+              person's own chat, the webhook writes the verified channel. The typed chat ID stays
+              as the fallback for a deployment without the webhook. */}
+          <button type="button" onClick={connectTelegram} disabled={busy !== null} className={`${secondaryButton} w-full justify-center gap-1.5`}>
+            <TelegramLogo size={14} /> {telegramVerified ? 'Reconnect Telegram' : 'Connect Telegram'}
+          </button>
+          {connectUrl && !telegramVerified && (
+            <a
+              href={connectUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1.5 inline-flex items-center gap-1 font-mono text-[11px] text-blue-info hover:underline"
+            >
+              Open Telegram and press Start - this page updates by itself <ExternalLink size={11} />
+            </a>
+          )}
+          <details className="mt-1.5">
+            <summary className="cursor-pointer text-[11px] text-ink-dim">Or paste a chat ID</summary>
+            <div className="mt-1 flex gap-2">
+              <input id="tg-id" inputMode="numeric" className={inputClass} value={telegramChatId} placeholder="123456789" onChange={(event) => setTelegramChatId(event.target.value.trim())} aria-label="Telegram chat ID" />
+              <button type="button" onClick={() => saveChannel('telegram')} disabled={busy !== null} className={secondaryButton} aria-label="Save Telegram chat ID">
+                <TelegramLogo size={14} />
+              </button>
+            </div>
+            <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] text-blue-info hover:underline">
+              Get chat ID <ExternalLink size={11} />
+            </a>
+          </details>
         </div>
 
         <div>

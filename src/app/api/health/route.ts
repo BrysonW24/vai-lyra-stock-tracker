@@ -22,7 +22,11 @@ async function lastScanAt(): Promise<string | null> {
       .select('finished_at')
       // The scanner's runs only - the nightly digest/outcome jobs log here too and are not scans.
       .eq('job_name', 'hourly_stock_scanner')
-      .order('started_at', { ascending: false })
+      // Finished runs only: the row a scan writes when it STARTS has no finished_at yet, so for
+      // the minutes a scan was running this probe answered null - "no scan ever" - to a monitor
+      // that had just seen a fresh timestamp (2026-10-08 audit).
+      .not('finished_at', 'is', null)
+      .order('finished_at', { ascending: false })
       .limit(1)
       .maybeSingle();
     return (data as { finished_at?: string | null } | null)?.finished_at ?? null;

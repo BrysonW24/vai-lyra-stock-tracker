@@ -3,6 +3,9 @@
   "stock_signals": ["symbol", "timeframe", "candle_time", "signal_score", "signal_type", "signal_status", "previous_signal_score", "signal_score_delta", "action_state", "lifecycle_state", "explanation", "raw_payload"],
   "stock_scanner_runs": ["job_name", "timeframe", "started_at", "finished_at", "status", "tickers_scanned", "candles_saved", "indicators_saved", "signals_created", "portfolio_overlays_created", "watchlist_overlays_created", "alerts_sent", "payload"],
   "stock_alerts": ["symbol", "channel", "alert_type", "message", "payload", "sent_status", "sent_at", "created_at"],
-  "user_alert_preferences": ["user_id", "mute_all", "alert_mode", "updated_at", "timezone"],
-  "notification_deliveries": ["user_id", "status", "error_message", "created_at"]
+  "user_alert_preferences": ["user_id", "mute_all", "alert_mode", "updated_at", "timezone", "telegram_enabled"],
+  "notification_deliveries": ["user_id", "status", "error_message", "created_at"],
+  "notification_channels": ["user_id", "channel_type", "destination", "channel_label", "is_active", "is_verified", "verified_at", "updated_at"],
+  "channel_pairing_codes": ["user_id", "channel_type", "code_hash", "expires_at", "used_at"],
+  "briefing_subscribers": ["id", "token", "channel", "email", "telegram_chat_id", "topics", "holdings", "status", "unsubscribe_reason", "user_id", "source", "confirmed_at", "unsubscribed_at", "updated_at"]
 }

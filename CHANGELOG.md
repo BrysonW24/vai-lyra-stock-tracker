@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.134.0] - 2026-10-08
+
+Subscribe to the evening AI briefing with one link - Telegram or email, no account.
+
+### Changed
+
+- A public /subscribe page asks three questions - what you hold, which topics, where to send it - and that is the whole sign-up: no account, no password, no onboarding. Share the link with anyone.
+- Telegram without the chat-ID dance: one button opens Lyra's bot and pressing Start is the whole connection. The same button now lives in Settings > Notifications for accounts ("Connect Telegram"), in place of find-your-chat-ID-and-paste-it.
+- Email as a channel for the first time: a confirmation link starts it, nothing is sent until that link is opened, and every briefing carries a one-click unsubscribe.
+- Each subscriber's copy is reordered for them by the deterministic engine - items that touch their holdings first, then their chosen topics - from the same source-checked research, so personalising costs nothing and can never invent a fact. Reply STOP to end it.
+- The health probe no longer reports "no scan" for the minutes a scan is running.
+
 ## [0.133.1] - 2026-10-08
 
 A night the AI briefing could not run no longer counts as done.
@@ -1857,7 +1869,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.134.0...HEAD
+[0.134.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.1...v0.134.0
 [0.133.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.0...v0.133.1
 [0.133.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.3...v0.133.0
 [0.132.3]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.132.2...v0.132.3

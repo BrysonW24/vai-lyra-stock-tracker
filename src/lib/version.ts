@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.134.0',
+    date: '2026-10-08',
+    title: 'Subscribe to the evening AI briefing with one link - Telegram or email, no account',
+    highlights: [
+      'A public /subscribe page asks three questions - what you hold, which topics, where to send it - and that is the whole sign-up: no account, no password, no onboarding. Share the link with anyone.',
+      'Telegram without the chat-ID dance: one button opens Lyra\'s bot and pressing Start is the whole connection. The same button now lives in Settings > Notifications for accounts ("Connect Telegram"), in place of find-your-chat-ID-and-paste-it.',
+      'Email as a channel for the first time: a confirmation link starts it, nothing is sent until that link is opened, and every briefing carries a one-click unsubscribe.',
+      'Each subscriber\'s copy is reordered for them by the deterministic engine - items that touch their holdings first, then their chosen topics - from the same source-checked research, so personalising costs nothing and can never invent a fact. Reply STOP to end it.',
+      'The health probe no longer reports "no scan" for the minutes a scan is running.',
+    ],
+  },
+  {
     version: '0.133.1',
     date: '2026-10-08',
     title: 'A night the AI briefing could not run no longer counts as done',

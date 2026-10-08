@@ -248,8 +248,10 @@ class _FakeQuery:
 
     def execute(self):
         if self._update is not None:
-            for row in self.db["stock_scanner_runs"]:
-                if row["id"] == self.filters.get("id"):
+            # An update lands on the row of ITS table with the filtered id (the run ledger, a
+            # briefing subscriber's delivery stamp); every write is also logged for the asserts.
+            for row in self.db.get(self.table_name, []):
+                if row.get("id") == self.filters.get("id"):
                     row.update(self._update)
             self.db["writes"].append(dict(self._update))
             return SimpleNamespace(data=[])
@@ -499,6 +501,14 @@ def test_every_column_the_code_names_is_in_the_manifest():
     ab.load_briefing_runs(client, EVENING)
     ab.load_universe_symbols(client)
     ab.load_user_ids(client, SimpleNamespace(load_active_user_ids=lambda: []), "user-1")
+    # The subscribe-by-link audience (briefing_subscribers.py) reads and stamps its own table.
+    import workers.stock_scanner.briefing_subscribers as bs
+
+    bs.load_subscribers(client)
+    subscriber = bs.Subscriber(id="sub-1", token="t", channel="telegram", email="", chat_id="1", topics=(), holdings=())
+    bs.mark_sent(client, subscriber, date(2026, 10, 7))
+    bs.mark_failed(client, subscriber, "Telegram API HTTP 400")
+    bs.mark_unsubscribed(client, subscriber, "blocked")
     named = {table: columns - {"id", "finished_at", "alerts_sent", "error_message"} for table, columns in client.log.items()}
     missing = {table: sorted(columns - set(dr.COLUMNS.get(table, []))) for table, columns in named.items()}
     missing = {table: columns for table, columns in missing.items() if columns}

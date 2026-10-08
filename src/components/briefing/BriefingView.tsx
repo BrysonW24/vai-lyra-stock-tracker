@@ -109,6 +109,13 @@ export function BriefingView({ briefings, source }: BriefingViewProps) {
           What moved in AI for investors - model releases, AI-related deals and listings, infrastructure, emerging companies -
           researched from the web each evening and checked against the original sources. Research, not advice.
         </p>
+        <p className="text-xs text-ink-muted">
+          Anyone can get it on Telegram or by email without an account - share{' '}
+          <a href="/subscribe" className="text-blue-info hover:underline">
+            /subscribe
+          </a>
+          .
+        </p>
       </header>
 
       {source === 'none' || !latest ? (

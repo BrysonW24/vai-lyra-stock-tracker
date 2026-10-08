@@ -98,3 +98,19 @@ describe('findingsFromEvents - filtering + lifecycle', () => {
     expect(findings[0].state).toBe('Paper-bot research queue');
   });
 });
+
+describe('scheduled briefings are not findings', () => {
+  // 2026-10-08 audit: the fear was that daily_digest / ai_briefing events (one per account, every
+  // evening) would be projected through the default branch as "scanner signal" findings. They are
+  // not: the feed only projects investigable event types. Pinned so it stays that way.
+  it('keeps daily_digest and ai_briefing events out of the feed and the graph', () => {
+    expect(isInvestigableEvent('ai_briefing')).toBe(false);
+    expect(isInvestigableEvent('daily_digest')).toBe(false);
+    const findings = findingsFromEvents([
+      ev({ id: 'b-1', type: 'ai_briefing', title: 'AI briefing · Wed 7 Oct: Constellation', body: 'Google signed a 20-year agreement.' }),
+      ev({ id: 'd-1', type: 'daily_digest', title: 'Daily digest' }),
+      ev({ id: 's-1', type: 'signal_alert' }),
+    ]);
+    expect(findings.map((f) => f.id)).toEqual(['s-1']);
+  });
+});

@@ -12,6 +12,7 @@ import pytest
 import workers.stock_scanner.ai_briefing as ab
 import workers.stock_scanner.briefing_guard as bg
 from tests.test_daily_read import SYDNEY, UTC, _FakeClient, _FakeQuery, _settings
+import workers.stock_scanner.briefing_subscribers as bs
 from workers.stock_scanner.notification_dispatch import DispatchResult
 from workers.stock_scanner.telegram import TelegramResult
 
@@ -328,11 +329,27 @@ def harness(monkeypatch):
         "stock_scanner_runs": [],
         "stock_tickers": [{"symbol": "CEG", "is_active": True, "scan_enabled": True}, {"symbol": "NVDA", "is_active": True, "scan_enabled": True}],
         "profiles": [{"id": "user-1"}, {"id": "user-2"}],
+        "briefing_subscribers": [],
         "writes": [],
     }
-    state = SimpleNamespace(db=db, sent=[], dispatched=[], research_calls=[], items=[_item()], research_overrides={}, telegram_result=None, dispatch_result=None, settings_overrides={})
+    state = SimpleNamespace(db=db, sent=[], dispatched=[], emails=[], research_calls=[], items=[_item()], research_overrides={}, telegram_result=None, dispatch_result=None, email_result=None, settings_overrides={})
 
-    monkeypatch.setattr(ab, "load_settings", lambda: _settings(**{"enable_ai_briefing": True, "notification_dispatch_url": "https://lyra.example/api/notifications/dispatch", "notification_dispatch_secret": "secret", **state.settings_overrides}))
+    monkeypatch.setattr(
+        ab,
+        "load_settings",
+        lambda: _settings(
+            **{
+                "enable_ai_briefing": True,
+                "notification_dispatch_url": "https://lyra.example/api/notifications/dispatch",
+                "notification_dispatch_secret": "secret",
+                # The subscriber leg: the app's bot, Resend, and the public URL the unsubscribe links are built on.
+                "telegram_bot_token": "app-bot",
+                "app_base_url": "https://lyra.example",
+                "resend_api_key": "re_test",
+                **state.settings_overrides,
+            }
+        ),
+    )
     monkeypatch.setattr(
         ab,
         "SupabaseRepository",
@@ -351,9 +368,17 @@ def harness(monkeypatch):
 
     def fake_send(message, settings, chat_id=None, *, silent=False, parse_mode=None):
         state.sent.append({"message": message, "chat_id": chat_id, "silent": silent, "parse_mode": parse_mode, "token": settings.telegram_bot_token})
-        return state.telegram_result or TelegramResult(sent_status="sent")
+        result = state.telegram_result(chat_id) if callable(state.telegram_result) else state.telegram_result
+        return result or TelegramResult(sent_status="sent")
 
     monkeypatch.setattr(ab, "send_telegram_message", fake_send)
+    monkeypatch.setattr(bs, "send_telegram_message", fake_send)
+
+    def fake_email(**kwargs):
+        state.emails.append(kwargs)
+        return state.email_result or bs.EmailResult("sent")
+
+    monkeypatch.setattr(bs, "send_email", fake_email)
 
     def fake_dispatch(settings, **kwargs):
         state.dispatched.append(kwargs)
@@ -489,6 +514,44 @@ def test_run_honours_force_quiet_hours_and_the_knobs(harness, monkeypatch):
 def test_run_is_a_no_op_without_the_flag_or_a_destination(harness, monkeypatch):
     harness.settings_overrides["enable_ai_briefing"] = False
     assert ab.run(now=EVENING) == 0 and harness.research_calls == []
-    harness.settings_overrides.update(enable_ai_briefing=True, notification_dispatch_url="", notification_dispatch_secret="")
+    harness.settings_overrides.update(enable_ai_briefing=True, notification_dispatch_url="", notification_dispatch_secret="", telegram_bot_token="", resend_api_key="")
     monkeypatch.delenv("SUMMARY_TELEGRAM_CHAT_ID")
-    assert ab.run(now=EVENING) == 0 and harness.research_calls == []
+    assert ab.run(now=EVENING) == 0 and harness.research_calls == [], "no operator chat, no router, no subscriber channel: nowhere to send"
+
+
+def test_run_serves_subscribers_their_own_copy_and_resends_only_to_those_missed(harness):
+    harness.db["briefing_subscribers"] = [
+        {"id": "sub-1", "token": "t1", "channel": "telegram", "telegram_chat_id": "777", "topics": ["holdings"], "holdings": ["NVDA"], "status": "active", "sent_count": 0},
+        {"id": "sub-2", "token": "t2", "channel": "email", "email": "friend@example.com", "topics": ["ai_release"], "holdings": [], "status": "active", "sent_count": 3},
+    ]
+    # First firing: every channel is down - the operator's chat, the router, the app bot and Resend.
+    harness.telegram_result = TelegramResult(sent_status="failed", error_message="Telegram API HTTP 502")
+    harness.dispatch_result = DispatchResult(attempted=True, ok=True, delivered=False)
+    harness.email_result = bs.EmailResult("failed", "resend HTTP 500")
+    assert ab.run(now=EVENING) == 1
+    first = harness.db["stock_scanner_runs"][0]
+    assert first["status"] == "failed" and first["payload"]["date"] is None
+    assert (first["payload"]["subscribers_attempted"], first["payload"]["subscribers_reached"], first["payload"]["subscribers_failed"]) == (2, 0, 2)
+    assert harness.db["briefing_subscribers"][0]["last_error"] == "Telegram API HTTP 502" and "last_sent_date" not in harness.db["briefing_subscribers"][0]
+
+    # The next firing resends from the ledger: the research is not repeated and every subscriber is served once.
+    harness.telegram_result = lambda chat_id: TelegramResult(sent_status="failed", error_message="Telegram API HTTP 502") if chat_id == "chat-1" else TelegramResult(sent_status="sent")
+    harness.email_result = None
+    assert ab.run(now=EVENING + timedelta(hours=1)) == 0
+    assert len(harness.research_calls) == 1
+    second = harness.db["stock_scanner_runs"][1]
+    assert second["status"] == "success" and second["payload"]["date"] == "2026-10-07" and second["payload"]["reason"] == "resend"
+    assert (second["payload"]["operator_delivered"], second["payload"]["users_reached"], second["payload"]["subscribers_reached"]) == (False, 0, 2), "subscribers alone make the briefing delivered"
+    telegram = [s for s in harness.sent if s["chat_id"] == "777"]
+    assert len(telegram) == 2 and telegram[-1]["token"] == "app-bot" and telegram[-1]["parse_mode"] == "HTML", "the app's bot, not the operator's"
+    message = telegram[-1]["message"]
+    assert message.startswith("🗞️ <b>Lyra AI briefing</b> · Wed 7 Oct\n<i>1 item touches your holdings (NVDA).</i>")
+    assert "📌 <b>Your holdings</b>\n\n⚡ <b>Constellation (Nasdaq: CEG)</b>" in message and message.endswith("Reply STOP to unsubscribe · Research, not advice.")
+    assert len(harness.emails) == 2 and harness.emails[-1]["to"] == "friend@example.com" and harness.emails[-1]["api_key"] == "re_test"
+    assert harness.emails[-1]["subject"] == "Lyra AI briefing · Wed 7 Oct: Constellation"
+    assert "https://lyra.example/api/subscribe/unsubscribe?id=sub-2&amp;sig=" in harness.emails[-1]["html_body"]
+    assert harness.db["briefing_subscribers"][0]["last_sent_date"] == "2026-10-07" and harness.db["briefing_subscribers"][1]["sent_count"] == 4
+
+    # A third firing finds the day on the ledger - nobody hears from Lyra twice.
+    assert ab.run(now=EVENING + timedelta(hours=2)) == 0
+    assert len([s for s in harness.sent if s["chat_id"] == "777"]) == 2 and len(harness.emails) == 2

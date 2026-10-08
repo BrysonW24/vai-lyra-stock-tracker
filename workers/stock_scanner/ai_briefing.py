@@ -21,7 +21,6 @@ and its Actions logs are public.
 
 from __future__ import annotations
 
-import html
 import os
 import sys
 import time
@@ -37,6 +36,16 @@ from workers.stock_scanner.briefing_guard import (
     canonical_url,
     guard_briefing,
     parse_items,
+)
+from workers.stock_scanner.briefing_subscribers import SubscriberOutcome, deliver_to_subscribers, load_subscribers
+from workers.stock_scanner.briefing_text import (
+    CATEGORY_STYLE,
+    TELEGRAM_LIMIT,
+    first_sentence as _first_sentence,
+    h as _h,
+    item_html,
+    short_name as _short_name,
+    split_messages,
 )
 from workers.stock_scanner.config import load_settings
 from workers.stock_scanner.daily_read import (
@@ -82,16 +91,8 @@ RESEARCH_ATTEMPTS = 2  # a research turn that dies mid-stream (overload, a dropp
 RETRY_PAUSE_SECONDS = 30
 SEARCH_PRICE_USD = 0.01  # US$10 per 1,000 searches (list, read 2026-10-07); fetches cost tokens only
 COVERED_DAYS = 7
-TELEGRAM_LIMIT = 3_800  # Telegram's hard limit is 4,096; split at item boundaries well before it
 ROUTER_BODY_LIMIT = 1_500
-
-CATEGORY_STYLE = {
-    "investment": ("💰", "investment"),
-    "infrastructure": ("⚡", "infrastructure"),
-    "ai_release": ("🧠", "AI release"),
-    "emerging": ("🌱", "emerging"),
-    "developer": ("🛠️", "developer"),
-}
+# TELEGRAM_LIMIT and CATEGORY_STYLE live in briefing_text.py, shared with every subscriber's copy.
 
 SYSTEM_PROMPT = """You research and write Lyra's AI briefing: one evening message for Australian private investors who follow AI and technology shares. Lyra is a research tool, not an adviser - the briefing informs, it never recommends.
 
@@ -453,23 +454,8 @@ def _research_once(brief: str, *, model: str, effort: str, max_searches: int, ma
 
 
 # --------------------------------------------------------------------------------------------
-# The messages.
-
-
-def _h(text: str) -> str:
-    return html.escape(text, quote=True)
-
-
-def _short_name(item: BriefingItem) -> str:
-    return item.headline.split(" (")[0].strip()
-
-
-def _first_sentence(text: str) -> str:
-    for end in (". ", "; "):
-        cut = text.find(end)
-        if 0 < cut < 220:
-            return text[:cut].rstrip(" ;,.") + "."
-    return text if len(text) <= 220 else text[:219].rstrip() + "…"
+# The messages. The item HTML, the escaping and the split are briefing_text.py (shared with the
+# subscribers' copies); what is the operator's alone - the summary, the cost footer - is here.
 
 
 def summary_line(items: list[BriefingItem]) -> str:
@@ -479,17 +465,6 @@ def summary_line(items: list[BriefingItem]) -> str:
     parts = [f"{count} {CATEGORY_STYLE[category][1]}" for category, count in counts.items()]
     noun = "item" if len(items) == 1 else "items"
     return f"{len(items)} {noun} checked against their original sources: " + ", ".join(parts) + "."
-
-
-def item_html(item: BriefingItem) -> str:
-    emoji, _label = CATEGORY_STYLE[item.category]
-    tags = [tag for tag, on in (("private", not item.listed), ("catch-up", item.catch_up)) if on]
-    head = f"{emoji} <b>{_h(item.headline)}</b>" + (f" <i>({', '.join(tags)})</i>" if tags else "")
-    lines = [head, _h(item.what_happened), f"<i>Why it matters:</i> {_h(item.why_it_matters)}", f"<i>Risks:</i> {_h(item.risks)}"]
-    if item.not_disclosed:
-        lines.append(f"<i>Not disclosed:</i> {_h(item.not_disclosed)}")
-    lines.append(" · ".join(f'<a href="{_h(source.url)}">{_h(source.label)}</a>' for source in item.sources))
-    return "\n".join(lines)
 
 
 def compose_messages(
@@ -518,19 +493,7 @@ def compose_messages(
         footer.append(f"Lyra's checks removed {removed} item{'s' if removed != 1 else ''} ({', '.join(removed_categories)}).")
     footer.append("Research, not advice.")
     parts.append("\n".join(footer))
-
-    messages: list[str] = []
-    current = ""
-    for part in parts:
-        candidate = part if not current else f"{current}\n\n{part}"
-        if current and len(candidate) > limit:
-            messages.append(current)
-            current = part
-        else:
-            current = candidate
-    if current:
-        messages.append(current)
-    return messages
+    return split_messages(parts, limit)
 
 
 def router_title(items: list[BriefingItem], day_label: str) -> str:
@@ -647,8 +610,9 @@ def run(now: datetime | None = None) -> int:
     bot_token = os.getenv("SUMMARY_TELEGRAM_BOT_TOKEN", "")
     chat_id = os.getenv("SUMMARY_TELEGRAM_CHAT_ID", "")
     operator_chat = bool(bot_token and chat_id)
-    if not operator_chat and not settings.notification_dispatch_enabled:
-        LOGGER.info("No SUMMARY_TELEGRAM_* and no notification dispatch - nowhere to send the briefing.")
+    subscriber_channels = bool(settings.telegram_bot_token or settings.resend_api_key)
+    if not operator_chat and not settings.notification_dispatch_enabled and not subscriber_channels:
+        LOGGER.info("No SUMMARY_TELEGRAM_*, no notification dispatch, no subscriber channel - nowhere to send the briefing.")
         return 0
     repository = SupabaseRepository(settings)
     if not repository.client:
@@ -740,6 +704,8 @@ def run(now: datetime | None = None) -> int:
         "operator_delivered": False,
         "users_attempted": 0,
         "users_reached": 0,
+        "subscribers_attempted": 0,
+        "subscribers_reached": 0,
     }
     # The research is paid for and stored before any send, so a crash between the two loses neither.
     record_run(client, run_id, "running", ledger, delivered=False)
@@ -787,8 +753,15 @@ def run(now: datetime | None = None) -> int:
             if result.reached_someone:
                 users_reached += 1
 
+    # The subscribe-by-link audience (no account): the same checked items, reordered per person -
+    # their holdings first, then their topics - on Telegram through the app's bot or by email. Each
+    # row remembers the last date it was served, so a resend firing never sends anyone a second copy.
+    subscribers = SubscriberOutcome()
+    if kept:
+        subscribers = deliver_to_subscribers(client, load_subscribers(client), items=kept, day_label=day_label, ipo_note=ipo_note, today=today, settings=settings, silent=silent)
+
     briefing_exists = bool(kept)
-    briefing_delivered = briefing_exists and (operator_delivered or users_reached > 0)
+    briefing_delivered = briefing_exists and (operator_delivered or users_reached > 0 or subscribers.reached > 0)
     researched = research_result.reason in ("ok", "resend")
     # The day is done when a briefing went out, when the research ran and genuinely found nothing,
     # when the month's budget is spent, or when the model itself gave up (a refusal is not retried
@@ -815,14 +788,19 @@ def run(now: datetime | None = None) -> int:
             "operator_delivered": operator_delivered,
             "users_attempted": users_attempted,
             "users_reached": users_reached,
+            "subscribers_attempted": subscribers.attempted,
+            "subscribers_reached": subscribers.reached,
+            "subscribers_already": subscribers.already,
+            "subscribers_failed": subscribers.failed,
+            "subscribers_unsubscribed": subscribers.unsubscribed,
         },
         # alerts_sent counts a delivered briefing; a "nothing tonight" note is not one.
         delivered=briefing_delivered,
         error=error,
     )
     LOGGER.info(
-        "ai briefing for %s: items=%d removed=%d reasons=%s operator=%s users=%d/%d ai=%s reason=%s model=%s effort=%s searches=%d fetches=%d continuations=%d tokens=%d in (%d cached) / %d out cost=$%.4f month=$%.2f of $%.0f",
-        today.isoformat(), len(kept), removed, ",".join(removed_categories) or "-", operator_delivered, users_reached, users_attempted,
+        "ai briefing for %s: items=%d removed=%d reasons=%s operator=%s users=%d/%d subscribers=%d/%d ai=%s reason=%s model=%s effort=%s searches=%d fetches=%d continuations=%d tokens=%d in (%d cached) / %d out cost=$%.4f month=$%.2f of $%.0f",
+        today.isoformat(), len(kept), removed, ",".join(removed_categories) or "-", operator_delivered, users_reached, users_attempted, subscribers.reached, subscribers.attempted,
         ledger["ai"], research_result.reason, research_result.model, research_result.effort, research_result.searches, research_result.fetches,
         research_result.continuations, research_result.input_tokens, research_result.cache_read_tokens, research_result.output_tokens, research_result.cost_usd, spent_after, budget,
     )

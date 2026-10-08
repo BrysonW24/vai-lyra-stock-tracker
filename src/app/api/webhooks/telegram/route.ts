@@ -15,14 +15,30 @@
  * 4. Per-chat token-bucket rate limit. In-memory, so on serverless this is
  *    best-effort per instance - production should move it to a shared store.
  *
+ * What a chat can do here (v0.134.0):
+ * - `/start s<token>`  the /subscribe deep link: this chat becomes the briefing subscriber the
+ *                      token names (src/lib/subscribe-store.ts). Telegram delivering the update
+ *                      from this chat IS the proof the chat is theirs.
+ * - `/start p<code>`   the Settings > Notifications "Connect Telegram" link: this chat becomes the
+ *                      account's verified alert channel (src/lib/notifications/telegram-pairing.ts).
+ * - `/stop` or STOP    ends the chat's briefing subscription and retires a paired alert channel.
+ * The /start argument is a bounded token looked up by exact match or hash - it is never logged
+ * and never interpreted. Without a database (demo) every one of these answers honestly that
+ * nothing was stored.
+ *
  * The route always returns 200 fast after the auth gate, replying via the server-only
  * sender in src/lib/notifications/telegram.ts when TELEGRAM_BOT_TOKEN is configured.
  */
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import type { InboundCommand } from '@/lib/notifications/types';
+import { parseMessage, type ParsedMessage } from '@/lib/notifications/telegram-commands';
 import { sendTelegramMessage } from '@/lib/notifications/telegram';
+import { completeTelegramPairing, disconnectChat, pairedUserForChat } from '@/lib/notifications/telegram-pairing';
+import { SUBSCRIBE_TOPICS, TELEGRAM_START_PREFIX } from '@/lib/subscribe';
+import { appBaseUrl } from '@/lib/subscribe-server';
+import { activateTelegramSubscriber, activeChatSubscription, unsubscribeChat, type SupabaseLike } from '@/lib/subscribe-store';
+import { createSupabaseServiceClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
@@ -89,48 +105,9 @@ function allowMessage(chatId: string, nowMs: number): boolean {
   return true;
 }
 
-// --- command parsing (closed enum, untrusted input) ---------------------------
+// --- command parsing: src/lib/notifications/telegram-commands.ts (closed enum, untrusted input) ---
 
-const COMMAND_MAP: Record<string, InboundCommand> = {
-  status: 'status',
-  portfolio: 'portfolio',
-  watchlist: 'watchlist',
-  today: 'today',
-  mute: 'mute',
-  unmute: 'unmute',
-  paper: 'paper',
-  approve: 'approve',
-  reject: 'reject',
-  killswitch: 'killswitch',
-  help: 'help',
-};
-
-type ParsedMessage =
-  | { kind: 'command'; command: InboundCommand; args: string }
-  | { kind: 'start'; args: string };
-
-function parseMessage(text: string): ParsedMessage {
-  const trimmed = text.trim();
-  if (!trimmed.startsWith('/')) return { kind: 'command', command: 'unknown', args: '' };
-  const [head = '', ...rest] = trimmed.slice(1).split(/\s+/);
-  const name = (head.split('@')[0] ?? '').toLowerCase();
-  const args = rest.join(' ').slice(0, 64); // args are data only - bounded, never instructions
-  if (name === 'start') return { kind: 'start', args };
-  return { kind: 'command', command: COMMAND_MAP[name] ?? 'unknown', args };
-}
-
-// --- pairing + per-chat state (honest current-state stubs) --------------------
-
-/**
- * Populated by the future pairing completion flow (channel_pairing_codes lookup via
- * server-side Supabase). Until that lands no chat is paired, so account-scoped
- * commands answer with pairing instructions instead of pretending to have data.
- */
-const PAIRED_CHAT_IDS = new Set<string>();
-
-function isPaired(chatId: string): boolean {
-  return PAIRED_CHAT_IDS.has(chatId);
-}
+// --- per-chat state (honest in-memory stubs for the trading commands) ---------
 
 /** Best-effort in-memory per-chat state - resets on redeploy, by design for now. */
 const mutedChats = new Set<string>();
@@ -138,79 +115,149 @@ const killSwitchRequests = new Map<string, string>();
 
 // --- replies ------------------------------------------------------------------
 
-const PAIRING_PROMPT =
-  'This chat is not paired to a Lyra account yet. Open the web app, go to Settings, then Notifications, and generate a one-time pairing code. Pairing completion is not enabled in this build yet, so commands run in stub mode.';
-
 const NOT_ADVICE = 'Lyra is research software, not financial advice.';
+const NO_DATABASE = 'Lyra is running without a database here, so this chat could not be linked and nothing was stored.';
 
-function buildReply(parsed: ParsedMessage, chatId: string, now: Date): string {
-  if (parsed.kind === 'start') {
-    if (parsed.args) {
-      return [
-        'Pairing code received but server-side pairing completion is not enabled in this build yet, so this chat was not linked and nothing was stored.',
-        'Generate codes only in the Lyra web app. Codes expire after 10 minutes and are single-use.',
-      ].join(' ');
-    }
-    return PAIRING_PROMPT;
+function pairingPrompt(base: string): string {
+  return `This chat is not linked to a Lyra account. In Lyra, open Settings > Notifications and tap Connect Telegram - or get the evening AI briefing with no account at ${base}/subscribe.`;
+}
+
+interface ReplyContext {
+  client: SupabaseLike | null;
+  chatId: string;
+  base: string;
+  now: Date;
+}
+
+async function startReply(args: string, ctx: ReplyContext): Promise<string> {
+  if (!args) {
+    return [
+      `Hello - this is Lyra's bot. Get the evening AI briefing (what moved in AI for investors, checked against its sources) with no account at ${base(ctx)}/subscribe, or connect a Lyra account from Settings > Notifications.`,
+      NOT_ADVICE,
+    ].join(' ');
   }
-
-  switch (parsed.command) {
-    case 'status': {
-      const muted = mutedChats.has(chatId) ? 'Alert replies are muted for this chat.' : 'Alert replies are not muted for this chat.';
-      return [
-        'Lyra status: webhook online.',
-        'Trading mode: disabled (the default). Live broker execution is not implemented in this build.',
-        'AI never generates orders - deterministic code decides, AI only explains.',
-        muted,
-        isPaired(chatId) ? '' : PAIRING_PROMPT,
-        NOT_ADVICE,
-      ]
-        .filter(Boolean)
-        .join(' ');
+  if (!ctx.client) return NO_DATABASE;
+  const flow = args[0];
+  const value = args.slice(1);
+  if (flow === TELEGRAM_START_PREFIX.subscriber) {
+    const outcome = await activateTelegramSubscriber(ctx.client, value, ctx.chatId, ctx.now);
+    console.info(JSON.stringify({ at: 'telegram.webhook', event: 'subscribe', outcome }));
+    switch (outcome) {
+      case 'activated':
+        return "You're in. Lyra's AI briefing arrives here around 8pm Sydney, Tuesday to Saturday - what moved in AI for investors, each item checked against the source it came from, your holdings first. Reply STOP any time to end it. Research, not advice.";
+      case 'already':
+        return 'This chat is already subscribed to the evening briefing. Reply STOP to end it.';
+      case 'unknown':
+        return `That link is not one Lyra recognises, or it has already been used. Start again at ${ctx.base}/subscribe.`;
+      default:
+        return 'Something went wrong linking this chat - tap the link again in a minute.';
     }
+  }
+  if (flow === TELEGRAM_START_PREFIX.pairing) {
+    const { outcome } = await completeTelegramPairing(ctx.client, value, ctx.chatId, ctx.now);
+    console.info(JSON.stringify({ at: 'telegram.webhook', event: 'pairing', outcome }));
+    switch (outcome) {
+      case 'paired':
+        return 'Connected. Lyra alerts and the evening briefing for your account will arrive in this chat. Manage them under Settings > Notifications; reply STOP to disconnect.';
+      case 'expired':
+        return 'That connect link has expired (they last 10 minutes). Open Lyra > Settings > Notifications and tap Connect Telegram again.';
+      case 'invalid':
+        return 'That connect link is not one Lyra recognises, or it was already used. Open Lyra > Settings > Notifications and tap Connect Telegram again.';
+      default:
+        return 'Something went wrong connecting this chat - tap the link again in a minute.';
+    }
+  }
+  return `That link is not one Lyra recognises. Subscribe at ${ctx.base}/subscribe, or connect an account from Settings > Notifications.`;
+}
+
+function base(ctx: ReplyContext): string {
+  return ctx.base;
+}
+
+async function stopReply(ctx: ReplyContext): Promise<string> {
+  if (!ctx.client) return NO_DATABASE;
+  const ended = await unsubscribeChat(ctx.client, ctx.chatId, 'stop', ctx.now);
+  const disconnected = await disconnectChat(ctx.client, ctx.chatId, ctx.now);
+  console.info(JSON.stringify({ at: 'telegram.webhook', event: 'stop', ended, disconnected: Boolean(disconnected) }));
+  if (!ended && !disconnected) return 'This chat had no Lyra subscription or connection to end - nothing was changed.';
+  const parts = [];
+  if (ended) parts.push('Your evening briefing subscription has ended.');
+  if (disconnected) parts.push('This chat is no longer connected to your Lyra account.');
+  parts.push(`Lyra will not message this chat again. Come back any time at ${ctx.base}/subscribe.`);
+  return parts.join(' ');
+}
+
+function topicLabels(topics: string[]): string {
+  const labels = SUBSCRIBE_TOPICS.filter((topic) => topics.includes(topic.id)).map((topic) => topic.label.toLowerCase());
+  return labels.length ? labels.join(', ') : 'everything';
+}
+
+async function statusReply(ctx: ReplyContext, paired: boolean): Promise<string> {
+  const muted = mutedChats.has(ctx.chatId) ? 'Alert replies are muted for this chat.' : 'Alert replies are not muted for this chat.';
+  const subscription = ctx.client ? await activeChatSubscription(ctx.client, ctx.chatId) : null;
+  const subscriptionLine = subscription
+    ? `Evening briefing: on (${topicLabels(subscription.topics)}${subscription.holdings.length ? `; holdings ${subscription.holdings.join(', ')}` : ''}). Reply STOP to end it.`
+    : `Evening briefing: not subscribed from this chat - ${ctx.base}/subscribe.`;
+  return [
+    'Lyra status: webhook online.',
+    paired ? 'This chat is connected to a Lyra account.' : pairingPrompt(ctx.base),
+    subscriptionLine,
+    'Trading mode: disabled (the default). Live broker execution is not implemented in this build.',
+    'AI never generates orders - deterministic code decides, AI only explains.',
+    muted,
+    NOT_ADVICE,
+  ].join(' ');
+}
+
+async function buildReply(parsed: ParsedMessage, ctx: ReplyContext): Promise<string> {
+  if (parsed.kind === 'start') return startReply(parsed.args, ctx);
+  if (parsed.command === 'stop') return stopReply(ctx);
+
+  const paired = ctx.client ? Boolean(await pairedUserForChat(ctx.client, ctx.chatId)) : false;
+  switch (parsed.command) {
+    case 'status':
+      return statusReply(ctx, paired);
     case 'portfolio':
-      return isPaired(chatId)
-        ? 'Portfolio summaries are not wired for paired chats yet.'
-        : `No portfolio to show. ${PAIRING_PROMPT}`;
+      return paired ? 'Portfolio summaries are not wired for connected chats yet - open Lyra > Portfolio.' : `No portfolio to show. ${pairingPrompt(ctx.base)}`;
     case 'watchlist':
-      return isPaired(chatId)
-        ? 'Watchlist summaries are not wired for paired chats yet.'
-        : `No watchlist to show. ${PAIRING_PROMPT}`;
+      return paired ? 'Watchlist summaries are not wired for connected chats yet - open Lyra > Watchlist.' : `No watchlist to show. ${pairingPrompt(ctx.base)}`;
     case 'today':
-      return isPaired(chatId)
-        ? 'Daily digests are not wired for paired chats yet.'
-        : `No daily digest to show. ${PAIRING_PROMPT}`;
+      return paired
+        ? 'The evening briefing and the daily digest arrive here on their own schedule; open Lyra > AI Briefing for the latest with sources.'
+        : `No daily digest to show. ${pairingPrompt(ctx.base)}`;
     case 'mute':
-      mutedChats.add(chatId);
+      mutedChats.add(ctx.chatId);
       return 'Muted alert replies for this chat. This is best-effort and in-memory - it resets on redeploy. Durable mute preferences live in the web app notification settings.';
     case 'unmute':
-      mutedChats.delete(chatId);
+      mutedChats.delete(ctx.chatId);
       return 'Unmuted alert replies for this chat. Durable preferences live in the web app notification settings.';
     case 'paper':
-      return isPaired(chatId)
-        ? 'Paper trading summaries are not wired for paired chats yet.'
-        : `Paper trading runs inside the platform - there is no live execution in this build. ${PAIRING_PROMPT}`;
+      return paired
+        ? 'Paper trading summaries are not wired for connected chats yet - open Lyra > Paper.'
+        : `Paper trading runs inside the platform - there is no live execution in this build. ${pairingPrompt(ctx.base)}`;
     case 'approve':
       return 'Nothing was approved. Approvals require a valid pending order intent and there are none - live execution is disabled in this build, so no order intent is awaiting approval.';
     case 'reject':
       return 'Nothing was rejected. Rejections require a valid pending order intent and there are none - live execution is disabled in this build, so no order intent is awaiting approval.';
     case 'killswitch': {
-      const at = now.toISOString();
-      killSwitchRequests.set(chatId, at);
-      return `User kill switch request recorded for this chat at ${at}. The deterministic risk engine treats the user kill switch as blocking for all order intents. Live execution is disabled in this build, so there is no live trading to halt. This record is in-memory until pairing and persistence land.`;
+      const at = ctx.now.toISOString();
+      killSwitchRequests.set(ctx.chatId, at);
+      return `User kill switch request recorded for this chat at ${at}. The deterministic risk engine treats the user kill switch as blocking for all order intents. Live execution is disabled in this build, so there is no live trading to halt. This record is in-memory until persistence lands.`;
     }
     case 'help':
       return [
         'Lyra commands:',
-        '/status - system and chat status',
-        '/portfolio - portfolio summary (requires pairing)',
-        '/watchlist - watchlist summary (requires pairing)',
-        '/today - daily digest (requires pairing)',
-        '/paper - paper trading summary (requires pairing)',
+        '/status - system, connection and subscription status',
+        '/stop (or STOP) - end the evening briefing for this chat and disconnect it from an account',
+        '/portfolio - portfolio summary (requires a connected account)',
+        '/watchlist - watchlist summary (requires a connected account)',
+        '/today - where the daily digest and briefing come from',
+        '/paper - paper trading summary (requires a connected account)',
         '/mute and /unmute - toggle alert replies for this chat',
         '/approve and /reject - act on a pending order intent (none exist - live execution is disabled)',
         '/killswitch - record a user kill switch request',
         '/help - this list',
+        `Subscribe to the evening AI briefing with no account: ${ctx.base}/subscribe`,
         NOT_ADVICE,
       ].join('\n');
     case 'unknown':
@@ -267,7 +314,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   // 6. Parse the untrusted text into the closed command enum. Log the command name
-  //    only - never the raw text, which is untrusted user input.
+  //    only - never the raw text or a /start argument, which are untrusted user input.
   const parsed = parseMessage(text);
   console.info(
     JSON.stringify({
@@ -281,8 +328,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   );
 
   // 7. Reply. Keyed by update_id so a Telegram redelivery of the same update is
-  //    suppressed by the sender's idempotency dedupe instead of double-replying.
-  const reply = buildReply(parsed, chatId, new Date(nowMs));
+  //    suppressed by the sender's idempotency dedupe instead of double-replying. A
+  //    database error must never turn into a non-2xx (Telegram would retry it for ever).
+  let reply: string;
+  try {
+    reply = await buildReply(parsed, { client: createSupabaseServiceClient(), chatId, base: appBaseUrl(request), now: new Date(nowMs) });
+  } catch (err) {
+    console.warn(JSON.stringify({ at: 'telegram.webhook', event: 'reply_error', error: err instanceof Error ? err.name : 'unknown' }));
+    reply = 'Something went wrong on our side - try again in a minute.';
+  }
   const delivery = await sendTelegramMessage(chatId, reply, `tg:webhook:${update.update_id}`);
   if (delivery.status === 'failed') {
     console.warn(

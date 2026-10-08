@@ -115,6 +115,14 @@ account's prepaid credit ran out mid-turn (the API answers 400 "credit balance i
 also stops the daily read's prose until the balance is topped up - both jobs now say so in their
 message rather than "error 400".
 
+#### The subscribe-by-link audience (v0.134.0: /subscribe, Telegram through the app's bot, email through Resend)
+
+| Service | What it carries | Price | Notes |
+|---|---|---|---|
+| Telegram Bot API | Subscriber briefings + the /start and STOP replies | Free | The app's own bot (`TELEGRAM_BOT_TOKEN`), one HTML message per subscriber per evening (split only when long) |
+| Resend | The confirmation email (app) + the briefing emails (worker) | Free tier: 3,000 emails/month, 100/day, 3 domains; Pro US$20/month for 50,000 (no daily cap) (list, read 2026-10-08) | ~22 briefings a month per email subscriber, so the free tier carries roughly 130 email subscribers; the daily cap (100) is the first ceiling to watch - past it, sends fail with a 4xx that lands on the row's `last_error` |
+| Anthropic | Nothing extra | US$0 | Personalisation is a deterministic reorder of the one shared research run - the per-subscriber cost is a Telegram call or an email, never a model call |
+
 ### Domain (optional)
 
 | Service | Price | Notes |

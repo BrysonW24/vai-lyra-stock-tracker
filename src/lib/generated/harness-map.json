@@ -175,13 +175,24 @@
       ]
     },
     {
-      "section": "AI briefing (web research, source checks, router fan-out, in-app page)",
+      "section": "AI briefing (web research, source checks, router fan-out, in-app page, the subscribe-by-link audience)",
       "paths": [
         "workers/stock_scanner/ai_briefing.py",
         "workers/stock_scanner/briefing_guard.py",
+        "workers/stock_scanner/briefing_text.py",
+        "workers/stock_scanner/briefing_subscribers.py",
         "src/lib/briefing.ts",
         "src/lib/briefing-live.ts",
-        "src/app/briefing/page.tsx"
+        "src/app/briefing/page.tsx",
+        "src/lib/subscribe.ts",
+        "src/lib/subscribe-server.ts",
+        "src/lib/subscribe-store.ts",
+        "src/lib/email/",
+        "src/app/subscribe/",
+        "src/app/api/subscribe/",
+        "src/components/subscribe/",
+        "src/lib/notifications/telegram-pairing.ts",
+        "src/app/api/notifications/telegram/"
       ],
       "chains": [
         "ai-quality",

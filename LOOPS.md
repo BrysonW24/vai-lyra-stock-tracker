@@ -17,7 +17,7 @@ Companions: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (structure - what exists),
 | 2 | Outcome learning | nightly 22:05 UTC | `signal_outcomes`, `component_efficacy` | track record, `/signal-quality` retune | efficacy saturation ERROR |
 | 3 | Digest + reviews | nightly / period-end | notification events | you, on your phone | worker tests |
 | 3b | Daily read (AI) | `daily-read.yml` at 09:05 + 10:05 UTC Tue-Sat; sends once per completed US session, at or after 8pm Sydney | `stock_scanner_runs` rows with `job_name = daily_read` (session sent, bars, model, effort, tokens, cost, guard removals) | the operator's Telegram; the next firing (dedupe + budget pacing) | `test_daily_read.py`, `test_ai_read_guard.py`, `check:app-columns` (summary manifest), the workflow's failure pager |
-| 3c | AI briefing (web research) | `ai-briefing.yml` at 09:20 + 10:20 UTC Tue-Sat; once per reader-local day, at or after 8pm Sydney | `stock_scanner_runs` rows with `job_name = ai_briefing` (the checked items with their sources, how many were removed and why, model, searches, pages opened, tokens, cost, who was reached) | the operator's Telegram; every account through the notification router (`ai_briefing` events); the `/briefing` page; the next firing (dedupe, resend of an undelivered briefing, budget pacing, the repeat check) | `test_ai_briefing.py`, `check:app-columns` (both manifests), the workflow's failure pager |
+| 3c | AI briefing (web research) | `ai-briefing.yml` at 09:20 + 10:20 UTC Tue-Sat; once per reader-local day, at or after 8pm Sydney | `stock_scanner_runs` rows with `job_name = ai_briefing` (the checked items with their sources, how many were removed and why, model, searches, pages opened, tokens, cost, who was reached); `briefing_subscribers` (the no-account audience from `/subscribe`: channel, topics, holdings, status, last date served) | the operator's Telegram; every account through the notification router (`ai_briefing` events); every active subscriber - their own reorder of the same items - on Telegram through the app's bot or by email (Resend); the `/briefing` page; the next firing (dedupe, resend of an undelivered briefing, budget pacing, the repeat check; a subscriber already served today is skipped) | `test_ai_briefing.py`, `test_briefing_subscribers.py`, `check:app-columns` (both manifests), the workflow's failure pager |
 | 4 | Notification delivery | every event + nightly sweep | `notification_deliveries`, `notification_engagements` | sweep, relevance tuning | `/notification-health` chain |
 | 5 | Scout (notice-create-learn) | nightly 22:05 UTC | `scout_items`, `scout_runs`, ideas, source scores, stoplist | Scout-tab proposals, next night's clustering | zero-writes guards, saturation flags |
 | 6 | Macro + calendar | hourly snap + seasonal crons | `market_context_snapshots`, calendar events | dashboard strips, loop 3 baselines | RBA no-number degradation |
@@ -206,11 +206,40 @@ advice; listed = ticker, private = no ticker; a source cited in the last 7 days 
 ledger row (status running, the kept items + cost on it) -> operator's Telegram (HTML, split at
 item boundaries; silent inside SUMMARY_QUIET_HOURS) -> one `ai_briefing` event per account through
 the notification router (push / chat where connected; gated by the digest preference)
+-> every active `briefing_subscribers` row (the no-account audience): the same items reordered
+   per person - holdings hits first, then their topics - as HTML to their chat through the app's
+   bot, or as a branded email through Resend with a signed one-click unsubscribe; each row stamped
+   with the date served, so a resend firing never serves anyone twice; a 403 from Telegram
+   (bot blocked) retires the row instead of retrying it for ever
 -> ledger row (success + date, who was reached) | (failed, date NULL -> resent next firing, exit 1)
       |
       v
 /briefing reads the newest ledger rows: tonight in full, earlier evenings folded
 ```
+
+The subscribe-by-link leg (v0.134.0) - how a person gets in and out with no account:
+
+```text
+/subscribe (public) -> POST /api/subscribe: three answers -> briefing_subscribers row, status pending
+      |
+      +-- Telegram: the page shows t.me/<bot>?start=s<token>; tapping it makes Telegram send
+      |   `/start s<token>` FROM THAT CHAT to the webhook -> row gets the chat id, status active
+      |   (ownership proven by delivery, nothing typed); the page polls GET /api/subscribe?token=
+      |   until it flips. STOP (or /stop) from the chat -> status unsubscribed (reason stop).
+      |
+      +-- Email: a confirmation link signed HMAC(secret, "confirm:<id>") -> opened -> status active;
+          every briefing email carries HMAC(secret, "unsubscribe:<id>") + List-Unsubscribe-Post ->
+          status unsubscribed (reason link). The same secret signs both sides (app and worker).
+```
+
+What closes this leg: the row itself. Nothing is deleted - `unsubscribed` rows with their reason
+(`stop`, `link`, `blocked`, `replaced`) are the audit trail, and the partial unique indexes keep one
+live subscription per chat and per inbox. The worker reads only `status = active` and writes
+`last_sent_date`, `sent_count` and `last_error` per row, so the question "did this person get
+tonight's briefing?" has one answer. The same deep-link mechanism now connects ACCOUNTS too:
+Settings > Notifications > Connect Telegram mints a `channel_pairing_codes` row (hash only, 10
+minutes) and the bot's `/start p<code>` writes the chat into `notification_channels` as a verified
+channel - the step that none of the four production accounts had completed by hand.
 
 What closes it: the same ledger, with one more row type. `last_date_sent()` stops a second send,
 `pending_items()` turns a delivery failure into a resend rather than a second research bill,

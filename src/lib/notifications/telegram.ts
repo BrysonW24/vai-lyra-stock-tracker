@@ -228,10 +228,14 @@ export function hashPairingCode(code: string): string {
   return createHash('sha256').update(code.trim().toUpperCase()).digest('hex');
 }
 
-/** Generate a one-time pairing code using crypto-grade randomness (randomInt). */
-export function buildPairingCode(now: Date = new Date()): PairingCode {
+/**
+ * Generate a one-time pairing code using crypto-grade randomness (randomInt). Six characters is
+ * the typed form; the Telegram deep link carries a longer one (telegram-pairing.ts) because nobody
+ * types it, so it can afford to be unguessable rather than merely short-lived.
+ */
+export function buildPairingCode(now: Date = new Date(), length: number = PAIRING_CODE_LENGTH): PairingCode {
   let code = '';
-  for (let i = 0; i < PAIRING_CODE_LENGTH; i += 1) {
+  for (let i = 0; i < length; i += 1) {
     code += PAIRING_ALPHABET[randomInt(PAIRING_ALPHABET.length)];
   }
   return {

@@ -26,7 +26,10 @@ import { createServerClient } from '@supabase/ssr';
 // /transparency is public on purpose: it is Lyra's AI System Card - a governance/transparency
 // readout of what the AI may/never do, its guardrails, and live eval results. A transparency page
 // behind a login defeats its purpose (2026-07-27 audit V11 - the card was API-only with no surface).
-const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/welcome', '/privacy', '/support', '/terms', '/transparency', '/whats-new'];
+// /subscribe is public on purpose: it is the no-account front door to the evening AI briefing (v0.134.0) -
+// a friend given the link answers three questions and never signs in. The confirm/unsubscribe links
+// land there too.
+const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/welcome', '/privacy', '/support', '/subscribe', '/terms', '/transparency', '/whats-new'];
 // Browser-install assets must never be caught by the first-run gate. A redirect here makes the
 // manifest invalid and prevents service-worker registration for the exact fresh visitor who needs
 // the install flow.
