@@ -202,12 +202,47 @@ def test_message_layout_is_sectioned_html():
     message = dr.compose_message(facts, narration, month_to_date=0.07, budget=10, reader_zone=SYDNEY)
     assert message.startswith("📈 <b>Lyra daily read</b>\nUS session of Tue 6 Oct\nClosed 7:00am Sydney, Wed 7 Oct\n\n🧠 <b>The read</b>\nNVDA led, up 4.0% on the session.\n\nAMD dropped out of strong setup.")
     assert "🌐 <b>Market</b>\nS&amp;P 500 up 0.7% · VIX at 15.0" in message
-    assert "📊 <b>Session · 3 names</b>\n🟢 2 up · 🔴 1 down · median +1.0%\nFirst hour: 2 up · 1 down → then 1 up · 1 down into the close\n🚀 NVDA +4.0% · SNOW +1.0%\n🐌 AMD -3.0%" in message
-    assert "🎯 <b>Setups at the close · 2 strong · 0 on watch</b>\nPrevious close: 2 strong · 0 on watch\n⬆️ New strong: NVDA\n⬇️ Left strong: AMD\n❌ Invalidated: AMD\n📈 Score up: NVDA 50→82\n📉 Score down: AMD 77→45" in message
+    # AMD's fall is the session's biggest but AMD is not in the book, so no 🐌 line; three names make no group block.
+    assert "📊 <b>Session · 3 names</b>\n🟢 2 up · 🔴 1 down · median +1.0%\nFirst hour: 2 up · 1 down → then 1 up · 1 down into the close\n🚀 NVDA +4.0% · SNOW +1.0%\n\n🎯 <b>Setups" in message
+    assert "🐌" not in message and "🧩" not in message
+    assert "🎯 <b>Setups at the close · 2 strong · 0 on watch</b>\nstrong = beaten-down name turning up · watch = one forming\nPrevious close: 2 strong · 0 on watch\n⬆️ New strong: NVDA\n⬇️ Left strong: AMD\n❌ Invalidated: AMD\n📈 Firming: NVDA\n📉 Fading: AMD" in message
+    assert "50→82" not in message, "score deltas mean nothing to the reader - names only"
     assert "💼 <b>Your book</b>\nNVDA +4.0% session · score 82 strong setup\nQQQ · not scanned" in message
     assert message.endswith("🤖 Claude Opus 5.5 at high effort · $0.038 this read · $0.07 of $10 this month\nResearch, not advice.")
     figures_only = dr.compose_message(facts, dr.Narration(None, "claude-opus-5-5", "high", note="no Anthropic API key is configured", reason="no_key"), month_to_date=0, budget=10, reader_zone=SYDNEY)
-    assert "<b>The read</b>" not in figures_only and figures_only.endswith("🤖 Figures only today - no Anthropic API key is configured.\nResearch, not advice.")
+    assert "<b>The read</b>" not in figures_only and "🤖" not in figures_only
+    assert "Closed 7:00am Sydney, Wed 7 Oct\n\n🧠 <b>No read tonight</b>\nNo Anthropic API key is configured. The figures below are the engine's own.\n\n🌐" in figures_only, "the reason sits where it is read, not in the footer"
+    assert figures_only.endswith("QQQ · not scanned\n\nResearch, not advice.")
+
+
+def test_groups_are_called_out_with_their_drivers_and_the_books_thread():
+    flat7 = ["no_signal"] * 7
+    rows = [
+        _row("NVDA", "semiconductor", [102, 102, 103, 103, 103, 104, 104], [50] * 7, flat7),  # +4.0%
+        _row("AMD", "semiconductor", [101] * 7, [50] * 7, flat7),  # +1.0%
+        _row("INTC", "semiconductor", [99, 99, 98, 98, 98, 98, 98], [50] * 7, flat7),  # -2.0%
+        _row("SNOW", "software", [99] * 7, [50] * 7, flat7),  # -1.0%
+        _row("CRM", "software", [100] * 7, [50] * 7, flat7),  # flat
+        _row("NOW", "software", [98, 98, 98, 98, 98, 98, 97], [50] * 7, flat7),  # -3.0%
+    ]
+    facts = dr.build_facts(rows, _settings())
+    assert [(g.category, round(g.mean_pct, 1), g.names, g.up, g.down) for g in facts.group_moves] == [("semiconductor", 1.0, 3, 2, 1), ("software", -1.3, 3, 0, 2)]
+    assert facts.group_moves[0].leader.symbol == "NVDA" and facts.group_moves[0].laggard.symbol == "INTC"
+    assert facts.group_moves[1].leader is None, "a flat name does not lead a group"
+    assert facts.group_moves[1].laggard.symbol == "NOW"
+
+    sheet = dr.build_sheet(facts)
+    assert "By group on the session, best to worst: semiconductors up 1.0% on average, 2 of 3 names up, led by NVDA up 4.0%, weighed by INTC down 2.0%; software down 1.3% on average, 0 of 3 names up, weighed by NOW down 3.0%." in sheet.text
+    assert "4.0%" in sheet.by_symbol["NVDA"] and "2.0%" in sheet.by_symbol["INTC"] and {"1.0%", "1.3%", "3"} <= sheet.general_figures
+
+    facts.holdings = dr.holdings_facts([{"symbol": "NVDA"}, {"symbol": "NOW"}], [], facts)
+    sheet = dr.build_sheet(facts)
+    assert "The groups the reader's holdings sit in: semiconductors (NVDA) up 1.0% on average, software (NOW) down 1.3% on average." in sheet.text
+    message = dr.compose_message(facts, None, month_to_date=0, budget=10, reader_zone=SYDNEY)
+    assert "🚀 NVDA +4.0% · AMD +1.0%\n🐌 NOW -3.0% · in your book" in message, "a fall is news only when it is the reader's"
+    assert "SNOW -1.0%" not in message and "INTC -2.0%" not in message.split("🧩")[0]
+    assert "🧩 <b>By group</b>\nsemiconductors +1.0% · 2/3 up · NVDA +4.0% led · INTC -2.0% weighed\nsoftware -1.3% · 0/3 up · NOW -3.0% weighed" in message
+    assert message.endswith("💼 <b>Your book</b>\nNOW -3.0% session · score 50 no signal\nNVDA +4.0% session · score 50 no signal\n🧵 Sits in semiconductors +1.0% · software -1.3%\n\nResearch, not advice.")
 
 
 # ------------------------------------------------------------------------------------------
@@ -350,7 +385,7 @@ def test_run_sends_the_figures_when_the_ai_cannot_run(harness, monkeypatch):
     assert dr.run(now=EVENING) == 0
     assert harness.calls == []
     message = harness.sent[0]["message"]
-    assert "🤖 Figures only today - no Anthropic API key is configured." in message and "<b>The read</b>" not in message
+    assert "🧠 <b>No read tonight</b>\nNo Anthropic API key is configured." in message and "<b>The read</b>" not in message
     assert harness.db["stock_scanner_runs"][0]["payload"]["reason"] == "no_key"
 
 
@@ -364,7 +399,7 @@ def test_run_counts_the_hourly_reads_spend_and_stops_at_the_budget(harness, monk
     monkeypatch.setenv("SUMMARY_FORCE", "true")
     assert dr.run(now=EVENING + timedelta(minutes=5)) == 0
     assert len(harness.calls) == 1, "over budget: no model call"
-    assert "this month's $10 AI budget is used up" in harness.sent[1]["message"]
+    assert "🧠 <b>No read tonight</b>\nThis month's $10 AI budget is used up" in harness.sent[1]["message"]
 
 
 def test_run_pages_when_telegram_fails_and_retries_the_session(harness):

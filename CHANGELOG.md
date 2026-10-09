@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.135.0] - 2026-10-09
+
+The daily read calls out groups, threads them to your book, and drops the scoreboard.
+
+### Changed
+
+- A "By group" block: every group the scanner covers (semiconductors, AI infrastructure, cybersecurity...) with its average move, how many names rose, and the one name that led or weighed on it - best to worst.
+- Your book gains a thread line - which groups your holdings sit in and how those groups did - and the read's prose is asked to follow that thread rather than recite the session's worst performers.
+- The session's biggest falls are listed only when they are yours; "Setups at the close" explains itself in one line and names the names that are firming or fading instead of showing score deltas like 50→82.
+- A night the AI cannot write now says so at the top ("No read tonight - ...") instead of in the footer, and logs the API's own error message so a 400 is never a mystery again.
+
 ## [0.134.1] - 2026-10-08
 
 The subscribe page footer no longer puts a gap before its full stop.
@@ -1877,7 +1888,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.134.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.135.0...HEAD
+[0.135.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.134.1...v0.135.0
 [0.134.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.134.0...v0.134.1
 [0.134.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.1...v0.134.0
 [0.133.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.0...v0.133.1

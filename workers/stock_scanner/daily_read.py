@@ -126,7 +126,7 @@ Rules that code checks after you write - a sentence that breaks one is deleted b
 4. No advice and no predictions: nothing about what to buy, sell, hold, add, trim, wait for or expect next. Describe what happened and what it means for the setups Lyra tracks.
 5. Do not mention the time, the date or these rules.
 
-Write five to eight short sentences of plain prose that read well on a phone, in three short paragraphs separated by a blank line: first what the session did and what it adds up to (its shape from the open to the close, the breadth, the leaders and laggards, the backdrop where the facts support it); then the setups, in Lyra's terms (what changed and what it means); then the reader's book, only if the facts include it. No headings, no bullets, no markdown, no emoji, no preamble, no sign-off. Lead with the single most important thing about the session. Interpret more than you recite: every figure already sits in the block under your text, so quote only the few that carry the point. The reader knows how Lyra works - explain the score only when the session's change needs it. If the session was quiet, say so briefly instead of padding."""
+Write five to eight short sentences of plain prose that read well on a phone, in three short paragraphs separated by a blank line: first what the session did and what it adds up to (its shape from the open to the close, the breadth, which groups moved and the names that drove them, the backdrop where the facts support it); then the setups, in Lyra's terms (what changed and what it means); then the reader's book, only if the facts include it - what each holding did and where it sits among the groups that moved, so the reader has a thread from the market to what they own. Groups and the reader's names matter; a list of the session's worst performers does not. No headings, no bullets, no markdown, no emoji, no preamble, no sign-off. Lead with the single most important thing about the session. Interpret more than you recite: every figure already sits in the block under your text, so quote only the few that carry the point. The reader knows how Lyra works - explain the score only when the session's change needs it. If the session was quiet, say so briefly instead of padding."""
 
 
 # --------------------------------------------------------------------------------------------
@@ -312,6 +312,21 @@ class BookLine:
         return f"{self.symbol} " + " · ".join(parts)
 
 
+@dataclass(frozen=True)
+class GroupMove:
+    """One of the scanner's groups (its category) over the session: the average, the breadth, and
+    the single name that led or weighed on it. The founder asked for groups, not lists of names
+    (2026-10-08): "call out groups ... and which companies they are"."""
+
+    category: str
+    mean_pct: float
+    names: int
+    up: int
+    down: int
+    leader: TickerSession | None = None  # biggest gain in the group, when it is a real move
+    laggard: TickerSession | None = None  # biggest fall in the group, when it is a real move
+
+
 @dataclass
 class SessionFacts:
     session: date
@@ -332,6 +347,7 @@ class SessionFacts:
     leaders: list[TickerSession]
     laggards: list[TickerSession]
     groups: list[tuple[str, float, int]]  # (category, mean session move, names)
+    group_moves: list[GroupMove]  # the same groups with breadth and drivers, best to worst
     status_counts: dict[str, int]
     prior_strong: int
     prior_watch: int
@@ -387,14 +403,28 @@ def build_facts(rows: list[dict[str, Any]], settings: Settings) -> SessionFacts 
     lates = [t.late_pct for t in tickers if t.late_pct is not None]
     by_day = sorted(moves, key=lambda t: t.day_pct, reverse=True)
 
-    grouped: dict[str, list[float]] = {}
+    grouped: dict[str, list[TickerSession]] = {}
     for ticker in moves:
-        grouped.setdefault(ticker.category, []).append(ticker.day_pct)
+        grouped.setdefault(ticker.category, []).append(ticker)
     groups = sorted(
-        ((category, statistics.fmean(values), len(values)) for category, values in grouped.items() if len(values) >= 3),
+        ((category, statistics.fmean(t.day_pct for t in members), len(members)) for category, members in grouped.items() if len(members) >= 3),
         key=lambda group: group[1],
         reverse=True,
     )
+    group_moves: list[GroupMove] = []
+    for category, mean, names in groups:
+        members = sorted(grouped[category], key=lambda t: t.day_pct, reverse=True)
+        group_moves.append(
+            GroupMove(
+                category=category,
+                mean_pct=mean,
+                names=names,
+                up=sum(1 for t in members if t.day_pct >= FLAT_BAND_PCT),
+                down=sum(1 for t in members if t.day_pct <= -FLAT_BAND_PCT),
+                leader=members[0] if members[0].day_pct >= FLAT_BAND_PCT else None,
+                laggard=members[-1] if members[-1].day_pct <= -FLAT_BAND_PCT else None,
+            )
+        )
 
     strong, watch = settings.alert_score_threshold, settings.watchlist_score_threshold
 
@@ -434,6 +464,7 @@ def build_facts(rows: list[dict[str, Any]], settings: Settings) -> SessionFacts 
         leaders=[t for t in by_day[:3] if t.day_pct >= FLAT_BAND_PCT],
         laggards=[t for t in reversed(by_day[-3:]) if t.day_pct <= -FLAT_BAND_PCT],
         groups=groups,
+        group_moves=group_moves,
         status_counts=dict(Counter(t.status for t in tickers)),
         prior_strong=sum(1 for t in tickers if was_strong(t)),
         prior_watch=sum(1 for t in tickers if was_watch_or_better(t) and not was_strong(t)),
@@ -586,12 +617,16 @@ def build_sheet(facts: SessionFacts) -> FactSheet:
         say("Biggest gains on the session: " + ", ".join(sheet.about(t.symbol, f"{t.symbol} {move_words(t.day_pct)}") for t in facts.leaders) + ".")
     if facts.laggards:
         say("Biggest falls on the session: " + ", ".join(sheet.about(t.symbol, f"{t.symbol} {move_words(t.day_pct)}") for t in facts.laggards) + ".")
-    if facts.groups:
-        say(
-            "Average move on the session by group: "
-            + ", ".join(general(f"{group_name(category)} {move_words(mean)} ({count} names)") for category, mean, count in facts.groups)
-            + "."
-        )
+    if facts.group_moves:
+        parts = []
+        for group in facts.group_moves:
+            text = general(f"{group_name(group.category)} {move_words(group.mean_pct)} on average, {group.up} of {group.names} names up")
+            if group.leader is not None:
+                text += ", led by " + sheet.about(group.leader.symbol, f"{group.leader.symbol} {move_words(group.leader.day_pct)}")
+            if group.laggard is not None:
+                text += ", weighed by " + sheet.about(group.laggard.symbol, f"{group.laggard.symbol} {move_words(group.laggard.day_pct)}")
+            parts.append(text)
+        say("By group on the session, best to worst: " + "; ".join(parts) + ".")
 
     counts = facts.status_counts
     say(
@@ -622,9 +657,24 @@ def build_sheet(facts: SessionFacts) -> FactSheet:
         say(f"Market backdrop: {backdrop}.")
     if facts.holdings:
         say("The reader's holdings: " + "; ".join(sheet.about(line.symbol, line.sheet_text()) for line in facts.holdings) + ".")
+        thread = book_groups(facts)
+        if thread:
+            say("The groups the reader's holdings sit in: " + ", ".join(general(f"{group_name(group.category)} ({', '.join(symbols)}) {move_words(group.mean_pct)} on average") for group, symbols in thread) + ".")
     if facts.watchlist:
         say("On the reader's watchlist, at or near a trigger: " + "; ".join(sheet.about(line.symbol, line.sheet_text()) for line in facts.watchlist) + ".")
     return sheet
+
+
+def book_groups(facts: SessionFacts) -> list[tuple[GroupMove, list[str]]]:
+    """The thread from the reader's book to the session: each group a scanned holding sits in,
+    with the holdings in it, in the groups' best-to-worst order."""
+    category_of = {t.symbol: t.category for t in facts.tickers}
+    held: dict[str, list[str]] = {}
+    for line in facts.holdings:
+        category = category_of.get(line.symbol)
+        if category is not None:
+            held.setdefault(category, []).append(line.symbol)
+    return [(group, held[group.category]) for group in facts.group_moves if group.category in held]
 
 
 # --------------------------------------------------------------------------------------------
@@ -659,15 +709,31 @@ def figure_sections(facts: SessionFacts) -> list[str]:
         lines.append(_h(shape))
     if facts.leaders:
         lines.append(_h("🚀 " + " · ".join(f"{t.symbol} {fmt_pct(t.day_pct)}" for t in facts.leaders)))
-    if facts.laggards:
-        lines.append(_h("🐌 " + " · ".join(f"{t.symbol} {fmt_pct(t.day_pct)}" for t in facts.laggards)))
-    if len(facts.groups) >= 2:
-        best, worst = facts.groups[0], facts.groups[-1]
-        lines.append(_h(f"🧩 {group_name(best[0])} {fmt_pct(best[1])} best · {group_name(worst[0])} {fmt_pct(worst[1])} worst"))
+    # The session's biggest falls are only news when they are the reader's: "here's the bottom
+    # five - who cares" (founder, 2026-10-08). A fall in the book or on the watchlist still shows.
+    book = {line.symbol for line in facts.holdings} | {line.symbol for line in facts.watchlist}
+    own_falls = [t for t in facts.laggards if t.symbol in book]
+    if own_falls:
+        lines.append(_h("🐌 " + " · ".join(f"{t.symbol} {fmt_pct(t.day_pct)}" for t in own_falls) + " · in your book"))
     sections.append("\n".join(lines))
+
+    # Groups, not lists: every group with enough names, best to worst, with breadth and the one
+    # name that led or weighed on it - so the reader sees which parts of the market moved.
+    if len(facts.group_moves) >= 2:
+        lines = ["🧩 " + _b("By group")]
+        for group in facts.group_moves:
+            line = f"{group_name(group.category)} {fmt_pct(group.mean_pct)} · {group.up}/{group.names} up"
+            if group.leader is not None:
+                line += f" · {group.leader.symbol} {fmt_pct(group.leader.day_pct)} led"
+            if group.laggard is not None:
+                line += f" · {group.laggard.symbol} {fmt_pct(group.laggard.day_pct)} weighed"
+            lines.append(_h(line))
+        sections.append("\n".join(lines))
 
     counts = facts.status_counts
     lines = ["🎯 " + _b(f"Setups at the close · {counts.get('strong_setup', 0)} strong · {counts.get('watchlist_setup', 0)} on watch")]
+    # One line of meaning under the heading: the raw scores meant nothing to the reader (2026-10-08).
+    lines.append(_h("strong = beaten-down name turning up · watch = one forming"))
     lines.append(_h(f"Previous close: {facts.prior_strong} strong · {facts.prior_watch} on watch"))
     for mark, label, items in (
         ("⬆️", "New strong", facts.newly_strong),
@@ -678,10 +744,12 @@ def figure_sections(facts: SessionFacts) -> list[str]:
         if items:
             shown = ", ".join(item.symbol for item in items[:4]) + (f" +{len(items) - 4}" if len(items) > 4 else "")
             lines.append(_h(f"{mark} {label}: {shown}"))
-    for mark, label, items in (("📈", "Score up", facts.score_risers), ("📉", "Score down", facts.score_fallers)):
+    # Names only: "NVDA 50→82" is a score delta nobody outside the engine can read. The scores
+    # stay in the facts the model is given, and in the reader's own book lines.
+    for mark, label, items in (("📈", "Firming", facts.score_risers), ("📉", "Fading", facts.score_fallers)):
         if items:
-            lines.append(_h(f"{mark} {label}: " + " · ".join(f"{i.symbol} {round(i.previous_score)}→{round(i.score)}" for i in items)))
-    if len(lines) == 2:
+            lines.append(_h(f"{mark} {label}: " + ", ".join(i.symbol for i in items)))
+    if len(lines) == 3:
         lines.append("No status changes over the session")
     sections.append("\n".join(lines))
 
@@ -689,6 +757,9 @@ def figure_sections(facts: SessionFacts) -> list[str]:
         lines = ["💼 " + _b("Your book")]
         lines += [_h(line.reader_text()) for line in facts.holdings]
         lines += [_h("🔔 " + line.reader_text()) for line in facts.watchlist]
+        thread = book_groups(facts)
+        if thread:
+            lines.append(_h("🧵 Sits in " + " · ".join(f"{group_name(group.category)} {fmt_pct(group.mean_pct)}" for group, _symbols in thread)))
         sections.append("\n".join(lines))
     return sections
 
@@ -778,6 +849,9 @@ def narrate(sheet: FactSheet, *, model: str, effort: str) -> Narration:
         return Narration(None, model, effort, note="the Anthropic API was rate limited", reason="rate_limit")
     except anthropic.APIStatusError as exc:
         reason, note = api_failure(exc)
+        # The status and the API's own message (no key in it) - without this line a 400 on
+        # 2026-10-08 was logged as "api_400" with nothing to say which 400 it was.
+        LOGGER.warning("Anthropic API error %s: %s", getattr(exc, "status_code", "?"), str(exc)[:200])
         return Narration(None, model, effort, note=note, reason=reason)
     except anthropic.APIConnectionError:
         return Narration(None, model, effort, note="the Anthropic API could not be reached", reason="connection")
@@ -900,16 +974,19 @@ def compose_message(
     sections = ["\n".join(head)]
     if narration and narration.text:
         sections.append("🧠 " + _b("The read") + "\n" + _h(narration.text))
+    else:
+        # Say it where it will be seen: a figures-only night read as "intense numbers" to the
+        # reader (2026-10-08) because the footer explaining why went unnoticed.
+        why = (narration.note if narration and narration.note else "the AI could not write tonight").strip().rstrip(".")
+        sections.append("🧠 " + _b("No read tonight") + "\n" + _h(why[0].upper() + why[1:] + ". The figures below are the engine's own."))
     sections += figure_sections(facts)
 
     if narration and narration.text:
         model_name = MODEL_NAMES.get(narration.model, narration.model)
         footer = f"🤖 {model_name} at {narration.effort} effort · ${narration.cost_usd:.3f} this read · ${month_to_date:.2f} of ${budget:.0f} this month"
-    elif narration and narration.note:
-        footer = f"🤖 Figures only today - {narration.note}."
+        sections.append(_h(footer) + "\n" + _h("Research, not advice."))
     else:
-        footer = "🤖 Figures only today."
-    sections.append(_h(footer) + "\n" + _h("Research, not advice."))
+        sections.append(_h("Research, not advice."))
     return "\n\n".join(sections)
 
 

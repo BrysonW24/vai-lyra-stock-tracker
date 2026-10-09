@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.135.0',
+    date: '2026-10-09',
+    title: 'The daily read calls out groups, threads them to your book, and drops the scoreboard',
+    highlights: [
+      'A "By group" block: every group the scanner covers (semiconductors, AI infrastructure, cybersecurity...) with its average move, how many names rose, and the one name that led or weighed on it - best to worst.',
+      'Your book gains a thread line - which groups your holdings sit in and how those groups did - and the read\'s prose is asked to follow that thread rather than recite the session\'s worst performers.',
+      'The session\'s biggest falls are listed only when they are yours; "Setups at the close" explains itself in one line and names the names that are firming or fading instead of showing score deltas like 50→82.',
+      'A night the AI cannot write now says so at the top ("No read tonight - ...") instead of in the footer, and logs the API\'s own error message so a 400 is never a mystery again.',
+    ],
+  },
+  {
     version: '0.134.1',
     date: '2026-10-08',
     title: 'The subscribe page footer no longer puts a gap before its full stop',
