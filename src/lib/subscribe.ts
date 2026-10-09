@@ -2,8 +2,9 @@
  * The subscribe-by-link flow's shapes and pure rules - client-safe (the form imports this; the
  * signing, the store and the senders live in subscribe-server.ts / subscribe-store.ts).
  *
- * Three questions, no account: what you hold, which topics, where to send it. Topics mirror the
- * worker's briefing categories (workers/stock_scanner/briefing_guard.py CATEGORIES) plus
+ * Three questions, no account: what you hold, which topics, where to send it. Topics are the
+ * briefing's own spine - the app's theme slugs (src/lib/generated/themes.json) and the four
+ * standing desks (workers/stock_scanner/briefing_guard.py THEMES / STANDING_DESKS) - plus
  * 'holdings' = only the items that touch what I hold. Holdings are symbols as typed; the worker
  * matches them against each item's ticker and Lyra tags - nothing here looks a symbol up or
  * prices it, so a typo costs nothing and invents nothing.
@@ -12,15 +13,25 @@
 export type SubscribeChannel = 'telegram' | 'email';
 
 export const SUBSCRIBE_TOPICS = [
-  { id: 'ai_release', label: 'AI releases', blurb: 'New models and products from the labs' },
-  { id: 'investment', label: 'Deals and listings', blurb: 'Funding, M&A, IPOs, earnings, contracts' },
-  { id: 'infrastructure', label: 'Infrastructure', blurb: 'Chips, memory, networking, data centres, power' },
-  { id: 'emerging', label: 'Emerging companies', blurb: 'Private names worth knowing before they list' },
-  { id: 'developer', label: 'Developer tools', blurb: 'APIs, agents and platforms builders use' },
-  { id: 'holdings', label: 'Just my holdings', blurb: 'Only the items that touch what I hold' },
+  { id: 'agi-infrastructure', group: 'theme', label: 'AI labs and infrastructure', blurb: 'The labs, model releases, hyperscaler capex, data centres' },
+  { id: 'semiconductors', group: 'theme', label: 'Semiconductors', blurb: 'Chips, memory, networking, equipment' },
+  { id: 'power-grid', group: 'theme', label: 'Power grid', blurb: 'Electricity, cooling and grid gear for the buildout' },
+  { id: 'nuclear-uranium', group: 'theme', label: 'Nuclear and uranium', blurb: 'Reactors, fuel, and the deals that fund them' },
+  { id: 'critical-minerals', group: 'theme', label: 'Critical minerals', blurb: 'The materials technology needs and who controls them' },
+  { id: 'robotics-automation', group: 'theme', label: 'Robotics and automation', blurb: 'Robots, autonomy, humanoids, industrial automation' },
+  { id: 'quantum-computing', group: 'theme', label: 'Quantum computing', blurb: 'Hardware, error correction, customers' },
+  { id: 'space-economy', group: 'theme', label: 'Space economy', blurb: 'Launch, satellites, in-orbit services' },
+  { id: 'defence-drones', group: 'theme', label: 'Defence and drones', blurb: 'Defence technology and the contracts behind it' },
+  { id: 'cybersecurity', group: 'theme', label: 'Cybersecurity', blurb: 'Security products, breaches that move markets, consolidation' },
+  { id: 'ipo', group: 'desk', label: 'IPOs and filings', blurb: 'Filings, new listings, pricing - two lines even on a quiet night' },
+  { id: 'venture', group: 'desk', label: 'Venture', blurb: 'Private rounds and valuations' },
+  { id: 'government', group: 'desk', label: 'Government money', blurb: 'Contracts, grants, programmes, policy money' },
+  { id: 'small_cap', group: 'desk', label: 'Small caps', blurb: 'Small listed companies with a concrete development' },
+  { id: 'holdings', group: 'holdings', label: 'Just my holdings', blurb: 'Only the items that touch what I hold' },
 ] as const;
 
 export type SubscribeTopic = (typeof SUBSCRIBE_TOPICS)[number]['id'];
+export type SubscribeTopicGroup = (typeof SUBSCRIBE_TOPICS)[number]['group'];
 
 const TOPIC_IDS: ReadonlySet<string> = new Set(SUBSCRIBE_TOPICS.map((topic) => topic.id));
 
@@ -69,7 +80,7 @@ export function telegramDeepLink(botUsername: string, token: string): string {
 
 /** Plain-language summary of a subscription for confirmation copy. */
 export function describeSubscription(topics: readonly string[], holdings: readonly string[]): string {
-  const labels = SUBSCRIBE_TOPICS.filter((topic) => topics.includes(topic.id)).map((topic) => topic.label.toLowerCase());
-  const what = labels.length ? labels.join(', ') : 'everything in the briefing';
+  const labels = SUBSCRIBE_TOPICS.filter((topic) => topics.includes(topic.id)).map((topic) => topic.label);
+  const what = labels.length ? labels.join(', ') : 'every theme and every desk';
   return holdings.length ? `${what}, with ${holdings.join(', ')} flagged first` : what;
 }

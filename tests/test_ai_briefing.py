@@ -26,7 +26,8 @@ TER_TEXT = "Teradyne expanded Titan HP with burn-in testing. Second-quarter reve
 def _item(**overrides) -> dict:
     base = {
         "headline": "Constellation (Nasdaq: CEG)",
-        "category": "infrastructure",
+        "theme": "nuclear-uranium",
+        "desk": "news",
         "listed": True,
         "exchange": "Nasdaq",
         "ticker": "CEG",
@@ -62,10 +63,11 @@ def test_canonical_url_gives_one_spelling_per_page():
 
 
 def test_parse_items_keeps_only_the_right_shape():
-    items = bg.parse_items([_item(), _item(category="gossip"), _item(what_happened=""), "text", _item(sources=[{"url": "nope"}])])
-    assert [item.headline for item in items] == ["Constellation (Nasdaq: CEG)", "Constellation (Nasdaq: CEG)"]
-    assert items[1].sources == (), "a source that is not a web address is dropped, the item keeps its shape"
-    assert items[0].lyra_symbols == ("CEG", "NVDA") and items[0].ticker == "CEG"
+    items = bg.parse_items([_item(), _item(theme="gossip", desk="rumour"), _item(what_happened=""), "text", _item(sources=[{"url": "nope"}])])
+    assert [item.headline for item in items] == ["Constellation (Nasdaq: CEG)"] * 3
+    assert (items[1].theme, items[1].desk) == ("other", "news"), "a label is never a reason to lose a checked item"
+    assert items[2].sources == (), "a source that is not a web address is dropped, the item keeps its shape"
+    assert items[0].lyra_symbols == ("CEG", "NVDA") and items[0].ticker == "CEG" and (items[0].theme, items[0].desk) == ("nuclear-uranium", "news")
     labelled = bg.parse_item(_item(headline="Reflection AI previews Beam (private)", listed=False, ticker=""))
     assert labelled.headline == "Reflection AI previews Beam", "Lyra labels private items itself; the model's label would show twice"
 
@@ -168,8 +170,16 @@ def _fetch_block(url, text):
     return SimpleNamespace(type="web_fetch_tool_result", content=SimpleNamespace(type="web_fetch_result", url=url, content=document))
 
 
-def _publish_block(items, ipo_note="No additional primary-confirmed IPO made the cut this evening."):
-    return SimpleNamespace(type="tool_use", name="publish_briefing", input={"items": items, "ipo_note": ipo_note, "searched": "AI releases, filings, power deals."})
+DESK_NOTES = {
+    "ipo": "No additional primary-confirmed IPO made the cut this evening.",
+    "venture": "No round with an original announcement surfaced.",
+    "government": "Nothing new on contracts tonight.",
+    "small_cap": "No small-cap development with a source of its own.",
+}
+
+
+def _publish_block(items, desk_notes=None):
+    return SimpleNamespace(type="tool_use", name="publish_briefing", input={"items": items, "desk_notes": DESK_NOTES if desk_notes is None else desk_notes, "searched": "AI releases, filings, power deals."})
 
 
 @pytest.fixture
@@ -208,7 +218,7 @@ def test_research_harvests_sources_resumes_a_paused_turn_and_prices_the_searches
     assert (result.searches, result.fetches, result.continuations) == (4, 1, 1)
     assert (result.input_tokens, result.output_tokens) == (20_000, 4_000), "every continuation re-reads the context and is paid for"
     assert result.cost_usd == pytest.approx(20_000 * 4 / 1e6 + 4_000 * 20 / 1e6 + 4 * 0.01)
-    assert result.ipo_note.startswith("No additional") and result.searched
+    assert result.desk_notes["ipo"].startswith("No additional") and result.desk_notes["government"] == "Nothing new on contracts tonight." and result.searched
     first, second = sdk.calls
     assert first["tools"][0]["type"] == "web_search_20260209" and first["tools"][0]["max_uses"] == 16
     assert first["tools"][1]["type"] == "web_fetch_20260209" and first["tools"][1]["max_uses"] == 10
@@ -288,7 +298,7 @@ def test_research_reports_the_cache_split_on_the_result(sdk):
 
 
 def _research(items, **overrides):
-    base = dict(ipo_note="No additional primary-confirmed IPO made the cut this evening.", seen=_seen(CEG, TER, SAP), fetched={bg.canonical_url(url): CEG_TEXT + " " + TER_TEXT for url in (CEG, TER, SAP)}, searches=14, fetches=6, input_tokens=180_000, output_tokens=9_000, cost_usd=1.04)
+    base = dict(desk_notes={**DESK_NOTES, "venture": "", "small_cap": ""}, seen=_seen(CEG, TER, SAP), fetched={bg.canonical_url(url): CEG_TEXT + " " + TER_TEXT for url in (CEG, TER, SAP)}, searches=14, fetches=6, input_tokens=180_000, output_tokens=9_000, cost_usd=1.04)
     base.update(overrides)
     return ab.Research(items, **base)
 
@@ -296,27 +306,61 @@ def _research(items, **overrides):
 def test_compose_messages_is_html_safe_and_splits_at_item_boundaries():
     items = [bg.parse_item(_item(headline=f"Item {n} & Co (Nasdaq: CEG)")) for n in range(4)]
     research = _research(items)
-    one = ab.compose_messages(items, day_label="Wed 7 Oct", ipo_note=research.ipo_note, research=research, removed=1, removed_categories=["unseen source"], month_to_date=1.04, budget=40)
+    one = ab.compose_messages(items, day_label="Wed 7 Oct", desk_notes=research.desk_notes, research=research, removed=1, removed_categories=["unseen source"], month_to_date=1.04, budget=40)
     assert len(one) == 1
     text = one[0]
-    assert text.startswith("🗞️ <b>Lyra AI briefing</b> · Wed 7 Oct\n<i>4 items checked against their original sources: 4 infrastructure.</i>\n\n⚡ <b>Item 0 &amp; Co (Nasdaq: CEG)</b>\n")
+    assert text.startswith("🗞️ <b>Lyra AI briefing</b> · Wed 7 Oct\n<i>4 items checked against their original sources: 4 Nuclear and uranium.</i>\n\n☢️ <b>Nuclear and uranium</b>\n\n☢️ <b>Item 0 &amp; Co (Nasdaq: CEG)</b>\n")
     assert '<a href="https://www.constellationenergy.com/newsroom/2026/google-agreement.html">Constellation</a>' in text
     assert "<i>Why it matters:</i>" in text and "<i>Risks:</i>" in text and "<i>Not disclosed:</i>" in text
-    assert "🚀 <b>IPOs:</b> No additional primary-confirmed IPO" in text
+    # Every standing desk prints every night: the model's note, or the default when it wrote none.
+    assert "📜 <b>IPOs and filings:</b> No additional primary-confirmed IPO" in text and "🏛️ <b>Government money:</b> Nothing new on contracts tonight." in text
+    assert "💸 <b>Venture:</b> Nothing new found tonight." in text and "🔬 <b>Small caps:</b> Nothing new found tonight." in text
+    assert text.index("<b>Item 3") < text.index("📜 <b>IPOs"), "themes first, the desks after"
     assert text.endswith("🤖 Claude Opus 5.5 at high effort · 14 searches, 6 pages opened · $1.04 this briefing · $1.04 of $40 this month\nLyra's checks removed 1 item (unseen source).\nResearch, not advice.")
 
-    parts = ab.compose_messages(items, day_label="Wed 7 Oct", ipo_note=research.ipo_note, research=research, removed=0, removed_categories=[], month_to_date=1.04, budget=40, limit=900)
+    parts = ab.compose_messages(items, day_label="Wed 7 Oct", desk_notes=research.desk_notes, research=research, removed=0, removed_categories=[], month_to_date=1.04, budget=40, limit=900)
     assert len(parts) > 1 and all(len(part) <= 900 for part in parts)
     assert parts[0].startswith("🗞️ <b>Lyra AI briefing</b>") and parts[-1].endswith("Research, not advice.")
     assert "".join(parts).count("<b>Item ") == 4, "every item survives the split"
 
 
+def test_items_are_grouped_by_theme_and_desk_items_sit_on_their_desk():
+    items = bg.parse_items(
+        [
+            _item(headline="Rocket Lab (Nasdaq: RKLB)", theme="space-economy"),
+            _item(headline="OpenAI", theme="agi-infrastructure", listed=False, ticker="", exchange=""),
+            _item(headline="Cerebras files its S-1", theme="semiconductors", desk="ipo", listed=False, ticker="", exchange=""),
+            _item(headline="Constellation (Nasdaq: CEG)"),
+        ]
+    )
+    text = ab.compose_messages(items, day_label="Wed 7 Oct", desk_notes={}, research=_research(items), removed=0, removed_categories=[], month_to_date=1.04, budget=40)[0]
+    order = [text.index(marker) for marker in ("🤖 <b>AI labs and infrastructure</b>\n\n🤖 <b>OpenAI</b>", "☢️ <b>Nuclear and uranium</b>\n\n☢️ <b>Constellation", "🚀 <b>Space economy</b>\n\n🚀 <b>Rocket Lab", "📜 <b>IPOs and filings</b>\n\n💾 <b>Cerebras files its S-1</b>")]
+    assert order == sorted(order), "the spine's order for themes; an IPO item sits on the IPO desk under its own theme's emoji"
+    assert "💾 <b>Semiconductors</b>" not in text, "a desk item is not repeated under its theme"
+    assert "<i>4 items checked against their original sources: 1 Space economy, 1 AI labs and infrastructure, 1 Semiconductors, 1 Nuclear and uranium.</i>" in text
+
+
+def test_the_briefings_themes_are_the_apps_themes():
+    import json
+    from pathlib import Path
+
+    slugs = [theme["slug"] for theme in json.loads((Path(__file__).resolve().parents[1] / "src/lib/generated/themes.json").read_text())]
+    assert set(bg.THEMES[:-1]) == set(slugs) and bg.THEMES[-1] == "other", "a theme heading in the briefing is a /themes page in the app (the reading order is the briefing's own)"
+    assert set(ab.THEME_STYLE) == set(bg.THEMES)
+
+
+def test_desk_notes_carry_no_figures_and_no_advice():
+    notes = bg.parse_desk_notes({"ipo": "Cerebras priced at US$34", "venture": "You should buy into the next round.", "government": "  Nothing new on contracts tonight. ", "small_cap": None, "stray": "x"})
+    assert notes == {"ipo": "", "venture": "", "government": "Nothing new on contracts tonight.", "small_cap": ""}
+    assert bg.parse_desk_notes("nonsense") == {"ipo": "", "venture": "", "government": "", "small_cap": ""}
+
+
 def test_router_copy_is_short_and_points_at_the_page():
     items = [bg.parse_item(_item(headline=f"Company {n} (Nasdaq: CEG)")) for n in range(5)]
     assert ab.router_title(items, "Wed 7 Oct") == "AI briefing · Wed 7 Oct: Company 0, Company 1, Company 2 + 2 more"
-    body = ab.router_body(items, "No IPO made the cut.", limit=600)
-    assert len(body) <= 600 and body.endswith("Full briefing with sources: open Lyra > AI Briefing.") and "🚀 IPOs: No IPO made the cut." in body
-    assert body.startswith("⚡ Company 0 (Nasdaq: CEG): Google signed a 20-year agreement enabling 890 MW of new nuclear capacity, plus a 15-year agreement for 2,700 MW of existing supply.\n"), "one clause per item on a push; the page has the rest"
+    body = ab.router_body(items, limit=600)
+    assert len(body) <= 600 and body.endswith("Full briefing with sources and the desks: open Lyra > AI Briefing.")
+    assert body.startswith("☢️ Company 0 (Nasdaq: CEG): Google signed a 20-year agreement enabling 890 MW of new nuclear capacity, plus a 15-year agreement for 2,700 MW of existing supply.\n"), "one clause per item on a push; the page has the rest"
 
 
 # --------------------------------------------------------------------------------------------
@@ -446,7 +490,7 @@ def test_run_resends_from_the_ledger_when_nothing_was_delivered(harness):
 
 
 def test_run_checks_the_items_and_tells_the_operator_what_was_removed(harness):
-    harness.items = [_item(), _item(headline="SAP (NYSE: SAP)", ticker="SAP", exchange="NYSE", category="investment", sources=[{"label": "SAP", "url": "https://sap.com/never-fetched"}])]
+    harness.items = [_item(), _item(headline="SAP (NYSE: SAP)", ticker="SAP", exchange="NYSE", theme="agi-infrastructure", desk="venture", sources=[{"label": "SAP", "url": "https://sap.com/never-fetched"}])]
     assert ab.run(now=EVENING) == 0
     message = harness.sent[0]["message"]
     assert "SAP (NYSE: SAP)" not in message and "Lyra's checks removed 1 item (source not opened, unseen source)." in message
@@ -522,7 +566,7 @@ def test_run_is_a_no_op_without_the_flag_or_a_destination(harness, monkeypatch):
 def test_run_serves_subscribers_their_own_copy_and_resends_only_to_those_missed(harness):
     harness.db["briefing_subscribers"] = [
         {"id": "sub-1", "token": "t1", "channel": "telegram", "telegram_chat_id": "777", "topics": ["holdings"], "holdings": ["NVDA"], "status": "active", "sent_count": 0},
-        {"id": "sub-2", "token": "t2", "channel": "email", "email": "friend@example.com", "topics": ["ai_release"], "holdings": [], "status": "active", "sent_count": 3},
+        {"id": "sub-2", "token": "t2", "channel": "email", "email": "friend@example.com", "topics": ["agi-infrastructure"], "holdings": [], "status": "active", "sent_count": 3},
     ]
     # First firing: every channel is down - the operator's chat, the router, the app bot and Resend.
     harness.telegram_result = TelegramResult(sent_status="failed", error_message="Telegram API HTTP 502")
@@ -546,7 +590,8 @@ def test_run_serves_subscribers_their_own_copy_and_resends_only_to_those_missed(
     assert len(telegram) == 2 and telegram[-1]["token"] == "app-bot" and telegram[-1]["parse_mode"] == "HTML", "the app's bot, not the operator's"
     message = telegram[-1]["message"]
     assert message.startswith("🗞️ <b>Lyra AI briefing</b> · Wed 7 Oct\n<i>1 item touches your holdings (NVDA).</i>")
-    assert "📌 <b>Your holdings</b>\n\n⚡ <b>Constellation (Nasdaq: CEG)</b>" in message and message.endswith("Reply STOP to unsubscribe · Research, not advice.")
+    assert "📌 <b>Your holdings</b>\n\n☢️ <b>Constellation (Nasdaq: CEG)</b>" in message and message.endswith("Reply STOP to unsubscribe · Research, not advice.")
+    assert "📜 <b>IPOs" not in message, "just my holdings: no desks either"
     assert len(harness.emails) == 2 and harness.emails[-1]["to"] == "friend@example.com" and harness.emails[-1]["api_key"] == "re_test"
     assert harness.emails[-1]["subject"] == "Lyra AI briefing · Wed 7 Oct: Constellation"
     assert "https://lyra.example/api/subscribe/unsubscribe?id=sub-2&amp;sig=" in harness.emails[-1]["html_body"]

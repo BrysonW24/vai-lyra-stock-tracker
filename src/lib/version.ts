@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.136.0',
+    date: '2026-10-09',
+    title: 'The AI briefing gets a spine: the app\'s themes, four standing desks, and topics to match',
+    highlights: [
+      'The briefing is organised by the themes Lyra already tracks - AI labs and infrastructure, semiconductors, power grid, nuclear and uranium, critical minerals, robotics, quantum, space, defence, cybersecurity - and each heading is a theme page in the app.',
+      'Four standing desks print every evening, even on a quiet night: IPOs and filings, venture, government money, small caps - with the model\'s one-line note when nothing passed, never a figure that was not checked against a source.',
+      'Subscribers choose from the same themes and desks: their themes lead, and a chosen desk is the only desk they get. "Just my holdings" works as before.',
+      'Up to ten items a night across the themes and desks, from the same budget of searches and page opens.',
+    ],
+  },
+  {
     version: '0.135.0',
     date: '2026-10-09',
     title: 'The daily read calls out groups, threads them to your book, and drops the scoreboard',

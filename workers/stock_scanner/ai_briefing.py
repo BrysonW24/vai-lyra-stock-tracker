@@ -30,22 +30,28 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from workers.stock_scanner.briefing_guard import (
+    DESKS,
     MAX_ITEMS,
+    STANDING_DESKS,
+    THEMES,
     BriefingItem,
     GuardOutcome,
     canonical_url,
     guard_briefing,
+    parse_desk_notes,
     parse_items,
 )
 from workers.stock_scanner.briefing_subscribers import SubscriberOutcome, deliver_to_subscribers, load_subscribers
 from workers.stock_scanner.briefing_text import (
-    CATEGORY_STYLE,
     TELEGRAM_LIMIT,
+    THEME_STYLE,
     first_sentence as _first_sentence,
+    grouped_parts,
     h as _h,
     item_html,
     short_name as _short_name,
     split_messages,
+    theme_label,
 )
 from workers.stock_scanner.config import load_settings
 from workers.stock_scanner.daily_read import (
@@ -96,13 +102,29 @@ ROUTER_BODY_LIMIT = 1_500
 
 SYSTEM_PROMPT = """You research and write Lyra's AI briefing: one evening message for Australian private investors who follow AI and technology shares. Lyra is a research tool, not an adviser - the briefing informs, it never recommends.
 
-Sweep four areas, changing your queries to what is new rather than running a fixed list of names:
-1. AI releases - the major labs' announcements, model releases, APIs, developer tools and research.
-2. Investment events - AI-related IPO filings and new listings, funding rounds, acquisitions, earnings and major contracts.
-3. Infrastructure - chips, memory, networking, data centres, electricity and cooling, where listed companies offer exposure beyond the labs themselves.
-4. Emerging companies - businesses getting significant backing or customer traction, keeping private companies clearly apart from listed shares.
+The briefing has a spine of themes and four standing desks. Sweep the themes where something happened in the last two days - you need not touch every theme every night - and always run the four desks. Change your queries to what is new rather than running a fixed list of names.
 
-You have a fixed number of searches and page opens (stated in the brief). Plan them: three or four searches per sweep, each phrased for a specific announcement of the last two days (the kind of wording a press release, an 8-K, an S-1 or a lab's own post uses, with the date), then one search by company name and announcement title to find the original of each candidate worth an item.
+Themes - tag every item with exactly one:
+- agi-infrastructure: the frontier labs, model and product releases, hyperscaler capex, data centres and the companies building them.
+- semiconductors: chips, memory, networking, packaging and the equipment makers.
+- power-grid: electricity supply, grid equipment, cooling and transmission for the buildout.
+- nuclear-uranium: reactors, fuel, uranium supply and the deals that fund them.
+- critical-minerals: the materials technology needs - rare earths, lithium, copper, gallium - and who controls them.
+- robotics-automation: robots, autonomy, humanoids, industrial automation.
+- quantum-computing: hardware, error correction, cloud access, customers.
+- space-economy: launch, satellites, in-orbit services.
+- defence-drones: defence technology, drones, the contracts behind them.
+- cybersecurity: security products, breaches that move the market, consolidation.
+- other: a genuine AI or technology development that fits none of the above.
+
+Desks - tag an item with one when it IS that kind of event, otherwise "news":
+- ipo: IPO filings, new listings, pricing, direct listings, moves between exchanges.
+- venture: private funding rounds, valuations, secondary sales.
+- government: public contracts, grants, programmes, export rules and policy money.
+- small_cap: a small listed company with a concrete development (a contract, a result, a financing).
+For each desk, also write one sentence as its desk note for the evening - what you looked for and what you found, or that nothing new surfaced - with NO figures in it. Anything with a figure belongs in an item with a source, never in a note.
+
+You have a fixed number of searches and page opens (stated in the brief). Plan them: one or two searches per theme that is active, one per desk, each phrased for a specific announcement of the last two days (the kind of wording a press release, an 8-K, an S-1 or a lab's own post uses, with the date), then one search by company name and announcement title to find the original of each candidate worth an item.
 
 For each candidate, open the original with web_fetch: the press release itself, the investor-relations announcement, the exchange filing (SEC, ASX or another exchange), or the lab's own post for that announcement. Open ONLY that specific page. Never open a newsroom index, a homepage, a live blog, a newsletter, a daily roundup or a market wrap - they are not sources, they are long, and each one wastes a page open that a real original needed. A news article alone is not a source either. From the original establish what actually happened, whether a reader can invest in it on a public market, the pricing or valuation if it was disclosed, the next catalyst, the material risks, and what was NOT disclosed.
 
@@ -111,12 +133,12 @@ Rules:
 - Name a listed company as "Company (Exchange: TICKER)". Never attach a ticker to a private company; say it is private and not a listed investment. Do not write "(private)" or "(catch-up)" in the headline - set the listed and catch_up fields and Lyra labels the item.
 - Never recommend, rate or suggest buying, selling, holding or avoiding anything. Describe; do not advise.
 - Do not repeat anything in the already-covered list unless there is a genuinely new development since.
-- Aim for five to eight items across the four sweeps, and publish every item whose original you opened and checked - never drop a verified item. Lead with what matters most to an investor.
+- Aim for six to ten items across the themes and desks, and publish every item whose original you opened and checked - never drop a verified item. Within a theme, lead with what matters most to an investor.
 - Write for a phone: one or two plain sentences per field, no markdown, no emoji, no filler.
 
-Finish by calling publish_briefing once, with every item that passed, each citing the URL of the original you opened exactly as it appeared in your search or fetch results."""
+Finish by calling publish_briefing once, with every item that passed, each citing the URL of the original you opened exactly as it appeared in your search or fetch results, and the four desk notes."""
 
-NUDGE = "You stopped without publishing. Call publish_briefing now with every item you verified against its original source - or with an empty items list and an ipo_note saying nothing passed."
+NUDGE = "You stopped without publishing. Call publish_briefing now with every item you verified against its original source - or with an empty items list and desk notes saying nothing passed."
 
 PUBLISH_TOOL: dict[str, Any] = {
     "name": "publish_briefing",
@@ -132,7 +154,8 @@ PUBLISH_TOOL: dict[str, Any] = {
                     "type": "object",
                     "properties": {
                         "headline": {"type": "string", "description": "The company or subject; for a listed company include the exchange and ticker, e.g. 'Constellation (Nasdaq: CEG)'."},
-                        "category": {"type": "string", "enum": ["investment", "infrastructure", "ai_release", "emerging", "developer"]},
+                        "theme": {"type": "string", "enum": list(THEMES), "description": "The theme the item sits under."},
+                        "desk": {"type": "string", "enum": list(DESKS), "description": "A standing desk when the item is that kind of event (ipo, venture, government, small_cap); otherwise news."},
                         "listed": {"type": "boolean", "description": "True only when the subject itself is a listed company a reader can buy shares in."},
                         "exchange": {"type": "string", "description": "Exchange of the listed company, e.g. Nasdaq, NYSE, ASX. Empty for a private company."},
                         "ticker": {"type": "string", "description": "Ticker of the listed company. Empty for a private company."},
@@ -156,13 +179,18 @@ PUBLISH_TOOL: dict[str, Any] = {
                         "lyra_symbols": {"type": "array", "items": {"type": "string"}, "description": "Symbols from Lyra's scanned universe that this item directly concerns. Empty when none."},
                         "catch_up": {"type": "boolean", "description": "True when the development is older than the window but newly found."},
                     },
-                    "required": ["headline", "category", "listed", "what_happened", "why_it_matters", "risks", "sources"],
+                    "required": ["headline", "theme", "listed", "what_happened", "why_it_matters", "risks", "sources"],
                 },
             },
-            "ipo_note": {"type": "string", "description": "One sentence on IPO filings and listings checked this evening, e.g. 'No additional primary-confirmed IPO made the cut this evening.'"},
+            "desk_notes": {
+                "type": "object",
+                "description": "One sentence per standing desk on what was looked for and found this evening, with no figures - e.g. 'No new AI-related S-1 or pricing surfaced tonight.'",
+                "properties": {desk: {"type": "string"} for desk in STANDING_DESKS},
+                "required": list(STANDING_DESKS),
+            },
             "searched": {"type": "string", "description": "One sentence on what you searched, for the audit trail."},
         },
-        "required": ["items", "ipo_note"],
+        "required": ["items", "desk_notes"],
     },
 }
 
@@ -210,7 +238,7 @@ def research_brief(
         lines.append("")
         lines.append("Lyra's scanned universe (tag an item's lyra_symbols only from this list): " + ", ".join(universe))
     lines.append("")
-    lines.append("Run the four sweeps now, open the originals, and publish.")
+    lines.append("Run the theme sweeps and the four desks now, open the originals, and publish.")
     return "\n".join(lines)
 
 
@@ -221,7 +249,7 @@ def research_brief(
 @dataclass(frozen=True)
 class Research:
     items: list[BriefingItem]
-    ipo_note: str = ""
+    desk_notes: dict[str, str] = field(default_factory=dict)  # one line per standing desk, cleaned by the guard
     searched: str = ""
     seen: set[str] = field(default_factory=set)
     fetched: dict[str, str] = field(default_factory=dict)
@@ -448,7 +476,7 @@ def _research_once(brief: str, *, model: str, effort: str, max_searches: int, ma
     return replace(
         base,
         items=parse_items(publish.get("items")),
-        ipo_note=" ".join(str(publish.get("ipo_note") or "").split())[:300],
+        desk_notes=parse_desk_notes(publish.get("desk_notes")),
         searched=" ".join(str(publish.get("searched") or "").split())[:300],
     )
 
@@ -461,8 +489,8 @@ def _research_once(brief: str, *, model: str, effort: str, max_searches: int, ma
 def summary_line(items: list[BriefingItem]) -> str:
     counts: dict[str, int] = {}
     for item in items:
-        counts[item.category] = counts.get(item.category, 0) + 1
-    parts = [f"{count} {CATEGORY_STYLE[category][1]}" for category, count in counts.items()]
+        counts[item.theme] = counts.get(item.theme, 0) + 1
+    parts = [f"{count} {theme_label(theme)}" for theme, count in counts.items()]
     noun = "item" if len(items) == 1 else "items"
     return f"{len(items)} {noun} checked against their original sources: " + ", ".join(parts) + "."
 
@@ -471,7 +499,7 @@ def compose_messages(
     items: list[BriefingItem],
     *,
     day_label: str,
-    ipo_note: str,
+    desk_notes: dict[str, str],
     research: Research,
     removed: int,
     removed_categories: list[str],
@@ -479,12 +507,11 @@ def compose_messages(
     budget: float,
     limit: int = TELEGRAM_LIMIT,
 ) -> list[str]:
-    """The operator's HTML briefing, split at item boundaries so no message passes Telegram's limit.
-    The header stays with the first part and the footer with the last."""
+    """The operator's HTML briefing - a section per theme, then the four standing desks - split at
+    item boundaries so no message passes Telegram's limit. The header stays with the first part
+    and the footer with the last."""
     parts = [f"🗞️ <b>Lyra AI briefing</b> · {_h(day_label)}\n<i>{_h(summary_line(items))}</i>"]
-    parts.extend(item_html(item) for item in items)
-    if ipo_note:
-        parts.append(f"🚀 <b>IPOs:</b> {_h(ipo_note)}")
+    parts.extend(grouped_parts(items, desk_notes))
     footer = [
         f"🤖 {MODEL_NAMES.get(research.model, research.model)} at {research.effort} effort · {research.searches} searches, {research.fetches} pages opened"
         f" · ${research.cost_usd:.2f} this briefing · ${month_to_date:.2f} of ${budget:.0f} this month"
@@ -502,11 +529,11 @@ def router_title(items: list[BriefingItem], day_label: str) -> str:
     return f"AI briefing · {day_label}: " + ", ".join(names) + (f" + {more} more" if more > 0 else "")
 
 
-def router_body(items: list[BriefingItem], ipo_note: str, limit: int = ROUTER_BODY_LIMIT) -> str:
+def router_body(items: list[BriefingItem], limit: int = ROUTER_BODY_LIMIT) -> str:
     """The plain-text version for push and chat channels: one line per item, the deep link carries
-    the rest. The router adds the research suffix itself."""
-    item_lines = [f"{CATEGORY_STYLE[item.category][0]} {item.headline}: {_first_sentence(item.what_happened)}" for item in items]
-    tail = ([f"🚀 IPOs: {ipo_note}"] if ipo_note else []) + ["Full briefing with sources: open Lyra > AI Briefing."]
+    the rest (the desks included). The router adds the research suffix itself."""
+    item_lines = [f"{THEME_STYLE.get(item.theme, THEME_STYLE['other'])[0]} {item.headline}: {_first_sentence(item.what_happened)}" for item in items]
+    tail = ["Full briefing with sources and the desks: open Lyra > AI Briefing."]
     body = "\n".join(item_lines + tail)
     # Too long for a push: drop items from the tail end (the lead stays), never the pointer.
     while len(body) > limit and len(item_lines) > 1:
@@ -651,8 +678,9 @@ def run(now: datetime | None = None) -> int:
     if pending is not None:
         # Yesterday-evening's firing researched and could not deliver: resend from the ledger.
         kept = parse_items(pending.get("items"))
-        ipo_note = str(pending.get("ipo_note") or "")
-        research_result = Research(kept, ipo_note=ipo_note, model=str(pending.get("model") or model), effort=str(pending.get("effort") or configured_effort), searches=int(pending.get("searches") or 0), fetches=int(pending.get("fetches") or 0), reason="resend")
+        # A row stored before v0.136.0 carried an ipo_note; it becomes the IPO desk's note.
+        desk_notes = parse_desk_notes(pending.get("desk_notes") or {"ipo": pending.get("ipo_note")})
+        research_result = Research(kept, desk_notes=desk_notes, model=str(pending.get("model") or model), effort=str(pending.get("effort") or configured_effort), searches=int(pending.get("searches") or 0), fetches=int(pending.get("fetches") or 0), reason="resend")
         removed = int(pending.get("removed") or 0)
         removed_categories = [str(c) for c in (pending.get("removed_categories") or [])]
         LOGGER.info("Resending today's stored briefing (%d items) - the research is not repeated.", len(kept))
@@ -675,7 +703,7 @@ def run(now: datetime | None = None) -> int:
             research_result = research(brief, model=model, effort=effort, max_searches=max_searches, max_fetches=max_fetches)
         outcome: GuardOutcome = guard_briefing(research_result.items, seen=research_result.seen, fetched=research_result.fetched, covered=covered_urls, universe=set(universe))
         kept, removed, removed_categories = outcome.kept, len(outcome.removed), outcome.categories
-        ipo_note = research_result.ipo_note
+        desk_notes = research_result.desk_notes
         if outcome.removed:
             LOGGER.warning("guard removed %d item(s): %s", removed, ", ".join(removed_categories))
 
@@ -684,7 +712,7 @@ def run(now: datetime | None = None) -> int:
         "date": None,  # set only once something was delivered; a stored, undelivered briefing is resent
         "date_attempted": today.isoformat(),
         "items": [item.to_dict() for item in kept],
-        "ipo_note": ipo_note,
+        "desk_notes": desk_notes,
         "searched": research_result.searched,
         "published": len(research_result.items),
         "removed": removed,
@@ -716,7 +744,7 @@ def run(now: datetime | None = None) -> int:
     if operator_chat:
         send_settings = replace(settings, telegram_bot_token=bot_token, telegram_chat_id=chat_id)
         if kept:
-            messages = compose_messages(kept, day_label=day_label, ipo_note=ipo_note, research=research_result, removed=removed, removed_categories=removed_categories, month_to_date=spent_after, budget=budget)
+            messages = compose_messages(kept, day_label=day_label, desk_notes=desk_notes, research=research_result, removed=removed, removed_categories=removed_categories, month_to_date=spent_after, budget=budget)
         else:
             why = research_result.note or (f"the model published {len(research_result.items)} item(s) and Lyra's checks removed every one ({', '.join(removed_categories)})" if removed else "the sweep found nothing that passed")
             messages = [f"🗞️ <b>Lyra AI briefing</b> · {_h(day_label)}\nNo briefing tonight: {_h(why)}.\n🤖 ${research_result.cost_usd:.2f} this run · ${spent_after:.2f} of ${budget:.0f} this month"]
@@ -733,8 +761,8 @@ def run(now: datetime | None = None) -> int:
     users_attempted = users_reached = 0
     if kept and settings.notification_dispatch_enabled:
         title = router_title(kept, day_label)
-        body = router_body(kept, ipo_note)
-        event_payload = {"date": today.isoformat(), "items": ledger["items"], "ipo_note": ipo_note}
+        body = router_body(kept)
+        event_payload = {"date": today.isoformat(), "items": ledger["items"], "desk_notes": desk_notes}
         for user_id in load_user_ids(client, repository, settings.default_user_id):
             users_attempted += 1
             result = dispatch_notification(
@@ -758,7 +786,7 @@ def run(now: datetime | None = None) -> int:
     # row remembers the last date it was served, so a resend firing never sends anyone a second copy.
     subscribers = SubscriberOutcome()
     if kept:
-        subscribers = deliver_to_subscribers(client, load_subscribers(client), items=kept, day_label=day_label, ipo_note=ipo_note, today=today, settings=settings, silent=silent)
+        subscribers = deliver_to_subscribers(client, load_subscribers(client), items=kept, day_label=day_label, desk_notes=desk_notes, today=today, settings=settings, silent=silent)
 
     briefing_exists = bool(kept)
     briefing_delivered = briefing_exists and (operator_delivered or users_reached > 0 or subscribers.reached > 0)

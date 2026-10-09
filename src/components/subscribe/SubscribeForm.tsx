@@ -184,19 +184,27 @@ export function SubscribeForm({ telegram, email }: SubscribeFormProps) {
 
       <div className="space-y-2">
         <p className={labelClass}>2 · What do you want to hear about?</p>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Topics">
-          {SUBSCRIBE_TOPICS.map((topic) => {
-            const on = topics.includes(topic.id);
-            return (
-              <button key={topic.id} type="button" aria-pressed={on} onClick={() => toggleTopic(topic.id)} className={on ? chipOn : chipOff} title={topic.blurb}>
-                {topic.label}
-              </button>
-            );
-          })}
+        {/* The briefing's own spine: its themes (each a page in the app) and its four standing desks. */}
+        <div className="space-y-2" role="group" aria-label="Topics">
+          {(['theme', 'desk', 'holdings'] as const).map((group) => (
+            <div key={group} className="flex flex-wrap items-center gap-2">
+              {group !== 'holdings' && (
+                <span className="w-14 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9AA6B6]">{group === 'theme' ? 'Themes' : 'Desks'}</span>
+              )}
+              {SUBSCRIBE_TOPICS.filter((topic) => topic.group === group).map((topic) => {
+                const on = topics.includes(topic.id);
+                return (
+                  <button key={topic.id} type="button" aria-pressed={on} onClick={() => toggleTopic(topic.id)} className={on ? chipOn : chipOff} title={topic.blurb}>
+                    {topic.label}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
         <p className="text-xs text-[#5A6B82]">
           {topics.length === 0
-            ? 'Nothing picked = everything, in the order it happened.'
+            ? 'Nothing picked = every theme and every desk. Your themes lead; a chosen desk is the only desk you get.'
             : SUBSCRIBE_TOPICS.filter((topic) => topics.includes(topic.id))
                 .map((topic) => topic.blurb)
                 .join(' · ')}

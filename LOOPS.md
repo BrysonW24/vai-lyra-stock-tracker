@@ -241,6 +241,16 @@ Settings > Notifications > Connect Telegram mints a `channel_pairing_codes` row 
 minutes) and the bot's `/start p<code>` writes the chat into `notification_channels` as a verified
 channel - the step that none of the four production accounts had completed by hand.
 
+The spine (v0.136.0, the founder: "call out groups ... robotics, semiconductors, AI, minerals,
+quantum ... new filings, IPOs, venture capital, small caps, government spending"): every item
+carries a `theme` - one of the app's own theme slugs (`src/lib/generated/themes.json`, pinned
+equal by a test, so a heading in the message is a `/themes` page in the app) - and a `desk`
+(`news`, or one of the four standing desks `ipo`, `venture`, `government`, `small_cap`). The
+message is a section per theme with items, then every desk every night: its items, or the model's
+one-line note (`desk_notes`, blanked by the guard if it carries a figure or advice, since a note is
+not source-checked). Subscribers choose from the same themes and desks; their themes lead and a
+chosen desk is the only desk they get.
+
 What closes it: the same ledger, with one more row type. `last_date_sent()` stops a second send,
 `pending_items()` turns a delivery failure into a resend rather than a second research bill,
 `covered_from_runs()` feeds both repeat checks (the model's list and the guard's URL set), and

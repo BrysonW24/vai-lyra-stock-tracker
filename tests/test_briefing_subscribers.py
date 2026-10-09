@@ -13,6 +13,7 @@ from workers.stock_scanner.telegram import TelegramResult
 TODAY = date(2026, 10, 7)
 DAY = "Wed 7 Oct"
 UNSUB = "https://lyra.example/api/subscribe/unsubscribe?id=sub-1&sig=abc"
+NOTES = {"ipo": "Figma lodged its listing paperwork.", "venture": "", "government": "Nothing new on contracts tonight.", "small_cap": ""}
 
 
 def _sub(**overrides) -> dict:
@@ -24,10 +25,10 @@ def _sub(**overrides) -> dict:
 def _items() -> list[bg.BriefingItem]:
     return bg.parse_items(
         [
-            _item(),  # infrastructure, tagged CEG + NVDA
+            _item(),  # nuclear-uranium, tagged CEG + NVDA
             _item(
                 headline="OpenAI releases o5 (private)",
-                category="ai_release",
+                theme="agi-infrastructure",
                 listed=False,
                 ticker="",
                 exchange="",
@@ -40,7 +41,7 @@ def _items() -> list[bg.BriefingItem]:
             ),
             _item(
                 headline="CrowdStrike (Nasdaq: CRWD)",
-                category="investment",
+                theme="cybersecurity",
                 ticker="CRWD",
                 lyra_symbols=["CRWD"],
                 what_happened="CrowdStrike reported record net new ARR for the quarter.",
@@ -104,10 +105,15 @@ def test_a_subscriber_needs_a_destination_for_its_channel():
     assert bs.parse_subscriber(_sub(channel="email", email="")) is None
     assert bs.parse_subscriber(_sub(channel="pigeon")) is None
     assert bs.parse_subscriber(_sub(id=None)) is None
-    parsed = bs.parse_subscriber(_sub(topics=["ai_release", "gossip", "holdings"], holdings=["nvda", " qqq ", "NVDA"], last_sent_date="2026-10-06", sent_count="4"))
-    assert parsed == bs.Subscriber(id="sub-1", token="tok1", channel="telegram", email="", chat_id="777", topics=("ai_release", "holdings"), holdings=("NVDA", "QQQ"), last_sent_date=date(2026, 10, 6), sent_count=4)
+    parsed = bs.parse_subscriber(_sub(topics=["agi-infrastructure", "gossip", "ipo", "holdings", "other"], holdings=["nvda", " qqq ", "NVDA"], last_sent_date="2026-10-06", sent_count="4"))
+    assert parsed == bs.Subscriber(id="sub-1", token="tok1", channel="telegram", email="", chat_id="777", topics=("agi-infrastructure", "ipo", "holdings"), holdings=("NVDA", "QQQ"), last_sent_date=date(2026, 10, 6), sent_count=4)
     assert parsed.destination == "777"
     assert bs.parse_subscriber(_sub(channel="email", email=" Friend@Example.com ", telegram_chat_id=None)).destination == "friend@example.com"
+
+
+def test_the_topics_on_offer_are_the_briefings_spine():
+    assert bs.TOPICS == tuple(theme for theme in bg.THEMES if theme != "other") + bg.STANDING_DESKS + ("holdings",)
+    assert bs.TOPIC_LABELS["agi-infrastructure"] == "AI labs and infrastructure" and bs.TOPIC_LABELS["ipo"] == "IPOs and filings"
 
 
 def test_load_subscribers_survives_a_missing_table():
@@ -120,45 +126,56 @@ def test_load_subscribers_survives_a_missing_table():
 # What each person's copy says.
 
 
-def test_personalise_puts_holdings_first_then_the_readers_topics():
-    personal = bs.personalise(_items(), bs.parse_subscriber(_sub(holdings=["CRWD"], topics=["ai_release"])))
+def test_personalise_puts_holdings_first_and_the_readers_themes_ahead():
+    personal = bs.personalise(_items(), bs.parse_subscriber(_sub(holdings=["CRWD"], topics=["agi-infrastructure"])))
     assert [i.headline for i in personal.holdings_items] == ["CrowdStrike (Nasdaq: CRWD)"]
-    assert [i.headline for i in personal.topic_items] == ["OpenAI releases o5", "Constellation (Nasdaq: CEG)"], "the reader's topic first, the rest in the briefing's order"
+    assert [i.headline for i in personal.topic_items] == ["Constellation (Nasdaq: CEG)", "OpenAI releases o5"], "the rest keeps the briefing's order; the sections do the reordering"
+    assert personal.themes_first == ("agi-infrastructure",) and personal.desks == bg.STANDING_DESKS, "no desk chosen = every desk"
     assert personal.matched == ("CRWD",)
-    assert personal.note == "1 item touches your holdings (CRWD); 1 in your topics (AI releases) first."
+    assert personal.note == "1 item touches your holdings (CRWD); 1 in your topics (AI labs and infrastructure)."
 
 
-def test_personalise_holdings_only_says_what_was_left_out():
+def test_personalise_holdings_only_and_chosen_desks():
     personal = bs.personalise(_items(), bs.parse_subscriber(_sub(holdings=["QQQ"], topics=["holdings"])))
-    assert personal.items == () and personal.note == "Nothing tonight touches your holdings (QQQ); 3 other items left out as you asked."
+    assert personal.items == () and personal.desks == () and personal.note == "Nothing tonight touches your holdings (QQQ); 3 other items left out as you asked."
     everything = bs.personalise(_items(), bs.parse_subscriber(_sub(holdings=[], topics=[])))
     assert [i.headline for i in everything.items] == [i.headline for i in _items()] and everything.note == "Tonight's items, checked against their original sources."
-    tagged = bs.personalise(_items(), bs.parse_subscriber(_sub(holdings=["NVDA"], topics=["investment", "developer"])))
+    tagged = bs.personalise(_items(), bs.parse_subscriber(_sub(holdings=["NVDA"], topics=["cybersecurity", "ipo"])))
     assert [i.headline for i in tagged.holdings_items] == ["Constellation (Nasdaq: CEG)"], "an item tagged with a Lyra symbol counts as touching that holding"
-    assert tagged.note == "1 item touches your holdings (NVDA); 1 in your topics (deals and listings, developer tools) first."
+    assert tagged.note == "1 item touches your holdings (NVDA); 1 in your topics (Cybersecurity, IPOs and filings)."
+    assert tagged.themes_first == ("cybersecurity",) and tagged.desks == ("ipo",), "a chosen desk is the only desk shown"
 
 
-def test_subscriber_messages_carry_the_holdings_section_and_the_stop_line():
+def test_subscriber_messages_carry_the_holdings_section_the_themes_the_desks_and_the_stop_line():
     personal = bs.personalise(_items(), bs.parse_subscriber(_sub(holdings=["CRWD"])))
-    messages = bs.compose_subscriber_messages(personal, day_label=DAY, ipo_note="Figma lodged its S-1.")
+    messages = bs.compose_subscriber_messages(personal, day_label=DAY, desk_notes=NOTES)
     assert len(messages) == 1
     text = messages[0]
     assert text.startswith("🗞️ <b>Lyra AI briefing</b> · Wed 7 Oct\n<i>1 item touches your holdings (CRWD).</i>")
-    assert "📌 <b>Your holdings</b>\n\n💰 <b>CrowdStrike (Nasdaq: CRWD)</b>" in text and "🚀 <b>IPOs:</b> Figma lodged its S-1." in text
-    assert text.endswith("Reply STOP to unsubscribe · Research, not advice.")
-    assert text.index("CrowdStrike") < text.index("Constellation") < text.index("OpenAI"), "holdings first, then the briefing's own order when no topic was chosen"
-    split = bs.compose_subscriber_messages(personal, day_label=DAY, ipo_note="", limit=700)
+    assert "📌 <b>Your holdings</b>\n\n🔐 <b>CrowdStrike (Nasdaq: CRWD)</b>" in text
+    assert "🤖 <b>AI labs and infrastructure</b>\n\n🤖 <b>OpenAI releases o5</b> <i>(private)</i>" in text and "☢️ <b>Nuclear and uranium</b>\n\n☢️ <b>Constellation (Nasdaq: CEG)</b>" in text
+    assert "📜 <b>IPOs and filings:</b> Figma lodged its listing paperwork." in text and "💸 <b>Venture:</b> Nothing new found tonight." in text
+    assert text.endswith("🔬 <b>Small caps:</b> Nothing new found tonight.\n\nReply STOP to unsubscribe · Research, not advice.")
+    assert text.index("CrowdStrike") < text.index("OpenAI") < text.index("Constellation") < text.index("📜"), "holdings, then the spine's order, then the desks"
+    split = bs.compose_subscriber_messages(personal, day_label=DAY, desk_notes={}, limit=700)
     assert len(split) > 1 and split[0].startswith("🗞️") and split[-1].endswith("Research, not advice.")
 
+    chosen = bs.personalise(_items(), bs.parse_subscriber(_sub(holdings=[], topics=["nuclear-uranium", "government"])))
+    text = bs.compose_subscriber_messages(chosen, day_label=DAY, desk_notes=NOTES)[0]
+    assert text.index("Constellation") < text.index("OpenAI") < text.index("CrowdStrike"), "the reader's theme leads"
+    assert "🏛️ <b>Government money:</b> Nothing new on contracts tonight." in text and "📜 <b>IPOs" not in text, "only the chosen desk"
 
-def test_subscriber_email_carries_the_signed_unsubscribe_link():
-    personal = bs.personalise(_items(), bs.parse_subscriber(_sub(holdings=["CRWD"], topics=["ai_release"])))
-    subject, html_body, text = bs.compose_subscriber_email(personal, day_label=DAY, ipo_note="Figma lodged its S-1.", unsubscribe_url=UNSUB)
-    assert subject == "Lyra AI briefing · Wed 7 Oct: CrowdStrike, OpenAI releases o5, Constellation"
-    assert "📌 Your holdings" in html_body and html_body.index("CrowdStrike") < html_body.index("OpenAI") < html_body.index("Constellation")
+
+def test_subscriber_email_mirrors_the_sections_and_carries_the_signed_unsubscribe_link():
+    personal = bs.personalise(_items(), bs.parse_subscriber(_sub(holdings=["CRWD"], topics=["agi-infrastructure"])))
+    subject, html_body, text = bs.compose_subscriber_email(personal, day_label=DAY, desk_notes=NOTES, unsubscribe_url=UNSUB)
+    assert subject == "Lyra AI briefing · Wed 7 Oct: CrowdStrike, Constellation, OpenAI releases o5"
+    assert "📌 Your holdings" in html_body and "🤖 AI labs and infrastructure" in html_body and "📜 IPOs and filings" in html_body
+    assert html_body.index("CrowdStrike") < html_body.index("OpenAI") < html_body.index("Constellation") < html_body.index("Figma lodged")
     assert 'href="https://lyra.example/api/subscribe/unsubscribe?id=sub-1&amp;sig=abc"' in html_body and "Research, not advice." in html_body
-    assert 'href="https://ir.crowdstrike.com/q"' in html_body and "🚀 <strong>IPOs:</strong> Figma lodged its S-1." in html_body
-    assert text.startswith("Lyra AI briefing - Wed 7 Oct\n1 item touches your holdings (CRWD)") and text.endswith(f"Unsubscribe: {UNSUB}")
+    assert 'href="https://ir.crowdstrike.com/q"' in html_body and "Nothing new found tonight." in html_body
+    assert text.startswith("Lyra AI briefing - Wed 7 Oct\n1 item touches your holdings (CRWD); 1 in your topics (AI labs and infrastructure).\n\nYOUR HOLDINGS\nCrowdStrike (Nasdaq: CRWD)")
+    assert "IPOS AND FILINGS\nFigma lodged its listing paperwork." in text and text.endswith(f"Unsubscribe: {UNSUB}")
 
 
 def test_link_signature_is_the_one_the_api_routes_verify():
@@ -210,14 +227,14 @@ def test_deliver_serves_each_person_once_a_day_and_lets_a_blocked_chat_go(monkey
                 _sub(id="served", last_sent_date="2026-10-07"),
                 _sub(id="sub-1", sent_count=2),
                 _sub(id="blocked", telegram_chat_id="999"),
-                _sub(id="mail", channel="email", email="friend@example.com", telegram_chat_id=None, holdings=[], topics=["ai_release"], sent_count=0),
+                _sub(id="mail", channel="email", email="friend@example.com", telegram_chat_id=None, holdings=[], topics=["agi-infrastructure"], sent_count=0),
             ]
         )
     )
-    outcome = bs.deliver_to_subscribers(client, subscribers, items=_items(), day_label=DAY, ipo_note="", today=TODAY, settings=settings, silent=True)
+    outcome = bs.deliver_to_subscribers(client, subscribers, items=_items(), day_label=DAY, desk_notes=NOTES, today=TODAY, settings=settings, silent=True)
     assert outcome == bs.SubscriberOutcome(attempted=3, reached=2, already=1, failed=0, unsubscribed=1)
     assert [s["chat_id"] for s in sent] == ["777", "999"] and sent[0]["token"] == "app-bot" and sent[0]["silent"] is True and sent[0]["parse_mode"] == "HTML"
-    assert "📌 <b>Your holdings</b>" in sent[0]["message"]
+    assert "📌 <b>Your holdings</b>" in sent[0]["message"] and "📜 <b>IPOs and filings:</b> Figma lodged" in sent[0]["message"]
     assert len(emails) == 1 and emails[0]["to"] == "friend@example.com" and emails[0]["api_key"] == "re_test"
     assert emails[0]["unsubscribe"] == "https://lyra.example/api/subscribe/unsubscribe?id=mail&sig=" + bs.link_signature("secret", "unsubscribe", "mail")
     stamps = {(table, row_id): row for table, row_id, row in client.updates}
@@ -231,6 +248,6 @@ def test_an_email_subscriber_is_not_sent_without_an_unsubscribe_link(monkeypatch
     monkeypatch.setattr(bs, "send_email", lambda **_k: (_ for _ in ()).throw(AssertionError("must not be called")))
     client = _Client()
     subscriber = bs.parse_subscriber(_sub(channel="email", email="friend@example.com", telegram_chat_id=None))
-    outcome = bs.deliver_to_subscribers(client, [subscriber], items=_items(), day_label=DAY, ipo_note="", today=TODAY, settings=_settings(resend_api_key="re_test"), silent=False)
+    outcome = bs.deliver_to_subscribers(client, [subscriber], items=_items(), day_label=DAY, desk_notes={}, today=TODAY, settings=_settings(resend_api_key="re_test"), silent=False)
     assert outcome == bs.SubscriberOutcome(attempted=1, reached=0, already=0, failed=1, unsubscribed=0)
     assert client.updates[0][2]["last_error"].startswith("APP_BASE_URL or the link secret missing")

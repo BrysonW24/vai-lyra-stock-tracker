@@ -3,9 +3,14 @@
 A subscriber is a row in `briefing_subscribers` (migration 059) made at /subscribe with no account:
 what they hold, which topics, and a channel - Telegram (the chat id learnt from the bot's own
 /start) or email (active once the confirmation link is opened). The research is shared; what is
-personal is a deterministic reorder of the same checked items - the ones that touch the reader's
-holdings first, then the reader's topics - plus a one-line "for you" summary. No number and no
-sentence is written per person, so personalising costs nothing and can never invent a fact.
+personal is a deterministic re-cut of the same checked items - the ones that touch the reader's
+holdings first, then their chosen themes ahead of the rest, then the standing desks they asked for
+(all four when they chose none) - plus a one-line "for you" summary. No number and no sentence is
+written per person, so personalising costs nothing and can never invent a fact.
+
+Topics are the briefing's own spine: the theme slugs (src/lib/generated/themes.json, mirrored in
+briefing_text.THEME_STYLE), the four standing desks, and "holdings" (= only items that touch what
+I hold). The /subscribe page offers the same list (src/lib/subscribe.ts).
 
 Telegram sends use the app's bot (TELEGRAM_BOT_TOKEN - the bot /subscribe deep-links to), email
 goes through Resend (RESEND_API_KEY) with a signed one-click unsubscribe. Each row carries its own
@@ -24,8 +29,18 @@ from typing import Any
 
 import requests
 
-from workers.stock_scanner.briefing_guard import CATEGORIES, BriefingItem
-from workers.stock_scanner.briefing_text import CATEGORY_STYLE, TELEGRAM_LIMIT, h, item_html, short_name, split_messages
+from workers.stock_scanner.briefing_guard import STANDING_DESKS, THEMES, BriefingItem
+from workers.stock_scanner.briefing_text import (
+    DEFAULT_DESK_NOTE,
+    DESK_STYLE,
+    TELEGRAM_LIMIT,
+    THEME_STYLE,
+    grouped_parts,
+    h,
+    item_html,
+    short_name,
+    split_messages,
+)
 from workers.stock_scanner.config import Settings
 from workers.stock_scanner.logger import get_logger
 from workers.stock_scanner.telegram import send_telegram_message
@@ -35,13 +50,9 @@ LOGGER = get_logger("stock_scanner.briefing_subscribers")
 TABLE = "briefing_subscribers"
 SUBSCRIBER_SELECT = "id,token,channel,email,telegram_chat_id,topics,holdings,status,last_sent_date,sent_count"
 HOLDINGS_TOPIC = "holdings"
-TOPIC_LABELS = {
-    "ai_release": "AI releases",
-    "investment": "deals and listings",
-    "infrastructure": "infrastructure",
-    "emerging": "emerging companies",
-    "developer": "developer tools",
-}
+# What a subscriber may pick: every theme but "other", the standing desks, and holdings.
+TOPICS = tuple(theme for theme in THEMES if theme != "other") + STANDING_DESKS + (HOLDINGS_TOPIC,)
+TOPIC_LABELS: dict[str, str] = {**{theme: style[1] for theme, style in THEME_STYLE.items()}, **{desk: style[1] for desk, style in DESK_STYLE.items()}}
 RESEND_ENDPOINT = "https://api.resend.com/emails"
 DEFAULT_FROM_EMAIL = "Lyra <briefing@send.vivacityai.com.au>"
 MAX_ERROR_CHARS = 160
@@ -95,7 +106,7 @@ def parse_subscriber(raw: Any) -> Subscriber | None:
     except ValueError:
         last_sent = None
     raw_topics = raw.get("topics") if isinstance(raw.get("topics"), (list, tuple)) else []
-    topics = tuple(str(topic) for topic in raw_topics if str(topic) in CATEGORIES or str(topic) == HOLDINGS_TOPIC)
+    topics = tuple(dict.fromkeys(str(topic) for topic in raw_topics if str(topic) in TOPICS))
     return Subscriber(
         id=str(raw["id"]),
         token=str(raw.get("token") or ""),
@@ -117,8 +128,7 @@ def load_subscribers(client: Any) -> list[Subscriber]:
     except Exception as exc:  # noqa: BLE001 - the audience is an extra on top of the briefing
         LOGGER.warning("could not read briefing subscribers (%s) - none tonight", type(exc).__name__)
         return []
-    subscribers = [subscriber for subscriber in (parse_subscriber(row) for row in (result.data or [])) if subscriber]
-    return subscribers
+    return [subscriber for subscriber in (parse_subscriber(row) for row in (result.data or [])) if subscriber]
 
 
 # --------------------------------------------------------------------------------------------
@@ -127,12 +137,15 @@ def load_subscribers(client: Any) -> list[Subscriber]:
 
 @dataclass(frozen=True)
 class PersonalBriefing:
-    """The same checked items, ordered for one reader: holdings hits first, then their topics."""
+    """The same checked items, cut for one reader: holdings hits first, then the rest under their
+    themes (the reader's themes first), then the desks they asked for."""
 
     holdings_items: tuple[BriefingItem, ...]
     topic_items: tuple[BriefingItem, ...]
     matched: tuple[str, ...]
     note: str
+    themes_first: tuple[str, ...] = ()
+    desks: tuple[str, ...] = STANDING_DESKS
 
     @property
     def items(self) -> tuple[BriefingItem, ...]:
@@ -150,17 +163,10 @@ def personalise(items: list[BriefingItem], subscriber: Subscriber) -> PersonalBr
     holdings = set(subscriber.holdings)
     hits = [item for item in items if item_symbols(item) & holdings]
     rest = [item for item in items if item not in hits]
-    chosen = [topic for topic in subscriber.topics if topic in CATEGORIES]
-    rank = {topic: index for index, topic in enumerate(chosen)}
-    holdings_only = HOLDINGS_TOPIC in subscriber.topics and not chosen and bool(holdings)
+    themes = tuple(topic for topic in subscriber.topics if topic in THEMES)
+    desks = tuple(topic for topic in subscriber.topics if topic in STANDING_DESKS)
+    holdings_only = HOLDINGS_TOPIC in subscriber.topics and not themes and not desks and bool(holdings)
     matched = tuple(sorted({symbol for item in hits for symbol in item_symbols(item) & holdings}))
-
-    if holdings_only:
-        topic_items: list[BriefingItem] = []
-    elif chosen:
-        topic_items = sorted(rest, key=lambda item: rank.get(item.category, len(rank)))  # stable: ties keep the briefing's order
-    else:
-        topic_items = rest
 
     parts: list[str] = []
     if holdings and hits:
@@ -168,25 +174,29 @@ def personalise(items: list[BriefingItem], subscriber: Subscriber) -> PersonalBr
     elif holdings:
         parts.append(f"nothing tonight touches your holdings ({', '.join(subscriber.holdings)})")
     if holdings_only:
-        skipped = len(rest)
-        if skipped:
-            parts.append(f"{skipped} other item{'s' if skipped != 1 else ''} left out as you asked")
-    elif chosen:
-        in_topics = sum(1 for item in topic_items if item.category in rank)
-        labels = ", ".join(TOPIC_LABELS[topic] for topic in chosen)
-        parts.append(f"{in_topics} in your topics ({labels}) first" if in_topics else f"nothing in your topics ({labels}) tonight; the rest follows")
+        if rest:
+            parts.append(f"{len(rest)} other item{'s' if len(rest) != 1 else ''} left out as you asked")
+    elif themes or desks:
+        in_topics = sum(1 for item in rest if item.theme in themes or item.desk in desks)
+        labels = ", ".join(TOPIC_LABELS[topic] for topic in themes + desks)
+        parts.append(f"{in_topics} in your topics ({labels})" if in_topics else f"nothing in your topics ({labels}) tonight; the rest follows")
     note = ("; ".join(parts) + ".") if parts else "Tonight's items, checked against their original sources."
-    return PersonalBriefing(tuple(hits), tuple(topic_items), matched, note[0].upper() + note[1:])
+    return PersonalBriefing(
+        holdings_items=tuple(hits),
+        topic_items=() if holdings_only else tuple(rest),
+        matched=matched,
+        note=note[0].upper() + note[1:],
+        themes_first=themes,
+        desks=() if holdings_only else (desks or STANDING_DESKS),
+    )
 
 
-def compose_subscriber_messages(personal: PersonalBriefing, *, day_label: str, ipo_note: str, limit: int = TELEGRAM_LIMIT) -> list[str]:
+def compose_subscriber_messages(personal: PersonalBriefing, *, day_label: str, desk_notes: dict[str, str], limit: int = TELEGRAM_LIMIT) -> list[str]:
     """One reader's Telegram briefing in HTML, split at item boundaries under the limit."""
     parts = [f"🗞️ <b>Lyra AI briefing</b> · {h(day_label)}\n<i>{h(personal.note)}</i>"]
     if personal.holdings_items:
         parts.append("📌 <b>Your holdings</b>\n\n" + "\n\n".join(item_html(item) for item in personal.holdings_items))
-    parts.extend(item_html(item) for item in personal.topic_items)
-    if ipo_note:
-        parts.append(f"🚀 <b>IPOs:</b> {h(ipo_note)}")
+    parts.extend(grouped_parts(list(personal.topic_items), desk_notes, themes_first=personal.themes_first, desks=personal.desks))
     parts.append("Reply STOP to unsubscribe · Research, not advice.")
     return split_messages(parts, limit)
 
@@ -197,8 +207,11 @@ def email_subject(personal: PersonalBriefing, day_label: str) -> str:
     return f"Lyra AI briefing · {day_label}: " + ", ".join(names) + (f" + {more} more" if more > 0 else "")
 
 
+_HEADING_ROW = '<tr><td style="padding:18px 32px 4px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:{colour};font-weight:700;">{text}</td></tr>'
+
+
 def _email_item(item: BriefingItem) -> str:
-    emoji, _label = CATEGORY_STYLE[item.category]
+    emoji, _label = THEME_STYLE.get(item.theme, THEME_STYLE["other"])
     tags = [tag for tag, on in (("private", not item.listed), ("catch-up", item.catch_up)) if on]
     tag_html = f' <span style="font-size:12px;color:#8290a0;">({", ".join(tags)})</span>' if tags else ""
     rows = [
@@ -214,18 +227,46 @@ def _email_item(item: BriefingItem) -> str:
     return '<tr><td style="padding:14px 32px;border-top:1px solid #eef0f4;">' + "".join(rows) + "</td></tr>"
 
 
-def compose_subscriber_email(personal: PersonalBriefing, *, day_label: str, ipo_note: str, unsubscribe_url: str) -> tuple[str, str, str]:
+def _email_sections(personal: PersonalBriefing, desk_notes: dict[str, str]) -> tuple[list[str], list[str]]:
+    """(html rows, text lines) for the body - the same grouping as the Telegram copy."""
+    html_rows: list[str] = []
+    text_lines: list[str] = []
+
+    def section(emoji: str, label: str, members: list[BriefingItem], note: str = "", colour: str = "#5A6B82") -> None:
+        html_rows.append(_HEADING_ROW.format(colour=colour, text=f"{emoji} {h(label)}"))
+        text_lines.append(label.upper())
+        if members:
+            html_rows.extend(_email_item(item) for item in members)
+            for item in members:
+                text_lines.extend([item.headline, item.what_happened, f"Why it matters: {item.why_it_matters}", f"Risks: {item.risks}"])
+                if item.not_disclosed:
+                    text_lines.append(f"Not disclosed: {item.not_disclosed}")
+                text_lines.append(" | ".join(f"{source.label}: {source.url}" for source in item.sources))
+                text_lines.append("")
+        else:
+            html_rows.append(f'<tr><td style="padding:6px 32px 10px;font-size:14px;line-height:1.6;color:#2b3a52;">{h(note)}</td></tr>')
+            text_lines.extend([note, ""])
+
+    if personal.holdings_items:
+        section("📌", "Your holdings", list(personal.holdings_items), colour="#1E63FF")
+    shown = [desk for desk in personal.desks if desk in DESK_STYLE]
+    by_theme = [item for item in personal.topic_items if item.desk not in shown]
+    order = [theme for theme in personal.themes_first if theme in THEME_STYLE] + [theme for theme in THEME_STYLE if theme not in personal.themes_first]
+    for theme in order:
+        members = [item for item in by_theme if item.theme == theme]
+        if members:
+            emoji, label = THEME_STYLE[theme]
+            section(emoji, label, members)
+    for desk in shown:
+        emoji, label = DESK_STYLE[desk]
+        section(emoji, label, [item for item in personal.topic_items if item.desk == desk], note=desk_notes.get(desk) or DEFAULT_DESK_NOTE)
+    return html_rows, text_lines
+
+
+def compose_subscriber_email(personal: PersonalBriefing, *, day_label: str, desk_notes: dict[str, str], unsubscribe_url: str) -> tuple[str, str, str]:
     """(subject, html, text) for one reader - the same brand shell as the auth emails, every string escaped."""
     subject = email_subject(personal, day_label)
-    sections: list[str] = []
-    if personal.holdings_items:
-        sections.append('<tr><td style="padding:18px 32px 4px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#1E63FF;font-weight:700;">📌 Your holdings</td></tr>')
-        sections.extend(_email_item(item) for item in personal.holdings_items)
-        if personal.topic_items:
-            sections.append('<tr><td style="padding:18px 32px 4px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#5A6B82;font-weight:700;">Tonight&#39;s briefing</td></tr>')
-    sections.extend(_email_item(item) for item in personal.topic_items)
-    if ipo_note:
-        sections.append(f'<tr><td style="padding:14px 32px;border-top:1px solid #eef0f4;font-size:14px;line-height:1.6;color:#2b3a52;">🚀 <strong>IPOs:</strong> {h(ipo_note)}</td></tr>')
+    html_rows, text_lines = _email_sections(personal, desk_notes)
     html_body = (
         '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F6F2;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;">'
         '<tr><td align="center"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;border:1px solid #e7e9ef;overflow:hidden;">'
@@ -233,25 +274,14 @@ def compose_subscriber_email(personal: PersonalBriefing, *, day_label: str, ipo_
         '<tr><td style="padding:30px 32px 6px;"><span style="font-size:22px;font-weight:700;letter-spacing:-0.02em;color:#0E1E3A;">Lyra</span><span style="font-size:12px;color:#8290a0;">&nbsp; by Vivacity.ai</span></td></tr>'
         f'<tr><td style="padding:6px 32px 14px;"><h1 style="margin:0;font-size:20px;line-height:1.25;color:#0E1E3A;font-weight:600;">🗞️ AI briefing · {h(day_label)}</h1>'
         f'<p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:#5A6B82;">{h(personal.note)}</p></td></tr>'
-        + "".join(sections)
+        + "".join(html_rows)
         + '<tr><td style="padding:22px 32px 30px;"><div style="border-top:1px solid #eef0f4;padding-top:16px;">'
         f'<p style="margin:0;font-size:11px;line-height:1.6;color:#9aa6b6;">Research, not advice. Every item was checked against the source it links to. '
         f'<a href="{h(unsubscribe_url)}" style="color:#5A6B82;">Unsubscribe</a> &middot; &copy; Vivacity.ai</p></div></td></tr>'
         "</table></td></tr></table>"
     )
-    text_lines = [f"Lyra AI briefing - {day_label}", personal.note, ""]
-    if personal.holdings_items:
-        text_lines.append("YOUR HOLDINGS")
-    for item in personal.items:
-        text_lines.extend([item.headline, item.what_happened, f"Why it matters: {item.why_it_matters}", f"Risks: {item.risks}"])
-        if item.not_disclosed:
-            text_lines.append(f"Not disclosed: {item.not_disclosed}")
-        text_lines.append(" | ".join(f"{source.label}: {source.url}" for source in item.sources))
-        text_lines.append("")
-    if ipo_note:
-        text_lines.extend([f"IPOs: {ipo_note}", ""])
-    text_lines.append(f"Research, not advice. Unsubscribe: {unsubscribe_url}")
-    return subject, html_body, "\n".join(text_lines)
+    text = "\n".join([f"Lyra AI briefing - {day_label}", personal.note, ""] + text_lines + [f"Research, not advice. Unsubscribe: {unsubscribe_url}"])
+    return subject, html_body, text
 
 
 # --------------------------------------------------------------------------------------------
@@ -344,14 +374,14 @@ def deliver_to_subscriber(
     personal: PersonalBriefing,
     *,
     day_label: str,
-    ipo_note: str,
+    desk_notes: dict[str, str],
     settings: Settings,
     silent: bool,
 ) -> SubscriberDelivery:
     if subscriber.channel == "telegram":
         if not settings.telegram_bot_token:
             return SubscriberDelivery(subscriber.id, "telegram", "failed", "TELEGRAM_BOT_TOKEN missing")
-        for message in compose_subscriber_messages(personal, day_label=day_label, ipo_note=ipo_note):
+        for message in compose_subscriber_messages(personal, day_label=day_label, desk_notes=desk_notes):
             delivery = send_telegram_message(message, settings, chat_id=subscriber.chat_id, silent=silent, parse_mode="HTML")
             if delivery.sent_status != "sent":
                 error = delivery.error_message or "telegram send failed"
@@ -365,7 +395,7 @@ def deliver_to_subscriber(
     if not settings.app_base_url or not secret:
         return SubscriberDelivery(subscriber.id, "email", "failed", "APP_BASE_URL or the link secret missing - no unsubscribe link, so no email")
     link = unsubscribe_url(settings.app_base_url, secret, subscriber.id)
-    subject, html_body, text = compose_subscriber_email(personal, day_label=day_label, ipo_note=ipo_note, unsubscribe_url=link)
+    subject, html_body, text = compose_subscriber_email(personal, day_label=day_label, desk_notes=desk_notes, unsubscribe_url=link)
     result = send_email(api_key=settings.resend_api_key, from_email=settings.briefing_from_email, to=subscriber.email, subject=subject, html_body=html_body, text=text, unsubscribe=link)
     if result.sent_status == "sent":
         return SubscriberDelivery(subscriber.id, "email", "sent")
@@ -378,7 +408,7 @@ def deliver_to_subscribers(
     *,
     items: list[BriefingItem],
     day_label: str,
-    ipo_note: str,
+    desk_notes: dict[str, str],
     today: date,
     settings: Settings,
     silent: bool = False,
@@ -391,7 +421,7 @@ def deliver_to_subscribers(
             already += 1
             continue
         attempted += 1
-        delivery = deliver_to_subscriber(subscriber, personalise(items, subscriber), day_label=day_label, ipo_note=ipo_note, settings=settings, silent=silent)
+        delivery = deliver_to_subscriber(subscriber, personalise(items, subscriber), day_label=day_label, desk_notes=desk_notes, settings=settings, silent=silent)
         if delivery.status == "sent":
             reached += 1
             mark_sent(client, subscriber, today)

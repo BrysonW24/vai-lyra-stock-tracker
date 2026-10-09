@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.136.0] - 2026-10-09
+
+The AI briefing gets a spine: the app's themes, four standing desks, and topics to match.
+
+### Changed
+
+- The briefing is organised by the themes Lyra already tracks - AI labs and infrastructure, semiconductors, power grid, nuclear and uranium, critical minerals, robotics, quantum, space, defence, cybersecurity - and each heading is a theme page in the app.
+- Four standing desks print every evening, even on a quiet night: IPOs and filings, venture, government money, small caps - with the model's one-line note when nothing passed, never a figure that was not checked against a source.
+- Subscribers choose from the same themes and desks: their themes lead, and a chosen desk is the only desk they get. "Just my holdings" works as before.
+- Up to ten items a night across the themes and desks, from the same budget of searches and page opens.
+
 ## [0.135.0] - 2026-10-09
 
 The daily read calls out groups, threads them to your book, and drops the scoreboard.
@@ -1888,7 +1899,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.135.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.136.0...HEAD
+[0.136.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.135.0...v0.136.0
 [0.135.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.134.1...v0.135.0
 [0.134.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.134.0...v0.134.1
 [0.134.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.133.1...v0.134.0

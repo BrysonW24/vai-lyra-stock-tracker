@@ -110,7 +110,9 @@ costs forty to fifty daily reads. The levers, in order: `BRIEFING_MAX_FETCHES` a
 spend is read from the ledger before every run, effort steps down when the measured cost would not
 last the month, a briefing that was researched but not delivered is resent from the ledger rather
 than researched twice, and once the ceiling is reached the evening gets a one-line note instead.
-The two runs meant to measure the tuned prompt on 2026-10-07 did not complete: the Anthropic
+v0.136.0 asks for six to ten items across ten themes and four standing desks instead of five to
+eight across four sweeps, on the same search and page-open budgets - expect the upper end of the
+range until a run is measured. The two runs meant to measure the tuned prompt on 2026-10-07 did not complete: the Anthropic
 account's prepaid credit ran out mid-turn (the API answers 400 "credit balance is too low"), which
 also stops the daily read's prose until the balance is topped up - both jobs now say so in their
 message rather than "error 400".

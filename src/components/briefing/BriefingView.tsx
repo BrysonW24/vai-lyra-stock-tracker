@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
-import { BRIEFING_CATEGORY_STYLE, briefingDayLabel, type Briefing, type BriefingItem } from '@/lib/briefing';
+import { BRIEFING_THEME_STYLE, briefingDayLabel, briefingSections, type Briefing, type BriefingItem } from '@/lib/briefing';
 import { pageTitleClass, panelClass, panelSoftClass, tagPillClass } from '@/lib/ui';
 
 interface BriefingViewProps {
@@ -18,15 +18,22 @@ const MODEL_NAMES: Record<string, string> = {
 };
 
 function ItemCard({ item }: { item: BriefingItem }) {
-  const style = BRIEFING_CATEGORY_STYLE[item.category];
+  const style = BRIEFING_THEME_STYLE[item.theme];
   return (
     <article className={`${panelClass} space-y-2 p-3`}>
       <header className="flex flex-wrap items-center gap-2">
         <span className="text-base leading-none" aria-hidden="true">
           {style.emoji}
         </span>
-        <h3 className="text-sm font-semibold text-ink">{item.headline}</h3>
-        <span className={tagPillClass}>{style.label}</span>
+        <h4 className="text-sm font-semibold text-ink">{item.headline}</h4>
+        {/* The theme pill opens the theme's own page - the briefing's spine is the app's. */}
+        {item.theme === 'other' ? (
+          <span className={tagPillClass}>{style.label}</span>
+        ) : (
+          <Link href={`/themes/${item.theme}`} className={tagPillClass}>
+            {style.label}
+          </Link>
+        )}
         {!item.listed && <span className={tagPillClass}>private</span>}
         {item.catchUp && <span className={tagPillClass}>catch-up</span>}
         {item.lyraSymbols.map((symbol) => (
@@ -80,16 +87,26 @@ function BriefingBody({ briefing }: { briefing: Briefing }) {
         {model ? ` Researched by ${model}` : ''}
         {briefing.searches > 0 ? ` with ${briefing.searches} searches and ${briefing.pagesOpened} pages opened` : ''}.
       </p>
-      {briefing.items.map((item) => (
-        <ItemCard key={`${briefing.date}:${item.headline}`} item={item} />
+      {/* A section per theme with items, in the briefing's order, then every standing desk - its
+          items or its one-line note - the same grouping every subscriber's copy uses. */}
+      {briefingSections(briefing).map((section) => (
+        <section key={`${briefing.date}:${section.kind}:${section.id}`} className="space-y-2">
+          <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
+            <span aria-hidden="true">{section.emoji}</span>
+            {section.kind === 'theme' && section.id !== 'other' ? (
+              <Link href={`/themes/${section.id}`} className="hover:underline">
+                {section.label}
+              </Link>
+            ) : (
+              section.label
+            )}
+          </h3>
+          {section.items.map((item) => (
+            <ItemCard key={`${briefing.date}:${item.headline}`} item={item} />
+          ))}
+          {section.items.length === 0 && <p className={`${panelSoftClass} p-3 text-xs text-ink-muted`}>{section.note}</p>}
+        </section>
       ))}
-      {briefing.ipoNote && (
-        <p className={`${panelSoftClass} p-3 text-xs text-ink-muted`}>
-          <span aria-hidden="true">🚀 </span>
-          <span className="font-semibold text-ink-soft">IPOs: </span>
-          {briefing.ipoNote}
-        </p>
-      )}
     </div>
   );
 }

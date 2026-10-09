@@ -6,19 +6,57 @@
  * The worker (workers/stock_scanner/ai_briefing.py) stores the checked items on the
  * `stock_scanner_runs` row's payload; this maps what it stored and nothing more - a row that does
  * not parse is skipped, never patched, and a source that is not a web address is not a link.
+ *
+ * Since v0.136.0 the briefing's spine is the app's own themes (the /themes pages: the slugs here
+ * are pinned equal to src/lib/generated/themes.json by a test) plus four standing desks that print
+ * every evening - IPOs and filings, venture, government money, small caps - with the model's
+ * one-line note when a desk has no item.
  */
 
-export type BriefingCategory = 'investment' | 'infrastructure' | 'ai_release' | 'emerging' | 'developer';
+export type BriefingTheme =
+  | 'agi-infrastructure'
+  | 'semiconductors'
+  | 'power-grid'
+  | 'nuclear-uranium'
+  | 'critical-minerals'
+  | 'robotics-automation'
+  | 'quantum-computing'
+  | 'space-economy'
+  | 'defence-drones'
+  | 'cybersecurity'
+  | 'other';
 
-export const BRIEFING_CATEGORY_STYLE: Record<BriefingCategory, { emoji: string; label: string }> = {
-  investment: { emoji: '💰', label: 'Investment' },
-  infrastructure: { emoji: '⚡', label: 'Infrastructure' },
-  ai_release: { emoji: '🧠', label: 'AI release' },
-  emerging: { emoji: '🌱', label: 'Emerging' },
-  developer: { emoji: '🛠️', label: 'Developer' },
+export type BriefingDesk = 'news' | 'ipo' | 'venture' | 'government' | 'small_cap';
+export type StandingDesk = Exclude<BriefingDesk, 'news'>;
+
+/** Reading order of the sections - the briefing's own, not the themes page's. */
+export const BRIEFING_THEME_STYLE: Record<BriefingTheme, { emoji: string; label: string }> = {
+  'agi-infrastructure': { emoji: '🤖', label: 'AI labs and infrastructure' },
+  semiconductors: { emoji: '💾', label: 'Semiconductors' },
+  'power-grid': { emoji: '⚡', label: 'Power grid' },
+  'nuclear-uranium': { emoji: '☢️', label: 'Nuclear and uranium' },
+  'critical-minerals': { emoji: '⛏️', label: 'Critical minerals' },
+  'robotics-automation': { emoji: '🦾', label: 'Robotics and automation' },
+  'quantum-computing': { emoji: '⚛️', label: 'Quantum computing' },
+  'space-economy': { emoji: '🚀', label: 'Space economy' },
+  'defence-drones': { emoji: '🛡️', label: 'Defence and drones' },
+  cybersecurity: { emoji: '🔐', label: 'Cybersecurity' },
+  other: { emoji: '🧭', label: 'Elsewhere in tech' },
 };
 
-const CATEGORIES: ReadonlySet<string> = new Set<BriefingCategory>(Object.keys(BRIEFING_CATEGORY_STYLE) as BriefingCategory[]);
+export const BRIEFING_DESK_STYLE: Record<StandingDesk, { emoji: string; label: string }> = {
+  ipo: { emoji: '📜', label: 'IPOs and filings' },
+  venture: { emoji: '💸', label: 'Venture' },
+  government: { emoji: '🏛️', label: 'Government money' },
+  small_cap: { emoji: '🔬', label: 'Small caps' },
+};
+
+export const BRIEFING_THEMES = Object.keys(BRIEFING_THEME_STYLE) as BriefingTheme[];
+export const STANDING_DESKS = Object.keys(BRIEFING_DESK_STYLE) as StandingDesk[];
+export const DEFAULT_DESK_NOTE = 'Nothing new found tonight.';
+
+const THEMES: ReadonlySet<string> = new Set(BRIEFING_THEMES);
+const DESKS: ReadonlySet<string> = new Set<BriefingDesk>(['news', ...STANDING_DESKS]);
 
 export interface BriefingSource {
   label: string;
@@ -27,7 +65,8 @@ export interface BriefingSource {
 
 export interface BriefingItem {
   headline: string;
-  category: BriefingCategory;
+  theme: BriefingTheme;
+  desk: BriefingDesk;
   listed: boolean;
   exchange: string;
   ticker: string;
@@ -45,7 +84,8 @@ export interface Briefing {
   date: string;
   generatedAt: string | null;
   items: BriefingItem[];
-  ipoNote: string;
+  /** The model's one-line note per standing desk ('' when it wrote none - the view prints the default). */
+  deskNotes: Record<StandingDesk, string>;
   model: string;
   effort: string;
   searches: number;
@@ -73,7 +113,8 @@ function sourceFrom(raw: unknown): BriefingSource | null {
   return { label: text((raw as { label?: unknown }).label) || 'Source', url };
 }
 
-/** One stored item, or null when it lacks what a reader must see. */
+/** One stored item, or null when it lacks what a reader must see. A label is never a reason to lose
+ * a checked item: an unknown theme files under "other", an unknown desk is ordinary news. */
 export function itemFromPayload(raw: unknown): BriefingItem | null {
   if (!raw || typeof raw !== 'object') return null;
   const record = raw as Record<string, unknown>;
@@ -81,14 +122,16 @@ export function itemFromPayload(raw: unknown): BriefingItem | null {
   const whatHappened = text(record.what_happened);
   const whyItMatters = text(record.why_it_matters);
   const risks = text(record.risks);
-  const category = text(record.category);
-  if (!headline || !whatHappened || !whyItMatters || !risks || !CATEGORIES.has(category)) return null;
+  if (!headline || !whatHappened || !whyItMatters || !risks) return null;
   const sources = Array.isArray(record.sources) ? record.sources.map(sourceFrom).filter((s): s is BriefingSource => s !== null) : [];
   if (sources.length === 0) return null;
   const symbols = Array.isArray(record.lyra_symbols) ? record.lyra_symbols.map(text).filter((s) => /^[A-Z0-9.\-]{1,10}$/.test(s)) : [];
+  const theme = text(record.theme).toLowerCase();
+  const desk = text(record.desk).toLowerCase();
   return {
     headline,
-    category: category as BriefingCategory,
+    theme: THEMES.has(theme) ? (theme as BriefingTheme) : 'other',
+    desk: DESKS.has(desk) ? (desk as BriefingDesk) : 'news',
     listed: record.listed === true,
     exchange: text(record.exchange),
     ticker: text(record.ticker).toUpperCase(),
@@ -100,6 +143,14 @@ export function itemFromPayload(raw: unknown): BriefingItem | null {
     lyraSymbols: Array.from(new Set(symbols)),
     catchUp: record.catch_up === true,
   };
+}
+
+/** The desk notes as stored (a row from before v0.136.0 carried a single ipo_note). */
+export function deskNotesFromPayload(payload: Record<string, unknown>): Record<StandingDesk, string> {
+  const raw = payload.desk_notes && typeof payload.desk_notes === 'object' ? (payload.desk_notes as Record<string, unknown>) : {};
+  const notes = Object.fromEntries(STANDING_DESKS.map((desk) => [desk, text(raw[desk])])) as Record<StandingDesk, string>;
+  if (!notes.ipo) notes.ipo = text(payload.ipo_note);
+  return notes;
 }
 
 /** One stored briefing, or null when the row holds no delivered briefing. */
@@ -115,7 +166,7 @@ export function briefingFromRow(row: BriefingRunRow): Briefing | null {
     date,
     generatedAt: text(row.finished_at) || text(row.started_at) || null,
     items,
-    ipoNote: text(payload.ipo_note),
+    deskNotes: deskNotesFromPayload(payload),
     model: text(payload.model),
     effort: text(payload.effort),
     searches: count(payload.searches),
@@ -123,6 +174,33 @@ export function briefingFromRow(row: BriefingRunRow): Briefing | null {
     costUsd: typeof cost === 'number' && Number.isFinite(cost) ? cost : null,
     removed: count(payload.removed),
   };
+}
+
+export interface BriefingSection {
+  kind: 'theme' | 'desk';
+  id: BriefingTheme | StandingDesk;
+  emoji: string;
+  label: string;
+  items: BriefingItem[];
+  /** The desk's note when it has no items. */
+  note: string;
+}
+
+/** The same grouping the messages use: a section per theme that has items, in the briefing's order,
+ * then every standing desk - its items, or its note. An item on a desk is not repeated under its theme. */
+export function briefingSections(briefing: Briefing): BriefingSection[] {
+  const onDesk = new Set<string>(STANDING_DESKS);
+  const byTheme = briefing.items.filter((item) => !onDesk.has(item.desk));
+  const sections: BriefingSection[] = [];
+  for (const theme of BRIEFING_THEMES) {
+    const items = byTheme.filter((item) => item.theme === theme);
+    if (items.length) sections.push({ kind: 'theme', id: theme, ...BRIEFING_THEME_STYLE[theme], items, note: '' });
+  }
+  for (const desk of STANDING_DESKS) {
+    const items = briefing.items.filter((item) => item.desk === desk);
+    sections.push({ kind: 'desk', id: desk, ...BRIEFING_DESK_STYLE[desk], items, note: items.length ? '' : briefing.deskNotes[desk] || DEFAULT_DESK_NOTE });
+  }
+  return sections;
 }
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

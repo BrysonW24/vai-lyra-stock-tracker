@@ -26,9 +26,31 @@ from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from workers.stock_scanner.ai_read_guard import advice_findings
 
-CATEGORIES = ("investment", "infrastructure", "ai_release", "emerging", "developer")
-MAX_ITEMS = 8
+# The briefing's spine (2026-10-08, the founder: "call out groups ... robotics, semiconductors, AI,
+# minerals, commodities, quantum ... those groups that are really important to the world"). These
+# are the app's own theme slugs (src/lib/generated/themes.json - the /themes pages), pinned equal by
+# a test, so a theme heading in the briefing is a theme page in the app. "other" is for a genuine
+# development that fits none - never a reason to drop a verified item.
+THEMES = (
+    "agi-infrastructure",
+    "semiconductors",
+    "power-grid",
+    "nuclear-uranium",
+    "critical-minerals",
+    "robotics-automation",
+    "quantum-computing",
+    "space-economy",
+    "defence-drones",
+    "cybersecurity",
+    "other",
+)
+# The standing desks: the kinds of event the founder wants two lines on every night even when
+# nothing happened ("new filings, IPOs ... venture capital ... small caps ... government spending").
+STANDING_DESKS = ("ipo", "venture", "government", "small_cap")
+DESKS = ("news",) + STANDING_DESKS
+MAX_ITEMS = 10
 MAX_SOURCES_PER_ITEM = 4
+MAX_NOTE_CHARS = 240
 # Fields are clamped, never silently dropped: a model that writes an essay still yields an item.
 MAX_FIELD_CHARS = 700
 MAX_HEADLINE_CHARS = 140
@@ -54,7 +76,7 @@ class Source:
 @dataclass(frozen=True)
 class BriefingItem:
     headline: str
-    category: str
+    theme: str  # one of THEMES - the section the item sits under
     listed: bool
     what_happened: str
     why_it_matters: str
@@ -65,6 +87,7 @@ class BriefingItem:
     not_disclosed: str = ""
     lyra_symbols: tuple[str, ...] = ()
     catch_up: bool = False
+    desk: str = "news"  # one of DESKS - a standing desk when the item is that kind of event
 
     @property
     def text(self) -> str:
@@ -74,7 +97,8 @@ class BriefingItem:
     def to_dict(self) -> dict[str, Any]:
         return {
             "headline": self.headline,
-            "category": self.category,
+            "theme": self.theme,
+            "desk": self.desk,
             "listed": self.listed,
             "exchange": self.exchange,
             "ticker": self.ticker,
@@ -153,14 +177,16 @@ def parse_item(raw: Any) -> BriefingItem | None:
     risks = _clean(raw.get("risks"), MAX_FIELD_CHARS)
     if not headline or not what_happened or not why_it_matters or not risks:
         return None
-    category = str(raw.get("category") or "").strip().lower()
-    if category not in CATEGORIES:
-        return None
+    # A label is never a reason to lose a checked item: an unknown theme files under "other", an
+    # unknown desk is ordinary news (rows stored before v0.136.0 carried a category instead).
+    theme = str(raw.get("theme") or "").strip().lower()
+    desk = str(raw.get("desk") or "").strip().lower()
     sources = tuple(source for source in (parse_source(entry) for entry in (raw.get("sources") or [])) if source)[:MAX_SOURCES_PER_ITEM]
     symbols = raw.get("lyra_symbols") or []
     return BriefingItem(
         headline=headline,
-        category=category,
+        theme=theme if theme in THEMES else "other",
+        desk=desk if desk in DESKS else "news",
         listed=bool(raw.get("listed")),
         what_happened=what_happened,
         why_it_matters=why_it_matters,
@@ -178,6 +204,19 @@ def parse_items(raw: Any) -> list[BriefingItem]:
     if not isinstance(raw, list):
         return []
     return [item for item in (parse_item(entry) for entry in raw) if item is not None]
+
+
+def parse_desk_notes(raw: Any) -> dict[str, str]:
+    """The model's one-sentence note per standing desk - what it looked for and found, or that
+    nothing surfaced. A note is not checked against a source, so it may carry no figure and no
+    advice: one that does is blanked, and the composer prints the default line instead. Anything
+    with a figure belongs in an item, where the guard can hold it to its source."""
+    notes: dict[str, str] = {}
+    source = raw if isinstance(raw, dict) else {}
+    for desk in STANDING_DESKS:
+        text = _clean(source.get(desk), MAX_NOTE_CHARS)
+        notes[desk] = "" if not text or numbers_in(text) or advice_findings(text) else text
+    return notes
 
 
 def check_item(

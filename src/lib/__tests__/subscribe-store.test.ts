@@ -28,9 +28,9 @@ describe('subscriber store', () => {
 
   it('creates a pending row and reports a missing table honestly', async () => {
     const ok = fakeSupabase(() => ({ data: row() }));
-    const created = await createSubscriber(ok.client, { token: 'tok', channel: 'email', email: ' Friend@Example.com ', topics: ['ai_release'], holdings: ['NVDA'], userId: null, source: 'subscribe-page' });
+    const created = await createSubscriber(ok.client, { token: 'tok', channel: 'email', email: ' Friend@Example.com ', topics: ['agi-infrastructure'], holdings: ['NVDA'], userId: null, source: 'subscribe-page' });
     expect('row' in created && created.row.id).toBe('sub-1');
-    expect(ok.calls[0]).toMatchObject({ table: 'briefing_subscribers', op: 'insert', payload: { token: 'tok', channel: 'email', email: 'friend@example.com', status: 'pending', topics: ['ai_release'], holdings: ['NVDA'], user_id: null, source: 'subscribe-page' } });
+    expect(ok.calls[0]).toMatchObject({ table: 'briefing_subscribers', op: 'insert', payload: { token: 'tok', channel: 'email', email: 'friend@example.com', status: 'pending', topics: ['agi-infrastructure'], holdings: ['NVDA'], user_id: null, source: 'subscribe-page' } });
 
     const missing = fakeSupabase(() => ({ error: { code: 'PGRST205', message: 'schema cache' } }));
     expect(await createSubscriber(missing.client, { token: 't', channel: 'telegram', topics: [], holdings: [] })).toEqual({ error: 'table_missing', message: 'schema cache' });
