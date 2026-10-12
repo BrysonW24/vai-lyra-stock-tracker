@@ -82,7 +82,11 @@ Generate a strong secret first:
 openssl rand -hex 32
 ```
 
-Set it as `TELEGRAM_WEBHOOK_SECRET` in the deployment, then register:
+Set it as `TELEGRAM_WEBHOOK_SECRET` in the deployment, then register with `npm run telegram:webhook`
+(`scripts/telegram-webhook.mjs`: reads the token and the secret from the environment or `.env.local`,
+takes `allowed_updates` from `contracts/feedback/telegram-feedback.json`, prints only the bot, the URL
+and what is allowed; `-- --check` reads without changing anything and fails when an update type the
+webhook needs is missing). The same call by hand:
 
 ```bash
 curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
@@ -90,7 +94,7 @@ curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
   -d '{
     "url": "https://<your-domain>/api/webhooks/telegram",
     "secret_token": "<TELEGRAM_WEBHOOK_SECRET value>",
-    "allowed_updates": ["message"],
+    "allowed_updates": ["message", "callback_query"],
     "drop_pending_updates": true,
     "max_connections": 4
   }'
@@ -99,7 +103,7 @@ curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
 Why each field matters:
 
 - `secret_token` - Telegram echoes it back in `X-Telegram-Bot-Api-Secret-Token` on every delivery. This is the only authenticity signal Telegram offers; without it anyone who finds the URL can POST fake updates.
-- `allowed_updates: ["message"]` - restricts deliveries to plain messages. The route defends in depth anyway (non-message shapes are dropped with a log), but not receiving edited messages, callbacks, and channel posts shrinks the attack surface.
+- `allowed_updates: ["message", "callback_query"]` - plain messages, and taps on the feedback buttons under every message the workers send (v0.137.0: 👍 Useful / 👎 Not for me, then six reasons - see "Feedback buttons" below). Without `callback_query` Telegram silently drops every tap. The route defends in depth anyway (other shapes are dropped with a log), and not receiving edited messages or channel posts shrinks the attack surface.
 - `drop_pending_updates: true` - discards anything queued before the secure config existed.
 
 Verify with:
@@ -227,7 +231,7 @@ Either way, set `TELEGRAM_WEBHOOK_SECRET` in `.env.local` first - the route 401s
 - [ ] Bot created via BotFather; token stored only in the deployment secret store
 - [ ] `TELEGRAM_WEBHOOK_SECRET` generated with `openssl rand -hex 32` and set server-side
 - [ ] `TELEGRAM_BOT_USERNAME` set server-side and equal to what `getMe` returns - every `t.me/<username>?start=...` deep link (Connect Telegram, /subscribe) targets it
-- [ ] `setWebhook` called with `secret_token`, `allowed_updates: ["message"]`, `drop_pending_updates: true`
+- [ ] `setWebhook` called with `secret_token`, `allowed_updates: ["message", "callback_query"]`, `drop_pending_updates: true` (`npm run telegram:webhook`; `-- --check` to verify)
 - [ ] `getWebhookInfo` shows the correct URL and `last_error_message` is empty
 - [ ] Confirmed a request WITHOUT the secret header gets 401
 - [ ] Confirmed a request WITH the secret header gets 200 and a reply
@@ -260,3 +264,22 @@ Either way, set `TELEGRAM_WEBHOOK_SECRET` in `.env.local` first - the route 401s
 - `workers/stock_scanner/telegram.py` - legacy worker outbound alerts
 - `.env.example` - canonical env var list
 - `docs/ai-notification-layer.md` - notification layer design
+
+## Feedback buttons (v0.137.0)
+
+Every message the workers send through the bot - the daily read, the AI briefing (the operator's copy
+and every Telegram subscriber's), the morning guide - ends with two inline buttons, 👍 Useful and
+👎 Not for me. Their `callback_data` is `fb:<generation id>:<step>[:<pillar>]`, where the generation
+id is the message's `ai_runs` row (`workers/stock_scanner/generation_record.py` writes it before the
+send; a message whose row could not be written goes out without buttons). The grammar and the button
+text live in `contracts/feedback/telegram-feedback.json`, read by both the worker and the webhook.
+
+A tap reaches `/api/webhooks/telegram` as a `callback_query`: the route parses the data against the
+closed grammar, records it in `content_feedback` (migration 060; one row per reader per message,
+reader known from the chat - a subscriber, a paired account, or a hash of the chat id), answers the
+tap with a short toast and swaps the buttons for six reasons that are the nightly review's pillars,
+then for one "✓ Noted · change" button. A plain-text reply to a message that still carries those
+buttons is kept as a note on the same row. A command - `/stop`, a bare STOP sent as a reply - is
+always handled as the command. Until migration 060 is applied the toast says feedback is not being
+saved yet and the buttons stay put, so nothing pretends to be recorded.
+

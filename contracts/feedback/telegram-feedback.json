@@ -1,0 +1,31 @@
+{
+  "$comment": "The feedback buttons under every message Lyra's workers send (v0.137.0). One contract, read by the workers (workers/stock_scanner/feedback.py builds the first keyboard) and by the web app (src/lib/feedback/telegram-feedback.ts answers the taps), so the two can never disagree about what a button says or what its data means. callback_data is `<prefix>:<generation id>:<step>[:<pillar code>]`, at most 45 bytes (Telegram allows 64). The pillars are the six the nightly review scores (workers/stock_scanner/content_judge.py), so a reader's reason lands on the same radar as the judge's score.",
+  "prefix": "fb",
+  "allowed_updates": ["message", "callback_query"],
+  "vote": [
+    { "step": "u", "text": "👍 Useful" },
+    { "step": "d", "text": "👎 Not for me" }
+  ],
+  "pillars": {
+    "cor": "correctness",
+    "rel": "relevance",
+    "bre": "breadth",
+    "ins": "insight",
+    "cla": "clarity",
+    "fre": "freshness"
+  },
+  "reasons": {
+    "u": {
+      "toast": "Thanks. What made it good?",
+      "chips": [["rel", "Relevant to me"], ["ins", "Real insight"], ["cla", "Easy to read"], ["bre", "Good spread"], ["fre", "Timely"], ["cor", "Trustworthy"]]
+    },
+    "d": {
+      "toast": "Thanks. What fell short?",
+      "chips": [["rel", "Not relevant"], ["ins", "No insight"], ["cla", "Too dense"], ["bre", "Missing topics"], ["fre", "Old news"], ["cor", "Looks wrong"]]
+    }
+  },
+  "skip": "Skip",
+  "noted": "✓ Noted · change",
+  "done_toast": "Thanks - noted.",
+  "note_reply": "Thanks - noted. Your reply goes to the person who builds Lyra."
+}

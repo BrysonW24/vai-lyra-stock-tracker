@@ -213,8 +213,8 @@ def test_deliver_serves_each_person_once_a_day_and_lets_a_blocked_chat_go(monkey
     sent: list[dict] = []
     emails: list[dict] = []
 
-    def fake_send(message, settings, chat_id=None, *, silent=False, parse_mode=None):
-        sent.append({"chat_id": chat_id, "token": settings.telegram_bot_token, "silent": silent, "parse_mode": parse_mode, "message": message})
+    def fake_send(message, settings, chat_id=None, *, silent=False, parse_mode=None, reply_markup=None):
+        sent.append({"chat_id": chat_id, "token": settings.telegram_bot_token, "silent": silent, "parse_mode": parse_mode, "message": message, "reply_markup": reply_markup})
         return TelegramResult(sent_status="failed", error_message="Telegram API HTTP 403") if chat_id == "999" else TelegramResult(sent_status="sent")
 
     monkeypatch.setattr(bs, "send_telegram_message", fake_send)

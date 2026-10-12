@@ -100,7 +100,7 @@ for one day, 2026-10-06, at ~US$5-7 a month before the founder chose once a day.
 
 | Service | Model and tools | Price | Measured per briefing | Projected per month |
 |---|---|---|---|---|
-| Anthropic Claude API | `claude-opus-5-5` at `high` effort with `web_search_20260209` + `web_fetch_20260209` | US$4.00 in / US$20.00 out per 1M tokens (cache reads US$0.40, cache writes US$5.00); **US$10 per 1,000 searches**; fetches cost tokens only (list, read 2026-10-07) | **US$2.24** on the one complete real run (2026-10-07: 14 searches, 10 pages opened, 493k input tokens, 6.7k output, 167 s) - every input token priced at the full rate because that run predates the cache split now on the ledger, so the true bill is lower by whatever the API served from cache | **~US$30-50** at one briefing per US business day (~22 a month) before tuning; the ceiling `BRIEFING_MONTHLY_BUDGET_USD` (default **US$40**) holds regardless |
+| Anthropic Claude API | `claude-opus-5-5` at `high` effort with `web_search_20260209` + `web_fetch_20260209` | US$4.00 in / US$20.00 out per 1M tokens (cache reads **US$0.20** - 0.05x on this model, read 2026-10-13; the ledger priced them at US$0.40 until v0.137.0 - cache writes US$5.00); **US$10 per 1,000 searches**; fetches cost tokens only (list, read 2026-10-07) | **US$2.24** on the one complete real run (2026-10-07: 14 searches, 10 pages opened, 493k input tokens, 6.7k output, 167 s) - every input token priced at the full rate because that run predates the cache split now on the ledger, so the true bill is lower by whatever the API served from cache | **~US$30-50** at one briefing per US business day (~22 a month) before tuning; the ceiling `BRIEFING_MONTHLY_BUDGET_USD` (default **US$40**) holds regardless |
 
 Where the money goes: not the searches (14 cents) but the input tokens - a server-side tool loop
 re-reads its whole context on every search iteration, so one long turn with large fetched pages
@@ -116,6 +116,26 @@ range until a run is measured. The two runs meant to measure the tuned prompt on
 account's prepaid credit ran out mid-turn (the API answers 400 "credit balance is too low"), which
 also stops the daily read's prose until the balance is topped up - both jobs now say so in their
 message rather than "error 400".
+
+Prompt caching (v0.137.0). Until v0.137.0 the research request set no `cache_control`, and the web
+tools only cache their own results when the request already uses caching - so every one of the
+measured run's 493k input tokens was a full-price re-read. The request now carries a breakpoint on
+the static system prompt plus the top-level automatic one; every re-read after the first is billed
+at the cache-read rate (US$0.20/M instead of US$4.00/M), and the ledger's `cache_read_tokens` shows
+the split on the next real run. Expect the input share of a briefing to fall well below the 88% the
+review measured; the first forced run after the credit is topped up is the measurement.
+
+#### The nightly content review (v0.137.0: `content-review.yml`, Claude on the repo's own key)
+
+| Service | Model | Price | Per review | Projected per month |
+|---|---|---|---|---|
+| Anthropic Claude API | `claude-opus-5-5` at `low` effort, structured output (six pillar scores + reasons) | US$4.00 in / US$20.00 out per 1M tokens | One call per message reviewed: the message, the measures and the evidence (the read's fact sheet) in, a few hundred words out plus low-effort thinking - about **US$0.02-0.05** each (estimate; the ledger's `content_judge` rows are the measurement) | ~3 messages a weekday (read, briefing, morning guide) ≈ 66 a month ≈ **US$2-3**; the ceiling `JUDGE_MONTHLY_BUDGET_USD` (default **US$5**) holds regardless |
+
+Bounded by its own ledger rows (job `content_judge`): the month's spend is read before every run,
+at most `JUDGE_MAX_PER_RUN` (12) reviews a night, and a billing or key failure ends the night - the
+next one picks up anything unreviewed inside `JUDGE_LOOKBACK_DAYS` (3). The record itself
+(`ai_runs` rows for every message) and the readers' feedback (`content_feedback`) cost nothing but
+database rows: a few kilobytes per message.
 
 #### The subscribe-by-link audience (v0.134.0: /subscribe, Telegram through the app's bot, email through Resend)
 

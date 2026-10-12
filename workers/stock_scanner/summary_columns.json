@@ -72,5 +72,19 @@
     "unsubscribed_at",
     "created_at",
     "updated_at"
+  ],
+  "ai_runs": [
+    "id",
+    "user_id",
+    "agent_name",
+    "model_provider",
+    "model_name",
+    "prompt_version",
+    "input_hash",
+    "input_payload",
+    "output_payload",
+    "confidence_score",
+    "status",
+    "created_at"
   ]
 }

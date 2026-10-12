@@ -1,0 +1,57 @@
+name: Content Review
+
+# The nightly review of what Lyra sent (workers/stock_scanner/content_judge.py). Every message the
+# workers send - the daily read, the AI briefing, the morning guide - is on the record in ai_runs
+# with its text and prompt version; this job scores each new one on six anchored pillars
+# (correctness, relevance, breadth, insight, clarity, freshness) with Claude at low effort and
+# writes the review back to ai_runs, owned by the operator. The founder asked for "proper reviewing
+# over what content it is that we send out" so that feedback, when it comes, has a why (2026-10-13).
+#
+# 11:40 UTC is 22:40 Sydney in AEDT and 21:40 in AEST: after the evening read (09:05/10:05 UTC) and
+# briefing (09:20/10:20 UTC) have gone out. Tuesday to Saturday UTC, the days those run; a morning
+# guide sent at 21:30 UTC is reviewed the next evening. Anything missed (no credit, a failed run) is
+# picked up by a later night for JUDGE_LOOKBACK_DAYS. Budgeted from its own ledger rows.
+on:
+  schedule:
+    - cron: '40 11 * * 2-6'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-review
+  cancel-in-progress: false
+
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-worker
+
+      - name: Content review
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEFAULT_USER_ID: ${{ secrets.DEFAULT_USER_ID }}
+          DEFAULT_TIMEFRAME: ${{ vars.DEFAULT_TIMEFRAME || '1h' }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ENABLE_CONTENT_JUDGE: ${{ vars.ENABLE_CONTENT_JUDGE || 'true' }}
+          JUDGE_MODEL: ${{ vars.JUDGE_MODEL || 'claude-opus-5-5' }}
+          JUDGE_EFFORT: ${{ vars.JUDGE_EFFORT || 'low' }}
+          JUDGE_MONTHLY_BUDGET_USD: ${{ vars.JUDGE_MONTHLY_BUDGET_USD || '5' }}
+          JUDGE_LOOKBACK_DAYS: ${{ vars.JUDGE_LOOKBACK_DAYS || '3' }}
+          JUDGE_MAX_PER_RUN: ${{ vars.JUDGE_MAX_PER_RUN || '12' }}
+        run: python -m workers.stock_scanner.content_judge
+
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          title: Lyra content review FAILED
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}

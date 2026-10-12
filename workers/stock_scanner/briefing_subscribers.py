@@ -43,6 +43,7 @@ from workers.stock_scanner.briefing_text import (
 )
 from workers.stock_scanner.config import Settings
 from workers.stock_scanner.logger import get_logger
+from workers.stock_scanner.feedback import last_part_markup
 from workers.stock_scanner.telegram import send_telegram_message
 
 LOGGER = get_logger("stock_scanner.briefing_subscribers")
@@ -377,12 +378,18 @@ def deliver_to_subscriber(
     desk_notes: dict[str, str],
     settings: Settings,
     silent: bool,
+    generation_id: str | None = None,
 ) -> SubscriberDelivery:
     if subscriber.channel == "telegram":
         if not settings.telegram_bot_token:
             return SubscriberDelivery(subscriber.id, "telegram", "failed", "TELEGRAM_BOT_TOKEN missing")
-        for message in compose_subscriber_messages(personal, day_label=day_label, desk_notes=desk_notes):
-            delivery = send_telegram_message(message, settings, chat_id=subscriber.chat_id, silent=silent, parse_mode="HTML")
+        messages = compose_subscriber_messages(personal, day_label=day_label, desk_notes=desk_notes)
+        for index, message in enumerate(messages):
+            # The feedback buttons point at the briefing's generation row; the webhook knows the
+            # reader from the chat, so one row serves every subscriber's copy (feedback.py).
+            delivery = send_telegram_message(
+                message, settings, chat_id=subscriber.chat_id, silent=silent, parse_mode="HTML", reply_markup=last_part_markup(index, len(messages), generation_id)
+            )
             if delivery.sent_status != "sent":
                 error = delivery.error_message or "telegram send failed"
                 # 403 = the person blocked the bot or deleted the chat: that is an unsubscribe, not a retry.
@@ -412,6 +419,7 @@ def deliver_to_subscribers(
     today: date,
     settings: Settings,
     silent: bool = False,
+    generation_id: str | None = None,
 ) -> SubscriberOutcome:
     """Send tonight's briefing to everyone who has not had today's yet, stamping each row as it goes.
     Idempotent per day: the resend firing (an undelivered operator/user leg) skips anyone already served."""
@@ -421,7 +429,9 @@ def deliver_to_subscribers(
             already += 1
             continue
         attempted += 1
-        delivery = deliver_to_subscriber(subscriber, personalise(items, subscriber), day_label=day_label, desk_notes=desk_notes, settings=settings, silent=silent)
+        delivery = deliver_to_subscriber(
+            subscriber, personalise(items, subscriber), day_label=day_label, desk_notes=desk_notes, settings=settings, silent=silent, generation_id=generation_id
+        )
         if delivery.status == "sent":
             reached += 1
             mark_sent(client, subscriber, today)

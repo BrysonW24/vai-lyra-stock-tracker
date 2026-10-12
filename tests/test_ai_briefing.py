@@ -224,6 +224,12 @@ def test_research_harvests_sources_resumes_a_paused_turn_and_prices_the_searches
     assert first["tools"][1]["type"] == "web_fetch_20260209" and first["tools"][1]["max_uses"] == 10
     assert first["tools"][2]["name"] == "publish_briefing" and first["output_config"] == {"effort": "high"}
     assert [m["role"] for m in second["messages"]] == ["user", "assistant"], "the paused message goes back unchanged"
+    # Caching (v0.137.0): a breakpoint on the static system prompt plus the top-level automatic one,
+    # and a byte-identical prefix on the continuation - without both, every re-read is full price.
+    for call in (first, second):
+        assert call["cache_control"] == {"type": "ephemeral"}
+        assert call["system"] == [{"type": "text", "text": ab.SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
+    assert first["tools"] == second["tools"] and first["system"] == second["system"]
 
 
 def test_research_nudges_once_when_the_model_stops_without_publishing(sdk):
@@ -273,13 +279,16 @@ def test_a_dearer_serving_model_is_what_the_ledger_pays_for(sdk):
     assert result.model == "claude-fable-5-1" and result.cost_usd == pytest.approx(10_000 * 10 / 1e6 + 2_000 * 50 / 1e6)
 
 
-def test_cache_reads_are_priced_at_the_cache_rate_and_counted():
-    """A research turn re-reads its context on every iteration; the API serves most of that from the
-    cache at a tenth of the input price, and the ledger must say so rather than charge full price."""
+def test_cache_reads_are_priced_at_each_models_own_cache_rate_and_counted():
+    """A research turn re-reads its context on every iteration; with caching on, the API serves most
+    of that from the cache, and the ledger must price it at the model's own cache-read rate - 0.05x
+    on Opus 5.5 (US$0.20/M), not the 0.1x this charged until v0.137.0."""
     usage = SimpleNamespace(input_tokens=5_000, cache_creation_input_tokens=10_000, cache_read_input_tokens=100_000, output_tokens=1_000)
     tokens = ab._tokens(usage)
     assert tokens == ab.Tokens(5_000, 10_000, 100_000, 1_000) and tokens.billed_input == 115_000
-    assert ab.tokens_cost_usd("claude-opus-5-5", tokens) == pytest.approx((5_000 * 4 + 10_000 * 5 + 100_000 * 0.4 + 1_000 * 20) / 1e6)
+    assert ab.tokens_cost_usd("claude-opus-5-5", tokens) == pytest.approx((5_000 * 4 + 10_000 * 5 + 100_000 * 0.2 + 1_000 * 20) / 1e6)
+    assert ab.tokens_cost_usd("claude-fable-5-1", tokens) == pytest.approx((5_000 * 10 + 10_000 * 12.5 + 100_000 * 0.25 + 1_000 * 50) / 1e6)
+    assert ab.tokens_cost_usd("claude-sonnet-5-5", tokens) == pytest.approx((5_000 * 2 + 10_000 * 2.5 + 100_000 * 0.2 + 1_000 * 10) / 1e6), "an unlisted share reads at 0.1x"
     assert ab.tokens_cost_usd("claude-unknown", tokens) == pytest.approx((5_000 * 10 + 10_000 * 12.5 + 100_000 * 1.0 + 1_000 * 50) / 1e6), "an unknown model is priced at the dearest row"
 
     fallback = SimpleNamespace(input_tokens=1_000, output_tokens=100, iterations=[SimpleNamespace(input_tokens=1_000, output_tokens=100), SimpleNamespace(input_tokens=3_000, output_tokens=200)])
@@ -290,7 +299,7 @@ def test_research_reports_the_cache_split_on_the_result(sdk):
     sdk.responses = [_response([_publish_block([])], "tool_use", cache_read=50_000, cache_write=4_000)]
     result = ab.research("brief", model="claude-opus-5-5", effort="high", max_searches=16, max_fetches=10)
     assert (result.input_tokens, result.cache_read_tokens, result.output_tokens) == (64_000, 50_000, 2_000)
-    assert result.cost_usd == pytest.approx((10_000 * 4 + 4_000 * 5 + 50_000 * 0.4 + 2_000 * 20) / 1e6)
+    assert result.cost_usd == pytest.approx((10_000 * 4 + 4_000 * 5 + 50_000 * 0.2 + 2_000 * 20) / 1e6), "Opus 5.5 reads its cache at US$0.20/M"
 
 
 # --------------------------------------------------------------------------------------------
@@ -410,8 +419,8 @@ def harness(monkeypatch):
 
     monkeypatch.setattr(ab, "research", fake_research)
 
-    def fake_send(message, settings, chat_id=None, *, silent=False, parse_mode=None):
-        state.sent.append({"message": message, "chat_id": chat_id, "silent": silent, "parse_mode": parse_mode, "token": settings.telegram_bot_token})
+    def fake_send(message, settings, chat_id=None, *, silent=False, parse_mode=None, reply_markup=None):
+        state.sent.append({"message": message, "chat_id": chat_id, "silent": silent, "parse_mode": parse_mode, "token": settings.telegram_bot_token, "reply_markup": reply_markup})
         result = state.telegram_result(chat_id) if callable(state.telegram_result) else state.telegram_result
         return result or TelegramResult(sent_status="sent")
 
@@ -600,3 +609,75 @@ def test_run_serves_subscribers_their_own_copy_and_resends_only_to_those_missed(
     # A third firing finds the day on the ledger - nobody hears from Lyra twice.
     assert ab.run(now=EVENING + timedelta(hours=2)) == 0
     assert len([s for s in harness.sent if s["chat_id"] == "777"]) == 2 and len(harness.emails) == 2
+
+
+# ------------------------------------------------------------------------------------------
+# v0.137.0: the briefing on the record once, buttons for every reader, rehearsals kept apart.
+
+
+def _vote(generation_id):
+    return {"inline_keyboard": [[{"text": "👍 Useful", "callback_data": f"fb:{generation_id}:u"}, {"text": "👎 Not for me", "callback_data": f"fb:{generation_id}:d"}]]}
+
+
+def test_run_records_the_briefing_once_and_every_reader_rates_the_same_generation(harness):
+    harness.db["briefing_subscribers"] = [
+        {"id": "sub-1", "token": "t1", "channel": "telegram", "telegram_chat_id": "777", "topics": [], "holdings": ["NVDA"], "status": "active", "sent_count": 0},
+    ]
+    # The first firing reaches nobody; the resend must reuse the record, not write a second one.
+    harness.telegram_result = TelegramResult(sent_status="failed", error_message="Telegram API HTTP 502")
+    harness.dispatch_result = DispatchResult(attempted=True, ok=False, error_message="router down")
+    assert ab.run(now=EVENING) == 1
+    (record,) = harness.db["ai_runs"]
+    assert record["agent_name"] == "ai_briefing" and record["status"] == "ok" and record["user_id"] is None, "every account sees the briefing - no owner"
+    assert record["prompt_version"] == ab.PROMPT_VERSION and record["prompt_version"].startswith("ai_briefing@")
+    assert record["input_payload"]["input"] == harness.research_calls[0]["brief"] and record["input_payload"]["day"] == "2026-10-07"
+    output = record["output_payload"]
+    assert output["items"][0]["headline"] == "Constellation (Nasdaq: CEG)" and output["mode"] == "production" and output["cost_usd"] == 1.04
+    assert output["text"].startswith("🗞️ <b>Lyra AI briefing</b> · Wed 7 Oct") and output["parts"] == 1
+    assert harness.db["stock_scanner_runs"][0]["payload"]["generation_id"] == record["id"]
+
+    harness.telegram_result = None
+    harness.dispatch_result = None
+    assert ab.run(now=EVENING + timedelta(hours=1)) == 0
+    assert len(harness.db["ai_runs"]) == 1, "one generation however many firings it takes to deliver"
+    operator = [s for s in harness.sent if s["chat_id"] == "chat-1"]
+    subscriber = [s for s in harness.sent if s["chat_id"] == "777"]
+    assert operator[-1]["reply_markup"] == _vote(record["id"]) and subscriber[-1]["reply_markup"] == _vote(record["id"])
+    assert harness.db["stock_scanner_runs"][1]["payload"]["generation_id"] == record["id"]
+
+
+def test_buttons_sit_under_the_last_part_of_a_split_briefing_only(harness, monkeypatch):
+    monkeypatch.setattr(ab, "TELEGRAM_LIMIT", 600)
+    monkeypatch.setattr(ab, "compose_messages", lambda *a, **k: ["part one", "part two", "part three"])
+    assert ab.run(now=EVENING) == 0
+    (record,) = harness.db["ai_runs"]
+    assert [s["reply_markup"] for s in harness.sent] == [None, None, _vote(record["id"])]
+    assert record["output_payload"]["parts"] == 3 and record["output_payload"]["text"] == "part one\n\npart two\n\npart three"
+
+
+def test_a_nothing_tonight_note_is_recorded_as_a_note_without_buttons(harness):
+    harness.items = []
+    assert ab.run(now=EVENING) == 0
+    (record,) = harness.db["ai_runs"]
+    assert record["status"] == "note" and "No briefing tonight" in record["output_payload"]["text"]
+    assert harness.sent[0]["reply_markup"] is None
+
+
+def test_a_rehearsal_is_never_resent_never_covered_and_never_sent(harness, monkeypatch, tmp_path):
+    out = tmp_path / "briefing.html"
+    monkeypatch.setenv("LYRA_REHEARSAL", "true")
+    monkeypatch.setenv("LYRA_REHEARSAL_OUT", str(out))
+    assert ab.run(now=EARLY) == 0, "a rehearsal ignores the send time"
+    assert harness.sent == [] and harness.dispatched == [] and harness.emails == []
+    row = harness.db["stock_scanner_runs"][0]
+    assert row["status"] == "success" and row["payload"]["rehearsal"] is True and row["payload"]["date"] is None and row["payload"]["items"]
+    assert harness.db["ai_runs"][0]["output_payload"]["mode"] == "rehearsal" and out.read_text().startswith("🗞️ <b>Lyra AI briefing</b>")
+    runs = harness.db["stock_scanner_runs"]
+    assert ab.pending_items(runs, datetime(2026, 10, 7).date()) is None, "a dry run's items must never be published as a resend"
+    assert ab.covered_from_runs(runs, datetime(2026, 10, 1).date()) == (set(), []), "no reader saw a rehearsal, so nothing in it is a repeat"
+
+    monkeypatch.delenv("LYRA_REHEARSAL")
+    assert ab.run(now=EVENING) == 0
+    assert len(harness.research_calls) == 2, "the evening researches for real"
+    assert len([s for s in harness.sent if s["chat_id"] == "chat-1"]) == 1
+    assert [r["output_payload"]["mode"] for r in harness.db["ai_runs"]] == ["rehearsal", "production"]

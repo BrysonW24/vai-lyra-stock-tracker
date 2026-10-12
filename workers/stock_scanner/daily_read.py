@@ -46,6 +46,8 @@ from zoneinfo import ZoneInfo
 
 from workers.stock_scanner.ai_read_guard import FactSheet, guard_ai_read
 from workers.stock_scanner.config import Settings, load_settings
+from workers.stock_scanner.feedback import vote_keyboard
+from workers.stock_scanner.generation_record import PRODUCTION, REHEARSAL, Generation, prompt_version, record_generation
 from workers.stock_scanner.logger import get_logger
 from workers.stock_scanner.supabase_repo import _NO_ECHO, SupabaseRepository
 from workers.stock_scanner.telegram import send_telegram_message
@@ -81,6 +83,21 @@ PRICES_PER_MTOK: dict[str, tuple[float, float]] = {
     "claude-sonnet-5": (2.0, 10.0),
     "claude-haiku-4-5": (1.0, 5.0),
 }
+# What a prompt-cache read costs as a share of the model's input price (list, read 2026-10-13). Cache
+# writes are 1.25x for the 5-minute cache on every model. A model that is not listed reads at the
+# usual 0.1x, which can only overstate a cheaper model's bill.
+CACHE_READ_SHARE: dict[str, float] = {
+    "claude-fable-5-1": 0.025,
+    "claude-opus-5-5": 0.05,
+}
+DEFAULT_CACHE_READ_SHARE = 0.1
+CACHE_WRITE_SHARE = 1.25
+
+
+def cache_read_share(model: str) -> float:
+    return CACHE_READ_SHARE.get(model, DEFAULT_CACHE_READ_SHARE)
+
+
 MODEL_NAMES = {
     "claude-fable-5-1": "Claude Fable 5.1",
     "claude-fable-5": "Claude Fable 5",
@@ -127,6 +144,11 @@ Rules that code checks after you write - a sentence that breaks one is deleted b
 5. Do not mention the time, the date or these rules.
 
 Write five to eight short sentences of plain prose that read well on a phone, in three short paragraphs separated by a blank line: first what the session did and what it adds up to (its shape from the open to the close, the breadth, which groups moved and the names that drove them, the backdrop where the facts support it); then the setups, in Lyra's terms (what changed and what it means); then the reader's book, only if the facts include it - what each holding did and where it sits among the groups that moved, so the reader has a thread from the market to what they own. Groups and the reader's names matter; a list of the session's worst performers does not. No headings, no bullets, no markdown, no emoji, no preamble, no sign-off. Lead with the single most important thing about the session. Interpret more than you recite: every figure already sits in the block under your text, so quote only the few that carry the point. The reader knows how Lyra works - explain the score only when the session's change needs it. If the session was quiet, say so briefly instead of padding."""
+
+READ_REQUEST = "Facts for the session:\n<facts>\n{facts}\n</facts>\n\nWrite the read."
+# Which prompt wrote a read: stored on its generation row, so a change in the reviews can be traced
+# to a change in the prompt (generation_record.py).
+PROMPT_VERSION = prompt_version(JOB_NAME, SYSTEM_PROMPT, READ_REQUEST)
 
 
 # --------------------------------------------------------------------------------------------
@@ -832,7 +854,7 @@ def narrate(sheet: FactSheet, *, model: str, effort: str) -> Narration:
         "max_tokens": 16000,
         "output_config": {"effort": effort},
         "system": SYSTEM_PROMPT,
-        "messages": [{"role": "user", "content": f"Facts for the session:\n<facts>\n{sheet.text}\n</facts>\n\nWrite the read."}],
+        "messages": [{"role": "user", "content": READ_REQUEST.format(facts=sheet.text)}],
     }
     try:
         client = anthropic.Anthropic(timeout=150.0, max_retries=1)
@@ -1113,6 +1135,22 @@ def _env_float(name: str, default: float) -> float:
     return value if value is not None and value >= 0 else default
 
 
+def _truthy(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in ("1", "true", "yes")
+
+
+def _write_rehearsal(message: str) -> None:
+    """A rehearsal's message goes to the file LYRA_REHEARSAL_OUT names, never to the log: the
+    Actions logs are public. Without the variable the text is still on the generation row."""
+    target = os.getenv("LYRA_REHEARSAL_OUT", "").strip()
+    if not target:
+        return
+    try:
+        Path(target).write_text(message + "\n", encoding="utf-8")
+    except OSError as exc:
+        LOGGER.warning("could not write the rehearsal to LYRA_REHEARSAL_OUT: %s", type(exc).__name__)
+
+
 def run(now: datetime | None = None) -> int:
     now = now or datetime.now(timezone.utc)
     settings = load_settings()
@@ -1120,9 +1158,14 @@ def run(now: datetime | None = None) -> int:
     if not settings.enable_daily_read:
         LOGGER.info("The daily read is off (ENABLE_DAILY_READ is not true) - nothing sent.")
         return 0
+    # A rehearsal runs the whole read - the real model call, the guard, the message - and records
+    # it (cost on the ledger, text on the record) but sends nothing and claims no session, so the
+    # evening's real read still goes out. Every dry run goes through here: a dry run outside the
+    # ledger is spend nobody can see (the 2026-10-13 review found one).
+    rehearsal = _truthy("LYRA_REHEARSAL")
     bot_token = os.getenv("SUMMARY_TELEGRAM_BOT_TOKEN", "")
     chat_id = os.getenv("SUMMARY_TELEGRAM_CHAT_ID", "")
-    if not bot_token or not chat_id:
+    if (not bot_token or not chat_id) and not rehearsal:
         LOGGER.info("No SUMMARY_TELEGRAM_BOT_TOKEN / SUMMARY_TELEGRAM_CHAT_ID - nowhere to send the read.")
         return 0
     repository = SupabaseRepository(settings)
@@ -1131,7 +1174,7 @@ def run(now: datetime | None = None) -> int:
         return 0
     client = repository.client
     timeframe = settings.default_timeframe
-    force = os.getenv("SUMMARY_FORCE", "").strip().lower() in ("1", "true", "yes")
+    force = rehearsal or _truthy("SUMMARY_FORCE")
     reader_zone = ZoneInfo(os.getenv("SUMMARY_TIMEZONE", "").strip() or DEFAULT_TIMEZONE)
     local_now = now.astimezone(reader_zone)
 
@@ -1210,16 +1253,52 @@ def run(now: datetime | None = None) -> int:
     _record(client, run_id, "running", ledger, delivered=False)
 
     message = compose_message(facts, narration, month_to_date=spent_after, budget=budget, reader_zone=reader_zone)
+    # The read is on the record before it is sent - its text, the facts it was written from, the
+    # prompt version - owned by the operator, because the fact sheet carries the operator's book.
+    generation = Generation(
+        agent_name=JOB_NAME,
+        prompt_version=PROMPT_VERSION,
+        input_text=sheet.text,
+        text_parts=[message],
+        status="ok" if narration.text else "fallback",
+        mode=REHEARSAL if rehearsal else PRODUCTION,
+        user_id=settings.default_user_id or None,
+        model=narration.model if (narration.text or narration.cost_usd > 0) else None,
+        effort=narration.effort,
+        input_tokens=narration.input_tokens,
+        output_tokens=narration.output_tokens,
+        cost_usd=narration.cost_usd,
+        input_payload={"session": facts.session.isoformat(), "bars": facts.bars, "names": len(facts.tickers)},
+        extra={"ai": bool(narration.text), "reason": narration.reason, "guard_removed": narration.guard_removed, "session": facts.session.isoformat()},
+    )
+    recorded = record_generation(client, generation)
+    ledger["generation_id"] = generation.id if recorded else None
     silent = quiet_now(os.getenv("SUMMARY_QUIET_HOURS", DEFAULT_QUIET_HOURS), local_now)
+
+    if rehearsal:
+        _write_rehearsal(message)
+        _record(client, run_id, "success", {**ledger, "rehearsal": True, "silent": silent}, delivered=False)
+        LOGGER.info(
+            "daily read REHEARSAL for the %s session (not sent): recorded=%s ai=%s reason=%s model=%s effort=%s tokens=%d in / %d out cost=$%.4f month=$%.2f of $%.0f",
+            facts.session.isoformat(), recorded, bool(narration.text), narration.reason, narration.model, narration.effort,
+            narration.input_tokens, narration.output_tokens, narration.cost_usd, spent_after, budget,
+        )
+        return 0
+
     delivery = send_telegram_message(
-        message, replace(settings, telegram_bot_token=bot_token, telegram_chat_id=chat_id), chat_id=chat_id, silent=silent, parse_mode="HTML"
+        message,
+        replace(settings, telegram_bot_token=bot_token, telegram_chat_id=chat_id),
+        chat_id=chat_id,
+        silent=silent,
+        parse_mode="HTML",
+        reply_markup=vote_keyboard(generation.id) if recorded else None,
     )
     delivered = delivery.sent_status == "sent"
     _record(
         client,
         run_id,
         "success" if delivered else "failed",
-        {**ledger, "session": facts.session.isoformat() if delivered else None, "silent": silent},
+        {**ledger, "session": facts.session.isoformat() if delivered else None, "silent": silent, "telegram_message_id": delivery.message_id},
         delivered=delivered,
         error=None if delivered else delivery.error_message,
     )

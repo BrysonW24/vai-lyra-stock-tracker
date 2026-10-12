@@ -7,5 +7,6 @@
   "notification_deliveries": ["user_id", "status", "error_message", "created_at"],
   "notification_channels": ["user_id", "channel_type", "destination", "channel_label", "is_active", "is_verified", "verified_at", "updated_at"],
   "channel_pairing_codes": ["user_id", "channel_type", "code_hash", "expires_at", "used_at"],
-  "briefing_subscribers": ["id", "token", "channel", "email", "telegram_chat_id", "topics", "holdings", "status", "unsubscribe_reason", "user_id", "source", "confirmed_at", "unsubscribed_at", "updated_at"]
+  "briefing_subscribers": ["id", "token", "channel", "email", "telegram_chat_id", "topics", "holdings", "status", "unsubscribe_reason", "user_id", "source", "confirmed_at", "unsubscribed_at", "updated_at"],
+  "content_feedback": ["generation_id", "reader_ref", "reader_kind", "user_id", "subscriber_id", "channel", "rating", "pillar", "note", "telegram_message_id", "updated_at"]
 }

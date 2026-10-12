@@ -4,7 +4,7 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 33,
+    "sections": 34,
     "chains": 16,
     "gates": 9,
     "layers": 5
@@ -193,6 +193,23 @@
         "src/components/subscribe/",
         "src/lib/notifications/telegram-pairing.ts",
         "src/app/api/notifications/telegram/"
+      ],
+      "chains": [
+        "ai-quality",
+        "notification-health"
+      ]
+    },
+    {
+      "section": "Content record, nightly review and reader feedback (every message on the record, six-pillar review, 👍/👎 buttons)",
+      "paths": [
+        "workers/stock_scanner/generation_record.py",
+        "workers/stock_scanner/feedback.py",
+        "workers/stock_scanner/content_judge.py",
+        "contracts/feedback/",
+        "src/lib/feedback/",
+        "scripts/telegram-webhook.mjs",
+        ".github/workflows/content-review.yml",
+        "supabase/migrations/060_content_feedback.sql"
       ],
       "chains": [
         "ai-quality",

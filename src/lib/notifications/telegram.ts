@@ -199,6 +199,57 @@ export async function sendTelegramMessage(
   }
 }
 
+// --- button taps: answerCallbackQuery / editMessageReplyMarkup -----------------
+
+export interface TelegramCallResult {
+  ok: boolean;
+  /** Token-redacted reason when ok is false. */
+  error?: string;
+}
+
+/** One Bot API call for the feedback buttons. Never throws; a missing token is an honest no-op. */
+async function callTelegram(method: string, payload: Record<string, unknown>): Promise<TelegramCallResult> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return { ok: false, error: 'telegram: no bot token configured' };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${TELEGRAM_API_BASE}/bot${token}/${method}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    const raw = await res.text();
+    let parsed: { ok?: boolean; description?: string } = {};
+    try {
+      parsed = JSON.parse(raw) as { ok?: boolean; description?: string };
+    } catch {
+      /* non-JSON body - reported below */
+    }
+    if (!res.ok || parsed.ok !== true) {
+      return { ok: false, error: redactBotToken(`telegram ${method} ${res.status}: ${(parsed.description ?? raw).slice(0, 200)}`, token) };
+    }
+    return { ok: true };
+  } catch (err) {
+    const aborted = err instanceof Error && err.name === 'AbortError';
+    const message = err instanceof Error ? err.message : 'unknown error';
+    return { ok: false, error: redactBotToken(aborted ? `telegram ${method} timed out after ${SEND_TIMEOUT_MS}ms` : `telegram ${method} failed: ${message}`, token) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Stop the button's loading spinner, optionally with a short toast (Telegram caps it at 200 characters). */
+export function answerCallbackQuery(callbackQueryId: string, text?: string): Promise<TelegramCallResult> {
+  return callTelegram('answerCallbackQuery', text ? { callback_query_id: callbackQueryId, text: text.slice(0, 200) } : { callback_query_id: callbackQueryId });
+}
+
+/** Swap the buttons under a message the bot sent (the feedback flow's next step). */
+export function editMessageReplyMarkup(chatId: string, messageId: number, replyMarkup: unknown): Promise<TelegramCallResult> {
+  return callTelegram('editMessageReplyMarkup', { chat_id: chatId, message_id: messageId, reply_markup: replyMarkup });
+}
+
 // --- pairing codes -----------------------------------------------------------
 
 /**

@@ -12,6 +12,9 @@ from workers.stock_scanner.models import SignalResult, Ticker
 class TelegramResult:
     sent_status: str
     error_message: str | None = None
+    # Telegram's id for the message it delivered (None when it was not delivered, or the reply
+    # carried no id) - what a feedback tap or a reply points back at.
+    message_id: int | None = None
 
 
 def build_telegram_message(signal: SignalResult, ticker: Ticker, previous_score: float | None = None) -> str:
@@ -61,7 +64,13 @@ def build_invalidation_message(signal: SignalResult, ticker: Ticker, previous_sc
 
 
 def send_telegram_message(
-    message: str, settings: Settings, chat_id: str | None = None, *, silent: bool = False, parse_mode: str | None = None
+    message: str,
+    settings: Settings,
+    chat_id: str | None = None,
+    *,
+    silent: bool = False,
+    parse_mode: str | None = None,
+    reply_markup: dict[str, object] | None = None,
 ) -> TelegramResult:
     """Send a Telegram message to a specific chat_id.
 
@@ -69,6 +78,7 @@ def send_telegram_message(
     `silent` delivers without a sound or vibration (Telegram's disable_notification) - the
     message still arrives and is still unread; it just does not wake anyone. `parse_mode`
     ("HTML") lets a caller send bold section headings; the caller owns escaping `<`, `>`, `&`.
+    `reply_markup` attaches buttons (the feedback keyboard, workers/stock_scanner/feedback.py).
     """
     if not settings.telegram_bot_token:
         return TelegramResult(sent_status="skipped", error_message="Telegram bot token missing")
@@ -87,6 +97,8 @@ def send_telegram_message(
     }
     if parse_mode:
         body["parse_mode"] = parse_mode
+    if reply_markup:
+        body["reply_markup"] = reply_markup
 
     try:
         response = requests.post(endpoint, json=body, timeout=10)
@@ -101,7 +113,16 @@ def send_telegram_message(
         # Non-HTTP failures (timeout, DNS, connection) do not embed the URL, but redact defensively.
         return TelegramResult(sent_status="failed", error_message=_redact_token(str(exc), settings.telegram_bot_token))
 
-    return TelegramResult(sent_status="sent")
+    return TelegramResult(sent_status="sent", message_id=_message_id(response))
+
+
+def _message_id(response: object) -> int | None:
+    """The delivered message's id from Telegram's reply, or None - a reply without one is still a send."""
+    try:
+        value = response.json().get("result", {}).get("message_id")  # type: ignore[attr-defined]
+    except Exception:  # noqa: BLE001 - a missing or odd body must not turn a delivered message into a failure
+        return None
+    return value if isinstance(value, int) else None
 
 
 def _redact_token(text: str, token: str | None) -> str:

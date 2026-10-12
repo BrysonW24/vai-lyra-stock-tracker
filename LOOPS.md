@@ -18,6 +18,7 @@ Companions: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (structure - what exists),
 | 3 | Digest + reviews | nightly / period-end | notification events | you, on your phone | worker tests |
 | 3b | Daily read (AI) | `daily-read.yml` at 09:05 + 10:05 UTC Tue-Sat; sends once per completed US session, at or after 8pm Sydney | `stock_scanner_runs` rows with `job_name = daily_read` (session sent, bars, model, effort, tokens, cost, guard removals) | the operator's Telegram; the next firing (dedupe + budget pacing) | `test_daily_read.py`, `test_ai_read_guard.py`, `check:app-columns` (summary manifest), the workflow's failure pager |
 | 3c | AI briefing (web research) | `ai-briefing.yml` at 09:20 + 10:20 UTC Tue-Sat; once per reader-local day, at or after 8pm Sydney | `stock_scanner_runs` rows with `job_name = ai_briefing` (the checked items with their sources, how many were removed and why, model, searches, pages opened, tokens, cost, who was reached); `briefing_subscribers` (the no-account audience from `/subscribe`: channel, topics, holdings, status, last date served) | the operator's Telegram; every account through the notification router (`ai_briefing` events); every active subscriber - their own reorder of the same items - on Telegram through the app's bot or by email (Resend); the `/briefing` page; the next firing (dedupe, resend of an undelivered briefing, budget pacing, the repeat check; a subscriber already served today is skipped) | `test_ai_briefing.py`, `test_briefing_subscribers.py`, `check:app-columns` (both manifests), the workflow's failure pager |
+| 3d | Content record + review + reader feedback | every send writes its record; `content-review.yml` at 11:40 UTC Tue-Sat reviews; a reader's tap or reply lands at once | `ai_runs` rows for every message the workers send (`agent_name` daily_read / ai_briefing / morning_guide: the text as sent, the input, `prompt_version`, mode, tokens, cost) and for every review (`agent_name` content_judge: six pillar scores, reasons, advice flag, rubric version, owned by the operator); `content_feedback` (migration 060: one row per reader per message - 👍/👎, the reason pillar, a reply as a note) | the operator, reading the record, the reviews and the feedback side by side; the next night's review (anything unreviewed inside the lookback); a prompt change shows up as a new `prompt_version` next to the scores | `test_generation_record.py`, `test_content_judge.py`, the record tests in `test_daily_read.py` and `test_ai_briefing.py`, `src/lib/feedback/__tests__`, the webhook's `feedback.test.ts`, `check:app-columns` (both manifests), the workflow's failure pager |
 | 4 | Notification delivery | every event + nightly sweep | `notification_deliveries`, `notification_engagements` | sweep, relevance tuning | `/notification-health` chain |
 | 5 | Scout (notice-create-learn) | nightly 22:05 UTC | `scout_items`, `scout_runs`, ideas, source scores, stoplist | Scout-tab proposals, next night's clustering | zero-writes guards, saturation flags |
 | 6 | Macro + calendar | hourly snap + seasonal crons | `market_context_snapshots`, calendar events | dashboard strips, loop 3 baselines | RBA no-number degradation |
@@ -260,6 +261,46 @@ of a read because every search iteration re-reads the whole context). The ledger
 items themselves, on purpose: the table is globally readable and the briefing is for everyone, so
 the page reads what was sent. The count removed by the guard and its reason categories are on every
 row - a rising "figure not in source" count means the model has started converting units again.
+
+### 3d. The content record, the nightly review and the readers' buttons - what we sent, how good it was, and why
+
+The founder's ask (2026-10-13): "proper reviewing over what content it is that we send out ... if
+we do get feedback, we have ideas on why". The review that day could recover only three of the
+first twelve generated texts - the rest had gone to Telegram and nowhere else.
+
+```
+  daily read / AI briefing / morning guide
+        |  composed message (every part, as the operator gets it)
+        v
+  ai_runs row  -- generation_record.py, written BEFORE the send --------------------------+
+   text, input (fact sheet / research brief), prompt_version, mode, tokens, cost            |
+   owner: the operator for the read and the guide (they carry the book); none for the      |
+   briefing (every account already sees it)                                                 |
+        |                                                                                  |
+        v                                                                                  |
+  Telegram message + [👍 Useful] [👎 Not for me]   (callback_data fb:<row id>:u|d)          |
+        |  tap / reply                                                                      |
+        v                                                                                  |
+  /api/webhooks/telegram -> content_feedback (one row per reader per message)               |
+   rating, then the reason chip = a review pillar; a reply = a note                         |
+                                                                                           |
+  content-review.yml 11:40 UTC  -> content_judge.py  <------------------------------------+
+   six pillars 0-5 with reasons, advice flag, measures (words, figures/100 words, themes,
+   desks, holdings named) -> its own ai_runs row (content_judge), owned by the operator
+```
+
+A rehearsal (`LYRA_REHEARSAL=1` on either worker) is the same path with the sends cut: the model
+call is real, so its cost is on the ledger and its text is on the record (`mode: rehearsal`), but no
+session or day is claimed, a briefing rehearsal is never resent from the ledger, and its items never
+count as already covered. A dry run outside this path is spend nobody can see - the review found a
+US$2.24 one.
+
+What closes it: the record answers "what did this reader get, and which prompt wrote it" for any
+message; the review puts a radar on it the same night; the buttons put the reader's own verdict on
+the same six pillars, and the reader outranks the judge (Claude scoring Claude). The rubric is
+versioned (`RUBRIC_VERSION`) so a change in the rubric is never read as a change in the content. The
+open half: nothing yet reads the reviews and the feedback back into a page - for now the operator
+reads `ai_runs` and `content_feedback` directly, and the founder's review artifact is the template.
 
 ## 4. The notification loop - deliver, hold, sweep, learn
 

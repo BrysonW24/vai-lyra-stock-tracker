@@ -26,6 +26,14 @@
  * and never interpreted. Without a database (demo) every one of these answers honestly that
  * nothing was stored.
  *
+ * Feedback (v0.137.0): every message the workers send ends with 👍 Useful / 👎 Not for me. A tap
+ * arrives as a callback_query; its data is parsed against a closed grammar
+ * (src/lib/feedback/telegram-feedback.ts), recorded against the generation it names
+ * (content_feedback, migration 060 - src/lib/feedback/store.ts), and the buttons move on to six
+ * reasons and then a "noted" button. A plain-text reply to a Lyra message that still carries those
+ * buttons is kept as a note on the same generation. A command, including a replied STOP, is always
+ * a command. setWebhook must allow "callback_query" as well as "message" (npm run telegram:webhook).
+ *
  * The route always returns 200 fast after the auth gate, replying via the server-only
  * sender in src/lib/notifications/telegram.ts when TELEGRAM_BOT_TOKEN is configured.
  */
@@ -33,7 +41,9 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { parseMessage, type ParsedMessage } from '@/lib/notifications/telegram-commands';
-import { sendTelegramMessage } from '@/lib/notifications/telegram';
+import { answerCallbackQuery, editMessageReplyMarkup, sendTelegramMessage } from '@/lib/notifications/telegram';
+import { readerForChat, recordFeedback, type FeedbackOutcome } from '@/lib/feedback/store';
+import { generationFromMarkup, nextStep, NOTE_REPLY, parseFeedbackData } from '@/lib/feedback/telegram-feedback';
 import { completeTelegramPairing, disconnectChat, pairedUserForChat } from '@/lib/notifications/telegram-pairing';
 import { SUBSCRIBE_TOPICS, TELEGRAM_START_PREFIX } from '@/lib/subscribe';
 import { appBaseUrl } from '@/lib/subscribe-server';
@@ -60,6 +70,10 @@ function secretMatches(provided: string | null, expected: string | undefined): b
 
 // --- payload validation ------------------------------------------------------
 
+const inlineKeyboardSchema = z
+  .object({ inline_keyboard: z.array(z.array(z.object({ callback_data: z.string().max(64).optional() }))).max(10) })
+  .optional();
+
 const telegramUpdateSchema = z.object({
   update_id: z.number().int(),
   message: z
@@ -68,6 +82,23 @@ const telegramUpdateSchema = z.object({
       text: z.string().max(4096).optional(),
       chat: z.object({ id: z.number().int() }),
       from: z.object({ id: z.number().int() }).optional(),
+      // The message a reply answers - with its buttons, which name the generation it came from.
+      reply_to_message: z
+        .object({
+          message_id: z.number().int(),
+          from: z.object({ id: z.number().int(), is_bot: z.boolean().optional() }).optional(),
+          reply_markup: inlineKeyboardSchema,
+        })
+        .optional(),
+    })
+    .optional(),
+  // A button tap under a message the bot sent.
+  callback_query: z
+    .object({
+      id: z.string().max(128),
+      from: z.object({ id: z.number().int() }),
+      data: z.string().max(64).optional(),
+      message: z.object({ message_id: z.number().int(), chat: z.object({ id: z.number().int() }) }).optional(),
     })
     .optional(),
 });
@@ -266,6 +297,81 @@ async function buildReply(parsed: ParsedMessage, ctx: ReplyContext): Promise<str
   }
 }
 
+// --- feedback: button taps and replies -----------------------------------------
+
+type CallbackQuery = NonNullable<TelegramUpdate['callback_query']>;
+
+const NOT_SAVED_YET = 'Thanks - but feedback is not being saved yet. The person who runs Lyra has been told.';
+const SAVE_FAILED = 'That could not be saved - try again in a minute.';
+
+/** A tap on 👍 / 👎, a reason or "change". Always answers the tap so the spinner stops. */
+async function handleFeedbackTap(query: CallbackQuery, nowMs: number): Promise<void> {
+  const chatId = query.message ? String(query.message.chat.id) : String(query.from.id);
+  const action = parseFeedbackData(query.data);
+  if (!action || !allowMessage(chatId, nowMs)) {
+    await answerCallbackQuery(query.id);
+    console.info(JSON.stringify({ at: 'telegram.webhook', event: 'callback_ignored', reason: action ? 'rate_limited' : 'unknown_data' }));
+    return;
+  }
+
+  let outcome: FeedbackOutcome | 'not_written' | 'no_database' = 'not_written';
+  if (action.kind !== 'change') {
+    const client = createSupabaseServiceClient();
+    if (!client) {
+      outcome = 'no_database';
+    } else {
+      try {
+        const reader = await readerForChat(client, chatId);
+        outcome = await recordFeedback(client, {
+          generationId: action.generationId,
+          reader,
+          rating: action.rating,
+          // A new rating clears a reason given for the old one; a reason (or Skip) sets it.
+          pillar: action.kind === 'reason' ? action.pillar : null,
+          telegramMessageId: query.message?.message_id ?? null,
+          now: new Date(nowMs),
+        });
+      } catch {
+        outcome = 'error';
+      }
+    }
+  }
+
+  const step = nextStep(action);
+  const failed = outcome === 'error' || outcome === 'table_missing' || outcome === 'no_database';
+  await answerCallbackQuery(query.id, outcome === 'error' ? SAVE_FAILED : failed ? NOT_SAVED_YET : step.toast || undefined);
+  // The buttons move on only when the tap was kept, so a reader can try again after a failure.
+  if (query.message && !failed) await editMessageReplyMarkup(chatId, query.message.message_id, step.keyboard);
+  console.info(
+    JSON.stringify({
+      at: 'telegram.webhook',
+      event: 'feedback',
+      step: action.kind,
+      rating: action.kind === 'change' ? null : action.rating,
+      pillar: action.kind === 'reason' ? action.pillar : null,
+      outcome,
+    }),
+  );
+}
+
+/** A plain-text reply to a Lyra message: kept as a note on the generation the message came from. */
+async function noteReply(
+  text: string,
+  repliedTo: NonNullable<NonNullable<TelegramUpdate['message']>['reply_to_message']>,
+  ctx: ReplyContext,
+): Promise<string> {
+  const generationId = generationFromMarkup(repliedTo.reply_markup);
+  if (!generationId) {
+    return 'Thanks. To rate a message from Lyra, tap 👍 or 👎 under it - replies are kept for the messages that carry those buttons. Send /help for commands.';
+  }
+  if (!ctx.client) return NO_DATABASE;
+  const reader = await readerForChat(ctx.client, ctx.chatId);
+  const outcome = await recordFeedback(ctx.client, { generationId, reader, note: text, telegramMessageId: repliedTo.message_id, now: ctx.now });
+  console.info(JSON.stringify({ at: 'telegram.webhook', event: 'feedback_note', outcome }));
+  if (outcome === 'recorded') return NOTE_REPLY;
+  return outcome === 'table_missing' ? NOT_SAVED_YET : SAVE_FAILED;
+}
+
 // --- route --------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -292,8 +398,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
   const update: TelegramUpdate = result.data;
 
-  // 4. Only text messages are actionable (setWebhook restricts allowed_updates to
-  //    "message", but defend in depth anyway).
+  // 4. A button tap (the feedback buttons) is answered and recorded, then done. Any failure inside
+  //    is still a 200: Telegram retries non-2xx, and a retried tap would only double-answer.
+  if (update.callback_query) {
+    try {
+      await handleFeedbackTap(update.callback_query, Date.now());
+    } catch (err) {
+      console.warn(JSON.stringify({ at: 'telegram.webhook', event: 'callback_error', error: err instanceof Error ? err.name : 'unknown' }));
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  // Only text messages are actionable beyond that (setWebhook restricts allowed_updates to
+  // "message" and "callback_query", but defend in depth anyway).
   const message = update.message;
   const text = message?.text;
   if (!message || !text) {
@@ -332,7 +449,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   //    database error must never turn into a non-2xx (Telegram would retry it for ever).
   let reply: string;
   try {
-    reply = await buildReply(parsed, { client: createSupabaseServiceClient(), chatId, base: appBaseUrl(request), now: new Date(nowMs) });
+    const ctx: ReplyContext = { client: createSupabaseServiceClient(), chatId, base: appBaseUrl(request), now: new Date(nowMs) };
+    // Free text sent as a reply to one of the bot's messages is feedback on that message. A command
+    // - /stop, a bare STOP, anything the parser knows - is always handled as the command.
+    const repliedTo = message.reply_to_message;
+    const isFreeText = parsed.kind === 'command' && parsed.command === 'unknown' && !text.trim().startsWith('/');
+    reply = isFreeText && repliedTo?.from?.is_bot ? await noteReply(text, repliedTo, ctx) : await buildReply(parsed, ctx);
   } catch (err) {
     console.warn(JSON.stringify({ at: 'telegram.webhook', event: 'reply_error', error: err instanceof Error ? err.name : 'unknown' }));
     reply = 'Something went wrong on our side - try again in a minute.';

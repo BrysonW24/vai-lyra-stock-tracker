@@ -55,6 +55,7 @@ from workers.stock_scanner.briefing_text import (
 )
 from workers.stock_scanner.config import load_settings
 from workers.stock_scanner.daily_read import (
+    CACHE_WRITE_SHARE,
     DEFAULT_QUIET_HOURS,
     DEFAULT_TIMEZONE,
     EFFORT_LEVELS,
@@ -67,7 +68,10 @@ from workers.stock_scanner.daily_read import (
     _number,
     _parse_time,
     _record as record_run,
+    _truthy,
+    _write_rehearsal,
     api_failure,
+    cache_read_share,
     choose_effort,
     due,
     fmt_day,
@@ -75,6 +79,8 @@ from workers.stock_scanner.daily_read import (
     parse_clock,
     quiet_now,
 )
+from workers.stock_scanner.feedback import last_part_markup
+from workers.stock_scanner.generation_record import PRODUCTION, REHEARSAL, Generation, prompt_version, record_generation
 from workers.stock_scanner.logger import get_logger
 from workers.stock_scanner.notification_dispatch import dispatch_notification
 from workers.stock_scanner.supabase_repo import SupabaseRepository
@@ -199,6 +205,13 @@ PUBLISH_TOOL: dict[str, Any] = {
 # The brief the model researches from.
 
 
+SYSTEM_BLOCKS: list[dict[str, Any]] = [{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}]
+CACHE_CONTROL: dict[str, str] = {"type": "ephemeral"}
+# Which prompt wrote a briefing (stored on its generation row): the system prompt, the publish
+# tool's schema and the nudge - the parts that shape what the model writes.
+PROMPT_VERSION = prompt_version(JOB_NAME, SYSTEM_PROMPT, PUBLISH_TOOL, NUDGE)
+
+
 def last_us_business_day(now: datetime) -> date:
     """The most recent US business day whose close has passed."""
     local = now.astimezone(NEW_YORK)
@@ -306,8 +319,10 @@ def _tool_uses(usage: Any) -> tuple[int, int]:
 @dataclass(frozen=True)
 class Tokens:
     """One turn's tokens by price class. A research turn re-reads its growing context on every
-    search iteration, and the API serves most of those re-reads from the prompt cache at a tenth
-    of the input price - so unlike the read (two thousand tokens, priced flat) the split matters."""
+    search iteration. Those re-reads come from the prompt cache only because the request asks for
+    caching (v0.137.0 - before it, every re-read was billed at the full input price), and a cache
+    read costs a small share of the input price - so unlike the read (two thousand tokens, priced
+    flat) the split matters."""
 
     input: int = 0
     cache_write: int = 0
@@ -345,11 +360,17 @@ def _tokens(usage: Any) -> Tokens:
 
 
 def tokens_cost_usd(model: str, tokens: Tokens) -> float:
-    """List price: input at the model's input rate, cache writes at 1.25x, cache reads at 0.1x,
-    output at the output rate; an unknown model at the dearest row."""
+    """List price: input at the model's input rate, cache writes at 1.25x, cache reads at the
+    model's own cache-read share (0.05x on Opus 5.5 - this read 0.1x until v0.137.0, overstating
+    every cached token two-fold), output at the output rate; an unknown model at the dearest row."""
     dearest = max(PRICES_PER_MTOK.values())
     input_rate, output_rate = PRICES_PER_MTOK.get(model, dearest)
-    return (tokens.input * input_rate + tokens.cache_write * input_rate * 1.25 + tokens.cache_read * input_rate * 0.1 + tokens.output * output_rate) / 1_000_000
+    return (
+        tokens.input * input_rate
+        + tokens.cache_write * input_rate * CACHE_WRITE_SHARE
+        + tokens.cache_read * input_rate * cache_read_share(model)
+        + tokens.output * output_rate
+    ) / 1_000_000
 
 
 RETRYABLE_REASONS = ("connection", "rate_limit", "api_200", "api_500", "api_502", "api_503", "api_504", "api_529")
@@ -400,13 +421,19 @@ def _research_once(brief: str, *, model: str, effort: str, max_searches: int, ma
     try:
         while True:
             # Streamed because a research turn runs for minutes; the final message is what we read.
+            # Prompt caching (v0.137.0). The system prompt carries an explicit breakpoint and the
+            # top-level field caches the growing tail; with caching on, the web tools also cache
+            # their own results between search iterations, so each re-read of the pages already
+            # opened is billed at the cache-read share instead of the full input price. Without
+            # it the one measured run (2026-10-07) paid full price for all 493k input tokens.
             with client.beta.messages.stream(
                 model=model,
                 max_tokens=MAX_OUTPUT_TOKENS,
                 output_config={"effort": effort},
-                system=SYSTEM_PROMPT,
+                system=SYSTEM_BLOCKS,
                 tools=tools,
                 messages=messages,
+                cache_control=CACHE_CONTROL,
             ) as stream:
                 response = stream.get_final_message()
             served = str(getattr(response, "model", None) or model)
@@ -574,6 +601,9 @@ def pending_items(runs: list[dict[str, Any]], today: date) -> dict[str, Any] | N
     next firing resends them instead of paying for the research again."""
     for run in runs:
         payload = _payload(run)
+        # A rehearsal's items were never meant for readers: resending them would publish a dry run.
+        if payload.get("rehearsal"):
+            continue
         if payload.get("date") is None and payload.get("date_attempted") == today.isoformat() and payload.get("items"):
             return payload
     return None
@@ -586,6 +616,8 @@ def covered_from_runs(runs: list[dict[str, Any]], since_day: date) -> tuple[set[
     lines: list[str] = []
     for run in runs:
         payload = _payload(run)
+        if payload.get("rehearsal"):  # no reader saw a rehearsal, so nothing in it is a repeat
+            continue
         day = payload.get("date") or payload.get("date_attempted")
         if not isinstance(day, str) or date.fromisoformat(day) < since_day:
             continue
@@ -634,11 +666,14 @@ def run(now: datetime | None = None) -> int:
     if not settings.enable_ai_briefing:
         LOGGER.info("The AI briefing is off (ENABLE_AI_BRIEFING is not true) - nothing sent.")
         return 0
+    # A rehearsal researches, checks, composes and records - the real cost lands on the ledger and
+    # the text on the record - but sends nothing and claims no day (daily_read.py has the why).
+    rehearsal = _truthy("LYRA_REHEARSAL")
     bot_token = os.getenv("SUMMARY_TELEGRAM_BOT_TOKEN", "")
     chat_id = os.getenv("SUMMARY_TELEGRAM_CHAT_ID", "")
     operator_chat = bool(bot_token and chat_id)
     subscriber_channels = bool(settings.telegram_bot_token or settings.resend_api_key)
-    if not operator_chat and not settings.notification_dispatch_enabled and not subscriber_channels:
+    if not operator_chat and not settings.notification_dispatch_enabled and not subscriber_channels and not rehearsal:
         LOGGER.info("No SUMMARY_TELEGRAM_*, no notification dispatch, no subscriber channel - nowhere to send the briefing.")
         return 0
     repository = SupabaseRepository(settings)
@@ -646,7 +681,7 @@ def run(now: datetime | None = None) -> int:
         LOGGER.info("Supabase is not configured - demo mode, no briefing.")
         return 0
     client = repository.client
-    force = os.getenv("BRIEFING_FORCE", "").strip().lower() in ("1", "true", "yes")
+    force = rehearsal or _truthy("BRIEFING_FORCE")
     reader_zone = ZoneInfo(os.getenv("SUMMARY_TIMEZONE", "").strip() or DEFAULT_TIMEZONE)
     local_now = now.astimezone(reader_zone)
     today = local_now.date()
@@ -675,6 +710,8 @@ def run(now: datetime | None = None) -> int:
     run_id = repository.create_run(JOB_NAME, settings.default_timeframe)
     removed = 0
     removed_categories: list[str] = []
+    removed_detail: list[dict[str, Any]] = []  # what the guard threw away and why, for the record
+    brief = ""
     if pending is not None:
         # Yesterday-evening's firing researched and could not deliver: resend from the ledger.
         kept = parse_items(pending.get("items"))
@@ -703,6 +740,7 @@ def run(now: datetime | None = None) -> int:
             research_result = research(brief, model=model, effort=effort, max_searches=max_searches, max_fetches=max_fetches)
         outcome: GuardOutcome = guard_briefing(research_result.items, seen=research_result.seen, fetched=research_result.fetched, covered=covered_urls, universe=set(universe))
         kept, removed, removed_categories = outcome.kept, len(outcome.removed), outcome.categories
+        removed_detail = [{"headline": item.headline, "theme": item.theme, "reasons": reasons} for item, reasons in outcome.removed]
         desk_notes = research_result.desk_notes
         if outcome.removed:
             LOGGER.warning("guard removed %d item(s): %s", removed, ", ".join(removed_categories))
@@ -734,23 +772,66 @@ def run(now: datetime | None = None) -> int:
         "users_reached": 0,
         "subscribers_attempted": 0,
         "subscribers_reached": 0,
+        "generation_id": None,
+        "rehearsal": rehearsal,
     }
+
+    if kept:
+        messages = compose_messages(kept, day_label=day_label, desk_notes=desk_notes, research=research_result, removed=removed, removed_categories=removed_categories, month_to_date=spent_after, budget=budget)
+    else:
+        why = research_result.note or (f"the model published {len(research_result.items)} item(s) and Lyra's checks removed every one ({', '.join(removed_categories)})" if removed else "the sweep found nothing that passed")
+        messages = [f"🗞️ <b>Lyra AI briefing</b> · {_h(day_label)}\nNo briefing tonight: {_h(why)}.\n🤖 ${research_result.cost_usd:.2f} this run · ${spent_after:.2f} of ${budget:.0f} this month"]
+
+    # On the record before any send (generation_record.py). The briefing is the same for every
+    # account and every account sees it on /briefing, so its row has no owner. A resend of a
+    # briefing already on the record reuses that row: one generation, however many firings.
+    generation_id = str(pending.get("generation_id")) if pending is not None and pending.get("generation_id") else None
+    if generation_id is None:
+        generation = Generation(
+            agent_name=JOB_NAME,
+            prompt_version=PROMPT_VERSION,
+            input_text=brief,
+            text_parts=messages,
+            status="ok" if kept else "note",
+            mode=REHEARSAL if rehearsal else PRODUCTION,
+            user_id=None,
+            model=research_result.model if (kept or research_result.cost_usd > 0) else None,
+            effort=research_result.effort,
+            input_tokens=research_result.input_tokens,
+            cache_read_tokens=research_result.cache_read_tokens,
+            output_tokens=research_result.output_tokens,
+            cost_usd=research_result.cost_usd,
+            input_payload={"day": today.isoformat(), "searched": research_result.searched, "searches": research_result.searches, "fetches": research_result.fetches, "removed_items": removed_detail},
+            extra={"ai": ledger["ai"], "reason": research_result.reason, "day": today.isoformat(), "items": ledger["items"], "desk_notes": desk_notes, "removed": removed, "removed_categories": removed_categories},
+        )
+        generation_id = generation.id if record_generation(client, generation) else None
+    ledger["generation_id"] = generation_id
+    # Feedback buttons go on a briefing with items only - a "nothing tonight" note has nothing to rate.
+    keyboard_id = generation_id if kept else None
+
     # The research is paid for and stored before any send, so a crash between the two loses neither.
     record_run(client, run_id, "running", ledger, delivered=False)
 
     silent = quiet_now(os.getenv("SUMMARY_QUIET_HOURS", DEFAULT_QUIET_HOURS), local_now)
+    if rehearsal:
+        _write_rehearsal("\n\n".join(messages))
+        record_run(client, run_id, "success", {**ledger, "silent": silent}, delivered=False)
+        LOGGER.info(
+            "ai briefing REHEARSAL for %s (not sent): items=%d removed=%d reasons=%s recorded=%s reason=%s model=%s effort=%s searches=%d fetches=%d tokens=%d in (%d cached) / %d out cost=$%.4f month=$%.2f of $%.0f",
+            today.isoformat(), len(kept), removed, ",".join(removed_categories) or "-", bool(generation_id), research_result.reason, research_result.model, research_result.effort,
+            research_result.searches, research_result.fetches, research_result.input_tokens, research_result.cache_read_tokens, research_result.output_tokens, research_result.cost_usd, spent_after, budget,
+        )
+        return 0
+
     operator_delivered = False
     operator_error: str | None = None
     if operator_chat:
         send_settings = replace(settings, telegram_bot_token=bot_token, telegram_chat_id=chat_id)
-        if kept:
-            messages = compose_messages(kept, day_label=day_label, desk_notes=desk_notes, research=research_result, removed=removed, removed_categories=removed_categories, month_to_date=spent_after, budget=budget)
-        else:
-            why = research_result.note or (f"the model published {len(research_result.items)} item(s) and Lyra's checks removed every one ({', '.join(removed_categories)})" if removed else "the sweep found nothing that passed")
-            messages = [f"🗞️ <b>Lyra AI briefing</b> · {_h(day_label)}\nNo briefing tonight: {_h(why)}.\n🤖 ${research_result.cost_usd:.2f} this run · ${spent_after:.2f} of ${budget:.0f} this month"]
         delivered_parts = 0
-        for message in messages:
-            delivery = send_telegram_message(message, send_settings, chat_id=chat_id, silent=silent, parse_mode="HTML")
+        for index, message in enumerate(messages):
+            delivery = send_telegram_message(
+                message, send_settings, chat_id=chat_id, silent=silent, parse_mode="HTML", reply_markup=last_part_markup(index, len(messages), keyboard_id)
+            )
             if delivery.sent_status == "sent":
                 delivered_parts += 1
             else:
@@ -786,7 +867,9 @@ def run(now: datetime | None = None) -> int:
     # row remembers the last date it was served, so a resend firing never sends anyone a second copy.
     subscribers = SubscriberOutcome()
     if kept:
-        subscribers = deliver_to_subscribers(client, load_subscribers(client), items=kept, day_label=day_label, desk_notes=desk_notes, today=today, settings=settings, silent=silent)
+        subscribers = deliver_to_subscribers(
+            client, load_subscribers(client), items=kept, day_label=day_label, desk_notes=desk_notes, today=today, settings=settings, silent=silent, generation_id=keyboard_id
+        )
 
     briefing_exists = bool(kept)
     briefing_delivered = briefing_exists and (operator_delivered or users_reached > 0 or subscribers.reached > 0)

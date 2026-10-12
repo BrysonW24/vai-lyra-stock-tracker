@@ -1,6 +1,8 @@
 """The daily read: engine-computed session facts, one message per session at the reader's hour, honest ledger, bounded spend."""
 from __future__ import annotations
 
+import hashlib
+
 from datetime import date, datetime, time as clock_time, timedelta, timezone
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
@@ -273,7 +275,7 @@ class _FakeQuery:
     def limit(self, *_a, **_k):
         return self
 
-    def insert(self, row):
+    def insert(self, row, **_k):
         self._insert = row
         return self
 
@@ -291,8 +293,13 @@ class _FakeQuery:
             self.db["writes"].append(dict(self._update))
             return SimpleNamespace(data=[])
         if self._insert is not None:
-            row = {"id": f"run-{len(self.db['stock_scanner_runs']) + 1}", **self._insert}
-            self.db["stock_scanner_runs"].append(row)
+            # An insert lands in ITS table (the run ledger, a generation record in ai_runs) and keeps
+            # an id the caller minted. A test can make one table's inserts fail.
+            if self.table_name in self.db.get("fail_inserts", ()):
+                raise RuntimeError(f"{self.table_name} insert refused")
+            table = self.db.setdefault(self.table_name, [])
+            row = {"id": f"run-{len(table) + 1}", **self._insert}
+            table.append(row)
             return SimpleNamespace(data=[row])
         rows = self.db.get(self.table_name, [])
         if self.table_name == "stock_scanner_runs":
@@ -333,9 +340,9 @@ def harness(monkeypatch):
 
     monkeypatch.setattr(dr, "narrate", fake_narrate)
 
-    def fake_send(message, settings, chat_id=None, *, silent=False, parse_mode=None):
-        sent.append({"message": message, "chat_id": chat_id, "silent": silent, "token": settings.telegram_bot_token, "parse_mode": parse_mode})
-        return db.get("telegram_result") or TelegramResult(sent_status="sent")
+    def fake_send(message, settings, chat_id=None, *, silent=False, parse_mode=None, reply_markup=None):
+        sent.append({"message": message, "chat_id": chat_id, "silent": silent, "token": settings.telegram_bot_token, "parse_mode": parse_mode, "reply_markup": reply_markup})
+        return db.get("telegram_result") or TelegramResult(sent_status="sent", message_id=4242)
 
     monkeypatch.setattr(dr, "send_telegram_message", fake_send)
     for name, value in {"SUMMARY_TELEGRAM_BOT_TOKEN": "bot-token", "SUMMARY_TELEGRAM_CHAT_ID": "chat-1", "ANTHROPIC_API_KEY": "sk-test", "SUMMARY_TIMEZONE": "Australia/Sydney"}.items():
@@ -506,6 +513,11 @@ class _RecordingQuery:
             self.log.setdefault(self.table_name, set()).add(key)
         return self
 
+    def insert(self, row, **_k):
+        for key in row:
+            self.log.setdefault(self.table_name, set()).add(key)
+        return self
+
     def execute(self):
         return SimpleNamespace(data=[])
 
@@ -544,8 +556,84 @@ def test_every_column_the_code_names_is_in_the_manifest():
     bs.mark_sent(client, subscriber, date(2026, 10, 7))
     bs.mark_failed(client, subscriber, "Telegram API HTTP 400")
     bs.mark_unsubscribed(client, subscriber, "blocked")
+    # Every message on the record (generation_record.py) and the nightly review that reads it back.
+    import workers.stock_scanner.content_judge as cj
+    import workers.stock_scanner.generation_record as gr
+
+    gr.record_generation(client, gr.Generation(agent_name="daily_read", prompt_version="v", input_text="facts", text_parts=["text"], confidence=0.5))
+    cj.load_generations(client, EVENING)
+    cj.reviewed_ids(client, EVENING)
+    cj.load_judge_runs(client, EVENING)
+    cj.load_book(client, "user-1")
     named = {table: columns - {"id", "finished_at", "alerts_sent", "error_message"} for table, columns in client.log.items()}
     missing = {table: sorted(columns - set(dr.COLUMNS.get(table, []))) for table, columns in named.items()}
     missing = {table: columns for table, columns in missing.items() if columns}
     assert missing == {}, f"named in code but not in summary_columns.json: {missing}"
     assert set(named) == set(dr.COLUMNS), "the manifest lists a table neither the read nor the briefing reads"
+
+
+# ------------------------------------------------------------------------------------------
+# v0.137.0: every read on the record, with feedback buttons; rehearsals that never send.
+
+
+def _vote(generation_id: str) -> dict:
+    return {"inline_keyboard": [[{"text": "👍 Useful", "callback_data": f"fb:{generation_id}:u"}, {"text": "👎 Not for me", "callback_data": f"fb:{generation_id}:d"}]]}
+
+
+def test_run_puts_the_read_on_the_record_before_sending_it_with_feedback_buttons(harness):
+    assert dr.run(now=EVENING) == 0
+    (record,) = harness.db["ai_runs"]
+    message = harness.sent[0]["message"]
+    assert record["agent_name"] == "daily_read" and record["status"] == "ok"
+    assert record["user_id"] == "user-1", "the fact sheet carries the operator's book, so the row is the operator's alone"
+    assert (record["model_provider"], record["model_name"]) == ("anthropic", "claude-opus-5-5")
+    assert record["prompt_version"] == dr.PROMPT_VERSION and record["prompt_version"].startswith("daily_read@")
+    assert record["input_payload"]["input"] == harness.calls[0]["facts"] and record["input_payload"]["session"] == DAY
+    assert record["input_hash"] == hashlib.sha256(harness.calls[0]["facts"].encode()).hexdigest()
+    output = record["output_payload"]
+    assert output["text"] == message and output["parts"] == 1 and output["mode"] == "production"
+    assert (output["ai"], output["reason"], output["cost_usd"], output["effort"]) == (True, "ok", 0.038, "high")
+    assert harness.sent[0]["reply_markup"] == _vote(record["id"])
+    final = harness.db["stock_scanner_runs"][0]["payload"]
+    assert final["generation_id"] == record["id"] and final["telegram_message_id"] == 4242
+
+
+def test_a_figures_only_read_is_recorded_as_a_fallback_with_no_model(harness, monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY")
+    assert dr.run(now=EVENING) == 0
+    (record,) = harness.db["ai_runs"]
+    assert record["status"] == "fallback" and record["model_name"] is None and record["model_provider"] is None
+    assert record["output_payload"]["reason"] == "no_key" and record["output_payload"]["ai"] is False
+    assert harness.sent[0]["reply_markup"] == _vote(record["id"]), "what readers got is still rateable"
+
+
+def test_the_read_still_goes_out_without_buttons_when_the_record_cannot_be_written(harness, monkeypatch):
+    import workers.stock_scanner.generation_record as gr
+
+    monkeypatch.setattr(gr.time, "sleep", lambda *_: None)
+    harness.db["fail_inserts"] = {"ai_runs"}
+    assert dr.run(now=EVENING) == 0
+    assert len(harness.sent) == 1 and harness.sent[0]["reply_markup"] is None, "a button must never point at a row that does not exist"
+    assert harness.db["stock_scanner_runs"][0]["payload"]["generation_id"] is None
+    assert harness.db["stock_scanner_runs"][0]["status"] == "success"
+
+
+def test_a_rehearsal_records_and_pays_but_never_sends_or_claims_the_session(harness, monkeypatch, tmp_path):
+    out = tmp_path / "read.html"
+    monkeypatch.setenv("LYRA_REHEARSAL", "1")
+    monkeypatch.setenv("LYRA_REHEARSAL_OUT", str(out))
+    monkeypatch.delenv("SUMMARY_TELEGRAM_BOT_TOKEN")
+    assert dr.run(now=EARLY) == 0, "a rehearsal needs no send time and no chat"
+    assert harness.sent == [] and len(harness.calls) == 1
+    (record,) = harness.db["ai_runs"]
+    assert record["output_payload"]["mode"] == "rehearsal" and out.read_text().startswith("📈 <b>Lyra daily read</b>")
+    row = harness.db["stock_scanner_runs"][0]
+    assert row["status"] == "success" and row["alerts_sent"] == 0
+    assert row["payload"]["rehearsal"] is True and row["payload"]["session"] is None and row["payload"]["cost_usd"] == 0.038
+
+    # The evening's real read still goes out, and the rehearsal's spend counts against the month.
+    monkeypatch.delenv("LYRA_REHEARSAL")
+    monkeypatch.setenv("SUMMARY_TELEGRAM_BOT_TOKEN", "bot-token")
+    assert dr.run(now=EVENING) == 0
+    assert len(harness.sent) == 1 and "$0.08 of $10 this month" in harness.sent[0]["message"]
+    assert [r["output_payload"]["mode"] for r in harness.db["ai_runs"]] == ["rehearsal", "production"]
