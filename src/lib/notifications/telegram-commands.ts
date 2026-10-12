@@ -36,7 +36,9 @@ export type ParsedMessage =
 export function parseMessage(text: string): ParsedMessage {
   const trimmed = text.trim();
   if (!trimmed.startsWith('/')) {
-    return { kind: 'command', command: STOP_WORDS.has(trimmed.toUpperCase()) ? 'stop' : 'unknown', args: '' };
+    // "Stop." or "STOP!" is still the bare word; a sentence that merely contains it is not.
+    const bare = trimmed.replace(/[\s.!?]+$/u, '').toUpperCase();
+    return { kind: 'command', command: STOP_WORDS.has(bare) ? 'stop' : 'unknown', args: '' };
   }
   const [head = '', ...rest] = trimmed.slice(1).split(/\s+/);
   const name = (head.split('@')[0] ?? '').toLowerCase();

@@ -54,6 +54,7 @@ MAX_NOTE_CHARS = 240
 # Fields are clamped, never silently dropped: a model that writes an essay still yields an item.
 MAX_FIELD_CHARS = 700
 MAX_HEADLINE_CHARS = 140
+MAX_LEAD_CHARS = 160
 
 _TICKER_RE = re.compile(r"^[A-Z0-9][A-Z0-9.\-]{0,9}$")
 _EXCHANGE_IN_HEADLINE_RE = re.compile(
@@ -88,11 +89,14 @@ class BriefingItem:
     lyra_symbols: tuple[str, ...] = ()
     catch_up: bool = False
     desk: str = "news"  # one of DESKS - a standing desk when the item is that kind of event
+    # The takeaway in one plain sentence - the bold first line of the item's bite (v0.138.0).
+    # Optional: an item stored before it, or one the model wrote without it, leads with the headline.
+    lead: str = ""
 
     @property
     def text(self) -> str:
-        """Everything a reader sees, for the figure and advice checks."""
-        return " ".join(part for part in (self.headline, self.what_happened, self.why_it_matters, self.risks, self.not_disclosed) if part)
+        """Everything a reader sees, for the figure and advice checks - the lead included."""
+        return " ".join(part for part in (self.lead, self.headline, self.what_happened, self.why_it_matters, self.risks, self.not_disclosed) if part)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -109,6 +113,7 @@ class BriefingItem:
             "sources": [{"label": source.label, "url": source.url} for source in self.sources],
             "lyra_symbols": list(self.lyra_symbols),
             "catch_up": self.catch_up,
+            "lead": self.lead,
         }
 
 
@@ -197,6 +202,7 @@ def parse_item(raw: Any) -> BriefingItem | None:
         not_disclosed=_clean(raw.get("not_disclosed"), MAX_FIELD_CHARS),
         lyra_symbols=tuple(dict.fromkeys(str(s).strip().upper() for s in symbols if str(s).strip())) if isinstance(symbols, list) else (),
         catch_up=bool(raw.get("catch_up")),
+        lead=_HEADLINE_LABEL_RE.sub("", _clean(raw.get("lead"), MAX_LEAD_CHARS)).strip(),
     )
 
 

@@ -163,11 +163,13 @@
       ]
     },
     {
-      "section": "Daily read (engine facts, Claude prose, guard, budget)",
+      "section": "Daily read (engine facts, Claude prose, guard, budget) and the morning guide (engine only)",
       "paths": [
         "workers/stock_scanner/daily_read.py",
         "workers/stock_scanner/ai_read_guard.py",
-        "workers/stock_scanner/summary_columns.json"
+        "workers/stock_scanner/summary_columns.json",
+        "workers/stock_scanner/morning_guide.py",
+        ".github/workflows/morning-guide.yml"
       ],
       "chains": [
         "ai-quality",
@@ -192,7 +194,9 @@
         "src/app/api/subscribe/",
         "src/components/subscribe/",
         "src/lib/notifications/telegram-pairing.ts",
-        "src/app/api/notifications/telegram/"
+        "src/app/api/notifications/telegram/",
+        "workers/stock_scanner/fun_facts.py",
+        "content/finance-facts.jsonl"
       ],
       "chains": [
         "ai-quality",

@@ -62,15 +62,24 @@ def desk_label(desk: str) -> str:
     return DESK_STYLE[desk][1]
 
 
+def as_sentence(text: str) -> str:
+    text = text.strip()
+    return text if not text or text[-1] in ".!?" else text + "."
+
+
 def item_html(item: BriefingItem) -> str:
+    """One item as a bite (v0.138.0, the founder's "little bites"): the bold takeaway, then what
+    happened, why it matters, the risk and what was not disclosed as one paragraph, ending on its
+    sources. An item with no lead (stored before v0.138.0) leads with its headline."""
     emoji, _label = THEME_STYLE.get(item.theme, THEME_STYLE["other"])
     tags = [tag for tag, on in (("private", not item.listed), ("catch-up", item.catch_up)) if on]
-    head = f"{emoji} <b>{h(item.headline)}</b>" + (f" <i>({', '.join(tags)})</i>" if tags else "")
-    lines = [head, h(item.what_happened), f"<i>Why it matters:</i> {h(item.why_it_matters)}", f"<i>Risks:</i> {h(item.risks)}"]
+    lead = as_sentence(item.lead) if item.lead else item.headline
+    head = f"{emoji} <b>{h(lead)}</b>" + (f" <i>({', '.join(tags)})</i>" if tags else "")
+    body = " ".join(h(as_sentence(part)) for part in (item.what_happened, item.why_it_matters, item.risks) if part)
     if item.not_disclosed:
-        lines.append(f"<i>Not disclosed:</i> {h(item.not_disclosed)}")
-    lines.append(" · ".join(f'<a href="{h(source.url)}">{h(source.label)}</a>' for source in item.sources))
-    return "\n".join(lines)
+        body += f" <i>Not disclosed: {h(as_sentence(item.not_disclosed))}</i>"
+    links = " · ".join(f'<a href="{h(source.url)}">{h(source.label)}</a>' for source in item.sources)
+    return f"{head} {body} {links}".strip()
 
 
 def grouped_parts(

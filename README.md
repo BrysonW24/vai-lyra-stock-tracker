@@ -430,6 +430,8 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.138.0  2026-10-13  A morning guide before the market opens, and an evening briefing in short bites with a fun fact
+0.137.0  2026-10-13  Every message on the record, a 👍 / 👎 under each one, and a nightly review of what was sent
 0.136.0  2026-10-09  The AI briefing gets a spine: the app's themes, four standing desks, and topics to match
 0.135.0  2026-10-09  The daily read calls out groups, threads them to your book, and drops the scoreboard
 0.134.1  2026-10-08  The subscribe page footer no longer puts a gap before its full stop
@@ -593,7 +595,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(162 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(164 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

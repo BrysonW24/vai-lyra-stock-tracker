@@ -46,15 +46,20 @@
   "portfolio_positions": [
     "user_id",
     "symbol",
-    "is_active"
+    "is_active",
+    "stop_loss_price",
+    "take_profit_price"
   ],
   "watchlist_items": [
     "user_id",
     "symbol",
-    "is_active"
+    "is_active",
+    "target_price",
+    "reference_price"
   ],
   "profiles": [
-    "id"
+    "id",
+    "display_name"
   ],
   "briefing_subscribers": [
     "id",
@@ -86,5 +91,9 @@
     "confidence_score",
     "status",
     "created_at"
+  ],
+  "market_calendar_events": [
+    "event_date",
+    "title"
   ]
 }

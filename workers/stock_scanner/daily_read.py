@@ -46,7 +46,7 @@ from zoneinfo import ZoneInfo
 
 from workers.stock_scanner.ai_read_guard import FactSheet, guard_ai_read
 from workers.stock_scanner.config import Settings, load_settings
-from workers.stock_scanner.feedback import vote_keyboard
+from workers.stock_scanner.feedback import buttons_live, vote_keyboard
 from workers.stock_scanner.generation_record import PRODUCTION, REHEARSAL, Generation, prompt_version, record_generation
 from workers.stock_scanner.logger import get_logger
 from workers.stock_scanner.supabase_repo import _NO_ECHO, SupabaseRepository
@@ -1291,7 +1291,7 @@ def run(now: datetime | None = None) -> int:
         chat_id=chat_id,
         silent=silent,
         parse_mode="HTML",
-        reply_markup=vote_keyboard(generation.id) if recorded else None,
+        reply_markup=vote_keyboard(generation.id) if recorded and buttons_live(bot_token, settings.telegram_bot_token) else None,
     )
     delivered = delivery.sent_status == "sent"
     _record(

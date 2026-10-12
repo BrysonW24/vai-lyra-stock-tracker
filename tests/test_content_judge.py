@@ -290,3 +290,34 @@ def test_run_stops_on_billing_and_respects_the_budget(harness, monkeypatch):
     monkeypatch.setenv("ENABLE_CONTENT_JUDGE", "false")
     harness.db["stock_scanner_runs"] = []
     assert cj.run(now=NOW) == 0 and len(harness.prompts) == 1
+
+
+def test_run_reviews_only_lyras_own_rows_and_a_forged_review_suppresses_nothing(harness):
+    """Any signed-in account may insert ai_runs rows under its own id (migration 019's policy). Such a
+    row is never reviewed, and a forged "review" of a real generation does not stop the real one."""
+    harness.db["ai_runs"] = [
+        _row("g1", "daily_read"),
+        _row("evil", "daily_read", user_id="someone-else"),
+        {"id": "fake-review", "agent_name": "content_judge", "status": "ok", "user_id": "someone-else", "created_at": NOW.isoformat(), "input_payload": {"generation_id": "g1"}, "output_payload": {}},
+    ]
+    assert cj.run(now=NOW) == 0
+    reviewed = [row["input_payload"]["generation_id"] for row in harness.db["ai_runs"] if row["agent_name"] == "content_judge" and row["id"] != "fake-review"]
+    assert reviewed == ["g1"], "the forged row is skipped and the forged review does not count"
+
+
+def test_without_an_operator_only_the_ownerless_briefing_is_reviewed_and_no_book_is_quoted(harness, monkeypatch):
+    monkeypatch.setattr(cj, "load_settings", lambda: _settings(default_user_id=""))
+    harness.db["ai_runs"] = [_row("g1", "daily_read"), _row("g2", "ai_briefing", user_id=None, items=[])]
+    assert cj.run(now=NOW) == 0
+    (review,) = [row for row in harness.db["ai_runs"] if row["agent_name"] == "content_judge"]
+    assert review["input_payload"]["generation_id"] == "g2" and review["user_id"] is None
+    assert "holds" not in harness.prompts[0]["prompt"] and "Session facts" not in review["input_payload"]["input"]
+
+
+def test_a_review_that_fails_for_any_other_reason_turns_the_run_red(harness):
+    harness.db["ai_runs"] = [_row("g1", "daily_read"), _row("g2", "daily_read")]
+    harness.verdicts = [cj.Verdict(None, reason="unparsable")]
+    assert cj.run(now=NOW) == 1, "the pager should say a review failed"
+    assert len(harness.prompts) == 2, "one bad answer does not stop the others"
+    assert cj.DEFAULT_LOOKBACK_DAYS == 4
+

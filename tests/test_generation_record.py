@@ -103,3 +103,30 @@ def test_the_contract_names_the_six_pillars_and_asks_telegram_for_button_taps():
 @pytest.mark.parametrize("text", [button["text"] for button in CONTRACT["vote"]] + [CONTRACT["skip"], CONTRACT["noted"]])
 def test_button_labels_use_no_em_dash(text):
     assert "—" not in text and "–" not in text
+
+
+def test_buttons_go_live_only_when_the_app_bots_webhook_takes_taps(monkeypatch):
+    answers = {}
+
+    def fake_get(url, timeout):
+        assert url.endswith("/getWebhookInfo") and timeout == 10
+        return SimpleNamespace(json=lambda: {"ok": True, "result": answers["info"]})
+
+    monkeypatch.setattr(fb.requests, "get", fake_get)
+    cases = [
+        ({"url": "https://lyra.example/api/webhooks/telegram", "allowed_updates": ["message", "callback_query"]}, True),
+        ({"url": "https://lyra.example/api/webhooks/telegram", "allowed_updates": ["message"]}, False),
+        ({"url": "https://lyra.example/api/webhooks/telegram"}, True),  # no filter: every default update type
+        ({"url": ""}, False),  # no webhook: nothing receives a tap
+    ]
+    for info, expected in cases:
+        fb.webhook_takes_taps.cache_clear()
+        answers["info"] = info
+        assert fb.webhook_takes_taps("app-bot") is expected, info
+    fb.webhook_takes_taps.cache_clear()
+    assert fb.webhook_takes_taps("") is False
+    monkeypatch.setattr(fb.requests, "get", lambda *a, **k: (_ for _ in ()).throw(OSError("down")))
+    assert fb.webhook_takes_taps("other-bot") is False, "no answer, no buttons"
+    fb.webhook_takes_taps.cache_clear()
+    monkeypatch.setattr(fb, "webhook_takes_taps", lambda token: True)
+    assert fb.buttons_live("app-bot", "app-bot") is True and fb.buttons_live("ops-bot", "app-bot") is False and fb.buttons_live("", "") is False

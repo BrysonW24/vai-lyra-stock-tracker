@@ -89,9 +89,12 @@ const MONITORED = [
   // KEEP: cross-session chat memory reads newest-8 per user with NO age bound - a returning
   // user must not be a cold start. Gap-miner needs only 30d.
   { table: 'chat_turns', ageColumn: 'created_at', horizonDays: null, budgetMb: 10, prunedBy: 'keep', feeds: 'copilot cross-session memory (age-unbounded) + gap-miner 30d (consent-gated)' },
-  // KEEP: [AI-SEC-05] durable audit trail - no code reader yet, but pruning destroys audit
-  // evidence rather than breaking a feature.
-  { table: 'ai_runs', ageColumn: 'created_at', horizonDays: null, budgetMb: 5, prunedBy: 'keep', feeds: 'AI durable audit trail (AI-SEC-05)' },
+  // KEEP: [AI-SEC-05] durable audit trail, and since v0.137.0 the content record - the text of every
+  // message the workers send and its nightly review (content_judge.py reads it back). ~1 MB/month at
+  // three messages and three reviews a weekday; re-ratify before pruning.
+  { table: 'ai_runs', ageColumn: 'created_at', horizonDays: null, budgetMb: 25, prunedBy: 'keep', feeds: 'AI audit trail (AI-SEC-05) + the content record and its reviews (v0.137.0)' },
+  // KEEP: what readers said about each message (v0.137.0) - one row per reader per message.
+  { table: 'content_feedback', ageColumn: 'created_at', horizonDays: null, budgetMb: 5, prunedBy: 'keep', feeds: 'reader ratings, reasons and notes per message' },
   { table: 'component_efficacy', ageColumn: 'updated_at', horizonDays: null, budgetMb: 5, prunedBy: 'nightly full rebuild (bounded)', feeds: 'engine correctness per score component/band/horizon' },
   // Binding reader: yearly review benchmark/AUD baselines (earliest snapshot at/after Jan 1).
   { table: 'market_context_snapshots', ageColumn: 'captured_at', horizonDays: 372, budgetMb: 10, prunedBy: 'none', feeds: 'macro strip latest + yearly/quarterly review benchmark baselines' },

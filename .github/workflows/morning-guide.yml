@@ -1,0 +1,68 @@
+name: Morning Guide
+
+# The trader's daily guide in the founder's own layout (workers/stock_scanner/morning_guide.py):
+# "Morning, <name>", priorities from the reader's book, what is on today, loose ends, a coverage
+# line, and closing quotes for their holdings - built by code from the book, the scanner, Lyra's
+# calendar and Yahoo, no model call. The founder asked for it on 2026-10-13 ("something to this
+# effect in the morning ... copy this exact structure").
+#
+# Cron is UTC and does not move for daylight saving, so two firings cover both halves of the year:
+# 21:30 UTC is 08:30 Sydney in AEDT (October to April) and 07:30 in AEST; 22:30 UTC is 09:30 in AEDT
+# and 08:30 in AEST. The worker sends only at or after MORNING_SEND_AT in SUMMARY_TIMEZONE, once per
+# Sydney morning, and only for a US session no guide has covered yet - so exactly one guide goes out
+# whichever firing is first past the hour. Monday to Friday UTC is Tuesday to Saturday in Sydney:
+# the mornings after a US session.
+on:
+  schedule:
+    - cron: '30 21 * * 1-5'
+    - cron: '30 22 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Send this morning's guide now, even if one already went out or it is not yet the send time
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: morning-guide
+  cancel-in-progress: false
+
+jobs:
+  guide:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-worker
+
+      - name: Morning guide
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEFAULT_USER_ID: ${{ secrets.DEFAULT_USER_ID }}
+          DEFAULT_TIMEFRAME: ${{ vars.DEFAULT_TIMEFRAME || '1h' }}
+          # Its own SUMMARY_TELEGRAM_* secrets when set, otherwise the ops chat - the same as the read.
+          SUMMARY_TELEGRAM_BOT_TOKEN: ${{ secrets.SUMMARY_TELEGRAM_BOT_TOKEN || secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          SUMMARY_TELEGRAM_CHAT_ID: ${{ secrets.SUMMARY_TELEGRAM_CHAT_ID || secrets.OPS_TELEGRAM_CHAT_ID }}
+          # The app bot's token: the feedback buttons go on only when the message is sent through it,
+          # because only its webhook receives the taps (workers/stock_scanner/feedback.py).
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          ENABLE_MORNING_GUIDE: ${{ vars.ENABLE_MORNING_GUIDE || 'true' }}
+          SUMMARY_TIMEZONE: ${{ vars.SUMMARY_TIMEZONE || 'Australia/Sydney' }}
+          MORNING_SEND_AT: ${{ vars.MORNING_SEND_AT || '08:30' }}
+          SUMMARY_QUIET_HOURS: ${{ vars.SUMMARY_QUIET_HOURS || '22-7' }}
+          MORNING_FORCE: ${{ inputs.force && 'true' || 'false' }}
+        run: python -m workers.stock_scanner.morning_guide
+
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          title: Lyra morning guide FAILED
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}

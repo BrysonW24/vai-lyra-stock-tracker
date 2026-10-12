@@ -23,6 +23,7 @@ describe('briefing-live - the worker rows become the page, nothing invented', ()
     const parsed = itemFromPayload(item());
     expect(parsed).toEqual({
       headline: 'Constellation (Nasdaq: CEG)',
+      lead: '', // a row from before v0.138.0 has no lead; the page then shows the headline alone
       theme: 'nuclear-uranium',
       desk: 'news',
       listed: true,
@@ -44,6 +45,7 @@ describe('briefing-live - the worker rows become the page, nothing invented', ()
     expect(itemFromPayload(item({ theme: undefined, desk: undefined, category: 'infrastructure' }))).toMatchObject({ theme: 'other', desk: 'news' }); // a row from before v0.136.0
     expect(itemFromPayload(item({ sources: [{ label: 'x', url: 'ftp://nope' }] }))).toBeNull();
     expect(itemFromPayload('text')).toBeNull();
+    expect(itemFromPayload(item({ lead: '  Constellation locks in Google as a nuclear buyer.  ' }))).toMatchObject({ lead: 'Constellation locks in Google as a nuclear buyer.' });
   });
 
   it('builds a briefing from a run row and skips rows with no delivered briefing', () => {

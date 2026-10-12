@@ -19,6 +19,7 @@ Companions: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (structure - what exists),
 | 3b | Daily read (AI) | `daily-read.yml` at 09:05 + 10:05 UTC Tue-Sat; sends once per completed US session, at or after 8pm Sydney | `stock_scanner_runs` rows with `job_name = daily_read` (session sent, bars, model, effort, tokens, cost, guard removals) | the operator's Telegram; the next firing (dedupe + budget pacing) | `test_daily_read.py`, `test_ai_read_guard.py`, `check:app-columns` (summary manifest), the workflow's failure pager |
 | 3c | AI briefing (web research) | `ai-briefing.yml` at 09:20 + 10:20 UTC Tue-Sat; once per reader-local day, at or after 8pm Sydney | `stock_scanner_runs` rows with `job_name = ai_briefing` (the checked items with their sources, how many were removed and why, model, searches, pages opened, tokens, cost, who was reached); `briefing_subscribers` (the no-account audience from `/subscribe`: channel, topics, holdings, status, last date served) | the operator's Telegram; every account through the notification router (`ai_briefing` events); every active subscriber - their own reorder of the same items - on Telegram through the app's bot or by email (Resend); the `/briefing` page; the next firing (dedupe, resend of an undelivered briefing, budget pacing, the repeat check; a subscriber already served today is skipped) | `test_ai_briefing.py`, `test_briefing_subscribers.py`, `check:app-columns` (both manifests), the workflow's failure pager |
 | 3d | Content record + review + reader feedback | every send writes its record; `content-review.yml` at 11:40 UTC Tue-Sat reviews; a reader's tap or reply lands at once | `ai_runs` rows for every message the workers send (`agent_name` daily_read / ai_briefing / morning_guide: the text as sent, the input, `prompt_version`, mode, tokens, cost) and for every review (`agent_name` content_judge: six pillar scores, reasons, advice flag, rubric version, owned by the operator); `content_feedback` (migration 060: one row per reader per message - 👍/👎, the reason pillar, a reply as a note) | the operator, reading the record, the reviews and the feedback side by side; the next night's review (anything unreviewed inside the lookback); a prompt change shows up as a new `prompt_version` next to the scores | `test_generation_record.py`, `test_content_judge.py`, the record tests in `test_daily_read.py` and `test_ai_briefing.py`, `src/lib/feedback/__tests__`, the webhook's `feedback.test.ts`, `check:app-columns` (both manifests), the workflow's failure pager |
+| 3e | Morning guide (engine only) | `morning-guide.yml` at 21:30 + 22:30 UTC Mon-Fri; once per Sydney morning at or after 8:30am, only for a US session no guide has covered | `stock_scanner_runs` rows with `job_name = morning_guide` (date sent, session, holdings, quotes, how many were closing quotes, earnings dates found) and an `ai_runs` record per guide (owned by the operator) | the operator's Telegram (with the feedback buttons); the next firing (dedupe by date and by session); the nightly review | `test_morning_guide.py`, `check:app-columns` (summary manifest), the workflow's failure pager |
 | 4 | Notification delivery | every event + nightly sweep | `notification_deliveries`, `notification_engagements` | sweep, relevance tuning | `/notification-health` chain |
 | 5 | Scout (notice-create-learn) | nightly 22:05 UTC | `scout_items`, `scout_runs`, ideas, source scores, stoplist | Scout-tab proposals, next night's clustering | zero-writes guards, saturation flags |
 | 6 | Macro + calendar | hourly snap + seasonal crons | `market_context_snapshots`, calendar events | dashboard strips, loop 3 baselines | RBA no-number degradation |
@@ -301,6 +302,42 @@ the same six pillars, and the reader outranks the judge (Claude scoring Claude).
 versioned (`RUBRIC_VERSION`) so a change in the rubric is never read as a change in the content. The
 open half: nothing yet reads the reviews and the feedback back into a page - for now the operator
 reads `ai_runs` and `content_feedback` directly, and the founder's review artifact is the template.
+
+### 3e. The morning guide - the trader's daily guide, in the founder's own layout
+
+The founder (2026-10-13), sending a morning note from another assistant: "something to this effect
+in the morning would be amazing - copy this exact structure - this is like the traders daily
+guide". The structure is kept line for line - greeting with the date, Your priorities, Today in the
+market, Loose ends, a coverage line, then "US markets · <session day>, USD" with each holding's
+price and whether it is a closing quote or still preliminary - and filled from what Lyra knows,
+since it cannot see an inbox or a diary:
+
+```
+  portfolio_positions (+ the stops and take-profit levels set)   watchlist_items (+ target levels)
+  the scanner's last session (build_facts: moves, setups, groups)  market_calendar_events (today)
+  Yahoo: each holding's quote (closing vs preliminary) and next earnings date
+  the run ledger: did last night's read and briefing run with the model?
+        |
+        v
+  morning_guide.py (code only - no model, no cost; it still goes out on a night the AI cannot run)
+        |  ai_runs record (owner: the operator) -> Telegram with the feedback buttons
+        v
+  stock_scanner_runs (job morning_guide: date sent, session covered)
+```
+
+Priorities are ranked: an earnings date within a week, a stop breached or within 3%, a take-profit
+or watchlist level reached, then a holding that fell or lost its setup, then one that rose or turned
+up - in words, never score numbers. "Today" lists Lyra's calendar for the date and the next US open
+in the reader's time, naming an NYSE holiday or early close from the table in the module (nyse.com,
+read 2026-10-13; extend it each year). What closes it: the ledger's date and session stop a second
+guide that morning and a Monday guide with no new session; the nightly review scores it like any
+other message.
+
+The evening briefing changed shape with it (v0.138.0, the founder: "little bites ... with a
+financial fun fact"): each item is now one paragraph led by a bold one-line takeaway (`lead`, checked
+by the guard like every field), and the evening ends on one fact from Lyra's own facts library
+(`content/finance-facts.jsonl`) - only entries that carry a source and an https link, each checked
+against that page before it was added - one per date, in turn (`fun_facts.py`).
 
 ## 4. The notification loop - deliver, hold, sweep, learn
 

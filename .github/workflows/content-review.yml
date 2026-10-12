@@ -10,7 +10,7 @@ name: Content Review
 # 11:40 UTC is 22:40 Sydney in AEDT and 21:40 in AEST: after the evening read (09:05/10:05 UTC) and
 # briefing (09:20/10:20 UTC) have gone out. Tuesday to Saturday UTC, the days those run; a morning
 # guide sent at 21:30 UTC is reviewed the next evening. Anything missed (no credit, a failed run) is
-# picked up by a later night for JUDGE_LOOKBACK_DAYS. Budgeted from its own ledger rows.
+# picked up by a later night inside JUDGE_LOOKBACK_DAYS (four, so Saturday's sends are still in reach on Tuesday). Budgeted from its own ledger rows.
 on:
   schedule:
     - cron: '40 11 * * 2-6'
@@ -43,7 +43,7 @@ jobs:
           JUDGE_MODEL: ${{ vars.JUDGE_MODEL || 'claude-opus-5-5' }}
           JUDGE_EFFORT: ${{ vars.JUDGE_EFFORT || 'low' }}
           JUDGE_MONTHLY_BUDGET_USD: ${{ vars.JUDGE_MONTHLY_BUDGET_USD || '5' }}
-          JUDGE_LOOKBACK_DAYS: ${{ vars.JUDGE_LOOKBACK_DAYS || '3' }}
+          JUDGE_LOOKBACK_DAYS: ${{ vars.JUDGE_LOOKBACK_DAYS || '4' }}
           JUDGE_MAX_PER_RUN: ${{ vars.JUDGE_MAX_PER_RUN || '12' }}
         run: python -m workers.stock_scanner.content_judge
 

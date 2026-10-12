@@ -269,6 +269,9 @@ class _FakeQuery:
     def gte(self, *_a, **_k):
         return self
 
+    def lte(self, *_a, **_k):
+        return self
+
     def order(self, *_a, **_k):
         return self
 
@@ -330,9 +333,14 @@ def harness(monkeypatch):
     }
     sent: list[dict] = []
     calls: list[dict] = []
-    monkeypatch.setattr(dr, "load_settings", lambda: _settings())
+    # In production the operator's SUMMARY bot is a copy of the app bot's token (2026-10-05), so the
+    # feedback buttons go on; test_buttons_stay_off_when_the_read_goes_out_through_another_bot covers the other case.
+    monkeypatch.setattr(dr, "load_settings", lambda: _settings(telegram_bot_token="bot-token"))
     monkeypatch.setattr(dr, "SupabaseRepository", lambda settings: SimpleNamespace(client=_FakeClient(db), create_run=lambda job, tf: _FakeQuery(db, "stock_scanner_runs").insert({"job_name": job, "timeframe": tf, "status": "running"}).execute().data[0]["id"]))
     monkeypatch.setattr(dr.time, "sleep", lambda *_: None)
+    import workers.stock_scanner.feedback as feedback
+
+    monkeypatch.setattr(feedback, "webhook_takes_taps", lambda token: True)  # the live probe has its own tests
 
     def fake_narrate(sheet, *, model, effort):
         calls.append({"model": model, "effort": effort, "facts": sheet.text})
@@ -502,6 +510,9 @@ class _RecordingQuery:
     def gte(self, column, _value):
         return self._col(column)
 
+    def lte(self, column, _value):
+        return self._col(column)
+
     def order(self, column, *, desc=False, foreign_table=None):
         return self._col(column, foreign_table)
 
@@ -562,9 +573,17 @@ def test_every_column_the_code_names_is_in_the_manifest():
 
     gr.record_generation(client, gr.Generation(agent_name="daily_read", prompt_version="v", input_text="facts", text_parts=["text"], confidence=0.5))
     cj.load_generations(client, EVENING)
-    cj.reviewed_ids(client, EVENING)
+    cj.reviewed_ids(client, EVENING, "user-1")
     cj.load_judge_runs(client, EVENING)
     cj.load_book(client, "user-1")
+    # The morning guide reads the operator's name, levels and Lyra's calendar.
+    import workers.stock_scanner.morning_guide as mg
+
+    mg.load_first_name(client, "user-1")
+    mg.load_holdings(client, "user-1")
+    mg.load_watchlist(client, "user-1")
+    mg.load_events(client, date(2026, 10, 7))
+    mg.load_guide_runs(client, EVENING)
     named = {table: columns - {"id", "finished_at", "alerts_sent", "error_message"} for table, columns in client.log.items()}
     missing = {table: sorted(columns - set(dr.COLUMNS.get(table, []))) for table, columns in named.items()}
     missing = {table: columns for table, columns in missing.items() if columns}
@@ -637,3 +656,12 @@ def test_a_rehearsal_records_and_pays_but_never_sends_or_claims_the_session(harn
     assert dr.run(now=EVENING) == 0
     assert len(harness.sent) == 1 and "$0.08 of $10 this month" in harness.sent[0]["message"]
     assert [r["output_payload"]["mode"] for r in harness.db["ai_runs"]] == ["rehearsal", "production"]
+
+
+def test_buttons_stay_off_when_the_read_goes_out_through_another_bot(harness, monkeypatch):
+    """A tap reaches only the bot that sent the message, and only the app bot's webhook is Lyra's."""
+    monkeypatch.setattr(dr, "load_settings", lambda: _settings(telegram_bot_token="the-app-bot"))
+    assert dr.run(now=EVENING) == 0
+    assert len(harness.sent) == 1 and harness.sent[0]["reply_markup"] is None
+    assert harness.db["ai_runs"], "the read is still on the record"
+

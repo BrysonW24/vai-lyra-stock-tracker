@@ -42,6 +42,7 @@ function ItemCard({ item }: { item: BriefingItem }) {
           </Link>
         ))}
       </header>
+      {item.lead && <p className="text-sm font-semibold text-ink">{item.lead}</p>}
       <p className="text-sm text-ink">{item.whatHappened}</p>
       <dl className="space-y-1 text-xs text-ink-muted">
         <div>

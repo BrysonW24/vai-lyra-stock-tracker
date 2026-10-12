@@ -28,7 +28,9 @@ every score so a change in the rubric is never read as a change in the content.
 
 Budget: JUDGE_MONTHLY_BUDGET_USD (default US$5), paced from this job's own ledger rows. Low effort,
 one call per generation, at most JUDGE_MAX_PER_RUN a night; a billing or key failure ends the night
-and the next night picks up what is left (anything inside JUDGE_LOOKBACK_DAYS).
+and the next night picks up what is left (anything inside JUDGE_LOOKBACK_DAYS, four days so a missed
+Saturday is still reviewed on Tuesday). A review that fails for any reason other than an empty
+credit balance or a spent budget turns the run red, so the failure pager says so.
 
 Run: python -m workers.stock_scanner.content_judge   (scheduled by .github/workflows/content-review.yml)
 Logs carry counts and cost only - never content - because the Actions logs are public.
@@ -69,7 +71,7 @@ RUBRIC_VERSION = "2026-10-13"
 DEFAULT_MODEL = "claude-opus-5-5"
 DEFAULT_EFFORT = "low"
 DEFAULT_MONTHLY_BUDGET_USD = 5.0
-DEFAULT_LOOKBACK_DAYS = 3
+DEFAULT_LOOKBACK_DAYS = 4  # Saturday's sends must still be inside the window on Tuesday night
 DEFAULT_MAX_PER_RUN = 12
 MAX_OUTPUT_TOKENS = 8_000  # thinking is billed as output and cannot be turned off on this model
 MAX_CONTENT_CHARS = 16_000
@@ -358,14 +360,24 @@ def load_generations(client: Any, since: datetime) -> list[Reviewable]:
     return rows
 
 
-def reviewed_ids(client: Any, since: datetime) -> set[str]:
-    result = client.table("ai_runs").select("input_payload").eq("agent_name", JOB_NAME).gte("created_at", since.isoformat()).limit(1000).execute()
+def reviewed_ids(client: Any, since: datetime, owner: str | None) -> set[str]:
+    """Generations this job has already reviewed. Only reviews owned like this job's own count: a
+    signed-in account can insert ai_runs rows under its own id (migration 019), and a forged
+    "review" must not be able to suppress a real one."""
+    result = client.table("ai_runs").select("user_id,input_payload").eq("agent_name", JOB_NAME).gte("created_at", since.isoformat()).limit(1000).execute()
     ids = set()
     for row in result.data or []:
         payload = row.get("input_payload")
-        if isinstance(payload, dict) and payload.get("generation_id"):
+        if row.get("user_id") == owner and isinstance(payload, dict) and payload.get("generation_id"):
             ids.add(str(payload["generation_id"]))
     return ids
+
+
+def lyras_own(generation: Reviewable, owner: str | None) -> bool:
+    """A row the workers wrote: no owner (only the service role can write one - the briefing) or
+    the operator's (the read, the guide). Any other owner is a signed-in account's own insert,
+    which RLS allows and this job must never review or quote."""
+    return generation.user_id is None or (owner is not None and generation.user_id == owner)
 
 
 def load_judge_runs(client: Any, since: datetime) -> list[dict[str, Any]]:
@@ -409,15 +421,17 @@ def run(now: datetime | None = None) -> int:
         LOGGER.info("This month's $%.0f review budget is used up ($%.2f) - no review tonight.", budget, spent_before)
         return 0
 
+    # Every review is the operator's: its input can carry the operator's book. With no operator
+    # configured, only the ownerless briefing is reviewed, and without the book.
+    owner = settings.default_user_id or None
     since = now - timedelta(days=lookback)
-    done_already = reviewed_ids(client, since - timedelta(days=1))
-    candidates = [g for g in load_generations(client, since) if g.status in REVIEWED_STATUSES and g.id not in done_already]
+    done_already = reviewed_ids(client, since - timedelta(days=1), owner)
+    candidates = [g for g in load_generations(client, since) if g.status in REVIEWED_STATUSES and g.id not in done_already and lyras_own(g, owner)]
     todo = candidates[:max_per_run]
     if not todo:
         LOGGER.info("Nothing new to review.")
         return 0
 
-    owner = settings.default_user_id or None
     holdings: list[str] = []
     watchlist: list[str] = []
     if owner:
@@ -441,6 +455,7 @@ def run(now: datetime | None = None) -> int:
         spent += verdict.cost_usd
         if verdict.scores is None:
             failed += 1
+            record_run(client, run_id, "running", {"reviewed": reviewed, "failed": failed, "cost_usd": round(spent, 6), "model": model, "effort": effort, "ai": reviewed > 0}, delivered=False)
             if verdict.reason in STOP_REASONS:
                 reason = verdict.reason
                 break
@@ -480,6 +495,9 @@ def run(now: datetime | None = None) -> int:
             by_agent[generation.agent_name] = by_agent.get(generation.agent_name, 0) + 1
         else:
             failed += 1
+        # The spend is on the ledger as it is incurred, so a run killed half way still counts
+        # against the month's budget (the pacing reads these rows).
+        record_run(client, run_id, "running", {"reviewed": reviewed, "failed": failed, "cost_usd": round(spent, 6), "model": model, "effort": effort, "ai": reviewed > 0}, delivered=False)
 
     record_run(
         client,
@@ -504,7 +522,9 @@ def run(now: datetime | None = None) -> int:
         "content review: reviewed=%d failed=%d left=%d reason=%s model=%s effort=%s cost=$%.4f month=$%.2f of $%.0f",
         reviewed, failed, len(candidates) - reviewed, reason, model, effort, spent, spent_before + spent, budget,
     )
-    return 0
+    # An empty credit balance or a spent budget is a known, quiet state (the morning guide's loose
+    # ends say so); anything else that stopped a review should page.
+    return 1 if failed and reason not in ("billing", "budget") else 0
 
 
 def main() -> None:

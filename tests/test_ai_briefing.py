@@ -318,9 +318,10 @@ def test_compose_messages_is_html_safe_and_splits_at_item_boundaries():
     one = ab.compose_messages(items, day_label="Wed 7 Oct", desk_notes=research.desk_notes, research=research, removed=1, removed_categories=["unseen source"], month_to_date=1.04, budget=40)
     assert len(one) == 1
     text = one[0]
-    assert text.startswith("🗞️ <b>Lyra AI briefing</b> · Wed 7 Oct\n<i>4 items checked against their original sources: 4 Nuclear and uranium.</i>\n\n☢️ <b>Nuclear and uranium</b>\n\n☢️ <b>Item 0 &amp; Co (Nasdaq: CEG)</b>\n")
+    assert text.startswith("🗞️ <b>Lyra AI briefing</b> · Wed 7 Oct\n<i>4 items checked against their original sources: 4 Nuclear and uranium.</i>\n\n☢️ <b>Nuclear and uranium</b>\n\n☢️ <b>Item 0 &amp; Co (Nasdaq: CEG)</b> ")
     assert '<a href="https://www.constellationenergy.com/newsroom/2026/google-agreement.html">Constellation</a>' in text
-    assert "<i>Why it matters:</i>" in text and "<i>Risks:</i>" in text and "<i>Not disclosed:</i>" in text
+    # A bite (v0.138.0): one paragraph per item, no labelled sub-lines; what was not disclosed stays marked.
+    assert "<i>Why it matters:</i>" not in text and "<i>Risks:</i>" not in text and "<i>Not disclosed: " in text
     # Every standing desk prints every night: the model's note, or the default when it wrote none.
     assert "📜 <b>IPOs and filings:</b> No additional primary-confirmed IPO" in text and "🏛️ <b>Government money:</b> Nothing new on contracts tonight." in text
     assert "💸 <b>Venture:</b> Nothing new found tonight." in text and "🔬 <b>Small caps:</b> Nothing new found tonight." in text
@@ -412,6 +413,11 @@ def harness(monkeypatch):
             load_active_user_ids=lambda: [],
         ),
     )
+
+    monkeypatch.setattr(ab, "webhook_takes_taps", lambda token: True)  # the live probe has its own tests
+    import workers.stock_scanner.feedback as feedback
+
+    monkeypatch.setattr(feedback, "webhook_takes_taps", lambda token: True)
 
     def fake_research(brief, *, model, effort, max_searches, max_fetches):
         state.research_calls.append({"brief": brief, "model": model, "effort": effort, "max_searches": max_searches, "max_fetches": max_fetches})
@@ -619,7 +625,8 @@ def _vote(generation_id):
     return {"inline_keyboard": [[{"text": "👍 Useful", "callback_data": f"fb:{generation_id}:u"}, {"text": "👎 Not for me", "callback_data": f"fb:{generation_id}:d"}]]}
 
 
-def test_run_records_the_briefing_once_and_every_reader_rates_the_same_generation(harness):
+def test_run_records_the_briefing_once_and_every_reader_rates_the_same_generation(harness, monkeypatch):
+    monkeypatch.setenv("SUMMARY_TELEGRAM_BOT_TOKEN", "app-bot")  # production: the operator's bot is the app bot
     harness.db["briefing_subscribers"] = [
         {"id": "sub-1", "token": "t1", "channel": "telegram", "telegram_chat_id": "777", "topics": [], "holdings": ["NVDA"], "status": "active", "sent_count": 0},
     ]
@@ -647,6 +654,7 @@ def test_run_records_the_briefing_once_and_every_reader_rates_the_same_generatio
 
 
 def test_buttons_sit_under_the_last_part_of_a_split_briefing_only(harness, monkeypatch):
+    monkeypatch.setenv("SUMMARY_TELEGRAM_BOT_TOKEN", "app-bot")
     monkeypatch.setattr(ab, "TELEGRAM_LIMIT", 600)
     monkeypatch.setattr(ab, "compose_messages", lambda *a, **k: ["part one", "part two", "part three"])
     assert ab.run(now=EVENING) == 0
@@ -681,3 +689,33 @@ def test_a_rehearsal_is_never_resent_never_covered_and_never_sent(harness, monke
     assert len(harness.research_calls) == 2, "the evening researches for real"
     assert len([s for s in harness.sent if s["chat_id"] == "chat-1"]) == 1
     assert [r["output_payload"]["mode"] for r in harness.db["ai_runs"]] == ["rehearsal", "production"]
+
+
+def test_an_item_is_one_bite_led_by_its_takeaway():
+    (item,) = bg.parse_items([_item(lead="Constellation locks in Google as a nuclear buyer", not_disclosed="")])
+    bite = ab.item_html(item)
+    assert "\n" not in bite, "one paragraph"
+    assert bite.startswith("☢️ <b>Constellation locks in Google as a nuclear buyer.</b> ")
+    assert bite.index(item.what_happened.rstrip(".")) < bite.index(item.why_it_matters.rstrip(".")) < bite.index(item.risks.rstrip(".")) < bite.index("<a href=")
+    assert item.to_dict()["lead"] == "Constellation locks in Google as a nuclear buyer"
+    assert "Constellation locks in Google" in item.text, "the guard checks the lead like every other field"
+    (private,) = bg.parse_items([_item(lead="OpenAI raises again", listed=False, ticker="", exchange="")])
+    assert ab.item_html(private).startswith("☢️ <b>OpenAI raises again.</b> <i>(private)</i> ")
+
+
+def test_the_publish_tool_asks_for_a_lead_and_the_prompt_for_bites():
+    item_schema = ab.PUBLISH_TOOL["input_schema"]["properties"]["items"]["items"]
+    assert "lead" in item_schema["properties"] and "lead" in item_schema["required"]
+    assert "little bites" in ab.SYSTEM_PROMPT and "at most fourteen words" in ab.SYSTEM_PROMPT
+
+
+def test_the_operator_copy_has_no_buttons_through_another_bot_but_subscribers_keep_theirs(harness):
+    harness.db["briefing_subscribers"] = [
+        {"id": "sub-1", "token": "t1", "channel": "telegram", "telegram_chat_id": "777", "topics": [], "holdings": [], "status": "active", "sent_count": 0},
+    ]
+    assert ab.run(now=EVENING) == 0  # the harness's operator bot ("bot-token") is not the app bot ("app-bot")
+    (record,) = harness.db["ai_runs"]
+    operator = [s for s in harness.sent if s["chat_id"] == "chat-1"]
+    subscriber = [s for s in harness.sent if s["chat_id"] == "777"]
+    assert operator[-1]["reply_markup"] is None and subscriber[-1]["reply_markup"] == _vote(record["id"])
+

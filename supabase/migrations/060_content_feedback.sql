@@ -26,7 +26,9 @@ create table if not exists public.content_feedback (
   generation_id uuid not null,
   reader_ref text not null,
   reader_kind text not null check (reader_kind in ('subscriber', 'account', 'chat')),
-  user_id uuid references public.profiles(id) on delete set null,
+  -- Erasing an account (DELETE /api/account cascades from profiles) erases its feedback too:
+  -- reader_ref and a note would otherwise outlive the account they describe.
+  user_id uuid references public.profiles(id) on delete cascade,
   subscriber_id uuid references public.briefing_subscribers(id) on delete set null,
   channel text not null default 'telegram' check (channel in ('telegram', 'email', 'web')),
   -- null until the reader taps 👍 or 👎 (a reply alone leaves a note with no rating).

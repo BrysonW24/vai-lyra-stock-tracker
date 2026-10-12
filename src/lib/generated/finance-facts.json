@@ -964,5 +964,437 @@
     "category": "advice",
     "level": "expert",
     "educationId": "candle-closes"
+  },
+  {
+    "id": "fact-201",
+    "term": "Bradman on the exchange",
+    "body": "Don Bradman's CV goes beyond cricket: in 1943, the famous Australian cricketer became a member of the Stock Exchange of Adelaide.",
+    "category": "au",
+    "level": "beginner",
+    "source": "ASX",
+    "url": "https://www.asx.com.au/about/asx-story"
+  },
+  {
+    "id": "fact-202",
+    "term": "Chalkies",
+    "body": "On Australia's old trading floors, brokers gathered at 'posts' to deal in stocks, while 'chalkies' recorded the bid and offer prices and sales in chalk.",
+    "category": "au",
+    "level": "beginner",
+    "source": "ASX",
+    "url": "https://www.asx.com.au/about/asx-story"
+  },
+  {
+    "id": "fact-203",
+    "term": "ASX and SEATS",
+    "body": "The Australian Stock Exchange was formed on 1 April 1987, and its SEATS automated trading system was introduced that October: the day before the global stock market crash.",
+    "category": "au",
+    "level": "beginner",
+    "source": "ASX",
+    "url": "https://www.asx.com.au/about/asx-story"
+  },
+  {
+    "id": "fact-204",
+    "term": "NYSE at 40 Wall Street",
+    "body": "The exchange that became the NYSE once rented a room at 40 Wall Street, where brokers met twice a day to trade a list of 30 stocks and bonds, shouting bids and offers from their assigned chairs.",
+    "category": "history",
+    "level": "beginner",
+    "source": "NYSE",
+    "url": "https://www.nyse.com/history-of-nyse"
+  },
+  {
+    "id": "fact-205",
+    "term": "The NYSE gong",
+    "body": "The NYSE's famous bell was first used in the 1870s, with the advent of continuous trading. But the original bell of choice wasn't a bell at all: it was a Chinese gong.",
+    "category": "history",
+    "level": "beginner",
+    "source": "NYSE",
+    "url": "https://www.nyse.com/history-of-nyse"
+  },
+  {
+    "id": "fact-206",
+    "term": "Muriel Siebert's seat",
+    "body": "On 28 December 1967, Muriel Siebert became the first woman to hold a seat on the New York Stock Exchange in its 175-year history, and the only woman among 1,365 men.",
+    "category": "history",
+    "level": "beginner",
+    "source": "Harvard Business School",
+    "url": "https://www.library.hbs.edu/special-collections-and-archives/exhibits/muriel-siebert/seat-on-the-new-york-stock-exchange-1967"
+  },
+  {
+    "id": "fact-207",
+    "term": "A coffee-house price list",
+    "body": "The London Stock Exchange's story starts in a coffee house: in 1698, at Jonathan's Coffee House, John Castaing began issuing a price list called 'The Course of the Exchange and other things'.",
+    "category": "history",
+    "level": "beginner",
+    "source": "LSEG",
+    "url": "https://www.lseg.com/en/about-us/history"
+  },
+  {
+    "id": "fact-208",
+    "term": "Butter and Egg Board",
+    "body": "The Chicago Mercantile Exchange has breakfast-table roots: its predecessor, the Chicago Butter and Egg Board, was founded in 1898.",
+    "category": "history",
+    "level": "beginner",
+    "source": "US Commodity Futures Trading Commission",
+    "url": "https://www.cftc.gov/About/HistoryoftheCFTC/history_precftc.html"
+  },
+  {
+    "id": "fact-209",
+    "term": "The first Dow",
+    "body": "When the Dow Jones Industrial Average was first calculated, it was made up of just 12 industrial companies, and the average started at 40.94 points.",
+    "category": "history",
+    "level": "beginner",
+    "source": "Library of Congress",
+    "url": "https://guides.loc.gov/this-month-in-business-history/may/djia-first-published"
+  },
+  {
+    "id": "fact-210",
+    "term": "Dow's railroad average",
+    "body": "The first Dow index wasn't the Industrial Average. It was the 1884 Dow Jones Railroad Average of 11 stocks, published in the Customer's Afternoon Letter, the precursor to The Wall Street Journal.",
+    "category": "history",
+    "level": "beginner",
+    "source": "Library of Congress",
+    "url": "https://guides.loc.gov/this-month-in-business-history/may/djia-first-published"
+  },
+  {
+    "id": "fact-211",
+    "term": "The S&P 500's debut",
+    "body": "When The New York Times began publishing Standard & Poor's new index of 500 stocks, it said the gauge was made possible by 'the marriage of a stock market ticker with an electronic computer'.",
+    "category": "history",
+    "level": "beginner",
+    "source": "Library of Congress",
+    "url": "https://guides.loc.gov/this-month-in-business-history/march/debut-standard-poors-500"
+  },
+  {
+    "id": "fact-212",
+    "term": "Who invented the ticker",
+    "body": "Edison didn't invent the stock ticker. The credit goes to Edward Calahan, who devised the first one in 1867; Edison developed his Universal Stock Printer in 1871.",
+    "category": "history",
+    "level": "beginner",
+    "source": "Thomas A. Edison Papers (Rutgers)",
+    "url": "https://edison.rutgers.edu/component/content/article/stock-ticker"
+  },
+  {
+    "id": "fact-213",
+    "term": "From sixteenths to cents",
+    "body": "US share prices once moved in fractions. When the markets converted to decimals, the minimum price increment shrank from one-sixteenth of a dollar, or 6.25 cents, to one cent.",
+    "category": "history",
+    "level": "beginner",
+    "source": "US Securities and Exchange Commission",
+    "url": "https://www.sec.gov/news/testimony/052401tslu.htm"
+  },
+  {
+    "id": "fact-214",
+    "term": "Circuit breakers after 1987",
+    "body": "The NYSE had no circuit breakers in place in October 1987. A working group then recommended a one-hour trading halt after a 250-point drop in the Dow, and a two-hour halt after a 400-point drop.",
+    "category": "history",
+    "level": "beginner",
+    "source": "Federal Reserve Bank of Chicago",
+    "url": "https://www.chicagofed.org/publications/chicago-fed-letter/1998/july-131"
+  },
+  {
+    "id": "fact-215",
+    "term": "Where the RBA came from",
+    "body": "The RBA started life as the Commonwealth Bank: the Reserve Bank Act 1959 renamed it, with a newly created Commonwealth Banking Corporation to operate as a trading bank. The RBA commenced operations on 14 January 1960.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Reserve Bank of Australia",
+    "url": "https://www.rba.gov.au/education/resources/explainers/origins-of-the-reserve-bank-of-australia.html"
+  },
+  {
+    "id": "fact-216",
+    "term": "Why the RBA is in Sydney",
+    "body": "The RBA put its headquarters in Sydney rather than Canberra on purpose: the aim was to maintain its independence from the political sphere. It moved into Martin Place in early 1965.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Reserve Bank of Australia",
+    "url": "https://www.rba.gov.au/education/resources/explainers/origins-of-the-reserve-bank-of-australia.html"
+  },
+  {
+    "id": "fact-217",
+    "term": "The Jekyll Island 'duck hunt'",
+    "body": "A secret November 1910 meeting on Jekyll Island, Georgia, was organised by financiers and bankers keen to begin work on a US central bank. They used only first names and told others they were on a duck hunting trip.",
+    "category": "history",
+    "level": "beginner",
+    "source": "Federal Reserve History",
+    "url": "https://www.federalreservehistory.org/essays/federal-reserve-act-signed"
+  },
+  {
+    "id": "fact-218",
+    "term": "Funding the Bank of England",
+    "body": "The Bank of England's £1.2 million founding target was raised in just 11 days by 1,268 members of the public. It was established by Royal Charter on 27 July 1694.",
+    "category": "history",
+    "level": "beginner",
+    "source": "Bank of England",
+    "url": "https://www.bankofengland.co.uk/museum/online-collections/blog/why-was-the-bank-of-england-founded"
+  },
+  {
+    "id": "fact-219",
+    "term": "The New York Fed's gold vault",
+    "body": "The New York Fed's gold vault rests on the bedrock of Manhattan Island, 80 feet below street level and 50 feet below sea level. That bedrock is what lets it support the weight of the gold.",
+    "category": "history",
+    "level": "beginner",
+    "source": "Federal Reserve Bank of New York",
+    "url": "https://www.newyorkfed.org/aboutthefed/goldvault.html"
+  },
+  {
+    "id": "fact-220",
+    "term": "Woolworths' first store",
+    "body": "Woolworths began as the 'Woolworths Stupendous Bargain Basement' in Sydney's Imperial Arcade, opening on 5 December 1924. Founding CEO Percy Christmas declared: 'Every city needs a Woolworths.'",
+    "category": "au",
+    "level": "beginner",
+    "source": "Woolworths Group",
+    "url": "https://woolworthsgroup.com.au/au/en/who-we-are/our-history.html"
+  },
+  {
+    "id": "fact-221",
+    "term": "Brambles and the pallets",
+    "body": "When Brambles bought the CHEP equipment pool from the Australian government in 1958, it was after the cranes and forklifts. The pallets were a bonus.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Brambles",
+    "url": "https://brambles.com/our-history"
+  },
+  {
+    "id": "fact-222",
+    "term": "Where 'Wesfarmers' came from",
+    "body": "Wesfarmers began trading in 1914 from two small rooms at 13 Howard Street, Perth, as The Westralian Farmers Limited. 'Wesfarmers' was its telegraphic address.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Wesfarmers",
+    "url": "https://www.wesfarmers.com.au/who-we-are/our-history/the-wesfarmers-story-begins"
+  },
+  {
+    "id": "fact-223",
+    "term": "Coca-Cola's first year",
+    "body": "The first glass of Coca-Cola was poured at Jacobs' Pharmacy in Atlanta on 8 May 1886. In its first year, it served about nine drinks a day.",
+    "category": "history",
+    "level": "beginner",
+    "source": "The Coca-Cola Company",
+    "url": "https://www.coca-colacompany.com/about-us/history"
+  },
+  {
+    "id": "fact-224",
+    "term": "Naming the dollar",
+    "body": "Around 1,000 names were proposed for Australia's decimal currency, including the Oz, the Roo, the Kwid and the Ming - Menzies' nickname. In 1963 it was named the Royal; opposition saw it changed to the Dollar three months later.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Reserve Bank of Australia",
+    "url": "https://museum.rba.gov.au/exhibitions/the-decimal-revolution/gordon-andrews/"
+  },
+  {
+    "id": "fact-225",
+    "term": "Dollar Bill's jingle",
+    "body": "To help Australians adjust to decimal currency, ads starred an animated character called Dollar Bill, whose catchy conversion jingle - sung to the tune of 'Click Go the Shears' - was an instant hit.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Reserve Bank of Australia",
+    "url": "https://museum.rba.gov.au/exhibitions/the-decimal-revolution/dollar-bill/"
+  },
+  {
+    "id": "fact-226",
+    "term": "The silver 50c coin",
+    "body": "Australia's original 50c coin was 80% silver. The Mint stopped striking it in March 1968 as silver rose above its face value, though the metal for all 36.5 million coins had been bought before prices rose.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Royal Australian Mint",
+    "url": "https://www.ramint.gov.au/collect/national-coin-collection/circulating-coins/fifty-cents"
+  },
+  {
+    "id": "fact-227",
+    "term": "The first polymer note",
+    "body": "In January 1988, Australia marked its bicentenary with a polymer $10 note, using banknote technology developed by the Reserve Bank and CSIRO. Its successful issue was a world first.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Reserve Bank of Australia",
+    "url": "https://www.banknotes.rba.gov.au/australias-banknotes/history/"
+  },
+  {
+    "id": "fact-228",
+    "term": "Banknotes you can feel",
+    "body": "Australia's newer banknotes can be told apart by touch: raised bumps on the long edges number one on the $5, two on the $10, three on the $20, four on the $50 and five on the $100.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Reserve Bank of Australia",
+    "url": "https://www.banknotes.rba.gov.au/resources/for-people-with-vision-impairment/accessibility-features/"
+  },
+  {
+    "id": "fact-229",
+    "term": "The holey dollar",
+    "body": "To ease a colonial coin shortage, Governor Macquarie had the centres cut from Spanish dollars, making two coins: the 'holey dollar', worth 5 shillings, and the 'dump', worth one shilling and threepence.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Reserve Bank of Australia",
+    "url": "https://museum.rba.gov.au/exhibitions/pocket-guides/currency-crises/crisis-in-the-colony-of-new-south-wales.html"
+  },
+  {
+    "id": "fact-230",
+    "term": "The Sydney Mint",
+    "body": "Australia's first branch of the Royal Mint began operating in 1855 in part of Sydney's Rum Hospital, striking the country's first gold sovereigns and half sovereigns.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Reserve Bank of Australia",
+    "url": "https://museum.rba.gov.au/exhibitions/pocket-guides/currency-crises/crisis-in-the-age-of-gold.html"
+  },
+  {
+    "id": "fact-231",
+    "term": "What a US note is made of",
+    "body": "A US banknote is a blend of 75% cotton and 25% linen, and it would take 4,000 double folds, forwards and backwards, to tear one.",
+    "category": "fun",
+    "level": "beginner",
+    "source": "U.S. Currency Education Program",
+    "url": "https://www.uscurrency.gov/about-us/currency-facts"
+  },
+  {
+    "id": "fact-232",
+    "term": "Spencer Clark's portrait",
+    "body": "A US 5-cent note once carried the portrait of Spencer Clark, causing a public uproar - and it is unclear how it got there. In 1866, Congress banned the likeness of any living person on currency notes.",
+    "category": "fun",
+    "level": "beginner",
+    "source": "Bureau of Engraving and Printing",
+    "url": "https://www.bep.gov/currency/history"
+  },
+  {
+    "id": "fact-233",
+    "term": "Gold for dentists",
+    "body": "In 1933, the US restricted private use of gold, so businesses had to apply to the Fed for gold bars. On 26 July 1933, a dental manufacturer asked the Cleveland Fed for $10,000 in pure gold and was sent twenty-nine bars.",
+    "category": "history",
+    "level": "beginner",
+    "source": "Federal Reserve History",
+    "url": "https://www.federalreservehistory.org/essays/gold-reserve-act"
+  },
+  {
+    "id": "fact-234",
+    "term": "The Old Lady",
+    "body": "The Bank of England's nickname, the 'Old Lady of Threadneedle Street', comes from a 1797 James Gillray cartoon of Prime Minister William Pitt the Younger wooing an old lady - while really after her gold.",
+    "category": "history",
+    "level": "beginner",
+    "source": "Bank of England",
+    "url": "https://www.bankofengland.co.uk/explainers/who-is-the-old-lady-of-threadneedle-street"
+  },
+  {
+    "id": "fact-235",
+    "term": "Giants and Titans",
+    "body": "Some Bank of England notes are worth £1 million ('Giants') or £100 million ('Titans'). They are held as backing for the banknotes that banks in Scotland and Northern Ireland issue.",
+    "category": "fun",
+    "level": "beginner",
+    "source": "Bank of England",
+    "url": "https://www.bankofengland.co.uk/banknotes/scottish-and-northern-ireland-banknotes"
+  },
+  {
+    "id": "fact-236",
+    "term": "Mortgage",
+    "body": "'Mortgage' comes from the Old French 'mort gage', meaning 'dead pledge'. The preferred alternative, where the property's profits went to paying off the debt, was the 'vif gage' - the 'living pledge'.",
+    "category": "fun",
+    "level": "beginner",
+    "source": "American Heritage Dictionary",
+    "url": "https://ahdictionary.com/word/search.html?q=mortgage"
+  },
+  {
+    "id": "fact-237",
+    "term": "Bankrupt",
+    "body": "'Bankrupt' comes from the Italian 'banca rotta', a broken counter - from the practice of breaking the counters of bankrupt bankers. A 'banca' was a moneychanger's table.",
+    "category": "fun",
+    "level": "beginner",
+    "source": "American Heritage Dictionary",
+    "url": "https://ahdictionary.com/word/search.html?q=bankrupt"
+  },
+  {
+    "id": "fact-238",
+    "term": "Budget",
+    "body": "A budget started out as a bag. The word comes from the Middle English 'bouget', a wallet, from the Old French 'bougette', a diminutive of 'bouge', meaning a leather bag.",
+    "category": "fun",
+    "level": "beginner",
+    "source": "American Heritage Dictionary",
+    "url": "https://ahdictionary.com/word/search.html?q=budget"
+  },
+  {
+    "id": "fact-239",
+    "term": "Money",
+    "body": "'Money' comes from the Latin 'moneta', meaning mint or coinage. Moneta was an epithet of Juno, and money was coined at the temple of Juno in Rome.",
+    "category": "fun",
+    "level": "beginner",
+    "source": "American Heritage Dictionary",
+    "url": "https://ahdictionary.com/word/search.html?q=money"
+  },
+  {
+    "id": "fact-240",
+    "term": "Fee",
+    "body": "'Fee' comes from the Old English 'feoh', which had three meanings: cattle or livestock, goods or possessions, and money.",
+    "category": "fun",
+    "level": "beginner",
+    "source": "American Heritage Dictionary",
+    "url": "https://ahdictionary.com/word/search.html?q=fee"
+  },
+  {
+    "id": "fact-241",
+    "term": "Dollar",
+    "body": "The word 'dollar' traces back to Joachimsthal, or 'Saint Joachim's Valley', in Bohemia, where the local ruler turned newly found silver into large coins nicknamed Joachimsthalers.",
+    "category": "fun",
+    "level": "beginner",
+    "source": "The Perth Mint",
+    "url": "https://www.perthmint.com/news/collector/coin-collecting/where-does-the-term-dollar-originate"
+  },
+  {
+    "id": "fact-242",
+    "term": "Bear market",
+    "body": "One theory traces the market 'bear' to 1709, when it was shorthand for a 'bearskin jobber' - a title from a proverb about selling bearskins before catching the bear.",
+    "category": "fun",
+    "level": "beginner",
+    "source": "Federal Reserve Bank of New York",
+    "url": "https://libertystreeteconomics.newyorkfed.org/2012/06/historical-echoes-the-symbolism-of-the-bull-and-the-bear/"
+  },
+  {
+    "id": "fact-243",
+    "term": "Shinplasters",
+    "body": "In colonial New South Wales, promissory notes were nicknamed 'shinplasters' - paper currency thought to be worth only soaking in vinegar as a dressing for bruises.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Reserve Bank of Australia",
+    "url": "https://museum.rba.gov.au/exhibitions/pocket-guides/currency-crises/crisis-in-the-colony-of-new-south-wales.html"
+  },
+  {
+    "id": "fact-244",
+    "term": "Australia's first bank",
+    "body": "The colony's first bank, the Bank of New South Wales, opened in Sydney's Macquarie Place in 1817, in premises leased from businesswoman Mary Reibey - who later appeared on the $20 note.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Reserve Bank of Australia",
+    "url": "https://museum.rba.gov.au/exhibitions/pocket-guides/currency-crises/crisis-in-the-colony-of-new-south-wales.html"
+  },
+  {
+    "id": "fact-245",
+    "term": "Where 'Westpac' came from",
+    "body": "When the Bank of New South Wales merged with the Commercial Bank of Australia in 1982, neither wanted to be the only one losing its name. So they created a new one: Westpac, short for 'Western Pacific'.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Westpac",
+    "url": "https://www.westpac.com.au/about-westpac/westpac-group/company-overview/our-history/"
+  },
+  {
+    "id": "fact-246",
+    "term": "The CommBank money box",
+    "body": "The Commonwealth Bank's first branch opened at 317 Collins Street, Melbourne, on 15 July 1912 with 12 staff. Its 1916 Sydney head office became known as the 'money box' building: the bank's money box was modelled on it.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Commonwealth Bank",
+    "url": "https://www.commbank.com.au/about-us/our-company/history/1912-1960.html"
+  },
+  {
+    "id": "fact-247",
+    "term": "The super guarantee",
+    "body": "The Superannuation Guarantee Charge, introduced in 1992, required employers to contribute a minimum of 3% of employees' earnings to super. Between 1988 and 1993, super coverage of employed people rose from 51% to 80%.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Australian Bureau of Statistics",
+    "url": "https://www.abs.gov.au/ausstats/ABS@.nsf/Previousproducts/1C838A295A6BA636CA2570EC00752C1C"
+  },
+  {
+    "id": "fact-248",
+    "term": "Melbourne's building societies",
+    "body": "Building societies began in provincial England, but colonial Melbourne embraced them: by the 1870s, membership was more than twice as high per capita as in England.",
+    "category": "au",
+    "level": "beginner",
+    "source": "Encyclopedia of Melbourne",
+    "url": "https://www.emelbourne.net.au/biogs/EM00256b.htm"
   }
 ]

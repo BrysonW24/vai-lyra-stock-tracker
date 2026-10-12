@@ -8,10 +8,13 @@
  *
  * Who the reader is comes from the chat, never from the callback data: an active subscriber row for
  * the chat ('sub:<id>'), else an account the chat is paired to ('user:<id>'), else the chat itself,
- * stored as a hash ('chat:<16 hex>') - a raw chat id is never written here.
+ * stored as a keyed hash ('chat:<16 hex>', HMAC under the link secret) - a raw chat id is never
+ * written here, and a chat id is a short number, so an unkeyed hash of it could be reversed by
+ * trying them all.
  */
-import { createHash } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import { pairedUserForChat } from '@/lib/notifications/telegram-pairing';
+import { linkSecret } from '@/lib/subscribe-server';
 import { isMissingTable, type SupabaseLike } from '@/lib/subscribe-store';
 import { MAX_NOTE_CHARS, type Pillar, type Rating } from './telegram-feedback';
 
@@ -28,8 +31,9 @@ export type FeedbackOutcome = 'recorded' | 'table_missing' | 'error';
 
 const TABLE = 'content_feedback';
 
-export function chatRef(chatId: string): string {
-  return `chat:${createHash('sha256').update(chatId).digest('hex').slice(0, 16)}`;
+export function chatRef(chatId: string, secret: string | null = linkSecret()): string {
+  const digest = secret ? createHmac('sha256', secret).update(`feedback-chat:${chatId}`).digest('hex') : createHash('sha256').update(chatId).digest('hex');
+  return `chat:${digest.slice(0, 16)}`;
 }
 
 export async function readerForChat(client: SupabaseLike, chatId: string): Promise<Reader> {

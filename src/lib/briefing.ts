@@ -65,6 +65,8 @@ export interface BriefingSource {
 
 export interface BriefingItem {
   headline: string;
+  /** The takeaway in one sentence (v0.138.0) - '' for items stored before it. */
+  lead: string;
   theme: BriefingTheme;
   desk: BriefingDesk;
   listed: boolean;
@@ -130,6 +132,7 @@ export function itemFromPayload(raw: unknown): BriefingItem | null {
   const desk = text(record.desk).toLowerCase();
   return {
     headline,
+    lead: text(record.lead),
     theme: THEMES.has(theme) ? (theme as BriefingTheme) : 'other',
     desk: DESKS.has(desk) ? (desk as BriefingDesk) : 'news',
     listed: record.listed === true,

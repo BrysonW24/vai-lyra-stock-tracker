@@ -18,8 +18,13 @@ describe('feedback store', () => {
     const stranger = fakeSupabase(() => ({ data: null }));
     const reader = await readerForChat(stranger.client, '777');
     expect(reader).toEqual({ kind: 'chat', ref: chatRef('777'), userId: null, subscriberId: null });
-    expect(reader.ref).toBe(`chat:${createHash('sha256').update('777').digest('hex').slice(0, 16)}`);
     expect(reader.ref).not.toContain('777');
+    // Keyed: a chat id is a short number, so an unkeyed hash could be reversed by trying them all.
+    const unkeyed = `chat:${createHash('sha256').update('777').digest('hex').slice(0, 16)}`;
+    expect(chatRef('777', 'link-secret')).not.toBe(unkeyed);
+    expect(chatRef('777', 'link-secret')).toBe(chatRef('777', 'link-secret'));
+    expect(chatRef('777', 'other-secret')).not.toBe(chatRef('777', 'link-secret'));
+    expect(chatRef('777', null)).toBe(unkeyed);
   });
 
   it('upserts one row per reader per generation, writing only the fields given', async () => {

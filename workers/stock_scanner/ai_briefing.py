@@ -79,7 +79,8 @@ from workers.stock_scanner.daily_read import (
     parse_clock,
     quiet_now,
 )
-from workers.stock_scanner.feedback import last_part_markup
+from workers.stock_scanner.feedback import last_part_markup, taps_reach_the_webhook, webhook_takes_taps
+from workers.stock_scanner.fun_facts import FunFact, fact_for, fact_html
 from workers.stock_scanner.generation_record import PRODUCTION, REHEARSAL, Generation, prompt_version, record_generation
 from workers.stock_scanner.logger import get_logger
 from workers.stock_scanner.notification_dispatch import dispatch_notification
@@ -140,7 +141,7 @@ Rules:
 - Never recommend, rate or suggest buying, selling, holding or avoiding anything. Describe; do not advise.
 - Do not repeat anything in the already-covered list unless there is a genuinely new development since.
 - Aim for six to ten items across the themes and desks, and publish every item whose original you opened and checked - never drop a verified item. Within a theme, lead with what matters most to an investor.
-- Write for a phone: one or two plain sentences per field, no markdown, no emoji, no filler.
+- Write each item as a bite a reader takes in at a glance on a phone (the founder's request, 2026-10-13: "little bites"). lead: the takeaway in one plain sentence of at most fourteen words that names the company and says what matters, the way a sharp editor would write it - e.g. "Nanya's earnings expose the AI-memory pricing boom." what_happened: at most two sentences, naming a listed company with its exchange and ticker the first time (e.g. "Nasdaq-listed APLD"). why_it_matters: one sentence - what the headline hides or changes. risks: one sentence. not_disclosed: a few words, only when something material is missing. Lyra prints them as one paragraph, so every field must read on from the one before it. No markdown, no emoji, no filler.
 
 Finish by calling publish_briefing once, with every item that passed, each citing the URL of the original you opened exactly as it appeared in your search or fetch results, and the four desk notes."""
 
@@ -160,6 +161,7 @@ PUBLISH_TOOL: dict[str, Any] = {
                     "type": "object",
                     "properties": {
                         "headline": {"type": "string", "description": "The company or subject; for a listed company include the exchange and ticker, e.g. 'Constellation (Nasdaq: CEG)'."},
+                        "lead": {"type": "string", "description": "The takeaway: one plain sentence of at most fourteen words that names the company and says what matters - the bold first line readers see."},
                         "theme": {"type": "string", "enum": list(THEMES), "description": "The theme the item sits under."},
                         "desk": {"type": "string", "enum": list(DESKS), "description": "A standing desk when the item is that kind of event (ipo, venture, government, small_cap); otherwise news."},
                         "listed": {"type": "boolean", "description": "True only when the subject itself is a listed company a reader can buy shares in."},
@@ -185,7 +187,7 @@ PUBLISH_TOOL: dict[str, Any] = {
                         "lyra_symbols": {"type": "array", "items": {"type": "string"}, "description": "Symbols from Lyra's scanned universe that this item directly concerns. Empty when none."},
                         "catch_up": {"type": "boolean", "description": "True when the development is older than the window but newly found."},
                     },
-                    "required": ["headline", "theme", "listed", "what_happened", "why_it_matters", "risks", "sources"],
+                    "required": ["headline", "lead", "theme", "listed", "what_happened", "why_it_matters", "risks", "sources"],
                 },
             },
             "desk_notes": {
@@ -533,12 +535,15 @@ def compose_messages(
     month_to_date: float,
     budget: float,
     limit: int = TELEGRAM_LIMIT,
+    fun_fact: FunFact | None = None,
 ) -> list[str]:
-    """The operator's HTML briefing - a section per theme, then the four standing desks - split at
-    item boundaries so no message passes Telegram's limit. The header stays with the first part
-    and the footer with the last."""
+    """The operator's HTML briefing - a section per theme, then the four standing desks, then the
+    evening's fun fact - split at item boundaries so no message passes Telegram's limit. The
+    header stays with the first part and the footer with the last."""
     parts = [f"🗞️ <b>Lyra AI briefing</b> · {_h(day_label)}\n<i>{_h(summary_line(items))}</i>"]
     parts.extend(grouped_parts(items, desk_notes))
+    if fun_fact is not None:
+        parts.append(fact_html(fun_fact))
     footer = [
         f"🤖 {MODEL_NAMES.get(research.model, research.model)} at {research.effort} effort · {research.searches} searches, {research.fetches} pages opened"
         f" · ${research.cost_usd:.2f} this briefing · ${month_to_date:.2f} of ${budget:.0f} this month"
@@ -776,11 +781,17 @@ def run(now: datetime | None = None) -> int:
         "rehearsal": rehearsal,
     }
 
+    # The evening's fun fact (fun_facts.py): from Lyra's sourced facts library, one per reader-date.
+    fun_fact = fact_for(today)
     if kept:
-        messages = compose_messages(kept, day_label=day_label, desk_notes=desk_notes, research=research_result, removed=removed, removed_categories=removed_categories, month_to_date=spent_after, budget=budget)
+        messages = compose_messages(
+            kept, day_label=day_label, desk_notes=desk_notes, research=research_result, removed=removed, removed_categories=removed_categories,
+            month_to_date=spent_after, budget=budget, fun_fact=fun_fact,
+        )
     else:
         why = research_result.note or (f"the model published {len(research_result.items)} item(s) and Lyra's checks removed every one ({', '.join(removed_categories)})" if removed else "the sweep found nothing that passed")
-        messages = [f"🗞️ <b>Lyra AI briefing</b> · {_h(day_label)}\nNo briefing tonight: {_h(why)}.\n🤖 ${research_result.cost_usd:.2f} this run · ${spent_after:.2f} of ${budget:.0f} this month"]
+        note = f"🗞️ <b>Lyra AI briefing</b> · {_h(day_label)}\nNo briefing tonight: {_h(why)}.\n🤖 ${research_result.cost_usd:.2f} this run · ${spent_after:.2f} of ${budget:.0f} this month"
+        messages = [note + (f"\n\n{fact_html(fun_fact)}" if fun_fact else "")]
 
     # On the record before any send (generation_record.py). The briefing is the same for every
     # account and every account sees it on /briefing, so its row has no owner. A resend of a
@@ -802,12 +813,16 @@ def run(now: datetime | None = None) -> int:
             output_tokens=research_result.output_tokens,
             cost_usd=research_result.cost_usd,
             input_payload={"day": today.isoformat(), "searched": research_result.searched, "searches": research_result.searches, "fetches": research_result.fetches, "removed_items": removed_detail},
-            extra={"ai": ledger["ai"], "reason": research_result.reason, "day": today.isoformat(), "items": ledger["items"], "desk_notes": desk_notes, "removed": removed, "removed_categories": removed_categories},
+            extra={
+                "ai": ledger["ai"], "reason": research_result.reason, "day": today.isoformat(), "items": ledger["items"], "desk_notes": desk_notes,
+                "removed": removed, "removed_categories": removed_categories, "fun_fact_id": fun_fact.id if fun_fact else None,
+            },
         )
         generation_id = generation.id if record_generation(client, generation) else None
     ledger["generation_id"] = generation_id
-    # Feedback buttons go on a briefing with items only - a "nothing tonight" note has nothing to rate.
-    keyboard_id = generation_id if kept else None
+    # Feedback buttons go on a briefing with items only - a "nothing tonight" note has nothing to rate -
+    # and only while the app bot's webhook takes taps (feedback.webhook_takes_taps).
+    keyboard_id = generation_id if kept and not rehearsal and webhook_takes_taps(settings.telegram_bot_token) else None
 
     # The research is paid for and stored before any send, so a crash between the two loses neither.
     record_run(client, run_id, "running", ledger, delivered=False)
@@ -829,8 +844,9 @@ def run(now: datetime | None = None) -> int:
         send_settings = replace(settings, telegram_bot_token=bot_token, telegram_chat_id=chat_id)
         delivered_parts = 0
         for index, message in enumerate(messages):
+            operator_keyboard = keyboard_id if taps_reach_the_webhook(bot_token, settings.telegram_bot_token) else None
             delivery = send_telegram_message(
-                message, send_settings, chat_id=chat_id, silent=silent, parse_mode="HTML", reply_markup=last_part_markup(index, len(messages), keyboard_id)
+                message, send_settings, chat_id=chat_id, silent=silent, parse_mode="HTML", reply_markup=last_part_markup(index, len(messages), operator_keyboard)
             )
             if delivery.sent_status == "sent":
                 delivered_parts += 1
@@ -868,7 +884,8 @@ def run(now: datetime | None = None) -> int:
     subscribers = SubscriberOutcome()
     if kept:
         subscribers = deliver_to_subscribers(
-            client, load_subscribers(client), items=kept, day_label=day_label, desk_notes=desk_notes, today=today, settings=settings, silent=silent, generation_id=keyboard_id
+            client, load_subscribers(client), items=kept, day_label=day_label, desk_notes=desk_notes, today=today, settings=settings, silent=silent,
+            generation_id=keyboard_id, fun_fact=fun_fact,
         )
 
     briefing_exists = bool(kept)

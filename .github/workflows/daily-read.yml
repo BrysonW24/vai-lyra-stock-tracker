@@ -48,6 +48,9 @@ jobs:
           # Its own SUMMARY_TELEGRAM_* secrets when set, otherwise the ops pager chat.
           SUMMARY_TELEGRAM_BOT_TOKEN: ${{ secrets.SUMMARY_TELEGRAM_BOT_TOKEN || secrets.OPS_TELEGRAM_BOT_TOKEN }}
           SUMMARY_TELEGRAM_CHAT_ID: ${{ secrets.SUMMARY_TELEGRAM_CHAT_ID || secrets.OPS_TELEGRAM_CHAT_ID }}
+          # The app bot's token: the feedback buttons go on only when the message is sent through it,
+          # because only its webhook receives the taps (workers/stock_scanner/feedback.py).
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           ENABLE_DAILY_READ: ${{ vars.ENABLE_DAILY_READ || 'true' }}
           SUMMARY_MODEL: ${{ vars.SUMMARY_MODEL || 'claude-opus-5-5' }}
           SUMMARY_EFFORT: ${{ vars.SUMMARY_EFFORT || 'high' }}

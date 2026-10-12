@@ -35,6 +35,7 @@ from workers.stock_scanner.briefing_text import (
     DESK_STYLE,
     TELEGRAM_LIMIT,
     THEME_STYLE,
+    as_sentence,
     grouped_parts,
     h,
     item_html,
@@ -44,6 +45,7 @@ from workers.stock_scanner.briefing_text import (
 from workers.stock_scanner.config import Settings
 from workers.stock_scanner.logger import get_logger
 from workers.stock_scanner.feedback import last_part_markup
+from workers.stock_scanner.fun_facts import FunFact, fact_html, fact_text
 from workers.stock_scanner.telegram import send_telegram_message
 
 LOGGER = get_logger("stock_scanner.briefing_subscribers")
@@ -192,12 +194,16 @@ def personalise(items: list[BriefingItem], subscriber: Subscriber) -> PersonalBr
     )
 
 
-def compose_subscriber_messages(personal: PersonalBriefing, *, day_label: str, desk_notes: dict[str, str], limit: int = TELEGRAM_LIMIT) -> list[str]:
+def compose_subscriber_messages(
+    personal: PersonalBriefing, *, day_label: str, desk_notes: dict[str, str], limit: int = TELEGRAM_LIMIT, fun_fact: FunFact | None = None
+) -> list[str]:
     """One reader's Telegram briefing in HTML, split at item boundaries under the limit."""
     parts = [f"🗞️ <b>Lyra AI briefing</b> · {h(day_label)}\n<i>{h(personal.note)}</i>"]
     if personal.holdings_items:
         parts.append("📌 <b>Your holdings</b>\n\n" + "\n\n".join(item_html(item) for item in personal.holdings_items))
     parts.extend(grouped_parts(list(personal.topic_items), desk_notes, themes_first=personal.themes_first, desks=personal.desks))
+    if fun_fact is not None:
+        parts.append(fact_html(fun_fact))
     parts.append("Reply STOP to unsubscribe · Research, not advice.")
     return split_messages(parts, limit)
 
@@ -215,14 +221,15 @@ def _email_item(item: BriefingItem) -> str:
     emoji, _label = THEME_STYLE.get(item.theme, THEME_STYLE["other"])
     tags = [tag for tag, on in (("private", not item.listed), ("catch-up", item.catch_up)) if on]
     tag_html = f' <span style="font-size:12px;color:#8290a0;">({", ".join(tags)})</span>' if tags else ""
-    rows = [
-        f'<p style="margin:0 0 6px;font-size:15px;line-height:1.4;color:#0E1E3A;font-weight:600;">{emoji} {h(item.headline)}{tag_html}</p>',
-        f'<p style="margin:0 0 6px;font-size:14px;line-height:1.6;color:#2b3a52;">{h(item.what_happened)}</p>',
-        f'<p style="margin:0 0 6px;font-size:13px;line-height:1.6;color:#5A6B82;"><em>Why it matters:</em> {h(item.why_it_matters)}</p>',
-        f'<p style="margin:0 0 6px;font-size:13px;line-height:1.6;color:#5A6B82;"><em>Risks:</em> {h(item.risks)}</p>',
-    ]
+    # A bite (v0.138.0): the bold takeaway, then one paragraph, then the sources.
+    lead = as_sentence(item.lead) if item.lead else item.headline
+    body = " ".join(h(as_sentence(part)) for part in (item.what_happened, item.why_it_matters, item.risks) if part)
     if item.not_disclosed:
-        rows.append(f'<p style="margin:0 0 6px;font-size:13px;line-height:1.6;color:#5A6B82;"><em>Not disclosed:</em> {h(item.not_disclosed)}</p>')
+        body += f' <em style="color:#5A6B82;">Not disclosed: {h(as_sentence(item.not_disclosed))}</em>'
+    rows = [
+        f'<p style="margin:0 0 6px;font-size:15px;line-height:1.4;color:#0E1E3A;font-weight:600;">{emoji} {h(lead)}{tag_html}</p>',
+        f'<p style="margin:0 0 6px;font-size:14px;line-height:1.6;color:#2b3a52;">{body}</p>',
+    ]
     links = " &middot; ".join(f'<a href="{h(source.url)}" style="color:#1E63FF;">{h(source.label)}</a>' for source in item.sources)
     rows.append(f'<p style="margin:0;font-size:12px;line-height:1.6;color:#8290a0;">{links}</p>')
     return '<tr><td style="padding:14px 32px;border-top:1px solid #eef0f4;">' + "".join(rows) + "</td></tr>"
@@ -239,9 +246,9 @@ def _email_sections(personal: PersonalBriefing, desk_notes: dict[str, str]) -> t
         if members:
             html_rows.extend(_email_item(item) for item in members)
             for item in members:
-                text_lines.extend([item.headline, item.what_happened, f"Why it matters: {item.why_it_matters}", f"Risks: {item.risks}"])
-                if item.not_disclosed:
-                    text_lines.append(f"Not disclosed: {item.not_disclosed}")
+                lead = as_sentence(item.lead) if item.lead else item.headline
+                body = " ".join(as_sentence(part) for part in (item.what_happened, item.why_it_matters, item.risks) if part)
+                text_lines.extend([lead, body + (f" Not disclosed: {as_sentence(item.not_disclosed)}" if item.not_disclosed else "")])
                 text_lines.append(" | ".join(f"{source.label}: {source.url}" for source in item.sources))
                 text_lines.append("")
         else:
@@ -264,10 +271,18 @@ def _email_sections(personal: PersonalBriefing, desk_notes: dict[str, str]) -> t
     return html_rows, text_lines
 
 
-def compose_subscriber_email(personal: PersonalBriefing, *, day_label: str, desk_notes: dict[str, str], unsubscribe_url: str) -> tuple[str, str, str]:
+def compose_subscriber_email(
+    personal: PersonalBriefing, *, day_label: str, desk_notes: dict[str, str], unsubscribe_url: str, fun_fact: FunFact | None = None
+) -> tuple[str, str, str]:
     """(subject, html, text) for one reader - the same brand shell as the auth emails, every string escaped."""
     subject = email_subject(personal, day_label)
     html_rows, text_lines = _email_sections(personal, desk_notes)
+    if fun_fact is not None:
+        html_rows.append(
+            '<tr><td style="padding:16px 32px 4px;font-size:14px;line-height:1.6;color:#2b3a52;border-top:1px solid #eef0f4;">'
+            f'💡 <strong>Fun fact:</strong> {h(fun_fact.text)} <a href="{h(fun_fact.url)}" style="color:#1E63FF;">{h(fun_fact.source)}</a></td></tr>'
+        )
+        text_lines.extend([fact_text(fun_fact), ""])
     html_body = (
         '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F6F2;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;">'
         '<tr><td align="center"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;border:1px solid #e7e9ef;overflow:hidden;">'
@@ -379,11 +394,12 @@ def deliver_to_subscriber(
     settings: Settings,
     silent: bool,
     generation_id: str | None = None,
+    fun_fact: FunFact | None = None,
 ) -> SubscriberDelivery:
     if subscriber.channel == "telegram":
         if not settings.telegram_bot_token:
             return SubscriberDelivery(subscriber.id, "telegram", "failed", "TELEGRAM_BOT_TOKEN missing")
-        messages = compose_subscriber_messages(personal, day_label=day_label, desk_notes=desk_notes)
+        messages = compose_subscriber_messages(personal, day_label=day_label, desk_notes=desk_notes, fun_fact=fun_fact)
         for index, message in enumerate(messages):
             # The feedback buttons point at the briefing's generation row; the webhook knows the
             # reader from the chat, so one row serves every subscriber's copy (feedback.py).
@@ -402,7 +418,7 @@ def deliver_to_subscriber(
     if not settings.app_base_url or not secret:
         return SubscriberDelivery(subscriber.id, "email", "failed", "APP_BASE_URL or the link secret missing - no unsubscribe link, so no email")
     link = unsubscribe_url(settings.app_base_url, secret, subscriber.id)
-    subject, html_body, text = compose_subscriber_email(personal, day_label=day_label, desk_notes=desk_notes, unsubscribe_url=link)
+    subject, html_body, text = compose_subscriber_email(personal, day_label=day_label, desk_notes=desk_notes, unsubscribe_url=link, fun_fact=fun_fact)
     result = send_email(api_key=settings.resend_api_key, from_email=settings.briefing_from_email, to=subscriber.email, subject=subject, html_body=html_body, text=text, unsubscribe=link)
     if result.sent_status == "sent":
         return SubscriberDelivery(subscriber.id, "email", "sent")
@@ -420,6 +436,7 @@ def deliver_to_subscribers(
     settings: Settings,
     silent: bool = False,
     generation_id: str | None = None,
+    fun_fact: FunFact | None = None,
 ) -> SubscriberOutcome:
     """Send tonight's briefing to everyone who has not had today's yet, stamping each row as it goes.
     Idempotent per day: the resend firing (an undelivered operator/user leg) skips anyone already served."""
@@ -430,7 +447,8 @@ def deliver_to_subscribers(
             continue
         attempted += 1
         delivery = deliver_to_subscriber(
-            subscriber, personalise(items, subscriber), day_label=day_label, desk_notes=desk_notes, settings=settings, silent=silent, generation_id=generation_id
+            subscriber, personalise(items, subscriber), day_label=day_label, desk_notes=desk_notes, settings=settings, silent=silent,
+            generation_id=generation_id, fun_fact=fun_fact,
         )
         if delivery.status == "sent":
             reached += 1

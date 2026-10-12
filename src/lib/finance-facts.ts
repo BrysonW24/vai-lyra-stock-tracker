@@ -9,6 +9,9 @@ export interface FinanceFact {
   category: FactCategory;
   level?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   educationId?: string;
+  /** Where the fact was checked (v0.138.0). Only sourced facts close the evening briefing (workers/stock_scanner/fun_facts.py). */
+  source?: string;
+  url?: string;
 }
 
 /**

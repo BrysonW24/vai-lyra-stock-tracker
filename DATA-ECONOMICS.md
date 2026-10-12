@@ -100,7 +100,7 @@ Notes:
 - `news_items` currently persists **0 rows/night** - every write is rejected by a legacy `title`
   not-null constraint (known bug, intelligence worker lane). Its growth is counted at zero until fixed;
   when fixed it adds ~25 tiny rows/night.
-- `ai_runs` is metrics-only (1 row) and `chat_turns` is consent-gated (0 rows) - neither moves the needle.
+- `ai_runs` was metrics-only (1 row) until v0.137.0; it now also holds the content record - the text of every message the workers send and each night's review of it - at about 1 MB a month (three messages and three reviews a weekday, a few kB each before TOAST compression). Budget raised to 25 MB. `content_feedback` (one row per reader per message) is tiny. `chat_turns` is consent-gated (0 rows).
 
 ---
 
@@ -154,7 +154,8 @@ adversarially verified by an independent agent hunting for longer readers). Resu
 | `scout_items` | `/draft-vertical` chain reads the full retained window | **90 days** (already worker-enforced) | 0 (worker prunes nightly) | ~14 MB |
 | `market_context_snapshots` | Yearly review benchmark baseline (earliest snapshot at/after Jan 1) | **372 days** | 0 rows | ~20 MB |
 | `chat_turns` | Copilot cross-session memory reads newest-8 per user with NO age bound (a returning user must not be a cold start) | **keep** | - | small |
-| `ai_runs` | No code reader, but it is the [AI-SEC-05] durable audit trail - pruning destroys evidence, not a feature | **keep** | - | small |
+| `ai_runs` | The [AI-SEC-05] audit trail, and since v0.137.0 the content record the nightly review reads back (`content_judge.py`) - what a reader was sent is the evidence for their feedback | **keep** | - | ~12 MB/yr |
+| `content_feedback` | Readers' ratings, reasons and notes per message - the evidence the reviews are calibrated against | **keep** | - | small |
 | `ipos` | The /ipos explorer deliberately shows historical listings (full-table read) | keep | - | small |
 | `news_items`, `event_risks`, `valuation_metrics`, `hype_scores` | Zero code readers today (write-only; hype holds one row per ticker) | budget-guarded only | - | small |
 

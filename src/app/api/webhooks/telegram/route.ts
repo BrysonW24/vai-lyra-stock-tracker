@@ -301,7 +301,8 @@ async function buildReply(parsed: ParsedMessage, ctx: ReplyContext): Promise<str
 
 type CallbackQuery = NonNullable<TelegramUpdate['callback_query']>;
 
-const NOT_SAVED_YET = 'Thanks - but feedback is not being saved yet. The person who runs Lyra has been told.';
+const OPT_OUT_RE = /\b(stop|unsubscribe|cancel|opt[ -]?out|remove me|no more)\b/i;
+const NOT_SAVED_YET = 'Thanks - but feedback is not being saved yet, so this one was not kept.';
 const SAVE_FAILED = 'That could not be saved - try again in a minute.';
 
 /** A tap on 👍 / 👎, a reason or "change". Always answers the tap so the spinner stops. */
@@ -339,6 +340,10 @@ async function handleFeedbackTap(query: CallbackQuery, nowMs: number): Promise<v
 
   const step = nextStep(action);
   const failed = outcome === 'error' || outcome === 'table_missing' || outcome === 'no_database';
+  if (outcome === 'table_missing') {
+    // The operator learns from the logs (and check:app-columns), not from the reader's toast.
+    console.warn(JSON.stringify({ at: 'telegram.webhook', event: 'feedback_table_missing', hint: 'apply migration 060_content_feedback.sql' }));
+  }
   await answerCallbackQuery(query.id, outcome === 'error' ? SAVE_FAILED : failed ? NOT_SAVED_YET : step.toast || undefined);
   // The buttons move on only when the tap was kept, so a reader can try again after a failure.
   if (query.message && !failed) await editMessageReplyMarkup(chatId, query.message.message_id, step.keyboard);
@@ -368,8 +373,11 @@ async function noteReply(
   const reader = await readerForChat(ctx.client, ctx.chatId);
   const outcome = await recordFeedback(ctx.client, { generationId, reader, note: text, telegramMessageId: repliedTo.message_id, now: ctx.now });
   console.info(JSON.stringify({ at: 'telegram.webhook', event: 'feedback_note', outcome }));
-  if (outcome === 'recorded') return NOTE_REPLY;
-  return outcome === 'table_missing' ? NOT_SAVED_YET : SAVE_FAILED;
+  // "please stop sending these" is not the bare STOP the parser acts on: say how to stop, rather than
+  // only "noted" while the subscription carries on.
+  const optOut = OPT_OUT_RE.test(text) ? ' If you meant to stop the evening briefing, reply STOP on its own.' : '';
+  if (outcome === 'recorded') return NOTE_REPLY + optOut;
+  return (outcome === 'table_missing' ? NOT_SAVED_YET : SAVE_FAILED) + optOut;
 }
 
 // --- route --------------------------------------------------------------------

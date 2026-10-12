@@ -125,6 +125,16 @@ at the cache-read rate (US$0.20/M instead of US$4.00/M), and the ledger's `cache
 the split on the next real run. Expect the input share of a briefing to fall well below the 88% the
 review measured; the first forced run after the credit is topped up is the measurement.
 
+#### The morning guide (v0.138.0: `morning-guide.yml`, code only)
+
+| Service | What it carries | Price | Notes |
+|---|---|---|---|
+| Yahoo Finance chart endpoint + yfinance calendar | One quote and one earnings date per holding (at most 20) each morning | Free, no key | The same endpoint the market snapshot already uses; a missing quote is listed under Loose ends rather than failing the guide |
+| Telegram Bot API | One message a morning to the operator | Free | Through the app's bot, like the read |
+
+No model call: the guide costs nothing and still goes out on a morning after the AI could not run.
+The evening fun fact is free too - it comes from Lyra's own sourced facts library, not a model.
+
 #### The nightly content review (v0.137.0: `content-review.yml`, Claude on the repo's own key)
 
 | Service | Model | Price | Per review | Projected per month |
