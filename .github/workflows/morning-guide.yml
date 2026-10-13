@@ -26,6 +26,10 @@ on:
         description: Send this morning's guide now, even if one already went out or it is not yet the send time
         type: boolean
         default: false
+      rehearsal:
+        description: Rehearse - run it for real (the model call is paid for and recorded on ai_runs) but send nothing and claim nothing
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -60,6 +64,7 @@ jobs:
           MORNING_SEND_AT: ${{ vars.MORNING_SEND_AT || '08:30' }}
           SUMMARY_QUIET_HOURS: ${{ vars.SUMMARY_QUIET_HOURS || '22-7' }}
           MORNING_FORCE: ${{ inputs.force && 'true' || 'false' }}
+          LYRA_REHEARSAL: ${{ inputs.rehearsal && '1' || '' }}
         run: python -m workers.stock_scanner.morning_guide
 
       - name: Notify on failure

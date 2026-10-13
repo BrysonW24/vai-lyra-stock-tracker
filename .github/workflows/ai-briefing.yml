@@ -23,6 +23,10 @@ on:
         description: Research and send tonight's briefing now, even if one already went out today or it is not yet the send time
         type: boolean
         default: false
+      rehearsal:
+        description: Rehearse - run it for real (the model call is paid for and recorded on ai_runs) but send nothing and claim nothing
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -72,6 +76,7 @@ jobs:
           BRIEFING_SEND_AT: ${{ vars.BRIEFING_SEND_AT || '20:00' }}
           SUMMARY_QUIET_HOURS: ${{ vars.SUMMARY_QUIET_HOURS || '22-7' }}
           BRIEFING_FORCE: ${{ inputs.force && 'true' || 'false' }}
+          LYRA_REHEARSAL: ${{ inputs.rehearsal && '1' || '' }}
         run: python -m workers.stock_scanner.ai_briefing
 
       - name: Notify on failure
