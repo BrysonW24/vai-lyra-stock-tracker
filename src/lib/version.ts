@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.138.2',
+    date: '2026-10-13',
+    title: 'The morning guide tells a closing quote from a preliminary one by the session\'s own close',
+    highlights: [
+      'A quote is a closing quote once its last trade is at that session\'s 4:00pm New York close (1:00pm on a half day) and the day\'s bar is settled - Yahoo moves its own "trading period" to the next day a few hours after the close, which made every quote read as preliminary.',
+      'A fund such as QQQ no longer counts as a missing earnings date in the guide\'s coverage line - funds do not report earnings.',
+    ],
+  },
+  {
     version: '0.138.1',
     date: '2026-10-13',
     title: 'Quotes taken right after the US close are dated to the right session and marked preliminary',

@@ -430,6 +430,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.138.2  2026-10-13  The morning guide tells a closing quote from a preliminary one by the session's own close
 0.138.1  2026-10-13  Quotes taken right after the US close are dated to the right session and marked preliminary
 0.138.0  2026-10-13  A morning guide before the market opens, and an evening briefing in short bites with a fun fact
 0.137.0  2026-10-13  Every message on the record, a 👍 / 👎 under each one, and a nightly review of what was sent
@@ -596,7 +597,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(165 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(166 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

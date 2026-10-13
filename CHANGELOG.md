@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.138.2] - 2026-10-13
+
+The morning guide tells a closing quote from a preliminary one by the session's own close.
+
+### Changed
+
+- A quote is a closing quote once its last trade is at that session's 4:00pm New York close (1:00pm on a half day) and the day's bar is settled - Yahoo moves its own "trading period" to the next day a few hours after the close, which made every quote read as preliminary.
+- A fund such as QQQ no longer counts as a missing earnings date in the guide's coverage line - funds do not report earnings.
+
 ## [0.138.1] - 2026-10-13
 
 Quotes taken right after the US close are dated to the right session and marked preliminary.
@@ -1931,7 +1940,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.1...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.2...HEAD
+[0.138.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.1...v0.138.2
 [0.138.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.0...v0.138.1
 [0.138.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.137.0...v0.138.0
 [0.137.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.136.0...v0.137.0

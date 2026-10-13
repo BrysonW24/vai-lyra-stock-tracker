@@ -52,7 +52,7 @@ def test_the_guide_keeps_the_founders_layout_section_by_section():
     sections = message.split("\n\n")
     assert sections[0] == "☀️ <b>Morning, Bryson.</b> Wednesday 7 October, Sydney time."
     assert [s.split("\n")[0] for s in sections[1:4]] == ["<b>Your priorities</b>", "<b>Today in the market</b>", "<b>Loose ends</b>"]
-    assert sections[4].startswith("<i>Closing quotes for 2 of 3 holdings; earnings dates from Yahoo for 2 of 3.") and sections[4].endswith("Lyra cannot see your inbox or diary.</i>")
+    assert sections[4].startswith("<i>Closing quotes for 2 of 3 holdings; earnings dates from Yahoo for 2 of 3 companies.") and sections[4].endswith("Lyra cannot see your inbox or diary.</i>")
     assert sections[5].split("\n")[:2] == ["<b>US markets · Tuesday 6 October, USD</b>", "The regular session has closed. NVDA is still settling, so that reading is preliminary:"]
     assert "- AMD: $97.00, -3.0% · closing quote" in sections[5] and "- NVDA: $104.00, about +4.0% · preliminary" in sections[5]
     assert "- QQQ: $745.98, -0.7% · closing quote" in sections[5] and "S&amp;P 500 +0.6% · Nasdaq +0.4% · VIX 15.0" in sections[5]
@@ -111,9 +111,9 @@ def test_loose_ends_name_unscanned_holdings_missing_quotes_and_a_night_without_a
 
 
 def test_a_quote_is_closing_only_when_the_last_trade_is_at_the_close_and_the_close_has_settled():
-    def chart(traded):
+    def chart(traded, period_end=CLOSE_TS):
         return {
-            "meta": {"regularMarketPrice": 104.0, "regularMarketTime": traded, "gmtoffset": -14400, "currentTradingPeriod": {"regular": {"end": CLOSE_TS}}},
+            "meta": {"regularMarketPrice": 104.0, "regularMarketTime": traded, "gmtoffset": -14400, "currentTradingPeriod": {"regular": {"end": period_end}}},
             "timestamp": [int(CLOSE_TS - 86400 - 23400), int(CLOSE_TS - 23400)],
             "indicators": {"quote": [{"close": [100.0, 104.0]}]},
         }
@@ -127,6 +127,13 @@ def test_a_quote_is_closing_only_when_the_last_trade_is_at_the_close_and_the_clo
     assert quote == mg.Quote("NVDA", 104.0, pytest.approx(4.0), date(2026, 10, 6), True)
     assert mg.quote_from_chart("NVDA", chart(CLOSE_TS + 1), datetime.fromtimestamp(CLOSE_TS + 5 * 60, UTC)).final is False, "too soon after the close"
     assert mg.quote_from_chart("NVDA", chart(CLOSE_TS - 600), settled).final is False, "the last trade was before the close"
+    # Yahoo rolls currentTradingPeriod to the next trading day hours after the close; the close is
+    # the session's own 16:00, so a settled close stays final.
+    rolled = mg.quote_from_chart("NVDA", chart(CLOSE_TS + 1, period_end=CLOSE_TS + 86_400), datetime.fromtimestamp(CLOSE_TS + 6 * 3600, UTC))
+    assert rolled.final is True
+    fund = chart(CLOSE_TS + 1)
+    fund["meta"]["instrumentType"] = "ETF"
+    assert mg.quote_from_chart("QQQ", fund, settled).fund is True and quote.fund is False
 
 
 def test_ai_last_night_reads_only_the_latest_real_evening_runs():
@@ -262,4 +269,10 @@ def test_run_waits_for_the_closing_bar_and_the_last_firing_sends_anyway(harness)
     last = datetime(2026, 11, 3, 10, 13, tzinfo=SYDNEY).astimezone(UTC)
     assert mg.run(now=last, quote_fn=harness.quote, earnings_fn=harness.earnings) == 0
     assert len(harness.sent) == 1 and "Only 6 of the session's 7 hourly bars are in Lyra's data" in harness.sent[0]["message"]
+
+
+def test_a_fund_is_not_counted_as_a_missing_earnings_date():
+    quotes = {"NVDA": mg.Quote("NVDA", 104.0, 4.0, date(2026, 10, 6), True), "QQQ": mg.Quote("QQQ", 745.98, -0.7, date(2026, 10, 6), True, fund=True)}
+    line = mg.coverage_line(_inputs(holdings=[mg.Holding("NVDA"), mg.Holding("QQQ")], quotes=quotes, earnings={"NVDA": date(2026, 11, 18)}))
+    assert line.startswith("Closing quotes for 2 of 2 holdings; earnings dates from Yahoo for 1 of 1 company.")
 

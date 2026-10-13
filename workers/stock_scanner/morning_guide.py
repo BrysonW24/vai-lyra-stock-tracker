@@ -139,6 +139,7 @@ class Quote:
     change_pct: float | None
     session: date | None
     final: bool  # a closing quote, not a reading the feed may still revise
+    fund: bool = False  # an ETF or fund: it has no earnings to report
 
 
 @dataclass(frozen=True)
@@ -180,18 +181,23 @@ class GuideInputs:
 
 def quote_from_chart(symbol: str, result: dict[str, Any], now: datetime) -> Quote:
     """Price and one-session change from a Yahoo v8 chart result (market_context's correct change,
-    never meta.chartPreviousClose), and whether it is final: the last regular-session trade is at
-    the close, the close is FINAL_GRACE_SECONDS behind us and the session's daily bar is written.
-    Anything else is preliminary."""
+    never meta.chartPreviousClose), and whether it is final: the session's daily bar is written, the
+    last trade is at that session's close (16:00 New York, 13:00 on an NYSE early close) and the close
+    is FINAL_GRACE_SECONDS behind us. Anything else is preliminary.
+
+    The close is worked out from the session's own date, not from meta.currentTradingPeriod: Yahoo
+    rolls that forward to the next trading day a few hours after the close, and measured against the
+    next day's close every quote read as preliminary (production rehearsal, 2026-10-13 01:50 UTC)."""
     moved = _session_change(result)
     meta = result.get("meta") or {}
-    regular = ((meta.get("currentTradingPeriod") or {}).get("regular") or {}) if isinstance(meta.get("currentTradingPeriod"), dict) else {}
-    end, traded = _number(regular.get("end")), _number(meta.get("regularMarketTime"))
-    # Final only when the last trade is at the close, the close has settled, and Yahoo has written
-    # the session's daily bar - a null bar means the feed is still reconciling (preliminary).
-    final = bool(moved.get("settled") and end and traded and traded >= end - 60 and now.timestamp() >= end + FINAL_GRACE_SECONDS)
+    traded = _number(meta.get("regularMarketTime"))
     session = date.fromisoformat(moved["session_date"]) if moved.get("session_date") else None
-    return Quote(symbol, _number(moved.get("price")), _number(moved.get("change_pct")), session, final)
+    final = False
+    if session is not None and traded and moved.get("settled"):
+        close_at = datetime.combine(session, clock_time(13, 0) if session in NYSE_EARLY_CLOSES else SESSION_CLOSE, tzinfo=NEW_YORK).timestamp()
+        final = traded >= close_at - 60 and now.timestamp() >= close_at + FINAL_GRACE_SECONDS
+    fund = str(meta.get("instrumentType") or "").upper() in ("ETF", "MUTUALFUND")
+    return Quote(symbol, _number(moved.get("price")), _number(moved.get("change_pct")), session, final, fund)
 
 
 def fetch_quote(symbol: str, now: datetime) -> Quote | None:
@@ -421,9 +427,11 @@ def coverage_line(inputs: GuideInputs) -> str:
     cut = f" Your book has {inputs.total_holdings} holdings; the first {held} alphabetically were checked." if inputs.total_holdings > held else ""
     final = sum(1 for h in inputs.holdings if (q := inputs.quotes.get(h.symbol)) and q.price is not None and q.final)
     dated = sum(1 for h in inputs.holdings if h.symbol in inputs.earnings)
+    # A fund (QQQ) reports no earnings, so it is not counted as a missing date.
+    companies = sum(1 for h in inputs.holdings if not ((q := inputs.quotes.get(h.symbol)) and q.fund))
     week = sum(1 for e in inputs.events if 0 <= (e.day - inputs.today).days < 7)
     return (
-        f"Closing quotes for {final} of {held} holdings; earnings dates from Yahoo for {dated} of {held}. "
+        f"Closing quotes for {final} of {held} holdings; earnings dates from Yahoo for {dated} of {companies} {'company' if companies == 1 else 'companies'}. "
         f"Lyra's calendar lists {week} event{'s' if week != 1 else ''} this week.{cut} Lyra cannot see your inbox or diary."
     )
 
