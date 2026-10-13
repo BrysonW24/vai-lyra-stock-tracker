@@ -6,6 +6,15 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.138.1] - 2026-10-13
+
+Quotes taken right after the US close are dated to the right session and marked preliminary.
+
+### Changed
+
+- Right after the close, Yahoo often has the day's price before it has written the day's bar. The morning guide now reads that price as the session it belongs to - for example Monday, against Friday's close - and marks it preliminary until the bar settles, instead of dating it to the previous session.
+- The same fix reaches the market strip (S&P 500, Nasdaq and the rest), which in that window could show a two-session change under the earlier date.
+
 ## [0.138.0] - 2026-10-13
 
 A morning guide before the market opens, and an evening briefing in short bites with a fun fact.
@@ -1922,7 +1931,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.1...HEAD
+[0.138.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.0...v0.138.1
 [0.138.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.137.0...v0.138.0
 [0.137.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.136.0...v0.137.0
 [0.136.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.135.0...v0.136.0

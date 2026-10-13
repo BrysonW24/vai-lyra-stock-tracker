@@ -121,15 +121,27 @@ def _session_change(result: dict[str, Any]) -> dict[str, Any]:
         if ts is not None and close is not None
     ]
     if price is None or not bars:
-        return {"price": price, "change_pct": None, "session_date": None}
-    session_date = bars[-1][0]
-    previous = next((close for day, close in reversed(bars) if day < session_date), None)
+        return {"price": price, "change_pct": None, "session_date": None, "settled": False}
+    # Right after a close Yahoo often has the session's daily bar with a null close while the price
+    # (regularMarketPrice at regularMarketTime) is already that session's - measured for GOOG on
+    # 2026-10-13: last trade Mon 12 Oct 16:00:02, Monday's bar null. The session is the trading day
+    # of the price, and the change is against the last settled close before it; the reading is
+    # marked unsettled. Taking the last non-null bar instead dated the price to Friday and measured
+    # it against Thursday - a two-session change under the wrong date.
+    traded = meta.get("regularMarketTime")
+    trade_day = (datetime.fromtimestamp(int(traded), tz=timezone.utc) + offset).date() if traded else None
+    if trade_day is not None and trade_day > bars[-1][0]:
+        session_date, previous, settled = trade_day, bars[-1][1], False
+    else:
+        session_date, settled = bars[-1][0], True
+        previous = next((close for day, close in reversed(bars) if day < session_date), None)
     if not previous:
-        return {"price": price, "change_pct": None, "session_date": session_date.isoformat()}
+        return {"price": price, "change_pct": None, "session_date": session_date.isoformat(), "settled": settled}
     return {
         "price": price,
         "change_pct": ((price - previous) / previous) * 100,
         "session_date": session_date.isoformat(),
+        "settled": settled,
     }
 
 

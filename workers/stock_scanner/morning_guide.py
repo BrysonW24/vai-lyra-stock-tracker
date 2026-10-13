@@ -181,12 +181,15 @@ class GuideInputs:
 def quote_from_chart(symbol: str, result: dict[str, Any], now: datetime) -> Quote:
     """Price and one-session change from a Yahoo v8 chart result (market_context's correct change,
     never meta.chartPreviousClose), and whether it is final: the last regular-session trade is at
-    the close and the close is FINAL_GRACE_SECONDS behind us. Anything else is preliminary."""
+    the close, the close is FINAL_GRACE_SECONDS behind us and the session's daily bar is written.
+    Anything else is preliminary."""
     moved = _session_change(result)
     meta = result.get("meta") or {}
     regular = ((meta.get("currentTradingPeriod") or {}).get("regular") or {}) if isinstance(meta.get("currentTradingPeriod"), dict) else {}
     end, traded = _number(regular.get("end")), _number(meta.get("regularMarketTime"))
-    final = bool(end and traded and traded >= end - 60 and now.timestamp() >= end + FINAL_GRACE_SECONDS)
+    # Final only when the last trade is at the close, the close has settled, and Yahoo has written
+    # the session's daily bar - a null bar means the feed is still reconciling (preliminary).
+    final = bool(moved.get("settled") and end and traded and traded >= end - 60 and now.timestamp() >= end + FINAL_GRACE_SECONDS)
     session = date.fromisoformat(moved["session_date"]) if moved.get("session_date") else None
     return Quote(symbol, _number(moved.get("price")), _number(moved.get("change_pct")), session, final)
 

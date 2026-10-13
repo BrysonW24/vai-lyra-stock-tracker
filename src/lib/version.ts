@@ -23,6 +23,15 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.138.1',
+    date: '2026-10-13',
+    title: 'Quotes taken right after the US close are dated to the right session and marked preliminary',
+    highlights: [
+      'Right after the close, Yahoo often has the day\'s price before it has written the day\'s bar. The morning guide now reads that price as the session it belongs to - for example Monday, against Friday\'s close - and marks it preliminary until the bar settles, instead of dating it to the previous session.',
+      'The same fix reaches the market strip (S&P 500, Nasdaq and the rest), which in that window could show a two-session change under the earlier date.',
+    ],
+  },
+  {
     version: '0.138.0',
     date: '2026-10-13',
     title: 'A morning guide before the market opens, and an evening briefing in short bites with a fun fact',

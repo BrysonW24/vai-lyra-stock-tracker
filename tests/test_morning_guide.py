@@ -119,6 +119,10 @@ def test_a_quote_is_closing_only_when_the_last_trade_is_at_the_close_and_the_clo
         }
 
     settled = datetime.fromtimestamp(CLOSE_TS + 20 * 60, UTC)
+    unsettled_bar = chart(CLOSE_TS + 1)
+    unsettled_bar["indicators"]["quote"][0]["close"] = [100.0, None]
+    pending = mg.quote_from_chart("NVDA", unsettled_bar, settled)
+    assert pending.final is False and pending.session == date(2026, 10, 6) and pending.change_pct == pytest.approx(4.0), "a null daily bar is still reconciling"
     quote = mg.quote_from_chart("NVDA", chart(CLOSE_TS + 1), settled)
     assert quote == mg.Quote("NVDA", 104.0, pytest.approx(4.0), date(2026, 10, 6), True)
     assert mg.quote_from_chart("NVDA", chart(CLOSE_TS + 1), datetime.fromtimestamp(CLOSE_TS + 5 * 60, UTC)).final is False, "too soon after the close"

@@ -207,6 +207,28 @@ class TestSessionChange:
         assert change["session_date"] == "2026-10-05"
         assert round(change["change_pct"], 3) == round((8686.4 / 8682.0996 - 1) * 100, 3)
 
+    def test_a_session_whose_daily_bar_is_still_null_is_dated_by_the_last_trade(self):
+        """Recorded for GOOG on 2026-10-13: last trade Mon 12 Oct 16:00:02 at 348.97 while Monday's
+        daily bar was still null. The session is Monday, measured against Friday's settled close,
+        and it is marked unsettled - not Friday, measured against Thursday."""
+        from datetime import datetime, timezone
+
+        from workers.stock_scanner.market_context import _session_change
+
+        monday_close = int(datetime(2026, 10, 12, 20, 0, 2, tzinfo=timezone.utc).timestamp())
+        result = self._result(
+            {"regularMarketPrice": 348.97, "regularMarketTime": monday_close, "gmtoffset": -14400},
+            [("2026-10-08T13:30", 344.86), ("2026-10-09T13:30", 347.86), ("2026-10-12T13:30", None)],
+        )
+        change = _session_change(result)
+        assert change["session_date"] == "2026-10-12" and change["settled"] is False
+        assert round(change["change_pct"], 3) == round((348.97 / 347.86 - 1) * 100, 3)
+        settled = self._result(
+            {"regularMarketPrice": 348.97, "regularMarketTime": monday_close, "gmtoffset": -14400},
+            [("2026-10-09T13:30", 347.86), ("2026-10-12T13:30", 348.97)],
+        )
+        assert _session_change(settled)["settled"] is True and _session_change(settled)["session_date"] == "2026-10-12"
+
     def test_missing_price_or_history_yields_no_change(self):
         from workers.stock_scanner.market_context import _session_change
 
