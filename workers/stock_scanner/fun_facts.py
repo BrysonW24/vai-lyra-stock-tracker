@@ -7,8 +7,9 @@ comes from there rather than from a model: only entries that carry a `source` an
 are eligible, and those were each checked against the page they cite before they were added. A
 fact without a source is never sent, so nothing in the briefing's last line is unverified.
 
-One fact a day, chosen by the reader's date: consecutive days take consecutive facts and none
-repeats until every eligible fact has been used. No eligible fact, no line - the briefing is
+One fact per briefing, chosen by the reader's date and counted in briefing days (Tuesday to
+Saturday, from the first one on 13 October 2026): consecutive briefings take consecutive facts and
+none repeats until every eligible fact has been used. No eligible fact, no line - the briefing is
 complete without it.
 """
 
@@ -17,11 +18,13 @@ from __future__ import annotations
 import html
 import json
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 FACTS_PATH = Path(__file__).resolve().parents[2] / "content" / "finance-facts.jsonl"
 MAX_FACT_CHARS = 280
+FIRST_BRIEFING_DAY = date(2026, 10, 13)  # a Tuesday
+BRIEFING_WEEKDAYS = (1, 2, 3, 4, 5)  # Tuesday to Saturday in Sydney (Monday = 0)
 
 
 @dataclass(frozen=True)
@@ -52,9 +55,17 @@ def load_fun_facts(path: Path = FACTS_PATH) -> list[FunFact]:
     return sorted(facts, key=lambda fact: fact.id)
 
 
+def briefing_number(day: date) -> int:
+    """How many briefing days (Tuesday to Saturday) come before `day`, counted from the first one -
+    so Sunday and Monday never use up a fact."""
+    whole_weeks, rest = divmod((day - FIRST_BRIEFING_DAY).days, 7)
+    partial = sum(1 for k in range(rest) if (FIRST_BRIEFING_DAY + timedelta(days=k)).weekday() in BRIEFING_WEEKDAYS)
+    return whole_weeks * len(BRIEFING_WEEKDAYS) + partial
+
+
 def fact_for(day: date, facts: list[FunFact] | None = None) -> FunFact | None:
     pool = load_fun_facts() if facts is None else facts
-    return pool[day.toordinal() % len(pool)] if pool else None
+    return pool[briefing_number(day) % len(pool)] if pool else None
 
 
 def fact_html(fact: FunFact) -> str:

@@ -37,6 +37,7 @@ from workers.stock_scanner.briefing_text import (
     THEME_STYLE,
     as_sentence,
     grouped_parts,
+    listing,
     h,
     item_html,
     short_name,
@@ -219,8 +220,8 @@ _HEADING_ROW = '<tr><td style="padding:18px 32px 4px;font-size:12px;letter-spaci
 
 def _email_item(item: BriefingItem) -> str:
     emoji, _label = THEME_STYLE.get(item.theme, THEME_STYLE["other"])
-    tags = [tag for tag, on in (("private", not item.listed), ("catch-up", item.catch_up)) if on]
-    tag_html = f' <span style="font-size:12px;color:#8290a0;">({", ".join(tags)})</span>' if tags else ""
+    tags = [tag for tag, on in ((listing(item), bool(item.lead) and bool(listing(item))), ("private", not item.listed), ("catch-up", item.catch_up)) if on]
+    tag_html = f' <span style="font-size:12px;color:#8290a0;">({h(", ".join(tags))})</span>' if tags else ""
     # A bite (v0.138.0): the bold takeaway, then one paragraph, then the sources.
     lead = as_sentence(item.lead) if item.lead else item.headline
     body = " ".join(h(as_sentence(part)) for part in (item.what_happened, item.why_it_matters, item.risks) if part)
@@ -246,7 +247,7 @@ def _email_sections(personal: PersonalBriefing, desk_notes: dict[str, str]) -> t
         if members:
             html_rows.extend(_email_item(item) for item in members)
             for item in members:
-                lead = as_sentence(item.lead) if item.lead else item.headline
+                lead = (as_sentence(item.lead) + (f" ({listing(item)})" if listing(item) else "")) if item.lead else item.headline
                 body = " ".join(as_sentence(part) for part in (item.what_happened, item.why_it_matters, item.risks) if part)
                 text_lines.extend([lead, body + (f" Not disclosed: {as_sentence(item.not_disclosed)}" if item.not_disclosed else "")])
                 text_lines.append(" | ".join(f"{source.label}: {source.url}" for source in item.sources))

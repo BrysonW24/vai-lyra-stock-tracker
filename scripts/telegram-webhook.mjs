@@ -59,11 +59,16 @@ try {
     await call('setWebhook', { url: `${base}/api/webhooks/telegram`, secret_token: secret, allowed_updates: allowedUpdates });
   }
   const info = await call('getWebhookInfo');
-  const missing = allowedUpdates.filter((kind) => !(info.allowed_updates || []).includes(kind));
+  if (!info.url) {
+    console.error('[telegram-webhook] NO WEBHOOK is registered - run without --check to register it.');
+    process.exit(1);
+  }
+  // No allowed_updates on the registration means Telegram's default set, which includes both kinds.
+  const missing = info.allowed_updates ? allowedUpdates.filter((kind) => !info.allowed_updates.includes(kind)) : [];
   console.log(`[telegram-webhook] @${me.username} -> ${info.url || '(no webhook)'}`);
   console.log(`[telegram-webhook] allowed updates: ${(info.allowed_updates || []).join(', ') || '(all)'}; pending: ${info.pending_update_count ?? 0}`);
   if (info.last_error_message) console.log(`[telegram-webhook] last error: ${String(info.last_error_message).slice(0, 160)}`);
-  if (missing.length && info.allowed_updates) {
+  if (missing.length) {
     console.error(`[telegram-webhook] MISSING: ${missing.join(', ')} - run without --check to register them.`);
     process.exit(1);
   }

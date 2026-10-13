@@ -301,7 +301,8 @@ async function buildReply(parsed: ParsedMessage, ctx: ReplyContext): Promise<str
 
 type CallbackQuery = NonNullable<TelegramUpdate['callback_query']>;
 
-const OPT_OUT_RE = /\b(stop|unsubscribe|cancel|opt[ -]?out|remove me|no more)\b/i;
+// An opt-out written as a sentence ("please stop sending these"), not "move my stop on AMD".
+const OPT_OUT_RE = /\b(unsubscribe|opt[ -]?out|remove me)\b|\bstop (sending|messaging|these|this|them|it|the briefing)\b|\bno more (messages|briefings|of these)\b/i;
 const NOT_SAVED_YET = 'Thanks - but feedback is not being saved yet, so this one was not kept.';
 const SAVE_FAILED = 'That could not be saved - try again in a minute.';
 
@@ -365,17 +366,22 @@ async function noteReply(
   repliedTo: NonNullable<NonNullable<TelegramUpdate['message']>['reply_to_message']>,
   ctx: ReplyContext,
 ): Promise<string> {
-  const generationId = generationFromMarkup(repliedTo.reply_markup);
-  if (!generationId) {
-    return 'Thanks. To rate a message from Lyra, tap 👍 or 👎 under it - replies are kept for the messages that carry those buttons. Send /help for commands.';
-  }
   if (!ctx.client) return NO_DATABASE;
   const reader = await readerForChat(ctx.client, ctx.chatId);
+  // "please stop sending these" is not the bare STOP the parser acts on: say how to stop - but only
+  // to a reader STOP would actually serve (a subscriber, or a chat paired to an account).
+  const optOut =
+    OPT_OUT_RE.test(text) && reader.kind !== 'chat'
+      ? reader.kind === 'subscriber'
+        ? ' If you meant to stop the evening briefing, reply STOP on its own.'
+        : ' If you meant to disconnect this chat from your Lyra account, reply STOP on its own.'
+      : '';
+  const generationId = generationFromMarkup(repliedTo.reply_markup);
+  if (!generationId) {
+    return 'Thanks. To rate a message from Lyra, tap 👍 or 👎 under it - replies are kept for the messages that carry those buttons. Send /help for commands.' + optOut;
+  }
   const outcome = await recordFeedback(ctx.client, { generationId, reader, note: text, telegramMessageId: repliedTo.message_id, now: ctx.now });
   console.info(JSON.stringify({ at: 'telegram.webhook', event: 'feedback_note', outcome }));
-  // "please stop sending these" is not the bare STOP the parser acts on: say how to stop, rather than
-  // only "noted" while the subscription carries on.
-  const optOut = OPT_OUT_RE.test(text) ? ' If you meant to stop the evening briefing, reply STOP on its own.' : '';
   if (outcome === 'recorded') return NOTE_REPLY + optOut;
   return (outcome === 'table_missing' ? NOT_SAVED_YET : SAVE_FAILED) + optOut;
 }

@@ -24,7 +24,7 @@ Every message on the record, a 👍 / 👎 under each one, and a nightly review 
 ### Changed
 
 - Every message the daily read and the AI briefing send is now kept - the text exactly as it went out, what it was written from, and which version of the prompt wrote it - so any message can be looked up later. Your read stays yours alone; the briefing is the same for everyone.
-- Each message Lyra sends you on Telegram ends with 👍 Useful and 👎 Not for me. A tap asks what made it good or what fell short - relevance, insight, clarity, breadth, timeliness, accuracy - and a reply to the message is kept as a note.
+- The daily read and the evening briefing on Telegram - the operator's copy and each subscriber's - end with 👍 Useful and 👎 Not for me. A tap asks what made it good or what fell short - relevance, insight, clarity, breadth, timeliness, accuracy - and a reply to the message is kept as a note.
 - Every night the messages are scored on those same six pillars, with a reason quoted from the text, so feedback arrives with a "why" next to it.
 - The briefing's research now uses prompt caching: re-reading the pages it has opened costs a twentieth of the full price instead of all of it, and the cost on the ledger now uses Opus 5.5's real cache price.
 - Dry runs of the read and the briefing go through the same path as the real thing - paid for, recorded, never sent - so no spend happens off the books.

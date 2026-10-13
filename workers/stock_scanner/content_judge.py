@@ -75,6 +75,7 @@ DEFAULT_LOOKBACK_DAYS = 4  # Saturday's sends must still be inside the window on
 DEFAULT_MAX_PER_RUN = 12
 MAX_OUTPUT_TOKENS = 8_000  # thinking is billed as output and cannot be turned off on this model
 MAX_CONTENT_CHARS = 16_000
+MAX_FACTS_CHARS = 12_000  # the read's fact sheet runs to a few kB; a cap keeps any input from setting the bill
 MAX_REASON_CHARS = 240
 STOP_REASONS = ("billing", "auth", "no_library", "no_key")  # nothing later tonight could succeed either
 
@@ -221,7 +222,7 @@ def evidence(generation: Reviewable) -> str:
     if generation.agent_name == "daily_read":
         if generation.status == "fallback":
             return "There is no AI prose in this read: the message is the engine's own figures, correct by construction. Judge the other pillars on the figures-only layout the reader received."
-        facts = str(inputs.get("input") or "")
+        facts = str(inputs.get("input") or "")[:MAX_FACTS_CHARS]
         return (
             f"Every figure in the prose was matched against the engine's fact sheet below by Lyra's guard before sending; the guard removed {output.get('guard_removed', 0)} sentence(s). "
             "Judge claims that are not figures - causes, characterisations, comparisons - against the fact sheet.\n<facts>\n" + facts + "\n</facts>"
@@ -332,11 +333,16 @@ def judge(prompt: str, *, model: str, effort: str) -> Verdict:
 _GENERATION_COLUMNS = "id,agent_name,status,user_id,prompt_version,created_at,input_payload,output_payload"
 
 
-def load_generations(client: Any, since: datetime) -> list[Reviewable]:
+def _owned(query: Any, owner: str | None) -> Any:
+    """Only rows the workers wrote, filtered IN the database, before any row limit: no owner (only
+    the service role writes those) or the operator's. A signed-in account can insert ai_runs rows
+    under its own id (migration 019), so a filter applied after the limit could be crowded out."""
+    return query.or_(f"user_id.is.null,user_id.eq.{owner}") if owner else query.is_("user_id", "null")
+
+
+def load_generations(client: Any, since: datetime, owner: str | None) -> list[Reviewable]:
     result = (
-        client.table("ai_runs")
-        .select(_GENERATION_COLUMNS)
-        .in_("agent_name", list(REVIEWED_AGENTS))
+        _owned(client.table("ai_runs").select(_GENERATION_COLUMNS).in_("agent_name", list(REVIEWED_AGENTS)), owner)
         .gte("created_at", since.isoformat())
         .order("created_at", desc=False)
         .limit(200)
@@ -364,7 +370,9 @@ def reviewed_ids(client: Any, since: datetime, owner: str | None) -> set[str]:
     """Generations this job has already reviewed. Only reviews owned like this job's own count: a
     signed-in account can insert ai_runs rows under its own id (migration 019), and a forged
     "review" must not be able to suppress a real one."""
-    result = client.table("ai_runs").select("user_id,input_payload").eq("agent_name", JOB_NAME).gte("created_at", since.isoformat()).limit(1000).execute()
+    owned = client.table("ai_runs").select("user_id,input_payload").eq("agent_name", JOB_NAME)
+    owned = owned.eq("user_id", owner) if owner else owned.is_("user_id", "null")
+    result = owned.gte("created_at", since.isoformat()).order("created_at", desc=True).limit(1000).execute()
     ids = set()
     for row in result.data or []:
         payload = row.get("input_payload")
@@ -418,6 +426,9 @@ def run(now: datetime | None = None) -> int:
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     spent_before = month_spend([row for row in load_judge_runs(client, month_start) if (_parse_time(row.get("started_at")) or now) >= month_start])
     if spent_before >= budget:
+        # On the ledger, so the next morning guide's loose ends can say the reviews stopped.
+        run_id = repository.create_run(JOB_NAME, settings.default_timeframe)
+        record_run(client, run_id, "skipped", {"reviewed": 0, "failed": 0, "reason": "budget", "ai": False, "cost_usd": 0.0}, delivered=False, error=f"this month's ${budget:.0f} review budget is used up")
         LOGGER.info("This month's $%.0f review budget is used up ($%.2f) - no review tonight.", budget, spent_before)
         return 0
 
@@ -426,7 +437,7 @@ def run(now: datetime | None = None) -> int:
     owner = settings.default_user_id or None
     since = now - timedelta(days=lookback)
     done_already = reviewed_ids(client, since - timedelta(days=1), owner)
-    candidates = [g for g in load_generations(client, since) if g.status in REVIEWED_STATUSES and g.id not in done_already and lyras_own(g, owner)]
+    candidates = [g for g in load_generations(client, since, owner) if g.status in REVIEWED_STATUSES and g.id not in done_already and lyras_own(g, owner)]
     todo = candidates[:max_per_run]
     if not todo:
         LOGGER.info("Nothing new to review.")
@@ -442,7 +453,7 @@ def run(now: datetime | None = None) -> int:
 
     run_id = repository.create_run(JOB_NAME, settings.default_timeframe)
     spent = 0.0
-    reviewed = failed = 0
+    reviewed = failed = hard_failed = 0  # hard: anything but an empty balance or a spent budget
     reason = "ok"
     by_agent: dict[str, int] = {}
     for generation in todo:
@@ -455,6 +466,8 @@ def run(now: datetime | None = None) -> int:
         spent += verdict.cost_usd
         if verdict.scores is None:
             failed += 1
+            if verdict.reason not in ("billing", "budget"):
+                hard_failed += 1
             record_run(client, run_id, "running", {"reviewed": reviewed, "failed": failed, "cost_usd": round(spent, 6), "model": model, "effort": effort, "ai": reviewed > 0}, delivered=False)
             if verdict.reason in STOP_REASONS:
                 reason = verdict.reason
@@ -495,6 +508,7 @@ def run(now: datetime | None = None) -> int:
             by_agent[generation.agent_name] = by_agent.get(generation.agent_name, 0) + 1
         else:
             failed += 1
+            hard_failed += 1
         # The spend is on the ledger as it is incurred, so a run killed half way still counts
         # against the month's budget (the pacing reads these rows).
         record_run(client, run_id, "running", {"reviewed": reviewed, "failed": failed, "cost_usd": round(spent, 6), "model": model, "effort": effort, "ai": reviewed > 0}, delivered=False)
@@ -522,9 +536,9 @@ def run(now: datetime | None = None) -> int:
         "content review: reviewed=%d failed=%d left=%d reason=%s model=%s effort=%s cost=$%.4f month=$%.2f of $%.0f",
         reviewed, failed, len(candidates) - reviewed, reason, model, effort, spent, spent_before + spent, budget,
     )
-    # An empty credit balance or a spent budget is a known, quiet state (the morning guide's loose
-    # ends say so); anything else that stopped a review should page.
-    return 1 if failed and reason not in ("billing", "budget") else 0
+    # An empty credit balance or a spent budget is a known, quiet state (the next morning guide's loose
+    # ends say so); any other failed review pages, whatever stopped the night afterwards.
+    return 1 if hard_failed else 0
 
 
 def main() -> None:

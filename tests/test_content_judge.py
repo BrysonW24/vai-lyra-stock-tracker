@@ -52,14 +52,30 @@ class _Query:
         self.ins[column] = set(values)
         return self
 
+    def is_(self, column, value):
+        assert value == "null"
+        self.ors = getattr(self, "ors", []) + [[(column, None)]]
+        return self
+
+    def or_(self, expression):
+        # PostgREST's "user_id.is.null,user_id.eq.<id>": a row passes when any condition holds.
+        options = []
+        for condition in expression.split(","):
+            column, op, value = condition.split(".", 2)
+            options.append((column, None if op == "is" else value))
+        self.ors = getattr(self, "ors", []) + [options]
+        return self
+
     def gte(self, column, value):
         self.eqs.setdefault("__gte__", []).append((column, value))
         return self
 
-    def order(self, *_a, **_k):
+    def order(self, column, desc=False):
+        self._order = (column, desc)
         return self
 
-    def limit(self, *_a, **_k):
+    def limit(self, count):
+        self._limit = count
         return self
 
     def insert(self, row, **_k):
@@ -89,7 +105,15 @@ class _Query:
                 continue
             if any(str(row.get(c) or "") < v for c, v in self.eqs.get("__gte__", [])):
                 continue
+            if any(not any(row.get(c) == v for c, v in options) for options in getattr(self, "ors", [])):
+                continue
             rows.append(row)
+        # Like PostgREST: filter, then order, then cut to the limit.
+        if getattr(self, "_order", None):
+            column, desc = self._order
+            rows.sort(key=lambda r: str(r.get(column) or ""), reverse=desc)
+        if getattr(self, "_limit", None) is not None:
+            rows = rows[: self._limit]
         return SimpleNamespace(data=rows)
 
 
@@ -320,4 +344,34 @@ def test_a_review_that_fails_for_any_other_reason_turns_the_run_red(harness):
     assert cj.run(now=NOW) == 1, "the pager should say a review failed"
     assert len(harness.prompts) == 2, "one bad answer does not stop the others"
     assert cj.DEFAULT_LOOKBACK_DAYS == 4
+
+
+def test_the_fact_sheet_in_the_evidence_is_capped():
+    read = cj.Reviewable("g1", "daily_read", "ok", "user-1", "v", NOW.isoformat(), {"input": "x" * 50_000}, {"text": "The read."})
+    prompt, _facts = cj.build_prompt(read, [], [])
+    assert len(prompt) < cj.MAX_FACTS_CHARS + 3_000, "no input can set the bill"
+
+
+def test_forged_rows_cannot_crowd_the_real_ones_out_of_the_row_limit(harness):
+    """The ownership filter runs in the query, before the 200-row limit: 250 forged rows dated ahead
+    of the real read cannot push it out of the window."""
+    forged = [_row(f"evil-{n}", "daily_read", days_ago=3.5 - n / 1000, user_id="someone-else") for n in range(250)]
+    harness.db["ai_runs"] = forged + [_row("g1", "daily_read", days_ago=0.5)]
+    assert cj.run(now=NOW) == 0
+    reviewed = [row["input_payload"]["generation_id"] for row in harness.db["ai_runs"] if row["agent_name"] == "content_judge"]
+    assert reviewed == ["g1"]
+
+
+def test_a_spent_budget_is_on_the_ledger_for_the_morning_guide(harness):
+    harness.db["ai_runs"] = [_row("g1", "daily_read")]
+    harness.db["stock_scanner_runs"] = [{"id": "x", "job_name": "content_judge", "status": "success", "started_at": NOW.isoformat(), "payload": {"cost_usd": 5.0}}]
+    assert cj.run(now=NOW) == 0 and harness.prompts == []
+    skipped = harness.db["stock_scanner_runs"][-1]
+    assert skipped["status"] == "skipped" and skipped["payload"]["reason"] == "budget" and skipped["payload"]["ai"] is False
+
+
+def test_an_earlier_failed_review_still_pages_when_billing_ends_the_night(harness):
+    harness.db["ai_runs"] = [_row("g1", "daily_read"), _row("g2", "daily_read")]
+    harness.verdicts = [cj.Verdict(None, reason="unparsable"), cj.Verdict(None, reason="billing")]
+    assert cj.run(now=NOW) == 1
 

@@ -10,7 +10,7 @@
 --
 -- One row per reader per generation (the unique index): a reader who changes their mind updates
 -- their row rather than adding a vote. reader_ref is 'sub:<subscriber id>', 'user:<profile id>' or
--- 'chat:<first 16 hex of sha256(chat id)>' - never a raw chat id.
+-- 'chat:<first 16 hex of an HMAC of the chat id under the link secret>' - never a raw chat id.
 --
 -- generation_id is deliberately not a foreign key: ai_runs rows are an append-only audit trail
 -- that cascades away with a deleted profile, and a reader's feedback must never be lost or block
@@ -50,3 +50,19 @@ create index if not exists idx_content_feedback_time
 
 alter table public.content_feedback enable row level security;
 -- No policies: service role only.
+
+-- ---------------------------------------------------------------------------
+-- The content record cannot be forged from a signed-in session (v0.137.0 review).
+-- Migration 019 lets an authenticated account insert ai_runs rows under its own id, with any
+-- agent_name - meant for the app's own audit trail, which in fact writes with the service role
+-- (src/lib/ai/audit.ts). The workers' messages and their nightly reviews are ai_runs rows too, and
+-- the review job already ignores rows owned by anyone but the operator; this closes the door as
+-- well: no session may insert a row under a worker's name.
+-- ---------------------------------------------------------------------------
+drop policy if exists ai_runs_owner_ins on public.ai_runs;
+create policy ai_runs_owner_ins on public.ai_runs
+  for insert to authenticated
+  with check (
+    auth.uid() = user_id
+    and agent_name not in ('daily_read', 'ai_briefing', 'morning_guide', 'content_judge')
+  );

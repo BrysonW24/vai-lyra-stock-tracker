@@ -6,16 +6,20 @@ name: Morning Guide
 # calendar and Yahoo, no model call. The founder asked for it on 2026-10-13 ("something to this
 # effect in the morning ... copy this exact structure").
 #
-# Cron is UTC and does not move for daylight saving, so two firings cover both halves of the year:
-# 21:30 UTC is 08:30 Sydney in AEDT (October to April) and 07:30 in AEST; 22:30 UTC is 09:30 in AEDT
-# and 08:30 in AEST. The worker sends only at or after MORNING_SEND_AT in SUMMARY_TIMEZONE, once per
-# Sydney morning, and only for a US session no guide has covered yet - so exactly one guide goes out
-# whichever firing is first past the hour. Monday to Friday UTC is Tuesday to Saturday in Sydney:
-# the mornings after a US session.
+# Cron is UTC and does not move for daylight saving. Three firings, off the congested :30 minute
+# GitHub drops most often (see hourly-stock-scanner.yml): 21:41 UTC is 08:41 Sydney in AEDT (October
+# to April) and 07:41 in AEST; 22:41 UTC is 09:41 AEDT / 08:41 AEST; 23:13 UTC is 10:13 AEDT / 09:13
+# AEST. The worker sends only at or after MORNING_SEND_AT in SUMMARY_TIMEZONE, once per Sydney
+# morning, and only for a US session no guide has covered yet - so exactly one guide goes out. It
+# also waits for the scanner to score the session's closing bar (about 50 minutes after the US
+# close, which is 8:00am AEDT from November to March), unless the firing is 90 minutes past the send
+# time, when it sends what it has and says so. A later firing retries a guide whose send failed.
+# Monday to Friday UTC is Tuesday to Saturday in Sydney: the mornings after a US session.
 on:
   schedule:
-    - cron: '30 21 * * 1-5'
-    - cron: '30 22 * * 1-5'
+    - cron: '41 21 * * 1-5'
+    - cron: '41 22 * * 1-5'
+    - cron: '13 23 * * 1-5'
   workflow_dispatch:
     inputs:
       force:

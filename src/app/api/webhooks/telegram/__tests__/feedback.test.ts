@@ -133,6 +133,15 @@ describe('telegram webhook feedback', () => {
     expect(hoisted.sent.at(-1)?.[1]).toMatch(/reply STOP on its own\.$/);
   });
 
+  it('does not mistake a stop-loss for an opt-out, and hints even under a message without buttons', async () => {
+    await post({
+      message: { message_id: 93, text: 'move my stop on AMD', chat: { id: 777 }, from: { id: 777 }, reply_to_message: { message_id: 55, from: { id: 1, is_bot: true }, reply_markup: voteKeyboard(ID) } },
+    });
+    expect(hoisted.sent.at(-1)?.[1]).not.toMatch(/reply STOP/);
+    await post({ message: { message_id: 94, text: 'please stop sending these', chat: { id: 777 }, from: { id: 777 }, reply_to_message: { message_id: 54, from: { id: 1, is_bot: true } } } });
+    expect(hoisted.sent.at(-1)?.[1]).toMatch(/^Thanks\. To rate a message from Lyra.*reply STOP on its own\.$/);
+  });
+
   it('never swallows a command: STOP sent as a reply still unsubscribes', async () => {
     hoisted.answer = () => ({ data: [{ id: 'sub-1' }] });
     await post({

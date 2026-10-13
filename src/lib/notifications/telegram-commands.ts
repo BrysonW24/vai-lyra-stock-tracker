@@ -36,8 +36,9 @@ export type ParsedMessage =
 export function parseMessage(text: string): ParsedMessage {
   const trimmed = text.trim();
   if (!trimmed.startsWith('/')) {
-    // "Stop." or "STOP!" is still the bare word; a sentence that merely contains it is not.
-    const bare = trimmed.replace(/[\s.!?]+$/u, '').toUpperCase();
+    // "Stop." or "STOP!" is still the bare word; "Stop?" is a question (the morning guide talks about
+    // the stops a reader set) and a sentence that merely contains the word is not one either.
+    const bare = trimmed.replace(/[\s.!]+$/u, '').toUpperCase();
     return { kind: 'command', command: STOP_WORDS.has(bare) ? 'stop' : 'unknown', args: '' };
   }
   const [head = '', ...rest] = trimmed.slice(1).split(/\s+/);

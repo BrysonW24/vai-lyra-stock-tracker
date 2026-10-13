@@ -72,3 +72,30 @@ def test_the_real_librarys_sourced_facts_are_well_formed():
             assert row.get("source") and str(row.get("url", "")).startswith("https://"), row["id"]
             assert len(row["body"]) <= ff.MAX_FACT_CHARS, row["id"]
         assert "—" not in row["body"] and "–" not in row["body"], f"{row['id']}: plain hyphens only"
+
+
+def test_a_listed_item_led_by_its_takeaway_still_shows_exchange_and_ticker_in_every_copy():
+    items = bg.parse_items([_item(lead="Constellation locks in Google as a nuclear buyer")])
+    research = _research(items)
+    operator = ab.compose_messages(items, day_label="Wed 7 Oct", desk_notes={}, research=research, removed=0, removed_categories=[], month_to_date=1.0, budget=40)[0]
+    assert "<b>Constellation locks in Google as a nuclear buyer.</b> <i>(Nasdaq: CEG)</i>" in operator
+    subscriber = bs.Subscriber(id="sub-1", token="t", channel="telegram", email="", chat_id="1", topics=(), holdings=())
+    personal = bs.personalise(items, subscriber)
+    assert "<i>(Nasdaq: CEG)</i>" in bs.compose_subscriber_messages(personal, day_label="Wed 7 Oct", desk_notes={})[0]
+    _subject, html_body, text = bs.compose_subscriber_email(personal, day_label="Wed 7 Oct", desk_notes={}, unsubscribe_url="https://lyra.example/u")
+    assert "(Nasdaq: CEG)" in html_body and "Constellation locks in Google as a nuclear buyer. (Nasdaq: CEG)" in text
+    (private,) = bg.parse_items([_item(lead="OpenAI raises again", listed=False, ticker="", exchange="")])
+    assert "<i>(private)</i>" in ab.item_html(private) and "Nasdaq" not in ab.item_html(private)
+
+
+def test_the_rotation_counts_briefing_days_so_no_fact_repeats_before_all_are_used():
+    facts = [ff.FunFact(f"fact-{n:03d}", f"Fact {n}.", "Source", "https://example.org") for n in range(48)]
+    day, sent = date(2026, 10, 13), []
+    while len(sent) < 48:
+        if day.weekday() in ff.BRIEFING_WEEKDAYS:
+            sent.append(ff.fact_for(day, facts).id)
+        day = day + __import__("datetime").timedelta(days=1)
+    assert len(set(sent)) == 48, "every fact once before any repeats"
+    saturday, tuesday = date(2026, 10, 17), date(2026, 10, 20)
+    assert ff.briefing_number(tuesday) == ff.briefing_number(saturday) + 1, "Sunday and Monday use no fact"
+

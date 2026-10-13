@@ -513,6 +513,14 @@ class _RecordingQuery:
     def lte(self, column, _value):
         return self._col(column)
 
+    def is_(self, column, _value):
+        return self._col(column)
+
+    def or_(self, expression, *_a, **_k):
+        for condition in expression.split(","):
+            self._col(condition.split(".", 1)[0])
+        return self
+
     def order(self, column, *, desc=False, foreign_table=None):
         return self._col(column, foreign_table)
 
@@ -572,7 +580,7 @@ def test_every_column_the_code_names_is_in_the_manifest():
     import workers.stock_scanner.generation_record as gr
 
     gr.record_generation(client, gr.Generation(agent_name="daily_read", prompt_version="v", input_text="facts", text_parts=["text"], confidence=0.5))
-    cj.load_generations(client, EVENING)
+    cj.load_generations(client, EVENING, "user-1")
     cj.reviewed_ids(client, EVENING, "user-1")
     cj.load_judge_runs(client, EVENING)
     cj.load_book(client, "user-1")

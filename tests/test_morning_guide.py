@@ -10,7 +10,7 @@ import pytest
 
 import workers.stock_scanner.daily_read as dr
 import workers.stock_scanner.morning_guide as mg
-from tests.test_daily_read import UTC, _FakeClient, _FakeQuery, _settings, _universe
+from tests.test_daily_read import HOURS, UTC, _FakeClient, _FakeQuery, _row, _settings, _universe
 from workers.stock_scanner.telegram import TelegramResult
 
 SYDNEY = ZoneInfo("Australia/Sydney")
@@ -35,7 +35,7 @@ def _inputs(**overrides):
             "AMD": mg.Quote("AMD", 97.0, -3.0, date(2026, 10, 6), True),
             "NVDA": mg.Quote("NVDA", 104.0, 4.0, date(2026, 10, 6), False),
             "QQQ": mg.Quote("QQQ", 745.98, -0.7, date(2026, 10, 6), True),
-            "META": mg.Quote("META", 712.5, 1.1, date(2026, 10, 6), True),
+            "META": mg.Quote("META", 690.0, -1.1, date(2026, 10, 6), True),
         },
         earnings={"NVDA": date(2026, 10, 12), "AMD": date(2026, 11, 3)},
         events=[mg.CalendarEvent(date(2026, 10, 7), "RBA Board Minutes (11:30am Sydney)"), mg.CalendarEvent(date(2026, 10, 9), "US CPI")],
@@ -62,9 +62,9 @@ def test_the_guide_keeps_the_founders_layout_section_by_section():
 
 def test_priorities_rank_what_needs_attention_and_use_words_not_scores():
     lines = mg.priorities(_inputs())
-    assert lines[0].startswith("NVDA reports earnings on Mon 12 Oct, in 5 days."), lines
+    assert lines[0].startswith("NVDA is expected to report earnings on Mon 12 Oct, in 5 days."), lines
     assert "NVDA closed at $104.00, 2.5% above the $101.50 stop you set." in lines
-    assert "META closed at $712.50, through the $700.00 level on your watchlist." in lines
+    assert "META closed at $690.00, at or under the $700.00 buy level on your watchlist." in lines
     amd = next(line for line in lines if line.startswith("AMD"))
     assert amd == "AMD fell 3.0% on the session, and its strong setup failed during the session."
     nvda_move = next(line for line in lines if line.startswith("NVDA rose"))
@@ -91,11 +91,11 @@ def test_a_stop_breached_or_a_take_profit_reached_comes_first():
 def test_today_lists_the_calendar_the_next_us_open_and_a_holiday():
     lines = mg.market_today(_inputs())
     assert lines[0] == "RBA Board Minutes (11:30am Sydney)."
-    assert lines[-1] == "The next US session (Wed 7 Oct) opens at 12:30am Sydney time, 9:30am in New York."
+    assert lines[-1] == "The next US session opens at 12:30am Thu 8 Oct Sydney time (9:30am Wed 7 Oct in New York)."
     thanksgiving_eve = datetime(2026, 11, 26, 8, 35, tzinfo=SYDNEY).astimezone(UTC)  # Wed 25 Nov, 4:35pm New York
     lines = mg.market_today(_inputs(today=date(2026, 11, 26), now=thanksgiving_eve, events=[], earnings={}))
     assert lines[0] == "US markets are closed on Thu 26 Nov for Thanksgiving."
-    assert lines[1] == "The next US session (Fri 27 Nov) opens at 1:30am Sydney time, 9:30am in New York. It closes early, at 1:00pm in New York (5:00am Sydney time)."
+    assert lines[1] == "The next US session opens at 1:30am Sat 28 Nov Sydney time (9:30am Fri 27 Nov in New York). It closes early, at 1:00pm in New York (5:00am Sat 28 Nov Sydney time)."
 
 
 def test_loose_ends_name_unscanned_holdings_missing_quotes_and_a_night_without_ai():
@@ -210,3 +210,52 @@ def test_run_is_off_without_the_flag_and_a_rehearsal_never_sends(harness, monkey
     ledger = harness.db["stock_scanner_runs"][0]
     assert ledger["payload"]["rehearsal"] is True and ledger["payload"]["date"] is None
     assert harness.db["ai_runs"][0]["output_payload"]["mode"] == "rehearsal"
+
+
+def test_a_watchlist_buy_level_is_reached_from_above_whatever_the_reference():
+    above = mg.priorities(_inputs(holdings=[], earnings={}, watchlist=[mg.WatchItem("META", target=700.0, reference=None)], quotes={"META": mg.Quote("META", 712.5, 1.0, date(2026, 10, 6), True)}))
+    assert above == ["Nothing in your book needs attention this morning."], "above the buy level is not reached"
+    under = mg.priorities(_inputs(holdings=[], earnings={}, watchlist=[mg.WatchItem("META", target=700.0, reference=None)], quotes={"META": mg.Quote("META", 690.0, -1.0, date(2026, 10, 6), True)}))
+    assert under == ["META closed at $690.00, at or under the $700.00 buy level on your watchlist."]
+
+
+def test_the_session_move_comes_from_the_closing_quote_when_there_is_one():
+    lines = mg.priorities(_inputs(holdings=[mg.Holding("AMD")], earnings={}, watchlist=[], quotes={"AMD": mg.Quote("AMD", 97.9, -2.1, date(2026, 10, 6), True)}))
+    assert not any(line.startswith("AMD fell 3.0%") for line in lines), "the scanner's hourly figure is not the close"
+    assert any(line.startswith("AMD") and "strong setup failed" in line for line in lines)
+
+
+def test_half_days_expect_four_bars_and_a_lagging_holding_is_named_as_lagging():
+    half = dr.build_facts([_row("NVDA", "semiconductor", [100, 101, 102, 103], [50, 50, 50, 50], ["no_signal"] * 4, day="2026-11-27", hours=[9, 10, 11, 12])], _settings())
+    assert mg.session_complete(half) and mg.expected_bars(half.session) == 4
+    assert not any("hourly bars" in line for line in mg.loose_ends(_inputs(facts=half, holdings=[mg.Holding("NVDA")], ai_last_night={})))
+    lines = mg.loose_ends(_inputs(holdings=[mg.Holding("GAPPY"), mg.Holding("QQQ")], universe=frozenset({"NVDA", "AMD", "SNOW", "GAPPY", "OLD"}), ai_last_night={}))
+    assert "QQQ is in your book but not in Lyra's scan, so there is a quote below and no setup reading." in lines
+    assert "GAPPY is missing the session's final bar in Lyra's data, so the setup reading is not current." in lines
+
+
+def test_a_big_book_is_named_as_cut_in_the_coverage_line():
+    line = mg.coverage_line(_inputs(total_holdings=52))
+    assert "Your book has 52 holdings; the first 3 alphabetically were checked." in line
+
+
+def test_the_judges_missed_night_joins_the_loose_ends():
+    since = datetime(2026, 10, 6, 12, 0, tzinfo=SYDNEY)
+    runs = [{"job_name": "content_judge", "started_at": "2026-10-06T11:40:00+00:00", "payload": {"ai": False, "reason": "budget"}}]
+    assert mg.ai_last_night(runs, since) == {"content_judge": "budget"}
+    assert "Last night the nightly content review did not run: this month's AI budget is used up." in mg.loose_ends(_inputs(ai_last_night={"content_judge": "budget"}))
+
+
+def test_run_waits_for_the_closing_bar_and_the_last_firing_sends_anyway(harness):
+    """November to March the 08:41 AEDT firing comes before the scanner has scored the closing bar."""
+    harness.db["stock_tickers"] = [
+        _row("NVDA", "semiconductor", [102, 102.5, 103, 103, 103.5, 104], [55, 58, 60, 65, 70, 72], ["no_signal"] * 6, day="2026-11-02", hours=HOURS[:6]),
+        _row("AMD", "semiconductor", [99, 98.5, 98, 97.5, 97, 97], [60, 60, 60, 60, 60, 60], ["no_signal"] * 6, day="2026-11-02", hours=HOURS[:6]),
+    ]
+    first = datetime(2026, 11, 3, 8, 41, tzinfo=SYDNEY).astimezone(UTC)
+    assert mg.run(now=first, quote_fn=harness.quote, earnings_fn=harness.earnings) == 0
+    assert harness.sent == [] and harness.db["stock_scanner_runs"] == [], "held: nothing sent, nothing claimed"
+    last = datetime(2026, 11, 3, 10, 13, tzinfo=SYDNEY).astimezone(UTC)
+    assert mg.run(now=last, quote_fn=harness.quote, earnings_fn=harness.earnings) == 0
+    assert len(harness.sent) == 1 and "Only 6 of the session's 7 hourly bars are in Lyra's data" in harness.sent[0]["message"]
+

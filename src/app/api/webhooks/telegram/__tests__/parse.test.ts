@@ -9,10 +9,11 @@ describe('telegram webhook parsing', () => {
   });
 
   it('treats STOP in every spelling as the stop command', () => {
-    for (const text of ['STOP', 'stop', ' Stop ', 'Stop.', 'STOP!', 'stop?!', 'UNSUBSCRIBE', '/stop', '/unsubscribe', '/stop@viva_lyra_trading_bot']) {
+    for (const text of ['STOP', 'stop', ' Stop ', 'Stop.', 'STOP!', 'Stop!!', 'UNSUBSCRIBE', '/stop', '/unsubscribe', '/stop@viva_lyra_trading_bot']) {
       expect(parseMessage(text)).toEqual({ kind: 'command', command: 'stop', args: '' });
     }
     expect(parseMessage('please stop')).toEqual({ kind: 'command', command: 'unknown', args: '' });
+    expect(parseMessage('Stop?')).toEqual({ kind: 'command', command: 'unknown', args: '' }); // a question, not an opt-out
   });
 
   it('keeps the closed command enum', () => {

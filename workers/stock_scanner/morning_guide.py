@@ -18,9 +18,12 @@ the scanner's reading of the last US session, Lyra's macro calendar, earnings da
 quotes from Yahoo, and whether last night's AI jobs ran. Every line is built by code from those
 figures - no model call, so it costs nothing and still goes out on a night the AI cannot run.
 
-Once per Sydney morning, at or after MORNING_SEND_AT (08:30 by default - the US close is 7:00am in
-AEDT, 6:00am in AEST, and the ASX opens at 10:00), and only for a US session no guide has covered
-yet: Saturday's covers Friday, and Monday morning has nothing new. Delivered to the operator's chat
+Once per Sydney morning, at or after MORNING_SEND_AT (08:30 by default; the ASX opens at 10:00), and
+only for a US session no guide has covered yet: Saturday's covers Friday, and Monday morning has
+nothing new. The US close lands at 6:00am (AEST) to 8:00am (AEDT with New York on EST, November to
+March) Sydney time, and the scanner scores the closing bar about 50 minutes after it - so a firing
+that finds the session's last bar not yet scored waits for the next one; a firing 90 minutes or
+more past the send time sends whatever it has and says so (morning-guide.yml fires three times). Delivered to the operator's chat
 through the app's bot with the feedback buttons; on the record like every message
 (generation_record.py), owned by the operator because it carries their book.
 
@@ -31,6 +34,7 @@ Logs carry counts only - never a symbol, a price or the text - because the Actio
 from __future__ import annotations
 
 import html
+import logging
 import os
 import sys
 from dataclasses import dataclass, field, replace
@@ -76,12 +80,20 @@ from workers.stock_scanner.supabase_repo import SupabaseRepository
 from workers.stock_scanner.telegram import send_telegram_message
 
 LOGGER = get_logger("stock_scanner.morning_guide")
+# yfinance logs a failed lookup at ERROR with Yahoo's response body, which names the symbol - and
+# with no handler of its own the record reaches stderr, the public Actions log. The guide reports a
+# missing earnings date by count, never by symbol, so the library is kept quiet.
+_YF_LOGGER = logging.getLogger("yfinance")
+_YF_LOGGER.setLevel(logging.CRITICAL)
+_YF_LOGGER.propagate = False
+_YF_LOGGER.addHandler(logging.NullHandler())
 
 JOB_NAME = "morning_guide"
 DEFAULT_SEND_AT = "08:30"
 DEFAULT_QUIET_HOURS = "22-7"
 MAX_PRIORITIES = 5
-MAX_HOLDINGS = 20
+MAX_HOLDINGS = 40  # checked and quoted; a bigger book is named as cut, never silently
+LATE_AFTER = timedelta(minutes=90)  # past the send time by this much, a guide goes out even on an unfinished session
 EARNINGS_SOON_DAYS = 7
 BIG_MOVE_PCT = 3.0
 NEAR_LEVEL_PCT = 3.0  # a stop or target this close (on the reader's own level) is a priority
@@ -161,6 +173,8 @@ class GuideInputs:
     events: list[CalendarEvent]
     ai_last_night: dict[str, str]  # job -> reason, for the evening jobs that ran without the model
     reader_zone: ZoneInfo = field(default_factory=lambda: ZoneInfo(DEFAULT_TIMEZONE))
+    total_holdings: int = 0  # the whole book; holdings is the part checked (at most MAX_HOLDINGS)
+    universe: frozenset[str] = frozenset()  # every symbol the scanner scores, on this session or not
     now: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -228,6 +242,17 @@ def _distance_pct(price: float, level: float) -> float:
     return abs(price - level) / level * 100
 
 
+def expected_bars(session: date) -> int:
+    """Hourly bars in a full session: seven, or four on an NYSE 1:00pm early close."""
+    return 4 if session in NYSE_EARLY_CLOSES else 7
+
+
+def session_complete(facts: SessionFacts) -> bool:
+    """The scanner has scored the session's last bar (15:30 New York, 12:30 on an early close)."""
+    last = clock_time(12, 30) if facts.session in NYSE_EARLY_CLOSES else clock_time(15, 30)
+    return facts.close_bar.astimezone(NEW_YORK).time() >= last
+
+
 def priorities(inputs: GuideInputs) -> list[str]:
     """What in the reader's book needs attention today, most pressing first, at most five."""
     ranked: list[tuple[int, float, str]] = []
@@ -253,7 +278,7 @@ def priorities(inputs: GuideInputs) -> list[str]:
         if when is not None and (when - inputs.today).days <= EARNINGS_SOON_DAYS:
             days = (when - inputs.today).days
             away = "today (US date)" if days == 0 else ("tomorrow (US date)" if days == 1 else f"in {days} days")
-            ranked.append((0, 0.0, f"{symbol} reports earnings on {short_day(when)}, {away}. Results can move a share sharply; Lyra's setup reading does not include them."))
+            ranked.append((0, 0.0, f"{symbol} is expected to report earnings on {short_day(when)}, {away}. Results can move a share sharply; Lyra's setup reading does not include them."))
         if price is not None and holding.stop:
             if price <= holding.stop:
                 ranked.append((0, 99.0, f"{symbol} closed at {money(price)}, at or below the {money(holding.stop)} stop you set."))
@@ -262,7 +287,12 @@ def priorities(inputs: GuideInputs) -> list[str]:
         if price is not None and holding.target and price >= holding.target:
             ranked.append((1, 0.0, f"{symbol} closed at {money(price)}, at or above the {money(holding.target)} take-profit level you set."))
         ticker = by_symbol.get(symbol)
-        change = ticker.day_pct if ticker and ticker.day_pct is not None else (quote.change_pct if quote else None)
+        # The session's move from the closing quote when there is one - the scanner's hourly bars can
+        # be a bar short of the close - and from the scanner's reading otherwise.
+        if quote is not None and quote.final and quote.change_pct is not None:
+            change = quote.change_pct
+        else:
+            change = ticker.day_pct if ticker and ticker.day_pct is not None else (quote.change_pct if quote else None)
         moved = change is not None and abs(change) >= BIG_MOVE_PCT
         label = transitions.get(symbol)
         if not (label or moved):
@@ -294,10 +324,10 @@ def priorities(inputs: GuideInputs) -> list[str]:
         price = quote.price if quote else None
         if price is None or not item.target:
             continue
-        waiting_for_dip = item.reference is not None and item.reference > item.target
-        reached = price <= item.target if waiting_for_dip else price >= item.target
-        if reached:
-            ranked.append((1, 0.0, f"{item.symbol} closed at {money(price)}, through the {money(item.target)} level on your watchlist."))
+        # A watchlist target is Lyra's "Buy under" level (watchlist_engine: price at or under it), so it
+        # is reached from above, whatever price the name was added at.
+        if price <= item.target:
+            ranked.append((1, 0.0, f"{item.symbol} closed at {money(price)}, at or under the {money(item.target)} buy level on your watchlist."))
 
     ranked.sort(key=lambda entry: (entry[0], -entry[1]))
     seen: set[str] = set()
@@ -322,10 +352,11 @@ def market_today(inputs: GuideInputs) -> list[str]:
         if when == session:
             lines.append(f"{symbol} reports earnings around the {short_day(session)} US session.")
     opens = datetime.combine(session, clock_time(9, 30), tzinfo=NEW_YORK).astimezone(inputs.reader_zone)
-    line = f"The next US session ({short_day(session)}) opens at {fmt_clock(opens)} {place} time, 9:30am in New York."
+    # Both days, because they differ: Monday's 9:30am in New York is Tuesday's small hours in Sydney.
+    line = f"The next US session opens at {fmt_clock(opens)} {short_day(opens.date())} {place} time (9:30am {short_day(session)} in New York)."
     if session in NYSE_EARLY_CLOSES:
         closes = datetime.combine(session, clock_time(13, 0), tzinfo=NEW_YORK).astimezone(inputs.reader_zone)
-        line += f" It closes early, at 1:00pm in New York ({fmt_clock(closes)} {place} time)."
+        line += f" It closes early, at 1:00pm in New York ({fmt_clock(closes)} {short_day(closes.date())} {place} time)."
     lines.append(line)
     return lines
 
@@ -349,23 +380,28 @@ def _next_us_session(now: datetime) -> date:
 
 def loose_ends(inputs: GuideInputs) -> list[str]:
     lines = []
-    scanned = inputs.facts.symbols if inputs.facts else set()
-    unscanned = [h.symbol for h in inputs.holdings if h.symbol not in scanned]
+    on_session = inputs.facts.symbols if inputs.facts else set()
+    unscanned = [h.symbol for h in inputs.holdings if h.symbol not in inputs.universe and h.symbol not in on_session]
+    lagging = [h.symbol for h in inputs.holdings if h.symbol in inputs.universe and h.symbol not in on_session]
     if unscanned:
         names = _join(unscanned)
         verb = "is" if len(unscanned) == 1 else "are"
         lines.append(f"{names} {verb} in your book but not in Lyra's scan, so there is a quote below and no setup reading.")
+    if lagging:
+        verb = "is" if len(lagging) == 1 else "are"
+        lines.append(f"{_join(lagging)} {verb} missing the session's final bar in Lyra's data, so the setup reading is not current.")
     missing = [h.symbol for h in inputs.holdings if inputs.quotes.get(h.symbol) is None or inputs.quotes[h.symbol].price is None]
     if missing:
         lines.append(f"No quote came back for {_join(missing)} this morning.")
     if inputs.facts is not None:
-        if inputs.facts.bars < 7:
-            lines.append(f"Only {inputs.facts.bars} of the session's 7 hourly bars are in Lyra's data, so the setup readings are not final.")
+        expected = expected_bars(inputs.facts.session)
+        if inputs.facts.bars < expected:
+            lines.append(f"Only {inputs.facts.bars} of the session's {expected} hourly bars are in Lyra's data, so the setup readings are not final.")
         elif coverage(inputs.facts) < 0.95:
             lines.append(f"{inputs.facts.scored - len(inputs.facts.tickers)} scanned names are missing the session's final bar.")
     reasons = {job: AI_REASONS.get(reason, f"it stopped ({reason})") for job, reason in inputs.ai_last_night.items()}
     if reasons:
-        names = {"daily_read": "the daily read's prose", "ai_briefing": "the AI briefing"}
+        names = {"daily_read": "the daily read's prose", "ai_briefing": "the AI briefing", "content_judge": "the nightly content review"}
         if len(set(reasons.values())) == 1:
             jobs = _join([names.get(job, job) for job in sorted(reasons)])
             lines.append(f"Last night {jobs} did not run: {next(iter(reasons.values()))}.")
@@ -379,12 +415,13 @@ def coverage_line(inputs: GuideInputs) -> str:
     held = len(inputs.holdings)
     if not held:
         return "No holdings in Lyra yet, so there is nothing of yours to guide - add positions under Portfolio."
+    cut = f" Your book has {inputs.total_holdings} holdings; the first {held} alphabetically were checked." if inputs.total_holdings > held else ""
     final = sum(1 for h in inputs.holdings if (q := inputs.quotes.get(h.symbol)) and q.price is not None and q.final)
     dated = sum(1 for h in inputs.holdings if h.symbol in inputs.earnings)
     week = sum(1 for e in inputs.events if 0 <= (e.day - inputs.today).days < 7)
     return (
         f"Closing quotes for {final} of {held} holdings; earnings dates from Yahoo for {dated} of {held}. "
-        f"Lyra's calendar lists {week} event{'s' if week != 1 else ''} this week. Lyra cannot see your inbox or diary."
+        f"Lyra's calendar lists {week} event{'s' if week != 1 else ''} this week.{cut} Lyra cannot see your inbox or diary."
     )
 
 
@@ -471,7 +508,7 @@ def load_holdings(client: Any, user_id: str) -> list[Holding]:
             stop=max(filter(None, (current.stop, stop)), default=None),
             target=min(filter(None, (current.target, target)), default=None),
         )
-    return sorted(merged.values(), key=lambda h: h.symbol)[:MAX_HOLDINGS]
+    return sorted(merged.values(), key=lambda h: h.symbol)
 
 
 def load_watchlist(client: Any, user_id: str) -> list[WatchItem]:
@@ -501,7 +538,7 @@ def load_events(client: Any, start: date, days: int = 7) -> list[CalendarEvent]:
 
 def load_guide_runs(client: Any, since: datetime) -> list[dict[str, Any]]:
     return list(
-        client.table("stock_scanner_runs").select("job_name,status,started_at,payload").in_("job_name", [JOB_NAME, "daily_read", "ai_briefing"]).gte("started_at", since.isoformat()).order("started_at", desc=True).limit(60).execute().data
+        client.table("stock_scanner_runs").select("job_name,status,started_at,payload").in_("job_name", [JOB_NAME, "daily_read", "ai_briefing", "content_judge"]).gte("started_at", since.isoformat()).order("started_at", desc=True).limit(60).execute().data
         or []
     )
 
@@ -514,7 +551,7 @@ def ai_last_night(runs: list[dict[str, Any]], since: datetime) -> dict[str, str]
         when = _parse_time(row.get("started_at"))
         payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
         # A rehearsal is not what readers got: it never stands in for the evening's real run.
-        if job not in ("daily_read", "ai_briefing") or when is None or when < since or payload.get("rehearsal"):
+        if job not in ("daily_read", "ai_briefing", "content_judge") or when is None or when < since or payload.get("rehearsal"):
             continue
         if job not in latest or when > (_parse_time(latest[job].get("started_at")) or when):
             latest[job] = row
@@ -550,7 +587,8 @@ def run(now: datetime | None = None, *, quote_fn: Callable[[str, datetime], Quot
     reader_zone = ZoneInfo(os.getenv("SUMMARY_TIMEZONE", "").strip() or DEFAULT_TIMEZONE)
     local_now = now.astimezone(reader_zone)
     today = local_now.date()
-    if not force and not due(local_now, parse_clock(os.getenv("MORNING_SEND_AT", ""), parse_clock(DEFAULT_SEND_AT, clock_time(8, 30)))):
+    send_at = parse_clock(os.getenv("MORNING_SEND_AT", ""), parse_clock(DEFAULT_SEND_AT, clock_time(8, 30)))
+    if not force and not due(local_now, send_at):
         LOGGER.info("Not yet the reader's morning send time (%s local) - nothing sent.", local_now.strftime("%H:%M"))
         return 0
 
@@ -561,10 +599,18 @@ def run(now: datetime | None = None, *, quote_fn: Callable[[str, datetime], Quot
         return 0
     # The session the guide will describe is the one the scanner's rows say, not a separate probe:
     # the dedupe and the ledger then name the same session the message does.
-    facts = build_facts(load_universe(client, settings.default_timeframe), settings)
+    universe_rows = load_universe(client, settings.default_timeframe)
+    facts = build_facts(universe_rows, settings)
     session = facts.session if facts is not None else newest_session(client, settings.default_timeframe)
     if not force and session is not None and any(payload.get("session") == session.isoformat() and payload.get("date") for payload in guides):
         LOGGER.info("No US session since the last guide - nothing sent.")
+        return 0
+    # The closing bar is scored about 50 minutes after the close; November to March that is after
+    # 08:30 Sydney. A firing that finds it missing waits for the next one, and the last firing of
+    # the morning sends anyway (the loose ends say the readings are not final).
+    late = local_now >= datetime.combine(today, send_at, tzinfo=reader_zone) + LATE_AFTER
+    if not force and facts is not None and not session_complete(facts) and not late:
+        LOGGER.info("The session's closing bar is not scored yet - waiting for the next firing.")
         return 0
 
     user = settings.default_user_id
@@ -579,6 +625,8 @@ def run(now: datetime | None = None, *, quote_fn: Callable[[str, datetime], Quot
         except Exception as exc:  # noqa: BLE001 - the book lines sharpen the guide; it still goes out without them
             LOGGER.warning("could not read the operator's overlays: %s", type(exc).__name__)
 
+    total_holdings = len(holdings)
+    holdings = holdings[:MAX_HOLDINGS]
     symbols = sorted({h.symbol for h in holdings} | {w.symbol for w in watchlist if w.target})
     quotes = {symbol: quote for symbol in symbols if (quote := quote_fn(symbol, now)) is not None}
     earnings = {h.symbol: when for h in holdings if (when := earnings_fn(h.symbol, today)) is not None}
@@ -600,6 +648,8 @@ def run(now: datetime | None = None, *, quote_fn: Callable[[str, datetime], Quot
         ai_last_night=ai_last_night(runs, evening),
         reader_zone=reader_zone,
         now=now,
+        total_holdings=total_holdings,
+        universe=frozenset(str(row.get("symbol") or "").upper() for row in universe_rows if row.get("symbol")),
     )
     message = compose_guide(inputs)
 
@@ -608,7 +658,7 @@ def run(now: datetime | None = None, *, quote_fn: Callable[[str, datetime], Quot
         "date": None,  # set once delivered: an undelivered guide is retried by the later firing
         "date_attempted": today.isoformat(),
         "session": session.isoformat() if session else None,
-        "holdings": len(holdings),
+        "holdings": total_holdings,
         "quotes": len(quotes),
         "closing_quotes": sum(1 for q in quotes.values() if q.final),
         "earnings_dates": len(earnings),

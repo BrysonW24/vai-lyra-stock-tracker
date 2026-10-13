@@ -67,14 +67,24 @@ def as_sentence(text: str) -> str:
     return text if not text or text[-1] in ".!?" else text + "."
 
 
+def listing(item: BriefingItem) -> str:
+    """'Nasdaq: CEG' for a listed company, '' otherwise. Shown beside a bite's takeaway, because the
+    takeaway replaces the headline that used to carry it - a reader must always see what is listed
+    where (v0.138.0 review)."""
+    if not item.listed or not item.ticker:
+        return ""
+    return f"{item.exchange}: {item.ticker}" if item.exchange else item.ticker
+
+
 def item_html(item: BriefingItem) -> str:
     """One item as a bite (v0.138.0, the founder's "little bites"): the bold takeaway, then what
     happened, why it matters, the risk and what was not disclosed as one paragraph, ending on its
     sources. An item with no lead (stored before v0.138.0) leads with its headline."""
     emoji, _label = THEME_STYLE.get(item.theme, THEME_STYLE["other"])
-    tags = [tag for tag, on in (("private", not item.listed), ("catch-up", item.catch_up)) if on]
+    # With a lead, the headline (which names the listing) is not printed, so the listing is a tag.
+    tags = [tag for tag, on in ((listing(item), bool(item.lead) and bool(listing(item))), ("private", not item.listed), ("catch-up", item.catch_up)) if on]
     lead = as_sentence(item.lead) if item.lead else item.headline
-    head = f"{emoji} <b>{h(lead)}</b>" + (f" <i>({', '.join(tags)})</i>" if tags else "")
+    head = f"{emoji} <b>{h(lead)}</b>" + (f" <i>({h(', '.join(tags))})</i>" if tags else "")
     body = " ".join(h(as_sentence(part)) for part in (item.what_happened, item.why_it_matters, item.risks) if part)
     if item.not_disclosed:
         body += f" <i>Not disclosed: {h(as_sentence(item.not_disclosed))}</i>"
