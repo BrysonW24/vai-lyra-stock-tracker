@@ -6,10 +6,10 @@
 # without `actions: write`, and the failure was hidden behind `|| true`. So the calling job MUST
 # grant `permissions: actions: write`, and a refusal is now a visible warning.
 #
-# It re-enables EVERY scheduled workflow, not just the caller, so any one surviving cron revives
-# the rest (the monthly model-eval job has no hope of keeping itself alive on its own).
+# It checks every scheduled workflow, not just the caller, so any surviving cron can revive one
+# disabled for inactivity. Manual pauses and all other disabled states must stay disabled.
 name: Keep scheduled workflows alive
-description: Reset the 60-day cron auto-disable clock for every scheduled workflow in the repo.
+description: Keep scheduled workflows alive while preserving intentional pauses.
 inputs:
   token:
     description: A token with actions:write (pass github.token).
@@ -24,6 +24,21 @@ runs:
       run: |
         for file in $(grep -lE '^\s*schedule:' .github/workflows/*.yml); do
           name=$(basename "$file")
+          if ! state=$(gh api "repos/${REPO}/actions/workflows/${name}" --jq '.state' 2>"$RUNNER_TEMP/keepalive-error"); then
+            echo "::warning::Could not read ${name} state - leaving it unchanged. $(tr '\n' ' ' < "$RUNNER_TEMP/keepalive-error")"
+            continue
+          fi
+          case "$state" in
+            active|disabled_inactivity) ;;
+            disabled_manually)
+              echo "keeping manually paused workflow disabled: ${name}"
+              continue
+              ;;
+            *)
+              echo "::warning::Leaving ${name} unchanged: workflow state '${state}' is not eligible for keepalive."
+              continue
+              ;;
+          esac
           if gh api -X PUT "repos/${REPO}/actions/workflows/${name}/enable" > /dev/null 2>"$RUNNER_TEMP/keepalive-error"; then
             echo "kept alive: ${name}"
           else
