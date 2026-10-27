@@ -4,6 +4,9 @@
 
 > Cadence, incidents, service ownership, convergence, and AI-native references.
 
+- [2026-10-27 Actions outage](2026-10-27-actions-outage.md) - paused production database,
+  free-project restore limit, keepalive repair and recovery steps.
+
 Founder-facing operating domain in Lyra's `lyra-<domain>` structure - see
 [`lyra-folder-convention.md`](../lyra-folder-convention.md). Generalised from Podium's proven
 `podium-<domain>` system and the `vd-mobile-apps/_template` scaffold.
