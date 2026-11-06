@@ -321,6 +321,7 @@ function formatFieldLabel(field: keyof SignalRow): string {
     priceVsSma200: 'Price vs SMA200',
     lastAlert: 'Last Alert',
     lastUpdated: 'Updated',
+    sample: 'Sample row',
     explanation: 'Explanation',
     summary: 'Summary',
   };
