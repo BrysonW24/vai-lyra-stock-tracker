@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.139.0] - 2026-11-06
+
+Groundwork for free AI: an open-source writer, a bake-off to choose it, and stricter checks on what any model writes.
+
+### Changed
+
+- Lyra can now write its updates with open-source models instead of a paid one - free hosted models (Groq, Cloudflare) or its own copy of a model running on GitHub's free machines. Nothing switches over yet: a bake-off first measures which model writes well enough on real sessions, and how fast.
+- The checks on anything a model writes are stricter. A percentage written in words ("12 percent") is checked like "12%", a group's move can no longer be quoted in another group's direction, and a sentence that predicts ("is likely to rebound", "expect more weakness") is removed.
+- More kinds of advice now stop a message entirely - an instruction naming a stock ("Buy SPOT now"), "investors should consider adding", "a buying opportunity", "a strong buy" - and advice anywhere in a draft stops it, even in a sentence the other checks would have deleted. Ordinary company news is no longer mistaken for advice: "a $1.5 billion loan guarantee" used to be read as a guaranteed-return claim and dropped.
+- A figure in the evening briefing must match its source scale and all - "$3 billion" no longer passes because a "3" appears somewhere on the page - and an item that forecasts a share price is removed.
+
 ## [0.138.2] - 2026-10-13
 
 The morning guide tells a closing quote from a preliminary one by the session's own close.
@@ -1940,7 +1951,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.2...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.139.0...HEAD
+[0.139.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.2...v0.139.0
 [0.138.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.1...v0.138.2
 [0.138.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.0...v0.138.1
 [0.138.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.137.0...v0.138.0

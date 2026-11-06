@@ -49,6 +49,7 @@ from workers.stock_scanner.config import Settings, load_settings
 from workers.stock_scanner.feedback import buttons_live, vote_keyboard
 from workers.stock_scanner.generation_record import PRODUCTION, REHEARSAL, Generation, prompt_version, record_generation
 from workers.stock_scanner.logger import get_logger
+from workers.stock_scanner.open_model import PROVIDERS
 from workers.stock_scanner.supabase_repo import _NO_ECHO, SupabaseRepository
 from workers.stock_scanner.telegram import send_telegram_message
 
@@ -382,6 +383,9 @@ class SessionFacts:
     macro: dict[str, Any] = field(default_factory=dict)
     holdings: list[BookLine] = field(default_factory=list)
     watchlist: list[BookLine] = field(default_factory=list)
+    # True when the rows are one bar per session (the no-account app's engine scores daily bars):
+    # there is no first hour to describe, and a session that is on the sheet at all is a whole one.
+    daily: bool = False
 
     @property
     def symbols(self) -> set[str]:
@@ -389,19 +393,23 @@ class SessionFacts:
 
     @property
     def complete(self) -> bool:
-        return self.close_bar.astimezone(NEW_YORK).time() >= clock_time(15, 30)
+        return self.daily or self.close_bar.astimezone(NEW_YORK).time() >= clock_time(15, 30)
 
 
 def _mode(values: list[Any]) -> Any:
     return Counter(values).most_common(1)[0][0] if values else None
 
 
-def build_facts(rows: list[dict[str, Any]], settings: Settings) -> SessionFacts | None:
+def build_facts(rows: list[dict[str, Any]], settings: Settings, *, daily: bool = False) -> SessionFacts | None:
     """Everything the read states about the session. None when nothing has been scanned yet.
 
     Reference bars are agreed across the universe: a ticker's moves count only against the prior
     close and first bar that most tickers share, so a name with a gap in its history is never
-    reported as a move it did not make."""
+    reported as a move it did not make.
+
+    `daily` is for rows that carry one bar per session (close to close). Read as hourly, such a
+    session's only bar is both its first bar and its close, so its whole move would be reported
+    as "the first hour" - in daily mode the first-hour figures do not exist."""
     every = [ticker for ticker in (ticker_session(row) for row in rows) if ticker is not None]
     if not every:
         return None
@@ -416,7 +424,11 @@ def build_facts(rows: list[dict[str, Any]], settings: Settings) -> SessionFacts 
         if ticker.close_bar != close_bar:
             continue  # on the session but not scored through to its last bar: it has no close state
         day_pct = _pct(ticker.close, ticker.prior_close) if ticker.prior_close_time == prior_time else None
-        open_pct = _pct(ticker.first_bar_close, ticker.prior_close) if ticker.prior_close_time == prior_time and ticker.first_bar_time == first_time else None
+        open_pct = (
+            _pct(ticker.first_bar_close, ticker.prior_close)
+            if not daily and ticker.prior_close_time == prior_time and ticker.first_bar_time == first_time
+            else None
+        )
         late_pct = _pct(ticker.close, ticker.first_bar_close) if ticker.first_bar_time == first_time and ticker.first_bar_time != close_bar else None
         tickers.append(replace(ticker, day_pct=day_pct, open_pct=open_pct, late_pct=late_pct))
 
@@ -498,6 +510,7 @@ def build_facts(rows: list[dict[str, Any]], settings: Settings) -> SessionFacts 
         ],
         score_risers=[transition(t) for t in risers[:3] if t.score - t.prior_score >= SCORE_MOVE],
         score_fallers=[transition(t) for t in fallers[:3] if t.score - t.prior_score <= -SCORE_MOVE],
+        daily=daily,
     )
 
 
@@ -619,7 +632,9 @@ def build_sheet(facts: SessionFacts) -> FactSheet:
     sheet = FactSheet()
     say, general = sheet.say, sheet.general
 
-    if facts.complete:
+    if facts.daily:
+        say("This is a full US session, measured from the previous session's close to this session's close.")
+    elif facts.complete:
         say(f"This is a full US session of {general(str(facts.bars))} hourly bars, from the open to the close.")
     else:
         say(f"The scan covers only the first {general(str(facts.bars))} hourly bars of this session - the figures below are not a full-session read.")
@@ -642,7 +657,9 @@ def build_sheet(facts: SessionFacts) -> FactSheet:
     if facts.group_moves:
         parts = []
         for group in facts.group_moves:
-            text = general(f"{group_name(group.category)} {move_words(group.mean_pct)} on average, {group.up} of {group.names} names up")
+            # The group's own move is registered to the group, so its direction cannot be handed to another group.
+            name = group_name(group.category)
+            text = sheet.about_subject(name, f"{name} {move_words(group.mean_pct)} on average, {group.up} of {group.names} names up")
             if group.leader is not None:
                 text += ", led by " + sheet.about(group.leader.symbol, f"{group.leader.symbol} {move_words(group.leader.day_pct)}")
             if group.laggard is not None:
@@ -681,7 +698,14 @@ def build_sheet(facts: SessionFacts) -> FactSheet:
         say("The reader's holdings: " + "; ".join(sheet.about(line.symbol, line.sheet_text()) for line in facts.holdings) + ".")
         thread = book_groups(facts)
         if thread:
-            say("The groups the reader's holdings sit in: " + ", ".join(general(f"{group_name(group.category)} ({', '.join(symbols)}) {move_words(group.mean_pct)} on average") for group, symbols in thread) + ".")
+            say(
+                "The groups the reader's holdings sit in: "
+                + ", ".join(
+                    sheet.about_subject(group_name(group.category), f"{group_name(group.category)} ({', '.join(symbols)}) {move_words(group.mean_pct)} on average")
+                    for group, symbols in thread
+                )
+                + "."
+            )
     if facts.watchlist:
         say("On the reader's watchlist, at or near a trigger: " + "; ".join(sheet.about(line.symbol, line.sheet_text()) for line in facts.watchlist) + ".")
     return sheet
@@ -801,9 +825,18 @@ class Narration:
     note: str | None = None  # why there is no text, for the reader
     reason: str = "ok"  # a coarse, public-safe label for the ledger and the log
     guard_removed: int = 0
+    provider: str = "anthropic"  # who served it: anthropic, or an open-model provider (open_model.py)
+
+
+def open_model_name(provider: str, model: str) -> str:
+    """'gpt-oss-120b (Groq)' - the model's short name and who served it, for a footer."""
+    served_by = PROVIDERS[provider].display if provider in PROVIDERS else provider
+    return f"{model.rsplit('/', 1)[-1]} ({served_by})"
 
 
 def cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
+    """Anthropic list price. Open models never reach this function: a free tier bills nothing, and
+    an unknown model here is priced at the dearest row (so nothing unlisted slips under a budget)."""
     dearest = max(PRICES_PER_MTOK.values())
     input_rate, output_rate = PRICES_PER_MTOK.get(model, dearest)
     return (input_tokens * input_rate + output_tokens * output_rate) / 1_000_000
@@ -890,6 +923,12 @@ def narrate(sheet: FactSheet, *, model: str, effort: str) -> Narration:
     if response.stop_reason == "max_tokens":
         return replace(base, note="the model's read was cut off before it finished", reason="max_tokens")
     text = "\n\n".join(block.text for block in response.content if block.type == "text").strip()
+    return guarded_narration(base, text, sheet)
+
+
+def guarded_narration(base: Narration, text: str, sheet: FactSheet) -> Narration:
+    """What a writer's text becomes once the guard has read it - the same step whichever model
+    wrote it. Nothing a model writes is trusted before this."""
     verdict = guard_ai_read(text, sheet)
     if verdict.removed:
         LOGGER.warning("guard removed %d sentence(s): %s", len(verdict.removed), ", ".join(sorted(set(verdict.categories))))
@@ -1004,8 +1043,12 @@ def compose_message(
     sections += figure_sections(facts)
 
     if narration and narration.text:
-        model_name = MODEL_NAMES.get(narration.model, narration.model)
-        footer = f"🤖 {model_name} at {narration.effort} effort · ${narration.cost_usd:.3f} this read · ${month_to_date:.2f} of ${budget:.0f} this month"
+        if narration.provider == "anthropic":
+            model_name = MODEL_NAMES.get(narration.model, narration.model)
+            footer = f"🤖 {model_name} at {narration.effort} effort · ${narration.cost_usd:.3f} this read · ${month_to_date:.2f} of ${budget:.0f} this month"
+        else:
+            where = "running on Lyra's own machine" if narration.provider == "local" else "on a free tier"
+            footer = f"🤖 {open_model_name(narration.provider, narration.model)} · an open model {where}"
         sections.append(_h(footer) + "\n" + _h("Research, not advice."))
     else:
         sections.append(_h("Research, not advice."))

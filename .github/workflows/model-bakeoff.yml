@@ -1,0 +1,136 @@
+name: Model bake-off
+
+# Which open model should write Lyra's updates? (workers/stock_scanner/model_bakeoff.py)
+#
+# The founder asked on 2026-11-06 for Lyra's updates and chat to run on open-source models at no
+# cost. This job measures the candidates on Lyra's own tasks - the market read through the real
+# guard, a briefing item through the real source check - and how fast each one writes:
+#   * LOCAL: four models small enough for a public repository's free runner (4 vCPUs, 16 GB, no
+#     GPU), each on x64 and on arm64, served by a pinned llama.cpp build (.github/actions/local-model).
+#     They need no key and no account. Their speed is the open question this job answers.
+#   * HOSTED: the free tiers of Groq and Cloudflare Workers AI. They need GROQ_API_KEY,
+#     CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN in the repository's secrets; a target with no
+#     key reports `no_key` and the others still run.
+#
+# MANUAL ONLY. It is a measurement, not a schedule: run it when choosing or re-checking models.
+# Every model file and the llama.cpp build are pinned by revision and sha256. The fixtures are
+# public market data and invented articles (no holdings, no users), so the results file with the
+# models' full outputs is uploaded for a person to read; the log prints metrics only.
+on:
+  workflow_dispatch:
+    inputs:
+      which:
+        description: Which candidates to run
+        type: choice
+        default: both
+        options:
+          - both
+          - local
+          - hosted
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-bakeoff
+  cancel-in-progress: false
+
+jobs:
+  local:
+    if: ${{ inputs.which != 'hosted' }}
+    name: ${{ matrix.model.name }} on ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+        model:
+          # Google's own quantisation-aware 4-bit build of Gemma 4 12B (6.98 GB).
+          - name: gemma-4-12b-qat
+            repo: google/gemma-4-12B-it-qat-q4_0-gguf
+            revision: 29d097773436b69ff9feafd636ab4cf873786537
+            file: gemma-4-12b-it-qat-q4_0.gguf
+            sha256: 93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b
+            reasoning: '-1'
+          # Qwen3.5 9B at Q4_K_M (5.68 GB). Thinking off: on a CPU it doubles the wait.
+          - name: qwen3.5-9b
+            repo: unsloth/Qwen3.5-9B-GGUF
+            revision: 3885219b6810b007914f3a7950a8d1b469d598a5
+            file: Qwen3.5-9B-Q4_K_M.gguf
+            sha256: 03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8
+            reasoning: '0'
+          # Google's quantisation-aware 4-bit build of Gemma 4 E4B (5.15 GB) - the fast, small one.
+          - name: gemma-4-e4b-qat
+            repo: google/gemma-4-E4B-it-qat-q4_0-gguf
+            revision: 4b4a2c1d584be7264f87aac328a1bc739ce81b6c
+            file: gemma-4-E4B_q4_0-it.gguf
+            sha256: 676c35070db6dbe52f93e9c864ee0fba4eddea94b9c875d9cb10daff453fbaee
+            reasoning: '-1'
+          # gpt-oss-20b at Q4_K_M (11.62 GB): the largest that can load in 16 GB, and it may not.
+          - name: gpt-oss-20b
+            repo: unsloth/gpt-oss-20b-GGUF
+            revision: d449b42d93e1c2c7bda5312f5c25c8fb91dfa9b4
+            file: gpt-oss-20b-Q4_K_M.gguf
+            sha256: c27536640e410032865dc68781d80a08b98f8db5e93575919af8ccc0568aeb4f
+            reasoning: '-1'
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-worker
+
+      - uses: ./.github/actions/local-model
+        with:
+          repo: ${{ matrix.model.repo }}
+          revision: ${{ matrix.model.revision }}
+          file: ${{ matrix.model.file }}
+          sha256: ${{ matrix.model.sha256 }}
+          reasoning-budget: ${{ matrix.model.reasoning }}
+
+      - name: Bake-off
+        env:
+          BAKEOFF_TARGETS: local:${{ matrix.model.name }}
+          BAKEOFF_RESULTS: bakeoff-${{ matrix.model.name }}-${{ runner.arch }}.json
+        run: python -m workers.stock_scanner.model_bakeoff
+
+      - name: Upload the results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bakeoff-${{ matrix.model.name }}-${{ runner.arch }}
+          path: bakeoff-*.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  hosted:
+    if: ${{ inputs.which != 'local' }}
+    name: hosted free tiers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-worker
+
+      - name: Bake-off
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_AI_TOKEN: ${{ secrets.CLOUDFLARE_AI_TOKEN }}
+          BAKEOFF_TARGETS: >-
+            groq:openai/gpt-oss-120b,
+            groq:qwen/qwen3.8-27b,
+            groq:openai/gpt-oss-20b,
+            cloudflare:@cf/google/gemma-4-26b-a4b-it,
+            cloudflare:@cf/openai/gpt-oss-120b
+          BAKEOFF_RESULTS: bakeoff-hosted.json
+        run: python -m workers.stock_scanner.model_bakeoff
+
+      - name: Upload the results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bakeoff-hosted
+          path: bakeoff-*.json
+          if-no-files-found: warn
+          retention-days: 30

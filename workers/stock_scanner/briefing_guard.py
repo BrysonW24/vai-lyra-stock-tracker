@@ -24,7 +24,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit
 
-from workers.stock_scanner.ai_read_guard import advice_findings
+from workers.stock_scanner.ai_read_guard import advice_findings, price_call_findings
 
 # The briefing's spine (2026-10-08, the founder: "call out groups ... robotics, semiconductors, AI,
 # minerals, commodities, quantum ... those groups that are really important to the world"). These
@@ -63,6 +63,25 @@ _EXCHANGE_IN_HEADLINE_RE = re.compile(
 # A figure: digits with optional thousands separators and decimals, not glued to a letter or a
 # dot on the left (so "Q2", "GPT-6" -> 6 counts but "v2.1" does not become "1", "A100" is skipped).
 _NUMBER_RE = re.compile(r"(?<![\w.,])(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?")
+# A figure with its scale: "$1.2 billion", "41%", "$318.4m", "20k". The bare-number check above
+# cannot tell "$3 billion" from "3 operators", so a figure that carries a scale must be found in
+# the source with the SAME scale. Short forms count only when glued to nothing else ("38 boats" is
+# not 38 billion).
+_FIGURE = r"(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?"
+# A scale word may follow a space or a hyphen ("1.2 billion", "1.2-billion"); a single letter is a
+# scale only when glued to the number ("$40m", "20k") - "a 6 m tall robot" is not six million.
+_SCALE = r"(?:[\s-]?(%|per\s?cent\b|pct\b|thousand\b|million\b|billion\b|trillion\b|bn\b|mn\b|tn\b)|([kmb])\b)"
+_SCALED_RE = re.compile(rf"(?<![\w.,]){_FIGURE}{_SCALE}", re.IGNORECASE)
+# A source that writes a range puts the scale once, after the second number: "$330-350 million",
+# "10 to 15%", "between 330 and 350 million". The first number carries that scale too.
+_RANGE_RE = re.compile(rf"(?<![\w.,]){_FIGURE}\s?(?:-|–|to|and)\s?\$?{_FIGURE}{_SCALE}", re.IGNORECASE)
+_SCALES = {
+    "%": "%", "percent": "%", "per cent": "%", "pct": "%",
+    "thousand": "thousand", "k": "thousand",
+    "million": "million", "mn": "million", "m": "million",
+    "billion": "billion", "bn": "billion", "b": "billion",
+    "trillion": "trillion", "tn": "trillion",
+}  # fmt: skip
 _TRACKING_PARAMS = ("utm_", "fbclid", "gclid", "mc_cid", "mc_eid", "ref")
 # Lyra labels an item from its fields; a label the model also wrote into the headline would show twice.
 _HEADLINE_LABEL_RE = re.compile(r"\s*\((?:private|catch-up|catch up|not listed|unlisted)\)\s*$", re.IGNORECASE)
@@ -159,6 +178,29 @@ def numbers_in(text: str) -> set[str]:
     return found
 
 
+def _figure(whole: str, decimals: str) -> str:
+    number = whole.replace(",", "") + (decimals or "")
+    return number.rstrip("0").rstrip(".") if "." in number else number
+
+
+def scaled_figures_in(text: str, *, ranges: bool = False) -> set[tuple[str, str]]:
+    """Every figure that carries a scale, as (number, scale): '$1.2 billion', '1.20bn' and
+    '$1.2-billion' are all ('1.2', 'billion'); '41%' and '41 per cent' are both ('41', '%').
+    Currency symbols are not compared - the prompt forbids converting, and a wrong currency on a
+    right number is rare beside a wrong number.
+
+    `ranges` is for SOURCE text: there the first number of '$330-350 million' is 330 million as
+    well. It is never applied to what a model wrote, where two unrelated numbers joined by 'and'
+    would be read as a range the source has to match."""
+    found: set[tuple[str, str]] = set()
+    for whole, decimals, word, letter in _SCALED_RE.findall(text or ""):
+        found.add((_figure(whole, decimals), _SCALES[" ".join((word or letter).lower().split())]))
+    if ranges:
+        for whole, decimals, _second, _second_decimals, word, letter in _RANGE_RE.findall(text or ""):
+            found.add((_figure(whole, decimals), _SCALES[" ".join((word or letter).lower().split())]))
+    return found
+
+
 def parse_source(raw: Any) -> Source | None:
     if isinstance(raw, str):
         url = raw.strip()
@@ -248,14 +290,21 @@ def check_item(
         reasons.append("source not opened: none of the item's sources was fetched as text")
     if opened:
         available: set[str] = set()
+        scaled: set[tuple[str, str]] = set()
         for text in opened:
             available |= numbers_in(text)
-        missing = sorted(numbers_in(item.text) - available)
+            scaled |= scaled_figures_in(text, ranges=True)
+        # A number the sources never printed, or one they printed at a different scale
+        # ("$3 billion" where the page says "3 operators" and "$1.2 billion").
+        missing = set(numbers_in(item.text) - available) | {number for number, _scale in scaled_figures_in(item.text) - scaled}
         if missing:
             reasons.append(f"figure not in source: {len(missing)} figure(s) absent from the item's own sources")
     advice = advice_findings(item.text)
     if advice:
         reasons.append("advice: " + "; ".join(advice))
+    price_calls = price_call_findings(item.text)
+    if price_calls:
+        reasons.append("prediction: " + "; ".join(price_calls))
     if item.listed and not _TICKER_RE.match(item.ticker):
         reasons.append("listed without ticker")
     if not item.listed and (item.ticker or _EXCHANGE_IN_HEADLINE_RE.search(item.headline)):

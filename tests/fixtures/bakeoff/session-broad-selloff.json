@@ -1,0 +1,1717 @@
+{
+ "label": "broad-selloff",
+ "session": "2026-11-05",
+ "bars": "daily",
+ "source": "Yahoo daily bars (yfinance), scored by workers/stock_scanner indicators + signal_engine",
+ "note": "Public market data for the bake-off. No holdings, no users.",
+ "rows": [
+  {
+   "symbol": "AAPL",
+   "category": "mega_cap_platform",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 65.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.561
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 70.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.934
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 344.17
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 349.51
+    }
+   ]
+  },
+  {
+   "symbol": "ABNB",
+   "category": "consumer_internet",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 45.0,
+     "signal_status": "weakening",
+     "volume_ratio": 2.426
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 62.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.636
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 170.13
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 176.37
+    }
+   ]
+  },
+  {
+   "symbol": "ADBE",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 63.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.396
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 58.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.036
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 246.44
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 248.48
+    }
+   ]
+  },
+  {
+   "symbol": "ADSK",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 47.0,
+     "signal_status": "weakening",
+     "volume_ratio": 2.026
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 62.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 2.116
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 269.16
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 270.09
+    }
+   ]
+  },
+  {
+   "symbol": "AFRM",
+   "category": "fintech_tech",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 63.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.859
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 62.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.77
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 69.66
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 75.59
+    }
+   ]
+  },
+  {
+   "symbol": "AI",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "weakening",
+     "volume_ratio": 0.973
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 60.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 0.668
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 11.38
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 11.96
+    }
+   ]
+  },
+  {
+   "symbol": "AKAM",
+   "category": "cybersecurity",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 38.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.865
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 28.0,
+     "signal_status": "weakening",
+     "volume_ratio": 0.938
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 77.84
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 85.93
+    }
+   ]
+  },
+  {
+   "symbol": "AMD",
+   "category": "semiconductor",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "invalidated",
+     "volume_ratio": 2.715
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 85.0,
+     "signal_status": "strong_setup",
+     "volume_ratio": 2.16
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 404.4
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 488.78
+    }
+   ]
+  },
+  {
+   "symbol": "AMZN",
+   "category": "mega_cap_platform",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 52.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.778
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 62.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 2.04
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 260.21
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 266.03
+    }
+   ]
+  },
+  {
+   "symbol": "ANET",
+   "category": "ai_infrastructure",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "invalidated",
+     "volume_ratio": 1.931
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 100.0,
+     "signal_status": "strong_setup",
+     "volume_ratio": 2.593
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 159.16
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 178.48
+    }
+   ]
+  },
+  {
+   "symbol": "AVGO",
+   "category": "ai_infrastructure",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "weakening",
+     "volume_ratio": 2.32
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 63.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.097
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 291.53
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 325.48
+    }
+   ]
+  },
+  {
+   "symbol": "COHR",
+   "category": "semiconductor",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 38.0,
+     "signal_status": "weakening",
+     "volume_ratio": 2.04
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.469
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 169.76
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 195.09
+    }
+   ]
+  },
+  {
+   "symbol": "COIN",
+   "category": "fintech_tech",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.42
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 70.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.045
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 136.82
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 151.5
+    }
+   ]
+  },
+  {
+   "symbol": "CRM",
+   "category": "enterprise_software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 58.0,
+     "signal_status": "invalidated",
+     "volume_ratio": 1.123
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 75.0,
+     "signal_status": "strong_setup",
+     "volume_ratio": 0.907
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 222.41
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 227.11
+    }
+   ]
+  },
+  {
+   "symbol": "CRWD",
+   "category": "cybersecurity",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.857
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.974
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 217.2
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 241.0
+    }
+   ]
+  },
+  {
+   "symbol": "CRWV",
+   "category": "ai_infrastructure",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 38.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.271
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "weakening",
+     "volume_ratio": 0.944
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 43.66
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 48.42
+    }
+   ]
+  },
+  {
+   "symbol": "DASH",
+   "category": "consumer_internet",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 55.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 3.482
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 62.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.706
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 179.92
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 198.59
+    }
+   ]
+  },
+  {
+   "symbol": "DBX",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "invalidated",
+     "volume_ratio": 1.712
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 75.0,
+     "signal_status": "strong_setup",
+     "volume_ratio": 1.157
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 35.76
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 36.1
+    }
+   ]
+  },
+  {
+   "symbol": "DDOG",
+   "category": "cloud_data",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 38.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 2.398
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "weakening",
+     "volume_ratio": 3.414
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 174.6
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 188.72
+    }
+   ]
+  },
+  {
+   "symbol": "DELL",
+   "category": "ai_infrastructure",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 38.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.905
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.547
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 316.91
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 372.36
+    }
+   ]
+  },
+  {
+   "symbol": "DOCN",
+   "category": "cloud_data",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 38.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 2.072
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 33.0,
+     "signal_status": "invalidated",
+     "volume_ratio": 1.787
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 70.7
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 84.02
+    }
+   ]
+  },
+  {
+   "symbol": "DOCU",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 38.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.456
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.025
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 78.92
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 80.5
+    }
+   ]
+  },
+  {
+   "symbol": "ENTG",
+   "category": "semiconductor",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 2.614
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.88
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 124.75
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 142.87
+    }
+   ]
+  },
+  {
+   "symbol": "ESTC",
+   "category": "cloud_data",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 63.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.107
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.999
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 84.2
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 89.68
+    }
+   ]
+  },
+  {
+   "symbol": "GFS",
+   "category": "semiconductor",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 2.083
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "invalidated",
+     "volume_ratio": 1.542
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 36.36
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 40.34
+    }
+   ]
+  },
+  {
+   "symbol": "GTLB",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.033
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.848
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 48.99
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 52.37
+    }
+   ]
+  },
+  {
+   "symbol": "HOOD",
+   "category": "fintech_tech",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "invalidated",
+     "volume_ratio": 1.619
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 75.0,
+     "signal_status": "strong_setup",
+     "volume_ratio": 1.041
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 78.39
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 87.41
+    }
+   ]
+  },
+  {
+   "symbol": "HUBS",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 2.627
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 3.528
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 204.96
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 216.64
+    }
+   ]
+  },
+  {
+   "symbol": "IBM",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 25.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.016
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 35.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.693
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 247.11
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 254.32
+    }
+   ]
+  },
+  {
+   "symbol": "MSFT",
+   "category": "mega_cap_platform",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 60.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.682
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 75.0,
+     "signal_status": "strong_setup",
+     "volume_ratio": 2.111
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 535.93
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 555.8
+    }
+   ]
+  },
+  {
+   "symbol": "NBIS",
+   "category": "ai_infrastructure",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 38.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.932
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "weakening",
+     "volume_ratio": 0.992
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 120.37
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 141.52
+    }
+   ]
+  },
+  {
+   "symbol": "NET",
+   "category": "cloud_data",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "weakening",
+     "volume_ratio": 2.357
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 58.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.037
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 244.51
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 266.58
+    }
+   ]
+  },
+  {
+   "symbol": "NOW",
+   "category": "enterprise_software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.277
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 65.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.069
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 102.36
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 108.81
+    }
+   ]
+  },
+  {
+   "symbol": "NTAP",
+   "category": "cloud_data",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.175
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.919
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 169.38
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 187.67
+    }
+   ]
+  },
+  {
+   "symbol": "NVDA",
+   "category": "ai_infrastructure",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "weakening",
+     "volume_ratio": 2.688
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 58.0,
+     "signal_status": "invalidated",
+     "volume_ratio": 1.439
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 181.6
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 200.13
+    }
+   ]
+  },
+  {
+   "symbol": "OKTA",
+   "category": "cybersecurity",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.133
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "weakening",
+     "volume_ratio": 0.735
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 171.16
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 191.05
+    }
+   ]
+  },
+  {
+   "symbol": "PANW",
+   "category": "cybersecurity",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "weakening",
+     "volume_ratio": 2.181
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 63.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.012
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 314.67
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 348.04
+    }
+   ]
+  },
+  {
+   "symbol": "PATH",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.0
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.701
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 13.01
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 13.51
+    }
+   ]
+  },
+  {
+   "symbol": "PINS",
+   "category": "consumer_internet",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "weakening",
+     "volume_ratio": 0.921
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 70.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 0.986
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 19.79
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 21.22
+    }
+   ]
+  },
+  {
+   "symbol": "PLTR",
+   "category": "ai_infrastructure",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.833
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.309
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 154.99
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 171.7
+    }
+   ]
+  },
+  {
+   "symbol": "PTC",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 38.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.388
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.814
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 194.6
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 195.18
+    }
+   ]
+  },
+  {
+   "symbol": "QLYS",
+   "category": "cybersecurity",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.191
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.897
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 199.63
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 210.89
+    }
+   ]
+  },
+  {
+   "symbol": "RBLX",
+   "category": "consumer_internet",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 70.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.069
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 60.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 0.851
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 47.65
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 49.31
+    }
+   ]
+  },
+  {
+   "symbol": "RDDT",
+   "category": "consumer_internet",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 65.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.112
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 65.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.14
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 93.81
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 101.89
+    }
+   ]
+  },
+  {
+   "symbol": "RPD",
+   "category": "cybersecurity",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.419
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.965
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 15.44
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 15.04
+    }
+   ]
+  },
+  {
+   "symbol": "S",
+   "category": "cybersecurity",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "weakening",
+     "volume_ratio": 0.815
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 58.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.573
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 21.42
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 23.49
+    }
+   ]
+  },
+  {
+   "symbol": "SMCI",
+   "category": "ai_infrastructure",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 33.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.509
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "invalidated",
+     "volume_ratio": 2.209
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 27.08
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 29.6
+    }
+   ]
+  },
+  {
+   "symbol": "SNAP",
+   "category": "consumer_internet",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 58.0,
+     "signal_status": "invalidated",
+     "volume_ratio": 1.779
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 80.0,
+     "signal_status": "strong_setup",
+     "volume_ratio": 1.863
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 5.09
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 5.92
+    }
+   ]
+  },
+  {
+   "symbol": "SNOW",
+   "category": "cloud_data",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.638
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 68.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.275
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 269.54
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 290.6
+    }
+   ]
+  },
+  {
+   "symbol": "SOFI",
+   "category": "fintech_tech",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 35.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.331
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 42.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.971
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 16.04
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 17.38
+    }
+   ]
+  },
+  {
+   "symbol": "SPOT",
+   "category": "consumer_internet",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 25.0,
+     "signal_status": "weakening",
+     "volume_ratio": 0.904
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 62.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.468
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 614.41
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 627.66
+    }
+   ]
+  },
+  {
+   "symbol": "SWKS",
+   "category": "semiconductor",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.552
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 45.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 2.004
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 81.21
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 82.92
+    }
+   ]
+  },
+  {
+   "symbol": "TENB",
+   "category": "cybersecurity",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 28.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.711
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 25.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.637
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 44.16
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 47.34
+    }
+   ]
+  },
+  {
+   "symbol": "TER",
+   "category": "semiconductor",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 38.0,
+     "signal_status": "weakening",
+     "volume_ratio": 2.619
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.154
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 212.74
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 250.99
+    }
+   ]
+  },
+  {
+   "symbol": "TSM",
+   "category": "ai_infrastructure",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "weakening",
+     "volume_ratio": 3.058
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 63.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 1.16
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 353.1
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 395.75
+    }
+   ]
+  },
+  {
+   "symbol": "TWLO",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.26
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 60.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 0.853
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 200.96
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 213.5
+    }
+   ]
+  },
+  {
+   "symbol": "VRNS",
+   "category": "cybersecurity",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.483
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 43.0,
+     "signal_status": "weakening",
+     "volume_ratio": 0.965
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 48.73
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 48.8
+    }
+   ]
+  },
+  {
+   "symbol": "VRT",
+   "category": "ai_infrastructure",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 38.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 2.311
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 40.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.678
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 176.73
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 205.55
+    }
+   ]
+  },
+  {
+   "symbol": "WOLF",
+   "category": "semiconductor",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 48.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.762
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 70.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 0.905
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 20.36
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 22.79
+    }
+   ]
+  },
+  {
+   "symbol": "XYZ",
+   "category": "fintech_tech",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 47.0,
+     "signal_status": "weakening",
+     "volume_ratio": 1.552
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 62.0,
+     "signal_status": "watchlist_setup",
+     "volume_ratio": 3.52
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 84.04
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 87.63
+    }
+   ]
+  },
+  {
+   "symbol": "ZM",
+   "category": "software",
+   "stock_signals": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "signal_score": 58.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 1.094
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "signal_score": 53.0,
+     "signal_status": "no_signal",
+     "volume_ratio": 0.823
+    }
+   ],
+   "stock_candles": [
+    {
+     "candle_time": "2026-11-05T21:00:00+00:00",
+     "close": 88.82
+    },
+    {
+     "candle_time": "2026-11-04T21:00:00+00:00",
+     "close": 91.84
+    }
+   ]
+  }
+ ]
+}

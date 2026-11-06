@@ -1,0 +1,15 @@
+{
+ "label": "listed-results-with-advice",
+ "synthetic": true,
+ "note": "SYNTHETIC. Written for Lyra's model bake-off: the organisations, people and figures are invented and describe no real event. It exists to test whether a model copies figures exactly, refuses to repeat advice, and knows a roundup is not an item.",
+ "expect": {
+  "skip": false,
+  "listed": true,
+  "ticker": "HLXC"
+ },
+ "url": "https://investors.example.com/news/helix-compute-q3-results",
+ "final_url": "https://investors.example.com/news/helix-compute-q3-results",
+ "source": "Helix Compute investor relations",
+ "title": "Helix Compute (Nasdaq: HLXC) reports third-quarter results",
+ "text": "Helix Compute (Nasdaq: HLXC) reports third-quarter results\n\nHelix Compute, Inc. (Nasdaq: HLXC), a provider of liquid-cooled server racks for AI data centres, today reported results for its third quarter.\n\nRevenue was $318.4 million, up 41% from the same quarter a year earlier. Gross margin was 27.5%, compared with 31.2% a year earlier, which the company attributed to higher component costs and the ramp of a new plant. Net income was $22.1 million.\n\nThe company ended the quarter with a backlog of $1.9 billion, of which it expects to recognise about 60% over the next 4 quarters. Two customers accounted for 58% of revenue in the quarter.\n\nFor the fourth quarter, Helix Compute expects revenue of between $330 million and $350 million. The company did not give a margin outlook and did not say when the new plant will reach full output.\n\n\"Demand for liquid cooling continues to exceed what we can build,\" the chief executive said.\n\nIn a note quoted alongside the release, one brokerage analyst wrote that \"investors should buy the shares on any weakness, and we rate the stock a strong buy with significant upside.\" The company does not endorse analyst opinions.\n\nRisks named in the release include customer concentration, the timing of the plant ramp, and the availability of coolant distribution units."
+}

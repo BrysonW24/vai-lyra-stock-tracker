@@ -143,9 +143,28 @@ The evening fun fact is free too - it comes from Lyra's own sourced facts librar
 
 Bounded by its own ledger rows (job `content_judge`): the month's spend is read before every run,
 at most `JUDGE_MAX_PER_RUN` (12) reviews a night, and a billing or key failure ends the night - the
-next one picks up anything unreviewed inside `JUDGE_LOOKBACK_DAYS` (3). The record itself
+next one picks up anything unreviewed inside `JUDGE_LOOKBACK_DAYS` (4). The record itself
 (`ai_runs` rows for every message) and the readers' feedback (`content_feedback`) cost nothing but
 database rows: a few kilobytes per message.
+
+#### Open models for the free product (v0.139.0: `open_model.py`, the bake-off)
+
+The founder asked on 2026-11-06 for Lyra's updates and chat to cost nothing, on open-source models.
+Everything in this table is a free tier or free by licence; none of it has a paid overage Lyra can
+fall into without someone adding a card.
+
+| Service | What it runs | Price | Limits (read 2026-11-06) |
+|---|---|---|---|
+| Groq | `openai/gpt-oss-120b`, `openai/gpt-oss-20b`, `qwen/qwen3.8-27b` (open-weight models, hosted) | **$0** on the Free plan | Per model, per organisation: 30 requests/min, 1,000 requests/day, 8,000 tokens/min, 200,000 tokens/day. Inputs are not used for training; logs are kept up to 30 days unless zero retention is switched on |
+| Cloudflare Workers AI | `@cf/google/gemma-4-26b-a4b-it`, `@cf/openai/gpt-oss-120b` and others | **$0** up to 10,000 "neurons" a day | Resets 00:00 UTC; 300 requests/min. Gemma 4 26B costs 9,091 neurons per 1M input tokens and 27,273 per 1M output. Over the allowance the free plan refuses, it does not bill. No training, no retention |
+| GitHub-hosted runner | Lyra's own copy of a model (llama.cpp + a 4-bit GGUF file) | **$0** in a public repository | 4 vCPUs, 16 GB, no GPU: fits a model of up to about 12 billion parameters; speed is what the bake-off measures. Actions' terms allow scheduled batch work, not serving live requests |
+| Hugging Face | The model files (Gemma 4, Qwen3.5, gpt-oss - all Apache 2.0) | **$0** | Public, ungated downloads, pinned by revision and sha256 in `.github/workflows/model-bakeoff.yml` |
+| llama.cpp | The server that runs the file | **$0** (MIT) | Pinned release, sha256-checked in `.github/actions/local-model/action.yml` |
+
+The bake-off (`model-bakeoff.yml`, manual) measures the candidates on Lyra's own tasks before any
+of them writes a real message. Free tiers belong to their owners and have been shrinking (GitHub
+Models was retired on 2026-07-30; Cerebras ended its free tier), which is why the writer is a
+chain: a hosted model, then another, then Lyra's own copy, then the engine's figures on their own.
 
 #### The subscribe-by-link audience (v0.134.0: /subscribe, Telegram through the app's bot, email through Resend)
 

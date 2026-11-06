@@ -1,0 +1,15 @@
+{
+ "label": "private-funding-round",
+ "synthetic": true,
+ "note": "SYNTHETIC. Written for Lyra's model bake-off: the organisations, people and figures are invented and describe no real event. It exists to test whether a model copies figures exactly, refuses to repeat advice, and knows a roundup is not an item.",
+ "expect": {
+  "skip": false,
+  "desk": "venture",
+  "listed": false
+ },
+ "url": "https://www.example.io/press/lumen-foundry-series-d",
+ "final_url": "https://www.example.io/press/lumen-foundry-series-d",
+ "source": "Lumen Foundry press release",
+ "title": "Lumen Foundry raises $1.2 billion Series D to build photonic AI accelerators",
+ "text": "Lumen Foundry raises $1.2 billion Series D to build photonic AI accelerators\n\nLumen Foundry, a developer of photonic chips for AI inference, today announced a $1.2 billion Series D financing that values the company at $9.8 billion after the new money.\n\nThe round was led by two existing investors and joined by a sovereign fund. Lumen Foundry said it will use the proceeds to finish its second chip, which it calls L2, and to reserve packaging capacity for 2 years.\n\nThe company said its first chip is in pilot use at 3 data-centre operators and that L2 is scheduled to reach customers in sample quantities within 9 months. It claimed L2 will use 70% less power per query than the systems those operators run today, a figure that has not been independently verified.\n\nLumen Foundry did not disclose its revenue, its losses, or the terms attached to the sovereign fund's investment. It has raised $2.1 billion in total.\n\nLumen Foundry is a private company. Its shares are not listed on any exchange and it said it has no current plan for a public offering.\n\nThe company named two risks: its chips depend on a single packaging supplier, and its power claim rests on its own tests."
+}

@@ -1,0 +1,15 @@
+{
+ "label": "government-contract",
+ "synthetic": true,
+ "note": "SYNTHETIC. Written for Lyra's model bake-off: the organisations, people and figures are invented and describe no real event. It exists to test whether a model copies figures exactly, refuses to repeat advice, and knows a roundup is not an item.",
+ "expect": {
+  "skip": false,
+  "desk": "government",
+  "listed": false
+ },
+ "url": "https://news.example.org/releases/2026/harbour-systems-award?utm_source=feed",
+ "final_url": "https://news.example.org/releases/2026/harbour-systems-award",
+ "source": "Example Defence Agency",
+ "title": "Agency awards Harbour Systems a $412 million contract for autonomous patrol vessels",
+ "text": "Agency awards Harbour Systems a $412 million contract for autonomous patrol vessels\n\nThe Example Defence Agency today announced a contract valued at $412 million with Harbour Systems, a privately held maker of uncrewed surface vessels, to deliver 38 autonomous patrol boats over 36 months.\n\nUnder the award, Harbour Systems will build the vessels at its two existing yards and stand up a third assembly line. The first 6 boats are due within 12 months of contract signature. The agency said the programme includes an option for a further 20 vessels, which is not funded under today's award.\n\n\"This contract moves autonomous patrol from trials to a fielded fleet,\" the agency's programme director said in the announcement.\n\nHarbour Systems said it expects to add about 450 jobs across its yards. The company did not disclose the unit price, its margin on the work, or how much of the award is tied to delivery milestones.\n\nThe agency noted that the award followed an open competition with 4 bidders and remains subject to the standard protest period of 10 days, during which an unsuccessful bidder may challenge the decision. Deliveries depend on the supply of marine batteries, which the agency described as constrained.\n\nHarbour Systems is privately owned and has no publicly traded shares."
+}

@@ -1,0 +1,264 @@
+{
+  "version": "2026-11-06",
+  "description": "What Lyra's AI may never say, in one file. ADVICE blocks a whole answer - there is no safe half of an instruction to trade. A PREDICTION removes the sentence that makes it. A PRICE CALL (a forecast of a share price) removes a briefing item. Read today by workers/stock_scanner/ai_read_guard.py and briefing_guard.py; written in the regex both Python and JavaScript read the same way (no lookbehind, no named groups, no inline flags) so the app's chat guard can read the same file. 'flags' is 'i' (ignore case) or '' (case matters - used where a capital letter is the signal: a sentence that opens with an instruction, or a ticker). Widened on 2026-11-06, when Lyra's free features moved to open-weight models: a smaller model writes 'Buy SPOT now' or 'investors should consider adding' where a frontier model did not. The rules describe advice TO THE READER. Company news is full of the same verbs used as facts - 'is considering selling a stake', 'we need to add capacity', 'a loan guarantee', 'investors must wait for the decision' - and must pass; the test sentences pin both sides.",
+  "advice": [
+    {
+      "id": "directive",
+      "why": "directive advice to trade",
+      "flags": "i",
+      "pattern": "\\b(?:you should|(?:i|we) (?:recommend|suggest|advise)|my advice|our advice)\\b.{0,30}\\b(?:buy(?:ing)?|sell(?:ing)?|short(?:ing)?|invest(?:ing)?|purchas(?:e|ing)|hold(?:ing)?|add(?:ing)?|trim(?:ming)?|avoid(?:ing)?|accumulat(?:e|ing))\\b"
+    },
+    {
+      "id": "time-pressured",
+      "why": "time-pressured buy/sell instruction",
+      "flags": "i",
+      "pattern": "\\b(?:buy|sell|short) (?:it|now|today|immediately)\\b"
+    },
+    {
+      "id": "certainty",
+      "why": "certainty / guaranteed-return claim",
+      "flags": "i",
+      "pattern": "\\b(?:guaranteed (?:returns?|profits?|gains?|wins?|upside)|(?:is|are) (?:all but |virtually |almost |practically )?guaranteed to (?:rise|gain|go up|rebound|recover|rally|win|pay off|outperform|work)|(?:rebound|recovery|rally|gain|profit|upside|return)s? (?:is|are) (?:all but |virtually |almost |practically )?guaranteed|guarantee[sd]? (?:a |an |you )?(?:returns?|profits?|gains?)|risk[- ]free|can'?t lose|sure thing|will (?:definitely|certainly) (?:go up|rise|moon))\\b"
+    },
+    {
+      "id": "imperative-ticker",
+      "why": "instruction to trade a named stock",
+      "flags": "",
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Buy|Sell|Short|Hold(?:\\s+on\\s?to)?|Trim|Avoid|Accumulate|Add(?:\\s+to)?|Load up on|BUY|SELL|SHORT|HOLD|TRIM|AVOID|ADD)\\s+(?:more\\s+|some\\s+)?[A-Z]{2,5}\\b"
+    },
+    {
+      "id": "imperative-position",
+      "why": "instruction to take or leave a position",
+      "flags": "",
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Stay (?:long|short|out of|away from|invested)|Take (?:some )?profits?|Load up|Lighten up|Step aside|Get out|Get in)\\b"
+    },
+    {
+      "id": "modal",
+      "why": "tells the reader what they should do",
+      "flags": "i",
+      "pattern": "\\b(?:investors?|traders?|readers?|you)\\s+(?:should|ought to|would do well to|would be (?:wise|smart|prudent|sensible) to|may want to|might want to|may wish to|(?:could|can|may|might) look to)\\s+(?:[a-z]+\\s+){0,3}(?:buy|sell|short|add|trim|avoid|accumulate|exit|enter|wait|hold|consider|sit tight|stand aside|step aside|stay put|hold off|take (?:some )?profits?|stay (?:long|away|out|invested|on the sidelines))\\b"
+    },
+    {
+      "id": "modal-consider",
+      "why": "tells the reader what they should do",
+      "flags": "i",
+      "pattern": "\\b(?:investors?|traders?|readers?|you)\\s+(?:might|could|may|can|should|would)\\s+(?:also\\s+|well\\s+|now\\s+)?consider\\b"
+    },
+    {
+      "id": "consider",
+      "why": "suggests a trade",
+      "flags": "",
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)Consider\\s+(?:buying|selling|shorting|adding|trimming|accumulating|exiting|entering|taking (?:some )?profits?|a position|an entry|an exit)\\b"
+    },
+    {
+      "id": "rating",
+      "why": "rates a stock a buy or a sell",
+      "flags": "i",
+      "pattern": "\\b(?:is|are|looks?|remains?|seems?)\\s+(?:like\\s+)?(?:(?:a|an)\\s+(?:strong\\s+|clear\\s+)?|strong\\s+|clear\\s+)(?:buy|sell)\\b(?!\\s*(?:-|review|signal|setup|side|off|order))"
+    },
+    {
+      "id": "rates",
+      "why": "rates a stock a buy or a sell",
+      "flags": "i",
+      "pattern": "\\b(?:rated?|rates|rating)\\s+(?:[a-z]+\\s+){0,3}(?:(?:a|an)\\s+(?:strong\\s+|clear\\s+)?|strong\\s+|clear\\s+)(?:buy|sell)\\b(?!\\s*(?:-|review|signal|setup|side|off|order))"
+    },
+    {
+      "id": "strong-buy",
+      "why": "rates a stock a buy or a sell",
+      "flags": "i",
+      "pattern": "\\b(?:(?:strong|clear|screaming)\\s+(?:buy|sell)\\b(?!\\s*(?:-|review|signal|setup|side|off))|(?:buy|sell)\\s+rating\\b)"
+    },
+    {
+      "id": "opportunity",
+      "why": "calls it a time or a chance to trade",
+      "flags": "i",
+      "pattern": "\\b(?:(?:buying|selling) opportunit(?:y|ies)\\b|buy(?:ing)? the dip\\b|(?:good|great|right|best|ideal|perfect) time to (?:buy|sell|enter|exit|add|invest)\\b|(?:time|moment) to (?:buy|sell|add|accumulate|trim|exit|take (?:some )?profits?|get (?:in|out))\\b|worth (?:buying|accumulating|adding)\\b(?!\\s+that\\b))"
+    },
+    {
+      "id": "valuation",
+      "why": "calls a stock cheap or dear",
+      "flags": "i",
+      "pattern": "\\b(?:looks?|appears?|seems?|is|are|remains?)\\s+(?:very\\s+|quite\\s+|increasingly\\s+|still\\s+)?(?:undervalued|overvalued|a bargain|(?:attractive|cheap|expensive) (?:at|here|now)|attractively (?:priced|valued))\\b"
+    },
+    {
+      "id": "analyst-rating",
+      "why": "relays a broker's buy or sell rating",
+      "flags": "i",
+      "pattern": "\\b(?:(?:upgrad|downgrad|reiterat|initiat)(?:e[sd]?|ing)|maintain(?:s|ed|ing)?)\\s+(?:[a-z]+\\s+){0,4}(?:(?:to|at|as)\\s+)?(?:(?:a|an)\\s+)?(?:strong\\s+)?(?:buy|sell|outperform|overweight|underweight|underperform)\\b(?!\\s*(?:-|review|signal|setup|side|off|order))"
+    },
+    {
+      "id": "rate-object",
+      "why": "relays a broker's buy or sell rating",
+      "flags": "i",
+      "pattern": "\\brat(?:e[sd]?|ing)\\s+(?:the\\s+|its\\s+)?(?:stock|shares?|company|name|it|them)\\s+(?:as\\s+)?(?:(?:a|an)\\s+)?(?:strong\\s+)?(?:buy|sell|outperform|overweight|underweight|underperform)\\b(?!\\s*(?:-|review|signal|setup|side|off|order))"
+    }
+  ],
+  "prediction": [
+    {
+      "id": "future-move",
+      "why": "predicts a move",
+      "flags": "i",
+      "pattern": "\\b(?:will|is likely to|are likely to|looks? set to|is set to|are set to|is poised to|are poised to|is expected to|are expected to|should|could|may|might)\\s+(?:well\\s+|soon\\s+|now\\s+|then\\s+|still\\s+|likely\\s+|probably\\s+)?(?:rise|fall|rebound|recover|rally|drop|bounce|climb|decline|slide|continue|extend|reverse|persist|resume|deepen|worsen|accelerate|fade|outperform|underperform|follow through|follow|have (?:legs|room to (?:run|rise|fall)|further to (?:run|go|fall))|keep (?:rising|falling|climbing|sliding|dropping|gaining|going)|see (?:further|more|additional|renewed)|go (?:up|down|higher|lower)|move (?:higher|lower)|head (?:higher|lower))\\b"
+    },
+    {
+      "id": "likely",
+      "why": "says what is likely",
+      "flags": "i",
+      "pattern": "\\b(?:is|are|looks?|seems?|appears?)\\s+(?:very\\s+|quite\\s+|more\\s+|less\\s+|increasingly\\s+)?(?:likely|unlikely|probable|inevitable)\\b"
+    },
+    {
+      "id": "future-time",
+      "why": "talks about what comes next",
+      "flags": "i",
+      "pattern": "\\b(?:tomorrow|next (?:session|week|month|quarter)|(?:in|over) the (?:coming|next) (?:few |several )?(?:days?|weeks?|sessions?|months?)|in the (?:near|short|medium|long) term|going forward)\\b"
+    },
+    {
+      "id": "expect",
+      "why": "tells the reader what to expect",
+      "flags": "",
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Expect|Watch for|Look for|Brace for|Prepare for)\\s+"
+    },
+    {
+      "id": "can-expect",
+      "why": "tells the reader what to expect",
+      "flags": "i",
+      "pattern": "\\b(?:should|can|may|might|could) expect\\b"
+    },
+    {
+      "id": "crowd-expects",
+      "why": "reports a forecast as fact",
+      "flags": "i",
+      "pattern": "\\b(?:traders?|investors?|analysts?|markets?|the market|the street)\\s+(?:now\\s+|still\\s+|widely\\s+)?expects?\\b"
+    }
+  ],
+  "vectors": {
+    "advice_blocks": [
+      "Buy SPOT now.",
+      "You should buy NVDA here.",
+      "I recommend selling AMD.",
+      "We suggest investors add to semiconductors.",
+      "Investors should consider adding to the group.",
+      "Readers may want to wait for a better entry.",
+      "This looks like a buying opportunity.",
+      "It may be time to buy the dip.",
+      "AMD is a strong buy.",
+      "The brokerage rates the stock a buy.",
+      "Breadth was poor. Hold NVDA through the weakness.",
+      "Consider taking profits in SPOT.",
+      "It is a risk-free trade.",
+      "One brokerage said investors should buy the shares on any weakness.",
+      "Now is a good time to buy.",
+      "Take profits on the rally.",
+      "It is worth adding NVDA on weakness.",
+      "Now could be the moment to buy NVDA.",
+      "Investors could look to add exposure to chips.",
+      "NVDA looks attractive at these levels.",
+      "Hold onto NVDA.",
+      "Load up on SPOT.",
+      "Stay long the group.",
+      "The broker kept its buy rating on the shares.",
+      "A rebound is all but guaranteed.",
+      "SPOT is undervalued after the fall.",
+      "Investors might consider adding exposure.",
+      "Readers could consider buying the dip in chips.",
+      "It may be time to take profits.",
+      "Now is the time to accumulate NVDA.",
+      "Investors would be wise to buy NVDA.",
+      "NVDA looks cheap here.",
+      "Traders may want to sit tight.",
+      "The bank upgraded the stock to buy.",
+      "Analysts rate the stock buy.",
+      "The broker reiterated its overweight on the shares."
+    ],
+    "advice_passes": [
+      "Buyers stepped in late in the session.",
+      "The sell-off was broad, with 60 of 61 names down.",
+      "Selling pressure hit semiconductors hardest.",
+      "SPOT became a strong setup, while AFRM dropped out of strong setup.",
+      "Short interest is not in the facts.",
+      "Short term, breadth was narrow.",
+      "NVDA is a Buy Review in Lyra's action language.",
+      "You can add NVDA to your watchlist from its ticker page.",
+      "The names that held up were in cybersecurity.",
+      "A strong setup failed in six names.",
+      "This is research, not financial advice.",
+      "The agency will buy 38 patrol boats over 36 months.",
+      "Profit-taking in the leaders weighed on the group.",
+      "The company expects revenue of between $330 million and $350 million.",
+      "It was a sell-off, not a rotation.",
+      "Lyra can add an update for your holdings.",
+      "Investors moved to take profits in the leaders after the rally.",
+      "Higher rates forced funds to sell growth names.",
+      "Intel is considering selling a stake in its Altera unit.",
+      "The company is considering an exit from the Chinese market.",
+      "The chief executive said we need to add capacity to meet demand.",
+      "Investors must wait for the regulator's decision in March.",
+      "The project won a $1.5 billion loan guarantee.",
+      "The loan is guaranteed by the energy department.",
+      "There are sell orders stacked at the open.",
+      "It is worth adding that breadth was narrow.",
+      "The terms are attractive to lenders.",
+      "OpenAI is considering selling employee shares.",
+      "The company will sell its unit to a rival.",
+      "Management said it will hold the dividend steady.",
+      "The new model is cheap to run.",
+      "The company upgraded its guidance for the year.",
+      "Higher rates forced funds to sell growth names again.",
+      "The board may consider the offer on Friday."
+    ],
+    "prediction_removes": [
+      "AMD is likely to rebound.",
+      "The selling could continue.",
+      "Semiconductors should recover from here.",
+      "The weakness may well extend.",
+      "More names will fall out of strong setup tomorrow.",
+      "Expect more weakness in the group.",
+      "Watch for a bounce in the coming days.",
+      "Going forward, breadth matters most.",
+      "NVDA will likely rebound.",
+      "SNOW is likely to keep rising.",
+      "The selling may persist.",
+      "Further downside is likely.",
+      "NVDA could see further gains.",
+      "Over the next few sessions breadth matters.",
+      "In the near term the group stays weak.",
+      "Readers can expect more of the same.",
+      "Traders expect more weakness.",
+      "More weakness may follow.",
+      "The bounce may have legs."
+    ],
+    "prediction_keeps": [
+      "A broad rally tends to lower scores.",
+      "The fall knocked seven names out of strong setup.",
+      "Scores rose where the turn survived the sell-off.",
+      "Cybersecurity led, up 2.4% on average.",
+      "The session did not continue the prior day's gains.",
+      "Nothing in the facts says why it fell.",
+      "The engine is built to look for a beaten-down name turning up.",
+      "Setups that had been forming were invalidated."
+    ],
+    "price_call_removes": [
+      "Shares are likely to rise on the news.",
+      "The stock could rally from here.",
+      "Its share price should benefit from the contract.",
+      "The stock will rebound."
+    ],
+    "price_call_keeps": [
+      "Shares will begin trading on Nasdaq on Friday.",
+      "The stock rose after the announcement.",
+      "The company said its shares are listed in New York.",
+      "The stock is expected to begin trading next month.",
+      "The company said its share price may decline if the deal fails.",
+      "Its valuation could rise to $5 billion in the new round.",
+      "Shares will fall under the new index rules."
+    ]
+  },
+  "price_call": [
+    {
+      "id": "share-price-forecast",
+      "why": "predicts the share price",
+      "flags": "i",
+      "pattern": "\\b(?:shares?|stock|share price)\\s+(?:(?:is|are|looks?|seems?)\\s+(?:likely|set|poised|expected)\\s+to\\s+(?:rise|fall|rally|rebound|jump|surge|drop|climb|soar|slide|decline|gain|benefit|re-?rate)|(?:will|could|should|may|might)\\s+(?:well\\s+|soon\\s+)?(?:rally|rebound|soar|surge|jump|re-?rate|benefit|outperform|underperform))\\b"
+    }
+  ]
+}

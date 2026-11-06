@@ -63,6 +63,10 @@ def test_a_generation_row_carries_the_text_the_input_and_who_may_read_it():
     assert row["output_payload"]["mode"] == "production" and row["output_payload"]["cost_usd"] == 0.039123 and row["output_payload"]["reason"] == "ok"
     engine_only = _generation(user_id="").row()
     assert engine_only["model_provider"] is None and engine_only["model_name"] is None and engine_only["user_id"] is None
+    # An open model is recorded under whoever served it, never as Anthropic (v0.139.0).
+    open_row = _generation(model="openai/gpt-oss-120b", provider="groq").row()
+    assert (open_row["model_provider"], open_row["model_name"]) == ("groq", "openai/gpt-oss-120b") and open_row["output_payload"]["cost_usd"] == 0.0
+    assert _generation(provider="groq").row()["model_provider"] is None, "no model, no provider"
     assert _generation().id != _generation().id
 
 

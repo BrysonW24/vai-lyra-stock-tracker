@@ -123,3 +123,163 @@ def test_paragraph_breaks_survive_and_empty_paragraphs_vanish():
     assert verdict.ok
     assert verdict.text == "NVDA led at up 2.1%. SNOW lagged, down 1.9%.\n\nCOIN became a strong setup with its score at 95.\n\nBreadth was broad with 61 names up."
     assert verdict.removed == ["AMD gained 4.5% on heavy volume."]
+
+
+# --- widened on 2026-11-06 for open-weight models (contracts/guardrails/advice.json) --------------
+
+import json  # noqa: E402
+import re  # noqa: E402
+
+import pytest  # noqa: E402
+
+from workers.stock_scanner.ai_read_guard import CONTRACT_PATH, advice_findings, prediction_findings, price_call_findings  # noqa: E402
+
+CONTRACT = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+
+
+def test_a_percentage_written_in_words_is_the_same_figure():
+    found = {figure.token: figure.direction for figure in figures_in("gained 12 percent, fell 3 per cent, up 4pct, 7 percentage points, 2.1%, rose 9  percent")}
+    assert found == {"12%": 1, "3%": -1, "4%": 1, "7": None, "2.1%": None, "9%": 1}
+    # 99 is a count in the facts; "99 percent" is a different claim and is not grounded by it.
+    verdict = guard_ai_read("Breadth was broad, with 61 names up. Nearly 99 percent of names moved. NVDA led at up 2.1%.", _sheet())
+    assert verdict.removed == ["Nearly 99 percent of names moved."] and verdict.categories == ["figure not in the facts for this subject"]
+
+
+def _group_sheet() -> FactSheet:
+    sheet = FactSheet()
+    sheet.say(sheet.general("Breadth on the session: 31 up, 30 down."))
+    sheet.say(
+        "By group: "
+        + sheet.about_subject("cybersecurity", "cybersecurity up 2.4% on average, 9 of 9 names up")
+        + ", led by "
+        + sheet.about("PANW", "PANW up 5.0%")
+        + "; "
+        + sheet.about_subject("consumer internet", "consumer internet down 2.4% on average, 2 of 7 names up")
+        + "; "
+        + sheet.about_subject("semiconductors", "semiconductors down 1.7% on average, 1 of 7 names up")
+        + "."
+    )
+    return sheet
+
+
+def test_a_groups_direction_cannot_be_handed_to_another_group():
+    """Two groups moved 2.4% in opposite directions. Read as general figures alone, 'cybersecurity
+    fell 2.4%' is grounded (2.4% was stated, and stated as a fall); it is still false."""
+    sheet = _group_sheet()
+    wrong = guard_ai_read("Cybersecurity fell 2.4% on average. Breadth was split, 31 up. Consumer internet rose 2.4% on average. PANW was up 5.0%.", sheet)
+    assert wrong.removed == ["Cybersecurity fell 2.4% on average.", "Consumer internet rose 2.4% on average."]
+    assert set(wrong.categories) == {"direction contradicts the facts"} and wrong.text == "Breadth was split, 31 up. PANW was up 5.0%."
+    right = guard_ai_read("Cybersecurity rose 2.4% on average, led by PANW up 5.0%. Consumer internet fell 2.4% on average.", sheet)
+    assert right.ok and right.removed == []
+    # Naming both groups in one sentence allows each its own direction; the singular still names the group.
+    both = guard_ai_read("Cybersecurity rose 2.4% while consumer internet fell 2.4%. Semiconductor stocks rose 1.7% on average. Breadth was split, 31 up.", sheet)
+    assert both.removed == ["Semiconductor stocks rose 1.7% on average."]
+    # A sentence that names no group may still quote the figure with a direction the facts gave it.
+    assert guard_ai_read("The best group rose 2.4% on average. Breadth was split, with 31 up and 30 down.", sheet).removed == []
+
+
+def test_a_group_owns_only_the_figures_in_its_own_clause_and_a_longer_name_is_not_a_shorter_one():
+    sheet = FactSheet()
+    sheet.say(sheet.general("Median move on the session: up 0.8%. Breadth: 31 up, 30 down."))
+    sheet.say(
+        sheet.about_subject("semiconductors", "semiconductors down 0.8% on average")
+        + "; "
+        + sheet.about_subject("software", "software up 1.4% on average")
+        + "; "
+        + sheet.about_subject("enterprise software", "enterprise software down 1.4% on average")
+        + "."
+    )
+    # The median's 0.8% is not the group's, though the group is named earlier in the sentence.
+    kept = guard_ai_read("Semiconductors lagged while the median name rose 0.8%. Breadth was split, with 31 up.", sheet)
+    assert kept.ok and kept.removed == []
+    # "Enterprise software" is its own group: it does not borrow software's direction.
+    swapped = guard_ai_read("Enterprise software rose 1.4% on average. Software rose 1.4% on average. Breadth was split, with 31 up.", sheet)
+    assert swapped.removed == ["Enterprise software rose 1.4% on average."] and swapped.categories == ["direction contradicts the facts"]
+    assert guard_ai_read("Enterprise software fell 1.4% on average. Breadth was split, with 31 up.", sheet).removed == []
+    # A clause that names no group carries on about the sentence's group, unless it names a
+    # measure of the whole scan (the median, above).
+    for wrong in (
+        "Semiconductors were the weak spot: the group rose 0.8% on average.",
+        "Semiconductors, though weak early, rose 0.8% on average.",
+        "Semiconductors slipped early but the group rose 0.8% on average.",
+    ):
+        assert guard_ai_read(wrong + " Breadth was split, with 31 up and 30 down.", sheet).removed == [wrong], wrong
+    # In one clause the group still owns its figure, wherever in the clause its name sits.
+    assert guard_ai_read("Semiconductors, the weakest group, rose 0.8% on average. Breadth was split, with 31 up and 30 down.", sheet).removed == [
+        "Semiconductors, the weakest group, rose 0.8% on average."
+    ]
+
+
+def test_a_sentence_that_predicts_is_removed_and_the_read_stands():
+    text = "NVDA led at up 2.1%. The strength is likely to continue tomorrow. SNOW lagged, down 1.9%. Expect more weakness in software."
+    verdict = guard_ai_read(text, _sheet())
+    assert verdict.ok and verdict.text == "NVDA led at up 2.1%. SNOW lagged, down 1.9%."
+    assert set(verdict.categories) == {"prediction"} and len(verdict.removed) == 2
+
+
+@pytest.mark.parametrize("sentence", CONTRACT["vectors"]["advice_blocks"])
+def test_every_advice_sentence_in_the_contract_blocks_the_whole_read(sentence):
+    assert advice_findings(sentence), sentence
+    verdict = guard_ai_read("NVDA led at up 2.1%. SNOW lagged, down 1.9%. " + sentence, _sheet())
+    assert not verdict.ok and verdict.text == "" and "advice" in verdict.categories
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "You should buy NVDA before it rebounds tomorrow.",  # advice and a forecast in one sentence
+        "Investors should buy NVDA, which is likely to rebound.",
+        "Buy NVDA now, it could rally further.",
+        "Buy SPOT now.",  # advice about a ticker the facts never named
+        "AMD gained 4.5%, so you should buy it.",  # advice beside a figure the facts never gave
+    ],
+)
+def test_advice_in_a_sentence_deleted_for_another_reason_still_blocks_the_read(sentence):
+    """A forecast, an unknown ticker or an invented figure gets a sentence deleted. If the advice
+    check read only what survived, that deletion would carry the advice out and the rest would be
+    sent as though the model had behaved."""
+    verdict = guard_ai_read("NVDA led at up 2.1%. SNOW lagged, down 1.9%. " + sentence, _sheet())
+    assert not verdict.ok and verdict.text == "" and "advice" in verdict.categories
+
+
+def test_advice_past_the_sentence_cap_still_blocks():
+    padding = " ".join(["NVDA led at up 2.1%."] * 11)
+    assert not guard_ai_read(padding + " Buy NVDA now.", _sheet()).ok
+
+
+@pytest.mark.parametrize("sentence", CONTRACT["vectors"]["price_call_removes"])
+def test_every_share_price_forecast_in_the_contract_is_caught(sentence):
+    assert price_call_findings(sentence), sentence
+
+
+@pytest.mark.parametrize("sentence", CONTRACT["vectors"]["price_call_keeps"])
+def test_reporting_what_a_share_did_or_when_it_lists_is_not_a_forecast(sentence):
+    assert price_call_findings(sentence) == [], sentence
+
+
+@pytest.mark.parametrize("sentence", CONTRACT["vectors"]["advice_passes"])
+def test_describing_the_market_is_not_advice(sentence):
+    assert advice_findings(sentence) == [], sentence
+
+
+@pytest.mark.parametrize("sentence", CONTRACT["vectors"]["prediction_removes"])
+def test_every_prediction_sentence_in_the_contract_is_caught(sentence):
+    assert prediction_findings(sentence), sentence
+
+
+@pytest.mark.parametrize("sentence", CONTRACT["vectors"]["prediction_keeps"])
+def test_describing_what_happened_is_not_a_prediction(sentence):
+    assert prediction_findings(sentence) == [], sentence
+
+
+def test_the_contract_uses_only_regex_both_python_and_javascript_read_the_same_way():
+    for group in ("advice", "prediction", "price_call"):
+        assert CONTRACT[group], group
+        for entry in CONTRACT[group]:
+            pattern = entry["pattern"]
+            assert entry["flags"] in ("i", ""), entry["id"]
+            assert "(?<" not in pattern and "(?P" not in pattern and "(?i" not in pattern, f"{entry['id']}: lookbehind, named groups and inline flags differ between the two engines"
+            assert "—" not in entry["why"] and "–" not in entry["why"]
+            re.compile(pattern)
+    groups = ("advice", "prediction", "price_call")
+    assert len({entry["id"] for group in groups for entry in CONTRACT[group]}) == sum(len(CONTRACT[group]) for group in groups)

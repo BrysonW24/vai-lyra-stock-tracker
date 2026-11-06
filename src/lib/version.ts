@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.139.0',
+    date: '2026-11-06',
+    title: 'Groundwork for free AI: an open-source writer, a bake-off to choose it, and stricter checks on what any model writes',
+    highlights: [
+      'Lyra can now write its updates with open-source models instead of a paid one - free hosted models (Groq, Cloudflare) or its own copy of a model running on GitHub\'s free machines. Nothing switches over yet: a bake-off first measures which model writes well enough on real sessions, and how fast.',
+      'The checks on anything a model writes are stricter. A percentage written in words ("12 percent") is checked like "12%", a group\'s move can no longer be quoted in another group\'s direction, and a sentence that predicts ("is likely to rebound", "expect more weakness") is removed.',
+      'More kinds of advice now stop a message entirely - an instruction naming a stock ("Buy SPOT now"), "investors should consider adding", "a buying opportunity", "a strong buy" - and advice anywhere in a draft stops it, even in a sentence the other checks would have deleted. Ordinary company news is no longer mistaken for advice: "a $1.5 billion loan guarantee" used to be read as a guaranteed-return claim and dropped.',
+      'A figure in the evening briefing must match its source scale and all - "$3 billion" no longer passes because a "3" appears somewhere on the page - and an item that forecasts a share price is removed.',
+    ],
+  },
+  {
     version: '0.138.2',
     date: '2026-10-13',
     title: 'The morning guide tells a closing quote from a preliminary one by the session\'s own close',

@@ -12,8 +12,16 @@ worker-side twin of the app's `src/lib/ai/guardrails/prose.ts` + the regulated-a
     ("fell 2.1%", "-2.1%");
   * a spelled-out magnitude ("forty percent", "doubled") counts as a figure and is not allowed;
   * every ticker it names must be one the facts named;
+  * a sentence that predicts ("is likely to rebound", "expect more weakness", "tomorrow") is a
+    sentence about something the facts cannot contain;
   * a sentence that breaks any of those is REMOVED - the rest of the read still stands;
   * advice or certainty language blocks the whole read, because there is no safe half of that.
+
+The advice and prediction wording lives in contracts/guardrails/advice.json, shared with the app's
+chat guard and pinned by test sentences on both sides. It was widened on 2026-11-06, when Lyra's
+free features moved to open-weight models: a smaller model writes "Buy SPOT now", "gained 12
+percent" or gives one group another group's direction where a frontier model did not, and the
+guard as first written let all three through.
 
 Pure functions, no I/O. What the guard cannot see: a true figure attached to the right ticker but
 the wrong measure (its day move quoted as its hour move), and causes or news the model supplies
@@ -21,12 +29,17 @@ from memory. The prompt forbids both; the figures block under the read shows the
 """
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 # A numeral with optional thousands separators and decimals, the unit the facts always write
-# explicitly (a leading $ or a trailing % / x), and any sign glued to it.
-_NUMBER_RE = re.compile(r"([+\-−])?(\$)?((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)(%|[xX](?![a-zA-Z]))?")
+# explicitly (a leading $ or a trailing % / x), and any sign glued to it. A percentage written out
+# in words ("12 percent", "12 per cent", "12 pct") is the same figure as "12%": read as a bare 12
+# it would match any count of twelve the facts happened to contain.
+_NUMBER_RE = re.compile(r"([+\-−])?(\$)?((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)(%|[xX](?![a-zA-Z])|\s{0,2}(?i:per\s?cent|pct)\b)?")
+_PERCENT_WORDS = frozenset({"%", "percent", "per cent", "pct"})
 
 _SPELLED_FIGURE_RE = re.compile(
     r"\b(?:(?:one|two|three|four|five|six|seven|eight|nine|ten|twenty|thirty|forty|fifty|sixty|seventy|"
@@ -48,24 +61,23 @@ _DOWN_WORDS = frozenset(
 )
 _DIRECTION_WINDOW = 3  # words before the figure that may carry its direction
 
-# The same four families the app's regulated-advice guard blocks.
-_ADVICE_PATTERNS: list[tuple[re.Pattern[str], str]] = [
-    (
-        re.compile(
-            r"\b(?:you should|i (?:recommend|suggest|advise)|my advice)\b.{0,30}\b(?:buy|sell|short|invest|purchase)\b",
-            re.IGNORECASE,
-        ),
-        "directive advice to trade",
-    ),
-    (re.compile(r"\b(?:buy|sell|short) (?:it|now|today|immediately)\b", re.IGNORECASE), "time-pressured buy/sell instruction"),
-    (
-        re.compile(
-            r"\b(?:guarantee[sd]?|risk[- ]free|can'?t lose|sure thing|will (?:definitely|certainly) (?:go up|rise|moon))\b",
-            re.IGNORECASE,
-        ),
-        "certainty / guaranteed-return claim",
-    ),
-]
+# What may never be said, read from the contract the app's chat guard reads too.
+CONTRACT_PATH = Path(__file__).resolve().parents[2] / "contracts" / "guardrails" / "advice.json"
+
+
+def _contract_patterns(group: str) -> list[tuple[re.Pattern[str], str]]:
+    contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+    return [(re.compile(entry["pattern"], re.IGNORECASE if entry.get("flags") == "i" else 0), str(entry["why"])) for entry in contract[group]]
+
+
+_ADVICE_PATTERNS: list[tuple[re.Pattern[str], str]] = _contract_patterns("advice")
+_PREDICTION_PATTERNS: list[tuple[re.Pattern[str], str]] = _contract_patterns("prediction")
+_PRICE_CALL_PATTERNS: list[tuple[re.Pattern[str], str]] = _contract_patterns("price_call")
+# Where one clause of a sentence ends and the next begins, for deciding which group a figure is
+# about: in "semiconductors lagged while the median name rose 0.8%" the 0.8% is not the group's.
+_CLAUSE_BREAK_RE = re.compile(r"[;:]|\b(?:while|whereas|but|although|though|even as)\b", re.IGNORECASE)
+# A clause that names one of these is about the whole scan or the market, not about a group.
+_GENERAL_MEASURE_RE = re.compile(r"\b(?:median|breadth|market|index|indices|overall|s&p|nasdaq|vix|yield|aud)\b", re.IGNORECASE)
 _ADVICE_FRAMING_RE = re.compile(r"\b(?:financial|investment) advice\b", re.IGNORECASE)
 
 # Upper-case tokens that look like tickers but are ordinary market vocabulary.
@@ -94,9 +106,10 @@ def figures_in(text: str) -> list[Figure]:
     previous_end = 0
     for match in _NUMBER_RE.finditer(text):
         sign, dollar, value, suffix = match.groups()
-        if suffix == "%":
+        unit = " ".join((suffix or "").lower().split())
+        if unit in _PERCENT_WORDS or unit == "percent":
             token = f"{value}%"
-        elif suffix:
+        elif unit:
             token = f"{value}x"
         elif dollar:
             token = f"${value}"
@@ -133,8 +146,19 @@ def split_paragraphs(text: str) -> list[str]:
     return [" ".join(part.split()) for part in re.split(r"\n\s*\n", cleaned) if part.strip()]
 
 
+def prediction_findings(sentence: str) -> list[str]:
+    """Why a sentence reads as a forecast - empty when it describes only what happened."""
+    return list(dict.fromkeys(why for pattern, why in _PREDICTION_PATTERNS if pattern.search(sentence)))
+
+
+def price_call_findings(text: str) -> list[str]:
+    """Why a piece of company news reads as a forecast of the share price. News may report what a
+    company expects of itself; what its shares will do is nobody's fact."""
+    return list(dict.fromkeys(why for pattern, why in _PRICE_CALL_PATTERNS if pattern.search(text)))
+
+
 def advice_findings(text: str) -> list[str]:
-    findings = [why for pattern, why in _ADVICE_PATTERNS if pattern.search(text)]
+    findings = list(dict.fromkeys(why for pattern, why in _ADVICE_PATTERNS if pattern.search(text)))
     # "financial advice" is a finding unless it is the disclaimer form ("... not financial advice").
     for match in _ADVICE_FRAMING_RE.finditer(text):
         before = text[max(0, match.start() - 30):match.start()]
@@ -148,16 +172,18 @@ def advice_findings(text: str) -> list[str]:
 class FactSheet:
     """What the model was told, in the two forms this needs: the text, and who owns each figure.
 
-    Build it with `general()` for facts about the whole scan or the market and `about(symbol, ...)`
-    for facts about one ticker; both return the text they were given so the caller can keep
-    composing lines. `say()` adds a line without registering anything (labels, explanations).
+    Build it with `general()` for facts about the whole scan or the market, `about(symbol, ...)`
+    for facts about one ticker and `about_subject(name, ...)` for facts about a named group; each
+    returns the text it was given so the caller can keep composing lines. `say()` adds a line
+    without registering anything (labels, explanations).
     """
 
     lines: list[str] = field(default_factory=list)
     general_figures: set[str] = field(default_factory=set)
     by_symbol: dict[str, set[str]] = field(default_factory=dict)
-    # (symbol or None, token) -> the directions the facts attached to that figure
+    # (symbol, None or "subject:<name>", token) -> the directions the facts attached to that figure
     directions: dict[tuple[str | None, str], set[int]] = field(default_factory=dict)
+    subject_names: set[str] = field(default_factory=set)  # lower-case names of the groups the facts describe
 
     @property
     def text(self) -> str:
@@ -180,14 +206,36 @@ class FactSheet:
         self._register(text, symbol)
         return text
 
+    def about_subject(self, name: str, text: str) -> str:
+        """A fact about a named group ("semiconductors down 11.5% on average"). Its figures stay
+        general - a sentence may quote one without naming the group - but its direction belongs to
+        the group: when two groups share a figure and moved opposite ways, a sentence that names
+        one of them may only give that one's direction."""
+        subject = _subject_key(name)
+        if subject:
+            self.subject_names.add(subject)
+            for figure in figures_in(text):
+                if figure.direction is not None:
+                    self.directions.setdefault((f"subject:{subject}", figure.token), set()).add(figure.direction)
+        return self.general(text)
+
     def _register(self, text: str, symbol: str | None) -> None:
         for figure in figures_in(text):
             (self.general_figures if symbol is None else self.by_symbol[symbol]).add(figure.token)
             if figure.direction is not None:
                 self.directions.setdefault((symbol, figure.token), set()).add(figure.direction)
 
-    def allowed_directions(self, token: str, symbols: set[str]) -> set[int]:
-        """Every direction the facts gave this figure in this context; empty = none claimed."""
+    def allowed_directions(self, token: str, symbols: set[str], subjects: set[str] | frozenset[str] = frozenset()) -> set[int]:
+        """Every direction the facts gave this figure in this context; empty = none claimed. When
+        the sentence names a group the facts gave this figure for, that group's direction is the
+        context (with the named tickers'); otherwise any direction the facts stated for it stands."""
+        scoped: set[int] = set()
+        for subject in subjects:
+            scoped |= self.directions.get((f"subject:{subject}", token), set())
+        if scoped:
+            for symbol in symbols:
+                scoped |= self.directions.get((symbol, token), set())
+            return scoped
         allowed = set(self.directions.get((None, token), set()))
         for symbol in symbols:
             allowed |= self.directions.get((symbol, token), set())
@@ -208,6 +256,36 @@ class GuardResult:
 # A read that loses most of itself to the guard is not a read worth sending.
 MIN_SENTENCES = 2
 MAX_SENTENCES = 10
+
+
+def _subject_key(name: str) -> str:
+    return " ".join(str(name or "").lower().split())
+
+
+def _subject_mentions(sentence: str, subjects: set[str]) -> list[tuple[int, str]]:
+    """Where each named group is mentioned, as (offset, group), singular or plural ("semiconductor
+    stocks"). Longer names are matched first and their words are then spent, so "enterprise
+    software" is not also a mention of "software"."""
+    found: list[tuple[int, str]] = []
+    remaining = sentence
+    for subject in sorted(subjects, key=lambda name: (-len(name), name)):
+        stem = subject[:-1] if subject.endswith("s") and len(subject) > 3 else subject
+        pattern = re.compile(rf"(?<![A-Za-z]){re.escape(stem)}s?(?![A-Za-z])", re.IGNORECASE)
+        found.extend((match.start(), subject) for match in pattern.finditer(remaining))
+        remaining = pattern.sub(lambda match: " " * len(match.group(0)), remaining)
+    return found
+
+
+def _clause_of(sentence: str, position: int) -> tuple[int, int]:
+    """The stretch of the sentence, between clause breaks, that holds `position`."""
+    start, end = 0, len(sentence)
+    for match in _CLAUSE_BREAK_RE.finditer(sentence):
+        if match.end() <= position:
+            start = match.end()
+        elif match.start() >= position:
+            end = match.start()
+            break
+    return start, end
 
 
 def _mentions(sentence: str, symbols: set[str]) -> set[str]:
@@ -243,6 +321,7 @@ def guard_ai_read(text: str, sheet: FactSheet) -> GuardResult:
                 break
             mentioned = _mentions(sentence, sheet.symbols)
             scope = mentioned or context_symbols
+            group_mentions = _subject_mentions(sentence, sheet.subject_names)
             problems: list[tuple[str, str]] = []
 
             allowed = set(sheet.general_figures)
@@ -253,7 +332,15 @@ def guard_ai_read(text: str, sheet: FactSheet) -> GuardResult:
                     problems.append(("figure not in the facts for this subject", figure.token))
                     continue
                 if figure.direction is not None:
-                    stated = sheet.allowed_directions(figure.token, scope)
+                    # The groups named in the same clause as the figure are the ones it can be about.
+                    # A clause that names no group carries on about the sentence's ("cybersecurity
+                    # was the weak spot: the group rose 2.4%") - unless it names a measure of the
+                    # whole scan ("... while the median name rose 0.8%").
+                    clause_start, clause_end = _clause_of(sentence, figure.start)
+                    subjects = {subject for position, subject in group_mentions if clause_start <= position < clause_end}
+                    if not subjects and not _GENERAL_MEASURE_RE.search(sentence[clause_start:clause_end]):
+                        subjects = {subject for _position, subject in group_mentions}
+                    stated = sheet.allowed_directions(figure.token, scope, subjects)
                     if stated and figure.direction not in stated:
                         problems.append(("direction contradicts the facts", figure.token))
 
@@ -262,6 +349,8 @@ def guard_ai_read(text: str, sheet: FactSheet) -> GuardResult:
                 problems.append(("spelled-out figure", spelled.group(0)))
             for ticker in _unknown_tickers(sentence, sheet.symbols):
                 problems.append(("ticker not in the facts", ticker))
+            for why in prediction_findings(sentence):
+                problems.append(("prediction", why))
 
             if problems:
                 removed.append(sentence)
@@ -275,7 +364,10 @@ def guard_ai_read(text: str, sheet: FactSheet) -> GuardResult:
                 context_symbols = mentioned
 
     survivor = "\n\n".join(" ".join(sentences) for sentences in kept if sentences)
-    advice = advice_findings(survivor)
+    # Advice is looked for in everything the model wrote, not in what survived: a sentence deleted
+    # for another reason (a forecast, an unknown ticker) must not carry its advice out with it and
+    # leave the rest to be sent as if the model had behaved.
+    advice = advice_findings("\n".join(paragraphs))
     if advice:
         return GuardResult(ok=False, text="", removed=removed, reasons=reasons + advice, categories=categories + ["advice"])
     if total < MIN_SENTENCES:

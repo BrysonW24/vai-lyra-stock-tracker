@@ -1,0 +1,13 @@
+{
+ "label": "weekly-roundup",
+ "synthetic": true,
+ "note": "SYNTHETIC. Written for Lyra's model bake-off: the organisations, people and figures are invented and describe no real event. It exists to test whether a model copies figures exactly, refuses to repeat advice, and knows a roundup is not an item.",
+ "expect": {
+  "skip": true
+ },
+ "url": "https://blog.example.net/this-week-in-ai-44",
+ "final_url": "https://blog.example.net/this-week-in-ai-44",
+ "source": "Example AI Weekly",
+ "title": "This week in AI: five stories you may have missed",
+ "text": "This week in AI: five stories you may have missed\n\nWelcome back to our weekly roundup. Here are the five stories our editors found most interesting this week. Click through for each one.\n\n1. A chip designer is said to be exploring a new packaging partner. Read more.\n\n2. Three robotics start-ups showed humanoid prototypes at a trade show. Read more.\n\n3. A cloud provider trimmed prices on some of its older accelerators. Read more.\n\n4. Regulators in two regions opened consultations on AI model reporting. Read more.\n\n5. Our columnist argues that the data-centre boom is running ahead of the grid, and that readers should think hard before chasing it. Read more.\n\nThat is all for this week. Subscribe to get the roundup in your inbox every Friday, and tell a friend."
+}

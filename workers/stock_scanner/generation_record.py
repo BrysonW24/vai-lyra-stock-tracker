@@ -76,6 +76,7 @@ class Generation:
     mode: str = PRODUCTION
     user_id: str | None = None
     model: str | None = None  # None for engine-only content (the morning guide, a figures-only read)
+    provider: str = "anthropic"  # who served the model: anthropic, or an open-model provider (open_model.py)
     effort: str | None = None
     input_tokens: int = 0
     cache_read_tokens: int = 0
@@ -93,7 +94,7 @@ class Generation:
             "id": self.id,
             "user_id": self.user_id or None,
             "agent_name": self.agent_name,
-            "model_provider": "anthropic" if self.model else None,
+            "model_provider": (self.provider or None) if self.model else None,
             "model_name": self.model or None,
             "prompt_version": self.prompt_version,
             "input_hash": input_hash(self.input_text),

@@ -1,0 +1,128 @@
+# Lyra's own copy of an open model, on the runner itself.
+#
+# A public repository's GitHub-hosted runner has 4 vCPUs and 16 GB of memory and no GPU. That is
+# enough to run a 4-bit build of a model of up to about 12 billion parameters with llama.cpp, slowly
+# (a few tokens a second) - which is fine for a scheduled job that writes one short message, and is
+# the only place Lyra can run a model that depends on nobody's free allowance. This action downloads
+# one pinned model file, checks it, and serves it on 127.0.0.1 with the OpenAI-compatible API that
+# workers/stock_scanner/open_model.py speaks (`local:<name>` in OPEN_MODEL_CHAIN).
+#
+# Three rules it keeps:
+#   * NOTHING UNPINNED RUNS. The model file is fetched at an exact Hugging Face revision and the
+#     llama.cpp build at an exact release tag; both are verified against a sha256 written in this
+#     repository before anything is executed or loaded.
+#   * NOTHING REACHES THE PUBLIC LOG. This repository's Actions logs are public. The server's output
+#     goes to a file on the runner; only its start-up lines (written before any request exists) are
+#     ever printed, and only when it fails to start.
+#   * IT LISTENS ON THIS MACHINE ONLY. 127.0.0.1, never a public interface.
+name: Start a local open model
+description: Serve one pinned GGUF model with a pinned llama.cpp build on 127.0.0.1.
+inputs:
+  repo:
+    description: Hugging Face repository id that holds the GGUF file.
+    required: true
+  revision:
+    description: The repository revision (commit hash) to fetch from - never a branch name.
+    required: true
+  file:
+    description: The GGUF file name inside the repository.
+    required: true
+  sha256:
+    description: The file's sha256, as Hugging Face lists it for that revision.
+    required: true
+  context:
+    description: Context window in tokens. A read or one briefing item fits well inside 8192.
+    required: false
+    default: '8192'
+  reasoning-budget:
+    description: '-1 lets a reasoning model think; 0 turns thinking off where the model allows it.'
+    required: false
+    default: '-1'
+  port:
+    description: Port on 127.0.0.1.
+    required: false
+    default: '8080'
+runs:
+  using: composite
+  steps:
+    - name: Fetch and check the model
+      shell: bash
+      env:
+        MODEL_REPO: ${{ inputs.repo }}
+        MODEL_REVISION: ${{ inputs.revision }}
+        MODEL_FILE: ${{ inputs.file }}
+        MODEL_SHA256: ${{ inputs.sha256 }}
+      run: |
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/local-model"
+        target="$RUNNER_TEMP/local-model/model.gguf"
+        curl --fail --location --silent --show-error --retry 3 --retry-delay 10 \
+          --output "$target" "https://huggingface.co/${MODEL_REPO}/resolve/${MODEL_REVISION}/${MODEL_FILE}"
+        echo "${MODEL_SHA256}  ${target}" | sha256sum --check --status \
+          || { echo "::error::the model file does not match its pinned sha256"; exit 1; }
+        echo "model ready: $(du -h "$target" | cut -f1)"
+
+    - name: Fetch and check llama.cpp
+      shell: bash
+      env:
+        # ggml-org/llama.cpp release b12110 (2026-11-04). The sha256 values are the release's own
+        # asset digests, read from the GitHub API on 2026-11-06. To move to a newer build, change
+        # the tag and both digests together.
+        LLAMA_TAG: b12110
+        LLAMA_SHA256_X64: 368227edcc229be5f9bed16a2223d79b5e41d0ac2e19bcf5825e82291c060e55
+        LLAMA_SHA256_ARM64: 4758b51335e37b4346251f2687d64841ff1c07ecb27fc46323945bb2ec9c44d2
+      run: |
+        set -euo pipefail
+        case "$(uname -m)" in
+          x86_64) asset="llama-${LLAMA_TAG}-bin-ubuntu-x64.tar.gz"; sum="$LLAMA_SHA256_X64" ;;
+          aarch64 | arm64) asset="llama-${LLAMA_TAG}-bin-ubuntu-arm64.tar.gz"; sum="$LLAMA_SHA256_ARM64" ;;
+          *) echo "::error::no llama.cpp build is pinned for $(uname -m)"; exit 1 ;;
+        esac
+        archive="$RUNNER_TEMP/local-model/llama.tar.gz"
+        curl --fail --location --silent --show-error --retry 3 --retry-delay 10 \
+          --output "$archive" "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_TAG}/${asset}"
+        echo "${sum}  ${archive}" | sha256sum --check --status \
+          || { echo "::error::the llama.cpp archive does not match its pinned sha256"; exit 1; }
+        mkdir -p "$RUNNER_TEMP/local-model/llama"
+        tar -xzf "$archive" -C "$RUNNER_TEMP/local-model/llama"
+        server="$(find "$RUNNER_TEMP/local-model/llama" -type f -name llama-server | head -n 1)"
+        [ -n "$server" ] || { echo "::error::llama-server was not in the archive"; exit 1; }
+        chmod +x "$server"
+        echo "LLAMA_SERVER=$server" >> "$GITHUB_ENV"
+
+    - name: Start the server
+      shell: bash
+      env:
+        MODEL_CONTEXT: ${{ inputs.context }}
+        MODEL_REASONING: ${{ inputs.reasoning-budget }}
+        MODEL_PORT: ${{ inputs.port }}
+      run: |
+        set -euo pipefail
+        log="$RUNNER_TEMP/local-model/server.log"
+        library_dir="$(dirname "$LLAMA_SERVER")"
+        LD_LIBRARY_PATH="${library_dir}:${LD_LIBRARY_PATH:-}" nohup "$LLAMA_SERVER" \
+          --model "$RUNNER_TEMP/local-model/model.gguf" \
+          --host 127.0.0.1 --port "$MODEL_PORT" \
+          --ctx-size "$MODEL_CONTEXT" --parallel 1 --threads "$(nproc)" \
+          --jinja --reasoning-budget "$MODEL_REASONING" --no-webui \
+          > "$log" 2>&1 &
+        server_pid=$!
+        echo "LOCAL_MODEL_URL=http://127.0.0.1:${MODEL_PORT}/v1" >> "$GITHUB_ENV"
+        # Loading several gigabytes from disk takes a while; a request before it finishes gets a 503.
+        deadline=$((SECONDS + 720))
+        while [ "$SECONDS" -lt "$deadline" ]; do
+          if curl --fail --silent --max-time 3 "http://127.0.0.1:${MODEL_PORT}/health" > /dev/null 2>&1; then
+            echo "model server is up ($(nproc) threads, context ${MODEL_CONTEXT})"
+            exit 0
+          fi
+          if ! kill -0 "$server_pid" 2> /dev/null; then
+            echo "::error::the model server stopped while loading (out of memory is the usual cause)"
+            head -n 40 "$log" || true
+            exit 1
+          fi
+          sleep 3
+        done
+        # Start-up lines only: no request has been made, so no prompt or answer can be in them.
+        echo "::error::the model server did not come up within 12 minutes"
+        head -n 40 "$log" || true
+        exit 1
