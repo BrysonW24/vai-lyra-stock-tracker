@@ -6,6 +6,18 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.141.0] - 2026-11-07
+
+The market read is checked for what its figures mean, and the bake-off finds the small model that got them right.
+
+### Changed
+
+- Groundwork for the free market read: the check on anything a model writes about a session now tests what a figure means, not only that it is real. A count attached to the wrong thing ("7 names weakened" when 25 did and 7 dropped out), a group called the worst when it was not, a ticker placed in a group it is not in, and a ticker sent to a status it does not hold are each caught, and the sentence is removed.
+- A number written as a word ("sixty-one names", "forty percent") is now read as the number it is and checked like any other. Before, it passed unread.
+- This comes from the first bake-off of open-source models on Lyra's own work, run on free GitHub machines: every model copied its figures correctly, and half the reads still said something wrong about them. On those saved reads the new checks remove 9 of the 13 slips found by eye and none of the 96 correct sentences.
+- The one model with no slip at all was the smallest (Gemma 4 E4B), and the only one left free to think before writing. The bake-off now runs each model with thinking on and off, reads each session several times, and counts getting the facts right separately from filing an item under the right heading.
+- A model running on Lyra's own machine now gets more room to think before it writes, and a sentence that calls a setup an "opportunity" is removed from a read or a chat answer.
+
 ## [0.140.0] - 2026-11-07
 
 Ask Lyra is free for everyone: open-source models answer, no key and no sign-in needed.
@@ -1963,7 +1975,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.140.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.141.0...HEAD
+[0.141.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.140.0...v0.141.0
 [0.140.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.139.0...v0.140.0
 [0.139.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.2...v0.139.0
 [0.138.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.1...v0.138.2

@@ -77,7 +77,12 @@ def test_unknown_tickers_and_spelled_out_magnitudes_are_removed():
     verdict = guard_ai_read(text, _sheet())
     assert verdict.ok
     assert verdict.removed == ["TSLA ripped higher.", "Roughly forty percent of names rose."]
-    assert verdict.categories == ["ticker not in the facts", "spelled-out figure"]
+    # "forty percent" is read as 40% and checked like any other figure: nobody's facts hold it.
+    assert verdict.categories == ["ticker not in the facts", "figure not in the facts for this subject"]
+
+    # A magnitude that cannot be read as a number is still not allowed.
+    doubled = guard_ai_read("NVDA led at up 2.1%. Volume doubled across the scan. SNOW lagged, down 1.9%.", _sheet())
+    assert doubled.removed == ["Volume doubled across the scan."] and doubled.categories == ["spelled-out figure"]
 
 
 def test_market_vocabulary_is_not_a_ticker():

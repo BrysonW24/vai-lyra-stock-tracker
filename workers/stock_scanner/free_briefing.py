@@ -43,7 +43,14 @@ JOB_NAME = "free_briefing"
 # night's dozen articles far inside a free tier's daily allowance.
 ARTICLE_WINDOW_CHARS = 6_000
 MAX_OUTPUT_TOKENS = 1200
+# On Lyra's own machine a thinking model gets room to think (see free_read.LOCAL_MAX_OUTPUT_TOKENS).
+LOCAL_MAX_OUTPUT_TOKENS = 2500
 SOURCE_LABEL_CHARS = 60
+
+
+def output_budget(target: Target) -> int:
+    """The most a model may write for one item: generous on Lyra's own machine, tight on a free tier."""
+    return LOCAL_MAX_OUTPUT_TOKENS if target.provider.name == "local" else MAX_OUTPUT_TOKENS
 
 ITEM_PROMPT = """You write one item for Lyra's evening briefing from ONE source page. Lyra is a research tool for private investors who follow AI and technology shares. It informs; it never recommends.
 
@@ -217,7 +224,7 @@ def write_item(
             target,
             system=ITEM_PROMPT,
             user=brief,
-            max_tokens=MAX_OUTPUT_TOKENS,
+            max_tokens=output_budget(target),
             temperature=0.2,
             schema=ITEM_SCHEMA,
             schema_name="briefing_item",

@@ -167,6 +167,7 @@
       "paths": [
         "workers/stock_scanner/daily_read.py",
         "workers/stock_scanner/ai_read_guard.py",
+        "workers/stock_scanner/read_meaning.py",
         "workers/stock_scanner/summary_columns.json",
         "workers/stock_scanner/morning_guide.py",
         ".github/workflows/morning-guide.yml"

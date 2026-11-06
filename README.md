@@ -430,6 +430,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.141.0  2026-11-07  The market read is checked for what its figures mean, and the bake-off finds the small model that got them right
 0.140.0  2026-11-07  Ask Lyra is free for everyone: open-source models answer, no key and no sign-in needed
 0.139.0  2026-11-06  Groundwork for free AI: an open-source writer, a bake-off to choose it, and stricter checks on what any model writes
 0.138.2  2026-10-13  The morning guide tells a closing quote from a preliminary one by the session's own close
@@ -599,7 +600,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(168 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(169 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

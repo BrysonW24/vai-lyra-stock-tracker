@@ -129,6 +129,12 @@
       "why": "reports a forecast as fact",
       "flags": "i",
       "pattern": "\\b(?:traders?|investors?|analysts?|markets?|the market|the street)\\s+(?:now\\s+|still\\s+|widely\\s+)?expects?\\b"
+    },
+    {
+      "id": "opportunity-framing",
+      "why": "calls a setup an opportunity",
+      "flags": "i",
+      "pattern": "\\bopportunit(?:y|ies)\\b"
     }
   ],
   "vectors": {
@@ -307,7 +313,10 @@
       "A strong setup is confirmed if NVDA will rise, which looks set to happen.",
       "The setup fails unless prices will rise, which they will.",
       "The setup is confirmed only if NVDA will rally.",
-      "The signal resets if NVDA could bounce."
+      "The signal resets if NVDA could bounce.",
+      "Additionally, ESTC, DOCU, and NOW transitioned into watchlist setups, indicating forming opportunities.",
+      "Several other names moved into watchlist setups, forming new potential opportunities as they began to recover.",
+      "The sell-off leaves an opportunity in beaten-down names."
     ],
     "prediction_keeps": [
       "A broad rally tends to lower scores.",
@@ -317,7 +326,9 @@
       "The session did not continue the prior day's gains.",
       "Nothing in the facts says why it fell.",
       "The engine is built to look for a beaten-down name turning up.",
-      "Setups that had been forming were invalidated."
+      "Setups that had been forming were invalidated.",
+      "Three names became watchlist setups as their scores improved.",
+      "The engine looks for a beaten-down name turning up."
     ],
     "price_call_removes": [
       "Shares are likely to rise on the news.",
