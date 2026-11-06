@@ -4,7 +4,7 @@ import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { guardProse } from '@/lib/ai/guardrails/prose';
 import { answerWith } from '@/lib/ai/answer';
 import { figuresOnlyAnswer } from '@/lib/ai/figures-answer';
-import { explicitlyAsked, offerText } from '@/lib/ai/action-offer';
+import { explicitlyAsked, isOfferable, offerText } from '@/lib/ai/action-offer';
 import { buildDailyBrief } from '@/lib/daily-brief';
 import { getDashboardData } from '@/lib/data';
 import { getMarketContextLive } from '@/lib/market-context-live';
@@ -438,8 +438,10 @@ export async function POST(request: NextRequest) {
         latencyMs,
       });
       // The model's wording was stopped, but the reader asked for this action in so many words:
-      // offer it in the app's own words rather than leave them with a refusal.
-      if (action && last?.role === 'user' && explicitlyAsked(last.content, action)) {
+      // offer it in the app's own words rather than leave them with a refusal. Only ever a
+      // watchlist or portfolio entry - a buy the model proposed, with an amount the model chose,
+      // is never offered after its advice was stopped.
+      if (action && isOfferable(action) && last?.role === 'user' && explicitlyAsked(last.content, action)) {
         return NextResponse.json({ ok: true, text: offerText(action), suggestions: [], action, answeredBy: completion.via });
       }
       return NextResponse.json({

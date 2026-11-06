@@ -155,6 +155,20 @@ describe('POST /api/ai/chat with the free pool', () => {
     expect(off.action).toBeUndefined();
   });
 
+  it('never turns stopped advice into a buy card for an amount the model chose', async () => {
+    // The reader asks whether to buy; the model answers with advice and proposes a $5,000 buy.
+    const modelSays = 'You should buy NVDA now - put in $5,000.\nACTION: log_trade || BUY || NVDA || 5000';
+    mocks.answerWith.mockResolvedValue({ ok: true, text: modelSays, provider: 'groq', model: 'openai/gpt-oss-120b', usage: null, costUsd: 0, via: 'free_pool' });
+    const reply = await ask('Should I add NVDA? How much would you put in?', { agentActions: true });
+    expect(reply.text).toContain('research-only guardrails');
+    expect(reply.text).not.toContain('5,000');
+    expect(reply.action).toBeUndefined();
+
+    // Nor a portfolio card for a question that named no portfolio.
+    mocks.answerWith.mockResolvedValue({ ok: true, text: 'Buy NVDA now.\nACTION: add_portfolio || NVDA', provider: 'groq', model: 'openai/gpt-oss-120b', usage: null, costUsd: 0, via: 'free_pool' });
+    expect((await ask('Should I add NVDA?', { agentActions: true })).action).toBeUndefined();
+  });
+
   it("gives the model step what is left of the route's own time", async () => {
     await ask('What does the scan look like?');
     const request = mocks.answerWith.mock.calls[0][2] as { deadlineMs: number };

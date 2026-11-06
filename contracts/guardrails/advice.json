@@ -1,6 +1,6 @@
 {
   "version": "2026-11-06",
-  "description": "What Lyra's AI may never say, in one file. ADVICE blocks a whole answer - there is no safe half of an instruction to trade. A PREDICTION removes the sentence that makes it. A PRICE CALL (a forecast of a share price) removes a briefing item. Read today by workers/stock_scanner/ai_read_guard.py and briefing_guard.py; written in the regex both Python and JavaScript read the same way (no lookbehind, no named groups, no inline flags) so the app's chat guard can read the same file. 'flags' is 'i' (ignore case) or '' (case matters - used where a capital letter is the signal: a sentence that opens with an instruction, or a ticker). Widened on 2026-11-06, when Lyra's free features moved to open-weight models: a smaller model writes 'Buy SPOT now' or 'investors should consider adding' where a frontier model did not. The rules describe advice TO THE READER. Company news is full of the same verbs used as facts - 'is considering selling a stake', 'we need to add capacity', 'a loan guarantee', 'investors must wait for the decision' - and must pass; the test sentences pin both sides. Three adversarial reviews of the app's free chat (2026-11-06) settled one more thing: these rules carry NO exemptions for wording that merely looks like advice or a forecast ('Add NVDA to your watchlist', 'Look for the Buy Review badge', 'likely why the score fell', 'invalidated if price should fall'). Each exemption that was tried could be talked around ('Add NVDA to your watchlist and go long'). Losing a harmless sentence is the price of never showing a reader an instruction to trade; the test sentences pin those losses too.",
+  "description": "What Lyra's AI may never say, in one file. ADVICE blocks a whole answer - there is no safe half of an instruction to trade. A PREDICTION removes the sentence that makes it. A PRICE CALL (a forecast of a share price) removes a briefing item. Read today by workers/stock_scanner/ai_read_guard.py and briefing_guard.py; written in the regex both Python and JavaScript read the same way (no lookbehind, no named groups, no inline flags) so the app's chat guard can read the same file. 'flags' is 'i' (ignore case) or '' (case matters - used where a capital letter is the signal: a sentence that opens with an instruction, or a ticker). Widened on 2026-11-06, when Lyra's free features moved to open-weight models: a smaller model writes 'Buy SPOT now' or 'investors should consider adding' where a frontier model did not. The rules describe advice TO THE READER. Company news is full of the same verbs used as facts - 'is considering selling a stake', 'we need to add capacity', 'a loan guarantee', 'investors must wait for the decision' - and must pass; the test sentences pin both sides. Three adversarial reviews of the app's free chat (2026-11-06) settled one more thing: these rules carry NO exemptions for wording that merely looks like advice or a forecast ('Add NVDA to your watchlist', 'Look for the Buy Review badge', 'likely why the score fell', 'invalidated if price should fall'). Each exemption that was tried could be talked around ('Add NVDA to your watchlist and go long'). Losing a harmless sentence is the price of never showing a reader an instruction to trade; the test sentences pin those losses too. The advice rules also guard briefing items written from company news, so a rule that reads 'Grab shares rose' or 'Double down: Intel said' as an instruction costs a true item - see known_gaps.",
   "advice": [
     {
       "id": "directive",
@@ -29,8 +29,8 @@
     {
       "id": "imperative-position",
       "why": "instruction to take or leave a position",
-      "flags": "i",
-      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:(?:then|and then|now|next|so)[,]?\\s+)?(?:stay (?:long|short|out of|away from|invested)|take (?:some )?profits?|load up|lighten up|step aside|get out|get in(?!\\s+touch)|pick (?:it|them|some) up|pick up (?:shares|stock|some|more|a few)|grab (?:some |a few )?(?:shares|stock)|snap (?:it|them|some|shares) up|go (?:long|short)|get (?:long|short|exposure)|pile in|double down|back up the truck|open a (?:long|short|position)|own (?:it|them|the stock|shares)|start a (?:stake|position)|purchase (?:shares|stock))\\b"
+      "flags": "",
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Stay (?:long|short|out of|away from|invested)|Take (?:some )?profits?|Load up|Lighten up|Step aside|Get out|Get in)\\b"
     },
     {
       "id": "modal",
@@ -72,7 +72,7 @@
       "id": "opportunity",
       "why": "calls it a time or a chance to trade",
       "flags": "i",
-      "pattern": "\\b(?:(?:buying|selling) opportunit(?:y|ies)\\b|buy(?:ing)? the dip\\b|(?:good|great|right|best|ideal|perfect) time to (?:buy|sell|enter|exit|add|invest)\\b|(?:time|moment) to (?:buy|sell|add|accumulate|trim|exit|take (?:some )?profits?|get (?:in|out))\\b|worth (?:buying|accumulating|adding)\\b(?!\\s+that\\b)|the ones? to own\\b|a steal (?:here|at|now)\\b|it'?s a steal\\b)"
+      "pattern": "\\b(?:(?:buying|selling) opportunit(?:y|ies)\\b|buy(?:ing)? the dip\\b|(?:good|great|right|best|ideal|perfect) time to (?:buy|sell|enter|exit|add|invest)\\b|(?:time|moment) to (?:buy|sell|add|accumulate|trim|exit|take (?:some )?profits?|get (?:in|out))\\b|worth (?:buying|accumulating|adding)\\b(?!\\s+that\\b))"
     },
     {
       "id": "valuation",
@@ -201,10 +201,9 @@
       "Traders might want to add AMD to the watchlist and dump INTC.",
       "Readers may wish to add NVDA to my watchlist and open a long.",
       "Investors could look to add SPOT to the alerts and pile in.",
-      "The setup improved. Then pick up shares.",
-      "The score is 82: go long.",
-      "Now double down.",
-      "NVDA is the one to own."
+      "Get in touch via Settings if alerts do not arrive.",
+      "Get in touch with the team through the support page.",
+      "Get in touch with your broker and load up on NVDA."
     ],
     "advice_passes": [
       "Buyers stepped in late in the session.",
@@ -241,13 +240,16 @@
       "The company upgraded its guidance for the year.",
       "Higher rates forced funds to sell growth names again.",
       "The board may consider the offer on Friday.",
-      "Get in touch via Settings if alerts do not arrive.",
       "Pick-up in demand lifted revenue for a second quarter.",
       "Scale in manufacturing remains the constraint, the company said.",
       "The fund said it will double down on AI infrastructure.",
       "Investors piled in after the results.",
       "The founders will own the stock outright after the buyback.",
-      "Get in touch with the team through the support page."
+      "Grab shares rose 4% after the ride-hailing group raised its guidance.",
+      "Snap shares up 12% after the company beat revenue estimates.",
+      "Some analysts called the price a steal at 8 times earnings.",
+      "Double down: Intel said it would spend $20 billion on two new fabs.",
+      "The plan has three parts: go long on renewables, cut coal and build storage."
     ],
     "prediction_removes": [
       "AMD is likely to rebound.",
@@ -340,5 +342,14 @@
       "flags": "i",
       "pattern": "\\b(?:shares?|stock|share price)\\s+(?:(?:is|are|looks?|seems?)\\s+(?:likely|set|poised|expected)\\s+to\\s+(?:rise|fall|rally|rebound|jump|surge|drop|climb|soar|slide|decline|gain|benefit|re-?rate)|(?:will|could|should|may|might)\\s+(?:well\\s+|soon\\s+)?(?:rally|rebound|soar|surge|jump|re-?rate|benefit|outperform|underperform))\\b"
     }
-  ]
+  ],
+  "known_gaps": {
+    "why": "Reader-directed trade idioms with no ticker and no 'you should' are not caught. Adding them to the advice rules dropped real company news (the advice rules also guard briefing items), so they wait for a rule that only chat and the market read apply.",
+    "advice": [
+      "The setup improved. Then pick up shares.",
+      "The score is 82: go long.",
+      "Now double down.",
+      "NVDA is the one to own."
+    ]
+  }
 }
