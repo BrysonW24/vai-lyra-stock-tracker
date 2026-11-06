@@ -401,7 +401,7 @@
  },
  {
   "session": "quiet",
-  "verdict": "false-missed",
+  "verdict": "false-caught",
   "sentence": "Two strong setups failed."
  },
  {
@@ -718,5 +718,365 @@
   "session": "broad-selloff",
   "verdict": "true",
   "sentence": "Losses were broad but not uniform, down 2.4% on average for mega-cap platforms."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "Two of your holdings are now weakening."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "Three names on your watchlist are near a trigger."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "Of the seven strong setups at the previous close, none survived."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "Seven strong setups at the previous close became zero at this close."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "The scan ended with no strong setups and seven watchlist setups."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "Seven names are watchlist setups, two of them new: ADBE and ESTC."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "There were six invalidations, all from former strong setups."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "Watchlist setups shrank from twenty to seven."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "Three strong setups stand at the close, two of them new."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "Four names left strong setup territory, three of them invalidated."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "Seven new watchlist setups formed, bringing the total to twelve."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "The number of watchlist setups rose to twelve from eleven."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "Strong setups fell to three from five as prices moved away from their lows."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "Two names turned into strong setups and four fell out."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "Sixteen names are weakening, as the rally pulled prices off their lows."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "Cloud and data was the best-performing group, up 5.8% on average."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "Semiconductors, the worst-performing group, slipped 0.6% on average."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "SWKS was the biggest single faller, down 5.4%, in semiconductors."
+ },
+ {
+  "session": "quiet",
+  "verdict": "true",
+  "sentence": "Cybersecurity was the standout group, with all nine names up."
+ },
+ {
+  "session": "quiet",
+  "verdict": "true",
+  "sentence": "Fintech fell the most, down 3.0% on average, with all five names lower."
+ },
+ {
+  "session": "quiet",
+  "verdict": "true",
+  "sentence": "Four strong setups remain after two new ones and five departures."
+ },
+ {
+  "session": "quiet",
+  "verdict": "true",
+  "sentence": "Three of the five names that left strong setup were invalidated."
+ },
+ {
+  "session": "quiet",
+  "verdict": "true",
+  "sentence": "Strong setups numbered four at the close, down from seven."
+ },
+ {
+  "session": "quiet",
+  "verdict": "true",
+  "sentence": "PTC and SPOT turned into strong setups, the only two to do so."
+ },
+ {
+  "session": "quiet",
+  "verdict": "true",
+  "sentence": "Twenty-one names are weakening and three more were invalidated."
+ },
+ {
+  "session": "quiet",
+  "verdict": "true",
+  "sentence": "Watchlist setups slipped to thirteen from fifteen."
+ },
+ {
+  "session": "quiet",
+  "verdict": "true",
+  "sentence": "Consumer internet was weighed by ABNB, the session's biggest decliner, down 7.6%."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "MSFT, a mega-cap platform, held up better than AMD in semiconductors."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "Mega-cap platforms led the scan on a relative basis, down only 2.4% on average."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "The sell-off left 25 names weakening and 6 invalidated."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "AKAM and COIN became strong setups while IBM, DOCU and NOW were invalidated."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "HOOD became a watchlist setup and COIN a strong setup, both fintech names."
+ },
+ {
+  "session": "quiet",
+  "verdict": "true",
+  "sentence": "AFRM, AMZN and SOFI dropped out of strong setup; PINS and XYZ did too."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "true",
+  "sentence": "AMD dropped out of strong setup into invalidated territory."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "true",
+  "sentence": "Only three names remain strong setups: AKAM, COIN and one more."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "7 of the names weakened as the sell-off spread."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "Seven names have weakened since the previous close."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "The fintech names ABNB and SNAP led the declines."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "AI infrastructure was the worst group."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "AI infrastructure posted the steepest average decline, down 11.3%."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "The worst-performing group was AI infrastructure."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "The heaviest average loss came in AI infrastructure."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "Seven strong setups were invalidated."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "The session invalidated all seven strong setups."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "MSFT moved down to no signal."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-missed",
+  "sentence": "MSFT ended with no signal after leaving strong setup."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "Twelve names moved into watchlist setups."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "There were four new watchlist setups."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "SNAP, a fintech name, fell 14.0%."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "In fintech, SNAP fell 14.0%."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "Watchlist setups rose to 20 from 7."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "false-caught",
+  "sentence": "Four new strong setups formed."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "false-caught",
+  "sentence": "Strong setups rose to five from three."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "false-caught",
+  "sentence": "Cybersecurity was the best group."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "false-caught",
+  "sentence": "Cybersecurity posted the biggest average gain."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "false-caught",
+  "sentence": "NET became a strong setup."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "false-caught",
+  "sentence": "IBM fell from strong setup to a watchlist setup."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "false-caught",
+  "sentence": "DOCN, a cybersecurity name, led with 8.8%."
+ },
+ {
+  "session": "quiet",
+  "verdict": "false-caught",
+  "sentence": "Software was the best group on the day."
+ },
+ {
+  "session": "quiet",
+  "verdict": "false-caught",
+  "sentence": "Five strong setups were invalidated."
+ },
+ {
+  "session": "quiet",
+  "verdict": "false-caught",
+  "sentence": "AMZN slipped to a watchlist setup."
+ },
+ {
+  "session": "quiet",
+  "verdict": "false-caught",
+  "sentence": "Strong setups rose to 7 from 4."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "Seven names weakened, including two of your holdings."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-missed",
+  "sentence": "Across your book and the scan, seven names weakened."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "Seven of the strong setups were invalidated."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "All seven of the previous strong setups were invalidated."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "Seven setups were invalidated."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "Seven strong setups failed outright."
+ },
+ {
+  "session": "broad-rally",
+  "verdict": "false-caught",
+  "sentence": "Four strong setups were invalidated."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "There are now seven strong setups."
+ },
+ {
+  "session": "broad-selloff",
+  "verdict": "false-caught",
+  "sentence": "Six names are strong setups at the close."
+ },
+ {
+  "session": "quiet",
+  "verdict": "false-caught",
+  "sentence": "Seven strong setups remain at the close."
  }
 ]

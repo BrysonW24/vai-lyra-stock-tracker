@@ -26,12 +26,13 @@ sentences is not sent at all. Each rule is therefore narrow on purpose: it fires
 slips actually took and leaves alone what merely resembles them (a count about the reader's own
 book, "one of the hardest-hit groups", "the day's biggest gain", "strong buying"). Two corpora pin
 both sides: every sentence the first bake-off's models wrote (tests/fixtures/bakeoff/
-reads-first-bakeoff.json) and a reviewer's 144 true and false sentences about the same sessions
+reads-first-bakeoff.json) and a reviewer's 216 true and false sentences about the same sessions
 (reads-review-cases.json).
 
 What it still cannot see: a claim the facts do not rank ("the strongest signals are in ESTC and
-AKAM"), a count given for the wrong moment ("20 watchlist setups at the close" when 20 was the
-day before), and wording that is merely loose. Pure functions, no I/O.
+AKAM"), a status named before its count ("weakening names totalled 23"), a destination not said
+with to / into / became ("ended with no signal"), and wording that is merely loose. Pure functions,
+no I/O.
 """
 from __future__ import annotations
 
@@ -172,6 +173,12 @@ _REACH_END_RE = re.compile(r"[,;:()]|\b\d+\b| - | – | — |\b(?:and|but|while|
 _SCORE_BEFORE_RE = re.compile(r"(?:scores?|scored|from|to|at)\s*$", re.IGNORECASE)
 _DESTINATION_RE = re.compile(r"\b(?:to|into)\s+(?:a\s+|the\s+)?(no[- ]signal|watch[- ]?list|strong)", re.IGNORECASE)
 _CLAIMING_VERBS = (("invalidated", r"invalidat(?:ed|es|e|ing)"), ("weakening", r"weaken(?:ed|s|ing)?"))
+# "7 strong setups were invalidated", "7 strong setups failed": a count of the ones that failed.
+_FAILED_RE = re.compile(r"^strong[- ](?:setups?|names?)\s+(?:were\s+|was\s+|got\s+|have\s+been\s+|had\s+been\s+)?(?:all\s+)?(?:invalidated|failed|fail)\b", re.IGNORECASE)
+# When a TOTAL of strong or watchlist setups is for: the close before, or this one. "Three previous
+# strong setups were invalidated" is not a total - "previous" there means "formerly".
+_PRIOR_RE = re.compile(r"\b(?:(?:previous|prior)\s+(?:session(?:'s)?\s+)?close|(?:previous|prior)\s+session|the day before|a day earlier|yesterday)\b", re.IGNORECASE)
+_NOW_RE = re.compile(r"\b(?:now|remain(?:s|ed|ing)?|at (?:the )?close|ended|stands?)\b", re.IGNORECASE)
 _REACH_WORDS = 7
 # "Strong setups fell to 6 from 7": the count now, and the count before. The verb must follow
 # "setups" directly - in "became strong setups as their scores jumped to 75" the 75 is a score.
@@ -233,12 +240,24 @@ def count_problems(sentence: str, meaning: ReadMeaning) -> list[str]:
             if found and (first is None or found.start() < first[0]):
                 first = (found.start(), status)
         if first is not None:
-            lead = after[: first[0]]
-            movement = "became" if _BECAME_RE.search(lead) else "dropped" if _DROPPED_RE.search(lead) else "any"
+            lead, tail = after[: first[0]], after[first[0] :]
+            if _BECAME_RE.search(lead):
+                movement = "became"
+            elif _DROPPED_RE.search(lead):
+                movement = "dropped"
+            elif _DROPPED_RE.search(tail) or _BECAME_RE.search(tail):
+                movement = "any"  # "7 strong setups dropped out": which 7 is said by the verb, not by a moment
+            else:
+                # "There are now 7 strong setups" is a claim about this close; "7 at the previous
+                # close" is one about the last. Said of the wrong one, a true number is a false one.
+                around = " ".join(before.split()[-4:]) + " " + after
+                movement = "prior" if _PRIOR_RE.search(around) else "now" if _NOW_RE.search(around) else "any"
             claims.append((first[1], movement))
-            destination = _DESTINATION_RE.search(after[first[0] :])  # "fell from strong to no signal"
+            destination = _DESTINATION_RE.search(tail)  # "fell from strong to no signal"
             if destination:
                 claims.append((_status_key(destination.group(1)), "any"))
+            if first[1] == "strong" and movement not in ("dropped", "became") and _FAILED_RE.match(tail):
+                claims.append(("invalidated", "any"))
         # A status verb directly before the count claims it too ("invalidated 7 strong setups").
         for status, verb in _CLAIMING_VERBS:
             if re.search(rf"\b{verb}\s+(?:all\s+|the\s+|another\s+|a\s+further\s+|some\s+)?$", before, re.IGNORECASE):

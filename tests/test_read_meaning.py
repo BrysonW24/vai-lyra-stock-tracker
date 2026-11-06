@@ -146,6 +146,26 @@ def test_a_total_said_to_have_moved_is_checked_at_both_ends(selloff: ReadMeaning
     assert count_problems("NOW moved to a watchlist setup after its score rose to 60 from 33.", quiet) == []
 
 
+def test_a_total_given_for_the_wrong_close_is_caught(selloff: ReadMeaning, quiet: ReadMeaning) -> None:
+    # The sell-off: 7 strong setups at the previous close, none at this one; 6 failed.
+    assert count_problems("There are now seven strong setups.", selloff) == ["7 strong"]
+    assert count_problems("Six names are strong setups at the close.", selloff) == ["6 strong"]
+    assert count_problems("At the previous close there were 7 strong setups.", selloff) == []
+    assert count_problems("Seven strong setups remain at the close.", quiet) == ["7 strong"]
+    assert count_problems("Four strong setups remain at the close.", quiet) == []
+    # "Previous" as "formerly" is not a total for the previous close.
+    assert count_problems("The session also invalidated three previous strong setups, including AFRM, AMZN, and SOFI.", quiet) == []
+
+
+def test_a_count_of_strong_setups_said_to_have_failed_is_held_to_the_ones_that_did(selloff: ReadMeaning, quiet: ReadMeaning) -> None:
+    assert count_problems("Seven strong setups were invalidated.", selloff) == ["7 invalidated"]
+    assert count_problems("All seven of the previous strong setups were invalidated.", selloff) == ["7 invalidated"]
+    assert count_problems("Seven strong setups failed outright.", selloff) == ["7 invalidated"]
+    assert count_problems("Six strong setups were invalidated.", selloff) == []
+    # Five left strong setup; three of those were invalidated. The five is not a count of failures.
+    assert count_problems("Three of the five names that left strong setup were invalidated.", quiet) == []
+
+
 @pytest.mark.parametrize(
     "sentence",
     [
@@ -384,7 +404,7 @@ def test_the_guard_leaves_every_clean_sentence_of_the_first_bakeoff_alone() -> N
 
 
 def test_the_reviewers_cases_behave_as_labelled() -> None:
-    """`reads-review-cases.json`: 144 sentences an independent reviewer wrote about the same three
+    """`reads-review-cases.json`: 216 sentences an independent reviewer wrote about the same three
     sessions to break these checks, each labelled true or false against the fact sheet. Pinned:
       true                  - survives the whole guard;
       true-lost-to-figure   - true, and removed by the older figure rule because it states a
@@ -392,8 +412,8 @@ def test_the_reviewers_cases_behave_as_labelled() -> None:
       true-lost-to-wording  - true, and removed by a wording rule ("opportunities") - a known cost;
       false-caught          - removed;
       false-missed          - passes: the limits this module documents (a count given for the wrong
-                              moment, a status before its count). Move one to false-caught when a
-                              rule learns to see it.
+                              place ("Weakening names totalled 23", "ended with no signal").
+                              Move one to false-caught when a rule learns to see it.
     """
     cases = json.loads((FIXTURES / "reads-review-cases.json").read_text(encoding="utf-8"))
     facts = {label: _facts(label) for label in ("broad-selloff", "broad-rally", "quiet")}
@@ -414,5 +434,5 @@ def test_the_reviewers_cases_behave_as_labelled() -> None:
             assert removed, sentence
         else:
             assert verdict == "false-missed" and not removed, sentence
-    assert seen == {"true": 111, "false-caught": 27, "false-missed": 3, "true-lost-to-figure": 2, "true-lost-to-wording": 1}
+    assert seen == {"true": 146, "false-caught": 63, "false-missed": 4, "true-lost-to-figure": 2, "true-lost-to-wording": 1}
 
