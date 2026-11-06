@@ -11,7 +11,9 @@ worker-side twin of the app's `src/lib/ai/guardrails/prose.ts` + the regulated-a
   * a figure the facts gave a direction ("up 2.1%") may not be quoted with the opposite one
     ("fell 2.1%", "-2.1%");
   * a spelled-out magnitude ("forty percent", "doubled") counts as a figure and is not allowed;
-  * a count written as a word ("sixty-one names") is read as the number it is, and checked like one;
+  * a count of names or setups written as a word ("sixty-one names") is read as the number it is
+    and checked like one; a number word that counts nothing the facts count ("seven of the eight
+    groups", "three to one") is left as the turn of phrase it is;
   * a true figure given the wrong meaning - a count attached to the wrong status, a group called
     the worst when it was not, a ticker tied to a group it is not in, a ticker sent to a status it
     does not hold - contradicts the facts as surely as a wrong figure does (read_meaning.py);
@@ -39,7 +41,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from workers.stock_scanner.read_meaning import ReadMeaning, digits_for_words, meaning_problems
+from workers.stock_scanner.read_meaning import ReadMeaning, counted_digits, meaning_problems
 
 # A numeral with optional thousands separators and decimals, the unit the facts always write
 # explicitly (a leading $ or a trailing % / x), and any sign glued to it. A percentage written out
@@ -334,9 +336,10 @@ def guard_ai_read(text: str, sheet: FactSheet) -> GuardResult:
         for sentence in split_sentences(paragraph):
             if total >= MAX_SENTENCES:
                 break
-            # The sentence as it is CHECKED: a count written as a word is the number it is, and a
-            # typographic hyphen is a hyphen. The reader is still shown what the model wrote.
-            checked = digits_for_words(sentence)
+            # The sentence as it is CHECKED: a count of names or setups written as a word is the
+            # number it is, and a typographic hyphen is a hyphen. The reader is still shown what the
+            # model wrote.
+            checked = counted_digits(sentence)
             mentioned = _mentions(checked, sheet.symbols)
             scope = mentioned or context_symbols
             group_mentions = _subject_mentions(checked, sheet.subject_names)
@@ -371,7 +374,7 @@ def guard_ai_read(text: str, sheet: FactSheet) -> GuardResult:
                 problems.append(("ticker not in the facts", ticker))
             for why in prediction_findings(sentence):
                 problems.append(("prediction", why))
-            problems.extend(meaning_problems(checked, sheet.meaning))
+            problems.extend(meaning_problems(sentence, sheet.meaning))
 
             if problems:
                 removed.append(sentence)

@@ -13,18 +13,25 @@ ABOUT them. The first bake-off (2026-11-06, 24 reads by four local models) passe
     11.3%" (semiconductors fell 11.5%);
   * a ticker tied to a group it is not in - "ABNB and SNAP ... pulling the fintech group down";
   * a ticker sent to a status it does not have - "MSFT ... fell from strong to no signal" (it
-    closed as a watchlist setup);
-  * a count written as a word ("sixty-one", "twenty-five"), which the figure check never read.
+    closed as a watchlist setup).
 
 Every one of those is a statement the facts already settle, so code can settle it. This module
-holds the facts in the shape the checks need (`ReadMeaning`, filled in by `daily_read.build_sheet`)
+holds the facts in the shape the checks need (`ReadMeaning`, filled in by `daily_read.build_meaning`)
 and finds the sentences that contradict them. A sentence that does is REMOVED, like any other the
 guard rejects; the read still stands on what is left, and the figures block under it is exact
-either way. Measured on the same 24 reads: 11 of 111 sentences removed, each a real slip, none of
-the other 100 touched.
+either way.
+
+The checks only ever remove, so their cost is a true sentence lost - and a read thinned below two
+sentences is not sent at all. Each rule is therefore narrow on purpose: it fires on the shapes the
+slips actually took and leaves alone what merely resembles them (a count about the reader's own
+book, "one of the hardest-hit groups", "the day's biggest gain", "strong buying"). Two corpora pin
+both sides: every sentence the first bake-off's models wrote (tests/fixtures/bakeoff/
+reads-first-bakeoff.json) and a reviewer's 144 true and false sentences about the same sessions
+(reads-review-cases.json).
 
 What it still cannot see: a claim the facts do not rank ("the strongest signals are in ESTC and
-AKAM"), and wording that is merely loose. Pure functions, no I/O.
+AKAM"), a count given for the wrong moment ("20 watchlist setups at the close" when 20 was the
+day before), and wording that is merely loose. Pure functions, no I/O.
 """
 from __future__ import annotations
 
@@ -44,22 +51,57 @@ _ALL = {**_TENS, **_UNITS}
 # The hyphens a model may type instead of "-" to JOIN words (U+2010 and the non-breaking U+2011, as
 # in "sixty-one" or "consumer-internet"). Dashes that SEPARATE (U+2013, U+2014) are left alone:
 # made plain, a range such as 330-350 would read as "minus 350".
-_DASHES = "\u2010\u2011"
+_DASHES = chr(0x2010) + chr(0x2011)
+_NUMBER_WORD = rf"(?:(?:{'|'.join(_TENS)})[\s-](?:{'|'.join(_ONES)})|{'|'.join(_ALL)})"
 _COMPOUND_RE = re.compile(rf"\b({'|'.join(_TENS)})[\s-]({'|'.join(_ONES)})\b", re.IGNORECASE)
 _SIMPLE_RE = re.compile(rf"\b({'|'.join(_ALL)})\b", re.IGNORECASE)
 # "one" is a number only where it counts something ("one name", "one more", "one up"); elsewhere it
-# is a pronoun ("the lone one", "no one").
-_ONE_RE = re.compile(r"\bone(?=\s+(?:names?|stocks?|tickers?|setups?|groups?|more|up|down|of)\b)", re.IGNORECASE)
+# is a pronoun ("the lone one", "no one") or a hedge ("one of the hardest hit").
+_ONE_RE = re.compile(r"\bone(?=\s+(?:names?|stocks?|tickers?|setups?|more|up|down)\b)", re.IGNORECASE)
+# The things the facts count. A number word in front of one of them is a count the facts can check.
+_COUNTED = r"(?:names?|stocks?|tickers?|setups?|others?)"
+# A number word, then up to two describing words, then something the facts count: "sixty-one names",
+# "seven prior strong setups", "sixty others".
+_COUNTED_WORD_RE = re.compile(rf"\b({_NUMBER_WORD}|one)\b(?=(?:\s+[a-z-]+){{0,2}}\s+{_COUNTED}\b)", re.IGNORECASE)
+# Words that make a count about the reader's own book, which the session's totals say nothing about.
+_READERS_OWN_RE = re.compile(r"\b(?:your|you|yours|holdings?|held|positions?|portfolio|book)\b", re.IGNORECASE)
+
+
+def plain_hyphens(text: str) -> str:
+    """The same text with word-joining typographic hyphens made plain."""
+    for dash in _DASHES:
+        text = text.replace(dash, "-")
+    return text
+
+
+def _number(word: str) -> int:
+    word = word.lower()
+    parts = re.split(r"[\s-]", word)
+    return _TENS[parts[0]] + _ONES[parts[1]] if len(parts) == 2 else {**_ALL, "one": 1}[word]
 
 
 def digits_for_words(text: str) -> str:
-    """The same text with cardinal numbers written as digits ("sixty-one names" -> "61 names") and
-    typographic hyphens made plain. Used for CHECKING only - the reader is shown what the model wrote."""
-    for dash in _DASHES:
-        text = text.replace(dash, "-")
+    """The same text with every cardinal number written as digits ("sixty-one names" -> "61
+    names"). For reading what a sentence CLAIMS; nothing here is shown to a reader."""
+    text = plain_hyphens(text)
     text = _COMPOUND_RE.sub(lambda match: str(_TENS[match.group(1).lower()] + _ONES[match.group(2).lower()]), text)
     text = _SIMPLE_RE.sub(lambda match: str(_ALL[match.group(1).lower()]), text)
     return _ONE_RE.sub("1", text)
+
+
+def counted_digits(text: str) -> str:
+    """The same text with a number word written as digits ONLY where it counts names or setups -
+    the things the facts count, and so the only spelled numbers the figure check can hold to the
+    facts. "Sixty-one names" becomes "61 names"; "seven of the eight groups", "three to one" and
+    "a twenty-four hour rout" are left as the turns of phrase they are, and so is a count of the
+    reader's own holdings, which the session's totals say nothing about."""
+    text = plain_hyphens(text)
+
+    def swap(match: re.Match[str]) -> str:
+        around = text[max(0, match.start() - 24) : match.end() + 40]
+        return match.group(0) if _READERS_OWN_RE.search(around) else str(_number(match.group(1)))
+
+    return _COUNTED_WORD_RE.sub(swap, text)
 
 
 # --- the facts, in the shape the checks need -------------------------------------------------
@@ -85,13 +127,12 @@ class ReadMeaning:
     """What the session's facts say about counts, groups and statuses - the things a read can get
     wrong while quoting only true figures."""
 
-    # status -> how the count came about ("any", "became", "dropped") -> the counts the facts state
+    # status -> how the count came about ("any", "now", "prior", "became", "dropped") -> the counts the facts state
     counts: dict[str, dict[str, frozenset[int]]] = field(default_factory=dict)
     group_order: tuple[str, ...] = ()  # group keys, best to worst
     group_names: dict[str, tuple[str, ...]] = field(default_factory=dict)  # group key -> names, lower case
     member: dict[str, str] = field(default_factory=dict)  # ticker -> group key
     status_now: dict[str, str] = field(default_factory=dict)  # ticker -> one of STATUSES, at the close
-    failed_strong: frozenset[str] = frozenset()  # tickers whose strong setup failed this session
 
 
 def status_word(status: str) -> str:
@@ -105,14 +146,16 @@ def names_for(category: str, display: str) -> tuple[str, ...]:
     return tuple(sorted(names, key=lambda name: (-len(name), name)))
 
 
-# --- reading a sentence ------------------------------------------------------------------------
+# --- counts ------------------------------------------------------------------------------------
 
 _STATUS_RE = {
     "no_signal": re.compile(r"\bno[- ]signals?\b", re.IGNORECASE),
-    # "strong gains" and "strong demand" are not the strong-setup status.
-    "strong": re.compile(r"\bstrong\b(?!\s+(?:gains?|performance|session|rally|demand|day|move|showing|advance|rebound))", re.IGNORECASE),
+    # "strong" is the status only where it names one: "strong setups", "dropped from strong",
+    # "from strong to no signal". "Strong gains", "strong buying" and "a strong day" are not.
+    "strong": re.compile(r"\bstrong\b(?=[- ](?:setups?|status|names?|signals?|territory|category)\b|\s+to\b|\s*$)", re.IGNORECASE),
     "watchlist": re.compile(r"\bwatch[- ]?list\b", re.IGNORECASE),
-    "weakening": re.compile(r"\bweaken(?:ing|ed|s)?\b", re.IGNORECASE),
+    # "weakening names", "7 names weakened" - not "weakening momentum" or "weakening demand".
+    "weakening": re.compile(r"\bweaken(?:ing|ed|s)?\b(?!\s+(?:momentum|demand|breadth|volume|trend|prices?|sentiment|conditions|economy|outlook|data|dollar|yields?))", re.IGNORECASE),
     "invalidated": re.compile(r"\binvalidat(?:ed|ion|ions|es|e)\b", re.IGNORECASE),
 }
 _BECAME_RE = re.compile(
@@ -122,26 +165,21 @@ _DROPPED_RE = re.compile(r"\b(?:dropped out|dropping out|dropped from|slipped ou
 # A bare whole number that could be a count: not money, not a percentage or a multiple, not half of
 # "3 of 7", not a decimal - and not the sheet's own "and 1 more".
 _COUNT_RE = re.compile(r"(?<![$\d.,])\b(\d{1,3})\b(?!\s*(?:%|percent|per cent|pct|x\b|of\s+\d|more\b|others?\b)|[.,]\d)")
-# Where the words that belong to a count end: punctuation, the next number, a dash.
-_REACH_END_RE = re.compile(r"[,;:()]|\b\d+\b| - | – ")
+# Where the words that belong to a count end: punctuation, the next number, a dash, or the start of
+# another statement ("60 of 61 names fell AND no strong setups remained").
+_REACH_END_RE = re.compile(r"[,;:()]|\b\d+\b| - | – | — |\b(?:and|but|while|whereas|as|after|before|because|so|though)\b", re.IGNORECASE)
 # "score 85", "from 48", "fell to 32": a score, not a count.
 _SCORE_BEFORE_RE = re.compile(r"(?:scores?|scored|from|to|at)\s*$", re.IGNORECASE)
 _DESTINATION_RE = re.compile(r"\b(?:to|into)\s+(?:a\s+|the\s+)?(no[- ]signal|watch[- ]?list|strong)", re.IGNORECASE)
 _CLAIMING_VERBS = (("invalidated", r"invalidat(?:ed|es|e|ing)"), ("weakening", r"weaken(?:ed|s|ing)?"))
 _REACH_WORDS = 7
-
-_WORST_RE = re.compile(
-    r"\b(?:worst|weakest|hardest[- ]hit|steepest|(?:biggest|largest|sharpest|heaviest)\s+(?:average\s+)?(?:falls?|drops?|loss(?:es)?|declines?))\b", re.IGNORECASE
-)
-_BEST_RE = re.compile(
-    r"\b(?:best|strongest|(?:biggest|largest)\s+(?:average\s+)?(?:gains?|rises?|advances?)|led the (?:day|session|move|rally|charge|way|gains|advance|market))\b",
+# "Strong setups fell to 6 from 7": the count now, and the count before. The verb must follow
+# "setups" directly - in "became strong setups as their scores jumped to 75" the 75 is a score.
+_TOTAL_MOVED_RE = re.compile(
+    r"\b(strong|watch[- ]?list)[- ]setups\s+(?:fell|rose|dropped|grew|climbed|increased|decreased|declined|slipped|went|moved|shrank|narrowed|expanded)"
+    r"\s+(?:back\s+)?to\s+(\d{1,3})\b(?:\s+from\s+(\d{1,3})\b)?",
     re.IGNORECASE,
 )
-# "among the worst", "one of the hardest hit": a claim about a set, not about the extreme.
-_HEDGE_RE = re.compile(r"\b(?:among|one of|some of)\s+(?:the\s+)?$", re.IGNORECASE)
-_SCOPE_END_RE = re.compile(r"[,;:]|\.(?!\d)")
-_CLAUSE_RE = re.compile(r"[;:]|\b(?:while|whereas|but|although|though|even as|despite)\b", re.IGNORECASE)
-_TICKER_RE = re.compile(r"(?<![A-Za-z0-9&.])[A-Z]{2,5}(?![A-Za-z0-9&])")
 
 
 def _status_key(word: str) -> str:
@@ -170,12 +208,22 @@ def count_problems(sentence: str, meaning: ReadMeaning) -> list[str]:
         status = match.group(1).lower()
         if 0 not in allowed(status, "any"):
             problems.append(f"0 {status}")
+    for match in _TOTAL_MOVED_RE.finditer(text):
+        status = _status_key(match.group(1))
+        now, prior = allowed(status, "now"), allowed(status, "prior")
+        if now and int(match.group(2)) not in now:
+            problems.append(f"{match.group(2)} {status}")
+        elif match.group(3) and prior and int(match.group(3)) not in prior:
+            problems.append(f"{match.group(3)} {status}")
     for match in _COUNT_RE.finditer(text):
         value = int(match.group(1))
         before = text[: match.start()]
         if _SCORE_BEFORE_RE.search(before):
             continue
         after = _reach_after(text, match.end())
+        # A count of the reader's own holdings or watchlist is not a count of the session's.
+        if _READERS_OWN_RE.search(" ".join(before.split()[-4:]) + " " + after):
+            continue
         claims: list[tuple[str, str]] = []
         # The first status named after the count is the one it counts ("7 names weakened", "4 new
         # strong setups"); how it got there is in the words between ("moved into", "dropped out").
@@ -199,15 +247,33 @@ def count_problems(sentence: str, meaning: ReadMeaning) -> list[str]:
             pool = allowed(status, movement)
             if pool and value not in pool:
                 problems.append(f"{value} {status.replace('_', ' ')}")
-    return problems
+    return list(dict.fromkeys(problems))
+
+
+# --- groups ------------------------------------------------------------------------------------
+
+# A superlative about a GROUP. "Biggest" and "largest" count only with "average": on their own they
+# are usually about one stock ("PANW posted the biggest gain").
+_WORST_RE = re.compile(
+    r"\b(?:worst|weakest|hardest[- ]hit|steepest|(?:biggest|largest|sharpest|heaviest)\s+average\s+(?:falls?|drops?|loss(?:es)?|declines?))\b", re.IGNORECASE
+)
+_BEST_RE = re.compile(
+    r"\b(?:best|strongest|(?:biggest|largest)\s+average\s+(?:gains?|rises?|advances?)|led the (?:day|session|move|rally|charge|way|gains|advance|market))\b",
+    re.IGNORECASE,
+)
+# "among the worst", "one of the hardest hit": a claim about a set, not about the extreme.
+_HEDGE_RE = re.compile(r"\b(?:among|one of|1 of|some of)\s+(?:the\s+)?$", re.IGNORECASE)
+# "the worst single move", "the best performer": about one stock, not a group.
+_ONE_STOCK_RE = re.compile(r"^\s*(?:single|individual|one-day|performer|performing|mover|gainer|faller|decliner|name|stock|move)\b", re.IGNORECASE)
+_SCOPE_END_RE = re.compile(r"[,;:]|\.(?!\d)")
+_CLAUSE_RE = re.compile(r"[;:]|\b(?:while|whereas|but|although|though|even as|despite|compared (?:with|to)|than|unlike|versus|vs|relative to|against)\b", re.IGNORECASE)
+_TICKER_RE = re.compile(r"(?<![A-Za-z0-9&.])[A-Z]{2,5}(?![A-Za-z0-9&])")
 
 
 def _groups_in(text: str, meaning: ReadMeaning) -> tuple[list[tuple[int, str]], str]:
     """Each group the text names, as (offset, group key), and the text with those names blanked -
     so the "AI" of "AI infrastructure" is not then read as the ticker AI."""
-    remaining = text.replace("-", " ")
-    for dash in _DASHES:
-        remaining = remaining.replace(dash, " ")
+    remaining = plain_hyphens(text).replace("-", " ")
     found: list[tuple[int, str]] = []
     pairs = sorted(((name, key) for key, names in meaning.group_names.items() for name in names), key=lambda pair: (-len(pair[0]), pair[0]))
     for name, key in pairs:
@@ -225,7 +291,7 @@ def rank_problems(sentence: str, meaning: ReadMeaning) -> list[str]:
     problems: list[str] = []
     for label, pattern in (("worst", _WORST_RE), ("best", _BEST_RE)):
         for cue in pattern.finditer(sentence):
-            if _HEDGE_RE.search(sentence[: cue.start()]):
+            if _HEDGE_RE.search(sentence[: cue.start()]) or _ONE_STOCK_RE.search(sentence[cue.end() :]):
                 continue
             # The groups the superlative is about: the ones after it up to the next comma, else the
             # ones before it back to the last comma.
@@ -269,31 +335,50 @@ def membership_problems(sentence: str, meaning: ReadMeaning) -> list[str]:
     return problems
 
 
+# --- where a ticker ended ------------------------------------------------------------------------
+
+_ARRIVED_RE = re.compile(r"\b(?:to|into|became|become|becoming|turned)\s+(?:a\s+|the\s+)?(no[- ]signal|watch[- ]?list|strong)\b", re.IGNORECASE)
+# What may sit between two tickers of one list: "MSFT, CRM and AMD".
+_LIST_GAP_RE = re.compile(r"^\s*(?:,\s*and|,|and|&)\s*$", re.IGNORECASE)
+
+
+def _subject_tickers(text: str) -> list[str]:
+    """The run of tickers closest to the end of `text` - the list a following verb is about. In
+    "MSFT and CRM both fell out of strong setup, MSFT" that is the last MSFT alone."""
+    found = list(_TICKER_RE.finditer(text))
+    if not found:
+        return []
+    run = [found[-1]]
+    for earlier in reversed(found[:-1]):
+        if not _LIST_GAP_RE.match(text[earlier.end() : run[0].start()]):
+            break
+        run.insert(0, earlier)
+    return [match.group(0) for match in run]
+
+
 def status_problems(sentence: str, meaning: ReadMeaning) -> list[str]:
-    """A ticker said to have moved TO a status it does not hold at the close."""
+    """A ticker said to have ARRIVED at a status it does not hold at the close."""
     if not meaning.status_now:
         return []
     problems: list[str] = []
     for clause in _clauses(sentence):
-        destination = _DESTINATION_RE.search(clause)
-        if not destination:
-            continue
-        want = _status_key(destination.group(1))
-        for ticker in dict.fromkeys(_TICKER_RE.findall(clause)):
-            now = meaning.status_now.get(ticker)
-            if now is None or now == want:
-                continue
-            if want == "strong" and ticker in meaning.failed_strong:
-                continue  # "dropped out of strong" names the status it left
-            problems.append(f"{ticker} is {now.replace('_', ' ')}, not {want.replace('_', ' ')}")
-    return problems
+        for arrived in _ARRIVED_RE.finditer(clause):
+            want = _status_key(arrived.group(1))
+            for ticker in dict.fromkeys(_subject_tickers(clause[: arrived.start()])):
+                now = meaning.status_now.get(ticker)
+                if now is None or now == want:
+                    continue
+                problems.append(f"{ticker} is {now.replace('_', ' ')}, not {want.replace('_', ' ')}")
+    return list(dict.fromkeys(problems))
 
 
 def meaning_problems(sentence: str, meaning: ReadMeaning | None) -> list[tuple[str, str]]:
-    """Why a sentence contradicts what the facts mean, as (category, detail). The categories are
-    coarse and safe to log; the details name tickers and are for the stored record only."""
+    """Why a sentence contradicts what the facts mean, as (category, detail). Takes the sentence as
+    written (number words and all). The categories are coarse and safe to log; the details name
+    tickers and are for the stored record only."""
     if meaning is None:
         return []
+    sentence = plain_hyphens(sentence)
     return (
         [("count contradicts the facts", detail) for detail in count_problems(sentence, meaning)]
         + [("group rank contradicts the facts", detail) for detail in rank_problems(sentence, meaning)]

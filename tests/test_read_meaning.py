@@ -18,6 +18,7 @@ from workers.stock_scanner.daily_read import build_facts, build_meaning, build_s
 from workers.stock_scanner.read_meaning import (
     ReadMeaning,
     count_problems,
+    counted_digits,
     digits_for_words,
     meaning_problems,
     membership_problems,
@@ -71,6 +72,30 @@ def test_a_number_written_as_a_word_is_read_as_that_number(written: str, read: s
     assert digits_for_words(written) == read
 
 
+@pytest.mark.parametrize(
+    ("written", "checked"),
+    [
+        # A number word in front of something the facts count is a count, and is checked as one.
+        ("sixty-one names were scanned", "61 names were scanned"),
+        ("Seven prior strong setups dropped out", "7 prior strong setups dropped out"),
+        ("Only one name rose while sixty others fell", "Only 1 name rose while 60 others fell"),
+        ("Forty-four names hit new lows", "44 names hit new lows"),
+        # A number word that counts nothing the facts count is a turn of phrase, and is left alone.
+        ("Seven of the eight groups fell", "Seven of the eight groups fell"),
+        ("outnumbered by more than three to one", "outnumbered by more than three to one"),
+        ("A twenty-four hour rout left no group untouched", "A twenty-four hour rout left no group untouched"),
+        ("Strong setups dropped to four from seven", "Strong setups dropped to four from seven"),
+        ("one of the hardest-hit groups", "one of the hardest-hit groups"),
+        # The reader's own book: the session's totals say nothing about it.
+        ("Two of your holdings are now weakening", "Two of your holdings are now weakening"),
+        ("Three names on your watchlist are near a trigger", "Three names on your watchlist are near a trigger"),
+        ("Two of the names you hold were invalidated", "Two of the names you hold were invalidated"),
+    ],
+)
+def test_only_a_count_of_names_or_setups_is_read_as_a_figure(written: str, checked: str) -> None:
+    assert counted_digits(written) == checked
+
+
 def test_names_a_group_goes_by_are_longest_first() -> None:
     assert names_for("cloud_data", "cloud and data") == ("cloud and data", "cloud & data", "cloud")
     assert names_for("mega_cap_platform", "mega-cap platforms")[0] == "mega cap platforms"
@@ -86,11 +111,11 @@ def test_the_meaning_is_built_from_the_session_facts(selloff: ReadMeaning) -> No
     assert selloff.counts["no_signal"]["any"] == frozenset({23})
     assert selloff.counts["strong"]["became"] == frozenset({0})
     assert selloff.counts["strong"]["dropped"] == frozenset({7, 6})
+    assert selloff.counts["strong"]["now"] == frozenset({0}) and selloff.counts["strong"]["prior"] == frozenset({7})
     assert selloff.counts["watchlist"]["became"] == frozenset({2})
     assert selloff.group_order[0] == "mega_cap_platform" and selloff.group_order[-1] == "semiconductor"
     assert selloff.member["TER"] == "semiconductor" and selloff.member["SNAP"] == "consumer_internet"
     assert selloff.status_now["MSFT"] == "watchlist" and selloff.status_now["AMD"] == "invalidated"
-    assert "AMD" in selloff.failed_strong and "MSFT" not in selloff.failed_strong
 
 
 # --- a count given the wrong meaning -------------------------------------------------------------
@@ -107,6 +132,37 @@ def test_a_count_attached_to_the_wrong_status_is_caught(selloff: ReadMeaning, ra
     assert count_problems("Twelve names moved into watchlist territory as scores improved, but 16 setups weakened and 3 invalidated, leaving 27 with no signal.", rally) == ["12 watchlist"]
     # 2 new strong setups; 4 in all.
     assert count_problems("Lyra's score engine marked 4 new strong setups, including PTC and SPOT, while five names slipped out of strong status.", quiet) == ["4 strong"]
+
+
+def test_a_total_said_to_have_moved_is_checked_at_both_ends(selloff: ReadMeaning, quiet: ReadMeaning) -> None:
+    # 7 strong setups at the previous close, none at this one.
+    assert count_problems("Strong setups fell to six from seven.", selloff) == ["6 strong"]
+    assert count_problems("Strong setups fell to 0 from 7.", selloff) == []
+    assert count_problems("Strong setups dropped to 4 from 2.", quiet) == ["2 strong"]  # 7 before, 4 now
+    assert count_problems("The number of strong setups rose to 4 from 2.", quiet) == ["2 strong"]
+    assert count_problems("The number of strong setups fell to 4 from 7.", quiet) == []
+    # A score that follows the word "setups" is still a score.
+    assert count_problems("PTC and SPOT became strong setups as their scores jumped to 75.", quiet) == []
+    assert count_problems("NOW moved to a watchlist setup after its score rose to 60 from 33.", quiet) == []
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        # The reader's own book: its counts are not the session's.
+        "Two of your holdings are now weakening.",
+        "Your 2 holdings in semiconductors are weakening.",
+        "Two of the names you hold were invalidated.",
+        "Three names on your watchlist are near a trigger.",
+        # A status word that is not the status.
+        "60 of 61 names fell and no strong setups remained.",
+        "Just 1 name rose and strong setups disappeared from the scan.",
+        "Only one name showed strong buying, RPD up 2.7%.",
+        "Eleven names fell on weakening momentum in semiconductors.",
+    ],
+)
+def test_a_count_that_is_not_about_the_sessions_setups_is_left_alone(sentence: str, selloff: ReadMeaning) -> None:
+    assert count_problems(sentence, selloff) == []
 
 
 @pytest.mark.parametrize(
@@ -166,6 +222,13 @@ def test_a_group_called_the_worst_when_it_was_not_is_caught(selloff: ReadMeaning
         "AMD led the declines with a sharp drop of 17.3%.",
         "The biggest score rises were ESTC, AKAM and ENTG.",
         "RPD posted the biggest gain, up 2.7%.",
+        # A hedge is a claim about a set, not about the extreme.
+        "Cybersecurity was one of the hardest-hit groups, down 6.4% on average.",
+        "Software was among the best groups, down 3.1% on average.",
+        # About one stock, not about the group.
+        "Cybersecurity held the day's biggest gain, RPD up 2.7%.",
+        "Consumer internet had the worst single move, SNAP down 14.0%.",
+        "Semiconductors had the worst performer, AMD down 17.3%.",
     ],
 )
 def test_true_or_unranked_statements_about_groups_are_left_alone(sentence: str, selloff: ReadMeaning) -> None:
@@ -200,6 +263,10 @@ def test_a_ticker_tied_to_a_group_it_is_not_in_is_caught(quiet: ReadMeaning) -> 
         # "AI" here is part of the group's name, not the ticker AI (which is a software name).
         "Nearly every major group, including semiconductors and AI infrastructure, saw zero names up.",
         "Cybersecurity and consumer‑internet names also climbed, with CRWD and SPOT posting gains in their sectors.",
+        # A comparison is not a membership claim.
+        "ABNB fell 7.6% compared with a 1.0% average rise in software.",
+        "MSFT, unlike the semiconductors, held up relatively well.",
+        "PANW rose more than fintech as a whole.",
     ],
 )
 def test_tickers_named_with_their_own_group_are_left_alone(sentence: str, quiet: ReadMeaning) -> None:
@@ -223,10 +290,19 @@ def test_a_ticker_sent_to_a_status_it_does_not_hold_is_caught(selloff: ReadMeani
         "ESTC saw its score rise to 63 from 43.",
         "AMD and HOOD were invalidated.",
         "Leaders such as MSFT and CRM lost their strong setup status as their scores fell sharply.",
+        # The destination belongs to the ticker next to it, not to every ticker in the sentence.
+        "MSFT and CRM both fell out of strong setup, MSFT to a watchlist setup.",
+        "ADBE and ESTC became watchlist setups.",
     ],
 )
 def test_true_statements_about_where_a_ticker_ended_are_left_alone(sentence: str, selloff: ReadMeaning) -> None:
     assert status_problems(sentence, selloff) == []
+
+
+def test_a_ticker_said_to_have_become_what_it_is_not_is_caught(rally: ReadMeaning) -> None:
+    # AKAM and COIN became strong setups; NET became a watchlist setup.
+    assert status_problems("AKAM, COIN and NET became strong setups.", rally) == ["NET is watchlist, not strong"]
+    assert status_problems("AKAM and COIN became strong setups.", rally) == []
 
 
 # --- together, and through the guard -----------------------------------------------------------------
@@ -241,6 +317,7 @@ def test_the_categories_are_safe_to_log(selloff: ReadMeaning) -> None:
     found = meaning_problems("MSFT, CRM and AMD fell from strong to no signal, 7 names weakened.", selloff)
     categories = {category for category, _detail in found}
     assert categories == {"count contradicts the facts", "status contradicts the facts"}
+    assert meaning_problems("Software was one of the hardest-hit groups.", selloff) == []  # the hedge survives being read
     assert all(not any(char.isupper() for char in category) for category in categories)  # no ticker in a category
 
 
@@ -304,3 +381,38 @@ def test_the_guard_leaves_every_clean_sentence_of_the_first_bakeoff_alone() -> N
             removed_slips += gone
     assert removed_clean == []
     assert removed_slips == 9
+
+
+def test_the_reviewers_cases_behave_as_labelled() -> None:
+    """`reads-review-cases.json`: 144 sentences an independent reviewer wrote about the same three
+    sessions to break these checks, each labelled true or false against the fact sheet. Pinned:
+      true                  - survives the whole guard;
+      true-lost-to-figure   - true, and removed by the older figure rule because it states a
+                              threshold the facts never do ("fell more than 3%") - a known cost;
+      true-lost-to-wording  - true, and removed by a wording rule ("opportunities") - a known cost;
+      false-caught          - removed;
+      false-missed          - passes: the limits this module documents (a count given for the wrong
+                              moment, a status before its count). Move one to false-caught when a
+                              rule learns to see it.
+    """
+    cases = json.loads((FIXTURES / "reads-review-cases.json").read_text(encoding="utf-8"))
+    facts = {label: _facts(label) for label in ("broad-selloff", "broad-rally", "quiet")}
+    meanings = {label: build_meaning(item) for label, item in facts.items()}
+    sheets = {label: build_sheet(item) for label, item in facts.items()}
+    padding = " Names scanned: 61. Names scanned: 61."
+    seen: dict[str, int] = {}
+    for case in cases:
+        verdict, sentence = case["verdict"], case["sentence"]
+        seen[verdict] = seen.get(verdict, 0) + 1
+        flagged = bool(meaning_problems(sentence, meanings[case["session"]]))
+        removed = sentence in guard_ai_read(sentence + padding, sheets[case["session"]]).removed
+        if verdict == "true":
+            assert not flagged and not removed, sentence
+        elif verdict in ("true-lost-to-figure", "true-lost-to-wording"):
+            assert not flagged and removed, sentence
+        elif verdict == "false-caught":
+            assert removed, sentence
+        else:
+            assert verdict == "false-missed" and not removed, sentence
+    assert seen == {"true": 111, "false-caught": 27, "false-missed": 3, "true-lost-to-figure": 2, "true-lost-to-wording": 1}
+

@@ -640,10 +640,17 @@ def build_meaning(facts: SessionFacts) -> ReadMeaning:
             # "a strong setup failed (6)".
             "strong": {
                 "any": frozenset({strong_now, facts.prior_strong, len(facts.newly_strong), len(facts.lost_strong), failed, counts.get("invalidated", 0)}),
+                "now": frozenset({strong_now}),
+                "prior": frozenset({facts.prior_strong}),
                 "became": frozenset({len(facts.newly_strong)}),
                 "dropped": frozenset({len(facts.lost_strong), failed}),
             },
-            "watchlist": {"any": frozenset({watch_now, facts.prior_watch, len(facts.newly_watch)}), "became": frozenset({len(facts.newly_watch)})},
+            "watchlist": {
+                "any": frozenset({watch_now, facts.prior_watch, len(facts.newly_watch)}),
+                "now": frozenset({watch_now}),
+                "prior": frozenset({facts.prior_watch}),
+                "became": frozenset({len(facts.newly_watch)}),
+            },
             "weakening": {"any": frozenset({counts.get("weakening", 0)})},
             "invalidated": {"any": frozenset({counts.get("invalidated", 0), failed})},
             "no_signal": {"any": frozenset({counts.get("no_signal", 0)})},
@@ -652,7 +659,6 @@ def build_meaning(facts: SessionFacts) -> ReadMeaning:
         group_names={group.category: names_for(group.category, group_name(group.category)) for group in facts.group_moves},
         member={ticker.symbol: ticker.category for ticker in facts.tickers},
         status_now={ticker.symbol: status_word(ticker.status) for ticker in facts.tickers},
-        failed_strong=frozenset(item.symbol for item in facts.invalidated),
     )
 
 
