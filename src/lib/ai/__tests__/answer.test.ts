@@ -16,7 +16,13 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/lib/ai/gateway', async (original) => ({ ...(await original<typeof import('@/lib/ai/gateway')>()), complete: mocks.complete }));
 vi.mock('@/lib/ai/budget-tracker', () => ({ chargeHostedBudgetShared: mocks.budget }));
-vi.mock('@/lib/ai/free-pool', () => ({ chargeFreeCaps: mocks.caps, completeFromPool: mocks.pool, freePoolAvailable: () => true, poolTargets: () => [] }));
+vi.mock('@/lib/ai/free-pool', () => ({
+  chargeFreeCaps: mocks.caps,
+  completeFromPool: mocks.pool,
+  freePoolAvailable: () => true,
+  poolTargets: () => [],
+  POOL_DEADLINE_MS: 35_000,
+}));
 
 import { answerWith } from '../answer';
 import type { ResolvedAiCredentials } from '../credentials';
@@ -69,7 +75,9 @@ describe('answerWith', () => {
   it('charges the free caps before the pool is asked, and reports who actually answered', async () => {
     const answer = await answerWith(creds('free_pool', { provider: 'cloudflare' }), 'ip:1.2.3.4', REQUEST);
     expect(mocks.caps).toHaveBeenCalledWith('ip:1.2.3.4');
-    expect(mocks.pool).toHaveBeenCalledWith({ system: 's', prompt: 'p', maxTokens: 600 });
+    expect(mocks.pool.mock.calls[0][0]).toEqual({ system: 's', prompt: 'p', maxTokens: 600 });
+    // The pool is given a deadline: its own 35 s, since nothing has been spent yet.
+    expect(mocks.pool.mock.calls[0][3]).toBe(35_000);
     expect(answer).toMatchObject({ ok: true, provider: 'groq', model: 'openai/gpt-oss-120b', costUsd: 0 });
     expect(mocks.budget).not.toHaveBeenCalled();
     expect(mocks.complete).not.toHaveBeenCalled();
@@ -113,7 +121,7 @@ describe('answerWith', () => {
     try {
       // With the pool behind it: one 15 s attempt, so house + pool fit inside the route's 60 s.
       await answerWith(creds('hosted_openai', { poolFallback: true }), 'user-1', REQUEST);
-      expect(mocks.complete).toHaveBeenLastCalledWith(expect.objectContaining({ maxAttempts: 1, timeoutMs: 15_000 }));
+      expect(mocks.complete).toHaveBeenLastCalledWith(expect.objectContaining({ maxAttempts: 1, timeoutMs: 15_000, boundQueue: true }));
       expect(warn).not.toHaveBeenCalled();
 
       // Without it: the gateway's usual retries, untouched.
@@ -133,6 +141,27 @@ describe('answerWith', () => {
     } finally {
       warn.mockRestore();
     }
+  });
+
+  it('fits the house attempt and the pool inside one deadline when the route has little time left', async () => {
+    // A route that spent most of its time loading data passes what is left: 14 seconds.
+    const hosted = creds('hosted_openai', { poolFallback: true });
+    mocks.complete.mockRejectedValue(new Error('openai 503'));
+    await answerWith(hosted, 'user-1', { ...REQUEST, deadlineMs: 14_000 });
+    // The house gets what leaves the pool ten seconds, not its usual fifteen...
+    const houseTimeout = (mocks.complete.mock.calls.at(-1)?.[0] as { timeoutMs: number }).timeoutMs;
+    expect(houseTimeout).toBeGreaterThan(3_000);
+    expect(houseTimeout).toBeLessThanOrEqual(4_000);
+    // ...and the pool gets what is left of the 14, never its full 35.
+    const poolDeadline = mocks.pool.mock.calls.at(-1)?.[3] as number;
+    expect(poolDeadline).toBeGreaterThan(9_000);
+    expect(poolDeadline).toBeLessThanOrEqual(14_000);
+
+    // With no time left at all the pool is still asked - with a deadline it cannot meet, so it
+    // tries nobody and the route answers with the figures.
+    mocks.pool.mockClear();
+    await answerWith(creds('free_pool'), 'ip:1', { ...REQUEST, deadlineMs: 0 });
+    expect(mocks.pool.mock.calls[0][3]).toBeLessThanOrEqual(0);
   });
 
   it('does not hand over without the route saying so, and never for a reader\'s own key', async () => {

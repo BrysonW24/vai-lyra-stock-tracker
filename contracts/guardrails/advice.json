@@ -1,6 +1,6 @@
 {
   "version": "2026-11-06",
-  "description": "What Lyra's AI may never say, in one file. ADVICE blocks a whole answer - there is no safe half of an instruction to trade. A PREDICTION removes the sentence that makes it. A PRICE CALL (a forecast of a share price) removes a briefing item. Read today by workers/stock_scanner/ai_read_guard.py and briefing_guard.py; written in the regex both Python and JavaScript read the same way (no lookbehind, no named groups, no inline flags; an entry may add 'unless_before', a regex tested against the text before each match, which cancels that match). Every exemption is pinned from both sides below: what it lets through, and the advice or forecast it must not so the app's chat guard can read the same file. 'flags' is 'i' (ignore case) or '' (case matters - used where a capital letter is the signal: a sentence that opens with an instruction, or a ticker). Widened on 2026-11-06, when Lyra's free features moved to open-weight models: a smaller model writes 'Buy SPOT now' or 'investors should consider adding' where a frontier model did not. The rules describe advice TO THE READER. Company news is full of the same verbs used as facts - 'is considering selling a stake', 'we need to add capacity', 'a loan guarantee', 'investors must wait for the decision' - and must pass; the test sentences pin both sides.",
+  "description": "What Lyra's AI may never say, in one file. ADVICE blocks a whole answer - there is no safe half of an instruction to trade. A PREDICTION removes the sentence that makes it. A PRICE CALL (a forecast of a share price) removes a briefing item. Read today by workers/stock_scanner/ai_read_guard.py and briefing_guard.py; written in the regex both Python and JavaScript read the same way (no lookbehind, no named groups, no inline flags) so the app's chat guard can read the same file. 'flags' is 'i' (ignore case) or '' (case matters - used where a capital letter is the signal: a sentence that opens with an instruction, or a ticker). Widened on 2026-11-06, when Lyra's free features moved to open-weight models: a smaller model writes 'Buy SPOT now' or 'investors should consider adding' where a frontier model did not. The rules describe advice TO THE READER. Company news is full of the same verbs used as facts - 'is considering selling a stake', 'we need to add capacity', 'a loan guarantee', 'investors must wait for the decision' - and must pass; the test sentences pin both sides. Three adversarial reviews of the app's free chat (2026-11-06) settled one more thing: these rules carry NO exemptions for wording that merely looks like advice or a forecast ('Add NVDA to your watchlist', 'Look for the Buy Review badge', 'likely why the score fell', 'invalidated if price should fall'). Each exemption that was tried could be talked around ('Add NVDA to your watchlist and go long'). Losing a harmless sentence is the price of never showing a reader an instruction to trade; the test sentences pin those losses too.",
   "advice": [
     {
       "id": "directive",
@@ -24,31 +24,19 @@
       "id": "imperative-ticker",
       "why": "instruction to trade a named stock",
       "flags": "",
-      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Buy|Sell|Short|Hold(?:\\s+on\\s?to)?|Trim|Avoid|Accumulate|Load up on|BUY|SELL|SHORT|HOLD|TRIM|AVOID)\\s+(?:more\\s+|some\\s+)?[A-Z]{2,5}\\b"
-    },
-    {
-      "id": "imperative-add",
-      "why": "instruction to trade a named stock",
-      "flags": "",
-      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Add(?:\\s+to)?|ADD)\\s+(?:more\\s+|some\\s+)?[A-Z]{2,5}\\b(?!\\s+to\\s+(?:your|the|a|my)\\s+(?:own\\s+)?(?:watchlist|watch list|alerts?)\\b(?![^.!?\\n]*\\b(?:[Bb]uy(?:ing)?|BUY|[Ss]ell(?:ing)?|SELL|[Ss]hort(?:ing)?|[Tt]rim(?:ming)?|[Aa]ccumulat(?:e|ing)|[Ll]oad(?:ing)?\\s+up|profits?|[Gg]et(?:ting)?\\s+in|entry|position)\\b))"
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Buy|Sell|Short|Hold(?:\\s+on\\s?to)?|Trim|Avoid|Accumulate|Add(?:\\s+to)?|Load up on|BUY|SELL|SHORT|HOLD|TRIM|AVOID|ADD)\\s+(?:more\\s+|some\\s+)?[A-Z]{2,5}\\b"
     },
     {
       "id": "imperative-position",
       "why": "instruction to take or leave a position",
-      "flags": "",
-      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Stay (?:long|short|out of|away from|invested)|Take (?:some )?profits?|Load up|Lighten up|Step aside|Get out|Get in(?!\\s+touch))\\b"
+      "flags": "i",
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:(?:then|and then|now|next|so)[,]?\\s+)?(?:stay (?:long|short|out of|away from|invested)|take (?:some )?profits?|load up|lighten up|step aside|get out|get in(?!\\s+touch)|pick (?:it|them|some) up|pick up (?:shares|stock|some|more|a few)|grab (?:some |a few )?(?:shares|stock)|snap (?:it|them|some|shares) up|go (?:long|short)|get (?:long|short|exposure)|pile in|double down|back up the truck|open a (?:long|short|position)|own (?:it|them|the stock|shares)|start a (?:stake|position)|purchase (?:shares|stock))\\b"
     },
     {
       "id": "modal",
       "why": "tells the reader what they should do",
       "flags": "i",
-      "pattern": "\\b(?:investors?|traders?|readers?|you)\\s+(?:should|ought to|would do well to|would be (?:wise|smart|prudent|sensible) to|may want to|might want to|may wish to|(?:could|can|may|might) look to)\\s+(?:[a-z]+\\s+){0,3}(?:buy|sell|short|trim|avoid|accumulate|exit|enter|wait|hold|consider|sit tight|stand aside|step aside|stay put|hold off|take (?:some )?profits?|stay (?:long|away|out|invested|on the sidelines))\\b"
-    },
-    {
-      "id": "modal-add",
-      "why": "tells the reader what they should do",
-      "flags": "i",
-      "pattern": "\\b(?:investors?|traders?|readers?|you)\\s+(?:should|ought to|would do well to|would be (?:wise|smart|prudent|sensible) to|may want to|might want to|may wish to|(?:could|can|may|might) look to)\\s+(?:[a-z]+\\s+){0,3}add\\b(?!\\s+\\S+\\s+to\\s+(?:your|the|a|my)\\s+(?:own\\s+)?(?:watchlist|watch list|alerts?)\\b(?![^.!?\\n]*\\b(?:buy(?:ing)?|sell(?:ing)?|short(?:ing)?|trim(?:ming)?|accumulat(?:e|ing)|load(?:ing)?\\s+up|profits?|get(?:ting)?\\s+in|entry|position)\\b))"
+      "pattern": "\\b(?:investors?|traders?|readers?|you)\\s+(?:should|ought to|would do well to|would be (?:wise|smart|prudent|sensible) to|may want to|might want to|may wish to|(?:could|can|may|might) look to)\\s+(?:[a-z]+\\s+){0,3}(?:buy|sell|short|add|trim|avoid|accumulate|exit|enter|wait|hold|consider|sit tight|stand aside|step aside|stay put|hold off|take (?:some )?profits?|stay (?:long|away|out|invested|on the sidelines))\\b"
     },
     {
       "id": "modal-consider",
@@ -84,7 +72,7 @@
       "id": "opportunity",
       "why": "calls it a time or a chance to trade",
       "flags": "i",
-      "pattern": "\\b(?:(?:buying|selling) opportunit(?:y|ies)\\b|buy(?:ing)? the dip\\b|(?:good|great|right|best|ideal|perfect) time to (?:buy|sell|enter|exit|add|invest)\\b|(?:time|moment) to (?:buy|sell|add|accumulate|trim|exit|take (?:some )?profits?|get (?:in|out))\\b|worth (?:buying|accumulating|adding)\\b(?!\\s+that\\b))"
+      "pattern": "\\b(?:(?:buying|selling) opportunit(?:y|ies)\\b|buy(?:ing)? the dip\\b|(?:good|great|right|best|ideal|perfect) time to (?:buy|sell|enter|exit|add|invest)\\b|(?:time|moment) to (?:buy|sell|add|accumulate|trim|exit|take (?:some )?profits?|get (?:in|out))\\b|worth (?:buying|accumulating|adding)\\b(?!\\s+that\\b)|the ones? to own\\b|a steal (?:here|at|now)\\b|it'?s a steal\\b)"
     },
     {
       "id": "valuation",
@@ -110,14 +98,13 @@
       "id": "future-move",
       "why": "predicts a move",
       "flags": "i",
-      "pattern": "\\b(?:will|is likely to|are likely to|looks? set to|is set to|are set to|is poised to|are poised to|is expected to|are expected to|should|could|may|might)\\s+(?:well\\s+|soon\\s+|now\\s+|then\\s+|still\\s+|likely\\s+|probably\\s+)?(?:rise|fall|rebound|recover|rally|drop|bounce|climb|decline|slide|continue|extend|reverse|persist|resume|deepen|worsen|accelerate|fade|outperform|underperform|follow through|follow|have (?:legs|room to (?:run|rise|fall)|further to (?:run|go|fall))|keep (?:rising|falling|climbing|sliding|dropping|gaining|going)|see (?:further|more|additional|renewed)|go (?:up|down|higher|lower)|move (?:higher|lower)|head (?:higher|lower))\\b",
-      "unless_before": "\\b(?:invalidat(?:ed|es|e)|confirm(?:ed|s)?|trigger(?:ed|s)?|cancel(?:led|ed|s)?|resets?|fail(?:s|ed)?|flag(?:ged|s)?)\\s+(?:only\\s+|again\\s+)?(?:if|unless)\\s+(?:[a-z0-9'-]+\\s+){1,2}$"
+      "pattern": "\\b(?:will|is likely to|are likely to|looks? set to|is set to|are set to|is poised to|are poised to|is expected to|are expected to|should|could|may|might)\\s+(?:well\\s+|soon\\s+|now\\s+|then\\s+|still\\s+|likely\\s+|probably\\s+)?(?:rise|fall|rebound|recover|rally|drop|bounce|climb|decline|slide|continue|extend|reverse|persist|resume|deepen|worsen|accelerate|fade|outperform|underperform|follow through|follow|have (?:legs|room to (?:run|rise|fall)|further to (?:run|go|fall))|keep (?:rising|falling|climbing|sliding|dropping|gaining|going)|see (?:further|more|additional|renewed)|go (?:up|down|higher|lower)|move (?:higher|lower)|head (?:higher|lower))\\b"
     },
     {
       "id": "likely",
       "why": "says what is likely",
       "flags": "i",
-      "pattern": "\\b(?:is|are|looks?|seems?|appears?)\\s+(?:very\\s+|quite\\s+|more\\s+|less\\s+|increasingly\\s+)?(?:likely|unlikely|probable|inevitable)\\b(?!\\s+why\\b)"
+      "pattern": "\\b(?:is|are|looks?|seems?|appears?)\\s+(?:very\\s+|quite\\s+|more\\s+|less\\s+|increasingly\\s+)?(?:likely|unlikely|probable|inevitable)\\b"
     },
     {
       "id": "future-time",
@@ -129,7 +116,7 @@
       "id": "expect",
       "why": "tells the reader what to expect",
       "flags": "",
-      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:(?:Expect|Brace for|Prepare for|Watch for)\\s+|Look for\\s+(?!(?:the|a|an|your)\\s+(?:(?!(?:on|in|at|to|of|from|near|under|by|for|with)\\b)[A-Za-z][\\w'-]*\\s+){0,3}(?:badge|button|icon|label|tab|column|card|chip|banner|toggle)\\b))"
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Expect|Watch for|Watch out for|Look for|Look out for|Keep an eye out for|Keep an eye on|Brace for|Prepare for|Be ready for|Get ready for)\\s+"
     },
     {
       "id": "can-expect",
@@ -194,7 +181,30 @@
       "Add NVDA to your alerts and load up before earnings.",
       "Buy NVDA to your watchlist.",
       "Hold NVDA to your watchlist.",
-      "Get in touch before the rally - buy now."
+      "Get in touch before the rally - buy now.",
+      "Add NVDA to your watchlist? Tap confirm below.",
+      "You may want to add NVDA to your watchlist to get alerts.",
+      "ADD NVDA to your watchlist.",
+      "Add NVDA to your alerts so the next scan reaches you.",
+      "Add NVDA to your watchlist and pick some up on the next dip.",
+      "Add NVDA to your watchlist and get long before earnings.",
+      "Add NVDA to your watchlist - then grab shares.",
+      "Add NVDA to your watchlist; then own it.",
+      "Add NVDA to your watchlist and go long.",
+      "Add NVDA to your watchlist and dump AMD.",
+      "Add NVDA to the watchlist and double down if it dips.",
+      "Add NVDA to your alerts and snap it up below 120.",
+      "Add NVDA to your watchlist, it's a steal here.",
+      "ADD NVDA to your watchlist and get exposure now.",
+      "You may want to add it to your watchlist and go long.",
+      "Investors should add NVDA to the watchlist, then own it.",
+      "Traders might want to add AMD to the watchlist and dump INTC.",
+      "Readers may wish to add NVDA to my watchlist and open a long.",
+      "Investors could look to add SPOT to the alerts and pile in.",
+      "The setup improved. Then pick up shares.",
+      "The score is 82: go long.",
+      "Now double down.",
+      "NVDA is the one to own."
     ],
     "advice_passes": [
       "Buyers stepped in late in the session.",
@@ -231,11 +241,13 @@
       "The company upgraded its guidance for the year.",
       "Higher rates forced funds to sell growth names again.",
       "The board may consider the offer on Friday.",
-      "Add NVDA to your watchlist? Tap confirm below.",
-      "You may want to add NVDA to your watchlist to get alerts.",
       "Get in touch via Settings if alerts do not arrive.",
-      "ADD NVDA to your watchlist.",
-      "Add NVDA to your alerts so the next scan reaches you."
+      "Pick-up in demand lifted revenue for a second quarter.",
+      "Scale in manufacturing remains the constraint, the company said.",
+      "The fund said it will double down on AI infrastructure.",
+      "Investors piled in after the results.",
+      "The founders will own the stock outright after the buyback.",
+      "Get in touch with the team through the support page."
     ],
     "prediction_removes": [
       "AMD is likely to rebound.",
@@ -276,7 +288,24 @@
       "It is unclear if the selling will continue.",
       "Add NVDA to your watchlist: it will rally.",
       "NVDA triggered a strong setup and if momentum builds it will rally.",
-      "The setup fails if the stock should fall, and it will fall."
+      "The setup fails if the stock should fall, and it will fall.",
+      "Look for the Buy Review badge on the radar.",
+      "That is likely why the score fell.",
+      "The setup is invalidated if price should fall below the 60-period low.",
+      "A setup is invalidated if the price should fall below its low.",
+      "Look for the Alerts tab in the menu.",
+      "Look for a fresh Buy Review badge on NVDA soon.",
+      "Look for the strong setup label to appear on NVDA this week.",
+      "Look for a Buy Review chip on AMD after the next bounce.",
+      "Look for the rally badge.",
+      "Look for a rebound tab.",
+      "Look out for a rebound in NVDA.",
+      "Keep an eye out for a bounce in chips.",
+      "A bounce is likely why traders are positioning for more upside.",
+      "A strong setup is confirmed if NVDA will rise, which looks set to happen.",
+      "The setup fails unless prices will rise, which they will.",
+      "The setup is confirmed only if NVDA will rally.",
+      "The signal resets if NVDA could bounce."
     ],
     "prediction_keeps": [
       "A broad rally tends to lower scores.",
@@ -286,12 +315,7 @@
       "The session did not continue the prior day's gains.",
       "Nothing in the facts says why it fell.",
       "The engine is built to look for a beaten-down name turning up.",
-      "Setups that had been forming were invalidated.",
-      "Look for the Buy Review badge on the radar.",
-      "That is likely why the score fell.",
-      "The setup is invalidated if price should fall below the 60-period low.",
-      "A setup is invalidated if the price should fall below its low.",
-      "Look for the Alerts tab in the menu."
+      "Setups that had been forming were invalidated."
     ],
     "price_call_removes": [
       "Shares are likely to rise on the news.",

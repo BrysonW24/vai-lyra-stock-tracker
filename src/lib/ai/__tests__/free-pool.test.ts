@@ -197,8 +197,8 @@ describe('the free pool', () => {
 
   it('starts no new provider once the reader has waited long enough', async () => {
     const sent = provider({ status: 503 });
-    // The clock is read once at the start and once before each target.
-    const clock = vi.fn().mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValue(40_000);
+    // The clock is read once at the start, then before each target and again after its cooling lookup.
+    const clock = vi.fn().mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValue(40_000);
     const outcome = await completeFromPool(REQUEST, NOW, clock);
     expect(outcome).toMatchObject({ ok: false, reason: 'free_pool_exhausted' });
     expect(outcome.tried.map((attempt) => attempt.reason)).toEqual(['provider_unavailable', 'out_of_time', 'out_of_time', 'out_of_time']);
@@ -263,12 +263,30 @@ describe('the free pool', () => {
       // The slots come back at 10 s. The fifth call was given up on long before: it is not sent.
       await vi.advanceTimersByTimeAsync(9_500);
       expect(hung).toHaveBeenCalledTimes(4);
-      // And the lane is usable again - a new call goes straight out. (Five failures in a row
-      // opened the pool's breaker, as they should; this is about the queue, so close it.)
-      resetProviderBreakersForTests();
+      // Four providers that hung are four failures; the call that never left the queue is not one -
+      // busy is not broken - so the pool's circuit is still closed.
+      expect(providerBreakerStatus()['pool:groq']).toEqual({ open: false, consecutiveFailures: 4 });
+      // And the lane is usable again - a new call goes straight out.
       vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, headers: new Headers(), json: async () => ({ choices: [{ message: { content: 'ok' } }] }) })));
       const result = await complete({ provider: 'groq', apiKey: 'k', system: 's', prompt: 'p', maxAttempts: 1, timeoutMs: 1_000, lane: 'pool' });
       expect(result.text).toBe('ok');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not open the circuit because the queue was busy', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+      const ask = (timeoutMs: number) => void complete({ provider: 'groq', apiKey: 'k', system: 's', prompt: 'p', maxAttempts: 1, timeoutMs, lane: 'pool' }).catch(() => {});
+      // Four slow calls hold every slot; eight more give up waiting for one.
+      for (let slot = 0; slot < 4; slot += 1) ask(30_000);
+      for (let waiting = 0; waiting < 8; waiting += 1) ask(200);
+      await vi.advanceTimersByTimeAsync(500);
+      // Before this was pinned, heavy use alone opened the circuit and pushed everyone onto figures.
+      expect(providerBreakerStatus()['pool:groq']).toEqual({ open: false, consecutiveFailures: 0 });
+      await vi.advanceTimersByTimeAsync(30_000);
     } finally {
       vi.useRealTimers();
     }

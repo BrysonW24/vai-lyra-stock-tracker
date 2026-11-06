@@ -49,6 +49,7 @@ interface Reply {
   reason?: string;
   figuresOnly?: boolean;
   answeredBy?: string;
+  action?: { type: string; symbol: string };
 }
 
 const ask = async (question: string, extra: Record<string, unknown> = {}): Promise<Reply> => {
@@ -133,6 +134,32 @@ describe('POST /api/ai/chat with the free pool', () => {
     const reply = await ask('What are the top signals?');
     expect(reply.text).not.toContain('ZZZQ');
     expect(reply.text).toContain('- On the scan now: 1 name');
+  });
+
+  it("offers an action the reader asked for in the app's own words when the model's wording is stopped", async () => {
+    // What a model writes when asked to add a ticker: an instruction to act on a named stock.
+    const modelSays = 'Add NVDA to your watchlist? Tap confirm below.\nACTION: add_watchlist || NVDA';
+    mocks.answerWith.mockResolvedValue({ ok: true, text: modelSays, provider: 'groq', model: 'openai/gpt-oss-120b', usage: null, costUsd: 0, via: 'free_pool' });
+
+    const asked = await ask('add NVDA to my watchlist', { agentActions: true });
+    expect(asked.text).toBe('I can add NVDA to your watchlist. Confirm below and it is done - you can undo it.');
+    expect(asked.action).toEqual({ type: 'add_watchlist', symbol: 'NVDA' });
+
+    // The reader did not ask for it: the refusal stands, and no card is offered.
+    const unasked = await ask('What is the score for NVDA?', { agentActions: true });
+    expect(unasked.text).toContain('research-only guardrails');
+    expect(unasked.action).toBeUndefined();
+
+    // Actions switched off: the ACTION line is never read, whatever was asked.
+    const off = await ask('add NVDA to my watchlist');
+    expect(off.action).toBeUndefined();
+  });
+
+  it("gives the model step what is left of the route's own time", async () => {
+    await ask('What does the scan look like?');
+    const request = mocks.answerWith.mock.calls[0][2] as { deadlineMs: number };
+    expect(request.deadlineMs).toBeGreaterThan(45_000);
+    expect(request.deadlineMs).toBeLessThanOrEqual(52_000);
   });
 
   it('refuses to narrate the authored sample book when the live read failed on a configured deployment', async () => {

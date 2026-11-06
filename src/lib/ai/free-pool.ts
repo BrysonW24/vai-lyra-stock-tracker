@@ -227,13 +227,18 @@ export async function completeFromPool(
   const startedAt = clock();
   for (const target of targets) {
     const name = `${target.provider}:${target.model}`;
-    const left = deadlineMs - (clock() - startedAt);
-    if (left < MIN_ATTEMPT_MS) {
+    if (deadlineMs - (clock() - startedAt) < MIN_ATTEMPT_MS) {
       tried.push({ target: name, reason: 'out_of_time' });
       continue;
     }
     if (await isCooling(target, nowMs)) {
       tried.push({ target: name, reason: 'cooling' });
+      continue;
+    }
+    // Measured after the cooling lookup: a slow shared store spends the pool's time too.
+    const left = deadlineMs - (clock() - startedAt);
+    if (left < MIN_ATTEMPT_MS) {
+      tried.push({ target: name, reason: 'out_of_time' });
       continue;
     }
     try {
@@ -258,9 +263,11 @@ export async function completeFromPool(
     } catch (error) {
       const reason = error instanceof CircuitOpenError ? 'provider_unavailable' : classifyAiFailure(error);
       tried.push({ target: name, reason });
+      // Cooling is marked in this instance's memory at once and written to the shared store without
+      // being waited for: the reader's answer does not hang on a bookkeeping write.
       if (error instanceof ProviderHttpError) {
-        if (error.status === 429) await cool(target, error.retryAfterSec ?? DEFAULT_COOLDOWN_SEC, nowMs);
-        else if (error.status === 401 || error.status === 403) await cool(target, AUTH_COOLDOWN_SEC, nowMs);
+        if (error.status === 429) void cool(target, error.retryAfterSec ?? DEFAULT_COOLDOWN_SEC, nowMs);
+        else if (error.status === 401 || error.status === 403) void cool(target, AUTH_COOLDOWN_SEC, nowMs);
       }
     }
   }

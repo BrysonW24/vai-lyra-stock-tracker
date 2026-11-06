@@ -42,6 +42,23 @@ describe('rateLimitKeyForIp', () => {
     expect(rateLimitKeyForIp('0:0:0:0:0:FFFF:CB00:7107')).toBe('203.0.113.7');
   });
 
+  it('reads the other ways of carrying an IPv4 address in IPv6, so they do not all share one bucket', () => {
+    // NAT64, in hex and dotted, and the old IPv4-compatible form.
+    expect(rateLimitKeyForIp('64:ff9b::cb00:7107')).toBe('203.0.113.7');
+    expect(rateLimitKeyForIp('64:ff9b::cc00:7107')).toBe('204.0.113.7');
+    expect(rateLimitKeyForIp('64:ff9b::203.0.113.7')).toBe('203.0.113.7');
+    expect(rateLimitKeyForIp('::cb00:7107')).toBe('203.0.113.7');
+    // Loopback and the unspecified address are not IPv4 addresses.
+    expect(rateLimitKeyForIp('::1')).toBe('0:0:0:0::/64');
+    expect(rateLimitKeyForIp('::')).toBe('0:0:0:0::/64');
+  });
+
+  it('counts an IPv4 address written with leading zeros as the same address', () => {
+    expect(rateLimitKeyForIp('01.02.03.04')).toBe('1.2.3.4');
+    expect(rateLimitKeyForIp('203.000.113.007')).toBe('203.0.113.7');
+    expect(rateLimitKeyForIp('::ffff:203.000.113.007')).toBe('203.0.113.7');
+  });
+
   it('drops a port, so one caller is not a new caller on every connection', () => {
     expect(rateLimitKeyForIp('203.0.113.7:5678')).toBe('203.0.113.7');
     expect(rateLimitKeyForIp('203.0.113.7:443')).toBe('203.0.113.7');

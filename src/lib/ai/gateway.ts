@@ -53,6 +53,13 @@ export interface AiCompleteParams {
    * brought a key for the same provider. Default 'shared'.
    */
   lane?: 'shared' | 'pool';
+  /**
+   * Count time spent waiting in the queue against `timeoutMs`. Default: true in the 'pool' lane,
+   * false otherwise. A reader's own call is timed from the moment it reaches the provider - waiting
+   * for a slot is not the provider being slow. A call that has a deadline to keep (the free pool,
+   * or a house key with the pool behind it) is timed from the moment it is asked.
+   */
+  boundQueue?: boolean;
 }
 
 export interface AiCompleteResult {
@@ -240,6 +247,8 @@ interface OpenAiCompatibleOptions {
   extraBody?: Record<string, unknown>;
   /** What the endpoint calls the output ceiling. */
   tokenField?: 'max_tokens' | 'max_completion_tokens';
+  /** Ends the request itself when the caller has stopped waiting - a timer alone leaves it running. */
+  signal?: AbortSignal;
 }
 
 /** OpenRouter, xAI, Groq and Cloudflare Workers AI all speak the OpenAI chat-completions wire format. */
@@ -268,6 +277,7 @@ async function callOpenAiCompatible(
         ],
         ...(extraBody ?? {}),
       }),
+      ...(options.signal ? { signal: options.signal } : {}),
     });
   let res = await post(options.extraBody);
   // An endpoint that does not know a reasoning field refuses the whole request: ask once more plainly.
@@ -348,7 +358,7 @@ const poolLimiter = new BackpressureLimiter(4, 100);
 // --- public entry point -----------------------------------------------------
 
 /** Dispatch to the chosen provider adapter (one attempt, no retry/timeout). */
-async function dispatchCompletion(params: AiCompleteParams, model: string, maxTokens: number): Promise<CompletionRaw> {
+async function dispatchCompletion(params: AiCompleteParams, model: string, maxTokens: number, signal?: AbortSignal): Promise<CompletionRaw> {
   const { provider, apiKey, system, prompt, temperature } = params;
   switch (provider) {
     case 'anthropic':
@@ -365,7 +375,7 @@ async function dispatchCompletion(params: AiCompleteParams, model: string, maxTo
         prompt,
         maxTokens,
         temperature,
-        { extraHeaders: { 'HTTP-Referer': 'https://lyra.vivacity.ai', 'X-Title': 'Lyra' } },
+        { extraHeaders: { 'HTTP-Referer': 'https://lyra.vivacity.ai', 'X-Title': 'Lyra' }, signal },
       );
     case 'google':
       return callGoogle(apiKey, model, system, prompt, maxTokens, temperature);
@@ -375,6 +385,7 @@ async function dispatchCompletion(params: AiCompleteParams, model: string, maxTo
       return callOpenAiCompatible(provider, 'https://api.groq.com/openai/v1/chat/completions', apiKey, model, system, prompt, maxTokens, temperature, {
         extraBody: reasoningExtras(provider, model),
         tokenField: 'max_completion_tokens',
+        signal,
       });
     case 'cloudflare': {
       const account = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
@@ -388,7 +399,7 @@ async function dispatchCompletion(params: AiCompleteParams, model: string, maxTo
         prompt,
         maxTokens,
         temperature,
-        { extraBody: reasoningExtras(provider, model) },
+        { extraBody: reasoningExtras(provider, model), signal },
       );
     }
     default: {
@@ -479,25 +490,38 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
   const timeoutMs = params.timeoutMs && params.timeoutMs > 0 ? params.timeoutMs : ATTEMPT_TIMEOUT_MS;
   const maxAttempts = params.maxAttempts && params.maxAttempts > 0 ? Math.floor(params.maxAttempts) : 3;
 
-  // Every call is timed from the moment it reaches the provider, and that timer sits INSIDE the
-  // queue slot: it is what gives the slot back when a provider hangs (the timer bounds the wait, it
-  // does not close the socket).
-  const timed = () => withTimeout(dispatchCompletion(params, model, maxTokens), timeoutMs, `${provider} completion`);
-  // A pool call is ALSO timed from the moment it is asked - the reader is promised an answer or
-  // the figures within the pool's deadline, time in the queue included. A call given up on while
-  // still queued never goes out: nobody is waiting for it, and it would spend the free allowance.
-  const attempt = pooled
-    ? () => {
+  const label = `${provider} completion`;
+  const bounded = params.boundQueue ?? pooled;
+  // Whether any attempt got as far as the provider. A call that timed out waiting for a slot says
+  // nothing about the provider's health, so it must not count towards opening its circuit.
+  let reachedProvider = false;
+  const attempt = bounded
+    ? // Timed from the moment it is ASKED: the caller is promised an answer, or its fallback, by a
+      // deadline that includes the queue. Two timers do it. The outer one ends the caller's wait.
+      // The inner one sits inside the queue slot, gets only what is left after the wait, and is
+      // what gives the slot back when a provider hangs - with a signal that ends the request too,
+      // so a call nobody is waiting for stops spending the allowance. A call given up on while
+      // still queued is never sent at all.
+      () => {
+        const askedAt = Date.now();
         let abandoned = false;
         const queued = limiter.run(async () => {
-          if (abandoned) throw new Error(`${provider} completion: given up on while queued`);
-          return timed();
+          if (abandoned) throw new Error(`${label}: given up on while queued`);
+          reachedProvider = true;
+          const left = Math.max(1, timeoutMs - (Date.now() - askedAt));
+          return withTimeout(dispatchCompletion(params, model, maxTokens, AbortSignal.timeout(left + 250)), left, label);
         });
-        return withTimeout(queued, timeoutMs, `${provider} completion`).finally(() => {
+        return withTimeout(queued, timeoutMs, label).finally(() => {
           abandoned = true;
         });
       }
-    : () => limiter.run(timed);
+    : // Timed from the moment it reaches the provider, inside the queue slot (the timer bounds the
+      // wait and frees the slot; it does not close the socket).
+      () =>
+        limiter.run(() => {
+          reachedProvider = true;
+          return withTimeout(dispatchCompletion(params, model, maxTokens), timeoutMs, label);
+        });
 
   try {
     const raw = await withRetry(attempt, { policy: { maxAttempts, baseDelayMs: 400, maxDelayMs: 4000 }, isRetryable });
@@ -505,6 +529,8 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
     breaker.openedAt = null;
     return { text: raw.text, provider, model, usage: raw.usage, costUsd: estimateCostUsd(provider, model, raw.usage) };
   } catch (error) {
+    // Busy is not broken: a call that never left the queue is the queue's failure, not the provider's.
+    if (bounded && !reachedProvider) throw error;
     breaker.consecutiveFailures += 1;
     if (breaker.consecutiveFailures >= BREAKER_THRESHOLD) {
       breaker.openedAt = Date.now();

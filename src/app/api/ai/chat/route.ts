@@ -4,6 +4,7 @@ import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { guardProse } from '@/lib/ai/guardrails/prose';
 import { answerWith } from '@/lib/ai/answer';
 import { figuresOnlyAnswer } from '@/lib/ai/figures-answer';
+import { explicitlyAsked, offerText } from '@/lib/ai/action-offer';
 import { buildDailyBrief } from '@/lib/daily-brief';
 import { getDashboardData } from '@/lib/data';
 import { getMarketContextLive } from '@/lib/market-context-live';
@@ -141,11 +142,19 @@ const POOL_FALLBACK_REASONS = new Set(['free_pool_exhausted', 'provider_unavaila
 
 /** Long enough for the free pool's own deadline (35 s) plus the work around it. */
 export const maxDuration = 60;
+/**
+ * What the route allows itself in all, measured from the first line of POST. The model step is
+ * given what is left of it after the data is loaded, so a slow market-data fetch shortens the wait
+ * for prose (and can turn it into the figures-only answer) instead of running the function into
+ * the platform's limit.
+ */
+const ROUTE_BUDGET_MS = 52_000;
 
 /** Number of prior turns fed into the prompt - also the number screened for injection. */
 const HISTORY_TURNS = 8;
 
 export async function POST(request: NextRequest) {
+  const routeStartedAt = Date.now();
   try {
     const guard = await guardAiRoute<ChatRequest>(request);
     if (!guard.ok) return guard.response;
@@ -320,7 +329,13 @@ export async function POST(request: NextRequest) {
     const prompt = `${history}\nLyra:`;
 
     const startedAt = Date.now();
-    const completion = await answerWith(creds, guard.identity, { system, prompt, maxTokens: 600, budgetTokens: 600 });
+    const completion = await answerWith(creds, guard.identity, {
+      system,
+      prompt,
+      maxTokens: 600,
+      budgetTokens: 600,
+      deadlineMs: ROUTE_BUDGET_MS - (Date.now() - routeStartedAt),
+    });
     if (!completion.ok) {
       const reason = completion.reason;
       await recordAiRun({
@@ -422,6 +437,11 @@ export async function POST(request: NextRequest) {
         refusalReason: `guardrail_block: ${guarded.verdict.blockedReasons.join('; ') || 'empty after strip'}`,
         latencyMs,
       });
+      // The model's wording was stopped, but the reader asked for this action in so many words:
+      // offer it in the app's own words rather than leave them with a refusal.
+      if (action && last?.role === 'user' && explicitlyAsked(last.content, action)) {
+        return NextResponse.json({ ok: true, text: offerText(action), suggestions: [], action, answeredBy: completion.via });
+      }
       return NextResponse.json({
         ok: true,
         text: 'I drafted an answer that tripped Lyra\'s research-only guardrails (an ungrounded figure or advice-style wording), so I stopped it. Ask me to explain the data behind your question and I\'ll ground every number in the latest scan.',

@@ -16,7 +16,7 @@ import { complete, resolveModel, type AiProvider } from '@/lib/ai/gateway';
 import type { TokenUsage } from '@/lib/ai/cost';
 import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { classifyAiFailure, type AiFailureReason } from '@/lib/ai/failures';
-import { chargeFreeCaps, completeFromPool } from '@/lib/ai/free-pool';
+import { chargeFreeCaps, completeFromPool, POOL_DEADLINE_MS } from '@/lib/ai/free-pool';
 import type { ResolvedAiCredentials } from '@/lib/ai/credentials';
 
 export interface AnswerRequest {
@@ -25,7 +25,16 @@ export interface AnswerRequest {
   maxTokens: number;
   /** What to charge the house budget for this call when it rides Lyra's hosted key. */
   budgetTokens: number;
+  /**
+   * How long this answer may take in all, in ms, when a deadline applies (a house key with the pool
+   * behind it, or the pool itself). A route that has already spent time loading data passes what is
+   * left of its own limit. Default 45 seconds. A reader's own key is not bound by it - their key,
+   * their provider's pace.
+   */
+  deadlineMs?: number;
 }
+
+const DEFAULT_ANSWER_BUDGET_MS = 45_000;
 
 /** Which fence produced the outcome: the caller's own key, Lyra's hosted key, or the free pool. */
 export type AnswerVia = 'user' | 'hosted' | 'free_pool' | 'none';
@@ -56,11 +65,15 @@ const HOUSE_FAILURES: ReadonlySet<AiFailureReason> = new Set<AiFailureReason>([
  * the figures, never in a function that was cut off.
  */
 const HOUSE_ATTEMPT_WITH_POOL_BEHIND_MS = 15_000;
+/** What the house attempt must leave of the answer's time for the pool to be worth asking. */
+const HOUSE_LEAVES_FOR_POOL_MS = 10_000;
 
-async function fromPool(creds: ResolvedAiCredentials, identity: string, request: AnswerRequest): Promise<Answer> {
+async function fromPool(creds: ResolvedAiCredentials, identity: string, request: AnswerRequest, left: () => number): Promise<Answer> {
   const caps = await chargeFreeCaps(identity);
   if (!caps.ok) return { ok: false, reason: caps.reason, provider: creds.provider, model: 'n/a', via: 'free_pool' };
-  const outcome = await completeFromPool({ system: request.system, prompt: request.prompt, maxTokens: request.maxTokens });
+  // The pool gets what is left of the answer's time, never more than its own deadline. With too
+  // little left it tries nobody and says it is out - the route then answers with the figures.
+  const outcome = await completeFromPool({ system: request.system, prompt: request.prompt, maxTokens: request.maxTokens }, Date.now(), Date.now, Math.min(POOL_DEADLINE_MS, left()));
   if (!outcome.ok) return { ok: false, reason: outcome.reason, provider: creds.provider, model: 'n/a', via: 'free_pool' };
   const { text, provider, model, usage, costUsd } = outcome.result;
   return { ok: true, text, provider, model, usage, costUsd, via: 'free_pool' };
@@ -69,7 +82,9 @@ async function fromPool(creds: ResolvedAiCredentials, identity: string, request:
 /** Never throws: a failure is a reason the UI already knows how to explain. */
 export async function answerWith(creds: ResolvedAiCredentials, identity: string, request: AnswerRequest): Promise<Answer> {
   if (creds.source === 'none') return { ok: false, reason: 'no_key', provider: creds.provider, model: 'n/a', via: 'none' };
-  if (creds.source === 'free_pool') return fromPool(creds, identity, request);
+  const startedAt = Date.now();
+  const left = () => (request.deadlineMs ?? DEFAULT_ANSWER_BUDGET_MS) - (Date.now() - startedAt);
+  if (creds.source === 'free_pool') return fromPool(creds, identity, request, left);
 
   const own = creds.source === 'user';
   const via: AnswerVia = own ? 'user' : 'hosted';
@@ -81,7 +96,7 @@ export async function answerWith(creds: ResolvedAiCredentials, identity: string,
     // wrong model id or a revoked key would hand over quietly on every request. Names and a
     // reason only: no prompt, no key, no user.
     console.warn(JSON.stringify({ event: 'lyra.ai_house_handover', schemaVersion: 1, source: creds.source, model: usedModel, reason }));
-    return fromPool(creds, identity, request);
+    return fromPool(creds, identity, request, left);
   };
 
   if (!own) {
@@ -97,7 +112,9 @@ export async function answerWith(creds: ResolvedAiCredentials, identity: string,
       prompt: request.prompt,
       maxTokens: request.maxTokens,
       retryOn429: own,
-      ...(handsOver ? { maxAttempts: 1, timeoutMs: HOUSE_ATTEMPT_WITH_POOL_BEHIND_MS } : {}),
+      // With the pool behind it: one attempt, timed from now (its wait for a queue slot included),
+      // and never so long that the pool is left with nothing.
+      ...(handsOver ? { maxAttempts: 1, timeoutMs: Math.max(1_000, Math.min(HOUSE_ATTEMPT_WITH_POOL_BEHIND_MS, left() - HOUSE_LEAVES_FOR_POOL_MS)), boundQueue: true } : {}),
     });
     if (!result.text) return failed('empty_response', result.model);
     return { ok: true, text: result.text, provider: result.provider, model: result.model, usage: result.usage, costUsd: result.costUsd, via };

@@ -535,11 +535,20 @@ turns travel with every question. The UI decides whether to show the free-model 
 the no-account screen kept from the authored sample because its live recompute failed
 (`SignalRow.sample`) reaches neither the model, the brief, nor the figures-only answer.
 
-Timing: the routes allow 60 seconds. The pool takes at most 35 (a wall: each provider gets the
-smaller of 20 seconds and what is left, time in its queue included), and a house key with the pool
-behind it gets one 15-second attempt before handing over - which is logged as
-`lyra.ai_house_handover` with the reason, so a wrong model id or a revoked house key cannot fail
-quietly behind free answers.
+Timing: the routes allow 60 seconds, and chat budgets 52 of them from its first line - the model
+step gets what is left after the data is loaded (`deadlineMs`), 45 at most. Inside that, a house key
+with the pool behind it gets one attempt of up to 15 seconds, and the pool gets the rest, never more
+than 35: each provider the smaller of 20 seconds and what is left, time in its queue included, and
+the request itself is cancelled when the time is up. With too little left the pool tries nobody and
+chat answers with the figures. A handover from the house key is logged as `lyra.ai_house_handover`
+with the reason, so a wrong model id or a revoked house key cannot fail quietly behind free
+answers; a call that timed out waiting in the queue is not counted against a provider's circuit.
+
+Wording: the advice and forecast rules (`contracts/guardrails/advice.json`) carry no exemptions.
+"Add NVDA to your watchlist? Tap confirm" is stopped like any other instruction on a named stock,
+because every rule that tried to let it through could be talked around. When a reader asked for
+that action in so many words, chat shows the offer in the app's own words instead
+(`src/lib/ai/action-offer.ts`).
 
 ## 9. The paper-bot loop - practice trades, gated hands
 

@@ -89,11 +89,13 @@ export function rateLimitKeyForIp(ip: string): string {
   const bracketed = raw.match(/^\[([^\]]+)\](?::\d{1,5})?$/);
   if (bracketed) raw = bracketed[1]!;
   raw = raw.split('%')[0]!;
+  // "01.02.03.04" and "1.2.3.4" are one address.
+  const plain = (quad: string) => quad.split('.').map((octet) => String(Number(octet))).join('.');
   const v4 = raw.match(/^(\d{1,3}(?:\.\d{1,3}){3})(?::\d{1,5})?$/);
-  if (v4) return v4[1]!;
+  if (v4) return plain(v4[1]!);
   if (!raw.includes(':')) return raw;
-  const dotted = raw.match(/^(?:0{0,4}:){1,6}ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
-  if (dotted) return dotted[1]!;
+  const dotted = raw.match(/^(?:(?:0{0,4}:){1,6}ffff|64:ff9b:(?:0{0,4}:){0,4}):(\d{1,3}(?:\.\d{1,3}){3})$/);
+  if (dotted) return plain(dotted[1]!);
   const halves = raw.split('::');
   if (halves.length > 2) return raw;
   const head = halves[0] ? halves[0].split(':') : [];
@@ -103,8 +105,14 @@ export function rateLimitKeyForIp(ip: string): string {
   const groups = [...head, ...Array<string>(gap).fill('0'), ...tail];
   if (groups.length !== 8 || groups.some((group) => !/^[0-9a-f]{1,4}$/.test(group))) return raw;
   const words = groups.map((group) => parseInt(group, 16));
-  // ::ffff:a.b.c.d with the address written as two hex groups.
-  if (words.slice(0, 5).every((word) => word === 0) && words[5] === 0xffff) {
+  // An IPv4 address carried in the last 32 bits, written as two hex groups: IPv4-mapped
+  // (::ffff:a.b.c.d), NAT64 (64:ff9b::a.b.c.d) and the old IPv4-compatible form (::a.b.c.d). Read
+  // as IPv6 each family would be a single /64 shared by every caller that arrives through it.
+  const middleZero = words.slice(2, 5).every((word) => word === 0);
+  const mapped = words[0] === 0 && words[1] === 0 && middleZero && words[5] === 0xffff;
+  const nat64 = words[0] === 0x64 && words[1] === 0xff9b && middleZero && words[5] === 0;
+  const compatible = words.slice(0, 6).every((word) => word === 0) && (words[6]! > 0 || words[7]! > 1);
+  if (mapped || nat64 || compatible) {
     return `${words[6]! >> 8}.${words[6]! & 0xff}.${words[7]! >> 8}.${words[7]! & 0xff}`;
   }
   return `${words.slice(0, 4).map((word) => word.toString(16)).join(':')}::/64`;

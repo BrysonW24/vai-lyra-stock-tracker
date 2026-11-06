@@ -38,6 +38,8 @@ interface ChatMessage {
   price?: number;
   /** No model wrote this reply: it is the engine's own figures, printed when the free pool could not answer. */
   figuresOnly?: boolean;
+  /** The hosted model could not answer, so Lyra's free model did - said under the reply, since the sheet promised otherwise. */
+  freeStandIn?: boolean;
 }
 
 interface AiRuntimeStatus {
@@ -191,12 +193,18 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
+  // Whether this conversation has carried the reader's device-held book (a no-account reader, with
+  // their own key or with "Include my book" on). Earlier turns travel with every question, so a
+  // conversation that carried the book is never continued by a request that withholds it.
+  const bookInChat = useRef(false);
+
   const newChat = () => {
     setMessages([]);
     setSuggestions([]);
     setInput('');
     setStatus('idle');
     setErrorReason(null);
+    bookInChat.current = false;
   };
 
   const toggleSave = (q: string) => setSaved(toggleSavedPrompt(q));
@@ -305,7 +313,14 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const send = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || status === 'sending' || !ai || !connected) return;
-    const next = [...messages, { role: 'user' as const, content: trimmed }];
+    // Without a key of their own, who answers - and so what may be sent - is only known once the
+    // status call has come back. Nothing goes out before the sheet can say where it is going.
+    if (checkingRuntime) return;
+    // A conversation that carried the book is not continued by a question that withholds it: the
+    // earlier turns (and the answers that quoted the book) would go with it. Start afresh instead.
+    const prior = bookWithheld && bookInChat.current ? [] : messages;
+    bookInChat.current = soloMode && !bookWithheld ? true : prior.length === 0 ? false : bookInChat.current;
+    const next = [...prior, { role: 'user' as const, content: trimmed }];
     setMessages(next);
     setInput('');
     setSuggestions([]);
@@ -348,6 +363,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
         suggestions?: string[];
         action?: ProposedAction | null;
         figuresOnly?: boolean;
+        answeredBy?: string;
       };
       if (data.ok && data.text) {
         const action =
@@ -356,7 +372,15 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
             : undefined;
         setMessages((m) => [
           ...m,
-          { role: 'assistant', content: data.text as string, action, actionStatus: action ? 'proposed' : undefined, figuresOnly: data.figuresOnly === true },
+          {
+            role: 'assistant',
+            content: data.text as string,
+            action,
+            actionStatus: action ? 'proposed' : undefined,
+            figuresOnly: data.figuresOnly === true,
+            // The sheet said the hosted model would answer; it could not, and the free one did.
+            freeStandIn: data.answeredBy === 'free_pool' && !usingFree && data.figuresOnly !== true,
+          },
         ]);
         setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 3) : []);
         setStatus('idle');
@@ -615,6 +639,11 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                     {m.role === 'assistant' && m.figuresOnly && (
                       <p className="mt-1.5 text-[10px] text-ink-dim">Figures only - no model wrote this reply.</p>
                     )}
+                    {m.role === 'assistant' && m.freeStandIn && (
+                      <p className="mt-1.5 text-[10px] text-ink-dim">
+                        The hosted model could not answer, so Lyra&apos;s free open-source model (hosted by Cloudflare or Groq) wrote this reply.
+                      </p>
+                    )}
                     {m.role === 'assistant' && m.action && (
                       <div className="mt-2 rounded-cell border border-pending/30 bg-blue-tint/60 p-2.5">
                         {(m.actionStatus === 'proposed' || m.actionStatus === 'running' || m.actionStatus === 'failed') && (
@@ -741,7 +770,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 <button
                   type="button"
                   onClick={() => send(input)}
-                  disabled={!input.trim() || status === 'sending'}
+                  disabled={!input.trim() || status === 'sending' || checkingRuntime}
                   aria-label="Send"
                   className="grid h-11 w-11 shrink-0 place-items-center rounded-cell border border-pending/40 bg-blue-tint text-pending transition hover:bg-blue-deep/25 disabled:cursor-not-allowed disabled:opacity-40"
                 >
