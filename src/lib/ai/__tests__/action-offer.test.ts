@@ -58,6 +58,20 @@ describe('explicitlyAsked', () => {
     expect(explicitlyAsked('Is BRK.B a good portfolio stock?', HOLD)).toBe(false);
   });
 
+  it('is false when the reader asks whether to, or says not to - a card would read like a yes', () => {
+    const nvda: OfferedAction = { type: 'add_portfolio', symbol: 'NVDA' };
+    expect(explicitlyAsked('Should I add NVDA to my portfolio?', nvda)).toBe(false);
+    expect(explicitlyAsked('Should I put NVDA in my holdings now or wait?', nvda)).toBe(false);
+    expect(explicitlyAsked("Don't add NVDA to my portfolio.", nvda)).toBe(false);
+    expect(explicitlyAsked('Don’t add NVDA to my portfolio.', nvda)).toBe(false);
+    expect(explicitlyAsked('add NVDA - or should I keep it off my portfolio?', nvda)).toBe(false);
+    expect(explicitlyAsked('Is it worth tracking NVDA?', WATCH)).toBe(false);
+    expect(explicitlyAsked('Do you think I should watch NVDA?', WATCH)).toBe(false);
+    // A polite request is still a request.
+    expect(explicitlyAsked('Could you add NVDA to my watchlist please?', WATCH)).toBe(true);
+    expect(explicitlyAsked('Please add NVDA to my portfolio', nvda)).toBe(true);
+  });
+
   it('is false for another ticker, or a ticker inside another word', () => {
     expect(explicitlyAsked('add AMD to my watchlist', WATCH)).toBe(false);
     expect(explicitlyAsked('add NVDAX to my watchlist', WATCH)).toBe(false);

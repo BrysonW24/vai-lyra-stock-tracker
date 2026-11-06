@@ -35,6 +35,13 @@ const ASKED_FOR: Record<OfferedAction['type'], RegExp> = {
   add_portfolio: /\b(?:ADD|PUT|SAVE|RECORD|TRACK)\b(?:[^.?!]|\.(?=\S))*\b(?:PORTFOLIO|HOLDINGS?|MY BOOK)\b/,
 };
 
+/**
+ * A message that asks WHETHER to, or says not to, is not a request to do it. "Should I add NVDA to
+ * my portfolio?" is a question the guard has just stopped the model answering; a card offering to
+ * add it would read like a yes.
+ */
+const NOT_A_REQUEST = /\b(?:SHOULD (?:I|WE)|SHALL (?:I|WE)|OUGHT|DO YOU THINK|IS IT|WORTH|WHETHER|DON'?T|DO NOT|NOT|NEVER)\b/;
+
 /** Whether an action is one that code may offer at all - a buy never is. */
 export function isOfferable(action: { type: string; symbol: string }): action is OfferedAction {
   return action.type === 'add_watchlist' || action.type === 'add_portfolio';
@@ -46,7 +53,8 @@ export function isOfferable(action: { type: string; symbol: string }): action is
  */
 export function explicitlyAsked(question: string, action: OfferedAction): boolean {
   if (!/^[A-Za-z0-9.-]{1,12}$/.test(action.symbol)) return false;
-  const asked = question.toUpperCase();
+  const asked = question.toUpperCase().replaceAll('’', "'");
+  if (NOT_A_REQUEST.test(asked)) return false;
   const named = new RegExp(`(?<![A-Z0-9.])${literal(action.symbol)}(?![A-Z0-9])`).test(asked);
   return named && ASKED_FOR[action.type].test(asked);
 }
