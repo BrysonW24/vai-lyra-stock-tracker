@@ -6,9 +6,14 @@
  * model saw, strip any sentence carrying a fabricated figure (digit or spelled-out), then run the
  * full guardrails engine (injection echo, grounding, regulated advice, content safety) on what
  * remains. Callers refuse when the verdict still blocks.
+ *
+ * Two rules were added on 2026-11-06, with the move to open-weight models (the same two the
+ * workers' guard gained): ADVICE IS LOOKED FOR IN THE WHOLE ANSWER, before anything is stripped -
+ * a sentence deleted for an invented figure must not carry its advice out with it and leave the
+ * rest to be sent as though the model had behaved - and A SENTENCE THAT FORECASTS IS REMOVED.
  */
 import { assertNoFabricatedNumbers } from '@/lib/ai/guardrails/schema';
-import { evaluateGuardrails, type GuardrailVerdict } from '@/lib/ai/guardrails/engine';
+import { adviceFindings, evaluateGuardrails, predictionFindings, type GuardrailVerdict } from '@/lib/ai/guardrails/engine';
 
 /** Every numeral (int/decimal, with optional thousands separators) present in a string. */
 export function numeralsIn(text: string): string[] {
@@ -81,14 +86,29 @@ export function stripFabricatedSentences(
   return { text: kept.join(' '), fabricated };
 }
 
+/** Remove every sentence that forecasts. Returns the rest and why each removed sentence went. */
+export function stripPredictions(text: string): { text: string; removed: string[] } {
+  if (predictionFindings(text).length === 0) return { text, removed: [] };
+  const removed: string[] = [];
+  const kept = splitSentences(text).filter((sentence) => {
+    const why = predictionFindings(sentence);
+    if (why.length === 0) return true;
+    removed.push(...why);
+    return false;
+  });
+  return { text: kept.join(' '), removed };
+}
+
 export interface GuardedProse {
   /** False when the guarded text must not reach the user (caller refuses / falls back). */
   ok: boolean;
-  /** The text to ship when ok - fabricated-figure sentences already removed. */
+  /** The text to ship when ok - fabricated-figure and forecasting sentences already removed. */
   text: string;
   verdict: GuardrailVerdict;
   /** Figures that were stripped (digits or spelled-out claims). Empty when nothing was removed. */
   strippedFigures: string[];
+  /** Why each forecasting sentence was removed (labels, never the sentence). Empty when none was. */
+  removedPredictions: string[];
 }
 
 /**
@@ -101,14 +121,22 @@ export function guardProse(text: string, groundingTexts: string[]): GuardedProse
   // Unit-aware allow-set (audit V5): holds "82%" to a grounded 82%, not to a bare score of 82.
   const allowedNumbers = groundedNumberTokens(groundingTexts.join('\n'));
 
+  // Advice anywhere in what the model wrote blocks the answer - checked before any sentence is
+  // stripped, so a stripped sentence cannot take its advice with it.
+  if (adviceFindings(text).length > 0) {
+    return { ok: false, text: '', verdict: evaluateGuardrails({ text, allowedNumbers }), strippedFigures: [], removedPredictions: [] };
+  }
+
   const stripped = stripFabricatedSentences(text, allowedNumbers);
-  const candidate = stripped.text.trim();
+  const described = stripPredictions(stripped.text);
+  const candidate = described.text.trim();
   if (candidate.length === 0) {
     return {
       ok: false,
       text: '',
       verdict: evaluateGuardrails({ text, allowedNumbers }),
       strippedFigures: stripped.fabricated,
+      removedPredictions: described.removed,
     };
   }
 
@@ -118,5 +146,6 @@ export function guardProse(text: string, groundingTexts: string[]): GuardedProse
     text: candidate,
     verdict,
     strippedFigures: stripped.fabricated,
+    removedPredictions: described.removed,
   };
 }

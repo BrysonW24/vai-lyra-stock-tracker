@@ -56,6 +56,8 @@ export function extractUsage(provider: AiProvider, raw: unknown): TokenUsage | n
       break;
     case 'openrouter':
     case 'xai':
+    case 'groq':
+    case 'cloudflare':
       input = pick(usage?.prompt_tokens);
       output = pick(usage?.completion_tokens);
       break;
@@ -112,6 +114,11 @@ const PRICE_RULES: readonly PriceRule[] = [
   // OpenRouter is a router across many models; a coarse open-weights default. xAI Grok.
   { provider: 'openrouter', match: () => true, inUsdPerM: 0.4, outUsdPerM: 0.4 },
   { provider: 'xai', match: () => true, inUsdPerM: 2.0, outUsdPerM: 10.0 },
+
+  // The free pool (src/lib/ai/free-pool.ts): Lyra uses these only on their free tiers, which bill
+  // nothing. A real zero, not "cost unknown" - the usage page must be able to say free answers cost $0.
+  { provider: 'groq', match: () => true, inUsdPerM: 0, outUsdPerM: 0 },
+  { provider: 'cloudflare', match: () => true, inUsdPerM: 0, outUsdPerM: 0 },
 ];
 
 /** The list-price rule for a provider+model, or null when nothing matches (cost unknown). */

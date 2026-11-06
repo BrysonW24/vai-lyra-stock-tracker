@@ -11,6 +11,7 @@ const hoisted = vi.hoisted(() => ({
     auth: { getUser: () => Promise<{ data: { user: MockUser | null } }> };
     from?: (table: string) => unknown;
   },
+  freePool: false,
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -22,6 +23,7 @@ vi.mock('@/lib/ai/credentials', () => ({
     hostedOpenAi: true,
     hostedOpenAiModel: 'server-model',
     sharedGoogle: false,
+    freePool: hoisted.freePool,
   }),
 }));
 
@@ -49,24 +51,27 @@ const RUNTIME = {
   hostedOpenAi: true,
   hostedOpenAiModel: 'server-model',
   sharedGoogle: false,
+  freePool: false,
+  freeAvailable: false,
   breakers: { openai: { open: false, consecutiveFailures: 0 } },
 };
 
 describe('GET /api/ai/status', () => {
   afterEach(() => {
     hoisted.client = null;
+    hoisted.freePool = false;
     vi.unstubAllEnvs();
   });
 
   it('treats a Solo runtime with no auth stack as anonymous, exposing only whether a hosted mode exists', async () => {
     const response = await GET();
-    expect(await response.json()).toEqual({ hostedAvailable: true, authenticated: false });
+    expect(await response.json()).toEqual({ hostedAvailable: true, freeAvailable: false, authenticated: false });
   });
 
   it('treats a signed-out Community caller as anonymous', async () => {
     hoisted.client = { auth: { getUser: async () => ({ data: { user: null } }) } };
     const response = await GET();
-    expect(await response.json()).toEqual({ hostedAvailable: true, authenticated: false });
+    expect(await response.json()).toEqual({ hostedAvailable: true, freeAvailable: false, authenticated: false });
   });
 
   it('does NOT treat profiles.ai_included as a grant - a user can write their own profile row', async () => {
@@ -105,5 +110,13 @@ describe('GET /api/ai/status', () => {
       trialDaysLeft: 0,
       authenticated: true,
     });
+  });
+
+  it('reports the free pool to everyone, and the per-provider house keys only to a signed-in caller', async () => {
+    hoisted.freePool = true;
+    expect(await (await GET()).json()).toEqual({ hostedAvailable: true, freeAvailable: true, authenticated: false });
+
+    hoisted.client = signedInClient({ id: 'u2' }, false);
+    expect(await (await GET()).json()).toMatchObject({ freeAvailable: true, hostedOpenAi: true, sharedGoogle: false, aiIncluded: false, authenticated: true });
   });
 });

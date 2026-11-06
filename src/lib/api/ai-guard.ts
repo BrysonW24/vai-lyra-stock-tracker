@@ -60,16 +60,62 @@ export interface AiGuardBlocked {
  * every throttle on the open community routes. When only XFF exists we take the RIGHTMOST
  * hop (the nearest, platform-appended one). Still abuse damping, not authentication.
  * Exported for the other open routes (feedback, ticker-lookup) so they share one definition.
+ *
+ * An IPv6 caller is identified by their /64 (see rateLimitKeyForIp): one home or phone connection
+ * is handed a whole /64 and can pick any of its 18 quintillion addresses per request, so a limit
+ * keyed on the full address is a limit that caller can reset at will.
  */
 export function clientIp(request: NextRequest): string {
   const real = request.headers.get('x-real-ip')?.trim();
-  if (real) return real;
+  if (real) return rateLimitKeyForIp(real);
   const fwd = request.headers.get('x-forwarded-for');
   if (fwd) {
     const hops = fwd.split(',');
-    return hops[hops.length - 1]!.trim() || 'anon';
+    return rateLimitKeyForIp(hops[hops.length - 1]!.trim()) || 'anon';
   }
   return 'anon';
+}
+
+/**
+ * The key an address is rate-limited under. IPv4 is itself. IPv6 is its /64 prefix, written
+ * `2001:db8:1:2::/64`; an IPv4-mapped IPv6 address is the IPv4 address inside it, however it was
+ * written (`::ffff:203.0.113.7` or `::ffff:cb00:7107`). A port a proxy appended (`1.2.3.4:5678`,
+ * `[2001:db8::1]:443`) is dropped - the same caller on another port is the same caller. Anything
+ * that does not parse as an address is returned unchanged - a strange header still gets one bucket
+ * of its own rather than sharing "anon" with everybody.
+ */
+export function rateLimitKeyForIp(ip: string): string {
+  let raw = ip.trim().toLowerCase();
+  const bracketed = raw.match(/^\[([^\]]+)\](?::\d{1,5})?$/);
+  if (bracketed) raw = bracketed[1]!;
+  raw = raw.split('%')[0]!;
+  // "01.02.03.04" and "1.2.3.4" are one address.
+  const plain = (quad: string) => quad.split('.').map((octet) => String(Number(octet))).join('.');
+  const v4 = raw.match(/^(\d{1,3}(?:\.\d{1,3}){3})(?::\d{1,5})?$/);
+  if (v4) return plain(v4[1]!);
+  if (!raw.includes(':')) return raw;
+  const dotted = raw.match(/^(?:(?:0{0,4}:){1,6}ffff|64:ff9b:(?:0{0,4}:){0,4}):(\d{1,3}(?:\.\d{1,3}){3})$/);
+  if (dotted) return plain(dotted[1]!);
+  const halves = raw.split('::');
+  if (halves.length > 2) return raw;
+  const head = halves[0] ? halves[0].split(':') : [];
+  const tail = halves.length === 2 && halves[1] ? halves[1].split(':') : [];
+  const gap = halves.length === 2 ? 8 - head.length - tail.length : 0;
+  if (gap < 0) return raw;
+  const groups = [...head, ...Array<string>(gap).fill('0'), ...tail];
+  if (groups.length !== 8 || groups.some((group) => !/^[0-9a-f]{1,4}$/.test(group))) return raw;
+  const words = groups.map((group) => parseInt(group, 16));
+  // An IPv4 address carried in the last 32 bits, written as two hex groups: IPv4-mapped
+  // (::ffff:a.b.c.d), NAT64 (64:ff9b::a.b.c.d) and the old IPv4-compatible form (::a.b.c.d). Read
+  // as IPv6 each family would be a single /64 shared by every caller that arrives through it.
+  const middleZero = words.slice(2, 5).every((word) => word === 0);
+  const mapped = words[0] === 0 && words[1] === 0 && middleZero && words[5] === 0xffff;
+  const nat64 = words[0] === 0x64 && words[1] === 0xff9b && middleZero && words[5] === 0;
+  const compatible = words.slice(0, 6).every((word) => word === 0) && (words[6]! > 0 || words[7]! > 1);
+  if (mapped || nat64 || compatible) {
+    return `${words[6]! >> 8}.${words[6]! & 0xff}.${words[7]! >> 8}.${words[7]! & 0xff}`;
+  }
+  return `${words.slice(0, 4).map((word) => word.toString(16)).join(':')}::/64`;
 }
 
 export async function guardAiRoute<T>(

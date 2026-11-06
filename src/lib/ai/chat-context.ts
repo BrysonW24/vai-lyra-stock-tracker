@@ -144,6 +144,12 @@ export function deriveTone(profile?: ChatProfile): string {
 }
 
 export interface SoloDeviceContext {
+  /**
+   * The reader chose NOT to send their book with this question (the default when a free model
+   * answers a no-account reader). Holdings, watchlist and capital are then empty, and the model is
+   * told it cannot see them rather than that there are none.
+   */
+  withheld?: boolean;
   holdings: Array<{ symbol: string; quantity: number; averageBuyPrice: number }>;
   watchlist: Array<{ symbol: string; targetBuyPrice?: number }>;
   capital?: {
@@ -156,11 +162,19 @@ export interface SoloDeviceContext {
 }
 
 /**
- * Browser-local Solo state, forwarded only for this BYOK request. The hosted demo dataset is still
+ * Browser-local Solo state, forwarded for this one request and never stored: always with the
+ * reader's own key, and with Lyra's free model only when they have switched on "include my book"
+ * (otherwise the request says `withheld` and carries none of it). The hosted demo dataset is still
  * useful for signal maths, catalysts and macro, but it must not impersonate the user's own book.
  * This block is appended after scan grounding so its precedence is explicit to the model.
  */
 export function buildSoloDeviceGrounding(context: SoloDeviceContext, data: DashboardData): string {
+  if (context.withheld) {
+    return [
+      "SOLO DEVICE DATA: this reader keeps their holdings, watchlist and cash on their own device and has NOT shared them with you. You cannot see their book. Any HOLDINGS, WATCHLIST or cash figures above are not theirs - ignore them.",
+      'If they ask about their own holdings, positions, profit or cash, say plainly that you cannot see their book in this chat, and that they can switch on "Include my book" under the message box, or add their own key in AI settings. Then answer from the scan what you can.',
+    ].join('\n');
+  }
   const sigBy = new Map(data.signals.map((signal) => [signal.symbol, signal]));
   const lines = [
     'SOLO DEVICE DATA (authoritative for this user; ignore sample HOLDINGS, WATCHLIST and cash above when they conflict; transient request context, never a server-side account record):',

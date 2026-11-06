@@ -18,6 +18,8 @@ import {
   normaliseAiFailureReason,
   type AiFailureReason,
 } from '@/lib/ai/failures';
+import { loadShareBook, saveShareBook } from '@/lib/ai/share-book';
+import { whoAnswers } from '@/lib/ai/who-answers';
 
 interface ProposedAction {
   type: 'add_watchlist' | 'add_portfolio' | 'log_trade';
@@ -34,6 +36,10 @@ interface ChatMessage {
   undoId?: string;
   qty?: number;
   price?: number;
+  /** No model wrote this reply: it is the engine's own figures, printed when the free pool could not answer. */
+  figuresOnly?: boolean;
+  /** The hosted model could not answer, so Lyra's free model did - said under the reply, since the sheet promised otherwise. */
+  freeStandIn?: boolean;
 }
 
 interface AiRuntimeStatus {
@@ -47,6 +53,11 @@ interface AiRuntimeStatus {
   hostedAvailable?: boolean;
   hostedKeyOnDeployment?: boolean;
   aiIncluded?: boolean;
+  // The free pool of open models is on for this deployment (v0.140.0): anyone can chat with no key.
+  freeAvailable?: boolean;
+  // Whether a session exists (the signed-in status shape). With the fields above it is what
+  // whoAnswers() needs to say, before anything is sent, who will answer this reader.
+  authenticated?: boolean;
 }
 
 const ACTION_LABEL: Record<ProposedAction['type'], string> = {
@@ -177,9 +188,15 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const [errorReason, setErrorReason] = useState<AiFailureReason | null>(null);
+  const [shareBook, setShareBook] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Whether this conversation has carried the reader's device-held book (a no-account reader, with
+  // their own key or with "Include my book" on). Earlier turns travel with every question, so a
+  // conversation that carried the book is never continued by a request that withholds it.
+  const bookInChat = useRef(false);
 
   const newChat = () => {
     setMessages([]);
@@ -187,6 +204,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     setInput('');
     setStatus('idle');
     setErrorReason(null);
+    bookInChat.current = false;
   };
 
   const toggleSave = (q: string) => setSaved(toggleSavedPrompt(q));
@@ -196,6 +214,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     setAi(loadAi());
     setRuntime(null);
     setSaved(loadSavedPrompts());
+    setShareBook(loadShareBook());
     const acct = loadProfile();
     const summary = loadOnboardingSummary();
     setProfile({
@@ -253,14 +272,24 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  // Still waiting for the /api/ai/status response (fetch in-flight).
+  // Still waiting for the /api/ai/status response (fetch in-flight). Without a key of their own
+  // everyone waits for it now - no-account mode included - because it says whether the free pool is on.
   const soloMode = !isSupabaseConfigured();
-  const checkingRuntime =
-    !soloMode &&
-    ai != null &&
-    !ai.apiKey?.trim() &&
-    runtime == null &&
-    (ai.provider === 'openai' || ai.provider === 'google');
+  const checkingRuntime = ai != null && !ai.apiKey?.trim() && runtime == null;
+  // Answers come from the free pool when the reader has no key of their own and no house key
+  // answers them first. whoAnswers() mirrors the server's resolver case for case - including the
+  // one where the house holds a key for the OTHER provider and the free pool answers instead.
+  const usingFree = ai != null && !ai.apiKey?.trim() && whoAnswers(runtime, ai.provider) === 'free';
+  // A no-account reader decides whether their device-held book goes to the free model.
+  const bookChoice = usingFree && soloMode;
+  const bookWithheld = bookChoice && !shareBook;
+  const chooseShareBook = (value: boolean) => {
+    setShareBook(value);
+    saveShareBook(value);
+    // Switching it OFF mid-conversation starts a new chat: the earlier turns are sent with every
+    // question, and answers already given may quote the book.
+    if (!value && messages.length > 0) newChat();
+  };
 
   // Connected when the user has a browser key, or the selected provider is backed by a server key
   // AND this user is entitled to it. We gate on the PER-USER hostedAvailable (deployment key +
@@ -271,6 +300,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const connected =
     ai != null &&
     (!!ai.apiKey?.trim() ||
+      runtime?.freeAvailable === true ||
       (!soloMode &&
         ai.provider === 'openai' &&
         (runtime?.hostedAvailable || runtime === null)) ||
@@ -283,7 +313,14 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const send = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || status === 'sending' || !ai || !connected) return;
-    const next = [...messages, { role: 'user' as const, content: trimmed }];
+    // Without a key of their own, who answers - and so what may be sent - is only known once the
+    // status call has come back. Nothing goes out before the sheet can say where it is going.
+    if (checkingRuntime) return;
+    // A conversation that carried the book is not continued by a question that withholds it: the
+    // earlier turns (and the answers that quoted the book) would go with it. Start afresh instead.
+    const prior = bookWithheld && bookInChat.current ? [] : messages;
+    bookInChat.current = soloMode && !bookWithheld ? true : prior.length === 0 ? false : bookInChat.current;
+    const next = [...prior, { role: 'user' as const, content: trimmed }];
     setMessages(next);
     setInput('');
     setSuggestions([]);
@@ -292,22 +329,26 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     try {
       const agentActions = loadAgent().actionsEnabled;
       // Solo's own book/watchlist live in localStorage, while the server dataset is an
-      // illustrative scan. Forward a minimal transient snapshot so BYOK answers ground on what
-      // this user actually entered. The route validates it and audit logs only its hash.
+      // illustrative scan. Forward a minimal transient snapshot so answers ground on what this
+      // user actually entered. The route validates it and audit logs only its hash. With the free
+      // model it travels only when the reader has switched on "Include my book"; otherwise the
+      // request says the book was withheld and carries none of it.
       const summary = loadOnboardingSummary();
       const soloContext = !isSupabaseConfigured()
-        ? {
-            holdings: loadLocalHoldings().map(({ symbol, quantity, averageBuyPrice }) => ({
-              symbol,
-              quantity,
-              averageBuyPrice,
-            })),
-            watchlist: loadLocalWatchlist().map(({ symbol, targetBuyPrice }) => ({
-              symbol,
-              targetBuyPrice,
-            })),
-            capital: summary?.capital,
-          }
+        ? bookWithheld
+          ? { withheld: true as const, holdings: [], watchlist: [] }
+          : {
+              holdings: loadLocalHoldings().map(({ symbol, quantity, averageBuyPrice }) => ({
+                symbol,
+                quantity,
+                averageBuyPrice,
+              })),
+              watchlist: loadLocalWatchlist().map(({ symbol, targetBuyPrice }) => ({
+                symbol,
+                targetBuyPrice,
+              })),
+              capital: summary?.capital,
+            }
         : undefined;
       bumpAiUsage();
       const res = await fetch('/api/ai/chat', {
@@ -315,13 +356,32 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: next, ai, profile, agentActions, soloContext }),
       });
-      const data = (await res.json()) as { ok?: boolean; text?: string; reason?: string; suggestions?: string[]; action?: ProposedAction | null };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        text?: string;
+        reason?: string;
+        suggestions?: string[];
+        action?: ProposedAction | null;
+        figuresOnly?: boolean;
+        answeredBy?: string;
+      };
       if (data.ok && data.text) {
         const action =
           data.action && (data.action.type === 'add_watchlist' || data.action.type === 'add_portfolio' || data.action.type === 'log_trade')
             ? data.action
             : undefined;
-        setMessages((m) => [...m, { role: 'assistant', content: data.text as string, action, actionStatus: action ? 'proposed' : undefined }]);
+        setMessages((m) => [
+          ...m,
+          {
+            role: 'assistant',
+            content: data.text as string,
+            action,
+            actionStatus: action ? 'proposed' : undefined,
+            figuresOnly: data.figuresOnly === true,
+            // The sheet said the hosted model would answer; it could not, and the free one did.
+            freeStandIn: data.answeredBy === 'free_pool' && !usingFree && data.figuresOnly !== true,
+          },
+        ]);
         setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 3) : []);
         setStatus('idle');
       } else {
@@ -454,12 +514,12 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
             <span className="grid h-12 w-12 place-items-center rounded-full border border-pending/25 bg-blue-tint text-pending">
               {checkingRuntime ? <Loader2 size={22} className="animate-spin" /> : <KeyRound size={22} />}
             </span>
-            <p className="text-sm font-semibold text-ink">{checkingRuntime ? 'Checking hosted model' : 'Connect a model to chat'}</p>
+            <p className="text-sm font-semibold text-ink">{checkingRuntime ? 'Checking for a model' : 'Connect a model to chat'}</p>
             <p className="max-w-xs text-[12px] leading-relaxed text-ink-2">
               {checkingRuntime
-                ? 'Lyra is checking whether the hosted beta key is available for this deployment.'
+                ? 'Lyra is checking which model can answer here.'
                 : soloMode
-                  ? 'Solo has no hosted model. Add your own provider key in Settings; it stays in this browser and is sent only with your requests.'
+                  ? 'Free answers are not switched on here yet. Add your own provider key in Settings; it stays in this browser and is sent only with your requests.'
                   : ai?.provider === 'openai'
                     ? 'Hosted OpenAI is not configured for this deployment yet. Add your own OpenAI key, or set OPENAI_API_KEY server-side and redeploy.'
                   : 'Lyra runs on a model you choose. Add a free key or your own provider key in Settings. Browser keys stay on this device.'}
@@ -478,8 +538,23 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
               {messages.length === 0 && (
                 <div className="space-y-3">
                   <p className="text-[12px] leading-relaxed text-ink-2">
-                    I can read your holdings, watchlist, live signals, prime setups and catalysts. Pick a topic below or ask your own - I&apos;ll only answer from what&apos;s on your dashboard.
+                    {bookWithheld
+                      ? "I can read the live signals, prime setups, catalysts and the macro picture. Your own book stays on this device unless you switch on Include my book below. Pick a topic or ask your own - I'll only answer from what's on the dashboard."
+                      : "I can read your holdings, watchlist, live signals, prime setups and catalysts. Pick a topic below or ask your own - I'll only answer from what's on your dashboard."}
                   </p>
+                  {usingFree && (
+                    <p className="rounded-cell border border-line px-3 py-2 text-[11px] leading-relaxed text-ink-3">
+                      Free answers are written by an open-source model hosted by Cloudflare or Groq. Your question and this conversation are sent to whichever of them answers, with a one-line tone instruction based on the experience and risk comfort you entered
+                      {bookChoice
+                        ? '. Your book - holdings with quantities and average prices, watchlist targets, and the cash and goal settings you entered - is sent only while Include my book is switched on below; switching it off starts a new chat.'
+                        : ', and the account details that ground the answer: your holdings and their profit or loss, your watchlist, and your cash, goal, horizon and risk settings.'}{' '}
+                      Both say they do not train on it. There is a daily allowance shared by everyone - when it runs out you get the figures without the commentary. Add your own key in{' '}
+                      <Link href="/account/ai" onClick={onClose} className="font-semibold text-pending underline-offset-2 hover:underline">
+                        AI settings
+                      </Link>{' '}
+                      to use a model of your choice.
+                    </p>
+                  )}
 
                   {saved.length > 0 && (
                     <div className="space-y-1.5">
@@ -561,6 +636,14 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                     }
                   >
                     {m.role === 'user' ? m.content : <RichText text={m.content} />}
+                    {m.role === 'assistant' && m.figuresOnly && (
+                      <p className="mt-1.5 text-[10px] text-ink-dim">Figures only - no model wrote this reply.</p>
+                    )}
+                    {m.role === 'assistant' && m.freeStandIn && (
+                      <p className="mt-1.5 text-[10px] text-ink-dim">
+                        The hosted model could not answer, so Lyra&apos;s free open-source model (hosted by Cloudflare or Groq) wrote this reply.
+                      </p>
+                    )}
                     {m.role === 'assistant' && m.action && (
                       <div className="mt-2 rounded-cell border border-pending/30 bg-blue-tint/60 p-2.5">
                         {(m.actionStatus === 'proposed' || m.actionStatus === 'running' || m.actionStatus === 'failed') && (
@@ -654,6 +737,22 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
 
             {/* Composer */}
             <div className="border-t border-line px-3 py-2.5">
+              {bookChoice && (
+                <label className="mb-1.5 flex min-h-[44px] cursor-pointer items-center gap-2.5 text-[11px] leading-snug text-ink-2">
+                  <input
+                    type="checkbox"
+                    checked={shareBook}
+                    onChange={(e) => chooseShareBook(e.target.checked)}
+                    className="h-4 w-4 shrink-0 accent-blue-focus"
+                  />
+                  <span>
+                    <span className="font-semibold text-ink-title">Include my book</span> -{' '}
+                    {shareBook
+                      ? 'your holdings, watchlist and cash settings are sent with each question.'
+                      : 'off: your holdings, watchlist and cash settings stay on this device.'}
+                  </span>
+                </label>
+              )}
               <div className="flex items-end gap-2">
                 <textarea
                   value={input}
@@ -671,7 +770,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                 <button
                   type="button"
                   onClick={() => send(input)}
-                  disabled={!input.trim() || status === 'sending'}
+                  disabled={!input.trim() || status === 'sending' || checkingRuntime}
                   aria-label="Send"
                   className="grid h-11 w-11 shrink-0 place-items-center rounded-cell border border-pending/40 bg-blue-tint text-pending transition hover:bg-blue-deep/25 disabled:cursor-not-allowed disabled:opacity-40"
                 >

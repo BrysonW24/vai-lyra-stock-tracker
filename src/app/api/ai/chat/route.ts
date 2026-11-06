@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { complete, resolveModel, type AiProvider } from '@/lib/ai/gateway';
+import { type AiProvider } from '@/lib/ai/gateway';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { guardProse } from '@/lib/ai/guardrails/prose';
-import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
+import { answerWith } from '@/lib/ai/answer';
+import { figuresOnlyAnswer } from '@/lib/ai/figures-answer';
+import { explicitlyAsked, isOfferable, offerText } from '@/lib/ai/action-offer';
+import { buildDailyBrief } from '@/lib/daily-brief';
 import { getDashboardData } from '@/lib/data';
 import { getMarketContextLive } from '@/lib/market-context-live';
 import {
@@ -17,7 +20,6 @@ import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_CHAT_FORMAT, composeSystem, toneFo
 import { recordAiRun, hashInput } from '@/lib/ai/audit';
 import { recordQuestionSignal } from '@/lib/ai/question-signals';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
-import { classifyAiFailure } from '@/lib/ai/failures';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 import { parseTradeLogIntent, detectSellLogIntent } from '@/lib/trading/trade-intent';
 import { lookupMarketQuote } from '@/lib/market/quote';
@@ -70,6 +72,8 @@ function boundedNumber(value: unknown, min: number, max: number): number | undef
 function sanitiseSoloContext(input: unknown): SoloDeviceContext | null {
   if (!input || typeof input !== 'object') return null;
   const raw = input as Record<string, unknown>;
+  // The reader kept their book on the device for this question: nothing else in the object is read.
+  if (raw.withheld === true) return { withheld: true, holdings: [], watchlist: [] };
   const holdings = Array.isArray(raw.holdings)
     ? raw.holdings
         .slice(0, 30)
@@ -127,11 +131,30 @@ function sanitiseSoloContext(input: unknown): SoloDeviceContext | null {
  * deterministic dashboard is assembled into a CONTEXT block, and a profile-derived tone is
  * prepended. The model phrases; it cannot invent numbers or give advice. Any failure returns
  * ok:false so the UI degrades gracefully.
+ *
+ * Who answers (v0.140.0): the caller's own key when they have one; otherwise the FREE POOL of
+ * open models (src/lib/ai/free-pool.ts), for anyone, signed in or not. When the pool cannot answer
+ * - its daily allowance is used up, or every provider is busy - the reply is the engine's own
+ * figures without commentary (src/lib/ai/figures-answer.ts), never an empty chat.
  */
+/** The pool's own failures: the caller did nothing wrong, so they get figures rather than an error. */
+const POOL_FALLBACK_REASONS = new Set(['free_pool_exhausted', 'provider_unavailable', 'provider_rate_limited', 'empty_response', 'invalid_key', 'invalid_model', 'error']);
+
+/** Long enough for the free pool's own deadline (35 s) plus the work around it. */
+export const maxDuration = 60;
+/**
+ * What the route allows itself in all, measured from the first line of POST. The model step is
+ * given what is left of it after the data is loaded, so a slow market-data fetch shortens the wait
+ * for prose (and can turn it into the figures-only answer) instead of running the function into
+ * the platform's limit.
+ */
+const ROUTE_BUDGET_MS = 52_000;
+
 /** Number of prior turns fed into the prompt - also the number screened for injection. */
 const HISTORY_TURNS = 8;
 
 export async function POST(request: NextRequest) {
+  const routeStartedAt = Date.now();
   try {
     const guard = await guardAiRoute<ChatRequest>(request);
     if (!guard.ok) return guard.response;
@@ -142,14 +165,10 @@ export async function POST(request: NextRequest) {
     if (!ai) return NextResponse.json({ ok: false, reason: 'disabled' });
     if (!Array.isArray(messages) || messages.length === 0) return NextResponse.json({ ok: false, reason: 'empty' });
 
-    const creds = resolveAiCredentials(ai, { authenticated, aiIncluded });
-    if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
-
-    // Hosted/shared key rides the house budget; BYOK spends the user's own quota untouched.
-    if (creds.source !== 'user') {
-      const budget = await chargeHostedBudgetShared(creds.source, 600);
-      if (budget.decision === 'block') return NextResponse.json({ ok: false, reason: 'budget' });
-    }
+    const creds = resolveAiCredentials(ai, { authenticated, aiIncluded, allowFreePool: true });
+    if (creds.source === 'none') return NextResponse.json({ ok: false, reason: 'no_key' });
+    // The house budget (a hosted key) and the free caps (the pool) are charged where the model is
+    // actually called - answerWith() below - so a refused or deterministic reply costs nothing.
 
     const last = messages[messages.length - 1];
     const inputHash = hashInput({ messages, profile, soloContext });
@@ -246,13 +265,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const data = await getDashboardData();
+    const loaded = await getDashboardData();
     // On a configured deployment `mode: 'demo'` means one thing: the live read FAILED and the
     // loader fell back to the authored sample book (with no database at all it returns 'solo').
     // Grounding on that would narrate invented holdings and P/L as the user's own, and every
     // sample figure would pass the prose guard because it is "in the context". Say the data is
     // unavailable instead.
-    if (data.mode === 'demo') return NextResponse.json({ ok: false, reason: 'provider_unavailable' });
+    if (loaded.mode === 'demo') return NextResponse.json({ ok: false, reason: 'provider_unavailable' });
+    // The same rule, row by row: the no-account screen keeps an authored sample row on display when
+    // one name's live recompute fails. Such a row is not a figure, so it reaches neither the model
+    // nor the figures-only answer.
+    const data = { ...loaded, signals: loaded.signals.filter((signal) => !signal.sample) };
     const market = await getMarketContextLive();
     const constraints = await getUserConstraints();
     const constraintsBlock = constraints ? buildConstraintsBlock(constraints) : '';
@@ -306,59 +329,57 @@ export async function POST(request: NextRequest) {
     const prompt = `${history}\nLyra:`;
 
     const startedAt = Date.now();
-    let completion: Awaited<ReturnType<typeof complete>>;
-    try {
-      completion = await complete({
-        provider: creds.provider,
-        apiKey: creds.apiKey,
-        model: creds.model,
-        system,
-        prompt,
-        maxTokens: 600,
-        retryOn429: creds.source === 'user',
-      });
-    } catch (error) {
-      const reason = classifyAiFailure(error);
+    const completion = await answerWith(creds, guard.identity, {
+      system,
+      prompt,
+      maxTokens: 600,
+      budgetTokens: 600,
+      deadlineMs: ROUTE_BUDGET_MS - (Date.now() - routeStartedAt),
+    });
+    if (!completion.ok) {
+      const reason = completion.reason;
       await recordAiRun({
         userId: guard.identity,
         agentName: 'portfolio_assistant',
-        provider: creds.provider,
-        model: resolveModel(creds.provider, creds.model),
+        provider: completion.provider,
+        model: completion.model,
         inputHash,
         outputHash: null,
         toolsUsed: [],
         injectionFlags: [],
-        validationErrors: [],
+        validationErrors: reason === 'empty_response' ? ['empty_response'] : [],
         citationCount: 0,
-        status: 'error',
-        refusalReason: `provider:${reason}`,
+        status: reason === 'empty_response' ? 'validation_failed' : 'error',
+        refusalReason: reason === 'empty_response' ? 'empty_response' : `provider:${reason}`,
         latencyMs: Date.now() - startedAt,
       });
+      // The free pool ran out or stumbled: answer with the engine's own figures. A caller over
+      // their own share (`free_limit`) gets the plain message instead - figures on tap would make
+      // the cap meaningless as a brake on one person's use.
+      // `via` is the fence that gave this outcome - the pool also catches a house key that could
+      // not answer, so the source the request started with is not the test.
+      if (completion.via === 'free_pool' && POOL_FALLBACK_REASONS.has(reason)) {
+        const ownSymbols = [...data.portfolio.map((holding) => holding.symbol), ...(soloContext?.holdings ?? []).map((holding) => holding.symbol)];
+        const question = last?.role === 'user' ? last.content : '';
+        return NextResponse.json({
+          ok: true,
+          // The brief leans on the market backdrop: with no live capture it is sample data, and sample
+          // data is never printed as today's figures.
+          text: figuresOnlyAnswer(
+            question,
+            data,
+            market.source === 'live' ? buildDailyBrief(data, market) : null,
+            ownSymbols,
+            reason === 'free_pool_exhausted' ? 'used_up' : 'unavailable',
+          ),
+          suggestions: [],
+          figuresOnly: true,
+        });
+      }
       return NextResponse.json({ ok: false, reason });
     }
-    const { text, model: usedModel, usage, costUsd } = completion;
+    const { text, provider: usedProvider, model: usedModel, usage, costUsd } = completion;
     const latencyMs = Date.now() - startedAt;
-    if (!text) {
-      await recordAiRun({
-        userId: guard.identity,
-        agentName: 'portfolio_assistant',
-        provider: creds.provider,
-        model: usedModel,
-        inputHash,
-        outputHash: null,
-        toolsUsed: [],
-        injectionFlags: [],
-        validationErrors: ['empty_response'],
-        citationCount: 0,
-        status: 'validation_failed',
-        refusalReason: 'empty_response',
-        latencyMs,
-        inputTokens: usage?.inputTokens ?? null,
-        outputTokens: usage?.outputTokens ?? null,
-        costUsd,
-      });
-      return NextResponse.json({ ok: false, reason: 'empty_response' });
-    }
     // Strip an echoed "Lyra:" turn label, then split off the FOLLOW_UPS line into suggestion chips.
     let cleaned = text.replace(/^\s*(?:Lyra|Assistant)\s*:\s*/i, '').trim();
 
@@ -404,7 +425,7 @@ export async function POST(request: NextRequest) {
       await recordAiRun({
         userId: guard.identity,
         agentName: 'portfolio_assistant',
-        provider: creds.provider,
+        provider: usedProvider,
         model: usedModel,
         inputHash,
         outputHash: hashInput(answer),
@@ -416,6 +437,13 @@ export async function POST(request: NextRequest) {
         refusalReason: `guardrail_block: ${guarded.verdict.blockedReasons.join('; ') || 'empty after strip'}`,
         latencyMs,
       });
+      // The model's wording was stopped, but the reader asked for this action in so many words:
+      // offer it in the app's own words rather than leave them with a refusal. Only ever a
+      // watchlist or portfolio entry - a buy the model proposed, with an amount the model chose,
+      // is never offered after its advice was stopped.
+      if (action && isOfferable(action) && last?.role === 'user' && explicitlyAsked(last.content, action)) {
+        return NextResponse.json({ ok: true, text: offerText(action), suggestions: [], action, answeredBy: completion.via });
+      }
       return NextResponse.json({
         ok: true,
         text: 'I drafted an answer that tripped Lyra\'s research-only guardrails (an ungrounded figure or advice-style wording), so I stopped it. Ask me to explain the data behind your question and I\'ll ground every number in the latest scan.',
@@ -428,12 +456,16 @@ export async function POST(request: NextRequest) {
     await recordAiRun({
       userId: guard.identity,
       agentName: 'portfolio_assistant',
-      provider: creds.provider,
+      provider: usedProvider,
       model: usedModel,
       inputHash,
       outputHash: hashInput(finalText),
       toolsUsed: [],
-      injectionFlags: [...guarded.verdict.warnings, ...guarded.strippedFigures.map((f) => `stripped:${f}`)],
+      injectionFlags: [
+        ...guarded.verdict.warnings,
+        ...guarded.strippedFigures.map((f) => `stripped:${f}`),
+        ...guarded.removedPredictions.map((why) => `prediction:${why}`),
+      ],
       validationErrors: [],
       citationCount: 0,
       status: 'ok',
@@ -453,7 +485,7 @@ export async function POST(request: NextRequest) {
       ]).catch(() => {});
     }
 
-    return NextResponse.json({ ok: true, text: finalText, suggestions, action });
+    return NextResponse.json({ ok: true, text: finalText, suggestions, action, answeredBy: completion.via });
   } catch (error) {
     console.error(
       JSON.stringify({

@@ -161,6 +161,21 @@ fall into without someone adding a card.
 | Hugging Face | The model files (Gemma 4, Qwen3.5, gpt-oss - all Apache 2.0) | **$0** | Public, ungated downloads, pinned by revision and sha256 in `.github/workflows/model-bakeoff.yml` |
 | llama.cpp | The server that runs the file | **$0** (MIT) | Pinned release, sha256-checked in `.github/actions/local-model/action.yml` |
 
+In the app (v0.140.0) the same free-tier keys answer chat for anyone with no key of their own -
+the "free pool" (`src/lib/ai/free-pool.ts`): Cloudflare first, then Groq, each caller capped at 6
+answers a minute and 40 a day and the pool at 2,000 a day. The brief and the signal explanations
+use it only when a reader taps for them, never on a page view. At roughly 40 neurons a chat answer
+on Gemma 4 26B that is about 250 answers a day from Cloudflare plus about 170 from Groq before the
+pool is out, at which point chat prints the engine's figures without commentary. A reader's own
+key is never counted against any of it, and an entitled signed-in reader still gets the hosted
+key first (the pool is its fallback).
+
+**What keeps this at $0 is the plan the keys are on, not the code.** Nothing in Lyra can tell a
+free-tier key from a paid one. A Cloudflare account on Workers Paid is billed past 10,000 neurons
+a day; a Groq account with a card on file is billed past its free limits. Keep the Cloudflare
+account on the free plan and the Groq organisation without a payment method, and the worst an
+abuser can do is use up the day's allowance - never run up a bill. The caps above bound that too.
+
 The bake-off (`model-bakeoff.yml`, manual) measures the candidates on Lyra's own tasks before any
 of them writes a real message. Free tiers belong to their owners and have been shrinking (GitHub
 Models was retired on 2026-07-30; Cerebras ended its free tier), which is why the writer is a

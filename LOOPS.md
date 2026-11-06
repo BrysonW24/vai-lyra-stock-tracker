@@ -490,13 +490,23 @@ user asks -> grounding assembled server-side       src/app/api/ai/chat/route.ts
 retrieval, injection-fenced live news)              lexical + doc-identity rerank)
   |
   v
-BYOK key (user pays, any model) or hosted key      src/lib/ai/credentials.ts
-(model pinned, budget-metered: 2k/run,             budget-tracker.ts (charge BEFORE call;
-250k tokens/day shared ceiling)                    verdict blocks -> deterministic fallback)
+who answers (src/lib/ai/credentials.ts -> src/lib/ai/answer.ts):
+  1. the user's own key (they pay, any model)
+  2. a hosted key, for a signed-in reader who is     budget-tracker.ts (2k/run, 250k tokens/day);
+     entitled to it (model pinned, budget-metered)   when the house cannot answer, step 3 does
+  3. the FREE POOL of open models, for everyone      src/lib/ai/free-pool.ts: Cloudflare Workers AI,
+     else, no sign-in (v0.140.0) - capped per        then Groq, in order, ONE short attempt each and
+     caller (6/min, 40/day; IPv6 by /64) and for     35 s overall; a provider that answers 429 is
+     the pool (2,000/day) in Redis, charged BEFORE   left alone for its Retry-After (Redis key
+     the call. Chat uses it; the brief and signal    pool:cool:<provider>:<model>). Own queue and
+     explanations only when a reader TAPS for them   circuit breaker (pool:<provider>)
   |
+  +--> pool out or stumbling -> the engine's own    src/lib/ai/figures-answer.ts (code only, never
+  |    figures, without commentary                    sample data as today's)
   v
-answer (research only, never advice, never         guardProse + policy.ts
-an invented number)
+answer (research only, never advice, never         guardProse + policy.ts; advice wording from
+an invented number, no forecasts)                   contracts/guardrails/advice.json - the same file
+                                                    the workers' guard reads
   |
   +--> ai_runs (durable audit trail, AI-SEC-05)    -> /ai-ops metrics + token cost
   +--> chat_turns (twin-consented users only)      -> newest-8 seed the NEXT session's
@@ -508,6 +518,37 @@ an invented number)
 What closes it: memory (chat_turns) and demand signal (gap-miner) both feed forward; `/ai-quality`
 chain audits groundedness; the scout brief on idea cards runs the same budgeted path with
 server-side evidence grounding and a template fallback that stands when anything fails.
+
+The free pool's open half-loop: its counters and cooling keys live only in Redis and expire on
+their own, and nothing yet reads them back as a trend (how often the pool ran out, how many
+figures-only answers went out). `ai_runs` records each failed attempt's reason when the database is
+there; without it the reason goes to the server log only. A tripwire on pool exhaustion is owed.
+
+What a free model is shown: the question, the conversation, the scan, and a one-line tone
+instruction derived from the experience and risk comfort the reader entered. A no-account reader's
+own book (holdings, watchlist, cash and goal settings, all held in the browser) is sent only while
+they have "Include my book" ticked in the chat (`src/lib/ai/share-book.ts`); otherwise the request
+says `withheld` and the model is told it cannot see the book, and the brief card's "plain English"
+button sends the market lines of the brief only. Unticking it starts a new chat, because earlier
+turns travel with every question. The UI decides whether to show the free-model disclosure with
+`whoAnswers()` (`src/lib/ai/who-answers.ts`), pinned case for case to the server's resolver. A row
+the no-account screen kept from the authored sample because its live recompute failed
+(`SignalRow.sample`) reaches neither the model, the brief, nor the figures-only answer.
+
+Timing: the routes allow 60 seconds, and chat budgets 52 of them from its first line - the model
+step gets what is left after the data is loaded (`deadlineMs`), 45 at most. Inside that, a house key
+with the pool behind it gets one attempt of up to 15 seconds, and the pool gets the rest, never more
+than 35: each provider the smaller of 20 seconds and what is left, time in its queue included, and
+the request itself is cancelled when the time is up. With too little left the pool tries nobody and
+chat answers with the figures. A handover from the house key is logged as `lyra.ai_house_handover`
+with the reason, so a wrong model id or a revoked house key cannot fail quietly behind free
+answers; a call that timed out waiting in the queue is not counted against a provider's circuit.
+
+Wording: the advice and forecast rules (`contracts/guardrails/advice.json`) carry no exemptions.
+"Add NVDA to your watchlist? Tap confirm" is stopped like any other instruction on a named stock,
+because every rule that tried to let it through could be talked around. When a reader asked for
+that action in so many words, chat shows the offer in the app's own words instead
+(`src/lib/ai/action-offer.ts`).
 
 ## 9. The paper-bot loop - practice trades, gated hands
 

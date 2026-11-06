@@ -19,7 +19,7 @@
 import { withRetry, defaultIsRetryable, BackpressureLimiter } from '@/lib/ai/resilience';
 import { extractUsage, estimateCostUsd, type TokenUsage } from '@/lib/ai/cost';
 
-export type AiProvider = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'xai';
+export type AiProvider = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'xai' | 'groq' | 'cloudflare';
 
 /** One provider round-trip: the text plus the token usage the provider reported (null if omitted). */
 interface CompletionRaw {
@@ -42,6 +42,24 @@ export interface AiCompleteParams {
    * hosted/shared-key calls: retrying the house key into a provider rate limit amplifies it.
    */
   retryOn429?: boolean;
+  /** Attempts at this one provider (default 3). The free pool passes 1: its chain is the retry. */
+  maxAttempts?: number;
+  /** Wall-clock ceiling for each attempt, in ms (default 30 000). */
+  timeoutMs?: number;
+  /**
+   * Which queue and circuit breaker the call rides. 'pool' keeps the free pool's anonymous traffic
+   * apart from everyone else's: its own (smaller) backpressure queue, and a breaker of its own, so a
+   * free tier that is refusing requests can neither stall nor trip the circuit for a reader who
+   * brought a key for the same provider. Default 'shared'.
+   */
+  lane?: 'shared' | 'pool';
+  /**
+   * Count time spent waiting in the queue against `timeoutMs`. Default: true in the 'pool' lane,
+   * false otherwise. A reader's own call is timed from the moment it reaches the provider - waiting
+   * for a slot is not the provider being slow. A call that has a deadline to keep (the free pool,
+   * or a house key with the pool behind it) is timed from the moment it is asked.
+   */
+  boundQueue?: boolean;
 }
 
 export interface AiCompleteResult {
@@ -68,6 +86,23 @@ function describeProviderError(provider: AiProvider, status: number): string {
   return `${provider} ${status}`;
 }
 
+/**
+ * A provider's refusal, with the two facts the free pool needs to route around it: the status, and
+ * how long the provider asked us to wait (its Retry-After, in seconds, when it sent one). The
+ * message is the same cause-naming text every other adapter throws, so failure classification is
+ * unchanged. The response body is never read into it.
+ */
+export class ProviderHttpError extends Error {
+  constructor(
+    public readonly provider: AiProvider,
+    public readonly status: number,
+    public readonly retryAfterSec: number | null,
+  ) {
+    super(describeProviderError(provider, status));
+    this.name = 'ProviderHttpError';
+  }
+}
+
 /** Defaults per provider. OpenAI intentionally uses the powerful hosted beta default. */
 export const DEFAULT_MODELS: Record<AiProvider, string> = {
   // Current cheap/fast Anthropic default. The old 'claude-3-5-haiku-latest' resolved to
@@ -77,8 +112,16 @@ export const DEFAULT_MODELS: Record<AiProvider, string> = {
   openrouter: 'meta-llama/llama-3.1-70b-instruct',
   google: 'gemini-3.1-flash-lite',
   xai: 'grok-2-latest',
+  // The free pool's providers (src/lib/ai/free-pool.ts): open-weight models on free hosted tiers.
+  groq: 'openai/gpt-oss-120b',
+  cloudflare: '@cf/google/gemma-4-26b-a4b-it',
 };
 
+/**
+ * The providers a USER may choose for their own key - the list the credential resolver checks a
+ * client-supplied provider against. Groq and Cloudflare are deliberately not in it: they are
+ * reached only through the free pool, with Lyra's own keys, and never by a string from a request.
+ */
 export const SUPPORTED_PROVIDERS: AiProvider[] = ['anthropic', 'openai', 'openrouter', 'google', 'xai'];
 
 /** Resolve a user-supplied model (which may be blank) to a concrete model id. */
@@ -167,7 +210,48 @@ async function callOpenAiResponses(
   return { text: joined, usage };
 }
 
-/** OpenRouter and xAI use the OpenAI chat-completions wire format. */
+/**
+ * What a reasoning model needs so its thinking neither reaches the reader nor eats the answer's
+ * budget (the same fields workers/stock_scanner/open_model.py sends; Groq's docs, read 2026-11-06).
+ */
+export function reasoningExtras(provider: AiProvider, model: string): Record<string, unknown> | undefined {
+  const id = model.toLowerCase();
+  if (provider === 'groq') {
+    if (id.includes('gpt-oss')) return { reasoning_effort: 'low', include_reasoning: false };
+    if (id.startsWith('qwen/')) return { reasoning_effort: 'low', reasoning_format: 'hidden' };
+  }
+  if (provider === 'cloudflare' && id.includes('gpt-oss')) return { reasoning_effort: 'low' };
+  return undefined;
+}
+
+/** A model's answer without any reasoning it printed inline. */
+export function stripThinking(text: string): string {
+  let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '');
+  // An opening tag the server swallowed, the closing one left behind.
+  if (/<\/think>/i.test(cleaned)) cleaned = cleaned.replace(/^[\s\S]*?<\/think>/i, '');
+  return cleaned.trim();
+}
+
+/** A chat message's text: a string, or a list of typed parts whose text parts are joined. */
+function messageText(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+  return content
+    .map((part) => (part && typeof part === 'object' && typeof (part as { text?: unknown }).text === 'string' ? ((part as { text: string }).text) : ''))
+    .join('');
+}
+
+interface OpenAiCompatibleOptions {
+  extraHeaders?: Record<string, string>;
+  /** Extra request fields (a reasoning model's effort / visibility controls). */
+  extraBody?: Record<string, unknown>;
+  /** What the endpoint calls the output ceiling. */
+  tokenField?: 'max_tokens' | 'max_completion_tokens';
+  /** Ends the request itself when the caller has stopped waiting - a timer alone leaves it running. */
+  signal?: AbortSignal;
+}
+
+/** OpenRouter, xAI, Groq and Cloudflare Workers AI all speak the OpenAI chat-completions wire format. */
 async function callOpenAiCompatible(
   provider: AiProvider,
   endpoint: string,
@@ -177,27 +261,36 @@ async function callOpenAiCompatible(
   prompt: string,
   maxTokens: number,
   temperature: number | undefined,
-  extraHeaders?: Record<string, string>,
+  options: OpenAiCompatibleOptions = {},
 ): Promise<CompletionRaw> {
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}`, ...(extraHeaders ?? {}) },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens,
-      ...(temperature != null ? { temperature } : {}),
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: prompt },
-      ],
-    }),
-  });
-  if (!res.ok) throw new Error(describeProviderError(provider, res.status));
+  const post = (extraBody: Record<string, unknown> | undefined) =>
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}`, ...(options.extraHeaders ?? {}) },
+      body: JSON.stringify({
+        model,
+        [options.tokenField ?? 'max_tokens']: maxTokens,
+        ...(temperature != null ? { temperature } : {}),
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: prompt },
+        ],
+        ...(extraBody ?? {}),
+      }),
+      ...(options.signal ? { signal: options.signal } : {}),
+    });
+  let res = await post(options.extraBody);
+  // An endpoint that does not know a reasoning field refuses the whole request: ask once more plainly.
+  if (res.status === 400 && options.extraBody && Object.keys(options.extraBody).length > 0) res = await post(undefined);
+  if (!res.ok) {
+    const retryAfter = Number(res.headers?.get?.('retry-after'));
+    throw new ProviderHttpError(provider, res.status, Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : null);
+  }
   const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    choices?: Array<{ message?: { content?: unknown } }>;
     usage?: { prompt_tokens?: number; completion_tokens?: number };
   };
-  return { text: data.choices?.[0]?.message?.content?.trim() ?? '', usage: extractUsage(provider, data) };
+  return { text: stripThinking(messageText(data?.choices?.[0]?.message?.content)), usage: extractUsage(provider, data) };
 }
 
 async function callGoogle(
@@ -259,11 +352,13 @@ async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise
  * (bounded); a runaway queue rejects with BackpressureError rather than growing memory.
  */
 const providerLimiter = new BackpressureLimiter(6, 500);
+/** The free pool's own queue: anonymous traffic never takes a slot a reader's own key is waiting for. */
+const poolLimiter = new BackpressureLimiter(4, 100);
 
 // --- public entry point -----------------------------------------------------
 
 /** Dispatch to the chosen provider adapter (one attempt, no retry/timeout). */
-async function dispatchCompletion(params: AiCompleteParams, model: string, maxTokens: number): Promise<CompletionRaw> {
+async function dispatchCompletion(params: AiCompleteParams, model: string, maxTokens: number, signal?: AbortSignal): Promise<CompletionRaw> {
   const { provider, apiKey, system, prompt, temperature } = params;
   switch (provider) {
     case 'anthropic':
@@ -280,12 +375,33 @@ async function dispatchCompletion(params: AiCompleteParams, model: string, maxTo
         prompt,
         maxTokens,
         temperature,
-        { 'HTTP-Referer': 'https://lyra.vivacity.ai', 'X-Title': 'Lyra' },
+        { extraHeaders: { 'HTTP-Referer': 'https://lyra.vivacity.ai', 'X-Title': 'Lyra' }, signal },
       );
     case 'google':
       return callGoogle(apiKey, model, system, prompt, maxTokens, temperature);
     case 'xai':
       return callOpenAiCompatible(provider, 'https://api.x.ai/v1/chat/completions', apiKey, model, system, prompt, maxTokens, temperature);
+    case 'groq':
+      return callOpenAiCompatible(provider, 'https://api.groq.com/openai/v1/chat/completions', apiKey, model, system, prompt, maxTokens, temperature, {
+        extraBody: reasoningExtras(provider, model),
+        tokenField: 'max_completion_tokens',
+        signal,
+      });
+    case 'cloudflare': {
+      const account = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
+      if (!account) throw new Error('ai_gateway: cloudflare account id is not configured');
+      return callOpenAiCompatible(
+        provider,
+        `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(account)}/ai/v1/chat/completions`,
+        apiKey,
+        model,
+        system,
+        prompt,
+        maxTokens,
+        temperature,
+        { extraBody: reasoningExtras(provider, model), signal },
+      );
+    }
     default: {
       const never: never = provider;
       throw new Error(`ai_gateway: unsupported provider ${String(never)}`);
@@ -307,7 +423,8 @@ interface BreakerState {
   openedAt: number | null;
 }
 
-const breakers = new Map<AiProvider, BreakerState>();
+/** Keyed by provider for own-key and hosted calls, and by `pool:<provider>` for the free pool. */
+const breakers = new Map<string, BreakerState>();
 
 export class CircuitOpenError extends Error {
   constructor(provider: AiProvider) {
@@ -316,11 +433,11 @@ export class CircuitOpenError extends Error {
   }
 }
 
-function breakerFor(provider: AiProvider): BreakerState {
-  let state = breakers.get(provider);
+function breakerFor(key: string): BreakerState {
+  let state = breakers.get(key);
   if (!state) {
     state = { consecutiveFailures: 0, openedAt: null };
-    breakers.set(provider, state);
+    breakers.set(key, state);
   }
   return state;
 }
@@ -357,7 +474,8 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
   const model = resolveModel(provider, params.model);
   const maxTokens = params.maxTokens ?? DEFAULT_MAX_TOKENS;
 
-  const breaker = breakerFor(provider);
+  const pooled = params.lane === 'pool';
+  const breaker = breakerFor(pooled ? `pool:${provider}` : provider);
   if (breaker.openedAt !== null) {
     if (Date.now() - breaker.openedAt < BREAKER_COOLDOWN_MS) throw new CircuitOpenError(provider);
     breaker.openedAt = null; // cooldown elapsed - half-open: this call is the probe
@@ -368,16 +486,51 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
     if (!retryOn429 && /\b429\b/.test(err instanceof Error ? err.message : String(err))) return false;
     return defaultIsRetryable(err);
   };
+  const limiter = pooled ? poolLimiter : providerLimiter;
+  const timeoutMs = params.timeoutMs && params.timeoutMs > 0 ? params.timeoutMs : ATTEMPT_TIMEOUT_MS;
+  const maxAttempts = params.maxAttempts && params.maxAttempts > 0 ? Math.floor(params.maxAttempts) : 3;
+
+  const label = `${provider} completion`;
+  const bounded = params.boundQueue ?? pooled;
+  // Whether any attempt got as far as the provider. A call that timed out waiting for a slot says
+  // nothing about the provider's health, so it must not count towards opening its circuit.
+  let reachedProvider = false;
+  const attempt = bounded
+    ? // Timed from the moment it is ASKED: the caller is promised an answer, or its fallback, by a
+      // deadline that includes the queue. Two timers do it. The outer one ends the caller's wait.
+      // The inner one sits inside the queue slot, gets only what is left after the wait, and is
+      // what gives the slot back when a provider hangs - with a signal that ends the request too,
+      // so a call nobody is waiting for stops spending the allowance. A call given up on while
+      // still queued is never sent at all.
+      () => {
+        const askedAt = Date.now();
+        let abandoned = false;
+        const queued = limiter.run(async () => {
+          if (abandoned) throw new Error(`${label}: given up on while queued`);
+          reachedProvider = true;
+          const left = Math.max(1, timeoutMs - (Date.now() - askedAt));
+          return withTimeout(dispatchCompletion(params, model, maxTokens, AbortSignal.timeout(left + 250)), left, label);
+        });
+        return withTimeout(queued, timeoutMs, label).finally(() => {
+          abandoned = true;
+        });
+      }
+    : // Timed from the moment it reaches the provider, inside the queue slot (the timer bounds the
+      // wait and frees the slot; it does not close the socket).
+      () =>
+        limiter.run(() => {
+          reachedProvider = true;
+          return withTimeout(dispatchCompletion(params, model, maxTokens), timeoutMs, label);
+        });
 
   try {
-    const raw = await withRetry(
-      () => providerLimiter.run(() => withTimeout(dispatchCompletion(params, model, maxTokens), ATTEMPT_TIMEOUT_MS, `${provider} completion`)),
-      { policy: { maxAttempts: 3, baseDelayMs: 400, maxDelayMs: 4000 }, isRetryable },
-    );
+    const raw = await withRetry(attempt, { policy: { maxAttempts, baseDelayMs: 400, maxDelayMs: 4000 }, isRetryable });
     breaker.consecutiveFailures = 0;
     breaker.openedAt = null;
     return { text: raw.text, provider, model, usage: raw.usage, costUsd: estimateCostUsd(provider, model, raw.usage) };
   } catch (error) {
+    // Busy is not broken: a call that never left the queue is the queue's failure, not the provider's.
+    if (bounded && !reachedProvider) throw error;
     breaker.consecutiveFailures += 1;
     if (breaker.consecutiveFailures >= BREAKER_THRESHOLD) {
       breaker.openedAt = Date.now();

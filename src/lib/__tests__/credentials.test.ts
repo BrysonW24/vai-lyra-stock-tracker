@@ -107,3 +107,64 @@ describe('resolveAiCredentials treats the request body as untrusted', () => {
     expect(resolveAiCredentials({ provider: 'openai', apiKey: 'k'.repeat(5_000) }, anonymous).source).toBe('none');
   });
 });
+
+/**
+ * The free pool (v0.140.0): open models on free hosted tiers, for anyone - but only on a route
+ * that opted in, never ahead of the caller's own key, and never as a way to reach a paid key.
+ */
+describe('resolveAiCredentials and the free pool', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  const withPool = () => {
+    vi.stubEnv('GROQ_API_KEY', 'groq-free');
+    vi.stubEnv('OPENAI_API_KEY', 'sk-hosted');
+  };
+
+  it('gives an anonymous caller the pool on a route that allows it - with no key in hand', () => {
+    withPool();
+    const creds = resolveAiCredentials({ provider: 'openai' }, { authenticated: false, aiIncluded: false, allowFreePool: true });
+    expect(creds).toEqual({ provider: 'groq', apiKey: '', model: undefined, source: 'free_pool' });
+  });
+
+  it('never hands out the pool on a route that did not opt in', () => {
+    withPool();
+    expect(resolveAiCredentials({ provider: 'openai' }, { authenticated: false, aiIncluded: false }).source).toBe('none');
+    expect(resolveAiCredentials({ provider: 'openai' }, { authenticated: true, aiIncluded: true }).source).toBe('hosted_openai');
+  });
+
+  it('takes nothing away from an entitled reader: the house key still answers first, with the pool behind it', () => {
+    withPool();
+    const creds = resolveAiCredentials({ provider: 'openai' }, { authenticated: true, aiIncluded: true, allowFreePool: true });
+    expect(creds).toMatchObject({ source: 'hosted_openai', apiKey: 'sk-hosted', poolFallback: true });
+    // On a route that did not opt in there is nothing behind the house key.
+    expect(resolveAiCredentials({ provider: 'openai' }, { authenticated: true, aiIncluded: true }).poolFallback).toBe(false);
+  });
+
+  it('gives the pool to a signed-in reader past their trial, and to an entitled one on a provider the house holds no key for', () => {
+    withPool();
+    expect(resolveAiCredentials({ provider: 'openai' }, { authenticated: true, aiIncluded: false, allowFreePool: true }).source).toBe('free_pool');
+    // The house has an OpenAI key only: an entitled reader who picked Anthropic gets the pool, not nothing.
+    expect(resolveAiCredentials({ provider: 'anthropic' }, { authenticated: true, aiIncluded: true, allowFreePool: true }).source).toBe('free_pool');
+  });
+
+  it("still honours the caller's own key first, with their model", () => {
+    withPool();
+    const creds = resolveAiCredentials({ provider: 'anthropic', apiKey: 'sk-mine', model: 'claude-x' }, { authenticated: false, aiIncluded: false, allowFreePool: true });
+    expect(creds).toMatchObject({ source: 'user', provider: 'anthropic', apiKey: 'sk-mine', model: 'claude-x' });
+  });
+
+  it('does not let a request choose a pool provider or a pool model', () => {
+    withPool();
+    // groq / cloudflare are not user-selectable providers: a client string naming one is ignored.
+    const named = resolveAiCredentials({ provider: 'groq' as never, apiKey: 'k', model: 'x' }, { authenticated: false, aiIncluded: false, allowFreePool: true });
+    expect(named.provider).toBe('openai');
+    const pooled = resolveAiCredentials({ provider: 'openai', model: 'evil/expensive-model' }, { authenticated: false, aiIncluded: false, allowFreePool: true });
+    expect(pooled.model).toBeUndefined();
+  });
+
+  it('falls back to the old rules when no pool key is configured', () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-hosted');
+    expect(resolveAiCredentials({ provider: 'openai' }, { authenticated: false, aiIncluded: false, allowFreePool: true }).source).toBe('none');
+    expect(resolveAiCredentials({ provider: 'openai' }, { authenticated: true, aiIncluded: true, allowFreePool: true }).source).toBe('hosted_openai');
+  });
+});

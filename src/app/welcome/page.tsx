@@ -160,12 +160,13 @@ export default async function WelcomePage() {
                   <ShieldCheck size={12} /> Solo build - no sign-in. First visit starts guided setup; after that, you enter your console directly.
                 </p>
                 <p className="mt-1 flex items-center gap-1.5 text-[11px] text-[#5A6B82]">
-                  <ShieldCheck size={12} /> Your book and trade log stay in this browser. AI uses the provider key you add.
+                  <ShieldCheck size={12} /> Your book and trade log stay in this browser. An AI model sees them only when you choose: with your own key, or by switching on Include my book.
                 </p>
                 <div className="mt-3 max-w-md rounded-xl border border-[#1E63FF]/15 bg-white/55 p-3 text-[11px] leading-relaxed text-[#5A6B82]">
                   <p>
                     <span className="font-semibold text-[#0E1E3A]">Solo:</span>{' '}
-                    device-local data, no account, BYOK AI, and no background
+                    device-local data, no account, AI with your own key or
+                    Lyra&apos;s free model where it is on, and no background
                     notification delivery.
                   </p>
                   <p className="mt-1">

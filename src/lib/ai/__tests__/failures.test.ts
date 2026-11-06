@@ -39,4 +39,18 @@ describe('AI failure classification', () => {
     expect(aiFailureMessage('no_key')).toMatch(/add your own model key/i);
     expect(aiFailureMessage('budget')).toMatch(/allowance for today is used up/i);
   });
+
+  it('explains the free pool running out differently from one reader using their own share', () => {
+    expect(normaliseAiFailureReason('free_pool_exhausted')).toBe('free_pool_exhausted');
+    expect(normaliseAiFailureReason('free_limit')).toBe('free_limit');
+    const pool = aiFailureMessage('free_pool_exhausted');
+    const mine = aiFailureMessage('free_limit');
+    expect(pool).toMatch(/busy or used up/i);
+    expect(mine).toMatch(/you have used your free answers/i);
+    for (const message of [pool, mine]) {
+      expect(message).toMatch(/11am Sydney time/);
+      expect(message).toMatch(/own model key/i);
+      expect(message).not.toMatch(/[—–]/);
+    }
+  });
 });

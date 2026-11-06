@@ -16,6 +16,17 @@ const data = {
 } as unknown as DashboardData;
 
 describe('Solo device grounding', () => {
+  it('tells the model it cannot see a book the reader kept on their device - not that there is none', () => {
+    const result = buildSoloDeviceGrounding({ withheld: true, holdings: [], watchlist: [] }, data);
+
+    expect(result).toContain('has NOT shared them with you');
+    expect(result).toContain('You cannot see their book');
+    expect(result).toContain('Include my book');
+    // "None added" would be a statement about the reader's book, and a false one.
+    expect(result).not.toContain('none added');
+    expect(result).not.toContain('NVDA');
+  });
+
   it('makes an empty local book authoritative over the bundled sample book', () => {
     const result = buildSoloDeviceGrounding({ holdings: [], watchlist: [] }, data);
 

@@ -28,4 +28,17 @@ describe('aiHostingCopy - honest hosted-vs-BYOK copy', () => {
     expect(aiHostingCopy(false)).toEqual(aiHostingCopy(false));
     expect(aiHostingCopy(true)).not.toEqual(aiHostingCopy(false));
   });
+
+  it('says AI is free and needs no key when the free pool is on, whatever else is configured', () => {
+    for (const hosted of [true, false]) {
+      const free = aiHostingCopy(hosted, true);
+      expect(free.headerSubtitle).toMatch(/free open-source model/i);
+      expect(free.headerSubtitle).toMatch(/nothing to set up/i);
+      expect(free.panelSubtitle).toMatch(/Cloudflare or Groq/);
+      expect(free.panelSubtitle).toMatch(/daily allowance/i);
+      expect(free.openaiOptgroupLabel).toBe('Your own key');
+      expect(free.headerSubtitle + free.panelSubtitle).not.toMatch(/hosted beta|[—–]/);
+    }
+    expect(aiHostingCopy(false, false)).toEqual(aiHostingCopy(false));
+  });
 });

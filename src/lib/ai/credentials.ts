@@ -1,4 +1,5 @@
 import { DEFAULT_MODELS, SUPPORTED_PROVIDERS, type AiProvider } from '@/lib/ai/gateway';
+import { freePoolAvailable, poolTargets } from '@/lib/ai/free-pool';
 
 type AiMode = 'free' | 'byo' | 'off' | 'hosted';
 
@@ -22,13 +23,29 @@ export interface ResolveOptions {
    * authenticated-but-not-included user falls through to BYOK. A user's OWN key is unaffected.
    */
   aiIncluded: boolean;
+  /**
+   * Whether this route can answer from the FREE POOL (src/lib/ai/free-pool.ts) when the caller has
+   * no key of their own. Opt-in per route: the pool is open without sign-in, so only routes that
+   * charge the pool's per-caller caps and run the output guards may use it.
+   */
+  allowFreePool?: boolean;
 }
 
 export interface ResolvedAiCredentials {
   provider: AiProvider;
   apiKey: string;
   model?: string;
-  source: 'user' | 'hosted_openai' | 'shared_google' | 'none';
+  /**
+   * `free_pool` carries no key and no single provider: the caller hands the request to
+   * completeFromPool(), which picks the provider. `provider` is then only a label for the audit row.
+   */
+  source: 'user' | 'hosted_openai' | 'shared_google' | 'free_pool' | 'none';
+  /**
+   * Set on a HOSTED resolution when this route may also use the free pool: if the house key cannot
+   * answer (its budget is spent, its credit has run out, the provider is refusing), the request
+   * moves to the pool instead of failing. Never set for a caller's own key - their key, their call.
+   */
+  poolFallback?: boolean;
 }
 
 /** `value` arrives from a request body: trust nothing about its type. */
@@ -54,6 +71,8 @@ export function getAiRuntimeStatus() {
     hostedOpenAi: Boolean(clean(process.env.OPENAI_API_KEY)),
     hostedOpenAiModel,
     sharedGoogle: Boolean(clean(process.env.GOOGLE_AI_KEY)),
+    /** The free pool of open models has at least one key on this deployment. */
+    freePool: freePoolAvailable(),
   };
 }
 
@@ -61,10 +80,13 @@ export function getAiRuntimeStatus() {
  * Server-side AI credential resolution.
  *
  * Priority: a browser-provided BYOK key always wins (the user pays, so any model is fine).
- * Otherwise, an AUTHENTICATED caller may fall back to Lyra's hosted OpenAI key or the shared
- * Google key - and only then. When a server key is used the model is PINNED server-side
- * (the client cannot select an arbitrary, expensive model on our key). Unauthenticated callers
- * without their own key resolve to `source: 'none'` and the route degrades gracefully.
+ * Next, an AUTHENTICATED and ENTITLED caller gets Lyra's hosted OpenAI key or the shared Google
+ * key, exactly as before the free pool existed - the pool takes nothing away from anyone. When a
+ * server key is used the model is PINNED server-side (the client cannot select an arbitrary,
+ * expensive model on our key). Everyone else - signed out, past their trial, or on a deployment
+ * with no house key - gets the FREE POOL of open models on a route that allows it: it costs
+ * nothing, the caller cannot choose its provider or model, and it is capped per caller. With no
+ * pool either, the caller resolves to `source: 'none'` and the route degrades gracefully.
  */
 export function resolveAiCredentials(
   input: AiCredentialInput | undefined,
@@ -83,36 +105,44 @@ export function resolveAiCredentials(
     return { provider, apiKey: userKey, model: MODEL_ID_RE.test(rawModel) ? rawModel : undefined, source: 'user' };
   }
 
-  // Server-key fallback requires an authenticated session AND an AI-included entitlement
-  // (trial or granted). A signed-in user past their trial is BYOK-only, exactly like Solo.
-  if (!opts.authenticated || !opts.aiIncluded) {
-    return { provider, apiKey: '', model: undefined, source: 'none' };
-  }
+  const poolOpen = Boolean(opts.allowFreePool) && freePoolAvailable();
 
-  if (provider === 'openai') {
-    const hostedKey = clean(process.env.OPENAI_API_KEY);
-    if (hostedKey) {
-      // Model is server-pinned; ignore any client-supplied model on our key.
-      return {
-        provider,
-        apiKey: hostedKey,
-        model: clean(process.env.LYRA_HOSTED_OPENAI_MODEL) || undefined,
-        source: 'hosted_openai',
-      };
+  // A server key requires an authenticated session AND an AI-included entitlement (trial or
+  // granted). A signed-in user past their trial never reaches it, exactly like Solo.
+  if (opts.authenticated && opts.aiIncluded) {
+    if (provider === 'openai') {
+      const hostedKey = clean(process.env.OPENAI_API_KEY);
+      if (hostedKey) {
+        // Model is server-pinned; ignore any client-supplied model on our key.
+        return {
+          provider,
+          apiKey: hostedKey,
+          model: clean(process.env.LYRA_HOSTED_OPENAI_MODEL) || undefined,
+          source: 'hosted_openai',
+          poolFallback: poolOpen,
+        };
+      }
+    }
+
+    if (provider === 'google') {
+      const sharedKey = clean(process.env.GOOGLE_AI_KEY);
+      if (sharedKey) {
+        // Model server-pinned to the configured shared-tier model (or the provider default).
+        return {
+          provider,
+          apiKey: sharedKey,
+          model: clean(process.env.LYRA_SHARED_GOOGLE_MODEL) || undefined,
+          source: 'shared_google',
+          poolFallback: poolOpen,
+        };
+      }
     }
   }
 
-  if (provider === 'google') {
-    const sharedKey = clean(process.env.GOOGLE_AI_KEY);
-    if (sharedKey) {
-      // Model server-pinned to the configured shared-tier model (or the provider default).
-      return {
-        provider,
-        apiKey: sharedKey,
-        model: clean(process.env.LYRA_SHARED_GOOGLE_MODEL) || undefined,
-        source: 'shared_google',
-      };
-    }
+  // The free pool: open to every caller on a route that opted in. No key is handed back - the
+  // pool holds its own - so nothing here can be turned into a paid call.
+  if (poolOpen) {
+    return { provider: poolTargets()[0]!.provider, apiKey: '', model: undefined, source: 'free_pool' };
   }
 
   return { provider, apiKey: '', model: undefined, source: 'none' };

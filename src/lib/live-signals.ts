@@ -56,6 +56,9 @@ interface Snap {
 
 // ---- Yahoo fetch -----------------------------------------------------------
 
+/** How long one symbol's price history may take. A healthy call is well under a second. */
+const YAHOO_TIMEOUT_MS = 8_000;
+
 async function fetchOhlcv(symbol: string): Promise<Ohlcv | null> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1y&interval=1d`;
@@ -63,6 +66,10 @@ async function fetchOhlcv(symbol: string): Promise<Ohlcv | null> {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       // Cache per symbol for 10 min so a page load never fans out fresh calls.
       next: { revalidate: 600 },
+      // A price source that hangs must not hang the page - or the chat route, which loads this
+      // before it asks a model and has 60 seconds in all. Past the deadline the name is treated
+      // as unavailable, exactly like any other failed fetch.
+      signal: AbortSignal.timeout(YAHOO_TIMEOUT_MS),
     });
     if (!res.ok) return null;
     const json = (await res.json()) as {
@@ -401,7 +408,11 @@ export async function applyLiveSignals(
                 ? signal.priceChange1h
                 : (computed.priceChange1h ?? Number.NaN),
           }
-        : signal;
+        : // The recompute failed. A database row is still the worker's real last scan; an authored
+          // row is a sample, and is marked so nothing downstream speaks of it as a live figure.
+          base === 'demo'
+          ? { ...signal, sample: true }
+          : signal;
     }
   }
   await Promise.all(Array.from({ length: Math.min(LIVE_FETCH_CONCURRENCY, signals.length) }, worker));

@@ -48,10 +48,13 @@ const RISK_FLAGS: ReadonlyArray<string> = ['overextended', 'elevated_risk', 'inv
 export function buildDailyBrief(data: DashboardData, market: MarketContextSnapshot): DailyBrief {
   const lines: BriefLine[] = [];
 
-  const strongSetups = data.signals
+  // A row the no-account screen kept from the authored sample (its live recompute failed) is not
+  // today's figure: it is never counted as a setup or named as the lead.
+  const signals = data.signals.filter((signal) => !signal.sample);
+  const strongSetups = signals
     .filter((signal) => signal.status === 'strong_setup')
     .sort((a, b) => b.score - a.score);
-  const topSetup = strongSetups[0] ?? [...data.signals].sort((a, b) => b.score - a.score)[0];
+  const topSetup = strongSetups[0] ?? [...signals].sort((a, b) => b.score - a.score)[0];
 
   const holdings = data.portfolio;
   const totalValue = holdings.reduce((sum, holding) => sum + holding.marketValue, 0);

@@ -1,6 +1,6 @@
 {
   "version": "2026-11-06",
-  "description": "What Lyra's AI may never say, in one file. ADVICE blocks a whole answer - there is no safe half of an instruction to trade. A PREDICTION removes the sentence that makes it. A PRICE CALL (a forecast of a share price) removes a briefing item. Read today by workers/stock_scanner/ai_read_guard.py and briefing_guard.py; written in the regex both Python and JavaScript read the same way (no lookbehind, no named groups, no inline flags) so the app's chat guard can read the same file. 'flags' is 'i' (ignore case) or '' (case matters - used where a capital letter is the signal: a sentence that opens with an instruction, or a ticker). Widened on 2026-11-06, when Lyra's free features moved to open-weight models: a smaller model writes 'Buy SPOT now' or 'investors should consider adding' where a frontier model did not. The rules describe advice TO THE READER. Company news is full of the same verbs used as facts - 'is considering selling a stake', 'we need to add capacity', 'a loan guarantee', 'investors must wait for the decision' - and must pass; the test sentences pin both sides.",
+  "description": "What Lyra's AI may never say, in one file. ADVICE blocks a whole answer - there is no safe half of an instruction to trade. A PREDICTION removes the sentence that makes it. A PRICE CALL (a forecast of a share price) removes a briefing item. Read today by workers/stock_scanner/ai_read_guard.py and briefing_guard.py; written in the regex both Python and JavaScript read the same way (no lookbehind, no named groups, no inline flags) so the app's chat guard can read the same file. 'flags' is 'i' (ignore case) or '' (case matters - used where a capital letter is the signal: a sentence that opens with an instruction, or a ticker). Widened on 2026-11-06, when Lyra's free features moved to open-weight models: a smaller model writes 'Buy SPOT now' or 'investors should consider adding' where a frontier model did not. The rules describe advice TO THE READER. Company news is full of the same verbs used as facts - 'is considering selling a stake', 'we need to add capacity', 'a loan guarantee', 'investors must wait for the decision' - and must pass; the test sentences pin both sides. Three adversarial reviews of the app's free chat (2026-11-06) settled one more thing: these rules carry NO exemptions for wording that merely looks like advice or a forecast ('Add NVDA to your watchlist', 'Look for the Buy Review badge', 'likely why the score fell', 'invalidated if price should fall'). Each exemption that was tried could be talked around ('Add NVDA to your watchlist and go long'). Losing a harmless sentence is the price of never showing a reader an instruction to trade; the test sentences pin those losses too. The advice rules also guard briefing items written from company news, so a rule that reads 'Grab shares rose' or 'Double down: Intel said' as an instruction costs a true item - see known_gaps.",
   "advice": [
     {
       "id": "directive",
@@ -116,7 +116,7 @@
       "id": "expect",
       "why": "tells the reader what to expect",
       "flags": "",
-      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Expect|Watch for|Look for|Brace for|Prepare for)\\s+"
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Expect|Watch for|Watch out for|Look for|Look out for|Keep an eye out for|Keep an eye on|Brace for|Prepare for|Be ready for|Get ready for)\\s+"
     },
     {
       "id": "can-expect",
@@ -168,7 +168,42 @@
       "Traders may want to sit tight.",
       "The bank upgraded the stock to buy.",
       "Analysts rate the stock buy.",
-      "The broker reiterated its overweight on the shares."
+      "The broker reiterated its overweight on the shares.",
+      "Add NVDA to your portfolio before it runs.",
+      "You may want to add NVDA here.",
+      "Get in before the rally.",
+      "Add NVDA to your watchlist and buy the dip.",
+      "Add NVDA to your watchlist, then buy.",
+      "Add NVDA to your watchlist then buy it on weakness.",
+      "You may want to add it to your watchlist, then buy.",
+      "You may want to add NVDA to your watchlist before you buy.",
+      "You should add NVDA to your watchlist and wait for an entry.",
+      "Add NVDA to your alerts and load up before earnings.",
+      "Buy NVDA to your watchlist.",
+      "Hold NVDA to your watchlist.",
+      "Get in touch before the rally - buy now.",
+      "Add NVDA to your watchlist? Tap confirm below.",
+      "You may want to add NVDA to your watchlist to get alerts.",
+      "ADD NVDA to your watchlist.",
+      "Add NVDA to your alerts so the next scan reaches you.",
+      "Add NVDA to your watchlist and pick some up on the next dip.",
+      "Add NVDA to your watchlist and get long before earnings.",
+      "Add NVDA to your watchlist - then grab shares.",
+      "Add NVDA to your watchlist; then own it.",
+      "Add NVDA to your watchlist and go long.",
+      "Add NVDA to your watchlist and dump AMD.",
+      "Add NVDA to the watchlist and double down if it dips.",
+      "Add NVDA to your alerts and snap it up below 120.",
+      "Add NVDA to your watchlist, it's a steal here.",
+      "ADD NVDA to your watchlist and get exposure now.",
+      "You may want to add it to your watchlist and go long.",
+      "Investors should add NVDA to the watchlist, then own it.",
+      "Traders might want to add AMD to the watchlist and dump INTC.",
+      "Readers may wish to add NVDA to my watchlist and open a long.",
+      "Investors could look to add SPOT to the alerts and pile in.",
+      "Get in touch via Settings if alerts do not arrive.",
+      "Get in touch with the team through the support page.",
+      "Get in touch with your broker and load up on NVDA."
     ],
     "advice_passes": [
       "Buyers stepped in late in the session.",
@@ -204,7 +239,17 @@
       "The new model is cheap to run.",
       "The company upgraded its guidance for the year.",
       "Higher rates forced funds to sell growth names again.",
-      "The board may consider the offer on Friday."
+      "The board may consider the offer on Friday.",
+      "Pick-up in demand lifted revenue for a second quarter.",
+      "Scale in manufacturing remains the constraint, the company said.",
+      "The fund said it will double down on AI infrastructure.",
+      "Investors piled in after the results.",
+      "The founders will own the stock outright after the buyback.",
+      "Grab shares rose 4% after the ride-hailing group raised its guidance.",
+      "Snap shares up 12% after the company beat revenue estimates.",
+      "Some analysts called the price a steal at 8 times earnings.",
+      "Double down: Intel said it would spend $20 billion on two new fabs.",
+      "The plan has three parts: go long on renewables, cut coal and build storage."
     ],
     "prediction_removes": [
       "AMD is likely to rebound.",
@@ -225,7 +270,44 @@
       "Readers can expect more of the same.",
       "Traders expect more weakness.",
       "More weakness may follow.",
-      "The bounce may have legs."
+      "The bounce may have legs.",
+      "If the turn holds, the score could rise further.",
+      "If the Fed cuts, NVDA should rise.",
+      "Look for a bounce off the low.",
+      "Watch for more weakness in semiconductors.",
+      "A rebound is likely.",
+      "Look for a rebound on the Signals page.",
+      "Watch for a bounce in the semiconductors section.",
+      "Look for NVDA to rally, as the Signals tab shows.",
+      "Look for a bounce on the tab.",
+      "It is likely what drives the next leg up.",
+      "That is likely how the rally continues.",
+      "If the Fed cuts then the stock should rally.",
+      "If earnings beat NVDA will rise.",
+      "Even if breadth stays weak the group could rebound.",
+      "If you ask me the stock will rise.",
+      "If nothing else, the stock should rally.",
+      "It is unclear if the selling will continue.",
+      "Add NVDA to your watchlist: it will rally.",
+      "NVDA triggered a strong setup and if momentum builds it will rally.",
+      "The setup fails if the stock should fall, and it will fall.",
+      "Look for the Buy Review badge on the radar.",
+      "That is likely why the score fell.",
+      "The setup is invalidated if price should fall below the 60-period low.",
+      "A setup is invalidated if the price should fall below its low.",
+      "Look for the Alerts tab in the menu.",
+      "Look for a fresh Buy Review badge on NVDA soon.",
+      "Look for the strong setup label to appear on NVDA this week.",
+      "Look for a Buy Review chip on AMD after the next bounce.",
+      "Look for the rally badge.",
+      "Look for a rebound tab.",
+      "Look out for a rebound in NVDA.",
+      "Keep an eye out for a bounce in chips.",
+      "A bounce is likely why traders are positioning for more upside.",
+      "A strong setup is confirmed if NVDA will rise, which looks set to happen.",
+      "The setup fails unless prices will rise, which they will.",
+      "The setup is confirmed only if NVDA will rally.",
+      "The signal resets if NVDA could bounce."
     ],
     "prediction_keeps": [
       "A broad rally tends to lower scores.",
@@ -260,5 +342,14 @@
       "flags": "i",
       "pattern": "\\b(?:shares?|stock|share price)\\s+(?:(?:is|are|looks?|seems?)\\s+(?:likely|set|poised|expected)\\s+to\\s+(?:rise|fall|rally|rebound|jump|surge|drop|climb|soar|slide|decline|gain|benefit|re-?rate)|(?:will|could|should|may|might)\\s+(?:well\\s+|soon\\s+)?(?:rally|rebound|soar|surge|jump|re-?rate|benefit|outperform|underperform))\\b"
     }
-  ]
+  ],
+  "known_gaps": {
+    "why": "Reader-directed trade idioms with no ticker and no 'you should' are not caught. Adding them to the advice rules dropped real company news (the advice rules also guard briefing items), so they wait for a rule that only chat and the market read apply.",
+    "advice": [
+      "The setup improved. Then pick up shares.",
+      "The score is 82: go long.",
+      "Now double down.",
+      "NVDA is the one to own."
+    ]
+  }
 }

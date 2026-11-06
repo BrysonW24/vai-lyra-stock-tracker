@@ -9,6 +9,11 @@
  *
  * `hostedAvailable` is the same signal the chat uses: GET /api/ai/status -> hostedAvailable
  * (= a hosted OpenAI key or a shared Google key is configured server-side).
+ *
+ * `freeAnswers` (v0.140.0) is true when the free pool of open models is what answers THIS reader
+ * with no key of their own (GET /api/ai/status -> answersFrom === 'free'): everyone except an
+ * entitled signed-in reader, who still gets the hosted model first. When it is true, that is what
+ * the copy must say first - whatever else is configured.
  */
 export interface AiHostingCopy {
   /** Section-header subtitle for the AI settings page. */
@@ -21,7 +26,17 @@ export interface AiHostingCopy {
   openaiOptionLabel: string;
 }
 
-export function aiHostingCopy(hostedAvailable: boolean): AiHostingCopy {
+export function aiHostingCopy(hostedAvailable: boolean, freeAnswers = false): AiHostingCopy {
+  if (freeAnswers) {
+    return {
+      headerSubtitle:
+        'Lyra answers with a free open-source model - nothing to set up. Add your own key below to use a model of your choice instead.',
+      panelSubtitle:
+        'Free by default: an open-source model hosted by Cloudflare or Groq, with a daily allowance shared by everyone. Your own key, if you add one, stays in this browser and has no such limit.',
+      openaiOptgroupLabel: 'Your own key',
+      openaiOptionLabel: 'OpenAI GPT-5.5 (your key)',
+    };
+  }
   if (hostedAvailable) {
     return {
       headerSubtitle:

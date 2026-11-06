@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { Sparkles, X, ArrowRight } from 'lucide-react';
 import { AiInsightStep } from '@/components/onboarding/AiInsightStep';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
+import { loadAi } from '@/lib/account';
+import { whoAnswers, type AiStatusFacts } from '@/lib/ai/who-answers';
 
 const DISMISS_KEY = 'lyra.aiOffer.dismissed';
 
@@ -18,6 +20,8 @@ export function AiOfferCard() {
   const [open, setOpen] = useState(false);
   // Whether a hosted AI key actually exists here (a Supabase-configured build can still be BYOK-only).
   const [hostedAvailable, setHostedAvailable] = useState<boolean | null>(null);
+  // The free pool of open models: when it is on, there is nothing to set up.
+  const [freeAvailable, setFreeAvailable] = useState(false);
   const effectiveHosted = hostedAvailable ?? !soloMode;
 
   useEffect(() => {
@@ -34,6 +38,9 @@ export function AiOfferCard() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (alive && d && typeof d.hostedAvailable === 'boolean') setHostedAvailable(d.hostedAvailable);
+        // "Free" here means the free pool is what answers THIS reader with the provider they have
+        // selected - an entitled signed-in reader still gets the hosted model first.
+        if (alive && d) setFreeAvailable(whoAnswers(d as AiStatusFacts, loadAi().provider) === 'free');
       })
       .catch(() => {});
     return () => {
@@ -74,12 +81,14 @@ export function AiOfferCard() {
             <Sparkles size={15} />
           </span>
           <div className="min-w-0">
-            <h2 className="text-[13px] font-semibold text-ink">Turn on your AI copilot</h2>
+            <h2 className="text-[13px] font-semibold text-ink">{freeAvailable ? 'Ask Lyra is on, and free' : 'Turn on your AI copilot'}</h2>
             <p className="mt-0.5 text-[11px] leading-relaxed text-ink-3">
               {`Ask Lyra to explain any setup in plain English, grounded in ${soloMode ? 'your device-local data' : 'your data'}. ${
-                effectiveHosted
-                  ? 'Use the hosted beta model, or bring your own key.'
-                  : 'This deployment has no hosted key - bring your own to switch AI on; it stays in this browser.'
+                freeAvailable
+                  ? 'It answers with a free open-source model - no key needed. Add your own key anytime for a model of your choice.'
+                  : effectiveHosted
+                    ? 'Use the hosted beta model, or bring your own key.'
+                    : 'This deployment has no hosted key - bring your own to switch AI on; it stays in this browser.'
               } Optional - you can do this anytime.`}
             </p>
             <button
