@@ -524,11 +524,22 @@ their own, and nothing yet reads them back as a trend (how often the pool ran ou
 figures-only answers went out). `ai_runs` records each failed attempt's reason when the database is
 there; without it the reason goes to the server log only. A tripwire on pool exhaustion is owed.
 
-What a free model is shown: the question, the conversation and the scan. A no-account reader's own
-book (holdings, watchlist, cash and goal settings, all held in the browser) is sent only while they
-have "Include my book" ticked in the chat; otherwise the request says `withheld` and the model is
-told it cannot see the book. A row the no-account screen kept from the authored sample because its
-live recompute failed (`SignalRow.sample`) reaches neither the model nor the figures-only answer.
+What a free model is shown: the question, the conversation, the scan, and a one-line tone
+instruction derived from the experience and risk comfort the reader entered. A no-account reader's
+own book (holdings, watchlist, cash and goal settings, all held in the browser) is sent only while
+they have "Include my book" ticked in the chat (`src/lib/ai/share-book.ts`); otherwise the request
+says `withheld` and the model is told it cannot see the book, and the brief card's "plain English"
+button sends the market lines of the brief only. Unticking it starts a new chat, because earlier
+turns travel with every question. The UI decides whether to show the free-model disclosure with
+`whoAnswers()` (`src/lib/ai/who-answers.ts`), pinned case for case to the server's resolver. A row
+the no-account screen kept from the authored sample because its live recompute failed
+(`SignalRow.sample`) reaches neither the model, the brief, nor the figures-only answer.
+
+Timing: the routes allow 60 seconds. The pool takes at most 35 (a wall: each provider gets the
+smaller of 20 seconds and what is left, time in its queue included), and a house key with the pool
+behind it gets one 15-second attempt before handing over - which is logged as
+`lyra.ai_house_handover` with the reason, so a wrong model id or a revoked house key cannot fail
+quietly behind free answers.
 
 ## 9. The paper-bot loop - practice trades, gated hands
 

@@ -49,6 +49,14 @@ const HOUSE_FAILURES: ReadonlySet<AiFailureReason> = new Set<AiFailureReason>([
   'error',
 ]);
 
+/**
+ * When the free pool stands behind a house key, the house gets ONE attempt of this length - not its
+ * usual three of thirty seconds. Together with the pool's own deadline that keeps the whole answer
+ * inside the routes' 60-second limit, so a house provider that hangs still ends in a free answer or
+ * the figures, never in a function that was cut off.
+ */
+const HOUSE_ATTEMPT_WITH_POOL_BEHIND_MS = 15_000;
+
 async function fromPool(creds: ResolvedAiCredentials, identity: string, request: AnswerRequest): Promise<Answer> {
   const caps = await chargeFreeCaps(identity);
   if (!caps.ok) return { ok: false, reason: caps.reason, provider: creds.provider, model: 'n/a', via: 'free_pool' };
@@ -66,10 +74,15 @@ export async function answerWith(creds: ResolvedAiCredentials, identity: string,
   const own = creds.source === 'user';
   const via: AnswerVia = own ? 'user' : 'hosted';
   const model = resolveModel(creds.provider, creds.model);
-  const failed = (reason: AiFailureReason, usedModel: string = model): Promise<Answer> | Answer =>
-    !own && creds.poolFallback && HOUSE_FAILURES.has(reason)
-      ? fromPool(creds, identity, request)
-      : { ok: false, reason, provider: creds.provider, model: usedModel, via };
+  const handsOver = !own && creds.poolFallback === true;
+  const failed = (reason: AiFailureReason, usedModel: string = model): Promise<Answer> | Answer => {
+    if (!handsOver || !HOUSE_FAILURES.has(reason)) return { ok: false, reason, provider: creds.provider, model: usedModel, via };
+    // The reader is still answered, so nobody would otherwise learn the house key is failing - a
+    // wrong model id or a revoked key would hand over quietly on every request. Names and a
+    // reason only: no prompt, no key, no user.
+    console.warn(JSON.stringify({ event: 'lyra.ai_house_handover', schemaVersion: 1, source: creds.source, model: usedModel, reason }));
+    return fromPool(creds, identity, request);
+  };
 
   if (!own) {
     const budget = await chargeHostedBudgetShared(creds.source, request.budgetTokens);
@@ -84,6 +97,7 @@ export async function answerWith(creds: ResolvedAiCredentials, identity: string,
       prompt: request.prompt,
       maxTokens: request.maxTokens,
       retryOn429: own,
+      ...(handsOver ? { maxAttempts: 1, timeoutMs: HOUSE_ATTEMPT_WITH_POOL_BEHIND_MS } : {}),
     });
     if (!result.text) return failed('empty_response', result.model);
     return { ok: true, text: result.text, provider: result.provider, model: result.model, usage: result.usage, costUsd: result.costUsd, via };

@@ -66,8 +66,13 @@ const AUTH_COOLDOWN_SEC = 3_600; // a rejected key does not fix itself within th
 
 /** One slow provider may not cost a reader more than this; the next target gets what is left. */
 const ATTEMPT_TIMEOUT_MS = 20_000;
-/** No new target is started after this long: the reader gets the figures instead. */
-const POOL_DEADLINE_MS = 35_000;
+/**
+ * The whole pool answers within this long or the reader gets the figures instead. It is a wall, not
+ * a start-by time: each target is given the smaller of its own timeout and what is left.
+ */
+export const POOL_DEADLINE_MS = 35_000;
+/** Too little time left to be worth starting another provider. */
+const MIN_ATTEMPT_MS = 3_000;
 
 const PER_MINUTE = 6;
 const PER_DAY = 40;
@@ -212,6 +217,8 @@ export async function completeFromPool(
   nowMs: number = Date.now(),
   /** Wall clock for the overall deadline - a parameter so a test can run out of time on purpose. */
   clock: () => number = Date.now,
+  /** How long the pool may take in all. A caller that has already spent time elsewhere passes less. */
+  deadlineMs: number = POOL_DEADLINE_MS,
 ): Promise<PoolOutcome> {
   const targets = poolTargets();
   if (targets.length === 0) return { ok: false, reason: 'no_key', tried: [] };
@@ -220,7 +227,8 @@ export async function completeFromPool(
   const startedAt = clock();
   for (const target of targets) {
     const name = `${target.provider}:${target.model}`;
-    if (clock() - startedAt > POOL_DEADLINE_MS) {
+    const left = deadlineMs - (clock() - startedAt);
+    if (left < MIN_ATTEMPT_MS) {
       tried.push({ target: name, reason: 'out_of_time' });
       continue;
     }
@@ -239,9 +247,10 @@ export async function completeFromPool(
         temperature: request.temperature,
         // A 429 on a shared free key is the pool's signal to move on, never something to retry into.
         retryOn429: false,
-        // One short attempt, in the pool's own queue and behind the pool's own circuit breaker.
+        // One short attempt, in the pool's own queue and behind the pool's own circuit breaker,
+        // and never longer than what is left of the pool's deadline.
         maxAttempts: 1,
-        timeoutMs: ATTEMPT_TIMEOUT_MS,
+        timeoutMs: Math.min(ATTEMPT_TIMEOUT_MS, left),
         lane: 'pool',
       });
       if (result.text.trim()) return { ok: true, result, tried: [...tried, { target: name, reason: 'ok' }] };

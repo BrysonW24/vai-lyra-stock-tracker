@@ -205,6 +205,75 @@ describe('the free pool', () => {
     expect(sent.length).toBe(1);
   });
 
+  it('treats its deadline as a wall: a provider is given only what is left of it', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(NOW);
+      vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {}))); // a provider that never answers
+      const settled: Array<Awaited<ReturnType<typeof completeFromPool>>> = [];
+      // Five seconds for the whole pool: the first provider may hang for five, not its usual twenty.
+      void completeFromPool(REQUEST, NOW, Date.now, 5_000).then((result) => settled.push(result));
+      await vi.advanceTimersByTimeAsync(4_900);
+      expect(settled.length).toBe(0);
+      await vi.advanceTimersByTimeAsync(200);
+      expect(settled.length).toBe(1);
+      expect(settled[0]).toMatchObject({ ok: false, reason: 'free_pool_exhausted' });
+      expect(settled[0]?.tried.map((attempt) => attempt.reason)).toEqual(['provider_unavailable', 'out_of_time', 'out_of_time', 'out_of_time']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('counts time spent waiting in its own queue against a pool call, but not against a reader\'s own', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+      const settled: string[] = [];
+      const ask = (lane: 'pool' | 'shared', label: string) =>
+        void complete({ provider: 'groq', apiKey: 'k', system: 's', prompt: 'p', maxAttempts: 1, timeoutMs: 1_000, lane }).catch(() => settled.push(label));
+      // Fill each lane's slots (4 for the pool, 6 shared) with calls that hang, then queue one more.
+      for (let slot = 0; slot < 4; slot += 1) ask('pool', 'pool-running');
+      ask('pool', 'pool-queued');
+      for (let slot = 0; slot < 6; slot += 1) ask('shared', 'own-running');
+      ask('shared', 'own-queued');
+      await vi.advanceTimersByTimeAsync(1_050);
+      // Every running call timed out; so did the queued POOL call, though it had only just (or
+      // never) reached Groq.
+      expect(settled.filter((label) => label === 'pool-queued').length).toBe(1);
+      // The reader's own queued call is only now starting its own second.
+      expect(settled.includes('own-queued')).toBe(false);
+      await vi.advanceTimersByTimeAsync(1_050);
+      expect(settled.includes('own-queued')).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('gives a slot back when a provider hangs, and never sends a call nobody is waiting for', async () => {
+    vi.useFakeTimers();
+    try {
+      const hung = vi.fn(() => new Promise(() => {}));
+      vi.stubGlobal('fetch', hung);
+      const ask = (timeoutMs: number) => void complete({ provider: 'groq', apiKey: 'k', system: 's', prompt: 'p', maxAttempts: 1, timeoutMs, lane: 'pool' }).catch(() => {});
+      // Four calls hang for 10 s and hold every slot; a fifth is only willing to wait 1 s.
+      for (let slot = 0; slot < 4; slot += 1) ask(10_000);
+      ask(1_000);
+      await vi.advanceTimersByTimeAsync(1_050);
+      expect(hung).toHaveBeenCalledTimes(4);
+      // The slots come back at 10 s. The fifth call was given up on long before: it is not sent.
+      await vi.advanceTimersByTimeAsync(9_500);
+      expect(hung).toHaveBeenCalledTimes(4);
+      // And the lane is usable again - a new call goes straight out. (Five failures in a row
+      // opened the pool's breaker, as they should; this is about the queue, so close it.)
+      resetProviderBreakersForTests();
+      vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, headers: new Headers(), json: async () => ({ choices: [{ message: { content: 'ok' } }] }) })));
+      const result = await complete({ provider: 'groq', apiKey: 'k', system: 's', prompt: 'p', maxAttempts: 1, timeoutMs: 1_000, lane: 'pool' });
+      expect(result.text).toBe('ok');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("keeps its failures to itself: a free tier that is down does not trip the circuit for a reader's own key", async () => {
     vi.stubEnv('LYRA_FREE_POOL', 'groq:openai/gpt-oss-120b');
     const sent = provider({ status: 500 });

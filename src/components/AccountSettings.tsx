@@ -30,6 +30,7 @@ import { NotificationsSetup } from '@/components/NotificationsSetup';
 import { SoloUpgradeCta } from '@/components/SoloUpgradeCta';
 import { communitySignupHref } from '@/lib/community';
 import { aiHostingCopy } from '@/lib/ai/hosted-copy';
+import { whoAnswers, type AiStatusFacts } from '@/lib/ai/who-answers';
 import { pageTitleClass } from '@/lib/ui';
 
 function Panel({ icon: Icon, title, subtitle, children }: { icon: typeof UserRound; title: string; subtitle: string; children: React.ReactNode }) {
@@ -107,9 +108,14 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
   const [trialDaysLeft, setTrialDaysLeft] = useState(0);
   // The free pool of open models: when it is on, AI needs no key and the copy says so first.
   const [freeAvailable, setFreeAvailable] = useState(false);
-  // Whether the free pool is what answers THIS reader (an entitled signed-in reader gets the hosted
-  // model first, and the free one only as its fallback).
-  const [freeAnswers, setFreeAnswers] = useState(false);
+  // What /api/ai/status reported, kept whole: whether the free pool is what answers THIS reader
+  // depends on the provider they have selected below (the house may hold a key for one and not the
+  // other), so it is worked out on each render rather than once.
+  const [aiStatus, setAiStatus] = useState<AiStatusFacts | null>(null);
+  const [ai, setAi] = useState<AiSettings>(DEFAULT_AI);
+  // The free pool answers this reader when they have no key of their own and no house key comes
+  // first for the provider they have selected.
+  const freeAnswers = !ai.apiKey?.trim() && whoAnswers(aiStatus, ai.provider) === 'free';
   const effectiveHosted = hostedAvailable ?? !soloMode;
   const aiHosting = aiHostingCopy(effectiveHosted, freeAnswers);
   const sectionHeader =
@@ -129,7 +135,6 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
             }
       : SECTION_HEADERS[section];
   const [profile, setProfile] = useState<AccountProfile>(DEFAULT_PROFILE);
-  const [ai, setAi] = useState<AiSettings>(DEFAULT_AI);
   const [lock, setLock] = useState<LockSettings>(DEFAULT_LOCK);
 
   const [profileSaved, setProfileSaved] = useState(false);
@@ -165,7 +170,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
         if (typeof d.hostedAvailable === 'boolean') setHostedAvailable(d.hostedAvailable);
         if (typeof d.trialDaysLeft === 'number') setTrialDaysLeft(d.trialDaysLeft);
         if (typeof d.freeAvailable === 'boolean') setFreeAvailable(d.freeAvailable);
-        setFreeAnswers(typeof d.answersFrom === 'string' ? d.answersFrom === 'free' : d.freeAvailable === true);
+        setAiStatus(d as AiStatusFacts);
       })
       .catch(() => {});
     return () => {

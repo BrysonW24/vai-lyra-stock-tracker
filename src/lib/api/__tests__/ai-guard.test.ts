@@ -35,6 +35,20 @@ describe('rateLimitKeyForIp', () => {
     expect(rateLimitKeyForIp('0:0:0:0:0:ffff:203.0.113.7')).toBe('203.0.113.7');
   });
 
+  it('reads an IPv4 address written as two hex groups as that IPv4 address too', () => {
+    // Without this every such caller shared one bucket (0:0:0:0::/64) with every other.
+    expect(rateLimitKeyForIp('::ffff:cb00:7107')).toBe('203.0.113.7');
+    expect(rateLimitKeyForIp('::ffff:cc00:7107')).toBe('204.0.113.7');
+    expect(rateLimitKeyForIp('0:0:0:0:0:FFFF:CB00:7107')).toBe('203.0.113.7');
+  });
+
+  it('drops a port, so one caller is not a new caller on every connection', () => {
+    expect(rateLimitKeyForIp('203.0.113.7:5678')).toBe('203.0.113.7');
+    expect(rateLimitKeyForIp('203.0.113.7:443')).toBe('203.0.113.7');
+    expect(rateLimitKeyForIp('[2001:db8:1:2::1]:443')).toBe('2001:db8:1:2::/64');
+    expect(rateLimitKeyForIp('[2001:db8:1:2::9]:8080')).toBe('2001:db8:1:2::/64');
+  });
+
   it('returns what it cannot read unchanged, so a strange header still gets a bucket of its own', () => {
     expect(rateLimitKeyForIp('not-an-address')).toBe('not-an-address');
     expect(rateLimitKeyForIp('1::2::3')).toBe('1::2::3');

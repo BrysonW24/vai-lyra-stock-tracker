@@ -479,11 +479,28 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
   const timeoutMs = params.timeoutMs && params.timeoutMs > 0 ? params.timeoutMs : ATTEMPT_TIMEOUT_MS;
   const maxAttempts = params.maxAttempts && params.maxAttempts > 0 ? Math.floor(params.maxAttempts) : 3;
 
+  // Every call is timed from the moment it reaches the provider, and that timer sits INSIDE the
+  // queue slot: it is what gives the slot back when a provider hangs (the timer bounds the wait, it
+  // does not close the socket).
+  const timed = () => withTimeout(dispatchCompletion(params, model, maxTokens), timeoutMs, `${provider} completion`);
+  // A pool call is ALSO timed from the moment it is asked - the reader is promised an answer or
+  // the figures within the pool's deadline, time in the queue included. A call given up on while
+  // still queued never goes out: nobody is waiting for it, and it would spend the free allowance.
+  const attempt = pooled
+    ? () => {
+        let abandoned = false;
+        const queued = limiter.run(async () => {
+          if (abandoned) throw new Error(`${provider} completion: given up on while queued`);
+          return timed();
+        });
+        return withTimeout(queued, timeoutMs, `${provider} completion`).finally(() => {
+          abandoned = true;
+        });
+      }
+    : () => limiter.run(timed);
+
   try {
-    const raw = await withRetry(
-      () => limiter.run(() => withTimeout(dispatchCompletion(params, model, maxTokens), timeoutMs, `${provider} completion`)),
-      { policy: { maxAttempts, baseDelayMs: 400, maxDelayMs: 4000 }, isRetryable },
-    );
+    const raw = await withRetry(attempt, { policy: { maxAttempts, baseDelayMs: 400, maxDelayMs: 4000 }, isRetryable });
     breaker.consecutiveFailures = 0;
     breaker.openedAt = null;
     return { text: raw.text, provider, model, usage: raw.usage, costUsd: estimateCostUsd(provider, model, raw.usage) };

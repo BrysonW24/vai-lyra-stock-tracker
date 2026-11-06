@@ -18,6 +18,8 @@ import {
   normaliseAiFailureReason,
   type AiFailureReason,
 } from '@/lib/ai/failures';
+import { loadShareBook, saveShareBook } from '@/lib/ai/share-book';
+import { whoAnswers } from '@/lib/ai/who-answers';
 
 interface ProposedAction {
   type: 'add_watchlist' | 'add_portfolio' | 'log_trade';
@@ -51,34 +53,9 @@ interface AiRuntimeStatus {
   aiIncluded?: boolean;
   // The free pool of open models is on for this deployment (v0.140.0): anyone can chat with no key.
   freeAvailable?: boolean;
-  // Who answers THIS caller when they bring no key: the house key for an entitled signed-in user,
-  // the free pool for everyone else when it is on. Absent on an older server.
-  answersFrom?: 'hosted' | 'free' | 'none';
-}
-
-/**
- * A no-account reader's choice to send their device-held book with questions the FREE model
- * answers. Off until they switch it on: Solo's promise is that the book stays in this browser, and
- * a free model is somebody else's computer. (Their own key is their own arrangement - the book has
- * always travelled with it.)
- */
-const SHARE_BOOK_KEY = 'lyra.ai.free-share-book';
-
-function loadShareBook(): boolean {
-  try {
-    return window.localStorage.getItem(SHARE_BOOK_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function saveShareBook(value: boolean): void {
-  try {
-    if (value) window.localStorage.setItem(SHARE_BOOK_KEY, '1');
-    else window.localStorage.removeItem(SHARE_BOOK_KEY);
-  } catch {
-    /* private mode: the choice lasts for this sheet only */
-  }
+  // Whether a session exists (the signed-in status shape). With the fields above it is what
+  // whoAnswers() needs to say, before anything is sent, who will answer this reader.
+  authenticated?: boolean;
 }
 
 const ACTION_LABEL: Record<ProposedAction['type'], string> = {
@@ -291,16 +268,19 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   // everyone waits for it now - no-account mode included - because it says whether the free pool is on.
   const soloMode = !isSupabaseConfigured();
   const checkingRuntime = ai != null && !ai.apiKey?.trim() && runtime == null;
-  // Answers come from the free pool when the reader has no key of their own, the pool is on, and
-  // no house key answers them first (an entitled signed-in user on a provider the house holds).
-  const hostedForMe = runtime?.answersFrom === 'hosted' && (ai?.provider === 'openai' || ai?.provider === 'google');
-  const usingFree = ai != null && !ai.apiKey?.trim() && runtime?.freeAvailable === true && !hostedForMe;
+  // Answers come from the free pool when the reader has no key of their own and no house key
+  // answers them first. whoAnswers() mirrors the server's resolver case for case - including the
+  // one where the house holds a key for the OTHER provider and the free pool answers instead.
+  const usingFree = ai != null && !ai.apiKey?.trim() && whoAnswers(runtime, ai.provider) === 'free';
   // A no-account reader decides whether their device-held book goes to the free model.
   const bookChoice = usingFree && soloMode;
   const bookWithheld = bookChoice && !shareBook;
   const chooseShareBook = (value: boolean) => {
     setShareBook(value);
     saveShareBook(value);
+    // Switching it OFF mid-conversation starts a new chat: the earlier turns are sent with every
+    // question, and answers already given may quote the book.
+    if (!value && messages.length > 0) newChat();
   };
 
   // Connected when the user has a browser key, or the selected provider is backed by a server key
@@ -540,10 +520,10 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                   </p>
                   {usingFree && (
                     <p className="rounded-cell border border-line px-3 py-2 text-[11px] leading-relaxed text-ink-3">
-                      Free answers are written by an open-source model hosted by Cloudflare or Groq. Your question and this conversation are sent to whichever of them answers
+                      Free answers are written by an open-source model hosted by Cloudflare or Groq. Your question and this conversation are sent to whichever of them answers, with a one-line tone instruction based on the experience and risk comfort you entered
                       {bookChoice
-                        ? '. Your book - holdings with quantities and average prices, watchlist targets, and the cash and goal settings you entered - is sent only while Include my book is switched on below.'
-                        : ', along with the account details that ground the answer: your holdings and their profit or loss, your watchlist, and your cash, goal, horizon and risk settings.'}{' '}
+                        ? '. Your book - holdings with quantities and average prices, watchlist targets, and the cash and goal settings you entered - is sent only while Include my book is switched on below; switching it off starts a new chat.'
+                        : ', and the account details that ground the answer: your holdings and their profit or loss, your watchlist, and your cash, goal, horizon and risk settings.'}{' '}
                       Both say they do not train on it. There is a daily allowance shared by everyone - when it runs out you get the figures without the commentary. Add your own key in{' '}
                       <Link href="/account/ai" onClick={onClose} className="font-semibold text-pending underline-offset-2 hover:underline">
                         AI settings

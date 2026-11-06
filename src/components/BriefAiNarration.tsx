@@ -6,6 +6,8 @@ import { bumpAiUsage } from '@/lib/usage-store';
 import { AiGeneratedLabel } from '@/components/AiGeneratedLabel';
 import type { DailyBrief } from '@/lib/daily-brief';
 import { loadAi } from '@/lib/account';
+import { briefForFreeModel, loadShareBook } from '@/lib/ai/share-book';
+import { isSupabaseConfigured } from '@/lib/supabase/client';
 
 type Phase = 'idle' | 'loading' | 'offer' | 'unavailable';
 
@@ -18,10 +20,16 @@ type Phase = 'idle' | 'loading' | 'offer' | 'unavailable';
  * or a hosted entitlement. The FREE model is a daily allowance shared by everyone, so it is never
  * spent on a page view: the route answers `on_request`, and this shows a button instead. One tap
  * writes the brief.
+ *
+ * A tap is answered by the free model, so it honours the reader's "Include my book" choice: with
+ * no account and the choice off, only `marketBrief` - the same brief built without their holdings
+ * or watchlist - is sent, and the caption under the button says which it will be.
  */
-export function BriefAiNarration({ brief }: { brief: DailyBrief }) {
+export function BriefAiNarration({ brief, marketBrief }: { brief: DailyBrief; marketBrief: DailyBrief }) {
   const [text, setText] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
+  // Read when the button is offered, and again at the moment of the tap.
+  const [bookStaysHome, setBookStaysHome] = useState(false);
 
   const request = useCallback(
     (asked: boolean, isCancelled: () => boolean = () => false, announce: boolean = asked) => {
@@ -30,10 +38,13 @@ export function BriefAiNarration({ brief }: { brief: DailyBrief }) {
       // card does not flash a promise and then swap it for a button.
       if (announce) setPhase('loading');
       bumpAiUsage();
+      // An automatic call is answered by the reader's own key or a hosted entitlement, as it always
+      // was. A tap is answered by the free model, which sees the book only if they chose that.
+      const sent = asked ? briefForFreeModel(brief, marketBrief, { soloMode: !isSupabaseConfigured(), shareBook: loadShareBook() }) : brief;
       fetch('/api/ai/brief', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ brief, ai: loadAi(), asked }),
+        body: JSON.stringify({ brief: sent, ai: loadAi(), asked }),
       })
         .then((res) => res.json())
         .then((data: { ok?: boolean; text?: string; reason?: string }) => {
@@ -42,6 +53,7 @@ export function BriefAiNarration({ brief }: { brief: DailyBrief }) {
             setText(data.text);
             setPhase('idle');
           } else if (!asked && data?.reason === 'on_request') {
+            setBookStaysHome(!isSupabaseConfigured() && !loadShareBook());
             setPhase('offer');
           } else {
             // A tap that got nothing says so; an automatic call that got nothing stays silent.
@@ -52,7 +64,7 @@ export function BriefAiNarration({ brief }: { brief: DailyBrief }) {
           if (!isCancelled()) setPhase(asked ? 'unavailable' : 'idle');
         });
     },
-    [brief],
+    [brief, marketBrief],
   );
 
   useEffect(() => {
@@ -99,7 +111,9 @@ export function BriefAiNarration({ brief }: { brief: DailyBrief }) {
           <Sparkles size={13} /> Write this brief in plain English
         </button>
         <p className="-mt-1 pb-1 text-[10px] leading-snug text-ink-dim">
-          Sends the lines of this brief, as shown here, to Lyra&apos;s free open-source model (hosted by Cloudflare or Groq).
+          {bookStaysHome
+            ? "Sends the market lines of this brief - nothing about your book - to Lyra's free open-source model (hosted by Cloudflare or Groq)."
+            : "Sends the lines of this brief, as shown here, to Lyra's free open-source model (hosted by Cloudflare or Groq)."}
         </p>
       </div>
     );

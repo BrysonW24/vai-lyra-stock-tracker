@@ -376,3 +376,24 @@ describe('buildDailyBrief', () => {
     expect(bookLine?.tone).toBe('neg'); // TSLA has -8 scoreDelta (highest magnitude mover)
   });
 });
+
+/**
+ * The no-account screen keeps an authored sample row on display when one name's live recompute
+ * fails (`SignalRow.sample`). The brief is the engine speaking, so such a row is never counted as
+ * a setup or named as the lead.
+ */
+describe('buildDailyBrief and sample rows', () => {
+  it('does not count or name a row kept from the authored sample', async () => {
+    const { demoDashboardData } = await import('../demo-data');
+    const { demoMarketContext } = await import('../market-context');
+    const market = { ...demoMarketContext, source: 'sample' as const };
+    const [first, second] = demoDashboardData.signals;
+    const live = { ...second, symbol: 'LIVE', score: 61, status: 'watchlist_setup' as const };
+    const sample = { ...first, symbol: 'SMPL', score: 99, status: 'strong_setup' as const, sample: true };
+    const brief = buildDailyBrief({ ...demoDashboardData, portfolio: [], watchlist: [], signals: [sample, live] }, market);
+
+    expect(brief.headline).toBe('No strong setups on the radar right now.');
+    expect(JSON.stringify(brief)).not.toContain('SMPL');
+    expect(brief.lines.find((line) => line.label === 'Lead setup')?.text).toContain('LIVE leads at 61/100');
+  });
+});

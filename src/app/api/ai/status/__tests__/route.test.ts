@@ -65,13 +65,13 @@ describe('GET /api/ai/status', () => {
 
   it('treats a Solo runtime with no auth stack as anonymous, exposing only whether a hosted mode exists', async () => {
     const response = await GET();
-    expect(await response.json()).toEqual({ hostedAvailable: true, freeAvailable: false, answersFrom: 'none', authenticated: false });
+    expect(await response.json()).toEqual({ hostedAvailable: true, freeAvailable: false, authenticated: false });
   });
 
   it('treats a signed-out Community caller as anonymous', async () => {
     hoisted.client = { auth: { getUser: async () => ({ data: { user: null } }) } };
     const response = await GET();
-    expect(await response.json()).toEqual({ hostedAvailable: true, freeAvailable: false, answersFrom: 'none', authenticated: false });
+    expect(await response.json()).toEqual({ hostedAvailable: true, freeAvailable: false, authenticated: false });
   });
 
   it('does NOT treat profiles.ai_included as a grant - a user can write their own profile row', async () => {
@@ -89,7 +89,6 @@ describe('GET /api/ai/status', () => {
     expect(await response.json()).toEqual({
       ...RUNTIME,
       hostedAvailable: true,
-      answersFrom: 'hosted',
       hostedKeyOnDeployment: true,
       aiIncluded: true,
       granted: true,
@@ -105,7 +104,6 @@ describe('GET /api/ai/status', () => {
     expect(await response.json()).toEqual({
       ...RUNTIME,
       hostedAvailable: false,
-      answersFrom: 'none',
       hostedKeyOnDeployment: true,
       aiIncluded: false,
       granted: false,
@@ -114,20 +112,11 @@ describe('GET /api/ai/status', () => {
     });
   });
 
-  describe('with the free pool on', () => {
-    it('tells an anonymous caller the free pool answers them - never the house key they cannot reach', async () => {
-      hoisted.freePool = true;
-      expect(await (await GET()).json()).toEqual({ hostedAvailable: true, freeAvailable: true, answersFrom: 'free', authenticated: false });
-    });
+  it('reports the free pool to everyone, and the per-provider house keys only to a signed-in caller', async () => {
+    hoisted.freePool = true;
+    expect(await (await GET()).json()).toEqual({ hostedAvailable: true, freeAvailable: true, authenticated: false });
 
-    it('keeps the house key first for an entitled user, and gives a lapsed one the free pool', async () => {
-      hoisted.freePool = true;
-      vi.stubEnv('AI_INCLUDED_EMAILS', 'owner@example.com');
-      hoisted.client = signedInClient({ id: 'u1', email: 'owner@example.com' }, null);
-      expect(await (await GET()).json()).toMatchObject({ answersFrom: 'hosted', hostedAvailable: true, freeAvailable: true });
-
-      hoisted.client = signedInClient({ id: 'u2' }, false);
-      expect(await (await GET()).json()).toMatchObject({ answersFrom: 'free', hostedAvailable: false, freeAvailable: true });
-    });
+    hoisted.client = signedInClient({ id: 'u2' }, false);
+    expect(await (await GET()).json()).toMatchObject({ freeAvailable: true, hostedOpenAi: true, sharedGoogle: false, aiIncluded: false, authenticated: true });
   });
 });

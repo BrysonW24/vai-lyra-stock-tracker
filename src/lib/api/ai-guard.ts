@@ -78,15 +78,22 @@ export function clientIp(request: NextRequest): string {
 
 /**
  * The key an address is rate-limited under. IPv4 is itself. IPv6 is its /64 prefix, written
- * `2001:db8:1:2::/64`; an IPv4-mapped IPv6 address (`::ffff:203.0.113.7`) is the IPv4 address
- * inside it. Anything that does not parse as an address is returned unchanged - a strange header
- * still gets one bucket of its own rather than sharing "anon" with everybody.
+ * `2001:db8:1:2::/64`; an IPv4-mapped IPv6 address is the IPv4 address inside it, however it was
+ * written (`::ffff:203.0.113.7` or `::ffff:cb00:7107`). A port a proxy appended (`1.2.3.4:5678`,
+ * `[2001:db8::1]:443`) is dropped - the same caller on another port is the same caller. Anything
+ * that does not parse as an address is returned unchanged - a strange header still gets one bucket
+ * of its own rather than sharing "anon" with everybody.
  */
 export function rateLimitKeyForIp(ip: string): string {
-  const raw = ip.trim().replace(/^\[|\]$/g, '').split('%')[0]!.toLowerCase();
+  let raw = ip.trim().toLowerCase();
+  const bracketed = raw.match(/^\[([^\]]+)\](?::\d{1,5})?$/);
+  if (bracketed) raw = bracketed[1]!;
+  raw = raw.split('%')[0]!;
+  const v4 = raw.match(/^(\d{1,3}(?:\.\d{1,3}){3})(?::\d{1,5})?$/);
+  if (v4) return v4[1]!;
   if (!raw.includes(':')) return raw;
-  const mapped = raw.match(/^(?:0{0,4}:){1,6}ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
-  if (mapped) return mapped[1]!;
+  const dotted = raw.match(/^(?:0{0,4}:){1,6}ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
+  if (dotted) return dotted[1]!;
   const halves = raw.split('::');
   if (halves.length > 2) return raw;
   const head = halves[0] ? halves[0].split(':') : [];
@@ -95,7 +102,12 @@ export function rateLimitKeyForIp(ip: string): string {
   if (gap < 0) return raw;
   const groups = [...head, ...Array<string>(gap).fill('0'), ...tail];
   if (groups.length !== 8 || groups.some((group) => !/^[0-9a-f]{1,4}$/.test(group))) return raw;
-  return `${groups.slice(0, 4).map((group) => group.replace(/^0+(?=.)/, '')).join(':')}::/64`;
+  const words = groups.map((group) => parseInt(group, 16));
+  // ::ffff:a.b.c.d with the address written as two hex groups.
+  if (words.slice(0, 5).every((word) => word === 0) && words[5] === 0xffff) {
+    return `${words[6]! >> 8}.${words[6]! & 0xff}.${words[7]! >> 8}.${words[7]! & 0xff}`;
+  }
+  return `${words.slice(0, 4).map((word) => word.toString(16)).join(':')}::/64`;
 }
 
 export async function guardAiRoute<T>(

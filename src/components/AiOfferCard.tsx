@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { Sparkles, X, ArrowRight } from 'lucide-react';
 import { AiInsightStep } from '@/components/onboarding/AiInsightStep';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
+import { loadAi } from '@/lib/account';
+import { whoAnswers, type AiStatusFacts } from '@/lib/ai/who-answers';
 
 const DISMISS_KEY = 'lyra.aiOffer.dismissed';
 
@@ -36,9 +38,9 @@ export function AiOfferCard() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (alive && d && typeof d.hostedAvailable === 'boolean') setHostedAvailable(d.hostedAvailable);
-        // "Free" here means the free pool is what answers THIS reader - an entitled signed-in reader
-        // still gets the hosted model first.
-        if (alive && d) setFreeAvailable(typeof d.answersFrom === 'string' ? d.answersFrom === 'free' : d.freeAvailable === true);
+        // "Free" here means the free pool is what answers THIS reader with the provider they have
+        // selected - an entitled signed-in reader still gets the hosted model first.
+        if (alive && d) setFreeAvailable(whoAnswers(d as AiStatusFacts, loadAi().provider) === 'free');
       })
       .catch(() => {});
     return () => {

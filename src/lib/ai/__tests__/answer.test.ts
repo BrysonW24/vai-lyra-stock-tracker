@@ -108,6 +108,33 @@ describe('answerWith', () => {
     expect(await answerWith(hosted, 'user-1', REQUEST)).toMatchObject({ ok: false, reason: 'free_pool_exhausted', via: 'free_pool' });
   });
 
+  it('gives the house one short attempt when the pool is behind it, and says so when it hands over', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      // With the pool behind it: one 15 s attempt, so house + pool fit inside the route's 60 s.
+      await answerWith(creds('hosted_openai', { poolFallback: true }), 'user-1', REQUEST);
+      expect(mocks.complete).toHaveBeenLastCalledWith(expect.objectContaining({ maxAttempts: 1, timeoutMs: 15_000 }));
+      expect(warn).not.toHaveBeenCalled();
+
+      // Without it: the gateway's usual retries, untouched.
+      await answerWith(creds('hosted_openai'), 'user-1', REQUEST);
+      expect(mocks.complete.mock.calls.at(-1)?.[0]).not.toHaveProperty('maxAttempts');
+      await answerWith(creds('user'), 'ip:1', REQUEST);
+      expect(mocks.complete.mock.calls.at(-1)?.[0]).not.toHaveProperty('timeoutMs');
+
+      // A handover is logged - names and a reason, nothing about the reader or the question -
+      // so a wrong model id or a revoked house key cannot fail quietly behind free answers.
+      mocks.complete.mockRejectedValue(new Error('openai 404: model not found - check the model id (it may be retired or misspelled)'));
+      expect(await answerWith(creds('hosted_openai', { poolFallback: true, model: 'gpt-typo' }), 'user-1', REQUEST)).toMatchObject({ ok: true, via: 'free_pool' });
+      expect(warn).toHaveBeenCalledTimes(1);
+      const line = JSON.parse(String(warn.mock.calls[0][0])) as Record<string, unknown>;
+      expect(line).toEqual({ event: 'lyra.ai_house_handover', schemaVersion: 1, source: 'hosted_openai', model: 'gpt-typo', reason: 'invalid_model' });
+      expect(JSON.stringify(line)).not.toContain('user-1');
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it('does not hand over without the route saying so, and never for a reader\'s own key', async () => {
     mocks.complete.mockRejectedValue(new Error('openai 429: rate limited - wait and retry'));
     expect(await answerWith(creds('hosted_openai'), 'user-1', REQUEST)).toMatchObject({ ok: false, reason: 'provider_rate_limited', via: 'hosted' });

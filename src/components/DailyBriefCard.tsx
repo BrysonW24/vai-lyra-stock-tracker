@@ -119,6 +119,9 @@ interface DailyBriefCardProps {
  */
 export function DailyBriefCard({ data, market }: DailyBriefCardProps) {
   const brief = useMemo(() => buildDailyBrief(data, market), [data, market]);
+  // The same brief with nobody's book in it: what a free model is shown for a no-account reader
+  // who has not switched on "Include my book".
+  const marketBrief = useMemo(() => buildDailyBrief({ ...data, portfolio: [], watchlist: [] }, market), [data, market]);
   const pool = useMemo(() => buildLivePool(data), [data]);
   const [liveLines, setLiveLines] = useState<LiveLineData[]>([]);
   const cursor = useRef(0);
@@ -170,7 +173,7 @@ export function DailyBriefCard({ data, market }: DailyBriefCardProps) {
       </div>
 
       {/* AI narration appears here when enabled in Account; otherwise nothing renders. */}
-      <BriefAiNarration brief={brief} />
+      <BriefAiNarration brief={brief} marketBrief={marketBrief} />
 
       <div className="divide-y divide-line/70">
         {liveLines.map((line) => (
