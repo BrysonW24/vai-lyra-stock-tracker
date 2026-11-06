@@ -492,12 +492,14 @@ retrieval, injection-fenced live news)              lexical + doc-identity reran
   v
 who answers (src/lib/ai/credentials.ts -> src/lib/ai/answer.ts):
   1. the user's own key (they pay, any model)
-  2. the FREE POOL of open models, for anyone, no    src/lib/ai/free-pool.ts: Cloudflare Workers AI,
-     sign-in (v0.140.0) - capped per caller          then Groq, in order; a provider that answers 429
-     (6/min, 40/day) and for the pool (2,000/day)    is left alone for its Retry-After (Redis key
-     in Redis, charged BEFORE the call               pool:cool:<provider>:<model>)
-  3. a hosted key, only where no pool is set up      budget-tracker.ts (2k/run, 250k tokens/day)
-     (model pinned, budget-metered)
+  2. a hosted key, for a signed-in reader who is     budget-tracker.ts (2k/run, 250k tokens/day);
+     entitled to it (model pinned, budget-metered)   when the house cannot answer, step 3 does
+  3. the FREE POOL of open models, for everyone      src/lib/ai/free-pool.ts: Cloudflare Workers AI,
+     else, no sign-in (v0.140.0) - capped per        then Groq, in order, ONE short attempt each and
+     caller (6/min, 40/day; IPv6 by /64) and for     35 s overall; a provider that answers 429 is
+     the pool (2,000/day) in Redis, charged BEFORE   left alone for its Retry-After (Redis key
+     the call. Chat uses it; the brief and signal    pool:cool:<provider>:<model>). Own queue and
+     explanations only when a reader TAPS for them   circuit breaker (pool:<provider>)
   |
   +--> pool out or stumbling -> the engine's own    src/lib/ai/figures-answer.ts (code only, never
   |    figures, without commentary                    sample data as today's)
@@ -521,6 +523,12 @@ The free pool's open half-loop: its counters and cooling keys live only in Redis
 their own, and nothing yet reads them back as a trend (how often the pool ran out, how many
 figures-only answers went out). `ai_runs` records each failed attempt's reason when the database is
 there; without it the reason goes to the server log only. A tripwire on pool exhaustion is owed.
+
+What a free model is shown: the question, the conversation and the scan. A no-account reader's own
+book (holdings, watchlist, cash and goal settings, all held in the browser) is sent only while they
+have "Include my book" ticked in the chat; otherwise the request says `withheld` and the model is
+told it cannot see the book. A row the no-account screen kept from the authored sample because its
+live recompute failed (`SignalRow.sample`) reaches neither the model nor the figures-only answer.
 
 ## 9. The paper-bot loop - practice trades, gated hands
 

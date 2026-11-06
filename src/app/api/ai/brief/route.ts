@@ -6,6 +6,7 @@ import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_BRIEF_FORMAT, composeSystem } from
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { guardProse } from '@/lib/ai/guardrails/prose';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { freePoolAvailable } from '@/lib/ai/free-pool';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 
 /**
@@ -23,6 +24,12 @@ interface BriefRequest {
   brief: DailyBrief;
   ai: { mode: 'free' | 'byo' | 'off' | 'hosted'; provider: AiProvider; apiKey: string; model?: string };
   profile?: { experienceLevel?: string; learningStyle?: string; tradedBefore?: string };
+  /**
+   * True when a person tapped to have the brief written. The card also calls this route by itself
+   * on every dashboard load; those calls may use the caller's own key or a hosted entitlement, but
+   * never the free pool - a daily allowance shared by everyone is not spent on page views.
+   */
+  asked?: boolean;
 }
 
 const SYSTEM = composeSystem([
@@ -58,6 +65,9 @@ function audience(profile?: BriefRequest['profile']): string {
   return '';
 }
 
+/** Long enough for the free pool's own deadline (35 s) plus the work around it. */
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
     const guard = await guardAiRoute<BriefRequest>(request);
@@ -71,8 +81,12 @@ export async function POST(request: NextRequest) {
       // Untrusted client content tripped the injection screen - fall back to the deterministic brief.
       return NextResponse.json({ ok: false, reason: 'refused' });
     }
-    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded, allowFreePool: true });
-    if (creds.source === 'none') return NextResponse.json({ ok: false, reason: 'no_key' });
+    const asked = guard.body.asked === true;
+    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded, allowFreePool: asked });
+    if (creds.source === 'none') {
+      // `on_request`: nobody is paying for this caller, but the free pool would answer a tap.
+      return NextResponse.json({ ok: false, reason: !asked && freePoolAvailable() ? 'on_request' : 'no_key' });
+    }
 
     // answerWith charges whichever fence applies before the model is called: the house budget for
     // a hosted key (shared across instances), the per-caller and pool-wide caps for the free pool,

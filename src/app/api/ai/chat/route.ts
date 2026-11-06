@@ -71,6 +71,8 @@ function boundedNumber(value: unknown, min: number, max: number): number | undef
 function sanitiseSoloContext(input: unknown): SoloDeviceContext | null {
   if (!input || typeof input !== 'object') return null;
   const raw = input as Record<string, unknown>;
+  // The reader kept their book on the device for this question: nothing else in the object is read.
+  if (raw.withheld === true) return { withheld: true, holdings: [], watchlist: [] };
   const holdings = Array.isArray(raw.holdings)
     ? raw.holdings
         .slice(0, 30)
@@ -136,6 +138,9 @@ function sanitiseSoloContext(input: unknown): SoloDeviceContext | null {
  */
 /** The pool's own failures: the caller did nothing wrong, so they get figures rather than an error. */
 const POOL_FALLBACK_REASONS = new Set(['free_pool_exhausted', 'provider_unavailable', 'provider_rate_limited', 'empty_response', 'invalid_key', 'invalid_model', 'error']);
+
+/** Long enough for the free pool's own deadline (35 s) plus the work around it. */
+export const maxDuration = 60;
 
 /** Number of prior turns fed into the prompt - also the number screened for injection. */
 const HISTORY_TURNS = 8;
@@ -251,13 +256,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const data = await getDashboardData();
+    const loaded = await getDashboardData();
     // On a configured deployment `mode: 'demo'` means one thing: the live read FAILED and the
     // loader fell back to the authored sample book (with no database at all it returns 'solo').
     // Grounding on that would narrate invented holdings and P/L as the user's own, and every
     // sample figure would pass the prose guard because it is "in the context". Say the data is
     // unavailable instead.
-    if (data.mode === 'demo') return NextResponse.json({ ok: false, reason: 'provider_unavailable' });
+    if (loaded.mode === 'demo') return NextResponse.json({ ok: false, reason: 'provider_unavailable' });
+    // The same rule, row by row: the no-account screen keeps an authored sample row on display when
+    // one name's live recompute fails. Such a row is not a figure, so it reaches neither the model
+    // nor the figures-only answer.
+    const data = { ...loaded, signals: loaded.signals.filter((signal) => !signal.sample) };
     const market = await getMarketContextLive();
     const constraints = await getUserConstraints();
     const constraintsBlock = constraints ? buildConstraintsBlock(constraints) : '';
@@ -332,14 +341,22 @@ export async function POST(request: NextRequest) {
       // The free pool ran out or stumbled: answer with the engine's own figures. A caller over
       // their own share (`free_limit`) gets the plain message instead - figures on tap would make
       // the cap meaningless as a brake on one person's use.
-      if (creds.source === 'free_pool' && POOL_FALLBACK_REASONS.has(reason)) {
+      // `via` is the fence that gave this outcome - the pool also catches a house key that could
+      // not answer, so the source the request started with is not the test.
+      if (completion.via === 'free_pool' && POOL_FALLBACK_REASONS.has(reason)) {
         const ownSymbols = [...data.portfolio.map((holding) => holding.symbol), ...(soloContext?.holdings ?? []).map((holding) => holding.symbol)];
         const question = last?.role === 'user' ? last.content : '';
         return NextResponse.json({
           ok: true,
           // The brief leans on the market backdrop: with no live capture it is sample data, and sample
           // data is never printed as today's figures.
-          text: figuresOnlyAnswer(question, data, market.source === 'live' ? buildDailyBrief(data, market) : null, ownSymbols),
+          text: figuresOnlyAnswer(
+            question,
+            data,
+            market.source === 'live' ? buildDailyBrief(data, market) : null,
+            ownSymbols,
+            reason === 'free_pool_exhausted' ? 'used_up' : 'unavailable',
+          ),
           suggestions: [],
           figuresOnly: true,
         });
@@ -446,7 +463,7 @@ export async function POST(request: NextRequest) {
       ]).catch(() => {});
     }
 
-    return NextResponse.json({ ok: true, text: finalText, suggestions, action });
+    return NextResponse.json({ ok: true, text: finalText, suggestions, action, answeredBy: completion.via });
   } catch (error) {
     console.error(
       JSON.stringify({

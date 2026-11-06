@@ -24,12 +24,13 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     version: '0.140.0',
-    date: '2026-11-06',
+    date: '2026-11-07',
     title: 'Ask Lyra is free for everyone: open-source models answer, no key and no sign-in needed',
     highlights: [
       'Ask Lyra now answers for anyone, with no key and no sign-in, once the free model keys are switched on. The answers come from open-source models hosted free by Cloudflare and Groq, tried in turn; your own key, if you add one, still comes first and has no limit.',
-      'The free answers are a daily allowance shared by everyone, so each person gets a fair share (a few a minute, about 40 a day). When the allowance runs out, chat gives you the engine\'s own figures for what you asked about, without the commentary, instead of an error. It resets at 11am Sydney time (10am in winter).',
-      'The chat panel and the privacy page say plainly where a free answer comes from and what is sent: your question and the holdings it concerns go to whichever of the two hosts answers. Cloudflare says it neither trains on nor keeps it; Groq says it does not train on it and may keep logs for up to 30 days.',
+      'Without an account your book stays on your device: a free answer is grounded in the market scan only, until you tick "Include my book" in the chat. The chat panel and the privacy page list exactly what is sent in each case, and which host says what about keeping it.',
+      'The free answers are a daily allowance shared by everyone, so each person gets a fair share (a few a minute, about 40 a day), and they are only spent when you ask: the daily brief and each signal now show a "plain English" button instead of writing themselves on every page view.',
+      'When the allowance runs out, or the free models are busy, chat gives you the engine\'s own figures for what you asked about, without the commentary, instead of an error - and says which of the two happened. The allowance resets at 11am Sydney time (10am in winter).',
       'The stricter advice checks from the last release now guard chat too: an instruction to trade, "investors should consider", a rating or a "buying opportunity" stops the answer, wherever it appears, and a sentence that forecasts a move is removed.',
     ],
   },

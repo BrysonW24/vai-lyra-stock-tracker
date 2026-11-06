@@ -36,7 +36,9 @@ export function AiOfferCard() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (alive && d && typeof d.hostedAvailable === 'boolean') setHostedAvailable(d.hostedAvailable);
-        if (alive && d && typeof d.freeAvailable === 'boolean') setFreeAvailable(d.freeAvailable);
+        // "Free" here means the free pool is what answers THIS reader - an entitled signed-in reader
+        // still gets the hosted model first.
+        if (alive && d) setFreeAvailable(typeof d.answersFrom === 'string' ? d.answersFrom === 'free' : d.freeAvailable === true);
       })
       .catch(() => {});
     return () => {

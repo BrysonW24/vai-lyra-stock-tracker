@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { statusFor, actionFor, lifecycleFor } from '@/lib/live-signals';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import type { SignalRow } from '@/types/scanner';
+import { applyLiveSignals, statusFor, actionFor, lifecycleFor } from '@/lib/live-signals';
 
 /**
  * 2026-07-27 audit V1: the live-signals display module was untested. These pin the deterministic
@@ -54,5 +55,30 @@ describe('lifecycleFor', () => {
 
   it('falls back to continuing when the status holds with no material move', () => {
     expect(lifecycleFor('watchlist_setup', 'watchlist_setup', 1)).toBe('continuing');
+  });
+});
+
+/**
+ * The no-account screen keeps the authored sample row on display when one name's live recompute
+ * fails, so the board never goes blank. That row is not today's figure: it is marked, and nothing
+ * that speaks for the engine (chat grounding, the figures-only answer, a published update) may use
+ * it. A database row in the same position is the worker's real last scan, and is left alone.
+ */
+describe('applyLiveSignals when a recompute fails', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const row = { symbol: 'NVDA', score: 82, priceChange1h: 0.4 } as SignalRow;
+
+  it('marks the authored row it keeps as a sample', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503 })));
+    const [kept] = await applyLiveSignals([row], 'demo');
+    expect(kept).toMatchObject({ symbol: 'NVDA', score: 82, sample: true });
+  });
+
+  it('does not mark a database row: that is still the last real scan', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503 })));
+    const [kept] = await applyLiveSignals([row], 'db');
+    expect(kept.sample).toBeUndefined();
+    expect(kept).toBe(row);
   });
 });

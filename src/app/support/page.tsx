@@ -100,7 +100,8 @@ export default function SupportPage() {
         <Section title="Deleting your data">
           <p>
             If you have not created an account, your data stays on your device. Removing the app removes
-            it.
+            it. It leaves the device only when you ask an AI model about it - with your own key, or with
+            Include my book switched on in Ask Lyra - and it is not stored.
           </p>
           <p>
             If you have an account, email{' '}

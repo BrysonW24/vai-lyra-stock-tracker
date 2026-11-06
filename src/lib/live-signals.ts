@@ -401,7 +401,11 @@ export async function applyLiveSignals(
                 ? signal.priceChange1h
                 : (computed.priceChange1h ?? Number.NaN),
           }
-        : signal;
+        : // The recompute failed. A database row is still the worker's real last scan; an authored
+          // row is a sample, and is marked so nothing downstream speaks of it as a live figure.
+          base === 'demo'
+          ? { ...signal, sample: true }
+          : signal;
     }
   }
   await Promise.all(Array.from({ length: Math.min(LIVE_FETCH_CONCURRENCY, signals.length) }, worker));

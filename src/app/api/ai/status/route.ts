@@ -16,22 +16,28 @@ export const dynamic = 'force-dynamic';
  * For a SIGNED-IN user, `hostedAvailable` is now PER-USER: the deployment must have a hosted key
  * AND this user must be entitled (inside their free trial, or granted). A user past their trial
  * reads as BYOK - the same honest copy Solo gets - even on a deployment that pays for other users.
+ *
+ * `answersFrom` says who would answer THIS caller when they bring no key of their own - the house
+ * key ('hosted') for an entitled signed-in user, the free pool ('free') for everyone else when it
+ * is on, 'none' otherwise. It is what lets the UI say truthfully, before anything is sent, where a
+ * question will go; the resolver (resolveAiCredentials) is what enforces it.
  */
 export async function GET() {
   const status = getAiRuntimeStatus();
   const deploymentHasKey = status.hostedOpenAi || status.sharedGoogle;
 
-  const freeAvailable = status.freePool;
+  const freeAvailable = status.freePool === true;
+  const answersFrom = (hosted: boolean): 'hosted' | 'free' | 'none' => (hosted ? 'hosted' : freeAvailable ? 'free' : 'none');
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
-    return NextResponse.json({ hostedAvailable: deploymentHasKey, freeAvailable, authenticated: false });
+    return NextResponse.json({ hostedAvailable: deploymentHasKey, freeAvailable, answersFrom: answersFrom(false), authenticated: false });
   }
 
   const { data } = await supabase.auth.getUser();
   const user = data.user;
   if (!user) {
-    return NextResponse.json({ hostedAvailable: deploymentHasKey, freeAvailable, authenticated: false });
+    return NextResponse.json({ hostedAvailable: deploymentHasKey, freeAvailable, answersFrom: answersFrom(false), authenticated: false });
   }
 
   // Per-user entitlement (trial or env-granted), from the verified session and the server env only.
@@ -41,6 +47,7 @@ export async function GET() {
     ...status,
     hostedAvailable: deploymentHasKey && included,
     freeAvailable,
+    answersFrom: answersFrom(deploymentHasKey && included),
     hostedKeyOnDeployment: deploymentHasKey,
     aiIncluded: included,
     granted,

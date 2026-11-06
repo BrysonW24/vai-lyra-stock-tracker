@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { bumpAiUsage } from '@/lib/usage-store';
-import { useEffect, useState } from 'react';
-import { ArrowUpRight, LineChart } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { ArrowUpRight, LineChart, Sparkles } from 'lucide-react';
 import type { SignalRow } from '@/types/scanner';
 import { AiGeneratedLabel } from '@/components/AiGeneratedLabel';
 import { TradingViewChart } from '@/components/TradingViewChart';
@@ -46,42 +46,86 @@ interface FreshSignal {
  * Optional AI phrasing of the open signal. Grounding is server-owned (the route
  * recomputes the signal deterministically from the symbol alone), so this can never
  * show a number the engine did not produce. Renders nothing when AI is unavailable.
+ *
+ * It asks by itself, when the drawer opens, only when somebody is paying for the answer - the
+ * reader's own key, or a hosted entitlement. The FREE model is a daily allowance shared by
+ * everyone, so it is never spent on a drawer opening: the route answers `on_request`, and this
+ * shows a button instead. Only the ticker is sent - nothing about the reader.
  */
 function SignalAiNarration({ symbol }: { symbol: string }) {
   const [text, setText] = useState<string | null>(null);
+  const [phase, setPhase] = useState<'idle' | 'loading' | 'offer' | 'unavailable'>('idle');
+
+  const request = useCallback(
+    (asked: boolean, isCancelled: () => boolean = () => false) => {
+      if (asked) setPhase('loading');
+      bumpAiUsage();
+      fetch('/api/ai/explain-signal', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ symbol, ai: loadAi(), asked }),
+      })
+        .then((res) => res.json())
+        .then((data: { ok?: boolean; text?: string; reason?: string }) => {
+          if (isCancelled()) return;
+          if (data?.ok && data.text) {
+            setText(data.text);
+            setPhase('idle');
+          } else if (!asked && data?.reason === 'on_request') {
+            setPhase('offer');
+          } else {
+            // A tap that got nothing says so; an automatic call that got nothing stays silent.
+            setPhase(asked ? 'unavailable' : 'idle');
+          }
+        })
+        .catch(() => {
+          if (!isCancelled()) setPhase(asked ? 'unavailable' : 'idle');
+        });
+    },
+    [symbol],
+  );
 
   useEffect(() => {
     setText(null);
+    setPhase('idle');
     const ai = loadAi();
     const hasKey = !!ai.apiKey?.trim();
     const serverBacked = ai.provider === 'openai' || ai.provider === 'google';
     if (!hasKey && !serverBacked) return;
 
     let cancelled = false;
-    bumpAiUsage();
-    fetch('/api/ai/explain-signal', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ symbol, ai }),
-    })
-      .then((res) => res.json())
-      .then((data: { ok?: boolean; text?: string }) => {
-        if (!cancelled && data?.ok && data.text) setText(data.text);
-      })
-      .catch(() => {});
+    request(false, () => cancelled);
     return () => {
       cancelled = true;
     };
-  }, [symbol]);
+  }, [request]);
 
-  if (!text) return null;
-
-  return (
-    <div className="rounded-cell border border-accent-border/60 bg-accent-tint/60 p-2.5">
-      <AiGeneratedLabel size={11} />
-      <p className="mt-1 text-[11px] leading-snug text-ink-title">{text}</p>
-    </div>
-  );
+  if (text) {
+    return (
+      <div className="rounded-cell border border-accent-border/60 bg-accent-tint/60 p-2.5">
+        <AiGeneratedLabel size={11} />
+        <p className="mt-1 text-[11px] leading-snug text-ink-title">{text}</p>
+      </div>
+    );
+  }
+  if (phase === 'loading') {
+    return <p className="rounded-cell border border-line p-2.5 text-[11px] text-ink-3">Writing a plain-English read of this setup…</p>;
+  }
+  if (phase === 'offer') {
+    return (
+      <button
+        type="button"
+        onClick={() => request(true)}
+        className="inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-cell border border-pending/40 bg-blue-tint px-3 text-[11px] font-semibold text-pending transition hover:bg-blue-deep/25"
+      >
+        <Sparkles size={12} /> Explain this setup in plain English
+      </button>
+    );
+  }
+  if (phase === 'unavailable') {
+    return <p className="rounded-cell border border-line p-2.5 text-[11px] text-ink-3">No free answer is available right now - the figures here are the read.</p>;
+  }
+  return null;
 }
 
 /**

@@ -5,6 +5,7 @@ import { answerWith } from '@/lib/ai/answer';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, composeSystem } from '@/lib/ai/system-prompt';
 import { guardProse } from '@/lib/ai/guardrails/prose';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
+import { freePoolAvailable } from '@/lib/ai/free-pool';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 import { buildLiveSignal } from '@/lib/live-signals';
 
@@ -19,6 +20,12 @@ import { buildLiveSignal } from '@/lib/live-signals';
 interface ExplainSignalRequest {
   symbol: string;
   ai: { mode: 'free' | 'byo' | 'off' | 'hosted'; provider: AiProvider; apiKey: string; model?: string };
+  /**
+   * True when a person tapped "explain this setup". The drawer also calls this route by itself
+   * every time it opens; those calls may use the caller's own key or a hosted entitlement, but
+   * never the free pool - a daily allowance shared by everyone is not spent on a drawer opening.
+   */
+  asked?: boolean;
 }
 
 const SYMBOL_RE = /^[A-Z0-9.\-]{1,10}$/;
@@ -44,6 +51,9 @@ function factsBlock(symbol: string, s: Partial<SignalRow>): string {
   return `Facts:\n${lines.map((l) => `- ${l}`).join('\n')}`;
 }
 
+/** Long enough for the free pool's own deadline (35 s) plus the work around it. */
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
     const guard = await guardAiRoute<ExplainSignalRequest>(request);
@@ -55,8 +65,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, reason: 'disabled' });
     }
 
-    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded, allowFreePool: true });
-    if (creds.source === 'none') return NextResponse.json({ ok: false, reason: 'no_key' });
+    const asked = guard.body.asked === true;
+    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded, allowFreePool: asked });
+    if (creds.source === 'none') {
+      // `on_request`: nobody is paying for this caller, but the free pool would answer a tap.
+      return NextResponse.json({ ok: false, reason: !asked && freePoolAvailable() ? 'on_request' : 'no_key' });
+    }
 
     // Deterministic engine recomputes the signal server-side - the client cannot
     // smuggle content into the grounding.

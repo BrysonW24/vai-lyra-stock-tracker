@@ -1,8 +1,9 @@
 /**
  * answerWith - one way to get a completion, with the right fence for whoever is paying:
  * nothing for the caller's own key, the house budget for a hosted key, the per-caller caps for
- * the free pool. Pins that each fence is charged BEFORE the model is called and that a failure
- * comes back as a reason, never an exception.
+ * the free pool. Pins that each fence is charged BEFORE the model is called, that a failure comes
+ * back as a reason, never an exception, and that a house key which cannot answer hands over to the
+ * free pool - while a reader's own key never does.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -77,6 +78,42 @@ describe('answerWith', () => {
     mocks.pool.mockClear();
     expect(await answerWith(creds('free_pool'), 'ip:1.2.3.4', REQUEST)).toMatchObject({ ok: false, reason: 'free_limit' });
     expect(mocks.pool).not.toHaveBeenCalled();
+  });
+
+  it('says which fence answered', async () => {
+    expect(await answerWith(creds('user'), 'ip:1', REQUEST)).toMatchObject({ ok: true, via: 'user' });
+    expect(await answerWith(creds('hosted_openai'), 'user-1', REQUEST)).toMatchObject({ ok: true, via: 'hosted' });
+    expect(await answerWith(creds('free_pool'), 'ip:1', REQUEST)).toMatchObject({ ok: true, via: 'free_pool' });
+    expect(await answerWith(creds('none'), 'ip:1', REQUEST)).toMatchObject({ ok: false, via: 'none' });
+  });
+
+  it('hands over to the free pool when the house key cannot answer and the route allows it', async () => {
+    const hosted = creds('hosted_openai', { poolFallback: true });
+
+    // The house budget is spent: the model is never called on the house key, the pool answers.
+    mocks.budget.mockResolvedValue({ decision: 'block', window: 'day', reason: 'day ceiling exceeded' });
+    expect(await answerWith(hosted, 'user-1', REQUEST)).toMatchObject({ ok: true, via: 'free_pool', provider: 'groq', costUsd: 0 });
+    expect(mocks.complete).not.toHaveBeenCalled();
+    expect(mocks.caps).toHaveBeenCalledWith('user-1');
+
+    // The provider refuses the house key (its credit ran out, it is rate limited, it is down).
+    mocks.budget.mockResolvedValue({ decision: 'allow' });
+    for (const failure of ['openai 429: rate limited - wait and retry', 'openai 401: authentication failed - check the API key', 'openai 503']) {
+      mocks.complete.mockRejectedValue(new Error(failure));
+      expect(await answerWith(hosted, 'user-1', REQUEST)).toMatchObject({ ok: true, via: 'free_pool' });
+    }
+
+    // And when the pool cannot answer either, the reason is the pool's - so chat gives the figures.
+    mocks.pool.mockResolvedValue({ ok: false, reason: 'free_pool_exhausted', tried: [] });
+    expect(await answerWith(hosted, 'user-1', REQUEST)).toMatchObject({ ok: false, reason: 'free_pool_exhausted', via: 'free_pool' });
+  });
+
+  it('does not hand over without the route saying so, and never for a reader\'s own key', async () => {
+    mocks.complete.mockRejectedValue(new Error('openai 429: rate limited - wait and retry'));
+    expect(await answerWith(creds('hosted_openai'), 'user-1', REQUEST)).toMatchObject({ ok: false, reason: 'provider_rate_limited', via: 'hosted' });
+    expect(await answerWith(creds('user', { poolFallback: true }), 'ip:1', REQUEST)).toMatchObject({ ok: false, reason: 'provider_rate_limited', via: 'user' });
+    expect(mocks.pool).not.toHaveBeenCalled();
+    expect(mocks.caps).not.toHaveBeenCalled();
   });
 
   it('passes on the pool being out, a provider failing, and an empty answer as reasons', async () => {

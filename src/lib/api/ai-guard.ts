@@ -60,16 +60,42 @@ export interface AiGuardBlocked {
  * every throttle on the open community routes. When only XFF exists we take the RIGHTMOST
  * hop (the nearest, platform-appended one). Still abuse damping, not authentication.
  * Exported for the other open routes (feedback, ticker-lookup) so they share one definition.
+ *
+ * An IPv6 caller is identified by their /64 (see rateLimitKeyForIp): one home or phone connection
+ * is handed a whole /64 and can pick any of its 18 quintillion addresses per request, so a limit
+ * keyed on the full address is a limit that caller can reset at will.
  */
 export function clientIp(request: NextRequest): string {
   const real = request.headers.get('x-real-ip')?.trim();
-  if (real) return real;
+  if (real) return rateLimitKeyForIp(real);
   const fwd = request.headers.get('x-forwarded-for');
   if (fwd) {
     const hops = fwd.split(',');
-    return hops[hops.length - 1]!.trim() || 'anon';
+    return rateLimitKeyForIp(hops[hops.length - 1]!.trim()) || 'anon';
   }
   return 'anon';
+}
+
+/**
+ * The key an address is rate-limited under. IPv4 is itself. IPv6 is its /64 prefix, written
+ * `2001:db8:1:2::/64`; an IPv4-mapped IPv6 address (`::ffff:203.0.113.7`) is the IPv4 address
+ * inside it. Anything that does not parse as an address is returned unchanged - a strange header
+ * still gets one bucket of its own rather than sharing "anon" with everybody.
+ */
+export function rateLimitKeyForIp(ip: string): string {
+  const raw = ip.trim().replace(/^\[|\]$/g, '').split('%')[0]!.toLowerCase();
+  if (!raw.includes(':')) return raw;
+  const mapped = raw.match(/^(?:0{0,4}:){1,6}ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
+  if (mapped) return mapped[1]!;
+  const halves = raw.split('::');
+  if (halves.length > 2) return raw;
+  const head = halves[0] ? halves[0].split(':') : [];
+  const tail = halves.length === 2 && halves[1] ? halves[1].split(':') : [];
+  const gap = halves.length === 2 ? 8 - head.length - tail.length : 0;
+  if (gap < 0) return raw;
+  const groups = [...head, ...Array<string>(gap).fill('0'), ...tail];
+  if (groups.length !== 8 || groups.some((group) => !/^[0-9a-f]{1,4}$/.test(group))) return raw;
+  return `${groups.slice(0, 4).map((group) => group.replace(/^0+(?=.)/, '')).join(':')}::/64`;
 }
 
 export async function guardAiRoute<T>(

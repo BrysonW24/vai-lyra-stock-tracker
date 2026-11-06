@@ -65,14 +65,40 @@ _DIRECTION_WINDOW = 3  # words before the figure that may carry its direction
 CONTRACT_PATH = Path(__file__).resolve().parents[2] / "contracts" / "guardrails" / "advice.json"
 
 
-def _contract_patterns(group: str) -> list[tuple[re.Pattern[str], str]]:
+@dataclass(frozen=True)
+class _Rule:
+    """One line of the contract: what to look for, why it matters, and what cancels a match."""
+
+    pattern: re.Pattern[str]
+    why: str
+    # Tested against the text BEFORE a match; when it matches, that match does not count. It is how
+    # "invalidated if price should fall below the low" (a rule, stated as a condition) is told
+    # apart from "the stock should fall" (a forecast).
+    unless_before: re.Pattern[str] | None = None
+
+    def found_in(self, text: str) -> bool:
+        if self.unless_before is None:
+            return self.pattern.search(text) is not None
+        return any(not self.unless_before.search(text[: match.start()]) for match in self.pattern.finditer(text))
+
+
+def _contract_patterns(group: str) -> list[_Rule]:
     contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
-    return [(re.compile(entry["pattern"], re.IGNORECASE if entry.get("flags") == "i" else 0), str(entry["why"])) for entry in contract[group]]
+    rules: list[_Rule] = []
+    for entry in contract[group]:
+        flags = re.IGNORECASE if entry.get("flags") == "i" else 0
+        unless = entry.get("unless_before")
+        rules.append(_Rule(re.compile(entry["pattern"], flags), str(entry["why"]), re.compile(unless, flags) if unless else None))
+    return rules
 
 
-_ADVICE_PATTERNS: list[tuple[re.Pattern[str], str]] = _contract_patterns("advice")
-_PREDICTION_PATTERNS: list[tuple[re.Pattern[str], str]] = _contract_patterns("prediction")
-_PRICE_CALL_PATTERNS: list[tuple[re.Pattern[str], str]] = _contract_patterns("price_call")
+def _findings(rules: list[_Rule], text: str) -> list[str]:
+    return list(dict.fromkeys(rule.why for rule in rules if rule.found_in(text)))
+
+
+_ADVICE_PATTERNS: list[_Rule] = _contract_patterns("advice")
+_PREDICTION_PATTERNS: list[_Rule] = _contract_patterns("prediction")
+_PRICE_CALL_PATTERNS: list[_Rule] = _contract_patterns("price_call")
 # Where one clause of a sentence ends and the next begins, for deciding which group a figure is
 # about: in "semiconductors lagged while the median name rose 0.8%" the 0.8% is not the group's.
 _CLAUSE_BREAK_RE = re.compile(r"[;:]|\b(?:while|whereas|but|although|though|even as)\b", re.IGNORECASE)
@@ -148,17 +174,17 @@ def split_paragraphs(text: str) -> list[str]:
 
 def prediction_findings(sentence: str) -> list[str]:
     """Why a sentence reads as a forecast - empty when it describes only what happened."""
-    return list(dict.fromkeys(why for pattern, why in _PREDICTION_PATTERNS if pattern.search(sentence)))
+    return _findings(_PREDICTION_PATTERNS, sentence)
 
 
 def price_call_findings(text: str) -> list[str]:
     """Why a piece of company news reads as a forecast of the share price. News may report what a
     company expects of itself; what its shares will do is nobody's fact."""
-    return list(dict.fromkeys(why for pattern, why in _PRICE_CALL_PATTERNS if pattern.search(text)))
+    return _findings(_PRICE_CALL_PATTERNS, text)
 
 
 def advice_findings(text: str) -> list[str]:
-    findings = list(dict.fromkeys(why for pattern, why in _ADVICE_PATTERNS if pattern.search(text)))
+    findings = _findings(_ADVICE_PATTERNS, text)
     # "financial advice" is a finding unless it is the disclaimer form ("... not financial advice").
     for match in _ADVICE_FRAMING_RE.finditer(text):
         before = text[max(0, match.start() - 30):match.start()]

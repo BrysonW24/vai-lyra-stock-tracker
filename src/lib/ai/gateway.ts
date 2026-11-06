@@ -42,6 +42,17 @@ export interface AiCompleteParams {
    * hosted/shared-key calls: retrying the house key into a provider rate limit amplifies it.
    */
   retryOn429?: boolean;
+  /** Attempts at this one provider (default 3). The free pool passes 1: its chain is the retry. */
+  maxAttempts?: number;
+  /** Wall-clock ceiling for each attempt, in ms (default 30 000). */
+  timeoutMs?: number;
+  /**
+   * Which queue and circuit breaker the call rides. 'pool' keeps the free pool's anonymous traffic
+   * apart from everyone else's: its own (smaller) backpressure queue, and a breaker of its own, so a
+   * free tier that is refusing requests can neither stall nor trip the circuit for a reader who
+   * brought a key for the same provider. Default 'shared'.
+   */
+  lane?: 'shared' | 'pool';
 }
 
 export interface AiCompleteResult {
@@ -331,6 +342,8 @@ async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise
  * (bounded); a runaway queue rejects with BackpressureError rather than growing memory.
  */
 const providerLimiter = new BackpressureLimiter(6, 500);
+/** The free pool's own queue: anonymous traffic never takes a slot a reader's own key is waiting for. */
+const poolLimiter = new BackpressureLimiter(4, 100);
 
 // --- public entry point -----------------------------------------------------
 
@@ -399,7 +412,8 @@ interface BreakerState {
   openedAt: number | null;
 }
 
-const breakers = new Map<AiProvider, BreakerState>();
+/** Keyed by provider for own-key and hosted calls, and by `pool:<provider>` for the free pool. */
+const breakers = new Map<string, BreakerState>();
 
 export class CircuitOpenError extends Error {
   constructor(provider: AiProvider) {
@@ -408,11 +422,11 @@ export class CircuitOpenError extends Error {
   }
 }
 
-function breakerFor(provider: AiProvider): BreakerState {
-  let state = breakers.get(provider);
+function breakerFor(key: string): BreakerState {
+  let state = breakers.get(key);
   if (!state) {
     state = { consecutiveFailures: 0, openedAt: null };
-    breakers.set(provider, state);
+    breakers.set(key, state);
   }
   return state;
 }
@@ -449,7 +463,8 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
   const model = resolveModel(provider, params.model);
   const maxTokens = params.maxTokens ?? DEFAULT_MAX_TOKENS;
 
-  const breaker = breakerFor(provider);
+  const pooled = params.lane === 'pool';
+  const breaker = breakerFor(pooled ? `pool:${provider}` : provider);
   if (breaker.openedAt !== null) {
     if (Date.now() - breaker.openedAt < BREAKER_COOLDOWN_MS) throw new CircuitOpenError(provider);
     breaker.openedAt = null; // cooldown elapsed - half-open: this call is the probe
@@ -460,11 +475,14 @@ export async function complete(params: AiCompleteParams): Promise<AiCompleteResu
     if (!retryOn429 && /\b429\b/.test(err instanceof Error ? err.message : String(err))) return false;
     return defaultIsRetryable(err);
   };
+  const limiter = pooled ? poolLimiter : providerLimiter;
+  const timeoutMs = params.timeoutMs && params.timeoutMs > 0 ? params.timeoutMs : ATTEMPT_TIMEOUT_MS;
+  const maxAttempts = params.maxAttempts && params.maxAttempts > 0 ? Math.floor(params.maxAttempts) : 3;
 
   try {
     const raw = await withRetry(
-      () => providerLimiter.run(() => withTimeout(dispatchCompletion(params, model, maxTokens), ATTEMPT_TIMEOUT_MS, `${provider} completion`)),
-      { policy: { maxAttempts: 3, baseDelayMs: 400, maxDelayMs: 4000 }, isRetryable },
+      () => limiter.run(() => withTimeout(dispatchCompletion(params, model, maxTokens), timeoutMs, `${provider} completion`)),
+      { policy: { maxAttempts, baseDelayMs: 400, maxDelayMs: 4000 }, isRetryable },
     );
     breaker.consecutiveFailures = 0;
     breaker.openedAt = null;

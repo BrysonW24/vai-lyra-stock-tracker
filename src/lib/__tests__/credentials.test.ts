@@ -132,9 +132,19 @@ describe('resolveAiCredentials and the free pool', () => {
     expect(resolveAiCredentials({ provider: 'openai' }, { authenticated: true, aiIncluded: true }).source).toBe('hosted_openai');
   });
 
-  it('puts the free pool ahead of the paid house key: free is the default', () => {
+  it('takes nothing away from an entitled reader: the house key still answers first, with the pool behind it', () => {
     withPool();
-    expect(resolveAiCredentials({ provider: 'openai' }, { authenticated: true, aiIncluded: true, allowFreePool: true }).source).toBe('free_pool');
+    const creds = resolveAiCredentials({ provider: 'openai' }, { authenticated: true, aiIncluded: true, allowFreePool: true });
+    expect(creds).toMatchObject({ source: 'hosted_openai', apiKey: 'sk-hosted', poolFallback: true });
+    // On a route that did not opt in there is nothing behind the house key.
+    expect(resolveAiCredentials({ provider: 'openai' }, { authenticated: true, aiIncluded: true }).poolFallback).toBe(false);
+  });
+
+  it('gives the pool to a signed-in reader past their trial, and to an entitled one on a provider the house holds no key for', () => {
+    withPool();
+    expect(resolveAiCredentials({ provider: 'openai' }, { authenticated: true, aiIncluded: false, allowFreePool: true }).source).toBe('free_pool');
+    // The house has an OpenAI key only: an entitled reader who picked Anthropic gets the pool, not nothing.
+    expect(resolveAiCredentials({ provider: 'anthropic' }, { authenticated: true, aiIncluded: true, allowFreePool: true }).source).toBe('free_pool');
   });
 
   it("still honours the caller's own key first, with their model", () => {

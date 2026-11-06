@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const redis = vi.hoisted(() => ({ store: new Map<string, number | string>(), configured: true }));
 
 vi.mock('@/lib/cache', () => ({
+  sharedStoreConfigured: () => redis.configured,
   upstashCommand: async (cmd: (string | number)[]) => {
     if (!redis.configured) return null;
     const [op, key] = cmd as [string, string];
@@ -27,7 +28,7 @@ vi.mock('@/lib/cache', () => ({
   },
 }));
 
-import { resetProviderBreakersForTests } from '../gateway';
+import { CircuitOpenError, complete, providerBreakerStatus, resetProviderBreakersForTests } from '../gateway';
 import { resetRateLimits } from '@/lib/ratelimit';
 import { chargeFreeCaps, completeFromPool, DEFAULT_POOL, freePoolAvailable, parsePool, poolTargets, resetFreePoolForTests } from '../free-pool';
 
@@ -182,6 +183,51 @@ describe('the free pool', () => {
     expect(sent.length).toBe(1);
     provider({ content: 'back' });
     expect((await completeFromPool(REQUEST, NOW + 61 * 60_000)).ok).toBe(true);
+  });
+
+  it('gives each provider one attempt: the chain is the retry', async () => {
+    // Before this was pinned a 5xx was retried three times, thirty seconds each, per provider -
+    // minutes of waiting before the reader saw the figures instead.
+    const sent = provider({ status: 503 }, { content: 'Answered by the second provider.' });
+    const outcome = await completeFromPool(REQUEST, NOW);
+    expect(outcome.ok && outcome.result.text).toBe('Answered by the second provider.');
+    expect(outcome.tried.map((attempt) => attempt.reason)).toEqual(['provider_unavailable', 'ok']);
+    expect(sent.length).toBe(2);
+  });
+
+  it('starts no new provider once the reader has waited long enough', async () => {
+    const sent = provider({ status: 503 });
+    // The clock is read once at the start and once before each target.
+    const clock = vi.fn().mockReturnValueOnce(0).mockReturnValueOnce(0).mockReturnValue(40_000);
+    const outcome = await completeFromPool(REQUEST, NOW, clock);
+    expect(outcome).toMatchObject({ ok: false, reason: 'free_pool_exhausted' });
+    expect(outcome.tried.map((attempt) => attempt.reason)).toEqual(['provider_unavailable', 'out_of_time', 'out_of_time', 'out_of_time']);
+    expect(sent.length).toBe(1);
+  });
+
+  it("keeps its failures to itself: a free tier that is down does not trip the circuit for a reader's own key", async () => {
+    vi.stubEnv('LYRA_FREE_POOL', 'groq:openai/gpt-oss-120b');
+    const sent = provider({ status: 500 });
+    for (let call = 0; call < 5; call += 1) await completeFromPool(REQUEST, NOW);
+    expect(providerBreakerStatus()['pool:groq']).toEqual({ open: true, consecutiveFailures: 5 });
+    expect(providerBreakerStatus().groq).toBeUndefined();
+    // The pool now fails fast without calling out...
+    expect(await completeFromPool(REQUEST, NOW)).toMatchObject({ ok: false, tried: [{ reason: 'provider_unavailable' }] });
+    expect(sent.length).toBe(5);
+    // ...while a reader's own Groq key still reaches Groq.
+    const own = complete({ provider: 'groq', apiKey: 'their-own-key', system: 's', prompt: 'p', maxAttempts: 1 });
+    await expect(own).rejects.not.toBeInstanceOf(CircuitOpenError);
+    expect(sent.length).toBe(6);
+    expect(sent[5].headers.authorization).toBe('Bearer their-own-key');
+  });
+
+  it('stays off on a host with many instances and no shared store to count in', () => {
+    redis.configured = false;
+    expect(freePoolAvailable()).toBe(true); // one long-lived process counts correctly in memory
+    vi.stubEnv('VERCEL', '1');
+    expect(freePoolAvailable()).toBe(false); // each instance would keep its own "daily ceiling"
+    redis.configured = true;
+    expect(freePoolAvailable()).toBe(true);
   });
 
   it('never puts the caller in charge of who answers: nothing in the request names a provider, a model or a key', async () => {

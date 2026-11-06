@@ -15,7 +15,14 @@
  *     provider, a pool model or a key.
  *   * ONE PERSON CANNOT DRAIN IT. The pool is open without sign-in (the free product has no
  *     accounts), so every caller is capped per minute and per day by identity - a user id, or an
- *     IP address - and the pool as a whole has a daily ceiling. All three counters live in Redis.
+ *     IP address (an IPv6 caller is counted by /64, the block one connection is given) - and the
+ *     pool as a whole has a daily ceiling. All three counters live in Redis, and on a host that runs
+ *     many instances the pool stays OFF without it: a ceiling counted per instance is no ceiling.
+ *   * IT ANSWERS WHEN ASKED, NEVER ON A PAGE VIEW. A route may only hand a request to the pool when
+ *     a person asked for that answer - chat, or a tap on "explain this". The narration the dashboard
+ *     used to fetch on load would spend the day's allowance on people who never read it.
+ *   * IT IS QUICK OR IT STEPS ASIDE. One attempt per provider with a short timeout and one overall
+ *     deadline; the chain is the retry. A reader waits seconds for prose, never minutes.
  *   * THE GUARDS DO NOT KNOW WHO ANSWERED. Whatever a pool model writes goes through the same
  *     grounding, advice and prediction checks as any other model's answer.
  *
@@ -26,6 +33,7 @@
  */
 import { complete, CircuitOpenError, ProviderHttpError, type AiCompleteResult } from '@/lib/ai/gateway';
 import { classifyAiFailure, type AiFailureReason } from '@/lib/ai/failures';
+import { sharedStoreConfigured, upstashCommand } from '@/lib/cache';
 import { rateLimitShared } from '@/lib/ratelimit';
 
 export type PoolProvider = 'cloudflare' | 'groq' | 'openrouter';
@@ -55,6 +63,11 @@ const REASONING_HEADROOM_TOKENS = 700;
 const DEFAULT_COOLDOWN_SEC = 600; // a 429 with no Retry-After: leave the target alone for ten minutes
 const MAX_COOLDOWN_SEC = 3_600;
 const AUTH_COOLDOWN_SEC = 3_600; // a rejected key does not fix itself within the hour
+
+/** One slow provider may not cost a reader more than this; the next target gets what is left. */
+const ATTEMPT_TIMEOUT_MS = 20_000;
+/** No new target is started after this long: the reader gets the figures instead. */
+const POOL_DEADLINE_MS = 35_000;
 
 const PER_MINUTE = 6;
 const PER_DAY = 40;
@@ -93,8 +106,17 @@ export function poolTargets(): PoolTarget[] {
   return parsePool(process.env.LYRA_FREE_POOL?.trim() || DEFAULT_POOL).filter((target) => keyFor(target) !== '');
 }
 
+/**
+ * Whether the caps can be counted in one place. A single long-lived process (local dev, a Docker
+ * self-host) counts correctly in memory. A serverless host runs many instances, each with its own
+ * memory, so there the shared store is a requirement, not an optimisation.
+ */
+function capsAreCountable(): boolean {
+  return sharedStoreConfigured() || !process.env.VERCEL;
+}
+
 export function freePoolAvailable(): boolean {
-  return poolTargets().length > 0;
+  return capsAreCountable() && poolTargets().length > 0;
 }
 
 // --- cooling: a target that said "not now" is left alone for as long as it asked ---------------
@@ -106,9 +128,8 @@ function coolingKey(target: PoolTarget): string {
 }
 
 async function redis(command: (string | number)[]): Promise<unknown | null | undefined> {
-  // undefined = Redis is not configured or did not answer; the caller falls back to this instance's memory.
+  // undefined = Redis did not answer; the caller falls back to this instance's memory.
   try {
-    const { upstashCommand } = await import('@/lib/cache');
     return await upstashCommand(command);
   } catch {
     return undefined;
@@ -144,7 +165,8 @@ export type FreeCapVerdict = { ok: true } | { ok: false; reason: 'free_limit' | 
 /**
  * Count one free answer against the caller and against the pool. The windows are fixed UTC
  * windows, so the day's counters reset at 00:00 UTC - the same moment the providers' own daily
- * allowances do.
+ * allowances do. The caller's own counters are charged BEFORE the pool's: checked the other way
+ * round, someone already over their share would keep spending the ceiling everyone shares.
  */
 export async function chargeFreeCaps(identity: string, nowMs: number = Date.now()): Promise<FreeCapVerdict> {
   const minute = await rateLimitShared(identity, { scope: 'ai-free-minute', capacity: intEnv('LYRA_FREE_PER_MINUTE', PER_MINUTE), windowMs: 60_000 }, nowMs);
@@ -185,13 +207,23 @@ function isReasoningModel(target: PoolTarget): boolean {
  * moves to the next. With no target left, `free_pool_exhausted` - unless the pool was never
  * configured, which is `no_key`.
  */
-export async function completeFromPool(request: PoolRequest, nowMs: number = Date.now()): Promise<PoolOutcome> {
+export async function completeFromPool(
+  request: PoolRequest,
+  nowMs: number = Date.now(),
+  /** Wall clock for the overall deadline - a parameter so a test can run out of time on purpose. */
+  clock: () => number = Date.now,
+): Promise<PoolOutcome> {
   const targets = poolTargets();
   if (targets.length === 0) return { ok: false, reason: 'no_key', tried: [] };
 
   const tried: PoolAttempt[] = [];
+  const startedAt = clock();
   for (const target of targets) {
     const name = `${target.provider}:${target.model}`;
+    if (clock() - startedAt > POOL_DEADLINE_MS) {
+      tried.push({ target: name, reason: 'out_of_time' });
+      continue;
+    }
     if (await isCooling(target, nowMs)) {
       tried.push({ target: name, reason: 'cooling' });
       continue;
@@ -207,6 +239,10 @@ export async function completeFromPool(request: PoolRequest, nowMs: number = Dat
         temperature: request.temperature,
         // A 429 on a shared free key is the pool's signal to move on, never something to retry into.
         retryOn429: false,
+        // One short attempt, in the pool's own queue and behind the pool's own circuit breaker.
+        maxAttempts: 1,
+        timeoutMs: ATTEMPT_TIMEOUT_MS,
+        lane: 'pool',
       });
       if (result.text.trim()) return { ok: true, result, tried: [...tried, { target: name, reason: 'ok' }] };
       tried.push({ target: name, reason: 'empty_response' });

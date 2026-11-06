@@ -107,8 +107,11 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
   const [trialDaysLeft, setTrialDaysLeft] = useState(0);
   // The free pool of open models: when it is on, AI needs no key and the copy says so first.
   const [freeAvailable, setFreeAvailable] = useState(false);
+  // Whether the free pool is what answers THIS reader (an entitled signed-in reader gets the hosted
+  // model first, and the free one only as its fallback).
+  const [freeAnswers, setFreeAnswers] = useState(false);
   const effectiveHosted = hostedAvailable ?? !soloMode;
-  const aiHosting = aiHostingCopy(effectiveHosted, freeAvailable);
+  const aiHosting = aiHostingCopy(effectiveHosted, freeAnswers);
   const sectionHeader =
     section === 'ai'
       ? { title: 'AI Settings', subtitle: aiHosting.headerSubtitle }
@@ -162,6 +165,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
         if (typeof d.hostedAvailable === 'boolean') setHostedAvailable(d.hostedAvailable);
         if (typeof d.trialDaysLeft === 'number') setTrialDaysLeft(d.trialDaysLeft);
         if (typeof d.freeAvailable === 'boolean') setFreeAvailable(d.freeAvailable);
+        setFreeAnswers(typeof d.answersFrom === 'string' ? d.answersFrom === 'free' : d.freeAvailable === true);
       })
       .catch(() => {});
     return () => {
@@ -486,11 +490,11 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
             subtitle={aiHosting.panelSubtitle}
           >
             <div className="space-y-2.5">
-              {trialDaysLeft > 0 && !freeAvailable && (
+              {trialDaysLeft > 0 && !freeAnswers && (
                 <div className="rounded-cell border border-positive/30 bg-positive-tint p-2.5 text-[11px] leading-relaxed text-positive">
-                  AI is included free for {trialDaysLeft} more {trialDaysLeft === 1 ? 'day' : 'days'}. After that,
-                  add your own provider key below to keep AI on - your watchlist, portfolio and alerts are
-                  unaffected either way.
+                  {freeAvailable
+                    ? `The hosted model is included for ${trialDaysLeft} more ${trialDaysLeft === 1 ? 'day' : 'days'}. After that Lyra answers with its free open-source model, or add your own provider key below - your watchlist, portfolio and alerts are unaffected either way.`
+                    : `AI is included free for ${trialDaysLeft} more ${trialDaysLeft === 1 ? 'day' : 'days'}. After that, add your own provider key below to keep AI on - your watchlist, portfolio and alerts are unaffected either way.`}
                 </div>
               )}
               <div className="grid grid-cols-2 gap-2">
@@ -692,7 +696,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
           <div className="space-y-3">
             <p className="text-xs leading-relaxed text-ink-2">
               {soloMode
-                ? 'Solo keeps your profile, preferences, board layout, watchlist, portfolio, trade log and any AI key in this browser. It has no account or cloud copy. Behavioural “twin” capture is off.'
+                ? 'Solo keeps your profile, preferences, board layout, watchlist, portfolio, trade log and any AI key in this browser. It has no account or cloud copy. Your book is sent to an AI model only when you ask about it with your own key, or with Include my book switched on in Ask Lyra, and it is never stored. Behavioural “twin” capture is off.'
                 : 'On this device, Lyra keeps your profile, preferences, board layout and any AI key in local storage. When you are signed in, your profile, settings, watchlist and paper-trade history are also saved to your private Lyra account so they follow you across devices - visible only to you, never sold. Behavioural “twin” capture stays off until you opt in.'}
             </p>
             <div className="flex flex-wrap gap-2">

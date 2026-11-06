@@ -79,16 +79,46 @@ interface ContractPattern {
   why: string;
   flags: string;
   pattern: string;
+  /** A regex tested against the text BEFORE a match; when it matches, that match does not count. */
+  unless_before?: string;
 }
 
-const compile = (entries: ContractPattern[]): Array<{ id: string; re: RegExp; why: string }> =>
-  entries.map((entry) => ({ id: entry.id, re: new RegExp(entry.pattern, entry.flags === 'i' ? 'i' : ''), why: entry.why }));
+interface Rule {
+  id: string;
+  /** Global, so every match in the text can be weighed on its own. */
+  re: RegExp;
+  why: string;
+  unlessBefore: RegExp | null;
+}
 
-const ADVICE_PATTERNS: Array<{ re: RegExp; why: string }> = [
+const compile = (entries: ContractPattern[]): Rule[] =>
+  entries.map((entry) => {
+    const flags = entry.flags === 'i' ? 'i' : '';
+    return {
+      id: entry.id,
+      re: new RegExp(entry.pattern, `${flags}g`),
+      why: entry.why,
+      unlessBefore: entry.unless_before ? new RegExp(entry.unless_before, flags) : null,
+    };
+  });
+
+/**
+ * Whether a rule fires on the text. A rule with `unless_before` is cancelled match by match: it is
+ * how "invalidated if price should fall below the low" (a rule, stated as a condition) is told
+ * apart from "the stock should fall" (a forecast). Mirrors `_Rule.found_in` in the workers' guard.
+ */
+function foundIn(rule: Rule, text: string): boolean {
+  for (const match of text.matchAll(rule.re)) {
+    if (!rule.unlessBefore || !rule.unlessBefore.test(text.slice(0, match.index ?? 0))) return true;
+  }
+  return false;
+}
+
+const ADVICE_PATTERNS: Rule[] = [
   ...compile(adviceContract.advice),
   // Positive framing as advice fires; the compliant disclaimer ("this is ... not financial advice")
   // is excluded by the lookbehind - a preceding "not" within ~24 chars means it's a disclaimer.
-  { re: /(?<!\bnot\b.{0,24})\b(?:financial|investment) advice\b/i, why: 'framed as financial advice' },
+  { id: 'advice-framing', re: /(?<!\bnot\b.{0,24})\b(?:financial|investment) advice\b/gi, why: 'framed as financial advice', unlessBefore: null },
 ];
 
 // A forecast. The app's answers may state a scheduled date from the dashboard ("NVDA reports
@@ -98,12 +128,12 @@ const PREDICTION_PATTERNS = compile(adviceContract.prediction).filter((entry) =>
 
 /** Why a piece of text reads as advice to the reader - empty when it only describes. */
 export function adviceFindings(text: string): string[] {
-  return [...new Set(ADVICE_PATTERNS.filter((p) => p.re.test(text)).map((p) => p.why))];
+  return [...new Set(ADVICE_PATTERNS.filter((rule) => foundIn(rule, text)).map((rule) => rule.why))];
 }
 
 /** Why a sentence reads as a forecast - empty when it describes only what the data shows. */
 export function predictionFindings(sentence: string): string[] {
-  return [...new Set(PREDICTION_PATTERNS.filter((p) => p.re.test(sentence)).map((p) => p.why))];
+  return [...new Set(PREDICTION_PATTERNS.filter((rule) => foundIn(rule, sentence)).map((rule) => rule.why))];
 }
 
 /** Advice/recommendation/guarantee language -> block (research only, never advice). */

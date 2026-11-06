@@ -25,9 +25,10 @@ __pycache__
 sql
 supabase
 
-# Docs, contracts and repo media (README screenshots etc.).
+# Docs and repo media (README screenshots etc.). `contracts/` is NOT ignored: the app imports
+# JSON from it at build time (the guardrail wording in src/lib/ai/guardrails/engine.ts, the
+# feedback contract in the Telegram webhook), so an image built without it fails to compile.
 docs
-contracts
 *.md
 image*.png
 

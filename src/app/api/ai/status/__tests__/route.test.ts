@@ -11,6 +11,7 @@ const hoisted = vi.hoisted(() => ({
     auth: { getUser: () => Promise<{ data: { user: MockUser | null } }> };
     from?: (table: string) => unknown;
   },
+  freePool: false,
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -22,6 +23,7 @@ vi.mock('@/lib/ai/credentials', () => ({
     hostedOpenAi: true,
     hostedOpenAiModel: 'server-model',
     sharedGoogle: false,
+    freePool: hoisted.freePool,
   }),
 }));
 
@@ -49,24 +51,27 @@ const RUNTIME = {
   hostedOpenAi: true,
   hostedOpenAiModel: 'server-model',
   sharedGoogle: false,
+  freePool: false,
+  freeAvailable: false,
   breakers: { openai: { open: false, consecutiveFailures: 0 } },
 };
 
 describe('GET /api/ai/status', () => {
   afterEach(() => {
     hoisted.client = null;
+    hoisted.freePool = false;
     vi.unstubAllEnvs();
   });
 
   it('treats a Solo runtime with no auth stack as anonymous, exposing only whether a hosted mode exists', async () => {
     const response = await GET();
-    expect(await response.json()).toEqual({ hostedAvailable: true, authenticated: false });
+    expect(await response.json()).toEqual({ hostedAvailable: true, freeAvailable: false, answersFrom: 'none', authenticated: false });
   });
 
   it('treats a signed-out Community caller as anonymous', async () => {
     hoisted.client = { auth: { getUser: async () => ({ data: { user: null } }) } };
     const response = await GET();
-    expect(await response.json()).toEqual({ hostedAvailable: true, authenticated: false });
+    expect(await response.json()).toEqual({ hostedAvailable: true, freeAvailable: false, answersFrom: 'none', authenticated: false });
   });
 
   it('does NOT treat profiles.ai_included as a grant - a user can write their own profile row', async () => {
@@ -84,6 +89,7 @@ describe('GET /api/ai/status', () => {
     expect(await response.json()).toEqual({
       ...RUNTIME,
       hostedAvailable: true,
+      answersFrom: 'hosted',
       hostedKeyOnDeployment: true,
       aiIncluded: true,
       granted: true,
@@ -99,11 +105,29 @@ describe('GET /api/ai/status', () => {
     expect(await response.json()).toEqual({
       ...RUNTIME,
       hostedAvailable: false,
+      answersFrom: 'none',
       hostedKeyOnDeployment: true,
       aiIncluded: false,
       granted: false,
       trialDaysLeft: 0,
       authenticated: true,
+    });
+  });
+
+  describe('with the free pool on', () => {
+    it('tells an anonymous caller the free pool answers them - never the house key they cannot reach', async () => {
+      hoisted.freePool = true;
+      expect(await (await GET()).json()).toEqual({ hostedAvailable: true, freeAvailable: true, answersFrom: 'free', authenticated: false });
+    });
+
+    it('keeps the house key first for an entitled user, and gives a lapsed one the free pool', async () => {
+      hoisted.freePool = true;
+      vi.stubEnv('AI_INCLUDED_EMAILS', 'owner@example.com');
+      hoisted.client = signedInClient({ id: 'u1', email: 'owner@example.com' }, null);
+      expect(await (await GET()).json()).toMatchObject({ answersFrom: 'hosted', hostedAvailable: true, freeAvailable: true });
+
+      hoisted.client = signedInClient({ id: 'u2' }, false);
+      expect(await (await GET()).json()).toMatchObject({ answersFrom: 'free', hostedAvailable: false, freeAvailable: true });
     });
   });
 });

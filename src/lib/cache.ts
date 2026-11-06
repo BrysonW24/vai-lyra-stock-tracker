@@ -136,6 +136,15 @@ function getBackend(): CacheBackend {
   return backend;
 }
 
+/**
+ * Whether the shared store (Upstash) is configured on this deployment, read from env on every call.
+ * For the few things that are only correct when every instance counts in ONE place - the free AI
+ * pool's daily ceiling is the first - as opposed to the cache, which is happy to fall back to memory.
+ */
+export function sharedStoreConfigured(): boolean {
+  return upstashConfig() !== null;
+}
+
 /** Which backend is SELECTED from env (no liveness implied) - see cacheBackendStatus(). */
 export function cacheBackendName(): 'upstash' | 'memory' {
   return getBackend().name;

@@ -55,6 +55,13 @@ export interface SignalRow {
   priceVsSma200: number;
   lastAlert: string | null;
   lastUpdated: string;
+  /**
+   * True when this row is the AUTHORED SAMPLE the no-account screen keeps on display because the
+   * live recompute for this name failed (applyLiveSignals, base 'demo'). Its figures are not
+   * today's: nothing that speaks for the engine - chat grounding, the figures-only answer, a
+   * published update - may present them as live.
+   */
+  sample?: boolean;
   explanation: SignalExplanation;
   summary: {
     rsi: string;

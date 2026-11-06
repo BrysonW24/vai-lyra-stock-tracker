@@ -4,7 +4,8 @@
  * A route resolves the caller's credentials (src/lib/ai/credentials.ts) and hands them here. There
  * are three kinds, and each has its own fence:
  *   * the caller's OWN key - their quota, their model, retried on a rate limit;
- *   * Lyra's hosted key - the house budget is charged first, and a 429 is never retried into;
+ *   * Lyra's hosted key - the house budget is charged first, and a 429 is never retried into. When
+ *     the house cannot answer and the route may use the pool, the request moves there;
  *   * the FREE POOL of open models - the per-caller and pool-wide caps are charged first, and the
  *     pool picks the provider (src/lib/ai/free-pool.ts).
  * Every route used to carry its own copy of the first two; the pool made a third, so they live in
@@ -26,27 +27,53 @@ export interface AnswerRequest {
   budgetTokens: number;
 }
 
+/** Which fence produced the outcome: the caller's own key, Lyra's hosted key, or the free pool. */
+export type AnswerVia = 'user' | 'hosted' | 'free_pool' | 'none';
+
 export type Answer =
-  | { ok: true; text: string; provider: AiProvider; model: string; usage: TokenUsage | null; costUsd: number | null }
-  | { ok: false; reason: AiFailureReason; provider: AiProvider; model: string };
+  | { ok: true; text: string; provider: AiProvider; model: string; usage: TokenUsage | null; costUsd: number | null; via: AnswerVia }
+  | { ok: false; reason: AiFailureReason; provider: AiProvider; model: string; via: AnswerVia };
+
+/**
+ * The house's own reasons for not answering - its budget is spent, its credit has run out, its key
+ * is wrong, the provider is refusing or down. None is the caller's doing, so when the route may use
+ * the free pool the request goes there instead of failing.
+ */
+const HOUSE_FAILURES: ReadonlySet<AiFailureReason> = new Set<AiFailureReason>([
+  'budget',
+  'provider_rate_limited',
+  'provider_unavailable',
+  'invalid_key',
+  'invalid_model',
+  'empty_response',
+  'error',
+]);
+
+async function fromPool(creds: ResolvedAiCredentials, identity: string, request: AnswerRequest): Promise<Answer> {
+  const caps = await chargeFreeCaps(identity);
+  if (!caps.ok) return { ok: false, reason: caps.reason, provider: creds.provider, model: 'n/a', via: 'free_pool' };
+  const outcome = await completeFromPool({ system: request.system, prompt: request.prompt, maxTokens: request.maxTokens });
+  if (!outcome.ok) return { ok: false, reason: outcome.reason, provider: creds.provider, model: 'n/a', via: 'free_pool' };
+  const { text, provider, model, usage, costUsd } = outcome.result;
+  return { ok: true, text, provider, model, usage, costUsd, via: 'free_pool' };
+}
 
 /** Never throws: a failure is a reason the UI already knows how to explain. */
 export async function answerWith(creds: ResolvedAiCredentials, identity: string, request: AnswerRequest): Promise<Answer> {
-  if (creds.source === 'none') return { ok: false, reason: 'no_key', provider: creds.provider, model: 'n/a' };
+  if (creds.source === 'none') return { ok: false, reason: 'no_key', provider: creds.provider, model: 'n/a', via: 'none' };
+  if (creds.source === 'free_pool') return fromPool(creds, identity, request);
 
-  if (creds.source === 'free_pool') {
-    const caps = await chargeFreeCaps(identity);
-    if (!caps.ok) return { ok: false, reason: caps.reason, provider: creds.provider, model: 'n/a' };
-    const outcome = await completeFromPool({ system: request.system, prompt: request.prompt, maxTokens: request.maxTokens });
-    if (!outcome.ok) return { ok: false, reason: outcome.reason, provider: creds.provider, model: 'n/a' };
-    const { text, provider, model, usage, costUsd } = outcome.result;
-    return { ok: true, text, provider, model, usage, costUsd };
-  }
-
+  const own = creds.source === 'user';
+  const via: AnswerVia = own ? 'user' : 'hosted';
   const model = resolveModel(creds.provider, creds.model);
-  if (creds.source !== 'user') {
+  const failed = (reason: AiFailureReason, usedModel: string = model): Promise<Answer> | Answer =>
+    !own && creds.poolFallback && HOUSE_FAILURES.has(reason)
+      ? fromPool(creds, identity, request)
+      : { ok: false, reason, provider: creds.provider, model: usedModel, via };
+
+  if (!own) {
     const budget = await chargeHostedBudgetShared(creds.source, request.budgetTokens);
-    if (budget.decision === 'block') return { ok: false, reason: 'budget', provider: creds.provider, model };
+    if (budget.decision === 'block') return failed('budget');
   }
   try {
     const result = await complete({
@@ -56,11 +83,11 @@ export async function answerWith(creds: ResolvedAiCredentials, identity: string,
       system: request.system,
       prompt: request.prompt,
       maxTokens: request.maxTokens,
-      retryOn429: creds.source === 'user',
+      retryOn429: own,
     });
-    if (!result.text) return { ok: false, reason: 'empty_response', provider: creds.provider, model: result.model };
-    return { ok: true, text: result.text, provider: result.provider, model: result.model, usage: result.usage, costUsd: result.costUsd };
+    if (!result.text) return failed('empty_response', result.model);
+    return { ok: true, text: result.text, provider: result.provider, model: result.model, usage: result.usage, costUsd: result.costUsd, via };
   } catch (error) {
-    return { ok: false, reason: classifyAiFailure(error), provider: creds.provider, model };
+    return failed(classifyAiFailure(error));
   }
 }
