@@ -11,6 +11,12 @@ worker-side twin of the app's `src/lib/ai/guardrails/prose.ts` + the regulated-a
   * a figure the facts gave a direction ("up 2.1%") may not be quoted with the opposite one
     ("fell 2.1%", "-2.1%");
   * a spelled-out magnitude ("forty percent", "doubled") counts as a figure and is not allowed;
+  * a count of names or setups written as a word ("sixty-one names") is read as the number it is
+    and checked like one; a number word that counts nothing the facts count ("seven of the eight
+    groups", "three to one") is left as the turn of phrase it is;
+  * a true figure given the wrong meaning - a count attached to the wrong status, a group called
+    the worst when it was not, a ticker tied to a group it is not in, a ticker sent to a status it
+    does not hold - contradicts the facts as surely as a wrong figure does (read_meaning.py);
   * every ticker it names must be one the facts named;
   * a sentence that predicts ("is likely to rebound", "expect more weakness", "tomorrow") is a
     sentence about something the facts cannot contain;
@@ -24,8 +30,9 @@ percent" or gives one group another group's direction where a frontier model did
 guard as first written let all three through.
 
 Pure functions, no I/O. What the guard cannot see: a true figure attached to the right ticker but
-the wrong measure (its day move quoted as its hour move), and causes or news the model supplies
-from memory. The prompt forbids both; the figures block under the read shows the truth either way.
+the wrong measure (its day move quoted as its hour move), a ranking the facts do not make ("the
+strongest signals are in ESTC and AKAM"), and causes or news the model supplies from memory. The
+prompt forbids all three; the figures block under the read shows the truth either way.
 """
 from __future__ import annotations
 
@@ -33,6 +40,8 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from workers.stock_scanner.read_meaning import ReadMeaning, counted_digits, meaning_problems
 
 # A numeral with optional thousands separators and decimals, the unit the facts always write
 # explicitly (a leading $ or a trailing % / x), and any sign glued to it. A percentage written out
@@ -120,8 +129,13 @@ def figures_in(text: str) -> list[Figure]:
             direction = 1 if sign == "+" else -1
         else:
             # Only words in the same clause, after any earlier figure, can carry this figure's
-            # direction: in "SNOW fell 1.9%, score 95" the "fell" belongs to 1.9%, not to 95.
-            clause_start = max([previous_end] + [index + 1 for index, char in enumerate(text[: match.start()]) if char in ",;:()"])
+            # direction: in "SNOW fell 1.9%, score 95" the "fell" belongs to 1.9%, not to 95 - and in
+            # "1 name rose while 60 fell" the "rose" belongs to the 1.
+            clause_start = max(
+                [previous_end]
+                + [index + 1 for index, char in enumerate(text[: match.start()]) if char in ",;:()"]
+                + [found.end() for found in _CLAUSE_BREAK_RE.finditer(text, 0, match.start())]
+            )
             before = _WORD_RE.findall(text[clause_start : match.start()])[-_DIRECTION_WINDOW:]
             for word in reversed(before):
                 lowered = word.lower()
@@ -184,6 +198,9 @@ class FactSheet:
     # (symbol, None or "subject:<name>", token) -> the directions the facts attached to that figure
     directions: dict[tuple[str | None, str], set[int]] = field(default_factory=dict)
     subject_names: set[str] = field(default_factory=set)  # lower-case names of the groups the facts describe
+    # What the facts MEAN - which count goes with which status, the groups in order, who is in which
+    # group. None for a sheet built without it; the meaning checks are then skipped.
+    meaning: ReadMeaning | None = None
 
     @property
     def text(self) -> str:
@@ -319,15 +336,19 @@ def guard_ai_read(text: str, sheet: FactSheet) -> GuardResult:
         for sentence in split_sentences(paragraph):
             if total >= MAX_SENTENCES:
                 break
-            mentioned = _mentions(sentence, sheet.symbols)
+            # The sentence as it is CHECKED: a count of names or setups written as a word is the
+            # number it is, and a typographic hyphen is a hyphen. The reader is still shown what the
+            # model wrote.
+            checked = counted_digits(sentence)
+            mentioned = _mentions(checked, sheet.symbols)
             scope = mentioned or context_symbols
-            group_mentions = _subject_mentions(sentence, sheet.subject_names)
+            group_mentions = _subject_mentions(checked, sheet.subject_names)
             problems: list[tuple[str, str]] = []
 
             allowed = set(sheet.general_figures)
             for symbol in scope:
                 allowed |= sheet.by_symbol.get(symbol, set())
-            for figure in figures_in(sentence):
+            for figure in figures_in(checked):
                 if figure.token not in allowed:
                     problems.append(("figure not in the facts for this subject", figure.token))
                     continue
@@ -336,21 +357,24 @@ def guard_ai_read(text: str, sheet: FactSheet) -> GuardResult:
                     # A clause that names no group carries on about the sentence's ("cybersecurity
                     # was the weak spot: the group rose 2.4%") - unless it names a measure of the
                     # whole scan ("... while the median name rose 0.8%").
-                    clause_start, clause_end = _clause_of(sentence, figure.start)
+                    clause_start, clause_end = _clause_of(checked, figure.start)
                     subjects = {subject for position, subject in group_mentions if clause_start <= position < clause_end}
-                    if not subjects and not _GENERAL_MEASURE_RE.search(sentence[clause_start:clause_end]):
+                    if not subjects and not _GENERAL_MEASURE_RE.search(checked[clause_start:clause_end]):
                         subjects = {subject for _position, subject in group_mentions}
                     stated = sheet.allowed_directions(figure.token, scope, subjects)
                     if stated and figure.direction not in stated:
                         problems.append(("direction contradicts the facts", figure.token))
 
-            spelled = _SPELLED_FIGURE_RE.search(sentence)
+            # What is left spelled out after the numbers were read is a magnitude that cannot be
+            # checked ("doubled", "one percent" as a turn of phrase).
+            spelled = _SPELLED_FIGURE_RE.search(checked)
             if spelled:
                 problems.append(("spelled-out figure", spelled.group(0)))
             for ticker in _unknown_tickers(sentence, sheet.symbols):
                 problems.append(("ticker not in the facts", ticker))
             for why in prediction_findings(sentence):
                 problems.append(("prediction", why))
+            problems.extend(meaning_problems(sentence, sheet.meaning))
 
             if problems:
                 removed.append(sentence)

@@ -29,6 +29,16 @@ JOB_NAME = "market_read"
 # A short read: room for the two paragraphs and, on a reasoning model, the little thinking it is
 # allowed (open_model.request_extras asks for low effort and hides it).
 MAX_OUTPUT_TOKENS = 1500
+# A model on Lyra's own machine pays for its thinking in minutes, not out of a shared allowance -
+# and a thinking model that runs out of room mid-thought returns nothing at all. In the first
+# bake-off Gemma 4 12B did exactly that six reads out of six, and Gemma 4 E4B (the one that wrote
+# no factual slip) came within 150 tokens of it.
+LOCAL_MAX_OUTPUT_TOKENS = 3000
+
+
+def output_budget(target: Target) -> int:
+    """The most a model may write for a read: generous on Lyra's own machine, tight on a free tier."""
+    return LOCAL_MAX_OUTPUT_TOKENS if target.provider.name == "local" else MAX_OUTPUT_TOKENS
 
 MARKET_READ_PROMPT = """You write the market read for Lyra, a research tool that follows about sixty US-listed technology stocks. Readers are private investors who open this after the US session has closed. They want a plain-English read of what that session meant - not a recap of figures they can already see in the block printed under your text.
 
@@ -76,7 +86,7 @@ def narrate_open(sheet: FactSheet, targets: list[Target], *, rate_limit_wait: fl
             target,
             system=MARKET_READ_PROMPT,
             user=READ_REQUEST.format(facts=sheet.text),
-            max_tokens=MAX_OUTPUT_TOKENS,
+            max_tokens=output_budget(target),
             rate_limit_wait=rate_limit_wait,
         )
         last = narration_from(completion, sheet)

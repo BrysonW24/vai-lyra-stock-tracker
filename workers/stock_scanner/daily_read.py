@@ -50,6 +50,7 @@ from workers.stock_scanner.feedback import buttons_live, vote_keyboard
 from workers.stock_scanner.generation_record import PRODUCTION, REHEARSAL, Generation, prompt_version, record_generation
 from workers.stock_scanner.logger import get_logger
 from workers.stock_scanner.open_model import PROVIDERS
+from workers.stock_scanner.read_meaning import ReadMeaning, names_for, status_word
 from workers.stock_scanner.supabase_repo import _NO_ECHO, SupabaseRepository
 from workers.stock_scanner.telegram import send_telegram_message
 
@@ -627,9 +628,43 @@ def _listed(sheet: FactSheet, items: list[Transition], limit: int = 6) -> str:
     return f"{shown} and {sheet.general(str(extra))} more" if extra > 0 else shown
 
 
+def build_meaning(facts: SessionFacts) -> ReadMeaning:
+    """The same facts in the shape the meaning checks need (read_meaning.py): which count goes with
+    which status, the groups in order, who is in which group, and where each ticker ended."""
+    counts = facts.status_counts
+    failed = len(facts.invalidated)
+    strong_now, watch_now = counts.get("strong_setup", 0), counts.get("watchlist_setup", 0)
+    return ReadMeaning(
+        counts={
+            # A strong setup that failed is counted under "strong" too: the sheet's own words are
+            # "a strong setup failed (6)".
+            "strong": {
+                "any": frozenset({strong_now, facts.prior_strong, len(facts.newly_strong), len(facts.lost_strong), failed, counts.get("invalidated", 0)}),
+                "now": frozenset({strong_now}),
+                "prior": frozenset({facts.prior_strong}),
+                "became": frozenset({len(facts.newly_strong)}),
+                "dropped": frozenset({len(facts.lost_strong), failed}),
+            },
+            "watchlist": {
+                "any": frozenset({watch_now, facts.prior_watch, len(facts.newly_watch)}),
+                "now": frozenset({watch_now}),
+                "prior": frozenset({facts.prior_watch}),
+                "became": frozenset({len(facts.newly_watch)}),
+            },
+            "weakening": {"any": frozenset({counts.get("weakening", 0)})},
+            "invalidated": {"any": frozenset({counts.get("invalidated", 0), failed})},
+            "no_signal": {"any": frozenset({counts.get("no_signal", 0)})},
+        },
+        group_order=tuple(group.category for group in facts.group_moves),
+        group_names={group.category: names_for(group.category, group_name(group.category)) for group in facts.group_moves},
+        member={ticker.symbol: ticker.category for ticker in facts.tickers},
+        status_now={ticker.symbol: status_word(ticker.status) for ticker in facts.tickers},
+    )
+
+
 def build_sheet(facts: SessionFacts) -> FactSheet:
     """The grounding handed to the model: every statement it is allowed to make, in words."""
-    sheet = FactSheet()
+    sheet = FactSheet(meaning=build_meaning(facts))
     say, general = sheet.say, sheet.general
 
     if facts.daily:

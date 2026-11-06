@@ -181,6 +181,21 @@ of them writes a real message. Free tiers belong to their owners and have been s
 Models was retired on 2026-07-30; Cerebras ended its free tier), which is why the writer is a
 chain: a hosted model, then another, then Lyra's own copy, then the engine's figures on their own.
 
+What the first run measured (2026-11-06, local models only, 24 reads and 32 briefing items):
+
+| Model on a free runner | Memory (file plus context, estimated) | A read takes | Reads with a factual slip | Items right |
+| --- | --- | --- | --- | --- |
+| Gemma 4 E4B, thinking on | about 6 GB | 130-220 s | 0 of 6 | 8 of 8 |
+| Qwen3.5 9B, thinking off | about 7 GB | 60-105 s | 4 of 6 | 8 of 8 (1 filed under the wrong desk) |
+| gpt-oss-20b | about 13 GB (loads in 16) | 60-120 s | 4 of 6 | 8 of 8 (3 filed under the wrong desk) |
+| Gemma 4 12B, thinking on | about 8-9 GB | 7-8 min, then nothing | none written: out of output budget every time | the 2 skips only |
+
+Every read passed the figure check with nothing removed; the slips were true figures given the
+wrong meaning, found by reading the output against the fact sheet. `read_meaning.py` (v0.141.0)
+now removes 9 of the 13 found. Speed on 4 vCPUs is 4-13 tokens a second written and 9-49 read,
+arm64 faster than x64. The second run asks whether thinking is what made the smallest model the
+accurate one.
+
 #### The subscribe-by-link audience (v0.134.0: /subscribe, Telegram through the app's bot, email through Resend)
 
 | Service | What it carries | Price | Notes |

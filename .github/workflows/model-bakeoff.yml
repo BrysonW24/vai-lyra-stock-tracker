@@ -5,9 +5,12 @@ name: Model bake-off
 # The founder asked on 2026-11-06 for Lyra's updates and chat to run on open-source models at no
 # cost. This job measures the candidates on Lyra's own tasks - the market read through the real
 # guard, a briefing item through the real source check - and how fast each one writes:
-#   * LOCAL: four models small enough for a public repository's free runner (4 vCPUs, 16 GB, no
-#     GPU), each on x64 and on arm64, served by a pinned llama.cpp build (.github/actions/local-model).
-#     They need no key and no account. Their speed is the open question this job answers.
+#   * LOCAL: models small enough for a public repository's free runner (4 vCPUs, 16 GB, no GPU),
+#     each on x64 and on arm64, served by a pinned llama.cpp build (.github/actions/local-model).
+#     They need no key and no account. The first run (2026-11-06) settled speed - a read takes one
+#     to four minutes - and raised the question this matrix now asks: the one model that wrote no
+#     factual slip was the smallest, and the only one left free to think. So each family runs with
+#     thinking on and with it off.
 #   * HOSTED: the free tiers of Groq and Cloudflare Workers AI. They need GROQ_API_KEY,
 #     CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN in the repository's secrets; a target with no
 #     key reports `no_key` and the others still run.
@@ -27,6 +30,18 @@ on:
           - both
           - local
           - hosted
+      repeats:
+        description: How many times each session is read (the model samples, so each is a new piece of writing)
+        type: string
+        default: '1'
+      tasks:
+        description: Which tasks to run
+        type: choice
+        default: read,item
+        options:
+          - read,item
+          - read
+          - item
 
 permissions:
   contents: read
@@ -46,28 +61,46 @@ jobs:
       matrix:
         runner: [ubuntu-24.04, ubuntu-24.04-arm]
         model:
-          # Google's own quantisation-aware 4-bit build of Gemma 4 12B (6.98 GB).
-          - name: gemma-4-12b-qat
-            repo: google/gemma-4-12B-it-qat-q4_0-gguf
-            revision: 29d097773436b69ff9feafd636ab4cf873786537
-            file: gemma-4-12b-it-qat-q4_0.gguf
-            sha256: 93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b
-            reasoning: '-1'
-          # Qwen3.5 9B at Q4_K_M (5.68 GB). Thinking off: on a CPU it doubles the wait.
-          - name: qwen3.5-9b
-            repo: unsloth/Qwen3.5-9B-GGUF
-            revision: 3885219b6810b007914f3a7950a8d1b469d598a5
-            file: Qwen3.5-9B-Q4_K_M.gguf
-            sha256: 03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8
-            reasoning: '0'
-          # Google's quantisation-aware 4-bit build of Gemma 4 E4B (5.15 GB) - the fast, small one.
+          # Google's quantisation-aware 4-bit build of Gemma 4 E4B (5.15 GB), thinking ON. In the
+          # first run it was the only model with no factual slip in its reads (6 of 6) and filed
+          # every item under the right desk - at 130 to 220 seconds a read.
           - name: gemma-4-e4b-qat
             repo: google/gemma-4-E4B-it-qat-q4_0-gguf
             revision: 4b4a2c1d584be7264f87aac328a1bc739ce81b6c
             file: gemma-4-E4B_q4_0-it.gguf
             sha256: 676c35070db6dbe52f93e9c864ee0fba4eddea94b9c875d9cb10daff453fbaee
             reasoning: '-1'
-          # gpt-oss-20b at Q4_K_M (11.62 GB): the largest that can load in 16 GB, and it may not.
+          # The same model with thinking OFF: is the thinking what made it accurate?
+          - name: gemma-4-e4b-qat-nothink
+            repo: google/gemma-4-E4B-it-qat-q4_0-gguf
+            revision: 4b4a2c1d584be7264f87aac328a1bc739ce81b6c
+            file: gemma-4-E4B_q4_0-it.gguf
+            sha256: 676c35070db6dbe52f93e9c864ee0fba4eddea94b9c875d9cb10daff453fbaee
+            reasoning: '0'
+          # Google's quantisation-aware 4-bit build of Gemma 4 12B (6.98 GB), thinking OFF. With it
+          # on, at 4.5 tokens a second, it spent its whole output budget thinking and wrote nothing.
+          - name: gemma-4-12b-qat-nothink
+            repo: google/gemma-4-12B-it-qat-q4_0-gguf
+            revision: 29d097773436b69ff9feafd636ab4cf873786537
+            file: gemma-4-12b-it-qat-q4_0.gguf
+            sha256: 93567e57a8fe10b23569b9d9ec38cd005deedf71e29477c421a4b83f418a538b
+            reasoning: '0'
+          # Qwen3.5 9B at Q4_K_M (5.68 GB), thinking off (the first run's setting: a slip in 4 of 6 reads)...
+          - name: qwen3.5-9b
+            repo: unsloth/Qwen3.5-9B-GGUF
+            revision: 3885219b6810b007914f3a7950a8d1b469d598a5
+            file: Qwen3.5-9B-Q4_K_M.gguf
+            sha256: 03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8
+            reasoning: '0'
+          # ...and thinking ON: does it close the gap?
+          - name: qwen3.5-9b-think
+            repo: unsloth/Qwen3.5-9B-GGUF
+            revision: 3885219b6810b007914f3a7950a8d1b469d598a5
+            file: Qwen3.5-9B-Q4_K_M.gguf
+            sha256: 03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8
+            reasoning: '-1'
+          # gpt-oss-20b at Q4_K_M (11.62 GB): the largest that loads in 16 GB (it did), and the fastest writer
+          # in the first run - with a factual slip in 4 of 6 reads.
           - name: gpt-oss-20b
             repo: unsloth/gpt-oss-20b-GGUF
             revision: d449b42d93e1c2c7bda5312f5c25c8fb91dfa9b4
@@ -91,6 +124,8 @@ jobs:
         env:
           BAKEOFF_TARGETS: local:${{ matrix.model.name }}
           BAKEOFF_RESULTS: bakeoff-${{ matrix.model.name }}-${{ runner.arch }}.json
+          BAKEOFF_REPEATS: ${{ inputs.repeats }}
+          BAKEOFF_TASKS: ${{ inputs.tasks }}
         run: python -m workers.stock_scanner.model_bakeoff
 
       - name: Upload the results
@@ -124,6 +159,8 @@ jobs:
             cloudflare:@cf/google/gemma-4-26b-a4b-it,
             cloudflare:@cf/openai/gpt-oss-120b
           BAKEOFF_RESULTS: bakeoff-hosted.json
+          BAKEOFF_REPEATS: ${{ inputs.repeats }}
+          BAKEOFF_TASKS: ${{ inputs.tasks }}
         run: python -m workers.stock_scanner.model_bakeoff
 
       - name: Upload the results

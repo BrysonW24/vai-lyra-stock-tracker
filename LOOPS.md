@@ -162,6 +162,9 @@ Claude (SUMMARY_MODEL, SUMMARY_EFFORT, server-side refusal fallback) writes thre
       |
       v
 ai_read_guard: unknown figure / wrong owner / wrong direction / unknown ticker -> sentence out;
+a true figure given the wrong meaning (read_meaning.py: a count on the wrong status, a group
+ranked wrongly, a ticker in the wrong group or sent to a status it does not hold) -> sentence out;
+a number written as a word is read as that number first;
 advice -> read out; < 2 sentences left -> read out (figures still sent)
       |
       v

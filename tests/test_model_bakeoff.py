@@ -57,10 +57,15 @@ def test_an_item_case_is_right_when_the_page_becomes_the_item_it_should_or_is_sk
     post = Recorder(FakeResponse(payload=chat(json.dumps(_answer()))))
     kept = mb.item_case(_target(), FUNDING, universe=["NVDA"], env=ENV, post=post)
     assert kept["passed"] and kept["outcome"] == "kept" and kept["json_valid"] and kept["item"]["desk"] == "venture"
+    assert kept["desk_right"] is True
     assert post.calls[0]["json"]["response_format"]["type"] == "json_schema"
 
+    # A true item filed under the wrong desk is still a true item: the two are counted apart, so
+    # a model is not marked down on truth for a filing decision.
     wrong_desk = mb.item_case(_target(), FUNDING, universe=[], env=ENV, post=Recorder(FakeResponse(payload=chat(json.dumps(_answer(desk="news"))))))
-    assert wrong_desk["outcome"] == "kept" and not wrong_desk["passed"], "published, but not the item the page called for"
+    assert wrong_desk["outcome"] == "kept" and wrong_desk["passed"] and wrong_desk["desk_right"] is False
+    wrong_listing = mb.item_case(_target(), FUNDING, universe=[], env=ENV, post=Recorder(FakeResponse(payload=chat(json.dumps(_answer(listed=True, ticker="LUMN", exchange="NASDAQ"))))))
+    assert not wrong_listing["passed"], "a private company given a ticker is not the item the page called for"
     invented = mb.item_case(_target(), FUNDING, universe=[], env=ENV, post=Recorder(FakeResponse(payload=chat(json.dumps(_answer(lead="Lumen raises $3 billion."))))))
     assert invented["outcome"] == "removed" and not invented["passed"] and invented["guard_categories"] == ["figure not in source"]
 

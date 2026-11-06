@@ -1,0 +1,779 @@
+[
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "The session closed positive with a median move up 2.2%, driven by strong performance in cloud and data, where DOCN was up 8.8%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Cybersecurity and consumer internet also showed strength, though the semiconductor group averaged down 0.6%, led by SWKS down 5.4%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "The session brought significant shifts in Lyra's tracking, with AKAM and COIN becoming strong setups."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Conversely, IBM, DOCU, and NOW were invalidated, while several names moved into watchlist setups, including HOOD, DELL, and NET."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "The session was defined by extreme weakness, closing with a median move down 7.7%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "Breadth was heavily skewed, showing 1 up and 60 down, as nearly every major group, including semiconductors and AI infrastructure, saw zero names up."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "The session was driven by sharp declines in names like AMD down 17.3%, DOCN down 15.9%, and TER down 15.2%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "This environment caused a significant shift in Lyra's tracking, resulting in zero strong setups at the close."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "Seven prior strong setups dropped out, and six names, including AMD and HOOD, were invalidated."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "Despite the broad sell-off, ESTC and ADBE became watchlist setups, while ESTC saw its score rise to 63 from 43."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The session was nearly balanced with 31 names up and 30 names down, despite a median move up 0.1%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Cybersecurity led the session with an average gain of 2.4%, driven by PANW up 5.0% and CRWD up 5.0%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Conversely, the consumer internet and fintech groups were the weakest, led by ABNB down 7.6% and AFRM down 5.1%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The session saw several critical changes in setup status."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Three strong setups were invalidated, including AFRM, AMZN, and SOFI, while PTC and SPOT moved into strong setup status."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "framing",
+  "sentence": "Additionally, ESTC, DOCU, and NOW transitioned into watchlist setups, indicating forming opportunities."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "The session closed with a median move up 2.2%, supported by 50 names up and 11 down."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Cloud and data led the session, with DOCN up 8.8%, while cybersecurity and consumer internet also posted strong gains."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "The semiconductor group averaged down 0.6%, led by SWKS down 5.4%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "The quality of early-turn setups weakened, as the number of strong setups dropped to 3."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "IBM, DOCU, and NOW were invalidated after failing their strong setup status."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "AKAM and COIN became strong setups, while HUBS saw its score fall sharply to 32."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "The session was defined by extreme selling, with 60 names down and a median move of down 7.7%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "Widespread weakness swept through major tech groups, including AI infrastructure down 11.3% on average and Semiconductors down 11.5% on average."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "Mega-cap platforms were weighed down by MSFT down 3.6%, while the cloud and data sector averaged down 9.1%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "The session caused a sharp erosion of conviction, with 7 strong setups dropping out and 6 names invalidated."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "ANET saw a sharp score fall to 53 from 100, while ESTC and AKAM showed the biggest score rises, moving to 63 and 38 respectively."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The session was mixed, with 31 names up and 30 names down, driven by strong performance in cybersecurity, which averaged up 2.4% and was led by PANW up 5.0%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Conversely, consumer internet and fintech saw the largest average declines, with ABNB down 7.6% and AFRM down 5.1%."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The overall setup count weakened, as three strong setups were invalidated: AFRM, AMZN, and SOFI."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "However, momentum reset in names like PTC and SPOT, which became strong setups, while ESTC, DOCU, and NOW transitioned into watchlist setups."
+ },
+ {
+  "model": "gemma-4-e4b-qat",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The biggest score rises occurred for NOW, SPOT, and CRM."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "The session was a broad rally, with 50 names up and 11 down, the median move 2.2%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Cloud and data led the day, up 5.8% on average, all six names in that group moving higher, DOCN up 8.8% the biggest gain."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Semiconductors slipped 0.6% on average, three of seven names up, SWKS down 5.4% the biggest fall."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "At close Lyra has three strong setups, twelve watchlist setups and sixteen weakening."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Two names became strong, AKAM (score 85, from 48) and COIN (score 80, from 43)."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Four names dropped from strong, DBX, IBM, DOCU and NOW."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Seven names entered watchlist, including HOOD, DELL, NET, AI, SNAP, TENB and one more."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "IBM, DOCU and NOW were invalidated, their strong setups failing."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "The biggest score rises were AKAM, COIN and NET; the biggest falls were HUBS, IBM and NOW."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "The session was a sharp sell‑off, with 60 of 61 names down and only RPD the lone gain at 2.7%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "The median drop was 7.7%, and the biggest falls were AMD down 17.3%, DOCN down 15.9% and TER down 15.2%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "slip",
+  "sentence": "Mega‑cap platforms, software, cybersecurity, consumer internet, fintech, cloud and data, AI infrastructure and semiconductors all fell, with the worst average loss in AI infrastructure at 11.3%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "slip",
+  "sentence": "Lyra’s score engine found no new strong setups, but 7 names weakened from the previous close, 6 invalidated and 7 dropped out of strong setups."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "slip",
+  "sentence": "MSFT, CRM, SNAP, ANET, DBX, AMD and one more fell from strong to no signal."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "ADBE and ESTC moved into watchlist, while the biggest score rises were ESTC, AKAM and ENTG."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "The biggest score falls were ANET, AMD and SPOT."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The session was a near‑even split, with 31 names up and 30 down, the median move a modest 0.1%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Cybersecurity led the rally, all nine names up and PANW posting the biggest gain of 5.0%, followed by CRWD and OKTA each up 5.0% and 4.4%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "slip",
+  "sentence": "In contrast, fintech fell 3.0% on average, all five names down, with AFRM dropping 5.1% and SNAP 5.9%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "At close Lyra recorded four strong setups, thirteen watchlist setups, and 21 weakening signals."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Two names moved into strong setups: PTC (score 75 from 70) and SPOT (score 75 from 48)."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Five names slipped out of strong setups: PINS, XYZ, AFRM, AMZN, and SOFI."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Three names became watchlist setups: ESTC, DOCU, and NOW."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Invalidated strong setups included AFRM, AMZN, and SOFI, all still out at close."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The biggest score rises were NOW (60 from 33), SPOT (75 from 48), and CRM (55 from 33), while the biggest falls were NBIS (20 from 57), SOFI (43 from 80), and NET (25 from 57)."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "The session was a broad rally, with 50 of 61 names up and a median gain of 2.2%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Cloud and data led the move, up 5.8% on average, and every name in that group advanced, including DOCN’s 8.8% jump."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Cybersecurity and consumer‑internet names also climbed, each group up 4.9% and 3.3% respectively, with TENB and SNAP posting the biggest gains in their sectors."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Semiconductors slipped 0.6% on average, SWKS falling 5.4% the most."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Lyra’s score engine highlighted a few strong setups."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "AKAM and COIN moved into strong setups, their scores rising to 85 and 80 from 48 and 43."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Four names slipped out of strong status—DBX, IBM, DOCU and NOW—while three, IBM, DOCU and NOW, were invalidated as their scores fell sharply."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Watchlist setups grew to 12, with HOOD, DELL, NET, AI, SNAP and TENB joining the list."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Overall, 16 names weakened, 3 invalidated and 27 showed no signal at close."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "The session was a one‑up, 60‑down day, with the median move down 7.7%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "RPD was the only name to rise, up 2.7%, while AMD fell 17.3%, DOCN 15.9% and TER 15.2%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "Mega‑cap platforms, software, cybersecurity, consumer internet, fintech, cloud and data, AI infrastructure and semiconductors all slipped, with the largest average drops in AI infrastructure (11.3%) and semiconductors (11.5%)."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "RPD led the lone cybersecurity gain, and the only group with a name up was cybersecurity."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "At close Lyra had no strong setups, 7 watchlist setups, 25 weakening, 6 invalidated and 23 no signal."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "slip",
+  "sentence": "Seven names fell from strong to no signal – MSFT, CRM, SNAP, ANET, DBX, AMD and one more."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "missed",
+  "sentence": "ADBE and ESTC moved into watchlist from watchlist."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "Six strong setups were invalidated – CRM, SNAP, ANET, DBX, AMD and HOOD."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "The biggest score rises were ESTC (63 from 43), AKAM (38 from 28) and ENTG (53 from 43), while the biggest falls were ANET (53 from 100), AMD (48 from 85) and SPOT (25 from 62)."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The session was a near‑even split, 31 names up and 30 down, with a median rise of 0.1%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Cybersecurity led the day, all nine names up, and PANW and CRWD each gained 5.0%."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "slip",
+  "sentence": "The biggest falls were ABNB down 7.6%, SNAP down 5.9% and AFRM down 5.1%, pulling the fintech group into a 3.0% decline."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "slip",
+  "sentence": "Lyra’s score engine marked 4 new strong setups, including PTC and SPOT, while five names slipped out of strong status – PINS, XYZ, AFRM, AMZN and SOFI."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Three names became watchlist setups: ESTC, DOCU and NOW."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The biggest score rises were NOW (from 33 to 60), SPOT (from 48 to 75) and CRM (from 33 to 55)."
+ },
+ {
+  "model": "gpt-oss-20b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The biggest falls were NBIS (from 57 to 20), SOFI (from 80 to 43) and NET (from 57 to 25)."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "The session was broadly bullish with 50 of 61 names higher, led by a full sweep of cloud, cybersecurity, and consumer internet groups."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Momentum reset sharply in cloud and data as DOCN climbed 8.8% and SNOW rose 7.4%, while mega-cap platforms like AMZN gained 3.3% despite AAPL slipping 1.1%."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Lyra's engine identified two new strong setups in AKAM and COIN as they turned from beaten-down names, while three former strong setups including IBM and DOCU invalidated after their scores fell sharply."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "broad-rally",
+  "label": "slip",
+  "sentence": "Twelve names moved into watchlist territory as scores improved, but 16 setups weakened and 3 invalidated, leaving 27 with no signal."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "The session was a broad sell-off with only one name up out of sixty-one scanned, leaving the market in a defensive posture as mega-cap platforms, software, and AI infrastructure all retreated."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "AMD led the declines with a sharp drop of 17.3%, while DOCN and TER also fell heavily, dragging down their respective groups of semiconductors, cloud and data, and AI infrastructure."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "missed",
+  "sentence": "This widespread weakness invalidated six strong setups including AMD, CRM, and SNAP, while seven others dropped out of that category as their scores fell sharply."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "Two names, ADBE and ESTC, formed new watchlist setups as their scores rose from oversold levels, but the overall environment remains heavy with twenty-five names weakening and no strong setups remaining at the close."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The session was a mixed bag with a nearly even split of names moving up or down, led by a sharp rally in cybersecurity that outperformed almost every other group."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "PANW and CRWD each gained 5.0%, while ABNB fell 7.6% and AFRM dropped 5.1%, leaving the broader market with a median move of just 0.1%."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "This divergence meant that while cybersecurity was broadly strong, other sectors like fintech and consumer internet struggled, with fintech down 3.0% and consumer internet down 2.4%."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Lyra's scorecard shows a shift in momentum as two names, PTC and SPOT, became strong setups, while five others including AFRM and AMZN dropped out of that status."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "aarch64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The biggest score rises came from NOW and SPOT, indicating names that were beaten down are starting to turn, whereas NBIS and SOFI saw their scores fall sharply as their setups weakened or were invalidated."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "The session was broadly positive as technology names rallied, with 50 of 61 stocks advancing and the median move up 2.2%."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Cloud and data led the charge, rising 5.8% on average and driven by DOCN up 8.8%, while cybersecurity and consumer internet also posted solid gains."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "The broad breadth suggests a healthy advance across the sector rather than a narrow spike."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "Two names, AKAM and COIN, jumped into strong setups as their scores surged from oversold levels, signaling a fresh turn after a prior dip."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "clean",
+  "sentence": "However, four names that were previously strong setups, including DBX, IBM, DOCU, and NOW, dropped out as their scores fell sharply, indicating those early turns failed to hold."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "broad-rally",
+  "label": "framing",
+  "sentence": "Several other names, such as HOOD, DELL, and NET, moved into watchlist setups, forming new potential opportunities as they began to recover from recent weakness."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "The session was a broad sell-off with only one name rising while sixty others fell, leaving the technology sector broadly beaten down."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "clean",
+  "sentence": "Mega-cap platforms, software, and AI infrastructure all declined on average, with semiconductors and cloud names among the hardest hit, weighed by AMD down 17.3% and DOCN down 15.9%."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "slip",
+  "sentence": "This widespread decline invalidated seven strong setups and pushed twenty-five others into weakening status, while only two names formed new watchlist setups."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "broad-selloff",
+  "label": "missed",
+  "sentence": "The strongest signals for oversold recovery are now concentrated in names like ESTC and AKAM, which posted the biggest score rises, whereas leaders such as MSFT and CRM lost their strong setup status as their scores fell sharply."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "The session was narrow and mixed, with the market split almost evenly between gainers and losers, leaving the median move barely positive at up 0.1%."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Cybersecurity led the charge as the only group to rise across the board, while consumer internet and fintech dragged the broader index lower."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "missed",
+  "sentence": "The biggest winners were PANW and CRWD, both up 5.0%, whereas ABNB and AFRM were the primary sellers, falling 7.6% and 5.1% respectively."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "This volatility shifted the Lyra setups, with two names—PTC and SPOT—becoming strong setups as their scores jumped to 75."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "However, the session also invalidated three previous strong setups, including AFRM, AMZN, and SOFI, whose scores dropped sharply as they failed to hold their turns."
+ },
+ {
+  "model": "qwen3.5-9b",
+  "machine": "x86_64",
+  "session": "quiet",
+  "label": "clean",
+  "sentence": "Meanwhile, DOCU and NOW moved into watchlist status with improving scores, while the overall count of strong setups fell from seven to four."
+ }
+]

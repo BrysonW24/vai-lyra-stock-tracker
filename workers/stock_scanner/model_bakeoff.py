@@ -40,14 +40,14 @@ from workers.stock_scanner.daily_read import READ_REQUEST, build_facts, build_sh
 from workers.stock_scanner.free_briefing import (
     ITEM_PROMPT,
     ITEM_SCHEMA,
-    MAX_OUTPUT_TOKENS as ITEM_OUTPUT_TOKENS,
     PROMPT_VERSION as ITEM_PROMPT_VERSION,
     Article,
     article_window,
     item_brief,
     item_from_answer,
+    output_budget as item_output_budget,
 )
-from workers.stock_scanner.free_read import MARKET_READ_PROMPT, MAX_OUTPUT_TOKENS as READ_OUTPUT_TOKENS, PROMPT_VERSION as READ_PROMPT_VERSION
+from workers.stock_scanner.free_read import MARKET_READ_PROMPT, PROMPT_VERSION as READ_PROMPT_VERSION, output_budget as read_output_budget
 from workers.stock_scanner.logger import get_logger
 from workers.stock_scanner.open_model import Completion, Target, complete, parse_chain, parse_json_object
 
@@ -57,6 +57,8 @@ FIXTURE_DIR = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "bake
 TARGETS_ENV = "BAKEOFF_TARGETS"
 RESULTS_ENV = "BAKEOFF_RESULTS"
 PAUSE_ENV = "BAKEOFF_PAUSE_SECONDS"
+REPEATS_ENV = "BAKEOFF_REPEATS"  # how many times each session is read: one sample of a model's writing is an anecdote
+TASKS_ENV = "BAKEOFF_TASKS"  # "read,item" (default), or one of them
 DEFAULT_RESULTS = "bakeoff-results.json"
 DEFAULT_PAUSE = 6.0  # between calls to a hosted target: a free tier's per-minute token limit is small
 RATE_LIMIT_WAIT = 65.0
@@ -90,7 +92,7 @@ def read_case(target: Target, fixture: dict[str, Any], **call: Any) -> dict[str,
     if facts is None:
         return {**case, "reason": "no_facts", "passed": False}
     sheet = build_sheet(facts)
-    completion = complete(target, system=MARKET_READ_PROMPT, user=READ_REQUEST.format(facts=sheet.text), max_tokens=READ_OUTPUT_TOKENS, **call)
+    completion = complete(target, system=MARKET_READ_PROMPT, user=READ_REQUEST.format(facts=sheet.text), max_tokens=read_output_budget(target), **call)
     case.update(_speed(completion))
     if not completion.ok:
         return {**case, "passed": False}
@@ -123,7 +125,7 @@ def item_case(target: Target, fixture: dict[str, Any], *, universe: list[str], *
         target,
         system=ITEM_PROMPT,
         user=item_brief(article, universe),
-        max_tokens=ITEM_OUTPUT_TOKENS,
+        max_tokens=item_output_budget(target),
         temperature=0.2,
         schema=ITEM_SCHEMA,
         schema_name="briefing_item",
@@ -134,7 +136,12 @@ def item_case(target: Target, fixture: dict[str, Any], *, universe: list[str], *
         return {**case, "outcome": completion.reason, "passed": False}
     answer = parse_json_object(completion.text)
     outcome = item_from_answer(answer, article, covered=set(), universe=set(universe))
+    # Two different questions. PASSED is about truth: the page was kept or skipped as it should
+    # be, a private company got no ticker, a listed one got the right one. The DESK is a filing
+    # decision - which section of the briefing the item sits in - and a wrong one misplaces a true
+    # item rather than publishing a false one, so it is counted on its own.
     should_skip = bool(expect.get("skip"))
+    desk_right: bool | None = None
     if should_skip:
         passed = outcome.outcome == "skipped"
     else:
@@ -143,12 +150,14 @@ def item_case(target: Target, fixture: dict[str, Any], *, universe: list[str], *
             item is not None
             and ("listed" not in expect or item.listed is bool(expect["listed"]))
             and ("ticker" not in expect or item.ticker == expect["ticker"])
-            and ("desk" not in expect or item.desk == expect["desk"])
         )
+        if item is not None and "desk" in expect:
+            desk_right = item.desk == expect["desk"]
     return {
         **case,
         "outcome": outcome.outcome,
         "passed": passed,
+        "desk_right": desk_right,
         "json_valid": answer is not None,
         "guard_categories": outcome.categories,
         "item": outcome.item.to_dict() if outcome.item else None,
@@ -176,6 +185,8 @@ def summarise(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "sentences_written": written,
                 "items_right": sum(1 for case in items if case.get("passed")),
                 "items": len(items),
+                "desks_right": sum(1 for case in items if case.get("desk_right") is True),
+                "desks": sum(1 for case in items if case.get("desk_right") is not None),
                 "items_unparsable": sum(1 for case in items if case.get("outcome") == "unparsable"),
                 "tokens_per_second": round(sum(speeds) / len(speeds), 2) if speeds else None,
                 "seconds_per_read": round(sum(read_seconds) / len(read_seconds), 1) if read_seconds else None,
@@ -187,7 +198,7 @@ def summarise(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def render(summary: list[dict[str, Any]]) -> str:
     """The table for the log - numbers only."""
-    lines = ["target | reads passed | sentences cut | items right | unparsable | tokens/s | s per read | failures"]
+    lines = ["target | reads passed | sentences cut | items right | desks right | unparsable | tokens/s | s per read | failures"]
     for row in summary:
         lines.append(
             " | ".join(
@@ -196,6 +207,7 @@ def render(summary: list[dict[str, Any]]) -> str:
                     f"{row['reads_passed']}/{row['reads']}",
                     f"{row['sentences_removed']}/{row['sentences_written']}",
                     f"{row['items_right']}/{row['items']}",
+                    f"{row.get('desks_right', 0)}/{row.get('desks', 0)}",
                     str(row["items_unparsable"]),
                     "-" if row["tokens_per_second"] is None else f"{row['tokens_per_second']:.1f}",
                     "-" if row["seconds_per_read"] is None else f"{row['seconds_per_read']:.0f}",
@@ -214,10 +226,14 @@ def run(
     pause: float = DEFAULT_PAUSE,
     sleep: Any = time.sleep,
     checkpoint: Any = None,
+    repeats: int = 1,
+    tasks: tuple[str, ...] = ("read", "item"),
     **call: Any,
 ) -> dict[str, Any]:
     """Every target over every fixture. `checkpoint(results)` is called after each case, so a job
-    that runs out of time still leaves the cases it finished."""
+    that runs out of time still leaves the cases it finished. `repeats` reads each session that
+    many times (the model samples, so each is a different piece of writing); pages are read once -
+    an item is an extraction, and one answer shows whether the model can do it."""
     universe = sorted({row["symbol"] for session in sessions for row in session.get("rows", [])})
     cases: list[dict[str, Any]] = []
 
@@ -233,17 +249,22 @@ def run(
     for target in targets:
         hosted = target.provider.name != "local"
         for task, fixtures in (("read", sessions), ("item", articles)):
+            if task not in tasks:
+                continue
             for fixture in fixtures:
-                options = {"rate_limit_wait": RATE_LIMIT_WAIT if hosted else 0.0, **call}
-                case = read_case(target, fixture, **options) if task == "read" else item_case(target, fixture, universe=universe, **options)
-                cases.append(case)
-                LOGGER.info(
-                    "bake-off %s %s %s: %s, passed=%s, %.0fs", target.spec, task, fixture["label"], case.get("reason"), case.get("passed"), case.get("seconds") or 0
-                )
-                if checkpoint is not None:
-                    checkpoint(results())
-                if hosted and pause > 0:
-                    sleep(pause)
+                for attempt in range(max(1, repeats) if task == "read" else 1):
+                    options = {"rate_limit_wait": RATE_LIMIT_WAIT if hosted else 0.0, **call}
+                    case = read_case(target, fixture, **options) if task == "read" else item_case(target, fixture, universe=universe, **options)
+                    case["attempt"] = attempt + 1
+                    cases.append(case)
+                    LOGGER.info(
+                        "bake-off %s %s %s #%d: %s, passed=%s, %.0fs",
+                        target.spec, task, fixture["label"], attempt + 1, case.get("reason"), case.get("passed"), case.get("seconds") or 0,
+                    )  # fmt: skip
+                    if checkpoint is not None:
+                        checkpoint(results())
+                    if hosted and pause > 0:
+                        sleep(pause)
     return results()
 
 
@@ -260,12 +281,17 @@ def main() -> int:
         pause = float(os.environ.get(PAUSE_ENV, DEFAULT_PAUSE))
     except ValueError:
         pause = DEFAULT_PAUSE
+    try:
+        repeats = max(1, min(10, int(os.environ.get(REPEATS_ENV) or 1)))
+    except ValueError:
+        repeats = 1
+    tasks = tuple(task for task in (part.strip() for part in (os.environ.get(TASKS_ENV) or "read,item").split(",")) if task in ("read", "item")) or ("read", "item")
     out = Path(os.environ.get(RESULTS_ENV) or DEFAULT_RESULTS)
 
     def save(results: dict[str, Any]) -> None:
         out.write_text(json.dumps(results, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
-    results = run(targets, sessions, articles, pause=pause, checkpoint=save)
+    results = run(targets, sessions, articles, pause=pause, checkpoint=save, repeats=repeats, tasks=tasks)
     save(results)
     print(render(results["summary"]))
     # A run in which no model answered anything measured nothing: say so with the exit code.
