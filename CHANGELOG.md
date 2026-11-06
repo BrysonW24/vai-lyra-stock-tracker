@@ -6,6 +6,17 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.140.0] - 2026-11-06
+
+Ask Lyra is free for everyone: open-source models answer, no key and no sign-in needed.
+
+### Changed
+
+- Ask Lyra now answers for anyone, with no key and no sign-in, once the free model keys are switched on. The answers come from open-source models hosted free by Cloudflare and Groq, tried in turn; your own key, if you add one, still comes first and has no limit.
+- The free answers are a daily allowance shared by everyone, so each person gets a fair share (a few a minute, about 40 a day). When the allowance runs out, chat gives you the engine's own figures for what you asked about, without the commentary, instead of an error. It resets at 11am Sydney time (10am in winter).
+- The chat panel and the privacy page say plainly where a free answer comes from and what is sent: your question and the holdings it concerns go to whichever of the two hosts answers. Cloudflare says it neither trains on nor keeps it; Groq says it does not train on it and may keep logs for up to 30 days.
+- The stricter advice checks from the last release now guard chat too: an instruction to trade, "investors should consider", a rating or a "buying opportunity" stops the answer, wherever it appears, and a sentence that forecasts a move is removed.
+
 ## [0.139.0] - 2026-11-06
 
 Groundwork for free AI: an open-source writer, a bake-off to choose it, and stricter checks on what any model writes.
@@ -1951,7 +1962,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.139.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.140.0...HEAD
+[0.140.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.139.0...v0.140.0
 [0.139.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.2...v0.139.0
 [0.138.2]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.1...v0.138.2
 [0.138.1]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.138.0...v0.138.1

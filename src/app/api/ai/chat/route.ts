@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { complete, resolveModel, type AiProvider } from '@/lib/ai/gateway';
+import { type AiProvider } from '@/lib/ai/gateway';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { guardProse } from '@/lib/ai/guardrails/prose';
-import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
+import { answerWith } from '@/lib/ai/answer';
+import { figuresOnlyAnswer } from '@/lib/ai/figures-answer';
+import { buildDailyBrief } from '@/lib/daily-brief';
 import { getDashboardData } from '@/lib/data';
 import { getMarketContextLive } from '@/lib/market-context-live';
 import {
@@ -17,7 +19,6 @@ import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_CHAT_FORMAT, composeSystem, toneFo
 import { recordAiRun, hashInput } from '@/lib/ai/audit';
 import { recordQuestionSignal } from '@/lib/ai/question-signals';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
-import { classifyAiFailure } from '@/lib/ai/failures';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 import { parseTradeLogIntent, detectSellLogIntent } from '@/lib/trading/trade-intent';
 import { lookupMarketQuote } from '@/lib/market/quote';
@@ -127,7 +128,15 @@ function sanitiseSoloContext(input: unknown): SoloDeviceContext | null {
  * deterministic dashboard is assembled into a CONTEXT block, and a profile-derived tone is
  * prepended. The model phrases; it cannot invent numbers or give advice. Any failure returns
  * ok:false so the UI degrades gracefully.
+ *
+ * Who answers (v0.140.0): the caller's own key when they have one; otherwise the FREE POOL of
+ * open models (src/lib/ai/free-pool.ts), for anyone, signed in or not. When the pool cannot answer
+ * - its daily allowance is used up, or every provider is busy - the reply is the engine's own
+ * figures without commentary (src/lib/ai/figures-answer.ts), never an empty chat.
  */
+/** The pool's own failures: the caller did nothing wrong, so they get figures rather than an error. */
+const POOL_FALLBACK_REASONS = new Set(['free_pool_exhausted', 'provider_unavailable', 'provider_rate_limited', 'empty_response', 'invalid_key', 'invalid_model', 'error']);
+
 /** Number of prior turns fed into the prompt - also the number screened for injection. */
 const HISTORY_TURNS = 8;
 
@@ -142,14 +151,10 @@ export async function POST(request: NextRequest) {
     if (!ai) return NextResponse.json({ ok: false, reason: 'disabled' });
     if (!Array.isArray(messages) || messages.length === 0) return NextResponse.json({ ok: false, reason: 'empty' });
 
-    const creds = resolveAiCredentials(ai, { authenticated, aiIncluded });
-    if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
-
-    // Hosted/shared key rides the house budget; BYOK spends the user's own quota untouched.
-    if (creds.source !== 'user') {
-      const budget = await chargeHostedBudgetShared(creds.source, 600);
-      if (budget.decision === 'block') return NextResponse.json({ ok: false, reason: 'budget' });
-    }
+    const creds = resolveAiCredentials(ai, { authenticated, aiIncluded, allowFreePool: true });
+    if (creds.source === 'none') return NextResponse.json({ ok: false, reason: 'no_key' });
+    // The house budget (a hosted key) and the free caps (the pool) are charged where the model is
+    // actually called - answerWith() below - so a refused or deterministic reply costs nothing.
 
     const last = messages[messages.length - 1];
     const inputHash = hashInput({ messages, profile, soloContext });
@@ -306,59 +311,43 @@ export async function POST(request: NextRequest) {
     const prompt = `${history}\nLyra:`;
 
     const startedAt = Date.now();
-    let completion: Awaited<ReturnType<typeof complete>>;
-    try {
-      completion = await complete({
-        provider: creds.provider,
-        apiKey: creds.apiKey,
-        model: creds.model,
-        system,
-        prompt,
-        maxTokens: 600,
-        retryOn429: creds.source === 'user',
-      });
-    } catch (error) {
-      const reason = classifyAiFailure(error);
+    const completion = await answerWith(creds, guard.identity, { system, prompt, maxTokens: 600, budgetTokens: 600 });
+    if (!completion.ok) {
+      const reason = completion.reason;
       await recordAiRun({
         userId: guard.identity,
         agentName: 'portfolio_assistant',
-        provider: creds.provider,
-        model: resolveModel(creds.provider, creds.model),
+        provider: completion.provider,
+        model: completion.model,
         inputHash,
         outputHash: null,
         toolsUsed: [],
         injectionFlags: [],
-        validationErrors: [],
+        validationErrors: reason === 'empty_response' ? ['empty_response'] : [],
         citationCount: 0,
-        status: 'error',
-        refusalReason: `provider:${reason}`,
+        status: reason === 'empty_response' ? 'validation_failed' : 'error',
+        refusalReason: reason === 'empty_response' ? 'empty_response' : `provider:${reason}`,
         latencyMs: Date.now() - startedAt,
       });
+      // The free pool ran out or stumbled: answer with the engine's own figures. A caller over
+      // their own share (`free_limit`) gets the plain message instead - figures on tap would make
+      // the cap meaningless as a brake on one person's use.
+      if (creds.source === 'free_pool' && POOL_FALLBACK_REASONS.has(reason)) {
+        const ownSymbols = [...data.portfolio.map((holding) => holding.symbol), ...(soloContext?.holdings ?? []).map((holding) => holding.symbol)];
+        const question = last?.role === 'user' ? last.content : '';
+        return NextResponse.json({
+          ok: true,
+          // The brief leans on the market backdrop: with no live capture it is sample data, and sample
+          // data is never printed as today's figures.
+          text: figuresOnlyAnswer(question, data, market.source === 'live' ? buildDailyBrief(data, market) : null, ownSymbols),
+          suggestions: [],
+          figuresOnly: true,
+        });
+      }
       return NextResponse.json({ ok: false, reason });
     }
-    const { text, model: usedModel, usage, costUsd } = completion;
+    const { text, provider: usedProvider, model: usedModel, usage, costUsd } = completion;
     const latencyMs = Date.now() - startedAt;
-    if (!text) {
-      await recordAiRun({
-        userId: guard.identity,
-        agentName: 'portfolio_assistant',
-        provider: creds.provider,
-        model: usedModel,
-        inputHash,
-        outputHash: null,
-        toolsUsed: [],
-        injectionFlags: [],
-        validationErrors: ['empty_response'],
-        citationCount: 0,
-        status: 'validation_failed',
-        refusalReason: 'empty_response',
-        latencyMs,
-        inputTokens: usage?.inputTokens ?? null,
-        outputTokens: usage?.outputTokens ?? null,
-        costUsd,
-      });
-      return NextResponse.json({ ok: false, reason: 'empty_response' });
-    }
     // Strip an echoed "Lyra:" turn label, then split off the FOLLOW_UPS line into suggestion chips.
     let cleaned = text.replace(/^\s*(?:Lyra|Assistant)\s*:\s*/i, '').trim();
 
@@ -404,7 +393,7 @@ export async function POST(request: NextRequest) {
       await recordAiRun({
         userId: guard.identity,
         agentName: 'portfolio_assistant',
-        provider: creds.provider,
+        provider: usedProvider,
         model: usedModel,
         inputHash,
         outputHash: hashInput(answer),
@@ -428,12 +417,16 @@ export async function POST(request: NextRequest) {
     await recordAiRun({
       userId: guard.identity,
       agentName: 'portfolio_assistant',
-      provider: creds.provider,
+      provider: usedProvider,
       model: usedModel,
       inputHash,
       outputHash: hashInput(finalText),
       toolsUsed: [],
-      injectionFlags: [...guarded.verdict.warnings, ...guarded.strippedFigures.map((f) => `stripped:${f}`)],
+      injectionFlags: [
+        ...guarded.verdict.warnings,
+        ...guarded.strippedFigures.map((f) => `stripped:${f}`),
+        ...guarded.removedPredictions.map((why) => `prediction:${why}`),
+      ],
       validationErrors: [],
       citationCount: 0,
       status: 'ok',

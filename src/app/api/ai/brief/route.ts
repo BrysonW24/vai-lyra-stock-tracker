@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { DailyBrief } from '@/lib/daily-brief';
-import { complete, type AiProvider } from '@/lib/ai/gateway';
+import { type AiProvider } from '@/lib/ai/gateway';
+import { answerWith } from '@/lib/ai/answer';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, LYRA_BRIEF_FORMAT, composeSystem } from '@/lib/ai/system-prompt';
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { guardProse } from '@/lib/ai/guardrails/prose';
-import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 
@@ -71,29 +71,17 @@ export async function POST(request: NextRequest) {
       // Untrusted client content tripped the injection screen - fall back to the deterministic brief.
       return NextResponse.json({ ok: false, reason: 'refused' });
     }
-    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded });
-    if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
+    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded, allowFreePool: true });
+    if (creds.source === 'none') return NextResponse.json({ ok: false, reason: 'no_key' });
 
-    // Hosted/shared key rides the house budget; BYOK spends the user's own quota untouched. Shared
-    // (Upstash) so the day ceiling holds cross-instance on Vercel, matching chat/agent (audit V5 fix -
-    // this route used the per-lambda in-memory counter, decorative on serverless).
-    if (creds.source !== 'user') {
-      const budget = await chargeHostedBudgetShared(creds.source, 220);
-      if (budget.decision === 'block') return NextResponse.json({ ok: false, reason: 'budget' });
-    }
-
+    // answerWith charges whichever fence applies before the model is called: the house budget for
+    // a hosted key (shared across instances), the per-caller and pool-wide caps for the free pool,
+    // nothing for the caller's own key. Any failure sends the client back to the deterministic
+    // brief, which always renders.
     const prompt = `${factsBlock(brief)}\n\nWrite the brief.${audience(profile)}`;
-    const { text } = await complete({
-      provider: creds.provider,
-      apiKey: creds.apiKey,
-      model: creds.model,
-      system: SYSTEM,
-      prompt,
-      maxTokens: 220,
-      retryOn429: creds.source === 'user',
-    });
-
-    if (!text) return NextResponse.json({ ok: false, reason: 'empty' });
+    const answer = await answerWith(creds, guard.identity, { system: SYSTEM, prompt, maxTokens: 220, budgetTokens: 220 });
+    if (!answer.ok) return NextResponse.json({ ok: false, reason: answer.reason === 'empty_response' ? 'empty' : answer.reason });
+    const { text } = answer;
 
     // Output-side guardrails: the allow-set is the facts block the model was given. A weak
     // model inventing a figure or slipping into advice loses the sentence (or the whole

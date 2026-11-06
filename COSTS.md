@@ -161,6 +161,13 @@ fall into without someone adding a card.
 | Hugging Face | The model files (Gemma 4, Qwen3.5, gpt-oss - all Apache 2.0) | **$0** | Public, ungated downloads, pinned by revision and sha256 in `.github/workflows/model-bakeoff.yml` |
 | llama.cpp | The server that runs the file | **$0** (MIT) | Pinned release, sha256-checked in `.github/actions/local-model/action.yml` |
 
+In the app (v0.140.0) the same free-tier keys answer chat, the brief and signal explanations for
+anyone with no key of their own - the "free pool" (`src/lib/ai/free-pool.ts`): Cloudflare first,
+then Groq, each caller capped at 6 answers a minute and 40 a day and the pool at 2,000 a day. At
+roughly 40 neurons a chat answer on Gemma 4 26B that is about 250 answers a day from Cloudflare
+plus about 170 from Groq before the pool is out, at which point chat prints the engine's figures
+without commentary. A reader's own key is never counted against any of it.
+
 The bake-off (`model-bakeoff.yml`, manual) measures the candidates on Lyra's own tasks before any
 of them writes a real message. Free tiers belong to their owners and have been shrinking (GitHub
 Models was retired on 2026-07-30; Cerebras ended its free tier), which is why the writer is a

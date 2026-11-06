@@ -13,6 +13,11 @@ export type AiFailureReason =
   // back tomorrow' copy rather than the generic 'error' fallback (2026-07-27 audit V5 fix).
   | 'no_key'
   | 'budget'
+  // The free pool of open models (src/lib/ai/free-pool.ts). free_pool_exhausted: every provider in
+  // it is out of its free allowance or busy right now. free_limit: THIS caller has used their own
+  // share for the minute or the day.
+  | 'free_pool_exhausted'
+  | 'free_limit'
   | 'error';
 
 const AI_FAILURE_REASONS = new Set<AiFailureReason>([
@@ -23,6 +28,8 @@ const AI_FAILURE_REASONS = new Set<AiFailureReason>([
   'empty_response',
   'no_key',
   'budget',
+  'free_pool_exhausted',
+  'free_limit',
   'error',
 ]);
 
@@ -60,7 +67,11 @@ export function aiFailureMessage(reason: AiFailureReason): string {
     case 'empty_response':
       return 'The model returned an empty response. Try once more or choose another model.';
     case 'no_key':
-      return 'AI is not connected on this account. Add your own model key in AI settings to turn it on.';
+      return 'AI is not connected here yet. Add your own model key in AI settings to turn it on.';
+    case 'free_pool_exhausted':
+      return "Lyra's free answers are busy or used up for the moment. Try again in a few minutes - the daily allowance resets at 11am Sydney time (10am in winter). Your own model key in AI settings has no such limit.";
+    case 'free_limit':
+      return "You have used your free answers for now. A few more open up each minute, and the day's allowance resets at 11am Sydney time (10am in winter). Add your own model key in AI settings for more.";
     case 'budget':
       return "The shared AI allowance for today is used up. Add your own model key in AI settings for unlimited use, or try again tomorrow.";
     default:

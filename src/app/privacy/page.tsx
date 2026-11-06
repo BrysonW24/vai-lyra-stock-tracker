@@ -60,6 +60,7 @@ export default function PrivacyPage() {
         <Section title="How we use it">
           <p>To provide the service: personalise signals to what you own and watch, generate your daily brief, and deliver the alerts you opt into.</p>
           <p>When you use AI assistance, Lyra sends only the grounded dashboard/profile context needed for that response to the selected AI provider. Beta AI may use a server-side hosted OpenAI key, and any optional bring-your-own key stays browser-local.</p>
+          <p>Free answers are written by an open-source model hosted by Cloudflare or Groq. Your question, the conversation and the dashboard context that grounds the answer - including the holdings it concerns - are sent to whichever of them answers. Cloudflare states that it neither trains on nor keeps this content; Groq states that it does not train on it and may keep request logs for up to 30 days. Neither is sent your name, email address or account details. If you would rather they saw nothing, add your own model key in AI settings and your requests go only to the provider you chose.</p>
         </Section>
 
         <Section title="Your rights">

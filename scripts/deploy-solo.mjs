@@ -44,10 +44,14 @@ let url = urlFlag > -1 ? process.argv[urlFlag + 1] : null;
 if (!url) {
   console.log(`[deploy-solo] building a preview deployment of v${expected} ...`);
   // NEXT_PUBLIC_* is inlined at build time, so the flag has to be a build variable too.
+  // The "create an account" prompt points at the accounted site. Accounts are parked while Lyra
+  // runs without its database (issue #3), so it is OFF unless SOLO_UPGRADE_CTA=1 asks for it -
+  // an invitation to sign up somewhere nobody can sign in is worse than no invitation.
+  const cta = process.env.SOLO_UPGRADE_CTA === '1' ? '1' : '';
   const output = vercel([
     'deploy', '--yes',
-    '--build-env', 'NEXT_PUBLIC_SOLO_UPGRADE_CTA=1',
-    '--env', 'NEXT_PUBLIC_SOLO_UPGRADE_CTA=1',
+    '--build-env', `NEXT_PUBLIC_SOLO_UPGRADE_CTA=${cta}`,
+    '--env', `NEXT_PUBLIC_SOLO_UPGRADE_CTA=${cta}`,
   ]);
   // The CLI reports the deployment differently by mode (a bare URL, a "Preview https://..." line,
   // or JSON with no scheme), so match the hostname itself and take the last one it printed.

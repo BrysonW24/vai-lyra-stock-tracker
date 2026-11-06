@@ -47,6 +47,8 @@ interface AiRuntimeStatus {
   hostedAvailable?: boolean;
   hostedKeyOnDeployment?: boolean;
   aiIncluded?: boolean;
+  // The free pool of open models is on for this deployment (v0.140.0): anyone can chat with no key.
+  freeAvailable?: boolean;
 }
 
 const ACTION_LABEL: Record<ProposedAction['type'], string> = {
@@ -253,14 +255,12 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  // Still waiting for the /api/ai/status response (fetch in-flight).
+  // Still waiting for the /api/ai/status response (fetch in-flight). Without a key of their own
+  // everyone waits for it now - no-account mode included - because it says whether the free pool is on.
   const soloMode = !isSupabaseConfigured();
-  const checkingRuntime =
-    !soloMode &&
-    ai != null &&
-    !ai.apiKey?.trim() &&
-    runtime == null &&
-    (ai.provider === 'openai' || ai.provider === 'google');
+  const checkingRuntime = ai != null && !ai.apiKey?.trim() && runtime == null;
+  // Answers come from the free pool when the reader has no key of their own and the pool is on.
+  const usingFree = ai != null && !ai.apiKey?.trim() && runtime?.freeAvailable === true;
 
   // Connected when the user has a browser key, or the selected provider is backed by a server key
   // AND this user is entitled to it. We gate on the PER-USER hostedAvailable (deployment key +
@@ -271,6 +271,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const connected =
     ai != null &&
     (!!ai.apiKey?.trim() ||
+      runtime?.freeAvailable === true ||
       (!soloMode &&
         ai.provider === 'openai' &&
         (runtime?.hostedAvailable || runtime === null)) ||
@@ -454,12 +455,12 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
             <span className="grid h-12 w-12 place-items-center rounded-full border border-pending/25 bg-blue-tint text-pending">
               {checkingRuntime ? <Loader2 size={22} className="animate-spin" /> : <KeyRound size={22} />}
             </span>
-            <p className="text-sm font-semibold text-ink">{checkingRuntime ? 'Checking hosted model' : 'Connect a model to chat'}</p>
+            <p className="text-sm font-semibold text-ink">{checkingRuntime ? 'Checking for a model' : 'Connect a model to chat'}</p>
             <p className="max-w-xs text-[12px] leading-relaxed text-ink-2">
               {checkingRuntime
-                ? 'Lyra is checking whether the hosted beta key is available for this deployment.'
+                ? 'Lyra is checking which model can answer here.'
                 : soloMode
-                  ? 'Solo has no hosted model. Add your own provider key in Settings; it stays in this browser and is sent only with your requests.'
+                  ? 'Free answers are not switched on here yet. Add your own provider key in Settings; it stays in this browser and is sent only with your requests.'
                   : ai?.provider === 'openai'
                     ? 'Hosted OpenAI is not configured for this deployment yet. Add your own OpenAI key, or set OPENAI_API_KEY server-side and redeploy.'
                   : 'Lyra runs on a model you choose. Add a free key or your own provider key in Settings. Browser keys stay on this device.'}
@@ -480,6 +481,15 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                   <p className="text-[12px] leading-relaxed text-ink-2">
                     I can read your holdings, watchlist, live signals, prime setups and catalysts. Pick a topic below or ask your own - I&apos;ll only answer from what&apos;s on your dashboard.
                   </p>
+                  {usingFree && (
+                    <p className="rounded-cell border border-line px-3 py-2 text-[11px] leading-relaxed text-ink-3">
+                      Free answers are written by an open-source model hosted by Cloudflare or Groq. Your question and the holdings it concerns are sent to them; both say they do not train on it. There is a daily allowance shared by everyone - when it runs out you get the figures without the commentary. Add your own key in{' '}
+                      <Link href="/account/ai" onClick={onClose} className="font-semibold text-pending underline-offset-2 hover:underline">
+                        AI settings
+                      </Link>{' '}
+                      to use a model of your choice.
+                    </p>
+                  )}
 
                   {saved.length > 0 && (
                     <div className="space-y-1.5">

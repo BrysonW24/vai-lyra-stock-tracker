@@ -10,6 +10,7 @@
  */
 import { detectInjectionAttempt } from '@/lib/ai/guardrails/injection';
 import { assertNoFabricatedNumbers } from '@/lib/ai/guardrails/schema';
+import adviceContract from '../../../../contracts/guardrails/advice.json';
 
 export type GuardStatus = 'pass' | 'warn' | 'fail';
 export type GuardDecision = 'allow' | 'review' | 'block';
@@ -66,18 +67,48 @@ const grounding: Guard = ({ text, allowedNumbers }) => {
 
 // Advice / recommendation language a research tool must never emit. Lyra's action language is
 // "Buy Review / Watch / Do Not Add" - never "buy now" / "I recommend" / "guaranteed".
+//
+// The wording lives in contracts/guardrails/advice.json - the SAME file the workers' guard reads
+// (workers/stock_scanner/ai_read_guard.py), written in the regex both languages read the same way
+// and pinned on both sides by its own test sentences. It was widened on 2026-11-06, when Lyra's
+// free answers moved to open-weight models: a smaller model writes "Buy SPOT now" or "investors
+// should consider adding" where a frontier model did not, and the four patterns that used to live
+// here caught neither.
+interface ContractPattern {
+  id: string;
+  why: string;
+  flags: string;
+  pattern: string;
+}
+
+const compile = (entries: ContractPattern[]): Array<{ id: string; re: RegExp; why: string }> =>
+  entries.map((entry) => ({ id: entry.id, re: new RegExp(entry.pattern, entry.flags === 'i' ? 'i' : ''), why: entry.why }));
+
 const ADVICE_PATTERNS: Array<{ re: RegExp; why: string }> = [
-  { re: /\b(?:you should|i (?:recommend|suggest|advise)|my advice)\b.{0,30}\b(?:buy|sell|short|invest|purchase)\b/i, why: 'directive advice to trade' },
-  { re: /\b(?:buy|sell|short) (?:it|now|today|immediately)\b/i, why: 'time-pressured buy/sell instruction' },
-  { re: /\b(?:guarantee[sd]?|risk[- ]free|can'?t lose|sure thing|will (?:definitely|certainly) (?:go up|rise|moon))\b/i, why: 'certainty / guaranteed-return claim' },
+  ...compile(adviceContract.advice),
   // Positive framing as advice fires; the compliant disclaimer ("this is ... not financial advice")
   // is excluded by the lookbehind - a preceding "not" within ~24 chars means it's a disclaimer.
   { re: /(?<!\bnot\b.{0,24})\b(?:financial|investment) advice\b/i, why: 'framed as financial advice' },
 ];
 
+// A forecast. The app's answers may state a scheduled date from the dashboard ("NVDA reports
+// tomorrow" is a calendar fact), so the contract's `future-time` rule - right for a read of a
+// session that has already closed - is not applied here; every forecast of a MOVE is.
+const PREDICTION_PATTERNS = compile(adviceContract.prediction).filter((entry) => entry.id !== 'future-time');
+
+/** Why a piece of text reads as advice to the reader - empty when it only describes. */
+export function adviceFindings(text: string): string[] {
+  return [...new Set(ADVICE_PATTERNS.filter((p) => p.re.test(text)).map((p) => p.why))];
+}
+
+/** Why a sentence reads as a forecast - empty when it describes only what the data shows. */
+export function predictionFindings(sentence: string): string[] {
+  return [...new Set(PREDICTION_PATTERNS.filter((p) => p.re.test(sentence)).map((p) => p.why))];
+}
+
 /** Advice/recommendation/guarantee language -> block (research only, never advice). */
 const regulatedAdvice: Guard = ({ text }) => {
-  const findings = ADVICE_PATTERNS.filter((p) => p.re.test(text)).map((p) => p.why);
+  const findings = adviceFindings(text);
   return { guardId: 'regulated-advice', status: findings.length ? 'fail' : 'pass', findings };
 };
 
@@ -149,7 +180,7 @@ export const STOCK_OPS_GUARDS = [
 ] as const;
 
 /** Bumped whenever the guard set or a guard's behaviour changes - recorded in audit + surfaced in evals. */
-export const GUARDRAILS_VERSION = 2;
+export const GUARDRAILS_VERSION = 3; // 3 = the shared advice contract, advice checked on the whole answer, forecasts removed
 
 const worst = (a: GuardStatus, b: GuardStatus): GuardStatus => {
   const rank: Record<GuardStatus, number> = { pass: 0, warn: 1, fail: 2 };

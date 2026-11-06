@@ -105,8 +105,10 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
   // /api/ai/status resolves (no flicker for the common cases), then correct.
   const [hostedAvailable, setHostedAvailable] = useState<boolean | null>(null);
   const [trialDaysLeft, setTrialDaysLeft] = useState(0);
+  // The free pool of open models: when it is on, AI needs no key and the copy says so first.
+  const [freeAvailable, setFreeAvailable] = useState(false);
   const effectiveHosted = hostedAvailable ?? !soloMode;
-  const aiHosting = aiHostingCopy(effectiveHosted);
+  const aiHosting = aiHostingCopy(effectiveHosted, freeAvailable);
   const sectionHeader =
     section === 'ai'
       ? { title: 'AI Settings', subtitle: aiHosting.headerSubtitle }
@@ -159,6 +161,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
         if (!alive || !d) return;
         if (typeof d.hostedAvailable === 'boolean') setHostedAvailable(d.hostedAvailable);
         if (typeof d.trialDaysLeft === 'number') setTrialDaysLeft(d.trialDaysLeft);
+        if (typeof d.freeAvailable === 'boolean') setFreeAvailable(d.freeAvailable);
       })
       .catch(() => {});
     return () => {
@@ -483,7 +486,7 @@ export function AccountSettings({ section }: { section: SettingsSection }) {
             subtitle={aiHosting.panelSubtitle}
           >
             <div className="space-y-2.5">
-              {trialDaysLeft > 0 && (
+              {trialDaysLeft > 0 && !freeAvailable && (
                 <div className="rounded-cell border border-positive/30 bg-positive-tint p-2.5 text-[11px] leading-relaxed text-positive">
                   AI is included free for {trialDaysLeft} more {trialDaysLeft === 1 ? 'day' : 'days'}. After that,
                   add your own provider key below to keep AI on - your watchlist, portfolio and alerts are

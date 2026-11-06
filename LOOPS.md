@@ -490,13 +490,21 @@ user asks -> grounding assembled server-side       src/app/api/ai/chat/route.ts
 retrieval, injection-fenced live news)              lexical + doc-identity rerank)
   |
   v
-BYOK key (user pays, any model) or hosted key      src/lib/ai/credentials.ts
-(model pinned, budget-metered: 2k/run,             budget-tracker.ts (charge BEFORE call;
-250k tokens/day shared ceiling)                    verdict blocks -> deterministic fallback)
+who answers (src/lib/ai/credentials.ts -> src/lib/ai/answer.ts):
+  1. the user's own key (they pay, any model)
+  2. the FREE POOL of open models, for anyone, no    src/lib/ai/free-pool.ts: Cloudflare Workers AI,
+     sign-in (v0.140.0) - capped per caller          then Groq, in order; a provider that answers 429
+     (6/min, 40/day) and for the pool (2,000/day)    is left alone for its Retry-After (Redis key
+     in Redis, charged BEFORE the call               pool:cool:<provider>:<model>)
+  3. a hosted key, only where no pool is set up      budget-tracker.ts (2k/run, 250k tokens/day)
+     (model pinned, budget-metered)
   |
+  +--> pool out or stumbling -> the engine's own    src/lib/ai/figures-answer.ts (code only, never
+  |    figures, without commentary                    sample data as today's)
   v
-answer (research only, never advice, never         guardProse + policy.ts
-an invented number)
+answer (research only, never advice, never         guardProse + policy.ts; advice wording from
+an invented number, no forecasts)                   contracts/guardrails/advice.json - the same file
+                                                    the workers' guard reads
   |
   +--> ai_runs (durable audit trail, AI-SEC-05)    -> /ai-ops metrics + token cost
   +--> chat_turns (twin-consented users only)      -> newest-8 seed the NEXT session's
@@ -508,6 +516,11 @@ an invented number)
 What closes it: memory (chat_turns) and demand signal (gap-miner) both feed forward; `/ai-quality`
 chain audits groundedness; the scout brief on idea cards runs the same budgeted path with
 server-side evidence grounding and a template fallback that stands when anything fails.
+
+The free pool's open half-loop: its counters and cooling keys live only in Redis and expire on
+their own, and nothing yet reads them back as a trend (how often the pool ran out, how many
+figures-only answers went out). `ai_runs` records each failed attempt's reason when the database is
+there; without it the reason goes to the server log only. A tripwire on pool exhaustion is owed.
 
 ## 9. The paper-bot loop - practice trades, gated hands
 

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { SignalRow } from '@/types/scanner';
-import { complete, type AiProvider } from '@/lib/ai/gateway';
+import { type AiProvider } from '@/lib/ai/gateway';
+import { answerWith } from '@/lib/ai/answer';
 import { LYRA_IDENTITY, LYRA_GUARDRAILS, composeSystem } from '@/lib/ai/system-prompt';
 import { guardProse } from '@/lib/ai/guardrails/prose';
-import { chargeHostedBudgetShared } from '@/lib/ai/budget-tracker';
 import { resolveAiCredentials } from '@/lib/ai/credentials';
 import { guardAiRoute } from '@/lib/api/ai-guard';
 import { buildLiveSignal } from '@/lib/live-signals';
@@ -55,34 +55,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, reason: 'disabled' });
     }
 
-    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded });
-    if (!creds.apiKey) return NextResponse.json({ ok: false, reason: 'no_key' });
-
-    // Hosted/shared key rides the house budget; BYOK spends the user's own quota untouched. Shared
-    // (Upstash) so the day ceiling holds cross-instance on Vercel, matching chat/agent (audit V5 fix -
-    // this route used the per-lambda in-memory counter, decorative on serverless).
-    if (creds.source !== 'user') {
-      const budget = await chargeHostedBudgetShared(creds.source, 160);
-      if (budget.decision === 'block') return NextResponse.json({ ok: false, reason: 'budget' });
-    }
+    const creds = resolveAiCredentials(ai, { authenticated: guard.authenticated, aiIncluded: guard.aiIncluded, allowFreePool: true });
+    if (creds.source === 'none') return NextResponse.json({ ok: false, reason: 'no_key' });
 
     // Deterministic engine recomputes the signal server-side - the client cannot
     // smuggle content into the grounding.
     const signal = await buildLiveSignal(symbol);
     if (!signal) return NextResponse.json({ ok: false, reason: 'unavailable' });
 
+    // answerWith charges the fence that applies (house budget, or the free pool's caps) only once
+    // there is a signal to explain - a symbol with no data costs nobody anything.
     const prompt = `${factsBlock(symbol, signal)}\n\nExplain this setup.`;
-    const { text } = await complete({
-      provider: creds.provider,
-      apiKey: creds.apiKey,
-      model: creds.model,
-      system: SYSTEM,
-      prompt,
-      maxTokens: 160,
-      retryOn429: creds.source === 'user',
-    });
-
-    if (!text) return NextResponse.json({ ok: false, reason: 'empty' });
+    const answer = await answerWith(creds, guard.identity, { system: SYSTEM, prompt, maxTokens: 160, budgetTokens: 160 });
+    if (!answer.ok) return NextResponse.json({ ok: false, reason: answer.reason === 'empty_response' ? 'empty' : answer.reason });
+    const { text } = answer;
 
     const guarded = guardProse(text, [prompt]);
     if (!guarded.ok) return NextResponse.json({ ok: false, reason: 'guardrail' });

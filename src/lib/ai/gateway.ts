@@ -19,7 +19,7 @@
 import { withRetry, defaultIsRetryable, BackpressureLimiter } from '@/lib/ai/resilience';
 import { extractUsage, estimateCostUsd, type TokenUsage } from '@/lib/ai/cost';
 
-export type AiProvider = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'xai';
+export type AiProvider = 'anthropic' | 'openai' | 'openrouter' | 'google' | 'xai' | 'groq' | 'cloudflare';
 
 /** One provider round-trip: the text plus the token usage the provider reported (null if omitted). */
 interface CompletionRaw {
@@ -68,6 +68,23 @@ function describeProviderError(provider: AiProvider, status: number): string {
   return `${provider} ${status}`;
 }
 
+/**
+ * A provider's refusal, with the two facts the free pool needs to route around it: the status, and
+ * how long the provider asked us to wait (its Retry-After, in seconds, when it sent one). The
+ * message is the same cause-naming text every other adapter throws, so failure classification is
+ * unchanged. The response body is never read into it.
+ */
+export class ProviderHttpError extends Error {
+  constructor(
+    public readonly provider: AiProvider,
+    public readonly status: number,
+    public readonly retryAfterSec: number | null,
+  ) {
+    super(describeProviderError(provider, status));
+    this.name = 'ProviderHttpError';
+  }
+}
+
 /** Defaults per provider. OpenAI intentionally uses the powerful hosted beta default. */
 export const DEFAULT_MODELS: Record<AiProvider, string> = {
   // Current cheap/fast Anthropic default. The old 'claude-3-5-haiku-latest' resolved to
@@ -77,8 +94,16 @@ export const DEFAULT_MODELS: Record<AiProvider, string> = {
   openrouter: 'meta-llama/llama-3.1-70b-instruct',
   google: 'gemini-3.1-flash-lite',
   xai: 'grok-2-latest',
+  // The free pool's providers (src/lib/ai/free-pool.ts): open-weight models on free hosted tiers.
+  groq: 'openai/gpt-oss-120b',
+  cloudflare: '@cf/google/gemma-4-26b-a4b-it',
 };
 
+/**
+ * The providers a USER may choose for their own key - the list the credential resolver checks a
+ * client-supplied provider against. Groq and Cloudflare are deliberately not in it: they are
+ * reached only through the free pool, with Lyra's own keys, and never by a string from a request.
+ */
 export const SUPPORTED_PROVIDERS: AiProvider[] = ['anthropic', 'openai', 'openrouter', 'google', 'xai'];
 
 /** Resolve a user-supplied model (which may be blank) to a concrete model id. */
@@ -167,7 +192,46 @@ async function callOpenAiResponses(
   return { text: joined, usage };
 }
 
-/** OpenRouter and xAI use the OpenAI chat-completions wire format. */
+/**
+ * What a reasoning model needs so its thinking neither reaches the reader nor eats the answer's
+ * budget (the same fields workers/stock_scanner/open_model.py sends; Groq's docs, read 2026-11-06).
+ */
+export function reasoningExtras(provider: AiProvider, model: string): Record<string, unknown> | undefined {
+  const id = model.toLowerCase();
+  if (provider === 'groq') {
+    if (id.includes('gpt-oss')) return { reasoning_effort: 'low', include_reasoning: false };
+    if (id.startsWith('qwen/')) return { reasoning_effort: 'low', reasoning_format: 'hidden' };
+  }
+  if (provider === 'cloudflare' && id.includes('gpt-oss')) return { reasoning_effort: 'low' };
+  return undefined;
+}
+
+/** A model's answer without any reasoning it printed inline. */
+export function stripThinking(text: string): string {
+  let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '');
+  // An opening tag the server swallowed, the closing one left behind.
+  if (/<\/think>/i.test(cleaned)) cleaned = cleaned.replace(/^[\s\S]*?<\/think>/i, '');
+  return cleaned.trim();
+}
+
+/** A chat message's text: a string, or a list of typed parts whose text parts are joined. */
+function messageText(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+  return content
+    .map((part) => (part && typeof part === 'object' && typeof (part as { text?: unknown }).text === 'string' ? ((part as { text: string }).text) : ''))
+    .join('');
+}
+
+interface OpenAiCompatibleOptions {
+  extraHeaders?: Record<string, string>;
+  /** Extra request fields (a reasoning model's effort / visibility controls). */
+  extraBody?: Record<string, unknown>;
+  /** What the endpoint calls the output ceiling. */
+  tokenField?: 'max_tokens' | 'max_completion_tokens';
+}
+
+/** OpenRouter, xAI, Groq and Cloudflare Workers AI all speak the OpenAI chat-completions wire format. */
 async function callOpenAiCompatible(
   provider: AiProvider,
   endpoint: string,
@@ -177,27 +241,35 @@ async function callOpenAiCompatible(
   prompt: string,
   maxTokens: number,
   temperature: number | undefined,
-  extraHeaders?: Record<string, string>,
+  options: OpenAiCompatibleOptions = {},
 ): Promise<CompletionRaw> {
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}`, ...(extraHeaders ?? {}) },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens,
-      ...(temperature != null ? { temperature } : {}),
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: prompt },
-      ],
-    }),
-  });
-  if (!res.ok) throw new Error(describeProviderError(provider, res.status));
+  const post = (extraBody: Record<string, unknown> | undefined) =>
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}`, ...(options.extraHeaders ?? {}) },
+      body: JSON.stringify({
+        model,
+        [options.tokenField ?? 'max_tokens']: maxTokens,
+        ...(temperature != null ? { temperature } : {}),
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: prompt },
+        ],
+        ...(extraBody ?? {}),
+      }),
+    });
+  let res = await post(options.extraBody);
+  // An endpoint that does not know a reasoning field refuses the whole request: ask once more plainly.
+  if (res.status === 400 && options.extraBody && Object.keys(options.extraBody).length > 0) res = await post(undefined);
+  if (!res.ok) {
+    const retryAfter = Number(res.headers?.get?.('retry-after'));
+    throw new ProviderHttpError(provider, res.status, Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : null);
+  }
   const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    choices?: Array<{ message?: { content?: unknown } }>;
     usage?: { prompt_tokens?: number; completion_tokens?: number };
   };
-  return { text: data.choices?.[0]?.message?.content?.trim() ?? '', usage: extractUsage(provider, data) };
+  return { text: stripThinking(messageText(data?.choices?.[0]?.message?.content)), usage: extractUsage(provider, data) };
 }
 
 async function callGoogle(
@@ -280,12 +352,32 @@ async function dispatchCompletion(params: AiCompleteParams, model: string, maxTo
         prompt,
         maxTokens,
         temperature,
-        { 'HTTP-Referer': 'https://lyra.vivacity.ai', 'X-Title': 'Lyra' },
+        { extraHeaders: { 'HTTP-Referer': 'https://lyra.vivacity.ai', 'X-Title': 'Lyra' } },
       );
     case 'google':
       return callGoogle(apiKey, model, system, prompt, maxTokens, temperature);
     case 'xai':
       return callOpenAiCompatible(provider, 'https://api.x.ai/v1/chat/completions', apiKey, model, system, prompt, maxTokens, temperature);
+    case 'groq':
+      return callOpenAiCompatible(provider, 'https://api.groq.com/openai/v1/chat/completions', apiKey, model, system, prompt, maxTokens, temperature, {
+        extraBody: reasoningExtras(provider, model),
+        tokenField: 'max_completion_tokens',
+      });
+    case 'cloudflare': {
+      const account = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
+      if (!account) throw new Error('ai_gateway: cloudflare account id is not configured');
+      return callOpenAiCompatible(
+        provider,
+        `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(account)}/ai/v1/chat/completions`,
+        apiKey,
+        model,
+        system,
+        prompt,
+        maxTokens,
+        temperature,
+        { extraBody: reasoningExtras(provider, model) },
+      );
+    }
     default: {
       const never: never = provider;
       throw new Error(`ai_gateway: unsupported provider ${String(never)}`);
