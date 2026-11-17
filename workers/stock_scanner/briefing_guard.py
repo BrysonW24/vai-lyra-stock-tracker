@@ -36,6 +36,7 @@ THEMES = (
     "semiconductors",
     "power-grid",
     "nuclear-uranium",
+    "fusion-energy",
     "critical-minerals",
     "robotics-automation",
     "quantum-computing",

@@ -29,7 +29,9 @@ import { createServerClient } from '@supabase/ssr';
 // /subscribe is public on purpose: it is the no-account front door to the evening AI briefing (v0.134.0) -
 // a friend given the link answers three questions and never signs in. The confirm/unsubscribe links
 // land there too.
-const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/welcome', '/privacy', '/support', '/subscribe', '/terms', '/transparency', '/whats-new'];
+// /updates is public on purpose: it is where Lyra's free market read is published (v0.142.0), the same
+// read for everyone, written with no account anywhere in the loop - a link to it must simply work.
+const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/welcome', '/privacy', '/support', '/subscribe', '/terms', '/transparency', '/updates', '/whats-new'];
 // Browser-install assets must never be caught by the first-run gate. A redirect here makes the
 // manifest invalid and prevents service-worker registration for the exact fresh visitor who needs
 // the install flow.

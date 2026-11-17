@@ -23,6 +23,17 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.142.0',
+    date: '2026-11-18',
+    title: 'Free market updates with no account and no paid key, and Fusion Energy joins the themes',
+    highlights: [
+      'A new Updates page carries Lyra\'s market read of the last completed US session - the same read for everyone, open to anyone with the link, no sign-in.',
+      'The read is written for free: Lyra serves the session\'s figures, an open-source model writes two paragraphs on a free GitHub machine, and the app checks every figure against what it served before anything is shown. A sentence with a number it did not serve, advice or a forecast drops the commentary, and the figures still publish.',
+      'A session\'s figures come from its own closing bar, never the moving bar of a session still trading, so a read written right after the close is dated to the right day.',
+      'Fusion Energy is a new theme: the supply chain from fuel and magnets to the power deals, five listed companies with dated, sourced exposure, and ten dated capital events. The thesis says plainly that no fusion power has yet reached a grid. Its facts were checked against primary sources in July 2026, and it is a topic you can choose for the evening briefing.',
+    ],
+  },
+  {
     version: '0.141.0',
     date: '2026-11-07',
     title: 'The market read is checked for what its figures mean, and the bake-off finds the small model that got them right',

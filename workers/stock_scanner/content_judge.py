@@ -133,7 +133,7 @@ READERS = {
     ),
     "ai_briefing": (
         "Every Lyra account and the readers who subscribed by link: Australian private investors following AI and technology shares. "
-        "They asked for: the app's ten themes (AI labs and infrastructure, semiconductors, power grid, nuclear and uranium, critical minerals, robotics, "
+        "They asked for: the app's eleven themes (AI labs and infrastructure, semiconductors, power grid, nuclear and uranium, fusion energy, critical minerals, robotics, "
         "quantum computing, space, defence and drones, cybersecurity) with which companies they are, the four standing desks every night (IPOs and filings, "
         "venture, government money, small caps) even if a desk is one line, the biggest headline first, and short bites with a source each."
     ),

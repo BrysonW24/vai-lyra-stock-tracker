@@ -18,6 +18,7 @@ export type BriefingTheme =
   | 'semiconductors'
   | 'power-grid'
   | 'nuclear-uranium'
+  | 'fusion-energy'
   | 'critical-minerals'
   | 'robotics-automation'
   | 'quantum-computing'
@@ -35,6 +36,7 @@ export const BRIEFING_THEME_STYLE: Record<BriefingTheme, { emoji: string; label:
   semiconductors: { emoji: '💾', label: 'Semiconductors' },
   'power-grid': { emoji: '⚡', label: 'Power grid' },
   'nuclear-uranium': { emoji: '☢️', label: 'Nuclear and uranium' },
+  'fusion-energy': { emoji: '☀️', label: 'Fusion energy' },
   'critical-minerals': { emoji: '⛏️', label: 'Critical minerals' },
   'robotics-automation': { emoji: '🦾', label: 'Robotics and automation' },
   'quantum-computing': { emoji: '⚛️', label: 'Quantum computing' },

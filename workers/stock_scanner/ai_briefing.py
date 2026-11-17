@@ -116,6 +116,7 @@ Themes - tag every item with exactly one:
 - semiconductors: chips, memory, networking, packaging and the equipment makers.
 - power-grid: electricity supply, grid equipment, cooling and transmission for the buildout.
 - nuclear-uranium: reactors, fuel, uranium supply and the deals that fund them.
+- fusion-energy: fusion developers, magnets and fuel, the power deals and government programmes behind them.
 - critical-minerals: the materials technology needs - rare earths, lithium, copper, gallium - and who controls them.
 - robotics-automation: robots, autonomy, humanoids, industrial automation.
 - quantum-computing: hardware, error correction, cloud access, customers.

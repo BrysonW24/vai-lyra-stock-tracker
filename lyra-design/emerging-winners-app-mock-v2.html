@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lyra · Emerging Winners — mobile surface v2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(920px 540px at 10% -12%, rgba(59, 91, 219, 0.14), transparent 60%),
+      radial-gradient(820px 520px at 102% 2%, rgba(67, 209, 139, 0.07), transparent 55%),
+      radial-gradient(760px 640px at 50% 118%, rgba(124, 58, 237, 0.09), transparent 60%),
+      #07090c;
+    color: #eef3f8;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 34px 20px 44px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 19px; font-weight: 650; letter-spacing: -0.01em; }
+  .sub { color: #9fb0c0; font-size: 13px; margin-top: 6px; max-width: 74ch; line-height: 1.5; }
+  .phones { display: flex; gap: 34px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
+  .phone {
+    width: 393px; border-radius: 44px; padding: 10px;
+    background: #0b0f14;
+    border: 1px solid rgba(126,148,168,0.20);
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .screen {
+    border-radius: 36px; overflow: hidden; position: relative;
+    background:
+      radial-gradient(420px 280px at 18% -8%, rgba(59, 91, 219, 0.15), transparent 62%),
+      #080b0f;
+    border: 1px solid rgba(126,148,168,0.08);
+    padding: 12px 18px 22px;
+    min-height: 780px;
+  }
+  .notch { width: 118px; height: 26px; background:#0b0f14; border-radius: 0 0 16px 16px; position:absolute; top:0; left:50%; transform:translateX(-50%); }
+  .statusbar { display:flex; justify-content:space-between; font-size:12px; color:#77828e; padding: 6px 6px 14px; }
+
+  /* header */
+  .apphead { display:flex; align-items:center; justify-content:space-between; margin-bottom: 4px; }
+  .brand { font-weight: 700; font-size: 15px; letter-spacing: 0.02em; }
+  .brand em { font-style: normal; color:#f3a33a; }
+  .rbadge { font-size: 9.5px; font-weight: 650; letter-spacing: 0.08em; color:#77828e; text-transform: uppercase; }
+  .pagetitle { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-top: 10px; }
+  .pagesub { font-size: 12.5px; color: #77828e; margin: 4px 0 18px; }
+
+  /* slider */
+  .seg { display:flex; gap:4px; border-radius: 12px; padding:4px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(126,148,168,0.10); }
+  .seg .opt { flex:1; text-align:center; font-size: 12.5px; padding: 9px 0; border-radius: 9px; color:#8b98a5; font-weight: 500; }
+  .seg .opt.on {
+    background: linear-gradient(155deg, rgba(60,42,16,0.95), rgba(35,24,11,0.88));
+    border: 1px solid rgba(154,106,31,0.85);
+    box-shadow: 0 6px 18px -8px rgba(243,163,58,0.5);
+    color:#ffd9a0; font-weight: 650;
+  }
+  .seg .opt.off { color:#3d454e; }
+  .segnote { font-size: 10.5px; color:#55606c; margin: 8px 2px 20px; }
+
+  /* ============ queue card v2 ============ */
+  .qcard {
+    border-radius: 20px; padding: 16px;
+    background: linear-gradient(155deg, rgba(24,32,43,0.55), rgba(13,17,23,0.40));
+    border: 1px solid rgba(126,148,168,0.10);
+    margin-bottom: 12px;
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 14px;
+  }
+  .qcard.hero { border-color: rgba(96,165,250,0.25); box-shadow: 0 20px 60px -30px rgba(59,91,219,0.5); }
+  .qL {}
+  .tick { font-weight: 700; font-size: 16px; letter-spacing: 0.01em; }
+  .qname { color:#8b98a5; font-size: 12px; margin-top: 1px; }
+  .qtag { font-size: 11.5px; color:#b9a7ec; margin-top: 8px; }
+  .qtag i { font-style: normal; color:#55606c; }
+  .stat { display:flex; gap:14px; margin-top: 12px; align-items:center; }
+  .stat .s b { display:block; font-size: 13px; font-weight: 650; color:#eef3f8; }
+  .stat .s span { font-size: 9.5px; color:#55606c; letter-spacing: 0.04em; text-transform: uppercase; }
+  .dots { display:flex; gap:3px; align-items:center; }
+  .dots i { width: 6px; height: 6px; border-radius: 99px; background: #2d3844; }
+  .dots i.on { background: #60a5fa; }
+  /* score ring */
+  .ring { width: 74px; height: 74px; position: relative; align-self: center; grid-row: 1 / 4; grid-column: 2; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .tr { stroke: rgba(126,148,168,0.14); }
+  .ring .vl { stroke: url(#g1); stroke-linecap: round; }
+  .ring .num { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .ring .num b { font-size: 21px; font-weight: 750; letter-spacing: -0.02em; }
+  .ring .num span { font-size: 8px; color:#55606c; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }
+
+  /* ============ detail v2 ============ */
+  .dhero { display:flex; justify-content:space-between; align-items:flex-start; margin-top: 4px; }
+  .dhero h3 { font-size: 24px; font-weight: 750; letter-spacing: -0.01em; }
+  .dhero .co { color:#8b98a5; font-size: 12.5px; margin-top: 3px; }
+  .dhero .tag { font-size: 11.5px; color:#b9a7ec; margin-top: 7px; }
+  .bigring { width: 92px; height: 92px; }
+  .bigring .num b { font-size: 28px; }
+  .divider { height:1px; background: rgba(126,148,168,0.10); margin: 18px 0 16px; }
+
+  .kv { display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 10px; }
+  .kv .k { font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color:#55606c; }
+  .kv .v { font-size: 11px; color:#8b98a5; }
+
+  /* calibration as twin proportion bars */
+  .cal { margin-bottom: 4px; }
+  .calrow { display:grid; grid-template-columns: 86px 1fr 40px; gap: 10px; align-items:center; font-size: 11.5px; margin-bottom: 7px; }
+  .calrow .lbl { color:#8b98a5; }
+  .calbar { height: 8px; border-radius: 99px; background: rgba(126,148,168,0.10); overflow:hidden; }
+  .calbar i { display:block; height:100%; border-radius: 99px; }
+  .calrow .pv { text-align:right; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .calnote { font-size: 10.5px; color:#55606c; margin-top: 2px; }
+
+  /* drivers v2 — tight */
+  .drv { display:grid; grid-template-columns: 82px 1fr 30px; gap: 10px; align-items:center; font-size: 12px; margin-bottom: 8px; color:#c7d3de; }
+  .dbar { height: 5px; border-radius: 99px; background: rgba(126,148,168,0.10); position: relative; }
+  .dbar i { position:absolute; top:0; height:100%; border-radius:99px; }
+  .dbar i.pos { left:50%; background: linear-gradient(90deg,#2e9b73,#43d18b); }
+  .dbar i.neg { right:50%; background: linear-gradient(270deg,#c94f4f,#e66767); }
+  .dbar::after { content:""; position:absolute; left:50%; top:-2px; bottom:-2px; width:1px; background:rgba(126,148,168,0.22); }
+  .dv { text-align:right; font-variant-numeric: tabular-nums; font-size: 11.5px; font-weight: 600; }
+  .dv.pos { color:#7fdcae; } .dv.neg { color:#e88; } .dv.na { color:#3d454e; font-weight: 500; }
+  .drv .nm.na { color:#3d454e; }
+
+  /* risks v2 — compact severity pills */
+  .riskrow { display:flex; gap:8px; flex-wrap:wrap; }
+  .rpill {
+    display:flex; align-items:center; gap:7px;
+    font-size: 11.5px; font-weight: 550; color:#dcc9c9;
+    padding: 8px 12px; border-radius: 99px;
+    background: rgba(230,103,103,0.08);
+    border: 1px solid rgba(230,103,103,0.22);
+  }
+  .rpill .sev { width:7px; height:7px; border-radius:99px; }
+  .sev.hi { background:#e66767; } .sev.md { background:#f3a33a; }
+  .rpill .more { color:#77828e; font-size: 12px; margin-left: 1px; }
+  .riskx {
+    margin-top: 10px; padding: 11px 13px; border-radius: 14px;
+    background: rgba(230,103,103,0.05); border: 1px solid rgba(230,103,103,0.14);
+    font-size: 11.5px; color:#c9b4b4; line-height: 1.55;
+  }
+  .riskx b { color:#eadada; font-weight: 650; }
+
+  .inval { font-size: 11.5px; color:#8b98a5; line-height: 1.55; }
+  .inval b { color:#c7d3de; font-weight: 600; }
+
+  .actions { display:flex; gap:10px; margin-top: 18px; }
+  .act {
+    flex:1; text-align:center; font-size: 13px; font-weight: 650; padding: 13px 0; border-radius: 14px;
+    border: 1px solid rgba(126,148,168,0.16); color:#c7d3de; background: rgba(255,255,255,0.03); min-height:44px;
+  }
+  .act.primary { border-color: rgba(154,106,31,0.85); color:#ffd9a0;
+    background: linear-gradient(155deg, rgba(60,42,16,0.95), rgba(35,24,11,0.88));
+    box-shadow: 0 8px 22px -10px rgba(243,163,58,0.55); }
+  .prov { margin-top: 14px; font-size: 9.5px; color:#3d454e; line-height: 1.5; display:flex; align-items:center; gap:6px; }
+  .prov svg { flex-shrink:0; opacity:0.6; }
+
+  .caption { text-align:center; color:#77828e; font-size: 12px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Emerging Winners — surface v2</h1>
+  <p class="sub">Same doctrine, half the ink. Score rings replace number blocks; a 10-dot strip replaces coverage chips and "no data" pills; risks compress to severity pills with the top one expanded; calibration becomes two bars instead of a paragraph.</p>
+
+  <svg width="0" height="0"><defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3b5bdb"/><stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+  </defs></svg>
+
+  <div class="phones">
+
+    <!-- ============ PHONE 1 · QUEUE v2 ============ -->
+    <div>
+      <div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="statusbar"><span>9:41</span><span>􀙇 􀛨</span></div>
+
+        <div class="apphead">
+          <div class="brand">Lyra<em>.</em></div>
+          <div class="rbadge">Research · not advice</div>
+        </div>
+        <div class="pagetitle">Emerging Winners</div>
+        <div class="pagesub">Ranked for research · graded within weight class</div>
+
+        <div class="seg">
+          <div class="opt">+30%</div>
+          <div class="opt">+50%</div>
+          <div class="opt on">+100%</div>
+          <div class="opt off">+200%</div>
+          <div class="opt off">+300%</div>
+        </div>
+        <div class="segnote">Greyed targets: no proven skill yet — shown, not hidden.</div>
+
+        <!-- card 1 -->
+        <div class="qcard hero">
+          <div class="qL">
+            <div class="tick">NVTS</div>
+            <div class="qname">Navitas Semiconductor</div>
+            <div class="qtag">AI infra · 2nd-order <i>· Micro</i></div>
+            <div class="stat">
+              <div class="s"><b>2.6×</b><span>vs peers</span></div>
+              <div class="s"><b><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></b><span>7/10 domains</span></div>
+            </div>
+          </div>
+          <div class="ring">
+            <svg width="74" height="74"><circle class="tr" cx="37" cy="37" r="31" fill="none" stroke-width="5"/><circle class="vl" cx="37" cy="37" r="31" fill="none" stroke-width="5" stroke-dasharray="194.8" stroke-dashoffset="35.1"/></svg>
+            <div class="num"><b>82</b><span>similarity</span></div>
+          </div>
+        </div>
+
+        <!-- card 2 -->
+        <div class="qcard">
+          <div class="qL">
+            <div class="tick">ASTS</div>
+            <div class="qname">AST SpaceMobile</div>
+            <div class="qtag">Gov-backed space <i>· Small</i></div>
+            <div class="stat">
+              <div class="s"><b>2.1×</b><span>vs peers</span></div>
+              <div class="s"><b><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></span></b><span>6/10 domains</span></div>
+            </div>
+          </div>
+          <div class="ring">
+            <svg width="74" height="74"><circle class="tr" cx="37" cy="37" r="31" fill="none" stroke-width="5"/><circle class="vl" cx="37" cy="37" r="31" fill="none" stroke-width="5" stroke-dasharray="194.8" stroke-dashoffset="50.6"/></svg>
+            <div class="num"><b>74</b><span>similarity</span></div>
+          </div>
+        </div>
+
+        <!-- card 3 -->
+        <div class="qcard">
+          <div class="qL">
+            <div class="tick">RCAT</div>
+            <div class="qname">Red Cat Holdings</div>
+            <div class="qtag">Defence robotics <i>· Micro</i></div>
+            <div class="stat">
+              <div class="s"><b>1.9×</b><span>vs peers</span></div>
+              <div class="s"><b><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></span></b><span>5/10 domains</span></div>
+            </div>
+          </div>
+          <div class="ring">
+            <svg width="74" height="74"><circle class="tr" cx="37" cy="37" r="31" fill="none" stroke-width="5"/><circle class="vl" cx="37" cy="37" r="31" fill="none" stroke-width="5" stroke-dasharray="194.8" stroke-dashoffset="62.3"/></svg>
+            <div class="num"><b>68</b><span>similarity</span></div>
+          </div>
+        </div>
+
+      </div></div>
+      <div class="caption">Queue v2 — ring, one tag line, two stats, zero chip soup</div>
+    </div>
+
+    <!-- ============ PHONE 2 · DETAIL v2 ============ -->
+    <div>
+      <div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="statusbar"><span>9:41</span><span>􀙇 􀛨</span></div>
+
+        <div class="dhero">
+          <div>
+            <h3>NVTS</h3>
+            <div class="co">Navitas Semiconductor · Micro · $480M</div>
+            <div class="tag">AI infra · 2nd-order supplier</div>
+          </div>
+          <div class="ring bigring">
+            <svg width="92" height="92"><circle class="tr" cx="46" cy="46" r="39" fill="none" stroke-width="6"/><circle class="vl" cx="46" cy="46" r="39" fill="none" stroke-width="6" stroke-dasharray="245" stroke-dashoffset="44.1"/></svg>
+            <div class="num"><b>82</b><span>similarity</span></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="kv"><span class="k">Track record</span><span class="v">+100% within 12mo · historical</span></div>
+        <div class="cal">
+          <div class="calrow"><span class="lbl">Names like this</span><div class="calbar"><i style="width:18%; background:linear-gradient(90deg,#3b5bdb,#60a5fa)"></i></div><span class="pv" style="color:#8fbcf8">18%</span></div>
+          <div class="calrow"><span class="lbl">Random micro</span><div class="calbar"><i style="width:9%; background:rgba(126,148,168,0.35)"></i></div><span class="pv" style="color:#8b98a5">9%</span></div>
+          <div class="calnote">Resemblance estimate — not a prediction.</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="kv"><span class="k">Drivers</span><span class="v">signed contribution</span></div>
+        <div class="drv"><span class="nm">Theme</span><div class="dbar"><i class="pos" style="width:34%"></i></div><span class="dv pos">+18</span></div>
+        <div class="drv"><span class="nm">Gov / policy</span><div class="dbar"><i class="pos" style="width:23%"></i></div><span class="dv pos">+12</span></div>
+        <div class="drv"><span class="nm">Technical</span><div class="dbar"><i class="pos" style="width:19%"></i></div><span class="dv pos">+10</span></div>
+        <div class="drv"><span class="nm">Capital</span><div class="dbar"><i class="neg" style="width:17%"></i></div><span class="dv neg">−9</span></div>
+        <div class="drv"><span class="nm na">Sponsorship</span><div class="dbar"></div><span class="dv na">—</span></div>
+
+        <div class="divider"></div>
+
+        <div class="kv"><span class="k">Risks</span><span class="v">always shown · tap to expand</span></div>
+        <div class="riskrow">
+          <div class="rpill"><span class="sev hi"></span>Dilution<span class="more">›</span></div>
+          <div class="rpill"><span class="sev hi"></span>Illiquidity<span class="more">›</span></div>
+          <div class="rpill"><span class="sev md"></span>Pump screen<span class="more">›</span></div>
+        </div>
+        <div class="riskx"><b>Dilution — high.</b> 2 shelf registrations in 18 months · ~5 quarters of cash. <b>Invalidates the thesis:</b> a raise priced below market.</div>
+
+        <div class="actions">
+          <div class="act primary">Research</div>
+          <div class="act">Watch</div>
+          <div class="act">Compare</div>
+        </div>
+
+        <div class="prov">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="#3d454e"/><path d="M6 5.4v3" stroke="#3d454e" stroke-linecap="round"/><circle cx="6" cy="3.6" r="0.7" fill="#3d454e"/></svg>
+          real-v1 · corpus a297e8ad · claimed: micro × +100% · shadow-live · research only, never advice
+        </div>
+
+      </div></div>
+      <div class="caption">Card v2 — number → track record → drivers → risks, one screen</div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

@@ -20,6 +20,7 @@ Companions: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (structure - what exists),
 | 3c | AI briefing (web research) | `ai-briefing.yml` at 09:20 + 10:20 UTC Tue-Sat; once per reader-local day, at or after 8pm Sydney | `stock_scanner_runs` rows with `job_name = ai_briefing` (the checked items with their sources, how many were removed and why, model, searches, pages opened, tokens, cost, who was reached); `briefing_subscribers` (the no-account audience from `/subscribe`: channel, topics, holdings, status, last date served) | the operator's Telegram; every account through the notification router (`ai_briefing` events); every active subscriber - their own reorder of the same items - on Telegram through the app's bot or by email (Resend); the `/briefing` page; the next firing (dedupe, resend of an undelivered briefing, budget pacing, the repeat check; a subscriber already served today is skipped) | `test_ai_briefing.py`, `test_briefing_subscribers.py`, `check:app-columns` (both manifests), the workflow's failure pager |
 | 3d | Content record + review + reader feedback | every send writes its record; `content-review.yml` at 11:40 UTC Tue-Sat reviews; a reader's tap or reply lands at once | `ai_runs` rows for every message the workers send (`agent_name` daily_read / ai_briefing / morning_guide: the text as sent, the input, `prompt_version`, mode, tokens, cost) and for every review (`agent_name` content_judge: six pillar scores, reasons, advice flag, rubric version, owned by the operator); `content_feedback` (migration 060: one row per reader per message - 👍/👎, the reason pillar, a reply as a note) | the operator, reading the record, the reviews and the feedback side by side; the next night's review (anything unreviewed inside the lookback); a prompt change shows up as a new `prompt_version` next to the scores | `test_generation_record.py`, `test_content_judge.py`, the record tests in `test_daily_read.py` and `test_ai_briefing.py`, `src/lib/feedback/__tests__`, the webhook's `feedback.test.ts`, `check:app-columns` (both manifests), the workflow's failure pager |
 | 3e | Morning guide (engine only) | `morning-guide.yml` at 21:41, 22:41 and 23:13 UTC Mon-Fri; once per Sydney morning at or after 8:30am, only for a US session no guide has covered, after the scanner has scored its closing bar (the last firing sends regardless) | `stock_scanner_runs` rows with `job_name = morning_guide` (date sent, session, holdings, quotes, how many were closing quotes, earnings dates found) and an `ai_runs` record per guide (owned by the operator) | the operator's Telegram (with the feedback buttons); the next firing (dedupe by date and by session); the nightly review | `test_morning_guide.py`, `check:app-columns` (summary manifest), the workflow's failure pager |
+| 3f | Free market read (open model, no database) | `free-daily-read.yml` at 21:35 UTC Mon-Fri and 09:05 UTC Tue-Sat; once per completed US session, whichever firing gets there first | Redis (`lyra:updates:`): `facts:<session>` (the rows the app served, with their hash), `read:<session>` (the published read: figures, prose or the reason there is none, the writer), `latest-read`, `rehearsal:<session>` | the `/updates` page (`/api/updates/latest`); the next firing (`published` on the facts answer stops a second read); the writer's own log of counts and reasons | `test_app_client.py`, `test_free_daily_read.py`, `test_free_read.py`, `src/lib/updates/__tests__` (incl. the facts contract fixture both sides read), `src/app/api/updates/*/__tests__`, the workflow's failure pager |
 | 4 | Notification delivery | every event + nightly sweep | `notification_deliveries`, `notification_engagements` | sweep, relevance tuning | `/notification-health` chain |
 | 5 | Scout (notice-create-learn) | nightly 22:05 UTC | `scout_items`, `scout_runs`, ideas, source scores, stoplist | Scout-tab proposals, next night's clustering | zero-writes guards, saturation flags |
 | 6 | Macro + calendar | hourly snap + seasonal crons | `market_context_snapshots`, calendar events | dashboard strips, loop 3 baselines | RBA no-number degradation |
@@ -344,6 +345,52 @@ financial fun fact"): each item is now one paragraph led by a bold one-line take
 by the guard like every field), and the evening ends on one fact from Lyra's own facts library
 (`content/finance-facts.jsonl`) - only entries that carry a source and an https link, each checked
 against that page before it was added - one per date, in turn (`fun_facts.py`).
+
+### 3f. The free market read - the app's facts, an open model's prose, the app's own check, no database
+
+The founder (2026-11-06): Lyra's updates should keep coming, and "the whole thing should be free,
+effectively". The database is parked (the free product has no accounts), the paid model is dark, and
+the paid daily read (3b) depends on both. This loop is the same read without either: the app that
+serves the screen also serves the facts, an open-weight model writes, and nothing it writes reaches
+a reader without passing two guards.
+
+```text
+  the app: GET /api/updates/facts
+    every listed name's last COMPLETED session from Yahoo's daily bars (buildLiveSession - never
+    today's moving bar; the session most names are on; at least 60% of them), scored by the
+    engine the screen uses -> rows in the exact shape the worker's build_facts reads, computed
+    once per session, stored in Redis with their sha256, and served unchanged after that
+        |
+        v
+  GitHub runner (free-daily-read.yml, 21:35 UTC Mon-Fri + 09:05 UTC Tue-Sat)
+    free_daily_read.py: fetch the facts -> build_facts / build_sheet / figure_sections (the paid
+    read's own code, in daily mode) -> narrate_open over OPEN_MODEL_CHAIN (hosted free tiers
+    first when their keys exist; the floor is Lyra's own copy of Gemma 4 E4B on the runner,
+    started only when the check step finds a read is needed) -> guard_ai_read + read_meaning on
+    every candidate; the first that passes writes it, none passing means figures only
+        |  POST /api/updates/publish, signed: HMAC-SHA256 over "<timestamp>.<body>"
+        v
+  the app, four checks before anything is stored:
+    the signature is the writer's (UPDATES_PUBLISH_SECRET, +-300 s) -> the read quotes the hash of
+    the facts the app itself served -> guardProse on the prose against that very sheet (a figure
+    outside it, advice, a forecast: the prose is DROPPED, never edited - the figures still
+    publish and the read says why it has no commentary) -> one read per session unless `replace`
+        |
+        v
+  Redis lyra:updates: read:<session> + latest-read  ->  /updates (MarketReadView), /api/updates/latest
+```
+
+What closes it: the `published` flag on the facts answer stops a second read for the session, so the
+second firing of the day (and the paid read's old hour) is a no-op that starts no model; a US
+holiday has no new session. A `rehearsal` is checked exactly the same way and stored where no reader
+looks. The contract between the two sides is pinned by two files both test suites read:
+`contracts/updates/signature-vector.json` (one signed request) and `contracts/updates/facts-fixture.json`
+(what the app serves for a known set of names, written by the app's test and parsed by the real
+`build_facts` in the worker's). The store is the one place the cache is not optional
+(`src/lib/updates/store.ts`): with no shared store the routes say updates are not switched on, rather
+than "publishing" into one instance's memory. Workers log counts, labels and reasons only - the
+repository's Actions logs are public. Open: the hosted writers wait on the founder's free keys
+(Groq, Cloudflare); until then every read is written on the runner, at a few tokens a second.
 
 ## 4. The notification loop - deliver, hold, sweep, learn
 

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lyra · Model Evidence — mobile surface</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(920px 540px at 10% -12%, rgba(59,91,219,0.14), transparent 60%),
+      radial-gradient(760px 640px at 50% 118%, rgba(124,58,237,0.09), transparent 60%),
+      #07090c;
+    color: #eef3f8;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 34px 20px 44px;
+  }
+  .wrap { max-width: 470px; margin: 0 auto; }
+  .intro h1 { font-size: 18px; font-weight: 650; }
+  .intro p { color:#9fb0c0; font-size: 12.5px; margin: 6px 0 22px; line-height: 1.5; }
+
+  .phone {
+    border-radius: 44px; padding: 10px; background: #0b0f14;
+    border: 1px solid rgba(126,148,168,0.20);
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .screen {
+    border-radius: 36px; overflow: hidden; position: relative;
+    background: radial-gradient(420px 280px at 18% -8%, rgba(59,91,219,0.14), transparent 62%), #080b0f;
+    border: 1px solid rgba(126,148,168,0.08);
+    padding: 12px 16px 24px;
+  }
+  .notch { width: 118px; height: 26px; background:#0b0f14; border-radius: 0 0 16px 16px; position:absolute; top:0; left:50%; transform:translateX(-50%); z-index: 5;}
+  .statusbar { display:flex; justify-content:space-between; font-size:12px; color:#77828e; padding: 6px 6px 14px; }
+
+  .crumb { font-size: 10.5px; color:#55606c; letter-spacing:0.06em; text-transform:uppercase; font-weight:650; }
+  .pagetitle { font-size: 23px; font-weight: 700; letter-spacing: -0.02em; margin-top: 5px; }
+  .headmeta { display:flex; gap:7px; flex-wrap:wrap; margin: 10px 0 6px; }
+  .hm { font-size: 10px; font-weight: 600; padding: 4px 9px; border-radius: 99px; display:flex; align-items:center; gap:5px;
+        border:1px solid rgba(126,148,168,0.16); color:#8b98a5; background: rgba(255,255,255,0.02); }
+  .hm .ok { width:6px; height:6px; border-radius:99px; background:#43d18b; }
+  .hm.gate { border-color: rgba(96,165,250,0.3); color:#8fbcf8; }
+  .updated { font-size: 10.5px; color:#55606c; margin-bottom: 14px; }
+  .updated b { color:#8b98a5; font-weight: 600; }
+
+  /* verdict sentence */
+  .verdict {
+    border-radius: 16px; padding: 13px 15px; margin-bottom: 14px;
+    background: linear-gradient(155deg, rgba(24,32,43,0.6), rgba(13,17,23,0.45));
+    border: 1px solid rgba(96,165,250,0.22);
+    font-size: 13px; line-height: 1.55; color:#c7d3de;
+  }
+  .verdict b { color:#eef3f8; }
+  .verdict .g { color:#7fdcae; font-weight:650; }
+
+  /* accordion */
+  details {
+    border-radius: 18px; margin-bottom: 10px;
+    background: linear-gradient(155deg, rgba(24,32,43,0.5), rgba(13,17,23,0.38));
+    border: 1px solid rgba(126,148,168,0.10);
+    overflow: hidden;
+  }
+  summary {
+    list-style: none; cursor: pointer; padding: 14px 16px;
+    display:flex; align-items:center; justify-content:space-between; gap: 10px;
+    min-height: 44px;
+  }
+  summary::-webkit-details-marker { display:none; }
+  summary .st { font-size: 13.5px; font-weight: 650; }
+  summary .ss { font-size: 10.5px; color:#55606c; margin-top: 2px; font-weight: 450; }
+  summary .chev { flex-shrink:0; transition: transform 0.2s; color:#55606c; }
+  details[open] summary .chev { transform: rotate(90deg); }
+  details[open] summary { border-bottom: 1px solid rgba(126,148,168,0.08); }
+  .body { padding: 14px 16px 16px; }
+
+  .k { font-size: 9.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color:#55606c; margin-bottom: 9px; display:flex; justify-content:space-between; }
+  .k span { font-weight:500; text-transform:none; letter-spacing:0; color:#55606c; }
+  .note { font-size: 10.5px; color:#55606c; line-height: 1.5; margin-top: 8px; }
+  .note b { color:#8b98a5; font-weight:600; }
+  svg text { font-family: inherit; }
+  .gap { height: 14px; }
+
+  /* grade tiles */
+  .grades { display:grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .gr { border-radius: 12px; padding: 9px 10px; background: rgba(255,255,255,0.02); border:1px solid rgba(126,148,168,0.10); }
+  .gr b { font-size: 17px; font-weight: 750; display:block; }
+  .gr span { font-size: 9px; color:#77828e; letter-spacing: 0.03em; text-transform: uppercase; line-height: 1.3; display:block; margin-top:2px;}
+  .gA { color:#7fdcae; } .gB { color:#8fbcf8; } .gC { color:#f3a33a; } .gD { color:#e66767; }
+
+  /* freshness rows */
+  .fr { display:grid; grid-template-columns: 14px 1fr auto; gap: 9px; align-items:center; padding: 8px 0; border-bottom: 1px solid rgba(126,148,168,0.06); font-size: 12px; }
+  .fr:last-child { border-bottom:none; }
+  .fdot { width:8px; height:8px; border-radius:99px; }
+  .f-ok { background:#43d18b; } .f-mid { background:#f3a33a; } .f-dark { background:#3d454e; }
+  .fr .fn { color:#c7d3de; }
+  .fr .fn i { font-style:normal; color:#55606c; font-size: 10.5px; display:block; margin-top:1px; }
+  .fr .fd { text-align:right; font-size: 10.5px; color:#8b98a5; font-variant-numeric: tabular-nums; }
+  .fr .fd i { font-style:normal; color:#55606c; display:block; }
+
+  .prov { margin-top: 16px; font-size: 9.5px; color:#3d454e; line-height: 1.55; }
+  .caption { text-align:center; color:#77828e; font-size: 12px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="intro">
+    <h1>Model Evidence — the analysis, in the app</h1>
+    <p>UX pass: the full backtest artifact rendered mobile, all five sections expanded — the full scroll. Every figure is read from the generated evidence pack (corpus-hashed) — nothing hand-typed. Numbers below are the real gen-1/gen-2 results.</p>
+  </div>
+
+  <div class="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar"><span>9:41</span><span>􀙇 􀛨</span></div>
+
+    <div class="crumb">Emerging Winners · Evidence</div>
+    <div class="pagetitle">Do the models genuinely predict?</div>
+    <div class="headmeta">
+      <span class="hm"><span class="ok"></span>Drift guard 1.7e-08</span>
+      <span class="hm"><span class="ok"></span>509 tests</span>
+      <span class="hm gate">Shadow-live</span>
+    </div>
+    <div class="updated">Model <b>real-v1 · gen-2</b> · corpus <b>a297e8ad</b> · evaluated <b>2026-08-01</b> · next scheduled re-eval <b>2026-09-01</b></div>
+
+    <div class="verdict">
+      Trained on real 2016–2023 outcomes, confirmed once on untouched 2024–25 data: the champion's top picks contain <b>1.94×</b> the winners of a random pick <span class="g">— genuine, modest skill</span>. Both earlier models were refuted and retired. Surfacing is not yet earned; this page is why.
+    </div>
+
+    <!-- ============ S1 · THE VERDICT ============ -->
+    <details open>
+      <summary>
+        <div><div class="st">The verdict — lift over chance</div><div class="ss">All models, both splits, 90% intervals</div></div>
+        <svg class="chev" width="14" height="14" viewBox="0 0 14 14"><path d="M5 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <div class="body">
+        <!-- lift interval chart -->
+        <svg width="100%" viewBox="0 0 330 150">
+          <line x1="176" y1="6" x2="176" y2="122" stroke="#3d454e" stroke-dasharray="3 3"/>
+          <text x="176" y="134" fill="#55606c" font-size="8.5" text-anchor="middle">1.0× · CHANCE</text>
+          <!-- scale: x = 40 + lift*68 → 0.5x=74, 1x=108... use x = lift*90 → 1.0=90.. let's map: x = 20 + lift*80 : 0.5→60, 1.0→100.. need 176 at 1.0: x = 16 + lift*160 → 0.68→124.8, 1.94→326 too far. map x = 36 + lift*140/1: 1.0→176, 2.29→356 over. viewBox 330: x= 36+lift*72: 1→108. Use precomputed positions below. -->
+          <!-- real-v1 holdout 1.94 [1.55, 2.29] -->
+          <line x1="211" y1="20" x2="273" y2="20" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+          <circle cx="244" cy="20" r="5" fill="#60a5fa"/>
+          <text x="10" y="23" fill="#c7d3de" font-size="9.5" font-weight="600">real-v1 · holdout</text>
+          <text x="285" y="23" fill="#8fbcf8" font-size="10" font-weight="700">1.94×</text>
+          <!-- real-v1 dev 1.31 -->
+          <line x1="181" y1="46" x2="215" y2="46" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+          <circle cx="198" cy="46" r="4.5" fill="#60a5fa" opacity="0.75"/>
+          <text x="10" y="49" fill="#c7d3de" font-size="9.5">real-v1 · dev WF</text>
+          <text x="285" y="49" fill="#8b98a5" font-size="10" font-weight="600">1.31×</text>
+          <!-- synthetic 0.70 [0.47,0.92] -->
+          <line x1="86" y1="76" x2="152" y2="76" stroke="#e66767" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+          <circle cx="120" cy="76" r="4.5" fill="#e66767" opacity="0.85"/>
+          <text x="10" y="79" fill="#8b98a5" font-size="9.5">synthetic champ</text>
+          <text x="285" y="79" fill="#e88" font-size="10" font-weight="600">0.70×</text>
+          <!-- reference 0.68 [0.49,0.89] -->
+          <line x1="89" y1="100" x2="148" y2="100" stroke="#e66767" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/>
+          <circle cx="117" cy="100" r="4.5" fill="#e66767" opacity="0.85"/>
+          <text x="10" y="103" fill="#8b98a5" font-size="9.5">ref. scorecard</text>
+          <text x="285" y="103" fill="#e88" font-size="10" font-weight="600">0.68×</text>
+        </svg>
+        <div class="note">Right of the line = beats random. Intervals are block-bootstrapped by symbol. Both incumbents sit fully below chance — <b>refuted and retired</b>.</div>
+
+        <div class="gap"></div>
+        <div class="k">Top 5% of picks actually contained</div>
+        <svg width="100%" viewBox="0 0 330 64">
+          <text x="0" y="12" fill="#c7d3de" font-size="9.5" font-weight="600">real-v1</text>
+          <rect x="78" y="4" width="182" height="11" rx="5.5" fill="#60a5fa"/>
+          <text x="268" y="13" fill="#8fbcf8" font-size="10" font-weight="700">25.9%</text>
+          <text x="0" y="34" fill="#8b98a5" font-size="9.5">random</text>
+          <rect x="78" y="26" width="94" height="11" rx="5.5" fill="#3d454e"/>
+          <text x="180" y="35" fill="#8b98a5" font-size="10" font-weight="600">13.4%</text>
+          <text x="0" y="56" fill="#55606c" font-size="9">winners that doubled within 12 months · holdout, 308 top picks</text>
+        </svg>
+
+        <div class="gap"></div>
+        <div class="k">Report card <span>graded per cycle</span></div>
+        <div class="grades">
+          <div class="gr"><b class="gB">B−</b><span>Accuracy (real, OOT)</span></div>
+          <div class="gr"><b class="gA">A−</b><span>Calibration</span></div>
+          <div class="gr"><b class="gA">A</b><span>Process</span></div>
+          <div class="gr"><b class="gD">D+</b><span>Estimator</span></div>
+          <div class="gr"><b class="gC">C−</b><span>Data depth</span></div>
+          <div class="gr"><b class="gA">A</b><span>Honesty</span></div>
+        </div>
+        <div class="note"><b>B− predictive power on an A process, capped by C− data.</b> The gen-2 jump came from lighting data domains, not tuning.</div>
+      </div>
+    </details>
+
+    <!-- ============ S2 · CALIBRATION & REGIMES ============ -->
+    <details open>
+      <summary>
+        <div><div class="st">Calibration & regime honesty</div><div class="ss">Do the probabilities mean anything · quarter by quarter</div></div>
+        <svg class="chev" width="14" height="14" viewBox="0 0 14 14"><path d="M5 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <div class="body">
+        <div class="k">Reliability — predicted vs realised <span>ECE 0.017</span></div>
+        <svg width="100%" viewBox="0 0 330 120">
+          <line x1="30" y1="104" x2="310" y2="10" stroke="#3d454e" stroke-dasharray="3 3"/>
+          <polyline points="30,105 86,92 142,76 198,58 254,38 310,16" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="30" cy="105" r="3" fill="#60a5fa"/><circle cx="86" cy="92" r="3" fill="#60a5fa"/><circle cx="142" cy="76" r="3" fill="#60a5fa"/><circle cx="198" cy="58" r="3" fill="#60a5fa"/><circle cx="254" cy="38" r="3" fill="#60a5fa"/><circle cx="310" cy="16" r="3" fill="#60a5fa"/>
+          <text x="30" y="118" fill="#55606c" font-size="8.5">low predicted</text>
+          <text x="310" y="118" fill="#55606c" font-size="8.5" text-anchor="end">high predicted</text>
+          <text x="313" y="30" fill="#55606c" font-size="8.5" text-anchor="end">perfect ↗</text>
+        </svg>
+        <div class="note">A stated probability tracks the realised winner rate on untouched data. <b>Open item:</b> recalibration at deployment prevalence (~3% base) — until then probabilities are corpus-prevalence.</div>
+
+        <div class="gap"></div>
+        <div class="k">Precision by scoring quarter <span>▬ chance at that quarter's base</span></div>
+        <svg width="100%" viewBox="0 0 330 110">
+          <!-- quarterly bars (dev faded, holdout solid), chance ticks -->
+          <g>
+            <rect x="14" y="55" width="9" height="35" rx="2" fill="#60a5fa" opacity="0.35"/><line x1="12" y1="72" x2="25" y2="72" stroke="#c7d3de" stroke-width="1.5"/>
+            <rect x="32" y="40" width="9" height="50" rx="2" fill="#60a5fa" opacity="0.35"/><line x1="30" y1="70" x2="43" y2="70" stroke="#c7d3de" stroke-width="1.5"/>
+            <rect x="50" y="78" width="9" height="12" rx="2" fill="#60a5fa" opacity="0.35"/><line x1="48" y1="80" x2="61" y2="80" stroke="#c7d3de" stroke-width="1.5"/>
+            <rect x="68" y="48" width="9" height="42" rx="2" fill="#60a5fa" opacity="0.35"/><line x1="66" y1="68" x2="79" y2="68" stroke="#c7d3de" stroke-width="1.5"/>
+            <rect x="86" y="22" width="9" height="68" rx="2" fill="#60a5fa" opacity="0.35"/><line x1="84" y1="50" x2="97" y2="50" stroke="#c7d3de" stroke-width="1.5"/>
+            <rect x="104" y="30" width="9" height="60" rx="2" fill="#60a5fa" opacity="0.35"/><line x1="102" y1="55" x2="115" y2="55" stroke="#c7d3de" stroke-width="1.5"/>
+            <rect x="122" y="74" width="9" height="16" rx="2" fill="#60a5fa" opacity="0.35"/><line x1="120" y1="78" x2="133" y2="78" stroke="#c7d3de" stroke-width="1.5"/>
+            <rect x="140" y="60" width="9" height="30" rx="2" fill="#60a5fa" opacity="0.35"/><line x1="138" y1="73" x2="151" y2="73" stroke="#c7d3de" stroke-width="1.5"/>
+            <rect x="158" y="52" width="9" height="38" rx="2" fill="#60a5fa" opacity="0.35"/><line x1="156" y1="70" x2="169" y2="70" stroke="#c7d3de" stroke-width="1.5"/>
+            <!-- holdout solid -->
+            <rect x="186" y="34" width="9" height="56" rx="2" fill="#60a5fa"/><line x1="184" y1="62" x2="197" y2="62" stroke="#eef3f8" stroke-width="1.5"/>
+            <rect x="204" y="42" width="9" height="48" rx="2" fill="#60a5fa"/><line x1="202" y1="66" x2="215" y2="66" stroke="#eef3f8" stroke-width="1.5"/>
+            <rect x="222" y="28" width="9" height="62" rx="2" fill="#60a5fa"/><line x1="220" y1="58" x2="233" y2="58" stroke="#eef3f8" stroke-width="1.5"/>
+            <rect x="240" y="47" width="9" height="43" rx="2" fill="#60a5fa"/><line x1="238" y1="68" x2="251" y2="68" stroke="#eef3f8" stroke-width="1.5"/>
+            <rect x="258" y="38" width="9" height="52" rx="2" fill="#60a5fa"/><line x1="256" y1="64" x2="269" y2="64" stroke="#eef3f8" stroke-width="1.5"/>
+            <rect x="276" y="50" width="9" height="40" rx="2" fill="#60a5fa"/><line x1="274" y1="69" x2="287" y2="69" stroke="#eef3f8" stroke-width="1.5"/>
+          </g>
+          <line x1="178" y1="14" x2="178" y2="92" stroke="#3d454e" stroke-dasharray="3 3"/>
+          <text x="14" y="104" fill="#55606c" font-size="8.5">2016 → 2023 · dev walk-forward</text>
+          <text x="186" y="104" fill="#8b98a5" font-size="8.5">2024–25 · one-shot holdout</text>
+        </svg>
+        <div class="note">Beats its own null in most quarters; <b>worst cohort 0.20</b> (was 0.11 in gen-1 — no more zero-hit regimes). Bear regimes stay thin — one reason surfacing isn't earned yet.</div>
+      </div>
+    </details>
+
+    <!-- ============ S3 · ROBUSTNESS ============ -->
+    <details open>
+      <summary>
+        <div><div class="st">Robustness</div><div class="ss">Not an artifact of one operating point</div></div>
+        <svg class="chev" width="14" height="14" viewBox="0 0 14 14"><path d="M5 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <div class="body">
+        <div class="k">Lift at three cut-offs</div>
+        <svg width="100%" viewBox="0 0 330 58">
+          <text x="0" y="14" fill="#8b98a5" font-size="9.5">top 2%</text><rect x="58" y="5" width="188" height="10" rx="5" fill="#60a5fa"/><text x="252" y="14" fill="#8fbcf8" font-size="10" font-weight="700">1.88×</text>
+          <text x="0" y="34" fill="#8b98a5" font-size="9.5">top 5%</text><rect x="58" y="25" width="172" height="10" rx="5" fill="#60a5fa" opacity="0.8"/><text x="236" y="34" fill="#8fbcf8" font-size="10" font-weight="700">1.72×</text>
+          <text x="0" y="54" fill="#8b98a5" font-size="9.5">top 10%</text><rect x="58" y="45" width="156" height="10" rx="5" fill="#60a5fa" opacity="0.6"/><text x="220" y="54" fill="#8fbcf8" font-size="10" font-weight="700">1.56×</text>
+        </svg>
+        <div class="note">The edge persists as the list widens — not one lucky cut-off.</div>
+        <div class="gap"></div>
+        <div class="k">Lift by weight class <span>dot ∝ rows</span></div>
+        <svg width="100%" viewBox="0 0 330 66">
+          <line x1="30" y1="30" x2="310" y2="30" stroke="#3d454e" stroke-dasharray="3 3"/>
+          <text x="313" y="33" fill="#55606c" font-size="8" text-anchor="end"></text>
+          <circle cx="70" cy="14" r="9" fill="#60a5fa"/><text x="70" y="52" fill="#c7d3de" font-size="9.5" text-anchor="middle">micro</text>
+          <circle cx="150" cy="18" r="7" fill="#60a5fa" opacity="0.85"/><text x="150" y="52" fill="#c7d3de" font-size="9.5" text-anchor="middle">small</text>
+          <circle cx="230" cy="34" r="5" fill="#60a5fa" opacity="0.5"/><text x="230" y="52" fill="#8b98a5" font-size="9.5" text-anchor="middle">mid</text>
+          <circle cx="295" cy="38" r="4" fill="#3d454e"/><text x="295" y="52" fill="#55606c" font-size="9.5" text-anchor="middle">large</text>
+          <text x="30" y="10" fill="#55606c" font-size="8.5">above line = beats chance for that class</text>
+        </svg>
+        <div class="note">Signal concentrates in micro/small — the engine's target class. <b>Next:</b> each class graded against its own volatility baseline (per-tier plan).</div>
+      </div>
+    </details>
+
+    <!-- ============ S4 · WHAT IT LEARNED & HOW THE NUMBER WAS EARNED ============ -->
+    <details open>
+      <summary>
+        <div><div class="st">What it learned — and how the number was earned</div><div class="ss">Weights vs hypothesis · the leakage waterfall</div></div>
+        <svg class="chev" width="14" height="14" viewBox="0 0 14 14"><path d="M5 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <div class="body">
+        <div class="k">Learned weights vs the hand-designed bet <span>◦ hypothesis · ● learned</span></div>
+        <svg width="100%" viewBox="0 0 330 148">
+          <line x1="176" y1="4" x2="176" y2="128" stroke="#3d454e"/>
+          <!-- rows: label, hyp circle, learned dot -->
+          <g font-size="9.5">
+            <text x="8" y="16" fill="#c7d3de">technical</text><circle cx="216" cy="13" r="3.5" fill="none" stroke="#55606c"/><circle cx="142" cy="13" r="4" fill="#e66767"/>
+            <text x="8" y="36" fill="#c7d3de">liquidity</text><circle cx="206" cy="33" r="3.5" fill="none" stroke="#55606c"/><circle cx="150" cy="33" r="4" fill="#e66767"/>
+            <text x="8" y="56" fill="#c7d3de">theme</text><circle cx="230" cy="53" r="3.5" fill="none" stroke="#55606c"/><circle cx="242" cy="53" r="4" fill="#43d18b"/>
+            <text x="8" y="76" fill="#c7d3de">biz quality</text><circle cx="216" cy="73" r="3.5" fill="none" stroke="#55606c"/><circle cx="222" cy="73" r="4" fill="#43d18b"/>
+            <text x="8" y="96" fill="#c7d3de">capital</text><circle cx="210" cy="93" r="3.5" fill="none" stroke="#55606c"/><circle cx="204" cy="93" r="4" fill="#43d18b"/>
+            <text x="8" y="116" fill="#8b98a5">sponsorship +2</text><circle cx="216" cy="113" r="3.5" fill="none" stroke="#55606c"/><circle cx="176" cy="113" r="4" fill="#3d454e"/>
+          </g>
+          <text x="86" y="142" fill="#55606c" font-size="8.5" text-anchor="middle">− anti-predicts</text>
+          <text x="256" y="142" fill="#55606c" font-size="8.5" text-anchor="middle">+ predicts</text>
+        </svg>
+        <div class="note">The two heaviest hand-designed bets — <b>technical and comfortable liquidity — flip negative</b> on real 12-month doublers. Dark domains sit at exactly zero: the model refuses to pretend. <b>Standing test:</b> refit with volatility explicit — if these weights collapse, they were proxying jumpiness.</div>
+
+        <div class="gap"></div>
+        <div class="k">How the number was earned <span>each fix removed a real leak</span></div>
+        <svg width="100%" viewBox="0 0 330 92">
+          <g font-size="8.5">
+            <rect x="14" y="10" width="34" height="62" rx="4" fill="#e66767" opacity="0.7"/><text x="31" y="82" fill="#8b98a5" text-anchor="middle">first run</text><text x="31" y="7" fill="#e88" text-anchor="middle" font-weight="700">2.77×</text>
+            <rect x="78" y="38" width="34" height="34" rx="4" fill="#f3a33a" opacity="0.6"/><text x="95" y="82" fill="#8b98a5" text-anchor="middle">− theme leak</text><text x="95" y="34" fill="#f3a33a" text-anchor="middle" font-weight="600">1.47×</text>
+            <rect x="142" y="41" width="34" height="31" rx="4" fill="#f3a33a" opacity="0.5"/><text x="159" y="82" fill="#8b98a5" text-anchor="middle">− curated</text><text x="159" y="37" fill="#f3a33a" text-anchor="middle" font-weight="600">1.35×</text>
+            <rect x="206" y="42" width="34" height="30" rx="4" fill="#f3a33a" opacity="0.45"/><text x="223" y="82" fill="#8b98a5" text-anchor="middle">− purge bug</text><text x="223" y="38" fill="#f3a33a" text-anchor="middle" font-weight="600">1.31×</text>
+            <rect x="270" y="28" width="34" height="44" rx="4" fill="#43d18b" opacity="0.8"/><text x="287" y="82" fill="#c7d3de" text-anchor="middle">holdout ✓</text><text x="287" y="24" fill="#7fdcae" text-anchor="middle" font-weight="700">1.72×</text>
+          </g>
+        </svg>
+        <div class="note">The first run printed 2.77×; adversarial review dismantled it <b>before it was reported</b>. The surviving number is smaller and true. <b>Standing rule:</b> any lift &gt;2× triggers a mandatory leakage decomposition.</div>
+      </div>
+    </details>
+
+    <!-- ============ S5 · DATA & FRESHNESS ============ -->
+    <details open>
+      <summary>
+        <div><div class="st">Data & freshness</div><div class="ss">Where every number comes from, and how old it is</div></div>
+        <svg class="chev" width="14" height="14" viewBox="0 0 14 14"><path d="M5 3l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <div class="body">
+        <div class="k">Domain pipelines <span>10 of 10 listed · 7 lit</span></div>
+        <div class="fr"><span class="fdot f-ok"></span><span class="fn">Technical structure<i>EOD prices · daily scan</i></span><span class="fd">2026-08-01<i>fresh</i></span></div>
+        <div class="fr"><span class="fdot f-ok"></span><span class="fn">Volume / accumulation<i>EOD volume · daily scan</i></span><span class="fd">2026-08-01<i>fresh</i></span></div>
+        <div class="fr"><span class="fdot f-ok"></span><span class="fn">Liquidity<i>dollar volume · daily</i></span><span class="fd">2026-08-01<i>fresh</i></span></div>
+        <div class="fr"><span class="fdot f-ok"></span><span class="fn">Business quality<i>EDGAR 10-Q revenue · as-filed</i></span><span class="fd">Q2 filed 07-24<i>quarterly</i></span></div>
+        <div class="fr"><span class="fdot f-ok"></span><span class="fn">Capital / survivability<i>EDGAR shares, cash, shelf</i></span><span class="fd">Q2 filed 07-24<i>quarterly</i></span></div>
+        <div class="fr"><span class="fdot f-ok"></span><span class="fn">Theme<i>SEC SIC membership · outcome-independent</i></span><span class="fd">2026-07<i>monthly</i></span></div>
+        <div class="fr"><span class="fdot f-ok"></span><span class="fn">Narrative / regime<i>benchmark regime · daily</i></span><span class="fd">2026-08-01<i>fresh</i></span></div>
+        <div class="fr"><span class="fdot f-mid"></span><span class="fn">Sponsorship<i>Form 4 net-buy · historical fill running</i></span><span class="fd">partial<i>building</i></span></div>
+        <div class="fr"><span class="fdot f-dark"></span><span class="fn">Adoption / traction<i>no honest source yet</i></span><span class="fd">dark<i>weight 0.00</i></span></div>
+        <div class="fr"><span class="fdot f-dark"></span><span class="fn">Government awards<i>USAspending · planned</i></span><span class="fd">dark<i>weight 0.00</i></span></div>
+
+        <div class="gap"></div>
+        <div class="k">Known limits <span>travel with every number</span></div>
+        <div class="note" style="margin-top:0">Corpus is <b>survivor-biased</b> (no delisted names — precision is an optimistic bound) · curated names quarantined from training · holdout scored <b>once</b> per corpus generation · probabilities at corpus prevalence pending deployment recalibration.</div>
+      </div>
+    </details>
+
+    <div class="prov">Rendered from evidence pack a297e8ad · emerging-winner-classifier-real-v1 · history in model-metrics-history.jsonl · engine owns every number · research only — never advice, never a price target.</div>
+
+  </div></div>
+  <div class="caption">Evidence surface — fully expanded view</div>
+</div>
+</body>
+</html>
