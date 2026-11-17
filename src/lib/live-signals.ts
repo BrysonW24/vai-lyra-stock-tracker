@@ -31,6 +31,10 @@ interface Ohlcv {
   high: number[];
   low: number[];
   volume: number[];
+  /** Epoch seconds Yahoo stamps each bar with (NaN where it sent none) - same length as `close`. */
+  time: number[];
+  /** The regular trading session Yahoo calls current, in epoch seconds, or null when it did not say. */
+  period: { start: number; end: number } | null;
 }
 
 interface Snap {
@@ -73,15 +77,23 @@ async function fetchOhlcv(symbol: string): Promise<Ohlcv | null> {
     });
     if (!res.ok) return null;
     const json = (await res.json()) as {
-      chart?: { result?: Array<{ indicators?: { quote?: Array<Record<string, (number | null)[]>> } }> };
+      chart?: {
+        result?: Array<{
+          timestamp?: Array<number | null>;
+          meta?: { currentTradingPeriod?: { regular?: { start?: number; end?: number } } };
+          indicators?: { quote?: Array<Record<string, (number | null)[]>> };
+        }>;
+      };
     };
-    const q = json?.chart?.result?.[0]?.indicators?.quote?.[0];
+    const result = json?.chart?.result?.[0];
+    const q = result?.indicators?.quote?.[0];
     if (!q) return null;
 
     const close: number[] = [];
     const high: number[] = [];
     const low: number[] = [];
     const volume: number[] = [];
+    const time: number[] = [];
     const n = q.close?.length ?? 0;
     for (let i = 0; i < n; i++) {
       const c = q.close[i];
@@ -94,8 +106,15 @@ async function fetchOhlcv(symbol: string): Promise<Ohlcv | null> {
       high.push(h);
       low.push(l);
       volume.push(v ?? 0);
+      const stamp = result?.timestamp?.[i];
+      time.push(typeof stamp === 'number' && Number.isFinite(stamp) ? stamp : Number.NaN);
     }
-    return close.length >= 35 ? { close, high, low, volume } : null;
+    const regular = result?.meta?.currentTradingPeriod?.regular;
+    const period =
+      typeof regular?.start === 'number' && typeof regular?.end === 'number' && regular.end > regular.start
+        ? { start: regular.start, end: regular.end }
+        : null;
+    return close.length >= 35 ? { close, high, low, volume, time, period } : null;
   } catch {
     return null;
   }
@@ -366,6 +385,97 @@ export async function buildLiveSignal(symbol: string): Promise<Partial<SignalRow
     lastUpdated: new Date().toISOString(),
     explanation: explanationFor(snap, action),
     summary: summaryFor(snap),
+  };
+}
+
+// ---- The last completed session ------------------------------------------------
+
+/** A regular US session, open to close, in seconds. Used only to place a bar on its own day. */
+const SESSION_SECONDS = 6.5 * 3600;
+/** How long after the close a session's bar is trusted as final. */
+const SETTLE_SECONDS = 600;
+
+export interface LiveSessionBar {
+  /** An instant late on this session's own New York day, as ISO - the same for its close and its score. */
+  time: string;
+  close: number;
+  /** The engine's score at this bar, unrounded, and the status it gives - like-for-like with the screen. */
+  score: number;
+  status: SignalStatus;
+  volumeRatio: number | null;
+}
+
+export interface LiveSession {
+  symbol: string;
+  /** The newest session that has CLOSED, and the one before it. */
+  session: LiveSessionBar;
+  prior: LiveSessionBar;
+}
+
+/**
+ * Whether the newest bar is a finished session. Yahoo's daily series ends with today's bar while
+ * the market is open, and that bar keeps moving. A read of "the session" must never be written
+ * from it, so until its close has passed (plus a few minutes for the print to settle) the session
+ * is the bar before.
+ */
+function lastBarIsFinal(ohlcv: Ohlcv, nowMs: number): boolean {
+  const last = ohlcv.time[ohlcv.time.length - 1];
+  if (!Number.isFinite(last)) return false;
+  const now = nowMs / 1000;
+  const { period } = ohlcv;
+  // The bar for the session Yahoo calls current - whatever instant of that day it is stamped with -
+  // is final once that session has closed (its own close, so an early one counts).
+  if (period && newYorkDay(last) === newYorkDay(period.start)) return now >= period.end + SETTLE_SECONDS;
+  // An older bar. A full session after its stamp is a safe upper bound for when its day ended.
+  return now >= last + SESSION_SECONDS + SETTLE_SECONDS;
+}
+
+const NEW_YORK_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+/** The New York calendar day (YYYY-MM-DD) an instant falls on - the day a US session belongs to. */
+export function newYorkDay(epochSeconds: number): string {
+  return NEW_YORK_DAY.format(new Date(epochSeconds * 1000));
+}
+
+/**
+ * One name's last COMPLETED session and the one before it, scored by the same engine and from the
+ * same price history as the screen (buildLiveSignal) - so what an update says about a session can
+ * never disagree with what the app shows for it. Null when prices are unavailable, the history is
+ * too short to score, or Yahoo sent no timestamps to date the bars with.
+ */
+export async function buildLiveSession(symbol: string, nowMs: number = Date.now()): Promise<LiveSession | null> {
+  const ohlcv = await fetchOhlcv(symbol);
+  if (!ohlcv) return null;
+
+  const { close, time } = ohlcv;
+  const rsi = wilderRsi(close, 14);
+  const ema12 = ema(close, 12);
+  const ema26 = ema(close, 26);
+  const macdLine = close.map((_, i) => ema12[i] - ema26[i]);
+  const signal = ema(macdLine, 9);
+  const hist = macdLine.map((_, i) => macdLine[i] - signal[i]);
+
+  const k = lastBarIsFinal(ohlcv, nowMs) ? close.length - 1 : close.length - 2;
+  if (k < 4 || !Number.isFinite(time[k]) || !Number.isFinite(time[k - 1])) return null;
+
+  // The score at a bar needs the bar before it (the volume term); its status needs the score
+  // before that (weakening / invalidated are relative). Same construction as buildLiveSignal.
+  const snapAt = (i: number) => buildSnap(ohlcv, rsi, macdLine, signal, hist, i);
+  const scoreAt = (i: number): number | null => {
+    const snap = snapAt(i);
+    return snap ? scoreSnap(snap, snapAt(i - 1)).final : null;
+  };
+  const now = snapAt(k);
+  const before = snapAt(k - 1);
+  const score = scoreAt(k);
+  const priorScore = scoreAt(k - 1);
+  if (!now || !before || score == null || priorScore == null) return null;
+
+  const stamp = (i: number) => new Date((time[i] + SESSION_SECONDS) * 1000).toISOString();
+  return {
+    symbol,
+    session: { time: stamp(k), close: now.close, score, status: statusFor(score, priorScore), volumeRatio: now.volumeRatio },
+    prior: { time: stamp(k - 1), close: before.close, score: priorScore, status: statusFor(priorScore, scoreAt(k - 2)), volumeRatio: before.volumeRatio },
   };
 }
 

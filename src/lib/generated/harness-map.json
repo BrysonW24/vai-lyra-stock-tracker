@@ -4,7 +4,7 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 34,
+    "sections": 35,
     "chains": 16,
     "gates": 9,
     "layers": 5
@@ -171,6 +171,26 @@
         "workers/stock_scanner/summary_columns.json",
         "workers/stock_scanner/morning_guide.py",
         ".github/workflows/morning-guide.yml"
+      ],
+      "chains": [
+        "ai-quality",
+        "notification-health"
+      ]
+    },
+    {
+      "section": "Free updates (the app serves the session facts, an open model writes, the app checks and stores the read, the Updates page shows it - no database, no paid key)",
+      "paths": [
+        "src/lib/updates/",
+        "src/app/updates/",
+        "src/app/api/updates/",
+        "src/components/updates/",
+        "contracts/updates/",
+        "workers/stock_scanner/app_client.py",
+        "workers/stock_scanner/free_daily_read.py",
+        "workers/stock_scanner/free_read.py",
+        "workers/stock_scanner/open_model.py",
+        ".github/workflows/free-daily-read.yml",
+        ".github/actions/local-model/"
       ],
       "chains": [
         "ai-quality",

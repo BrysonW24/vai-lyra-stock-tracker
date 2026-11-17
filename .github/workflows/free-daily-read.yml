@@ -1,0 +1,110 @@
+name: Free Daily Read
+
+# The free market read of the last completed US session, written by an open model and published to
+# the app's Updates page (workers/stock_scanner/free_daily_read.py). The founder asked on 2026-11-06
+# for Lyra's updates to be free: this job needs no database and no paid key. The app serves the
+# facts (GET /api/updates/facts), code composes the figures, a model writes two paragraphs that the
+# worker's guard and then the app's own guard both check, and the app stores the result
+# (POST /api/updates/publish, signed with UPDATES_PUBLISH_SECRET).
+#
+# When. The US session closes at 21:00 UTC in winter (EST) and 20:00 UTC in summer (EDT); the app
+# trusts a session's bar ten minutes after its close. The first firing, 21:35 UTC Monday to Friday,
+# is 35 minutes after the winter close (an hour and 35 after the summer close): 08:35 in Sydney in
+# AEDT, in time for the morning. The second, 09:05 UTC Tuesday to Saturday, is the hour the paid
+# read used to go out (20:05 Sydney in AEDT) and catches a morning that failed. A session that has
+# its read is left alone, so exactly one read is published per session whichever firing gets there
+# first; a US holiday has no new session and both firings do nothing.
+#
+# Which model. OPEN_MODEL_CHAIN (a repository variable) names the writers in order, `provider:model`;
+# GROQ_API_KEY and the CLOUDFLARE_* secrets switch the hosted ones on. The floor that depends on
+# nobody's free allowance is Lyra's own copy of Gemma 4 E4B, served on the runner by
+# .github/actions/local-model - the one small model that wrote no factual slip across the bake-offs
+# of 2026-11-06/07 when allowed to think. The model is started only when the check step finds a read
+# is needed: downloading five gigabytes to do nothing is the one waste here.
+#
+# This repository is public, so its logs are. The worker logs counts, labels and reasons only - never
+# a read, a figure, a URL or a key - and the model server's output stays in a file on the runner.
+on:
+  schedule:
+    - cron: '35 21 * * 1-5'
+    - cron: '5 9 * * 2-6'
+  workflow_dispatch:
+    inputs:
+      rehearsal:
+        description: Rehearse - check everything, store the result where no reader looks, publish nothing
+        type: boolean
+        default: false
+      replace:
+        description: Publish again for a session that already has its read
+        type: boolean
+        default: false
+
+# Least privilege. `actions: write` is only for the keepalive step (see its action for why).
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: free-daily-read
+  cancel-in-progress: false
+
+env:
+  LYRA_APP_URL: ${{ vars.LYRA_APP_URL || 'https://solo.lyra.vivacityai.com.au' }}
+  FREE_READ_REHEARSAL: ${{ inputs.rehearsal && '1' || '' }}
+  FREE_READ_REPLACE: ${{ inputs.replace && '1' || '' }}
+
+jobs:
+  read:
+    # arm64: the bake-off's chosen runner for the local model (the same 16 GB, a little faster).
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-worker
+
+      - name: Is there a read to write?
+        id: check
+        env:
+          UPDATES_PUBLISH_SECRET: ${{ secrets.UPDATES_PUBLISH_SECRET }}
+          FREE_READ_CHECK: '1'
+        run: python -m workers.stock_scanner.free_daily_read
+
+      - name: Start Lyra's own model
+        if: steps.check.outputs.needed == 'true'
+        uses: ./.github/actions/local-model
+        with:
+          # Google's quantisation-aware 4-bit build of Gemma 4 E4B (5.15 GB), thinking on. Pinned
+          # by revision and sha256 like the bake-off's matrix entry of the same name.
+          repo: google/gemma-4-E4B-it-qat-q4_0-gguf
+          revision: 4b4a2c1d584be7264f87aac328a1bc739ce81b6c
+          file: gemma-4-E4B_q4_0-it.gguf
+          sha256: 676c35070db6dbe52f93e9c864ee0fba4eddea94b9c875d9cb10daff453fbaee
+          reasoning-budget: '-1'
+
+      - name: Write and publish the read
+        if: steps.check.outputs.needed == 'true'
+        env:
+          UPDATES_PUBLISH_SECRET: ${{ secrets.UPDATES_PUBLISH_SECRET }}
+          OPEN_MODEL_CHAIN: ${{ vars.OPEN_MODEL_CHAIN || 'local:gemma-4-e4b-qat' }}
+          # Hosted writers, when the founder has created their free keys. Absent, each reports
+          # `no_key` and the chain moves on to the next.
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_AI_TOKEN: ${{ secrets.CLOUDFLARE_AI_TOKEN }}
+        run: python -m workers.stock_scanner.free_daily_read
+
+      - name: Keepalive (reset the 60-day cron auto-disable clock)
+        if: always()
+        uses: ./.github/actions/keepalive
+        with:
+          token: ${{ github.token }}
+
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          title: Lyra free daily read FAILED
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}

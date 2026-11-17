@@ -71,6 +71,8 @@ jobs:
         run: npm run check:chains
       - name: Learning ledgers parse clean (a ledger that stops parsing stops teaching)
         run: npm run check:ledgers
+      - name: Model registry honest (every version number ties to a real artifact/history/code)
+        run: npm run check:model-registry
       - name: Unit tests
         run: npm run test
       - name: Build

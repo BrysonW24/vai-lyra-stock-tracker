@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lyra · Per-tier evaluation — how it works</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --page: #f9f9f7;
+    --ink-1: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --seq-150: #b7d3f6;
+    --seq-250: #86b6ef;
+    --seq-350: #5598e7;
+    --seq-450: #2a78d6;
+    --seq-600: #184f95;
+    --good-text: #006300;
+    --grey-cell: #f0efec;
+    --grey-hatch: #d8d7d0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1: #1a1a19;
+      --page: #0d0d0d;
+      --ink-1: #ffffff;
+      --ink-2: #c3c2b7;
+      --muted: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --seq-150: #cde2fb;
+      --seq-250: #9ec5f4;
+      --seq-350: #6da7ec;
+      --seq-450: #3987e5;
+      --seq-600: #184f95;
+      --good-text: #0ca30c;
+      --grey-cell: #232322;
+      --grey-hatch: #383835;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--page); }
+  .viz-root {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink-1);
+    background: var(--page);
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 28px 24px 40px;
+  }
+  h1 { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; }
+  .sub { color: var(--ink-2); font-size: 13.5px; margin-top: 6px; max-width: 72ch; line-height: 1.45; }
+  .panel {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 18px;
+  }
+  .panel h2 { font-size: 14px; font-weight: 650; }
+  .panel .note { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  /* ---------- pipeline ---------- */
+  .flow { display: grid; grid-template-columns: 1fr 28px 1fr 28px 1fr; gap: 10px 0; align-items: stretch; margin-top: 16px; }
+  .stage {
+    border: 1px solid var(--grid);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: var(--surface-1);
+    position: relative;
+  }
+  .stage .k {
+    display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .stage .t { display: block; font-size: 13.5px; font-weight: 650; margin-top: 3px; }
+  .stage .d { display: block; font-size: 12px; color: var(--ink-2); margin-top: 4px; line-height: 1.4; }
+  .arrow { display: flex; align-items: center; justify-content: center; color: var(--baseline); }
+  .arrow svg { display: block; }
+  .rowlabel { grid-column: 1 / -1; font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 8px; }
+  .stage.null { border-style: dashed; }
+  .stage.gate { border-color: var(--seq-450); }
+  .down-row { grid-column: 1 / -1; display: flex; justify-content: center; padding: 2px 0; color: var(--baseline); }
+  .merge { grid-column: 1 / -1; }
+
+  /* ---------- verdict grid ---------- */
+  table.grid { border-collapse: separate; border-spacing: 2px; margin-top: 14px; width: 100%; }
+  table.grid th { font-size: 11.5px; color: var(--ink-2); font-weight: 600; padding: 6px 4px; }
+  table.grid th.rowh { text-align: right; padding-right: 10px; white-space: nowrap; }
+  table.grid td {
+    border-radius: 4px;
+    text-align: center;
+    padding: 10px 4px 8px;
+    font-size: 12.5px;
+    position: relative;
+    min-width: 76px;
+    cursor: default;
+  }
+  td .v { font-weight: 650; display: block; }
+  td .n { display: block; font-size: 10px; margin-top: 2px; }
+  td.s150 { background: var(--seq-150); color: #0b0b0b; }
+  td.s250 { background: var(--seq-250); color: #0b0b0b; }
+  td.s350 { background: var(--seq-350); color: #0b0b0b; }
+  td.s450 { background: var(--seq-450); color: #ffffff; }
+  td.s600 { background: var(--seq-600); color: #ffffff; }
+  td.s150 .n, td.s250 .n, td.s350 .n { color: rgba(11,11,11,0.62); }
+  td.s450 .n, td.s600 .n { color: rgba(255,255,255,0.72); }
+  td.na {
+    background: var(--grey-cell);
+    color: var(--muted);
+    background-image: repeating-linear-gradient(45deg, transparent 0 5px, var(--grey-hatch) 5px 6px);
+  }
+  td.na .v { font-weight: 500; font-size: 11px; }
+  td.claimed { outline: 2px solid var(--seq-600); outline-offset: -1px; }
+  td:hover { filter: brightness(0.96); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin-top: 14px; font-size: 12px; color: var(--ink-2); }
+  .legend .item { display: flex; align-items: center; gap: 7px; }
+  .sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+  .ramp { display: flex; gap: 1px; }
+  .ramp span { width: 13px; height: 14px; display: inline-block; }
+  .ramp span:first-child { border-radius: 3px 0 0 3px; }
+  .ramp span:last-child { border-radius: 0 3px 3px 0; }
+
+  .tooltip {
+    position: fixed; z-index: 10; pointer-events: none;
+    background: var(--surface-1); color: var(--ink-1);
+    border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+    padding: 9px 11px; font-size: 12px; line-height: 1.5;
+    max-width: 260px; display: none;
+  }
+  .tooltip b { font-weight: 650; }
+  .tooltip .tt-sub { color: var(--ink-2); }
+
+  .foot { color: var(--muted); font-size: 11.5px; margin-top: 16px; line-height: 1.5; max-width: 80ch; }
+  .rule {
+    margin-top: 14px; padding: 10px 14px; border-left: 3px solid var(--seq-450);
+    background: var(--surface-1); border-radius: 0 8px 8px 0;
+    font-size: 12.5px; color: var(--ink-2); border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  }
+  .rule b { color: var(--ink-1); }
+</style>
+</head>
+<body>
+<div class="viz-root">
+
+  <h1>Per-tier evaluation — how it works, and what it produces</h1>
+  <p class="sub">Every stock is judged against its own weight class: a small cap doubling is graded against how often small caps double — and against a dumb "just pick the jumpiest small caps" baseline. The output is one verdict grid that says where the model genuinely knows something.</p>
+
+  <!-- ================= PIPELINE ================= -->
+  <div class="panel">
+    <h2>The pipeline</h2>
+    <p class="note">Runs inside the existing standing loop (purged walk-forward · one-shot holdout · clustered CIs)</p>
+
+    <div class="flow">
+      <div class="stage">
+        <span class="k">1 · Tag</span>
+        <span class="t">Tier at prediction date</span>
+        <span class="d">Micro &lt;$300M · Small $300M–2B · Mid $2–10B · Large &gt;$10B — cap as it was <em>then</em>, never today's.</span>
+      </div>
+      <div class="arrow"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 10h10m0 0-4-4m4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="stage">
+        <span class="k">2 · Chance</span>
+        <span class="t">Per-tier base rates</span>
+        <span class="d">How often does each tier hit +X% anyway, per quarter? This table <em>is</em> "random pick" for that group.</span>
+      </div>
+      <div class="arrow"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 10h10m0 0-4-4m4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="stage null">
+        <span class="k">3 · Baselines</span>
+        <span class="t">Two dumb models, per tier</span>
+        <span class="d">Random-within-tier (floor) and <b>jumpiest-within-tier</b> (the real bar — volatility alone predicts barrier touches).</span>
+      </div>
+
+      <div class="down-row">
+        <svg width="20" height="22" viewBox="0 0 20 22"><path d="M10 2v14m0 0-4-4m4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="stage">
+        <span class="k">4 · Model</span>
+        <span class="t">Score within tier</span>
+        <span class="d">Top 5% of micros vs micros, top 5% of smalls vs smalls. Never pooled — a pooled top list is all micros again.</span>
+      </div>
+      <div class="arrow"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 10h10m0 0-4-4m4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="stage">
+        <span class="k">5 · Compare</span>
+        <span class="t">Model vs its tier's baselines</span>
+        <span class="d">Paired, symbol-clustered bootstrap on the <em>difference</em>; permutation band across the threshold sweep; positives counted per cell.</span>
+      </div>
+      <div class="arrow"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 10h10m0 0-4-4m4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="stage gate">
+        <span class="k">6 · Verdict</span>
+        <span class="t">The grid → product gate</span>
+        <span class="d">A tier is claimed only where it beats its own jumpiness baseline with CI separation. Everything else greys out.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= VERDICT GRID ================= -->
+  <div class="panel">
+    <h2>The verdict grid — what it will look like</h2>
+    <p class="note">Illustrative mock, not real results. Cell = skill after the jumpiness baseline is subtracted (SEDI, 0&nbsp;=&nbsp;no skill). Hover a cell for the full reading.</p>
+
+    <table class="grid" id="grid">
+      <thead>
+        <tr>
+          <th class="rowh"></th>
+          <th>+10%</th><th>+20%</th><th>+30%</th><th>+50%</th><th>+100%</th><th>+200%</th><th>+300%</th>
+        </tr>
+      </thead>
+      <tbody><!-- cells injected --></tbody>
+    </table>
+
+    <div class="legend">
+      <span class="item"><span class="ramp"><span style="background:var(--seq-150)"></span><span style="background:var(--seq-250)"></span><span style="background:var(--seq-350)"></span><span style="background:var(--seq-450)"></span><span style="background:var(--seq-600)"></span></span> skill low → high</span>
+      <span class="item"><span class="sw" style="background:var(--grey-cell); background-image:repeating-linear-gradient(45deg, transparent 0 4px, var(--grey-hatch) 4px 5px)"></span> not enough evidence — stays unclaimed</span>
+      <span class="item"><span class="sw" style="background:var(--surface-1); outline:2px solid var(--seq-600); outline-offset:-2px;"></span> claimed universe (beats jumpiness null, CI-clear)</span>
+    </div>
+
+    <div class="rule"><b>Standing rule:</b> the product only surfaces a tier × threshold cell inside the claimed outline. Grey cells render greyed in the UI too — "no demonstrated skill here" is shown, not hidden.</div>
+  </div>
+
+  <p class="foot">Numbers in the mock follow the pre-registered prediction (skill peaks in micro/small at moderate-to-+100% moves; +10% is a market-direction question; +200/300% and most of mid/large are too thin to claim). n = winners in the holdout for that cell — the honesty number: where it is tiny, no score is shown. Evidence pack: lyra-modelling/PER-TIER-EVAL-PLAN.md · THRESHOLD-SWEEP-EXPERIMENT.md. Research only — never advice.</p>
+
+  <div class="tooltip" id="tt"></div>
+</div>
+
+<script>
+  // Illustrative mock data. sedi: skill after vol-null (null = grey cell). n = holdout positives.
+  // base = tier base rate at that threshold, vol = jumpiness-null lift, model = model lift (all illustrative).
+  const tiers = ["Micro", "Small", "Mid", "Large"];
+  const cols = ["+10%","+20%","+30%","+50%","+100%","+200%","+300%"];
+  const D = {
+    Micro: [
+      {sedi:0.05,n:920,base:"58%",vol:"1.1×",model:"1.1×"},
+      {sedi:0.18,n:640,base:"41%",vol:"1.2×",model:"1.4×"},
+      {sedi:0.34,n:410,base:"29%",vol:"1.3×",model:"1.8×",claimed:true},
+      {sedi:0.42,n:240,base:"18%",vol:"1.5×",model:"2.3×",claimed:true},
+      {sedi:0.31,n:110,base:"9%", vol:"1.9×",model:"2.6×",claimed:true},
+      {sedi:null,n:26, base:"2.1%"},
+      {sedi:null,n:9,  base:"0.7%"}
+    ],
+    Small: [
+      {sedi:0.07,n:610,base:"49%",vol:"1.1×",model:"1.2×"},
+      {sedi:0.22,n:430,base:"33%",vol:"1.2×",model:"1.5×"},
+      {sedi:0.38,n:280,base:"22%",vol:"1.3×",model:"2.0×",claimed:true},
+      {sedi:0.45,n:150,base:"13%",vol:"1.4×",model:"2.4×",claimed:true},
+      {sedi:0.27,n:60, base:"5.4%",vol:"1.8×",model:"2.2×",claimed:true},
+      {sedi:null,n:12, base:"1.2%"},
+      {sedi:null,n:4,  base:"0.3%"}
+    ],
+    Mid: [
+      {sedi:0.04,n:250,base:"38%",vol:"1.0×",model:"1.1×"},
+      {sedi:0.12,n:150,base:"22%",vol:"1.1×",model:"1.3×"},
+      {sedi:0.19,n:80, base:"12%",vol:"1.2×",model:"1.5×"},
+      {sedi:null,n:31, base:"5.1%"},
+      {sedi:null,n:9,  base:"1.4%"},
+      {sedi:null,n:2,  base:"0.3%"},
+      {sedi:null,n:0,  base:"0.1%"}
+    ],
+    Large: [
+      {sedi:0.03,n:130,base:"31%",vol:"1.0×",model:"1.0×"},
+      {sedi:null,n:60, base:"14%"},
+      {sedi:null,n:24, base:"6.2%"},
+      {sedi:null,n:8,  base:"2.0%"},
+      {sedi:null,n:2,  base:"0.4%"},
+      {sedi:null,n:0,  base:"0.05%"},
+      {sedi:null,n:0,  base:"0.01%"}
+    ]
+  };
+
+  function step(s){ return s>=0.40?"s600" : s>=0.30?"s450" : s>=0.20?"s350" : s>=0.10?"s250" : "s150"; }
+
+  const tb = document.querySelector("#grid tbody");
+  tiers.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<th class="rowh">${t}</th>`;
+    D[t].forEach((c,i) => {
+      const td = document.createElement("td");
+      if (c.sedi === null) {
+        td.className = "na";
+        td.innerHTML = `<span class="v">too thin</span><span class="n">n=${c.n}</span>`;
+        td.dataset.tt = `<b>${t} · ${cols[i]}</b><br><span class="tt-sub">Only ${c.n} winners in the holdout at this setting (chance here: ${c.base}). The uncertainty band contains zero — no score is claimed.</span>`;
+      } else {
+        td.className = step(c.sedi) + (c.claimed ? " claimed" : "");
+        td.innerHTML = `<span class="v">${c.sedi.toFixed(2)}</span><span class="n">n=${c.n}</span>`;
+        td.dataset.tt = `<b>${t} · ${cols[i]}</b><br>Skill (SEDI): <b>${c.sedi.toFixed(2)}</b><br>Chance for this tier: ${c.base}<br>Jumpiness baseline: ${c.vol} · Model: ${c.model}<br><span class="tt-sub">${c.claimed ? "Claimed — beats the jumpiness baseline with CI separation." : "Positive but not CI-separated from the jumpiness baseline — not claimed."}</span>`;
+      }
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+
+  const tt = document.getElementById("tt");
+  tb.addEventListener("mousemove", e => {
+    const td = e.target.closest("td");
+    if (!td || !td.dataset.tt) { tt.style.display = "none"; return; }
+    tt.innerHTML = td.dataset.tt;
+    tt.style.display = "block";
+    const pad = 14, w = tt.offsetWidth, h = tt.offsetHeight;
+    let x = e.clientX + pad, y = e.clientY + pad;
+    if (x + w > innerWidth - 8) x = e.clientX - w - pad;
+    if (y + h > innerHeight - 8) y = e.clientY - h - pad;
+    tt.style.left = x + "px"; tt.style.top = y + "px";
+  });
+  tb.addEventListener("mouseleave", () => tt.style.display = "none");
+</script>
+</body>
+</html>

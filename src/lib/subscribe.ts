@@ -17,6 +17,7 @@ export const SUBSCRIBE_TOPICS = [
   { id: 'semiconductors', group: 'theme', label: 'Semiconductors', blurb: 'Chips, memory, networking, equipment' },
   { id: 'power-grid', group: 'theme', label: 'Power grid', blurb: 'Electricity, cooling and grid gear for the buildout' },
   { id: 'nuclear-uranium', group: 'theme', label: 'Nuclear and uranium', blurb: 'Reactors, fuel, and the deals that fund them' },
+  { id: 'fusion-energy', group: 'theme', label: 'Fusion energy', blurb: 'Fusion developers, magnets and fuel, and the power deals behind them' },
   { id: 'critical-minerals', group: 'theme', label: 'Critical minerals', blurb: 'The materials technology needs and who controls them' },
   { id: 'robotics-automation', group: 'theme', label: 'Robotics and automation', blurb: 'Robots, autonomy, humanoids, industrial automation' },
   { id: 'quantum-computing', group: 'theme', label: 'Quantum computing', blurb: 'Hardware, error correction, customers' },

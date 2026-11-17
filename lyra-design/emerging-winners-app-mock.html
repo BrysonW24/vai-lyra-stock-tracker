@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lyra · Emerging Winners — mobile surface mock</title>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(920px 540px at 10% -12%, rgba(59, 91, 219, 0.16), transparent 60%),
+      radial-gradient(820px 520px at 102% 2%, rgba(67, 209, 139, 0.08), transparent 55%),
+      radial-gradient(760px 640px at 50% 118%, rgba(124, 58, 237, 0.10), transparent 60%),
+      linear-gradient(rgba(20, 31, 42, 0.13) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20, 31, 42, 0.13) 1px, transparent 1px),
+      #07090c;
+    background-size: 100% 100%, 100% 100%, 100% 100%, 28px 28px, 28px 28px, 100% 100%;
+    color: #eef3f8;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 34px 20px 44px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 19px; font-weight: 650; letter-spacing: -0.01em; }
+  .sub { color: #9fb0c0; font-size: 13px; margin-top: 6px; max-width: 74ch; line-height: 1.5; }
+  .phones { display: flex; gap: 34px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
+  .phone {
+    width: 393px; border-radius: 40px; padding: 10px;
+    background: #0b0f14;
+    border: 1px solid rgba(126,148,168,0.22);
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .screen {
+    border-radius: 32px; overflow: hidden; position: relative;
+    background:
+      radial-gradient(400px 260px at 15% -6%, rgba(59, 91, 219, 0.18), transparent 60%),
+      radial-gradient(360px 240px at 110% 4%, rgba(67, 209, 139, 0.09), transparent 55%),
+      #07090c;
+    border: 1px solid rgba(126,148,168,0.10);
+    padding: 14px 14px 18px;
+  }
+  .statusbar { display: flex; justify-content: space-between; font-size: 12px; color: #9fb0c0; padding: 4px 10px 10px; }
+  .notch { width: 118px; height: 26px; background:#0b0f14; border-radius: 0 0 16px 16px; position:absolute; top:0; left:50%; transform:translateX(-50%); }
+
+  /* glass vocabulary */
+  .panel {
+    border: 1px solid rgba(126,148,168,0.14);
+    background: linear-gradient(155deg, rgba(24,32,43,0.74), rgba(13,17,23,0.60));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 30px -14px rgba(0,0,0,0.6);
+    border-radius: 16px;
+  }
+  .well {
+    border: 1px solid rgba(126,148,168,0.12);
+    background: rgba(7,10,14,0.42);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.32);
+    border-radius: 12px;
+  }
+  .hero {
+    border-color: rgba(96,165,250,0.22);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px rgba(96,165,250,0.05), 0 24px 70px -28px rgba(59,91,219,0.45);
+  }
+
+  /* header */
+  .apphead { display:flex; align-items:center; justify-content:space-between; padding: 2px 4px 12px; }
+  .brand { font-weight: 700; font-size: 16px; letter-spacing: 0.02em; }
+  .brand em { font-style: normal; color:#f3a33a; }
+  .badge {
+    font-size: 10px; font-weight: 650; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 99px; border: 1px solid rgba(96,165,250,0.35);
+    color: #8fbcf8; background: rgba(59,91,219,0.12);
+  }
+  .pagetitle { font-size: 20px; font-weight: 650; padding: 2px 4px 2px; }
+  .pagesub { font-size: 12px; color: #9fb0c0; padding: 0 4px 12px; line-height: 1.45; }
+
+  /* target slider */
+  .slider { padding: 12px; margin-bottom: 12px; }
+  .slider .lab { font-size: 11px; font-weight: 650; color:#9fb0c0; letter-spacing:0.05em; text-transform: uppercase; display:flex; justify-content:space-between; }
+  .slider .lab b { color:#f3a33a; font-size:11px; }
+  .seg { display:flex; gap:4px; margin-top:9px; border-radius: 11px; padding:4px;
+    border: 1px solid rgba(126,148,168,0.12); background: rgba(7,10,14,0.46);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.38); }
+  .seg .opt {
+    flex:1; text-align:center; font-size: 12px; padding: 8px 0; border-radius: 8px; color:#c7d3de;
+  }
+  .seg .opt.on {
+    background: linear-gradient(155deg, rgba(60,42,16,0.92), rgba(35,24,11,0.86));
+    border: 1px solid rgba(154,106,31,0.85);
+    box-shadow: inset 0 1px 0 rgba(255,200,120,0.14), 0 6px 18px -8px rgba(243,163,58,0.5);
+    color:#ffd9a0; font-weight: 650;
+  }
+  .seg .opt.off { color:#55606c; text-decoration: line-through; text-decoration-color: rgba(85,96,108,0.6); }
+  .slider .why { font-size: 10.5px; color:#77828e; margin-top: 7px; line-height:1.4; }
+  .slider .why s { color:#55606c; }
+
+  /* queue cards */
+  .qcard { padding: 13px 13px 11px; margin-bottom: 10px; }
+  .qtop { display:flex; align-items:baseline; justify-content:space-between; }
+  .tick { font-weight: 700; font-size: 15px; letter-spacing: 0.02em; }
+  .tick span { color:#9fb0c0; font-weight: 450; font-size: 12px; margin-left: 7px; }
+  .sim { text-align:right; }
+  .sim .n { font-size: 19px; font-weight: 700; color:#8fbcf8; }
+  .sim .d { font-size: 10px; color:#77828e; }
+  .meter { height: 4px; border-radius: 99px; background: rgba(126,148,168,0.15); margin-top: 8px; overflow:hidden; }
+  .meter i { display:block; height:100%; border-radius:99px; background: linear-gradient(90deg, #3b5bdb, #60a5fa); }
+  .qmeta { display:flex; gap:6px; flex-wrap:wrap; margin-top: 9px; }
+  .chip { font-size: 10.5px; padding: 3px 8px; border-radius: 99px; border:1px solid rgba(126,148,168,0.18); color:#c7d3de; background: rgba(7,10,14,0.35); }
+  .chip.arch { border-color: rgba(124,58,237,0.4); color:#c4b0f2; }
+  .chip.tier { border-color: rgba(67,209,139,0.35); color:#7fdcae; }
+  .chip.up { border-color: rgba(67,209,139,0.3); color:#7fdcae; }
+  .chip.miss { border-color: rgba(126,148,168,0.16); color:#77828e; border-style: dashed; }
+  .qfoot { display:flex; justify-content:space-between; align-items:center; margin-top: 10px; font-size: 10.5px; color:#77828e; }
+  .qfoot b { color:#9fb0c0; font-weight: 600; }
+
+  /* detail screen */
+  .dhead { padding: 14px 14px 12px; }
+  .dname { display:flex; justify-content:space-between; align-items:flex-start; }
+  .dname h3 { font-size: 17px; font-weight: 700; }
+  .dname .co { color:#9fb0c0; font-size: 12px; margin-top: 2px; font-weight: 450; }
+  .simbig { text-align:right; }
+  .simbig .n { font-size: 30px; font-weight: 750; color:#8fbcf8; line-height: 1; }
+  .simbig .d { font-size: 10px; color:#77828e; margin-top: 3px; }
+  .calib {
+    margin: 11px 14px 0; padding: 9px 11px; font-size: 11.5px; line-height: 1.5; color:#c7d3de;
+    border-left: 2px solid rgba(96,165,250,0.5); border-radius: 0 10px 10px 0;
+  }
+  .calib b { color:#8fbcf8; }
+  .sect { margin: 12px 14px 0; }
+  .sect .h { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color:#9fb0c0; margin-bottom: 8px; display:flex; justify-content:space-between;}
+  .sect .h span { color:#77828e; font-weight:500; text-transform:none; letter-spacing:0; }
+
+  .driver { display:grid; grid-template-columns: 92px 1fr 34px; gap: 8px; align-items:center; font-size: 11.5px; margin-bottom: 6px; color:#c7d3de; }
+  .bar { height: 6px; border-radius: 99px; background: rgba(126,148,168,0.12); position:relative; }
+  .bar i { position:absolute; top:0; height:100%; border-radius:99px; }
+  .bar i.pos { left:50%; background:#43d18b; }
+  .bar i.neg { right:50%; background:#e66767; }
+  .bar::after { content:""; position:absolute; left:50%; top:-2px; bottom:-2px; width:1px; background:rgba(126,148,168,0.3); }
+  .dv { text-align:right; font-variant-numeric: tabular-nums; font-size: 11px; }
+  .dv.pos { color:#7fdcae; } .dv.neg { color:#e88; } .dv.na { color:#55606c; }
+  .driver .nm.na { color:#55606c; }
+
+  .risks { border-color: rgba(230,103,103,0.25); }
+  .risks .h { color:#e6a1a1; }
+  .risk { display:flex; gap:8px; font-size: 11.5px; color:#d5c3c3; line-height:1.5; margin-bottom: 5px; }
+  .risk::before { content:"▲"; font-size: 8px; color:#e66767; margin-top: 3px; }
+  .invalid { font-size: 11px; color:#9fb0c0; line-height: 1.5; padding: 9px 11px; }
+  .invalid b { color:#eef3f8; }
+
+  .actions { display:flex; gap:8px; margin: 14px 14px 0; }
+  .act {
+    flex:1; text-align:center; font-size: 12.5px; font-weight: 650; padding: 11px 0; border-radius: 12px;
+    border: 1px solid rgba(126,148,168,0.2); color:#c7d3de; background: rgba(7,10,14,0.4); min-height:44px;
+  }
+  .act.primary { border-color: rgba(154,106,31,0.85); color:#ffd9a0;
+    background: linear-gradient(155deg, rgba(60,42,16,0.92), rgba(35,24,11,0.86));
+    box-shadow: 0 6px 18px -8px rgba(243,163,58,0.5); }
+  .prov { margin: 12px 14px 4px; font-size: 9.5px; color:#55606c; line-height: 1.55; }
+  .prov b { color:#77828e; font-weight:600; }
+
+  .caption { text-align:center; color:#77828e; font-size: 12px; margin-top: 12px; }
+  .foot { color:#77828e; font-size: 11.5px; margin-top: 26px; line-height: 1.55; max-width: 86ch; }
+  .foot b { color:#9fb0c0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Emerging Winners — how results reach the user</h1>
+  <p class="sub">Illustrative mock in Lyra's live design vocabulary (dark glass, amber thumb, engineering grid). Left: the ranked research queue with the move-target slider — unclaimed settings are visibly disabled, not hidden. Right: one name's research card — the number, what it historically means, why, what's missing, and the mandatory risks. Vocabulary is research / watch / compare — never buy, never a price target.</p>
+
+  <div class="phones">
+
+    <!-- ============ PHONE 1 · QUEUE ============ -->
+    <div>
+      <div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="statusbar"><span>9:41</span><span>􀙇 􀛨</span></div>
+
+        <div class="apphead">
+          <div class="brand">Lyra<em>.</em></div>
+          <div class="badge">Research · not advice</div>
+        </div>
+
+        <div class="pagetitle">Emerging Winners</div>
+        <div class="pagesub">Small companies that resemble past big winners — ranked for research, graded against their own weight class.</div>
+
+        <div class="panel slider">
+          <div class="lab"><span>Move target · 12 months</span><b>+100%</b></div>
+          <div class="seg">
+            <div class="opt">+30%</div>
+            <div class="opt">+50%</div>
+            <div class="opt on">+100%</div>
+            <div class="opt off">+200%</div>
+            <div class="opt off">+300%</div>
+          </div>
+          <div class="why">Targets are enabled only where the model has proven skill for a tier (beats a volatility baseline, CI-clear). <s>+200% / +300%</s>: not enough evidence — shown, not hidden.</div>
+        </div>
+
+        <!-- card 1 -->
+        <div class="panel hero qcard">
+          <div class="qtop">
+            <div class="tick">NVTS <span>Navitas Semiconductor</span></div>
+            <div class="sim"><div class="n">82</div><div class="d">winner similarity</div></div>
+          </div>
+          <div class="meter"><i style="width:82%"></i></div>
+          <div class="qmeta">
+            <span class="chip tier">Micro cap</span>
+            <span class="chip arch">2nd-order AI infra supplier</span>
+            <span class="chip up">Theme ↑</span>
+            <span class="chip up">Gov contract ↑</span>
+            <span class="chip miss">Sponsorship — no data</span>
+          </div>
+          <div class="qfoot"><span>vs micro-cap chance: <b>2.6× </b>· confidence <b>medium</b></span><span>7/10 domains</span></div>
+        </div>
+
+        <!-- card 2 -->
+        <div class="panel qcard">
+          <div class="qtop">
+            <div class="tick">ASTS <span>AST SpaceMobile</span></div>
+            <div class="sim"><div class="n">74</div><div class="d">winner similarity</div></div>
+          </div>
+          <div class="meter"><i style="width:74%"></i></div>
+          <div class="qmeta">
+            <span class="chip tier">Small cap</span>
+            <span class="chip arch">Gov-backed strategic tech</span>
+            <span class="chip up">Sponsorship ↑</span>
+            <span class="chip miss">Adoption — no data</span>
+          </div>
+          <div class="qfoot"><span>vs small-cap chance: <b>2.1×</b> · confidence <b>medium</b></span><span>6/10 domains</span></div>
+        </div>
+
+        <!-- card 3 -->
+        <div class="panel qcard">
+          <div class="qtop">
+            <div class="tick">RCAT <span>Red Cat Holdings</span></div>
+            <div class="sim"><div class="n">68</div><div class="d">winner similarity</div></div>
+          </div>
+          <div class="meter"><i style="width:68%"></i></div>
+          <div class="qmeta">
+            <span class="chip tier">Micro cap</span>
+            <span class="chip arch">Defence beneficiary</span>
+            <span class="chip up">Gov contract ↑</span>
+            <span class="chip miss">Business quality — thin</span>
+          </div>
+          <div class="qfoot"><span>vs micro-cap chance: <b>1.9×</b> · confidence <b>low</b></span><span>5/10 domains</span></div>
+        </div>
+
+        <div class="prov" style="margin:8px 4px 0">Every number is engine-owned · similarity is a calibrated resemblance estimate, not a prediction · full risks on every card.</div>
+      </div></div>
+      <div class="caption">The research queue — slider + tier-graded ranking</div>
+    </div>
+
+    <!-- ============ PHONE 2 · RESEARCH CARD ============ -->
+    <div>
+      <div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="statusbar"><span>9:41</span><span>􀙇 􀛨</span></div>
+
+        <div class="panel hero" style="padding-bottom:14px">
+          <div class="dhead">
+            <div class="dname">
+              <div>
+                <h3>NVTS</h3>
+                <div class="co">Navitas Semiconductor · Micro cap · $480M</div>
+              </div>
+              <div class="simbig"><div class="n">82</div><div class="d">winner similarity · +100% / 12mo</div></div>
+            </div>
+            <div class="qmeta" style="margin-top:10px">
+              <span class="chip arch">2nd-order AI infra supplier</span>
+              <span class="chip">Strong candidate</span>
+            </div>
+          </div>
+
+          <div class="well calib">
+            Names scoring like this went on to double within 12 months <b>≈18% of the time</b> — against <b>9%</b> for a random micro cap. A resemblance estimate, not a prediction.
+          </div>
+
+          <div class="sect">
+            <div class="h">Why it resembles past winners <span>signed contribution</span></div>
+            <div class="driver"><span class="nm">Theme strength</span><div class="bar"><i class="pos" style="width:34%"></i></div><span class="dv pos">+18</span></div>
+            <div class="driver"><span class="nm">Gov / policy</span><div class="bar"><i class="pos" style="width:23%"></i></div><span class="dv pos">+12</span></div>
+            <div class="driver"><span class="nm">Technical</span><div class="bar"><i class="pos" style="width:19%"></i></div><span class="dv pos">+10</span></div>
+            <div class="driver"><span class="nm">Capital / runway</span><div class="bar"><i class="neg" style="width:17%"></i></div><span class="dv neg">−9</span></div>
+            <div class="driver"><span class="nm na">Sponsorship</span><div class="bar"></div><span class="dv na">no data</span></div>
+          </div>
+
+          <div class="sect">
+            <div class="h">Coverage <span>7 of 10 domains assessed</span></div>
+            <div class="well" style="padding:8px 11px; font-size:11px; color:#9fb0c0; line-height:1.5">
+              Unavailable: <b style="color:#c7d3de">sponsorship · adoption · narrative</b> — pipelines not yet built. Missing data lowers <i>confidence</i>, never boosts the score.
+            </div>
+          </div>
+
+          <div class="sect">
+            <div class="well risks" style="padding:9px 11px">
+              <div class="h" style="margin-bottom:6px">Risks — always shown</div>
+              <div class="risk">Dilution: 2 shelf registrations in 18 months; cash runway ~5 quarters.</div>
+              <div class="risk">Illiquidity: $2.1M avg daily volume — exits are slow.</div>
+              <div class="risk">Pump screen: high retail attention; volatility 3× market.</div>
+            </div>
+          </div>
+
+          <div class="sect">
+            <div class="well invalid"><b>What would invalidate this:</b> losing the awarded contract · a raise below market · two quarters of decelerating design wins.</div>
+          </div>
+
+          <div class="actions">
+            <div class="act primary">Research</div>
+            <div class="act">Watch</div>
+            <div class="act">Compare</div>
+          </div>
+
+          <div class="prov">
+            <b>Provenance:</b> emerging-winner-classifier-real-v1 · corpus a297e8ad · claimed cell: micro × +100% (beats volatility baseline, CI-clear) · shadow-live until live calibration is earned · research only — never advice, never a price target.
+          </div>
+        </div>
+      </div></div>
+      <div class="caption">One name's research card — number → meaning → why → risks</div>
+    </div>
+
+  </div>
+
+  <p class="foot"><b>Doctrine, made visible:</b> the engine owns every number (similarity, calibration line, contributions); the slider disables itself where the verdict grid is grey; risks and what's-missing can never be empty; actions are research / watch / compare — the word "buy" does not exist in this surface. Tickers and figures are an illustrative mock, not output.</p>
+</div>
+</body>
+</html>

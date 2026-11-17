@@ -1,0 +1,7 @@
+{
+  "description": "One signed publish request, as workers/stock_scanner/app_client.py signs it and src/lib/updates/publish-auth.ts verifies it: HMAC-SHA256 over '<timestamp>.<body>' with the shared secret, sent as 'x-lyra-signature: t=<timestamp>,v1=<hex>'. Both sides' tests compute the signature from this file and must agree with it. The secret here is a test value, never a real one.",
+  "secret": "test-secret-for-the-signature-vector-0123456789",
+  "timestamp": 1762500000,
+  "body": "{\"kind\":\"market_read\",\"session\":\"2026-11-05\",\"factsHash\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"sheet\":\"Names scanned: 61.\",\"figures\":[{\"title\":\"Session\",\"lines\":[\"1 up\"]}],\"prose\":null,\"proseNote\":\"x\",\"writer\":null}",
+  "header": "t=1762500000,v1=b21a0b3f61f800a08b014074bcfdb61e58ed33a86c79f42fa6d0c804af8058e1"
+}

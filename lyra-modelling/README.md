@@ -26,6 +26,11 @@ Two model classes, one shared platform. Full framing in the research docs.
 Decision (2026-07-29): **build B first**; A is a fast-follow *timing* tenant on the same rails. The
 end-state combines them - archetype says "future winner," event says "timing is turning now."
 
+> **Are we actually improving?** The version timeline + the north star (out-of-sample holdout lift@k)
+> live in [`../lyra-evals/MODEL-REGISTRY.md`](../lyra-evals/MODEL-REGISTRY.md), graded in
+> [`../lyra-evals/MODEL-REPORT-CARD.md`](../lyra-evals/MODEL-REPORT-CARD.md). This folder holds the
+> *research + spec*; that folder holds the *scoreboard*.
+
 ## The one law it must never break
 
 The **deterministic engine decides; AI only explains and never invents a number.** This holds for the

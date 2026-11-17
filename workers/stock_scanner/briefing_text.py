@@ -19,6 +19,7 @@ THEME_STYLE: dict[str, tuple[str, str]] = {
     "semiconductors": ("💾", "Semiconductors"),
     "power-grid": ("⚡", "Power grid"),
     "nuclear-uranium": ("☢️", "Nuclear and uranium"),
+    "fusion-energy": ("☀️", "Fusion energy"),
     "critical-minerals": ("⛏️", "Critical minerals"),
     "robotics-automation": ("🦾", "Robotics and automation"),
     "quantum-computing": ("⚛️", "Quantum computing"),

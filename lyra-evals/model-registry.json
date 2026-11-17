@@ -1,0 +1,174 @@
+{
+  "$schema_note": "Canonical model-versions registry for Lyra's predictive models. Source of truth; the human view is MODEL-REGISTRY.md (generated-alongside, not from). Kept honest by scripts/check-model-registry.mjs (npm run check:model-registry, CI-gated): the north-star reading must tie to a recorded row in model-metrics-history.jsonl by corpus hash, the deployed champion must match the frozen artifact, and every code_versions string must exist in the worker. A number here that no artifact/history/code backs is a build failure, by design.",
+  "updated_at": "2026-08-01",
+  "north_star": {
+    "metric": "oos_holdout_random_lift_at_k_top5",
+    "one_line": "Out-of-sample lift over base rate among the top 5% highest-probability names, on the ONE-SHOT holdout, random slice.",
+    "plain_english": "Of our very top picks, how many more actually became winners than you'd get from a random pick - measured on data the model never trained on, on the honest random sample (not the curated hindsight names). A lift of 1.0x is no edge (random); 2.0x means our top picks are twice as winner-dense as chance.",
+    "why_this_one": "It is base-rate-normalised (comparable across corpora as winner density drifts), it is the headline the report card already commits to, it has bootstrap confidence intervals, and it is measured on the one-shot holdout so it cannot be tuned up by iterating. Crucially it is aligned with the product truth: surfacing is only earned when the top of the queue is reliably winner-dense out of sample.",
+    "canonical_destination_doc": "lyra-modelling/NORTH-STAR.md",
+    "role_of_this_registry": "This registry is the MACHINE-CHECKED VERSION LEDGER + honesty gate, not a competing north-star declaration. The destination + full target-state stack (L0-L5, earn-gates, arrived definition) lives in lyra-modelling/NORTH-STAR.md; the current letter grades live in lyra-evals/MODEL-REPORT-CARD.md. This file tracks every version against the one number and BINDS that number to the frozen artifact + recorded history + code (check:model-registry), so no doc can quote a metric that no artifact backs.",
+    "current": {
+      "value": 1.69,
+      "ci90": [1.39, 2.10],
+      "as_of": "2026-08-03",
+      "corpus_sha256": "a09b43107090a1c02605f9fdf8abb21c499079d18cbafdceb57fccfcbb01bc3b",
+      "model_version": "emerging-winner-classifier-real-v1",
+      "source_path": "holdout.champion.lift_at_k",
+      "note": "Gen-3 corpus (nine of ten domains lit; insider flow + federal awards added). The gen-2 1.94x -> gen-3 1.69x move is NOISE, not decline: the first cross-generation paired test put the delta at -0.18 CI90[-0.57,+0.20]. A boosted challenger scored 2.13x this cycle but was NOT promoted (paired tie vs the incumbent). Still an optimistic bound on a survivor-biased corpus. Fuller gen-3 timeline reconciliation with lyra-evals/generations/GENERATION-LOG.md is owed."
+    },
+    "target": {
+      "canonical_source": "lyra-modelling/NORTH-STAR.md#definition-of-arrived",
+      "arrived_definition": {
+        "holdout_lift_at_k": 3.0,
+        "ci90_floor": 2.0,
+        "measured_on": "random-slice, DELISTED-INCLUSIVE holdout at a real ~3% base rate (>= ~9% top-pick precision with the ruin class present)",
+        "worst_cohort": "beats its null in >= 90% of quarters (no dead regimes)",
+        "ece_at_deployment_prevalence": 0.03,
+        "live_calibration": "sustains the surfacing gate for two consecutive quarters (live evidence, not backtest)",
+        "per_name_receipt": "probability + conformal interval, top SHAP factors, two named historical analogues with outcomes, gate verdicts, timing annotation"
+      },
+      "interim_milestone": {
+        "holdout_lift_at_k": 2.0,
+        "ci_lower_min": 1.5,
+        "note": "A waypoint, not the destination. Current 1.72x is an OPTIMISTIC BOUND on a survivor-biased corpus; the 3.0x arrived bar is defined on the delisted-inclusive corpus precisely so the number is real, not flattering."
+      },
+      "unlocks": "Nothing on its own. Surfacing promotion remains a separate, founder-gated decision fed by live calibration (monitor.model_health), never by backtest numbers alone."
+    },
+    "guardrails": [
+      {
+        "id": "worst_cohort_lift",
+        "one_line": "No market regime worse than random: worst quarterly-cohort lift@k must be >= 1.0.",
+        "op": ">=",
+        "threshold": 1.0,
+        "current": 1.33,
+        "status": "PASSING",
+        "gates": "surfacing",
+        "derivation": "holdout.champion.worst_cohort_p_at_k (0.1778) / holdout.champion.base_rate (0.1341)",
+        "note": "Gen-3 cleared this: the worst quarter now beats random (1.33x, was 0.83x in gen-2). Surfacing is still gated - the arrived bar wants >=90% of quarters beating null AND ECE <= 0.03 at deployment prevalence AND live-calibration evidence, none confirmed yet."
+      },
+      {
+        "id": "ece",
+        "one_line": "Probabilities mean what they say: adaptive (equal-mass) ECE must be <= 0.05.",
+        "op": "<=",
+        "threshold": 0.05,
+        "current": 0.084,
+        "status": "FAILING",
+        "gates": "calibration",
+        "derivation": "holdout.champion.ece",
+        "note": "Regressed in gen-3 (0.042 -> 0.084): the champion's calibration proved feature-generation-sensitive as domains lit up. A slope-corrected artifact seam is shipped but inert; it earns its way through the standing loop."
+      },
+      {
+        "id": "leakage_decomposition",
+        "one_line": "Anti-gaming: any lift > 2.0x from this feature set triggers a mandatory leakage decomposition before it is recorded anywhere.",
+        "op": "rule",
+        "note": "A suspiciously strong number is treated as a leak until proven otherwise. Standing rule from MODEL-REPORT-CARD.md improvement rules."
+      }
+    ],
+    "improvement_rule": "A new model version counts as an IMPROVEMENT only if (a) the north star rises, (b) NO guardrail regresses, (c) it is measured on a FRESH one-shot holdout, and (d) it separates from the incumbent by confidence-interval (not point estimate). Anything short of all four is 'a change', not 'an improvement' - and the registry records it as such."
+  },
+  "deployed_champion": {
+    "model_version": "emerging-winner-classifier-real-v1",
+    "artifact": "src/lib/generated/emerging-winner-model.json",
+    "dataset": "historical-survivor-v1",
+    "promoted": "2026-07-31",
+    "forced": true,
+    "force_reason": "Force-promoted over the bootstrap-synthetic incumbent whose floor-comparison lift (2.774) was a SYNTHETIC self-evaluation, not a real-world number - the incumbent was refuted on the real holdout at 0.70x. Promoting the real-data model that clears 1.72x on real holdout over a synthetic artifact that fails at 0.70x on real holdout is correct; the floor's 'regression vs 2.774' was comparing against a fiction. Recorded here so the forced=true flag reads as a deliberate, reasoned act, not a silent override.",
+    "surfacing": "gated (shadow-live / Beta) - logs to the immutable ledger, never surfaces as a decision until the worst_cohort_lift guardrail clears and live calibration earns it"
+  },
+  "versions": [
+    {
+      "version": "real-v1",
+      "date": "2026-07-31",
+      "layer": "M2 classifier (deployed champion)",
+      "model_version": "emerging-winner-classifier-real-v1",
+      "algorithm": "logistic-regression (stdlib GD, L2) over 10 domain scores + completeness",
+      "dataset": "historical-survivor-v1 (real point-in-time, curated hindsight names excluded from training)",
+      "north_star": { "holdout_lift_at_k": 1.72, "ci90": [1.38, 2.05], "dev_walk_forward_lift_at_k": 1.31, "holdout_top5_precision": 0.231, "random_base": 0.1341 },
+      "guardrails": { "worst_cohort_lift": 0.83, "ece": 0.042 },
+      "leakage_decomposition": "2.77x first run -> 1.47x (-theme leak) -> 1.35x (-curated names) -> 1.31x (-purge bug) -> 1.72x holdout confirm. Adversarial review removed each real leak before the number was reported.",
+      "status": "CHAMPION (surfacing-gated)",
+      "verdict": "First model to learn REAL, out-of-time signal: holdout top-5% picks were 23.1% doublers vs 13.4% random. Genuine but modest research-queue edge; nowhere near tradeable; worst regime still below random.",
+      "evidence": "lyra-modelling/research/2026-08-01-real-history-backtest-and-real-v1-champion.md"
+    },
+    {
+      "version": "bootstrap-synthetic-v1",
+      "date": "2026-07-31",
+      "layer": "M2 classifier (retired)",
+      "model_version": "emerging-winner-classifier-trained-v1 (bootstrap dataset)",
+      "algorithm": "logistic-regression over 10 domain scores + completeness, trained on reproducible bootstrap synthetic data",
+      "dataset": "bootstrap-synthetic",
+      "north_star": { "holdout_lift_at_k": 0.70, "ci90": [0.47, 0.92] },
+      "guardrails": { "worst_cohort_lift": 0.0, "ece": null },
+      "status": "RETIRED (refuted 2026-08-01)",
+      "verdict": "Learned the hand-designed hypothesis faithfully - the hypothesis was wrong. Its honest role was proving the training lifecycle end to end, which it did. Retained in git history.",
+      "evidence": "lyra-modelling/research/2026-08-01-real-history-backtest-and-real-v1-champion.md"
+    },
+    {
+      "version": "reference-v1",
+      "date": "2026-07-29",
+      "layer": "M1 composite / fallback classifier (reference)",
+      "model_version": "emerging-winner-classifier-reference-v1",
+      "algorithm": "transparent hand-designed calibrated logistic over the 10 domain scores (DOMAIN_WEIGHTS + bias)",
+      "dataset": "none (hand-weighted hypothesis)",
+      "north_star": { "holdout_lift_at_k": 0.68, "ci90": [0.49, 0.89] },
+      "guardrails": { "worst_cohort_lift": 0.0, "ece": 0.173 },
+      "status": "REFUTED AS RANKER - retained as interpretable feature layer + coverage report, never as ranking authority",
+      "verdict": "Its top picks contain FEWER winners than random (0.68x). The hand-designed weights bet on technical + comfortable liquidity, both of which anti-predict real 12-month doublers. Kept for its legibility (10 named domains) - which is exactly what let the backtest refute it cleanly.",
+      "evidence": "lyra-evals/MODEL-REPORT-CARD.md"
+    }
+  ],
+  "feature_and_engine_log": [
+    {
+      "date": "2026-08-01",
+      "app_versions": ["0.105.0", "0.106.0", "0.107.0"],
+      "layer": "feature source + engine plumbing",
+      "change": "Real SEC EDGAR fundamentals (share-count dilution + gross-margin trend, CIK-authoritative); multi-market universe (US + ASX + FX + Stooq fallback); p_2x_12m outcome; coverage-honesty render fixes (unavailable domains render as gaps, null market caps hollow).",
+      "metric_isolated": false,
+      "note": "These are honest feature-coverage + plumbing changes, not an isolated retrain, so they carry no independent north-star delta. They EXPAND the substrate the next champion can learn from (more real domains lit up, more markets), which is where the next north-star move must come from - per MODEL-REPORT-CARD.md Stage 2."
+    },
+    {
+      "date": "2026-08-01",
+      "app_versions": ["semantics fix (pre-0.106 engine)"],
+      "layer": "M4 ranker semantics",
+      "change": "Removed the silent 0.5 default for unsupplied news_attention / portfolio_relevance - the ranker now renormalises over signals actually known instead of fabricating 25% of the priority weight on every real candidate.",
+      "metric_isolated": false,
+      "note": "A correctness/honesty fix to the ranking math, not a learned-model change. Recorded because it changes surfaced ordering on real candidates."
+    }
+  ],
+  "code_versions": {
+    "engine": {
+      "value": "emerging-winner-engine-v1-shadow-live",
+      "file": "workers/emerging_winner/engine.py",
+      "const": "ENGINE_VERSION"
+    },
+    "classifier_reference": {
+      "value": "emerging-winner-classifier-reference-v1",
+      "file": "workers/emerging_winner/classifier.py",
+      "const": "MODEL_VERSION"
+    },
+    "classifier_trained": {
+      "value": "emerging-winner-classifier-trained-v1",
+      "file": "workers/emerging_winner/train.py",
+      "const": "MODEL_VERSION",
+      "note": "Lifecycle default label; the deployed champion artifact overrides it to 'emerging-winner-classifier-real-v1' at train time (see deployed_champion.model_version)."
+    },
+    "timing": {
+      "value": "timing-network-reference-v1",
+      "file": "workers/emerging_winner/timing.py",
+      "const": "MODEL_VERSION"
+    }
+  },
+  "sophistication_ladder": {
+    "note": "Where each layer sits, honestly. Full grading in MODEL-REPORT-CARD.md.",
+    "levels": [
+      "L0 screens / hand-picked lists (most retail tools)",
+      "L1 hand-weighted composite scores <- reference scorecard (REFUTED as ranker)",
+      "L2 linear model, real labels, honest CV <- real-v1 champion is HERE (with L4-grade eval discipline)",
+      "L3 nonlinear tabular (GBDT), interactions, per-regime validation",
+      "L4 point-in-time multi-source features (filings, insider, contracts), delisted-inclusive corpus",
+      "L5 sequence/graph models, regime conditioning, ensembles with uncertainty"
+    ],
+    "current": "eval discipline L4, estimator L2, data L1.5 - and that gap IS the roadmap"
+  }
+}
