@@ -68,6 +68,8 @@ export interface SendTelegramOptions {
    * markup is malformed, so only pass it for text from a renderer that escapes its inputs.
    */
   parseMode?: 'HTML' | 'MarkdownV2';
+  /** Inline buttons under the message (an `inline_keyboard` object). Kept on the plain-text retry. */
+  replyMarkup?: unknown;
 }
 
 interface TelegramSendResponse {
@@ -134,6 +136,7 @@ export async function sendTelegramMessage(
       chat_id: chatId,
       text: text.slice(0, TELEGRAM_TEXT_LIMIT),
       disable_web_page_preview: true,
+      ...(options.replyMarkup ? { reply_markup: options.replyMarkup } : {}),
     };
 
     let res = await post(options.parseMode ? { ...basePayload, parse_mode: options.parseMode } : basePayload);
@@ -243,6 +246,11 @@ async function callTelegram(method: string, payload: Record<string, unknown>): P
 /** Stop the button's loading spinner, optionally with a short toast (Telegram caps it at 200 characters). */
 export function answerCallbackQuery(callbackQueryId: string, text?: string): Promise<TelegramCallResult> {
   return callTelegram('answerCallbackQuery', text ? { callback_query_id: callbackQueryId, text: text.slice(0, 200) } : { callback_query_id: callbackQueryId });
+}
+
+/** Show "typing..." in a chat while an answer is being written (Telegram clears it after five seconds or on the next message). */
+export function sendChatAction(chatId: string, action: 'typing' = 'typing'): Promise<TelegramCallResult> {
+  return callTelegram('sendChatAction', { chat_id: chatId, action });
 }
 
 /** Swap the buttons under a message the bot sent (the feedback flow's next step). */

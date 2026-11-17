@@ -23,6 +23,18 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.144.0',
+    date: '2026-11-19',
+    title: 'Lyra on Telegram for a few invited friends: ask anything privately, a world read twice a day, feedback straight to the owner',
+    highlights: [
+      'The circle: an invite-only Lyra on Telegram. A friend opens the invite link, picks what they follow and adds what they hold, and from then on can ask Lyra anything in their own words - only they see the chat. Answers come from free open-source models (Groq, Cloudflare), never a paid key and never one of their own, with a fair daily share for each person.',
+      'Every answer is built from figures Lyra computed a moment earlier - the world board, the latest US session read, their own tickers priced now, Lyra\'s engine score for any US name they mention, and the day\'s headlines and IPOs - and checked before it is sent: a figure Lyra did not compute is removed and advice stops the answer. When the free models are busy, they get the figures for what they asked.',
+      'A world read twice a day, sent to each person with their own names first: about 8:45am Sydney (how Wall Street and Europe closed, where Asia and Australia stand) and about 7:15pm (how Asia closed, how Europe opened, where US futures point), with a tech pulse that says plainly when technology is selling off across regions.',
+      'Feedback reaches the owner as it happens - /feedback, a reason tapped under a read, or something said in conversation that Lyra recognises as feedback on Lyra (it says when it passes one on). Nothing else anyone writes is shown to anyone.',
+      'The Updates page now shows the world right now: Asia, Europe, the US and Australia with their technology leaders, and the macro gauges, from live daily closes - where Lyra used to show fixed sample values for overseas markets. A market that has just closed is dated to the session it traded in, even before the source has written the day\'s bar.',
+    ],
+  },
+  {
     version: '0.143.0',
     date: '2026-11-18',
     title: 'Australia\'s economy, read as a whole: what growth, living standards, jobs and inflation mean together',

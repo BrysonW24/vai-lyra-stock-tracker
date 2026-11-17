@@ -65,6 +65,12 @@ export default function PrivacyPage() {
           <p>Tapping &quot;Explain this setup&quot; sends that ticker&apos;s figures and nothing about you; tapping &quot;Write this brief in plain English&quot; sends the lines of the brief as shown - without an account, only its market lines unless &quot;Include my book&quot; is on. Cloudflare states that it neither trains on nor keeps this content; Groq states that it does not train on it and may keep request logs for up to 30 days. Neither is sent your name or email address. If the hosted model is the one that normally answers you and it cannot - its daily budget is spent, or its provider is unavailable - the free model answers that question instead, on the terms above, and the reply says so. If you would rather they saw nothing, add your own model key in AI settings and your requests go only to the provider you chose.</p>
         </Section>
 
+        <Section title="Lyra on Telegram (the invite-only circle)">
+          <p>If someone invites you to Lyra&apos;s circle on Telegram, Lyra keeps your Telegram first name, the topics you follow and the tickers you add (until you send /leave), and the last 12 messages of your private chat so it can follow a conversation (for 7 days, or until you send /forget). Nothing is kept in a database - it sits in Lyra&apos;s server-side store.</p>
+          <p>Other members never see your chat, your tickers or your feedback. The person who runs the circle sees the names of the people in it, and the feedback you send: what you send with /feedback, a reason you tap under a read, and a message Lyra recognises as feedback on Lyra itself - it tells you when it passes one on. Nothing else you write is shown to anyone.</p>
+          <p>Your question, the earlier turns of your chat and the market figures it needs - including the tickers you added, but not your name - are sent to the free open-source model that writes the answer, hosted by Groq or Cloudflare, on the terms above.</p>
+        </Section>
+
         <Section title="Your rights">
           <p>You can access and correct your information at any time in the app. You can delete your account, which cascades to remove your associated data (portfolio, watchlist, alerts, settings, and analytics references).</p>
           <p>{BRAND_NAME} operates with regard to the Australian Privacy Principles. You may request access to, correction of, or deletion of your data.</p>

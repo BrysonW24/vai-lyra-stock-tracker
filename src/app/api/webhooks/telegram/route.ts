@@ -34,14 +34,25 @@
  * buttons is kept as a note on the same generation. A command, including a replied STOP, is always
  * a command. setWebhook must allow "callback_query" as well as "message" (npm run telegram:webhook).
  *
+ * The circle (v0.144.0): a small invite-only group of friends - see src/lib/circle/handle.ts. Every
+ * update is offered to the circle first. Someone who opened the invite link (`/start c<code>`) is a
+ * member, and in a PRIVATE chat a member's free text is a question for Lyra: it is still untrusted
+ * data - screened for injection, answered only from facts code computed, by the free pool of
+ * open-weight models, and checked by guardProse before it is sent (src/lib/circle/converse.ts). It is
+ * never an instruction, and nothing it says can place an order or change a setting. The answer is
+ * written after this route has returned 200 (next/server after()), so a slow model never makes
+ * Telegram retry. Anyone who is not a member gets exactly the closed command set above.
+ *
  * The route always returns 200 fast after the auth gate, replying via the server-only
  * sender in src/lib/notifications/telegram.ts when TELEGRAM_BOT_TOKEN is configured.
  */
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { circleConfigFromEnv, handleCircleMessage, handleCircleTap, type CircleIo } from '@/lib/circle/handle';
+import { CircleStore } from '@/lib/circle/store';
 import { parseMessage, type ParsedMessage } from '@/lib/notifications/telegram-commands';
-import { answerCallbackQuery, editMessageReplyMarkup, sendTelegramMessage } from '@/lib/notifications/telegram';
+import { answerCallbackQuery, editMessageReplyMarkup, sendChatAction, sendTelegramMessage } from '@/lib/notifications/telegram';
 import { readerForChat, recordFeedback, type FeedbackOutcome } from '@/lib/feedback/store';
 import { generationFromMarkup, nextStep, NOTE_REPLY, parseFeedbackData } from '@/lib/feedback/telegram-feedback';
 import { completeTelegramPairing, disconnectChat, pairedUserForChat } from '@/lib/notifications/telegram-pairing';
@@ -51,6 +62,9 @@ import { activateTelegramSubscriber, activeChatSubscription, unsubscribeChat, ty
 import { createSupabaseServiceClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
+// A circle answer is written after the 200 (after()), inside this function's lifetime: the free pool
+// gets at most 35 seconds, the world board and the holdings a few more.
+export const maxDuration = 60;
 
 // --- auth: constant-time secret check ---------------------------------------
 
@@ -80,8 +94,8 @@ const telegramUpdateSchema = z.object({
     .object({
       message_id: z.number().int(),
       text: z.string().max(4096).optional(),
-      chat: z.object({ id: z.number().int() }),
-      from: z.object({ id: z.number().int() }).optional(),
+      chat: z.object({ id: z.number().int(), type: z.string().max(32).optional() }),
+      from: z.object({ id: z.number().int(), first_name: z.string().max(256).optional() }).optional(),
       // The message a reply answers - with its buttons, which name the generation it came from.
       reply_to_message: z
         .object({
@@ -386,6 +400,31 @@ async function noteReply(
   return (outcome === 'table_missing' ? NOT_SAVED_YET : SAVE_FAILED) + optOut;
 }
 
+// --- the circle -----------------------------------------------------------------
+
+function circleIo(): CircleIo {
+  return {
+    store: new CircleStore(),
+    send: sendTelegramMessage,
+    answerTap: answerCallbackQuery,
+    editMarkup: editMessageReplyMarkup,
+    typing: (chatId) => sendChatAction(chatId),
+    later: (work) => after(work),
+    config: circleConfigFromEnv(),
+  };
+}
+
+/** The circle read a message replies to: its buttons carry the read id (`cl:r:<read id>:u`). */
+function replyToReadId(markup: z.infer<typeof inlineKeyboardSchema>): string | null {
+  for (const row of markup?.inline_keyboard ?? []) {
+    for (const button of row) {
+      const match = /^cl:[ry]:([me]\d{8}):/.exec(button.callback_data ?? '');
+      if (match) return match[1]!;
+    }
+  }
+  return null;
+}
+
 // --- route --------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -416,6 +455,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   //    is still a 200: Telegram retries non-2xx, and a retried tap would only double-answer.
   if (update.callback_query) {
     try {
+      const query = update.callback_query;
+      // A circle button (`cl:`) belongs to the circle; every other tap is the feedback flow's.
+      if (query.data?.startsWith('cl:')) {
+        await handleCircleTap(
+          {
+            id: query.id,
+            fromId: String(query.from.id),
+            chatId: query.message ? String(query.message.chat.id) : String(query.from.id),
+            messageId: query.message?.message_id ?? null,
+            data: query.data,
+          },
+          circleIo(),
+        );
+        return NextResponse.json({ ok: true });
+      }
       await handleFeedbackTap(update.callback_query, Date.now());
     } catch (err) {
       console.warn(JSON.stringify({ at: 'telegram.webhook', event: 'callback_error', error: err instanceof Error ? err.name : 'unknown' }));
@@ -444,7 +498,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true });
   }
 
-  // 6. Parse the untrusted text into the closed command enum. Log the command name
+  // 6. The circle first: a circle /start link, or anything from a member. Untrusted text either
+  //    way - the circle parses it against its own closed command set, and a member's question goes
+  //    to the guarded chat (src/lib/circle/converse.ts). Anything that is not the circle's falls
+  //    through, unchanged, to the closed command set below.
+  try {
+    const handled = await handleCircleMessage(
+      {
+        updateId: update.update_id,
+        chatId,
+        chatType: message.chat.type ?? 'private',
+        fromId,
+        firstName: message.from?.first_name ?? '',
+        text,
+        replyToReadId: message.reply_to_message?.from?.is_bot ? replyToReadId(message.reply_to_message.reply_markup) : null,
+      },
+      circleIo(),
+    );
+    if (handled) return NextResponse.json({ ok: true });
+  } catch (err) {
+    // A circle failure must never stop the route's own commands, nor become a non-2xx.
+    console.warn(JSON.stringify({ at: 'telegram.webhook', event: 'circle_error', error: err instanceof Error ? err.name : 'unknown' }));
+  }
+
+  // 7. Parse the untrusted text into the closed command enum. Log the command name
   //    only - never the raw text or a /start argument, which are untrusted user input.
   const parsed = parseMessage(text);
   console.info(
@@ -458,7 +535,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }),
   );
 
-  // 7. Reply. Keyed by update_id so a Telegram redelivery of the same update is
+  // 8. Reply. Keyed by update_id so a Telegram redelivery of the same update is
   //    suppressed by the sender's idempotency dedupe instead of double-replying. A
   //    database error must never turn into a non-2xx (Telegram would retry it for ever).
   let reply: string;
@@ -480,7 +557,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 8. Always 200 - Telegram retries any non-2xx, and retries of handled updates
+  // 9. Always 200 - Telegram retries any non-2xx, and retries of handled updates
   //    only create duplicate work.
   return NextResponse.json({ ok: true });
 }

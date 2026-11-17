@@ -12,7 +12,7 @@ Telegram is a delivery and command channel for Lyra, the research-first momentum
 Hard boundaries, grounded in code:
 
 - **No live trading exists.** The deterministic pre-trade engine (`src/lib/trading/risk-engine.ts`) refuses any mode beyond paper (`no_live_execution` check), and `DEFAULT_TRADING_SETTINGS.tradingMode` is `disabled` (`src/lib/trading/types.ts`). `/approve` and `/reject` over Telegram cannot execute anything because no pending order intents can exist.
-- **Inbound text is untrusted data, never instructions.** The webhook maps text to a fixed command enum. Nothing a user types in Telegram reaches an LLM as a prompt or system instruction.
+- **Inbound text is untrusted data, never instructions.** The webhook maps text to a fixed command enum. Since v0.144.0 one path sends text to a model: a member of the invite-only circle ("The circle" at the end of this page) asking a question in a private chat. That text is still data - screened for injection, answered only from figures code computed, by the free open-model pool, with the answer checked by `guardProse` - and it can never place an order, change a setting or reach the closed command set. Nothing a user types reaches an LLM as a system instruction.
 - **Secrets are server-side only.** `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` are unprefixed env vars (`.env.example`), never `NEXT_PUBLIC_*`, never logged (token redaction lives in `redactBotToken` in `src/lib/notifications/telegram.ts`).
 
 ## 2. Current state vs future state
@@ -283,3 +283,42 @@ buttons is kept as a note on the same row. A command - `/stop`, a bare STOP sent
 always handled as the command. Until migration 060 is applied the toast says feedback is not being
 saved yet and the buttons stay put, so nothing pretends to be recorded.
 
+## The circle (v0.144.0)
+
+Lyra for a few invited friends, on this same bot, with no database and no paid key. Code:
+`src/lib/circle/` (members, the conversation, the reads), `src/lib/world/` (the world board the
+answers and reads are built from), `src/app/api/circle/broadcast/route.ts` and
+`.github/workflows/circle-reads.yml`. The loop is `LOOPS.md` 3g.
+
+**What a member gets.** A private chat in which they can ask anything in their own words (answered
+by the free open-model pool, grounded in the world board, the latest US session read, their own
+tickers and Lyra's engine score, checked by `guardProse`), a morning read at about 8:45am Sydney
+and an evening read at about 7:15pm, each with 👍/👎, and commands: `/world`, `/read`, `/hold`,
+`/drop`, `/topics`, `/me`, `/feedback`, `/pause`, `/resume`, `/forget`, `/privacy`, `/leave`.
+The owner also has `/members` (names only), `/feedbacks`, `/invite` and `/announce`, and hears
+every join and every feedback note as it happens.
+
+**Switching it on** (founder steps, in order):
+
+1. Free model keys - create a free Groq key (console.groq.com, no card) and optionally a Cloudflare
+   Workers AI token; set `GROQ_API_KEY` (and `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_AI_TOKEN`) on
+   Vercel Production. Without them every answer is the figures-only fallback.
+2. Codes - set `CIRCLE_INVITE_CODE` and `CIRCLE_OWNER_CODE` (12+ characters each, letters, digits,
+   `-` or `_`; `openssl rand -hex 12` makes one) on Vercel Production, and `UPDATES_PUBLISH_SECRET`
+   (32+ characters) on Vercel Production and as an Actions secret.
+3. Redeploy, then re-register the webhook so button taps arrive: `npm run telegram:webhook`
+   (`--check` reads the registration without changing it; `allowed_updates` must include
+   `callback_query`).
+4. Open `https://t.me/<bot>?start=o<CIRCLE_OWNER_CODE>` yourself, then send `/invite` to get the
+   friends' link.
+5. Rehearse a read: Actions > Circle Reads > Run workflow (rehearsal is on by default - only owners
+   receive it).
+
+**Groups.** Optional: add the bot to a group and set `CIRCLE_GROUP_CHAT_ID` to have the reads posted
+there too, with nobody's names in them. In BotFather keep `/setprivacy` enabled (the bot then only
+sees commands in a group) and allow `/setjoingroups` only while adding it. In a group the bot
+answers `/world` and `/read` and nothing else - questions are answered only in private chats.
+
+**Who is in.** Only chats that opened the invite or owner link, up to `CIRCLE_MAX_MEMBERS` (default
+12). Changing `CIRCLE_INVITE_CODE` stops new joins without removing anyone. `/leave` forgets a
+member entirely (record, chat history); feedback they sent stays with the owner.

@@ -1,0 +1,84 @@
+name: Circle Reads
+
+# The circle's two scheduled reads on Telegram (src/lib/circle/, v0.144.0): a short world read sent
+# privately to each member of the founder's invite-only circle, with their own names first. This job
+# only rings the bell - it signs one request (scripts/circle-read.mjs) and the app that holds the bot
+# composes and sends the read (POST /api/circle/broadcast). No database, no paid key: the figures are
+# the world board's, the one short note is written by the free open-model pool, and each read is sent
+# once per Sydney day whichever firing gets there first.
+#
+# When. Cron strings are UTC; the comments give Sydney summer time (AEDT, UTC+11).
+#   morning  21:45 UTC Mon-Fri = 08:45 Tue-Sat: Wall Street closed 45 minutes ago (winter close,
+#            21:00 UTC; summer close 20:00), Europe closed overnight, Asia opens at 11:00.
+#   evening  08:15 UTC Mon-Fri = 19:15 Mon-Fri: every Asian market has closed (Hong Kong last, at
+#            08:00 UTC) and Europe is fifteen minutes into its session.
+# A second firing of each, half an hour later, catches a morning GitHub dropped (it does) and is a
+# no-op when the first got through.
+#
+# This repository is public, so its logs are: the script prints counts only.
+on:
+  schedule:
+    - cron: '45 21 * * 1-5'
+    - cron: '15 22 * * 1-5'
+    - cron: '15 8 * * 1-5'
+    - cron: '45 8 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: Which read
+        type: choice
+        options: [morning, evening]
+        default: morning
+      rehearsal:
+        description: Rehearse - send it to the owners only, marked as a rehearsal
+        type: boolean
+        default: true
+      force:
+        description: Send again even if today's read already went out
+        type: boolean
+        default: false
+
+# Least privilege. `actions: write` is only for the keepalive step (see its action for why).
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: circle-reads
+  cancel-in-progress: false
+
+jobs:
+  read:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Send the read
+        env:
+          UPDATES_PUBLISH_SECRET: ${{ secrets.UPDATES_PUBLISH_SECRET }}
+          LYRA_CIRCLE_URL: ${{ vars.LYRA_CIRCLE_URL || 'https://lyra.vivacityai.com.au' }}
+          # A scheduled run picks its read from the hour it fired in; a manual run from the inputs.
+          KIND: ${{ inputs.kind || (github.event.schedule == '15 8 * * 1-5' || github.event.schedule == '45 8 * * 1-5') && 'evening' || 'morning' }}
+          REHEARSAL: ${{ inputs.rehearsal && '--rehearsal' || '' }}
+          FORCE: ${{ inputs.force && '--force' || '' }}
+        run: node scripts/circle-read.mjs "$KIND" $REHEARSAL $FORCE
+
+      - name: Keepalive (reset the 60-day cron auto-disable clock)
+        if: always()
+        uses: ./.github/actions/keepalive
+        with:
+          token: ${{ github.token }}
+
+      - name: Notify on failure
+        if: failure()
+        uses: ./.github/actions/notify-failure
+        with:
+          title: Lyra circle read FAILED
+          telegram-bot-token: ${{ secrets.OPS_TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.OPS_TELEGRAM_CHAT_ID }}
+          slack-webhook: ${{ secrets.OPS_SLACK_WEBHOOK_URL }}
