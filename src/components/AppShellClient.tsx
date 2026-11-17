@@ -21,6 +21,7 @@ import {
   Award,
   FileText,
   Gem,
+  HeartPulse,
   FlaskConical,
   Gauge,
   GitCompare,
@@ -110,6 +111,7 @@ const navItems: NavItem[] = [
   { href: '/awards', label: 'Gov Awards', short: 'Awards', icon: ScrollText, bucket: 'research' },
   { href: '/flows', label: 'Capital Flows', short: 'Flows', icon: ArrowLeftRight, bucket: 'research' },
   { href: '/commodities', label: 'Commodities', short: 'Commod', icon: Gem, bucket: 'research' },
+  { href: '/economy', label: 'Australian Economy', short: 'Economy', icon: HeartPulse, bucket: 'research' },
   // PRACTICE - test ideas with no real money
   { href: '/paper-bot', label: 'Paper Bot', short: 'Paper Bot', icon: Bot, bucket: 'practice', primary: true },
   { href: '/trading', label: 'Live Bot', short: 'Live Bot', icon: ShieldCheck, bucket: 'practice' },

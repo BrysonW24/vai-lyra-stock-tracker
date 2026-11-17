@@ -43,6 +43,7 @@ import { formatCurrency, formatNumber, formatPercent, formatSignedNumber, toneCl
 import { PaperBotStrip } from '@/components/paper-bot/PaperBotStrip';
 import { SoloCommandLayout } from '@/components/SoloCommandLayout';
 import { SimpleHome } from '@/components/simple/SimpleHome';
+import { SimpleEconomyLoader, SimpleEconomyPending } from '@/components/simple/SimpleEconomy';
 import { parseViewMode, VIEW_MODE_COOKIE } from '@/lib/view-mode';
 import { resolveGovAwards } from '@/lib/ingestion/usaspending';
 import { buildEmergenceShortlist } from '@/lib/small-cap-lifecycle';
@@ -89,6 +90,11 @@ async function SimpleCommandPage() {
         themes={themes}
         themeCount={allThemes.length}
         setupStatus={setupStatus}
+        economySlot={
+          <Suspense fallback={<SimpleEconomyPending />}>
+            <SimpleEconomyLoader />
+          </Suspense>
+        }
       />
     </AppShell>
   );

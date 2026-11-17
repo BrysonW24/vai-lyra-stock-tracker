@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { ArrowRight } from 'lucide-react';
 import type { DashboardData } from '@/types/scanner';
 import type { IntelligenceItem } from '@/lib/intelligence';
@@ -39,6 +40,11 @@ export interface SimpleHomeProps {
   themeCount: number;
   /** Real per-user setup state; drives the progressive onboarding checklist. */
   setupStatus: SetupStatus;
+  /**
+   * The Australian economy read (founder brief 2026-11-18). A SLOT, not data: the page passes it
+   * wrapped in Suspense so a slow ABS/RBA answer streams in without holding up the rest.
+   */
+  economySlot?: ReactNode;
 }
 
 export function SimpleHome({
@@ -51,6 +57,7 @@ export function SimpleHome({
   themes,
   themeCount,
   setupStatus,
+  economySlot,
 }: SimpleHomeProps) {
   const isDemo = data.mode === 'demo';
   // Sample rows may only render on the demo tour (standing honesty rule).
@@ -65,6 +72,8 @@ export function SimpleHome({
       <SimpleSection title="Your book" hint="What you own and how it is doing." href="/portfolio" linkLabel="Open portfolio">
         <SimpleBook data={data} />
       </SimpleSection>
+
+      {economySlot}
 
       <SimpleSection
         title="What moved"
