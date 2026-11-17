@@ -430,6 +430,7 @@ Every shipped build and its headline feature, newest first. This table is **gene
 ```text
 BUILD    DATE        FEATURE THEME
 -------  ----------  ----------------------------------------------------------------------
+0.143.0  2026-11-18  Australia's economy, read as a whole: what growth, living standards, jobs and inflation mean together
 0.142.0  2026-11-18  Free market updates with no account and no paid key, and Fusion Energy joins the themes
 0.141.0  2026-11-07  The market read is checked for what its figures mean, and the bake-off finds the small model that got them right
 0.140.0  2026-11-07  Ask Lyra is free for everyone: open-source models answer, no key and no sign-in needed
@@ -601,7 +602,7 @@ BUILD    DATE        FEATURE THEME
 0.2.0    2026-06-12  Thematic intelligence + research platform
 0.1.0    2026-06-08  Initial release
 
-(170 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
+(171 builds - full per-build highlights in CHANGELOG.md and in-app /whats-new)
 ```
 <!-- BUILD-HISTORY:END -->
 

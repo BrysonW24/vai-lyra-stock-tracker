@@ -32,6 +32,7 @@ export const SURFACE_LABELS: Record<string, string> = {
   '/awards': 'Gov Awards',
   '/flows': 'Capital Flows',
   '/commodities': 'Commodities',
+  '/economy': 'Australian Economy',
   '/paper-bot': 'Paper Bot',
   '/trading': 'Live Bot',
   '/simulation': 'Simulation Lab',

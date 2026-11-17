@@ -23,6 +23,19 @@ export interface Release {
 /** Newest first. The first entry is the current build; APP_VERSION + APP_VERSION_DATE derive from it. */
 export const RELEASES: Release[] = [
   {
+    version: '0.143.0',
+    date: '2026-11-18',
+    title: 'Australia\'s economy, read as a whole: what growth, living standards, jobs and inflation mean together',
+    highlights: [
+      'A new Australian Economy page answers four plain questions - is the economy growing and is it reaching people, are people actually better off, is the jobs market healthy, and is inflation under control - each in one sentence built from the latest ABS and RBA figures.',
+      'It keeps apart the four things a GDP headline blurs: total output, output per person, output per hour and what income actually buys. On the day it shipped it read: the economy grew 2.1% over the year to the June quarter 2026, but output per person only 0.7%, pay bought 0.6% less after inflation, and output per hour fell 0.2% - growth came from more hours worked, not more productive ones.',
+      'It shows where growth came from - households, businesses, government services, public investment, exports - and adds public and private demand up from all their parts, so government spending is never judged from one line of the accounts.',
+      'Simple view puts the one-sentence read and the four verdicts on the home screen, right under your book, with one link to the detail. It streams in, so a slow statistics site never holds up the rest of the page.',
+      'Every figure comes live from the ABS Data API and the RBA statistical tables, or the page says it is missing - nothing is filled in. Verdicts come from fixed rules listed on the page, every sentence is built from the numbers it quotes, and every figure links to the release it came from.',
+      'The macro strip on the full Command page now shows the live figures. It had been showing seeded values - 2.8% inflation and "RBA easing" - while the real figures were 4.3% inflation and a rising cash rate.',
+    ],
+  },
+  {
     version: '0.142.0',
     date: '2026-11-18',
     title: 'Free market updates with no account and no paid key, and Fusion Energy joins the themes',

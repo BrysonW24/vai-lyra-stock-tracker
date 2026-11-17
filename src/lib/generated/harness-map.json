@@ -4,7 +4,7 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 35,
+    "sections": 36,
     "chains": 16,
     "gates": 9,
     "layers": 5
@@ -403,6 +403,17 @@
       ],
       "chains": [
         "data-integrity"
+      ]
+    },
+    {
+      "section": "Australian economy read (ABS Data API + RBA tables, live or absent - never seeded; the deterministic read of what growth, living standards, jobs and inflation mean together)",
+      "paths": [
+        "src/lib/economy/",
+        "src/app/economy/"
+      ],
+      "chains": [
+        "data-integrity",
+        "ux-surface"
       ]
     },
     {
