@@ -7,7 +7,14 @@
  * it for injection before any model sees it).
  *
  * The /start deep links that bring someone in are `c<invite code>` (a friend) and `o<owner code>`
- * (the founder). The subscribe and pairing flows own `s` and `p` (src/lib/subscribe.ts).
+ * (the founder). The subscribe and pairing flows own `s` and `p` (src/lib/subscribe.ts) - the circle
+ * hands every /start it does not own back to the webhook route, and a new deep-link flow must not
+ * start with `c` or `o`.
+ *
+ * Stopping is not the circle's alone: the same bot sends the evening briefing to subscribers and
+ * alerts to paired accounts, and every one of those messages says "Reply STOP". So STOP, /stop and
+ * /unsubscribe are a `stop` - the circle pauses its reads AND the route ends the briefing and the
+ * pairing - while /pause pauses the circle's reads only.
  */
 import { QUOTE_SYMBOL_RE } from '@/lib/world/fetch';
 import { MAX_HOLDINGS } from './store';
@@ -25,6 +32,7 @@ export type CircleCommand =
   | { kind: 'forget' }
   | { kind: 'feedback'; text: string }
   | { kind: 'pause' }
+  | { kind: 'stop' }
   | { kind: 'resume' }
   | { kind: 'leave' }
   | { kind: 'privacy' }
@@ -32,6 +40,8 @@ export type CircleCommand =
   | { kind: 'feedbacks' }
   | { kind: 'invite' }
   | { kind: 'announce'; text: string }
+  | { kind: 'kick'; index: number | null }
+  | { kind: 'demote'; index: number | null }
   | { kind: 'ask'; text: string }
   | { kind: 'unknown'; name: string };
 
@@ -47,7 +57,8 @@ const SIMPLE: Record<string, CircleCommand['kind']> = {
   follow: 'topics',
   forget: 'forget',
   pause: 'pause',
-  stop: 'pause',
+  stop: 'stop',
+  unsubscribe: 'stop',
   resume: 'resume',
   leave: 'leave',
   privacy: 'privacy',
@@ -73,13 +84,13 @@ export function parseSymbols(text: string): { symbols: string[]; rejected: strin
   return { symbols: symbols.slice(0, MAX_HOLDINGS), rejected };
 }
 
-/** The bare words people use to stop messages - honoured as a pause of the scheduled reads. */
+/** The bare words people use to stop messages - the same `stop` as /stop. */
 const STOP_WORDS = new Set(['STOP', 'UNSUBSCRIBE', 'CANCEL']);
 
 export function parseCircleMessage(text: string): CircleCommand {
   const trimmed = text.trim().slice(0, MAX_TEXT_CHARS);
   if (!trimmed.startsWith('/')) {
-    if (STOP_WORDS.has(trimmed.replace(/[\s.!]+$/u, '').toUpperCase())) return { kind: 'pause' };
+    if (STOP_WORDS.has(trimmed.replace(/[\s.!]+$/u, '').toUpperCase())) return { kind: 'stop' };
     return { kind: 'ask', text: trimmed };
   }
   const [head = '', ...rest] = trimmed.slice(1).split(/\s+/);
@@ -92,6 +103,11 @@ export function parseCircleMessage(text: string): CircleCommand {
   if (name === 'drop' || name === 'remove') return { kind: 'drop', symbols: parseSymbols(args).symbols };
   if (name === 'feedback' || name === 'idea' || name === 'bug') return { kind: 'feedback', text: args };
   if (name === 'announce') return { kind: 'announce', text: args };
+  if (name === 'kick' || name === 'demote') {
+    // The number from /members; anything else is no number, and the command says how to use it.
+    const index = /^\d{1,3}$/.test(args) ? Number(args) : null;
+    return { kind: name, index };
+  }
   if (name === 'ask') return args ? { kind: 'ask', text: args } : { kind: 'help' };
   const simple = SIMPLE[name];
   if (simple) return { kind: simple } as CircleCommand;
@@ -113,7 +129,8 @@ export type CircleTap =
   | { kind: 'topic'; topic: string }
   | { kind: 'topics_done' }
   | { kind: 'rate'; readId: string; rating: 'u' | 'd' }
-  | { kind: 'why'; readId: string; reason: string };
+  | { kind: 'why'; readId: string; reason: string }
+  | { kind: 'noted'; readId: string | null };
 
 const READ_ID_RE = /^[me]\d{8}$/;
 const REASONS = new Set(['long', 'short', 'late', 'wrong', 'more', 'other']);
@@ -125,6 +142,9 @@ export function parseCircleTap(data: string | undefined): CircleTap | null {
   if (parts[1] === 'td' && parts.length === 2) return { kind: 'topics_done' };
   if (parts[1] === 'r' && parts[2] && READ_ID_RE.test(parts[2]) && (parts[3] === 'u' || parts[3] === 'd')) return { kind: 'rate', readId: parts[2], rating: parts[3] };
   if (parts[1] === 'y' && parts[2] && READ_ID_RE.test(parts[2]) && parts[3] && REASONS.has(parts[3])) return { kind: 'why', readId: parts[2], reason: parts[3] };
+  // The "Noted" button left after a rating carries its read, so a reply to that read is filed as
+  // the reader's own note on it. A bare `cl:n` is a button from before it did.
+  if (parts[1] === 'n') return { kind: 'noted', readId: parts[2] && READ_ID_RE.test(parts[2]) ? parts[2] : null };
   return null;
 }
 

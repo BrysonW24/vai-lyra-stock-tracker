@@ -66,9 +66,9 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="Lyra on Telegram (the invite-only circle)">
-          <p>If someone invites you to Lyra&apos;s circle on Telegram, Lyra keeps your Telegram first name, the topics you follow and the tickers you add (until you send /leave), and the last 12 messages of your private chat so it can follow a conversation (for 7 days, or until you send /forget). Nothing is kept in a database - it sits in Lyra&apos;s server-side store.</p>
-          <p>Other members never see your chat, your tickers or your feedback. The person who runs the circle sees the names of the people in it, and the feedback you send: what you send with /feedback, a reason you tap under a read, and a message Lyra recognises as feedback on Lyra itself - it tells you when it passes one on. Nothing else you write is shown to anyone.</p>
-          <p>Your question, the earlier turns of your chat and the market figures it needs - including the tickers you added, but not your name - are sent to the free open-source model that writes the answer, hosted by Groq or Cloudflare, on the terms above.</p>
+          <p>If someone invites you to Lyra&apos;s circle on Telegram, Lyra keeps your Telegram first name, the topics you follow and the tickers you add (until you send /leave), the last 12 messages of your private chat so it can follow a conversation (each used for 7 days at most, and wiped by /forget), and your 👍/👎 on each read (for 90 days). Nothing is kept in a database - it sits in Lyra&apos;s server-side store. /leave deletes your record, your chat and your 👍/👎.</p>
+          <p>Other members never see your chat, your tickers or your feedback. The people who run the circle see the names of the people in it, how many 👍 and 👎 each read got (never who gave them), and the feedback you send in your own words: what you send with /feedback, a reason you tap under a read, and a reply to a read you have rated. Feedback notes stay with them after you leave. No model ever writes or chooses feedback for you, and nothing else you write is shown to anyone.</p>
+          <p>Your question, the earlier turns of your chat and the market figures it needs - including the tickers you added, but not your name - are sent to the free open-source model that writes the answer, hosted by Groq or Cloudflare, on the terms above. Questions are only ever answered in your private chat, never in a group.</p>
         </Section>
 
         <Section title="Your rights">

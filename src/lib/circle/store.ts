@@ -11,11 +11,17 @@
  *   member:<chatId>      one member: name, topics, holdings, read settings         kept until they leave
  *   members              the set of member chat ids (who the reads go to)
  *   owners               the set of owner chat ids (who sees feedback and the member list)
- *   turns:<chatId>       the last TURNS_KEPT turns of their conversation, newest first   kept 7 days
+ *   turns:<chatId>       the last TURNS_KEPT turns of their conversation, newest first - each turn is
+ *                        read back only within 7 days of when it was said (the key itself expires 7
+ *                        days after the last one)
+ *   epoch:<chatId>       a counter bumped by /forget and /leave, so an answer still being written
+ *                        cannot put back a conversation that was wiped while it was in flight
  *   feedback             the last FEEDBACK_KEPT feedback notes, newest first
- *   rating:<read>:<chat> a reader's thumbs on one read                                kept 90 days
+ *   ratings:<read>       each reader's thumbs on one read (chat id -> u/d)                kept 90 days
+ *   rated:<chatId>       the reads that reader rated, so /leave can take their thumbs out too
  *   last-read            the last scheduled read, in parts, for /read                   kept 3 days
- *   once:<key>           a "this already happened" marker (a read sent, an update answered)
+ *   once:<key>           a "this already happened" marker (a read sent to one member, an update
+ *                        answered, a tap handled)
  * A chat id is Telegram's own number for the private chat with that person.
  */
 import { sharedStoreConfigured, upstashCommand } from '@/lib/cache';
@@ -86,7 +92,11 @@ export interface FeedbackNote {
   chatId: string;
   name: string;
   text: string;
-  /** Where it came from: an explicit /feedback, a note the chat picked out, a thumbs-down reason, a reply to a read. */
+  /**
+   * Where it came from: an explicit /feedback, a thumbs-down reason, or a reply to a read the member
+   * had rated. Always the member's own words or a fixed label - never text a model wrote.
+   * 'conversation' is kept only so notes stored by v0.144.0 drafts still render.
+   */
   via: 'command' | 'conversation' | 'rating' | 'reply';
   /** The read it was about, when it was about one. */
   readId: string | null;
@@ -166,21 +176,48 @@ export class CircleStore {
     return found.filter((member): member is CircleMember => member !== null);
   }
 
-  /** Leaving forgets them entirely: the record, the conversation and the set entries. Feedback they sent stays with the owner. */
+  /**
+   * Leaving forgets them entirely: the record, the conversation, their thumbs on every read still
+   * kept, and the set entries. Feedback notes they sent stay with the owners (the privacy text says so).
+   */
   async removeMember(chatId: string): Promise<void> {
-    await this.redis(['DEL', `${PREFIX}member:${chatId}`, `${PREFIX}turns:${chatId}`]);
+    const rated = asStrings(await this.redis(['SMEMBERS', `${PREFIX}rated:${chatId}`]));
+    for (const readId of rated) await this.redis(['HDEL', `${PREFIX}ratings:${readId}`, chatId]);
+    await this.redis(['DEL', `${PREFIX}member:${chatId}`, `${PREFIX}turns:${chatId}`, `${PREFIX}rated:${chatId}`]);
     await this.redis(['SREM', `${PREFIX}members`, chatId]);
     await this.redis(['SREM', `${PREFIX}owners`, chatId]);
+    await this.bumpEpoch(chatId);
+  }
+
+  /** Bumped whenever the conversation is wiped; an answer compares it before saving its turns. */
+  async epoch(chatId: string): Promise<number> {
+    const raw = await this.redis(['GET', `${PREFIX}epoch:${chatId}`]);
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  private async bumpEpoch(chatId: string): Promise<void> {
+    await this.redis(['INCR', `${PREFIX}epoch:${chatId}`]);
+    await this.redis(['EXPIRE', `${PREFIX}epoch:${chatId}`, TURNS_TTL]);
   }
 
   // --- conversation ---------------------------------------------------------------------------
 
-  /** The conversation so far, oldest first. */
-  async turns(chatId: string): Promise<Turn[]> {
+  /**
+   * The conversation so far, oldest first - only turns said in the last 7 days. The key's own
+   * expiry restarts with every message, so without this a busy chat would replay a turn for weeks
+   * while the privacy text says 7 days.
+   */
+  async turns(chatId: string, nowMs: number = Date.now()): Promise<Turn[]> {
     const raw = asStrings(await this.redis(['LRANGE', `${PREFIX}turns:${chatId}`, 0, TURNS_KEPT - 1]));
+    const oldest = nowMs - TURNS_TTL * 1000;
     return raw
       .map((entry) => parseJson<Turn>(entry))
       .filter((turn): turn is Turn => Boolean(turn && (turn.role === 'user' || turn.role === 'lyra') && typeof turn.text === 'string'))
+      .filter((turn) => {
+        const at = Date.parse(turn.at);
+        return Number.isFinite(at) && at >= oldest;
+      })
       .reverse();
   }
 
@@ -193,6 +230,7 @@ export class CircleStore {
 
   async forgetTurns(chatId: string): Promise<void> {
     await this.redis(['DEL', `${PREFIX}turns:${chatId}`]);
+    await this.bumpEpoch(chatId);
   }
 
   // --- feedback and ratings -------------------------------------------------------------------
@@ -208,8 +246,24 @@ export class CircleStore {
     return raw.map((entry) => parseJson<FeedbackNote>(entry)).filter((note): note is FeedbackNote => Boolean(note && typeof note.text === 'string'));
   }
 
+  /** One reader's thumbs on one read - a second tap replaces the first. */
   async rate(readId: string, chatId: string, rating: 'u' | 'd'): Promise<void> {
-    await this.redis(['SET', `${PREFIX}rating:${readId}:${chatId}`, rating, 'EX', RATING_TTL]);
+    await this.redis(['HSET', `${PREFIX}ratings:${readId}`, chatId, rating]);
+    await this.redis(['EXPIRE', `${PREFIX}ratings:${readId}`, RATING_TTL]);
+    await this.redis(['SADD', `${PREFIX}rated:${chatId}`, readId]);
+    await this.redis(['EXPIRE', `${PREFIX}rated:${chatId}`, RATING_TTL]);
+  }
+
+  /** How each of these reads was rated, for the owners: counts only, never who. */
+  async ratingCounts(readIds: readonly string[]): Promise<Array<{ readId: string; up: number; down: number }>> {
+    return Promise.all(
+      readIds.map(async (readId) => {
+        const raw = await this.redis(['HGETALL', `${PREFIX}ratings:${readId}`]);
+        // Upstash answers HGETALL as a flat [field, value, field, value] list.
+        const values = Array.isArray(raw) ? raw.filter((_, index) => index % 2 === 1).map(String) : [];
+        return { readId, up: values.filter((value) => value === 'u').length, down: values.filter((value) => value === 'd').length };
+      }),
+    );
   }
 
   // --- the last read sent, so /read can show it again ----------------------------------------------
@@ -232,5 +286,10 @@ export class CircleStore {
 
   async releaseOnce(key: string): Promise<void> {
     await this.redis(['DEL', `${PREFIX}once:${key}`]);
+  }
+
+  /** Whether `key` has been claimed and is still held. */
+  async isClaimed(key: string): Promise<boolean> {
+    return (await this.redis(['GET', `${PREFIX}once:${key}`])) !== null;
   }
 }

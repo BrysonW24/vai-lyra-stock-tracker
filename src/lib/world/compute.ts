@@ -15,9 +15,15 @@
  *                         so the same word needs a bigger move
  *   tech pulse            the average five-session change of every technology instrument read
  *                         (TECH_PULSE below), with how many fell - never computed from fewer than six
+ *   a region's day        the session most of its exchanges last traded (indices, shares and funds -
+ *                         not futures, which trade through the night)
  *
  * An instrument whose bars could not be read is left out and named in `missing` - never filled in
- * with a remembered or sample value.
+ * with a remembered or sample value. So is one whose last bar is more than MAX_SESSIONS_BEHIND
+ * weekdays older than its region's day: its feed has stopped, and its last move is not news. One that
+ * trails by less (Tokyo shut for a holiday while Seoul trades) is kept, but its figures belong to its
+ * own day: every line that prints it says that day, and it earns no "worth knowing" line and no place
+ * in the tech pulse's day figure.
  */
 import { REGION_LABEL, REGION_ORDER, WORLD_INSTRUMENTS, type InstrumentKind, type WorldInstrument, type WorldRegion } from './instruments';
 
@@ -65,6 +71,12 @@ export interface InstrumentMove {
   /** Percent below the highest close of the last 60 sessions; null with fewer than 20 sessions. */
   fromHigh: number | null;
   flags: MoveFlag[];
+  /**
+   * The day its region is dated by (RegionMoves.session), on the board's moves. When `session` is a
+   * different day, these figures are that day's, not the region's, and the text says so. Absent on a
+   * holding priced on its own.
+   */
+  regionSession?: string | null;
 }
 
 export type TechPulseLevel = 'selloff' | 'weak' | 'steady' | 'firm' | 'rally' | 'unknown';
@@ -86,7 +98,10 @@ export interface TechPulse {
 export interface RegionMoves {
   region: WorldRegion;
   label: string;
-  /** The day most of its instruments last traded (their own timezones). */
+  /**
+   * The day most of its exchanges last traded (their own timezones; indices, shares and funds - not
+   * futures). A move whose own session differs carries its own date wherever it is printed.
+   */
   session: string | null;
   /** At least one of its exchanges is in its regular session now. */
   trading: boolean;
@@ -123,8 +138,19 @@ export const VIX_STRESS_LEVEL = 25;
 
 export const TECH_PULSE = { minCount: 6, selloff: -5, weak: -2, firm: 2, rally: 5 } as const;
 
+/**
+ * How many weekdays a series may trail its region's day and still be shown, with its own date. A
+ * market shut for a holiday trails by one or two; a feed that has stopped trails by more, and its
+ * last move is history, so it is named as missing instead.
+ */
+export const MAX_SESSIONS_BEHIND = 3;
+
 const HIGH_WINDOW = 60;
 const MIN_FOR_HIGH = 20;
+const DAY_MS = 86_400_000;
+
+/** The kinds that date a region: exchanges with a closing bell. Futures trade through the night. */
+const DATED_KINDS: ReadonlySet<InstrumentKind> = new Set(['index', 'stock', 'fund']);
 
 /** The day an epoch-seconds instant falls on in a timezone, as YYYY-MM-DD. */
 export function dayIn(epochSeconds: number, timezone: string): string {
@@ -160,6 +186,18 @@ export function cleanBars(bars: DailyBars): { closes: number[]; days: string[] }
 function round(value: number, places: number): number {
   const factor = 10 ** places;
   return Math.round(value * factor) / factor;
+}
+
+/**
+ * The latest price at the precision a reader needs: whole points for a level in the thousands,
+ * cents for a share, four decimals under 10 - and four significant figures under 1, because fixed
+ * decimals would round a share trading at a fraction of a cent to zero, and null is not zero.
+ */
+function keepLast(last: number): number {
+  if (last >= 1000) return round(last, 0);
+  if (last >= 10) return round(last, 2);
+  if (last >= 1) return round(last, 4);
+  return Number(last.toPrecision(4));
 }
 
 function changeOver(closes: number[], sessions: number, unit: 'percent' | 'points'): number | null {
@@ -207,7 +245,7 @@ export function describeMove(instrument: WorldInstrument, bars: DailyBars, nowMs
     kind: instrument.kind,
     tech: Boolean(instrument.tech),
     smallCap: Boolean(instrument.smallCap),
-    last: round(last, last >= 1000 ? 0 : last >= 10 ? 2 : 4),
+    last: keepLast(last),
     session: days[days.length - 1]!,
     trading,
     unit,
@@ -223,12 +261,16 @@ function average(values: number[]): number | null {
   return values.length ? round(values.reduce((sum, value) => sum + value, 0) / values.length, 1) : null;
 }
 
-/** How technology moved over five sessions, across every region read. */
-export function techPulse(moves: InstrumentMove[]): TechPulse {
+/**
+ * How technology moved over five sessions, across every region read. `onTheDay` says which moves'
+ * day figures belong to their region's day: the day average leaves out a market that has not
+ * traded since an earlier session, whose day move is that session's.
+ */
+export function techPulse(moves: InstrumentMove[], onTheDay: (move: InstrumentMove) => boolean = () => true): TechPulse {
   const tech = moves.filter((move) => move.tech && move.change5d !== null);
   const fives = tech.map((move) => move.change5d as number);
   const avg5d = average(fives);
-  const avg1d = average(tech.filter((move) => move.change1d !== null).map((move) => move.change1d as number));
+  const avg1d = average(tech.filter((move) => move.change1d !== null && onTheDay(move)).map((move) => move.change1d as number));
   let level: TechPulseLevel = 'unknown';
   if (tech.length >= TECH_PULSE.minCount && avg5d !== null) {
     level = avg5d <= TECH_PULSE.selloff ? 'selloff' : avg5d <= TECH_PULSE.weak ? 'weak' : avg5d >= TECH_PULSE.rally ? 'rally' : avg5d >= TECH_PULSE.firm ? 'firm' : 'steady';
@@ -279,33 +321,66 @@ function mostCommon(values: string[]): string | null {
   return best;
 }
 
+/**
+ * Weekdays after `from`, up to and including `to` (both YYYY-MM-DD): the sessions an exchange could
+ * have traded in between. Counted on the calendar, not from other series, so a coin's weekend bars
+ * never make a share look further behind. Stops once past `stopAt`.
+ */
+function weekdaysAfter(from: string, to: string, stopAt: number): number {
+  const end = Date.parse(`${to}T00:00:00Z`);
+  let count = 0;
+  for (let t = Date.parse(`${from}T00:00:00Z`) + DAY_MS; t <= end && count <= stopAt; t += DAY_MS) {
+    const weekday = new Date(t).getUTCDay();
+    if (weekday !== 0 && weekday !== 6) count += 1;
+  }
+  return count;
+}
+
+/** The move's figures are from an earlier session than its region's day (a market that has not traded since). */
+export function behindItsRegion(move: Pick<InstrumentMove, 'session' | 'regionSession'>): boolean {
+  return typeof move.regionSession === 'string' && move.session < move.regionSession;
+}
+
 /** The snapshot of every instrument that could be read. `bars` is keyed by Yahoo symbol. */
 export function buildWorldSnapshot(
   bars: ReadonlyMap<string, DailyBars>,
   nowMs: number,
   instruments: readonly WorldInstrument[] = WORLD_INSTRUMENTS,
 ): WorldSnapshot {
+  const described = instruments.map((instrument) => {
+    const series = bars.get(instrument.symbol);
+    return { instrument, move: series ? describeMove(instrument, series, nowMs) : null };
+  });
+  const read = described.flatMap((entry) => (entry.move ? [entry.move] : []));
+
+  // Each region's day: the session most of its exchanges last traded. A tie goes to the later day.
+  const regionDay = new Map<WorldRegion, string | null>();
+  for (const region of REGION_ORDER) {
+    const inRegion = read.filter((move) => move.region === region);
+    const dated = inRegion.filter((move) => DATED_KINDS.has(move.kind));
+    regionDay.set(region, mostCommon((dated.length ? dated : inRegion).map((move) => move.session)));
+  }
+
+  // A series well behind its region's day has stopped updating: it is missing, not last week's news.
   const moves: InstrumentMove[] = [];
   const missing: string[] = [];
-  for (const instrument of instruments) {
-    const series = bars.get(instrument.symbol);
-    const move = series ? describeMove(instrument, series, nowMs) : null;
-    if (move) moves.push(move);
-    else missing.push(instrument.label);
+  for (const { instrument, move } of described) {
+    const day = move ? (regionDay.get(move.region) ?? null) : null;
+    const stale = move !== null && day !== null && move.session < day && weekdaysAfter(move.session, day, MAX_SESSIONS_BEHIND) > MAX_SESSIONS_BEHIND;
+    if (!move || stale) missing.push(instrument.label);
+    else moves.push({ ...move, regionSession: day });
   }
+
   const regions: RegionMoves[] = REGION_ORDER.map((region) => {
     const inRegion = moves.filter((move) => move.region === region);
-    const dated = inRegion.filter((move) => move.kind === 'index' || move.kind === 'stock' || move.kind === 'fund');
-    return {
-      region,
-      label: REGION_LABEL[region],
-      session: mostCommon((dated.length ? dated : inRegion).map((move) => move.session)),
-      trading: inRegion.some((move) => move.trading),
-      moves: inRegion,
-    };
+    return { region, label: REGION_LABEL[region], session: regionDay.get(region) ?? null, trading: inRegion.some((move) => move.trading), moves: inRegion };
   }).filter((region) => region.moves.length > 0);
+
+  // A move from an earlier session than its region's day is shown with its own date, but it is not
+  // news of that day: it earns no "worth knowing" line, and its day move stays out of the pulse's.
+  const onTheDay = (move: InstrumentMove) => !behindItsRegion(move);
   const notable = moves
-    .filter((move) => severity(move) >= 2)
+    .filter((move) => onTheDay(move) && severity(move) >= 2)
     .sort((a, b) => severity(b) - severity(a) || Math.abs(b.change5d ?? 0) - Math.abs(a.change5d ?? 0));
-  return { asOf: new Date(nowMs).toISOString(), moves, missing, regions, techPulse: techPulse(moves), notable };
+  return { asOf: new Date(nowMs).toISOString(), moves, missing, regions, techPulse: techPulse(moves, onTheDay), notable };
 }

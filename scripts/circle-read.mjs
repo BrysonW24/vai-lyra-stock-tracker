@@ -10,7 +10,10 @@
  * its publish (src/lib/updates/publish-auth.ts): `x-lyra-signature: t=<unix seconds>,v1=<hmac>` over
  * `<timestamp>.<body>`. LYRA_CIRCLE_URL is the deployment that holds the Telegram bot (default: the
  * production app). Prints the counts the app returns; never a member, a ticker or a secret.
- * Exits 1 when the app refuses, errors, or some sends failed - so the schedule's failure pager fires.
+ * Exits 1 when the app refuses, errors, some sends failed, or the world board could not be read on
+ * the retry firing (30+ minutes after the read's Sydney time) - so the schedule's failure pager fires.
+ * A firing before the read's Sydney time (too_early), a read already sent, and a circle switched off
+ * (no invite code) are quiet exits.
  * A circle that is not switched on yet (no secret here, or the app answers `not_configured`) is a
  * visible ::warning:: on the run and exit 0: four pages a day for a feature nobody turned on would
  * teach the founder to ignore the pager.
@@ -41,11 +44,26 @@ const res = await fetch(`${base}/api/circle/broadcast`, {
 }).catch((error) => ({ ok: false, status: 0, json: async () => ({ reason: error instanceof Error ? error.name : 'network' }) }));
 
 const result = await res.json().catch(() => ({}));
-const { readId, status, rehearsal, recipients, delivered, failed, note, missing, reason } = result ?? {};
-console.log(JSON.stringify({ http: res.status, readId, status, rehearsal, recipients, delivered, failed, note, missing, reason }));
+const { readId, status, rehearsal, recipients, delivered, failed, blocked, skipped, note, missing, lateBy, reason } = result ?? {};
+console.log(JSON.stringify({ http: res.status, readId, status, rehearsal, recipients, delivered, failed, blocked, skipped, note, missing, lateBy, reason }));
 if (res.status === 503 && (reason === 'not_configured' || reason === 'no_bot')) {
   console.log(`::warning::circle-read: the app says the circle is not switched on (${reason}) - nothing sent.`);
   process.exit(0);
 }
-if (status === 'board_unreadable') console.log('::warning::circle-read: the world board could not be read - no read sent; the next firing tries again.');
+if (status === 'circle_off') {
+  console.log('::warning::circle-read: the circle is switched off on the app (no CIRCLE_INVITE_CODE) - nothing sent.');
+  process.exit(0);
+}
+if (status === 'too_early') {
+  console.log("circle-read: this firing is before the read's Sydney time - a later firing sends it.");
+  process.exit(0);
+}
+if (status === 'board_unreadable') {
+  // The first firing warns and leaves it to the retry; the retry failing too means no read today.
+  if (typeof lateBy === 'number' && lateBy >= 25) {
+    console.log('::error::circle-read: the world board could not be read on the retry - no read went out.');
+    process.exit(1);
+  }
+  console.log('::warning::circle-read: the world board could not be read - no read sent; the retry firing tries again.');
+}
 if (!res.ok || (typeof failed === 'number' && failed > 0)) process.exit(1);

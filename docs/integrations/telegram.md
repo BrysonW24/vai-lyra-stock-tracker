@@ -295,8 +295,16 @@ by the free open-model pool, grounded in the world board, the latest US session 
 tickers and Lyra's engine score, checked by `guardProse`), a morning read at about 8:45am Sydney
 and an evening read at about 7:15pm, each with 👍/👎, and commands: `/world`, `/read`, `/hold`,
 `/drop`, `/topics`, `/me`, `/feedback`, `/pause`, `/resume`, `/forget`, `/privacy`, `/leave`.
-The owner also has `/members` (names only), `/feedbacks`, `/invite` and `/announce`, and hears
-every join and every feedback note as it happens.
+Every owner also has `/members` (numbered, names only), `/feedbacks` (the latest notes and how the
+recent reads were rated - counts, never who), `/invite`, `/announce`, `/kick <n>` and `/demote <n>`,
+and hears every join, every new owner and every feedback note as it happens.
+
+**Feedback is always the member's own words** - `/feedback`, a reason tapped under a read, or a reply
+to a read they have rated (the "Noted - reply to say more" button keeps the read id). No model writes
+or picks out feedback. **STOP is shared with the rest of the bot**: from a member it pauses the circle's
+reads AND ends any evening-briefing subscription and account pairing for the chat, in one reply;
+`/pause` pauses the circle's reads only. A subscribe or pairing link, a reply to a briefing's or an
+alert's buttons, and any command the circle does not know go to the bot's own flows for members too.
 
 **Switching it on** (founder steps, in order):
 
@@ -315,10 +323,17 @@ every join and every feedback note as it happens.
    receive it).
 
 **Groups.** Optional: add the bot to a group and set `CIRCLE_GROUP_CHAT_ID` to have the reads posted
-there too, with nobody's names in them. In BotFather keep `/setprivacy` enabled (the bot then only
-sees commands in a group) and allow `/setjoingroups` only while adding it. In a group the bot
-answers `/world` and `/read` and nothing else - questions are answered only in private chats.
+there too, with nobody's names in them and no buttons. In BotFather keep `/setprivacy` enabled (the
+bot then only sees commands in a group) and allow `/setjoingroups` only while adding it. In that one
+group the bot answers `/world` and `/read` and nothing else, and a reply to it gets a pointer to the
+private chat - questions are answered only in private chats. Any other group gets nothing.
 
 **Who is in.** Only chats that opened the invite or owner link, up to `CIRCLE_MAX_MEMBERS` (default
-12). Changing `CIRCLE_INVITE_CODE` stops new joins without removing anyone. `/leave` forgets a
-member entirely (record, chat history); feedback they sent stays with the owner.
+12). Changing `CIRCLE_INVITE_CODE` stops new joins without removing anyone; unsetting it switches the
+circle off (no joins, no answers, no reads). An owner removes a member with `/kick <n>` (the number
+from `/members`). `/leave` and `/kick` forget a member entirely (record, chat history, 👍/👎);
+feedback notes they sent stay with the owners. A member who blocks the bot is paused, not retried.
+
+**When the reads arrive.** About 8:45am and 7:15pm Sydney all year: `circle-reads.yml` fires for both
+halves of daylight saving, the app ignores a firing before the read's Sydney time, and the firing half
+an hour later is the retry (it sends only to members the first did not reach).

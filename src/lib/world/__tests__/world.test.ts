@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildWorldSnapshot, cleanBars, dayIn, describeMove, techPulse, THRESHOLDS, type DailyBars, type InstrumentMove } from '../compute';
 import { parseChart, QUOTE_SYMBOL_RE } from '../fetch';
 import { instrumentsMentioned, WORLD_INSTRUMENTS, type WorldInstrument } from '../instruments';
-import { formatChange, formatLevel, regionHtml, techPulseHtml, worldFactsText } from '../text';
+import { formatChange, formatLevel, notableHtml, regionHtml, sessionLabel, techPulseHtml, worldFactsText } from '../text';
 
 // Absolute instants only - these tests must pass on a UTC runner and in Sydney alike.
 const DAY = 86_400;
@@ -211,6 +211,180 @@ describe('world fetch parsing', () => {
   it('accepts tickers as people type them across exchanges', () => {
     for (const symbol of ['NVDA', 'CBA.AX', '005930.KS', 'ES=F', '^N225', 'BRK-B']) expect(QUOTE_SYMBOL_RE.test(symbol)).toBe(true);
     for (const symbol of ['', 'nvda; drop', '<script>', 'A'.repeat(20)]) expect(QUOTE_SYMBOL_RE.test(symbol)).toBe(false);
+  });
+});
+
+/**
+ * One bar per weekday, the last on `lastDay`, stamped at `hourUtc` so each bar falls on that same
+ * day in the exchange's zone (06:00 UTC is mid-afternoon in Asia; 21:00 UTC is 4pm in New York).
+ */
+function weekdayBars(closes: number[], lastDay: string, timezone: string, hourUtc: number): DailyBars {
+  const times: number[] = [];
+  let t = Date.parse(`${lastDay}T${String(hourUtc).padStart(2, '0')}:00:00Z`);
+  while (times.length < closes.length) {
+    const weekday = new Date(t).getUTCDay();
+    if (weekday !== 0 && weekday !== 6) times.unshift(t / 1000);
+    t -= DAY * 1000;
+  }
+  return { closes, times, timezone, period: null };
+}
+
+const ASIA_ZONES: Record<string, string> = { Japan: 'Asia/Tokyo', Korea: 'Asia/Seoul', 'Hong Kong': 'Asia/Hong_Kong', China: 'Asia/Shanghai', Taiwan: 'Asia/Taipei' };
+const ASIA = WORLD_INSTRUMENTS.filter((instrument) => instrument.region === 'asia');
+
+/** Every Asian instrument: Japan's last bar on `japanDay` with `japanTail`, the rest on `restDay` up 1%. */
+function asiaBoard(japanDay: string, japanTail: number[], restDay: string): Map<string, DailyBars> {
+  return new Map(
+    ASIA.map((instrument) => {
+      const japan = instrument.market === 'Japan';
+      return [instrument.symbol, weekdayBars(endingWith(70, japan ? japanTail : [100, 101]), japan ? japanDay : restDay, ASIA_ZONES[instrument.market]!, 6)] as const;
+    }),
+  );
+}
+
+describe('a market on another day than its region (a holiday, a stalled feed)', () => {
+  // Mon 23 Nov 2026 is a holiday in Japan: Tokyo's last session is Friday's while the rest of Asia trades.
+  const EVENING = Date.parse('2026-11-23T08:15:00Z'); // 7:15pm in Sydney
+  const holiday = buildWorldSnapshot(asiaBoard('2026-11-20', [100, 94], '2026-11-23'), EVENING);
+  const asia = holiday.regions.find((region) => region.region === 'asia')!;
+
+  it('dates the region by the markets that traded, and keeps each market its own day', () => {
+    expect(asia.session).toBe('2026-11-23');
+    const nikkei = holiday.moves.find((move) => move.symbol === '^N225')!;
+    expect(nikkei.session).toBe('2026-11-20');
+    expect(nikkei.regionSession).toBe('2026-11-23');
+  });
+
+  it("prints Friday's moves under Friday's date, never among the day's chips", () => {
+    const lines = regionHtml(asia).split('\n');
+    expect(lines[0]).toContain(`${sessionLabel('2026-11-23')} close`);
+    expect(lines).toContain(`As of ${sessionLabel('2026-11-20')}: Nikkei 225 -6.0% · Tokyo Electron -6.0% · Advantest -6.0% · SoftBank Group -6.0%`);
+    const dayLines = lines.filter((line) => !line.startsWith('As of'));
+    expect(dayLines.join('\n')).not.toMatch(/Nikkei|Tokyo Electron|Advantest|SoftBank/);
+    expect(dayLines.find((line) => line.startsWith('Tech:'))).toContain('TSMC +1.0%');
+  });
+
+  it('keeps an earlier session out of "Worth knowing" and out of the day figure of the tech pulse', () => {
+    // Japan's -6% days would each be "a sharp fall on the day" - Friday's, not Monday's.
+    expect(holiday.notable.map((move) => move.symbol)).toEqual([]);
+    expect(notableHtml(holiday)).not.toContain('Nikkei');
+    // Six tech names from the markets that traded, all up 1%; Japan's three are left out of the day.
+    expect(holiday.techPulse.avg1d).toBe(1);
+    expect(holiday.techPulse.count).toBe(9);
+  });
+
+  it("gives the model each market's own session when it is not the region's", () => {
+    const facts = worldFactsText(holiday);
+    expect(facts).toContain('Asia - session 2026-11-23, closed:');
+    expect(facts).toContain('- Nikkei 225 (Japan) 94.00, last session read 2026-11-20 (not 2026-11-23): day -6.0%');
+    expect(facts).toContain('- KOSPI (Korea) 101.00: day +1.0%');
+  });
+
+  it('shows a market already on a later day with that date beside its figures', () => {
+    // Tokyo has opened Monday while the rest of Asia still shows Friday.
+    const early = buildWorldSnapshot(asiaBoard('2026-11-23', [100, 102.5], '2026-11-20'), Date.parse('2026-11-23T01:00:00Z'));
+    const region = early.regions.find((entry) => entry.region === 'asia')!;
+    expect(region.session).toBe('2026-11-20');
+    expect(regionHtml(region)).toContain(`Nikkei 225 +2.5% (${sessionLabel('2026-11-23')})`);
+    expect(notableHtml(early)).toContain(`Nikkei 225 (${sessionLabel('2026-11-23')}): a sharp rise on the day`);
+    expect(worldFactsText(early)).toContain('- Nikkei 225 (Japan) 102.50, session 2026-11-23 (not 2026-11-20): day +2.5%');
+  });
+
+  it('treats a series more than three sessions behind its region as missing', () => {
+    const map = asiaBoard('2026-11-23', [100, 101], '2026-11-23');
+    map.set('^N225', weekdayBars(endingWith(70, [100, 101]), '2026-11-16', 'Asia/Tokyo', 6)); // five weekdays behind
+    map.set('8035.T', weekdayBars(endingWith(70, [100, 101]), '2026-11-18', 'Asia/Tokyo', 6)); // three behind
+    const snapshot = buildWorldSnapshot(map, EVENING);
+    expect(snapshot.missing).toContain('Nikkei 225');
+    expect(snapshot.moves.some((move) => move.symbol === '^N225')).toBe(false);
+    expect(snapshot.missing).not.toContain('Tokyo Electron');
+    const region = snapshot.regions.find((entry) => entry.region === 'asia')!;
+    expect(regionHtml(region)).toContain(`As of ${sessionLabel('2026-11-18')}: Tokyo Electron +1.0%`);
+  });
+});
+
+describe('US index futures', () => {
+  // 7:15pm Wednesday in Sydney is 3:15am in New York: Tuesday's cash close, and futures trading Wednesday's session.
+  const EVENING = Date.parse('2026-11-18T08:15:00Z');
+
+  function usBoard(cashDay: string, futuresDay: string): Map<string, DailyBars> {
+    const cash = (tail: number[]) => weekdayBars(endingWith(70, tail), cashDay, 'America/New_York', 21);
+    const futures = (last: number) => {
+      const bars = weekdayBars(endingWith(69, [100]), cashDay, 'America/New_York', 21);
+      if (futuresDay === cashDay) return { ...bars, closes: [...bars.closes.slice(0, -1), last] };
+      // The overnight trade, stamped at 3am in New York on the futures' own day.
+      return { ...bars, closes: [...bars.closes, last], times: [...bars.times, Date.parse(`${futuresDay}T08:00:00Z`) / 1000] };
+    };
+    return new Map<string, DailyBars>([
+      ['^GSPC', cash([100, 100.6])],
+      ['^NDX', cash([100, 100.9])],
+      ['^DJI', cash([100, 100.3])],
+      ['ES=F', futures(99.6)],
+      ['NQ=F', futures(99.3)],
+    ]);
+  }
+
+  it('prints the overnight futures on their own line under their own date, never under the cash close', () => {
+    const snapshot = buildWorldSnapshot(usBoard('2026-11-17', '2026-11-18'), EVENING);
+    const us = snapshot.regions.find((region) => region.region === 'us')!;
+    const lines = regionHtml(us).split('\n');
+    expect(lines[0]).toContain(`${sessionLabel('2026-11-17')} close`);
+    expect(lines[1]).toBe('S&amp;P 500 +0.6% · Nasdaq 100 +0.9% · Dow Jones +0.3%');
+    expect(lines[2]).toBe(`Futures now, ${sessionLabel('2026-11-18')}: S&amp;P 500 futures -0.4% · Nasdaq 100 futures -0.7%`);
+  });
+
+  it('marks the futures for the model as trading now, with their own session', () => {
+    const facts = worldFactsText(buildWorldSnapshot(usBoard('2026-11-17', '2026-11-18'), EVENING));
+    const cashHeader = facts.indexOf('United States - session 2026-11-17, closed:');
+    const futuresHeader = facts.indexOf('United States futures - session 2026-11-18, trading now - a live price, not a close; the cash session above is 2026-11-17:');
+    expect(cashHeader).toBeGreaterThanOrEqual(0);
+    expect(futuresHeader).toBeGreaterThan(cashHeader);
+    expect(facts.indexOf('- S&P 500 futures (US) 99.60: day -0.4%')).toBeGreaterThan(futuresHeader);
+  });
+
+  it('does not call the futures live when they are on the same closed session as the cash market', () => {
+    const weekend = buildWorldSnapshot(usBoard('2026-11-20', '2026-11-20'), Date.parse('2026-11-21T15:00:00Z'));
+    const html = regionHtml(weekend.regions.find((region) => region.region === 'us')!);
+    expect(html).toContain(`Futures, ${sessionLabel('2026-11-20')}: S&amp;P 500 futures -0.4%`);
+    expect(html).not.toContain('Futures now');
+  });
+});
+
+describe('drawdown words', () => {
+  const coin = (tail: number[]) => buildWorldSnapshot(new Map([['BTC-USD', bars(endingWith(70, tail), 'UTC')]]), NOW);
+
+  it("words a coin's correction and bear market by the crypto bands that set them", () => {
+    const correction = coin([100, 70]); // 30% below its high: a crypto correction (20%), not yet a bear (35%)
+    expect(correction.notable[0]!.flags).toContain('correction');
+    expect(notableHtml(correction)).toContain('more than 20% below its three-month high');
+    expect(notableHtml(correction)).not.toContain('more than 10%');
+    expect(worldFactsText(correction)).toContain('more than 20% below its three-month high');
+    const bear = coin([100, 60]);
+    expect(bear.notable[0]!.flags).toContain('bear_market');
+    expect(notableHtml(bear)).toContain('more than 35% below its three-month high');
+  });
+
+  it('still words an index by the index bands', () => {
+    const index = buildWorldSnapshot(new Map([['^GSPC', bars(endingWith(70, [100, 88]))]]), NOW);
+    expect(notableHtml(index)).toContain('more than 10% below its three-month high');
+  });
+});
+
+describe('a price under one', () => {
+  it('keeps a sub-cent share as a price, never 0.00', () => {
+    const penny: WorldInstrument = { symbol: 'ABC.AX', label: 'ABC.AX', region: 'australia', market: 'Australia', kind: 'stock' };
+    const move = describeMove(penny, bars(Array.from({ length: 30 }, () => 0.004), 'Australia/Sydney'), NOW)!;
+    expect(move.last).toBe(0.004);
+    expect(formatLevel(move)).toBe('0.004');
+    const dust = describeMove(penny, bars(Array.from({ length: 30 }, () => 0.00001234), 'Australia/Sydney'), NOW)!;
+    expect(dust.last).toBeGreaterThan(0);
+    expect(formatLevel(dust)).toBe('0.00001234');
+  });
+
+  it('prints a share under a dollar with at least two decimals and a share above it in cents', () => {
+    expect(formatLevel({ last: 0.5, kind: 'stock' })).toBe('0.50');
+    expect(formatLevel({ last: 0.0035, kind: 'stock' })).toBe('0.0035');
+    expect(formatLevel({ last: 236.8, kind: 'stock' })).toBe('236.80');
   });
 });
 

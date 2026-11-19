@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendCircleRead } from '@/lib/circle/broadcast';
+import { circleConfigFromEnv, circleIsOn } from '@/lib/circle/handle';
 import { CircleStore, CircleStoreUnavailable, circleStoreConfigured } from '@/lib/circle/store';
 import { sendTelegramMessage } from '@/lib/notifications/telegram';
 import { SIGNATURE_HEADER, publishSecret, verifySignature } from '@/lib/updates/publish-auth';
@@ -20,7 +21,8 @@ export const maxDuration = 60;
  * exact body - the same scheme, and the same secret, as the free market read's publish route
  * (src/lib/updates/publish-auth.ts), because it is the same runner holding it. Everything the read
  * says is composed here from the world board; the one model-written note is checked by guardProse
- * inside composeRead (src/lib/circle/reads.ts). Each read is sent once (sendCircleRead claims its id).
+ * inside composeRead (src/lib/circle/reads.ts). Each member gets each read once (sendCircleRead claims
+ * each copy as it sends it). A circle switched off (no invite code) answers circle_off and sends nothing.
  */
 const Body = z.object({
   kind: z.enum(['morning', 'evening']),
@@ -52,6 +54,7 @@ export async function POST(request: NextRequest) {
     return refuse('bad_request', 400);
   }
 
+  const config = circleConfigFromEnv();
   try {
     const result = await sendCircleRead(
       body.kind,
@@ -63,7 +66,8 @@ export async function POST(request: NextRequest) {
         headlines: () => marketHeadlines(),
         ipos: () => ipoCalendar(),
         holdings: (symbols) => describeHoldings(symbols),
-        groupChatId: process.env.CIRCLE_GROUP_CHAT_ID?.trim() || null,
+        circleOn: circleIsOn(config),
+        groupChatId: config.groupChatId,
         updatesUrl: updatesUrl(request),
       },
       { rehearsal: body.rehearsal, force: body.force },
