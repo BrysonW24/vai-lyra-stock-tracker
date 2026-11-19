@@ -6,6 +6,19 @@ All notable changes to Lyra are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.144.0] - 2026-11-19
+
+Lyra on Telegram for a few invited friends: ask anything privately, a world read twice a day, feedback straight to the owners.
+
+### Changed
+
+- The circle: an invite-only Lyra on Telegram. A friend opens the invite link, picks what they follow and adds what they hold, and from then on can ask Lyra anything in their own words - only they see the chat. Answers come from free open-source models (Groq, Cloudflare), never a paid key and never one of their own, with a fair share for each person: a few a minute and about 40 a day, and Lyra says which limit was reached.
+- Every answer is built from figures Lyra computed for that answer - the world board, the latest US session read, their own tickers priced now (the names they ask about first), Lyra's engine score for any US name they mention - and checked before it is sent: a figure Lyra did not compute is removed, an old figure from earlier in the chat does not count, and advice stops the answer, written as a sentence or as a bulleted list. Headlines are passed to the model as quoted text, never as facts. When the free models are busy, they get the figures for what they asked.
+- A world read twice a day at the same Sydney time all year, about 8:45am (how Wall Street and Europe closed) and about 7:15pm (how Asia closed, how Europe opened, which way US futures lean), each person's own names first. The short note at the top carries no figures - every number is in the lines under it - and a copy that does not get through is retried half an hour later for exactly the people who missed it.
+- Feedback reaches the owners as it happens, always in the member's own words: /feedback, a reason tapped under a read, or a reply to a read they rated. No model writes or picks out feedback, the owners see only how many 👍 and 👎 each read got, and nothing else anyone writes is shown to anyone. An owner can remove a member (/kick) or take an owner back to a member (/demote), /leave forgets everything about a member, and unsetting the invite code switches the circle off.
+- STOP still does everything it says: a circle member who also gets the evening briefing or account alerts on the same bot stops those too, in one reply, and subscribe and pairing links work for members as for anyone.
+- The Updates page now also shows the world right now: Asia, Europe, the US and Australia with their technology leaders, and the macro gauges, from live daily closes. Each market is dated to the session it traded in - one shut for a holiday shows its own date and stays out of the day's moves - US futures are shown as trading now on their own line, and the page shows the market read without waiting for the board.
+
 ## [0.143.0] - 2026-11-18
 
 Australia's economy, read as a whole: what growth, living standards, jobs and inflation mean together.
@@ -1999,7 +2012,8 @@ technology stocks. Runs on built-in demo data with zero setup.
 
 - Research software, not financial advice. See [`DISCLAIMER.md`](DISCLAIMER.md).
 
-[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.143.0...HEAD
+[Unreleased]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.144.0...HEAD
+[0.144.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.143.0...v0.144.0
 [0.143.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.142.0...v0.143.0
 [0.142.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.141.0...v0.142.0
 [0.141.0]: https://github.com/BrysonW24/vai-lyra-stock-tracker/compare/v0.140.0...v0.141.0

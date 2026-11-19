@@ -4,7 +4,7 @@
     "HARNESS.md"
   ],
   "stats": {
-    "sections": 36,
+    "sections": 37,
     "chains": 16,
     "gates": 9,
     "layers": 5
@@ -191,6 +191,20 @@
         "workers/stock_scanner/open_model.py",
         ".github/workflows/free-daily-read.yml",
         ".github/actions/local-model/"
+      ],
+      "chains": [
+        "ai-quality",
+        "notification-health"
+      ]
+    },
+    {
+      "section": "The circle (Lyra on Telegram for a few invited friends: private AI chat on the free pool, twice-daily world reads, feedback to the owner - Redis only, no paid key) and the world board (Asia, Europe, the US and Australia from Yahoo daily closes, the tech pulse, Finnhub headlines and IPOs)",
+      "paths": [
+        "src/lib/circle/",
+        "src/lib/world/",
+        "src/app/api/circle/",
+        "scripts/circle-read.mjs",
+        ".github/workflows/circle-reads.yml"
       ],
       "chains": [
         "ai-quality",

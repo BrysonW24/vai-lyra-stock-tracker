@@ -21,6 +21,7 @@ Companions: [`ARCHITECTURE.md`](./ARCHITECTURE.md) (structure - what exists),
 | 3d | Content record + review + reader feedback | every send writes its record; `content-review.yml` at 11:40 UTC Tue-Sat reviews; a reader's tap or reply lands at once | `ai_runs` rows for every message the workers send (`agent_name` daily_read / ai_briefing / morning_guide: the text as sent, the input, `prompt_version`, mode, tokens, cost) and for every review (`agent_name` content_judge: six pillar scores, reasons, advice flag, rubric version, owned by the operator); `content_feedback` (migration 060: one row per reader per message - 👍/👎, the reason pillar, a reply as a note) | the operator, reading the record, the reviews and the feedback side by side; the next night's review (anything unreviewed inside the lookback); a prompt change shows up as a new `prompt_version` next to the scores | `test_generation_record.py`, `test_content_judge.py`, the record tests in `test_daily_read.py` and `test_ai_briefing.py`, `src/lib/feedback/__tests__`, the webhook's `feedback.test.ts`, `check:app-columns` (both manifests), the workflow's failure pager |
 | 3e | Morning guide (engine only) | `morning-guide.yml` at 21:41, 22:41 and 23:13 UTC Mon-Fri; once per Sydney morning at or after 8:30am, only for a US session no guide has covered, after the scanner has scored its closing bar (the last firing sends regardless) | `stock_scanner_runs` rows with `job_name = morning_guide` (date sent, session, holdings, quotes, how many were closing quotes, earnings dates found) and an `ai_runs` record per guide (owned by the operator) | the operator's Telegram (with the feedback buttons); the next firing (dedupe by date and by session); the nightly review | `test_morning_guide.py`, `check:app-columns` (summary manifest), the workflow's failure pager |
 | 3f | Free market read (open model, no database) | `free-daily-read.yml` at 21:35 UTC Mon-Fri and 09:05 UTC Tue-Sat; once per completed US session, whichever firing gets there first | Redis (`lyra:updates:`): `facts:<session>` (the rows the app served, with their hash), `read:<session>` (the published read: figures, prose or the reason there is none, the writer), `latest-read`, `rehearsal:<session>` | the `/updates` page (`/api/updates/latest`); the next firing (`published` on the facts answer stops a second read); the writer's own log of counts and reasons | `test_app_client.py`, `test_free_daily_read.py`, `test_free_read.py`, `src/lib/updates/__tests__` (incl. the facts contract fixture both sides read), `src/app/api/updates/*/__tests__`, the workflow's failure pager |
+| 3g | The circle (Telegram, invite-only, no database) | a member's message lands on the webhook at once; `circle-reads.yml` at 21:45, 22:15, 22:45 + 23:15 UTC Mon-Fri (morning) and 08:15, 08:45, 09:15 + 09:45 UTC Mon-Fri (evening) - one send and one retry at about 8:45am and 7:15pm Sydney in each half of daylight saving; once per member per read | Redis (`lyra:circle:`): `member:<chat>` (name, topics, holdings, read settings), `members`, `owners`, `turns:<chat>` (the last 12 turns, 7 days), `feedback` (the last 500 notes), `rating:<read>:<chat>`, `last-read`, `once:<key>`; the shared world board (`lyra:world:v1:*`, 10-30 minutes) | the member's private chat (answers, reads with 👍/👎); the owner's chat (every feedback note and every join, as it happens); `/read` re-sends the last read; the next firing (the read id is claimed once) | `src/lib/circle/__tests__` (incl. the circle policy invariants), `src/lib/world/__tests__`, the webhook's `circle-route.test.ts`, the workflow's failure pager |
 | 4 | Notification delivery | every event + nightly sweep | `notification_deliveries`, `notification_engagements` | sweep, relevance tuning | `/notification-health` chain |
 | 5 | Scout (notice-create-learn) | nightly 22:05 UTC | `scout_items`, `scout_runs`, ideas, source scores, stoplist | Scout-tab proposals, next night's clustering | zero-writes guards, saturation flags |
 | 6 | Macro + calendar | hourly snap + seasonal crons | `market_context_snapshots`, calendar events | dashboard strips, loop 3 baselines | RBA no-number degradation |
@@ -391,6 +392,51 @@ looks. The contract between the two sides is pinned by two files both test suite
 than "publishing" into one instance's memory. Workers log counts, labels and reasons only - the
 repository's Actions logs are public. Open: the hosted writers wait on the founder's free keys
 (Groq, Cloudflare); until then every read is written on the runner, at a few tokens a second.
+
+### 3g. The circle - Lyra on Telegram for a few invited friends, no database, no paid key
+
+The founder (2026-11-18): share Lyra with about five friends who follow markets - one Telegram
+space with a great update on how markets are moving (tech sell-offs, overseas sessions, IPOs, small
+caps), where each person can also ask Lyra privately and give feedback, answered by an open model
+so nobody needs a key. Nothing here needs the parked database; everything lives in the Redis the
+app already holds.
+
+```text
+  JOIN        t.me/<bot>?start=c<CIRCLE_INVITE_CODE>  ->  webhook  ->  member:<chat> (+ welcome, topic buttons)
+              (?start=o<CIRCLE_OWNER_CODE> makes the owner, who hears every join and every feedback note)
+
+  ASK         a member's private message  ->  webhook returns 200, then after():
+                screen it (injection)  ->  ground it: the world board (src/lib/world: about forty
+                instruments, Yahoo daily closes, the tech pulse), the latest US session read, their
+                holdings priced now, Lyra's engine score for any US name they named, Finnhub headlines
+                and IPOs  ->  the FREE POOL only, charged to tg:<chat>  ->  guardProse against exactly
+                that context  ->  their chat; the turn joins turns:<chat>
+                pool off / busy  ->  the figures for what they asked about, never a made-up answer
+
+  READ        circle-reads.yml (signed with UPDATES_PUBLISH_SECRET), both halves of daylight saving
+                ->  POST /api/circle/broadcast: before the read's Sydney time = too_early, done = stop
+                ->  the board, one short note from the pool (no figures in it - a sentence with a
+                number is dropped; advice drops the note)  ->  each member's copy (their regions
+                first, "Your names"), claimed once:read:<id>:<chat> right before it is sent and given
+                back if the send fails (the retry firing reaches exactly those)  ->  their chat, with
+                👍/👎; a member who blocked the bot is paused; read-done:<id> once every copy went
+                CIRCLE_GROUP_CHAT_ID gets a copy with nobody's names and no buttons
+
+  FEEDBACK    the member's own words only: /feedback, a 👎 reason (one per read), or a reply to a
+              read they rated  ->  feedback  ->  every owner's chat, at once
+              👍/👎  ->  ratings:<read> (chat -> u/d)  ->  /feedbacks shows each recent read's counts
+```
+
+What closes it: the owners read every note as it arrives and see each recent read's 👍/👎 counts in
+/feedbacks, and change the reads or the prompts; the retry firing closes a read that did not reach
+everyone, and pages when the board still cannot be read. A member's STOP also ends their briefing
+subscription and account pairing (the bot's other flows); /kick removes a member. What it deliberately does not do:
+answer a question in a group (only /world and /read there - a private question asked in front of
+everyone is the thing this was built to avoid), use the hosted or a caller's key (pinned by
+`circle-policy.test.ts`), or say what to buy. Open: the hosted writers wait on the founder's free
+Groq / Cloudflare keys - until then every answer is the figures-only fallback; the board's
+instruments are a fixed list (`src/lib/world/instruments.ts`); no intraday watcher, so a sell-off
+is described at the next read, not the minute it happens.
 
 ## 4. The notification loop - deliver, hold, sweep, learn
 

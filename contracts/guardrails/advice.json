@@ -24,13 +24,13 @@
       "id": "imperative-ticker",
       "why": "instruction to trade a named stock",
       "flags": "",
-      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Buy|Sell|Short|Hold(?:\\s+on\\s?to)?|Trim|Avoid|Accumulate|Add(?:\\s+to)?|Load up on|BUY|SELL|SHORT|HOLD|TRIM|AVOID|ADD)\\s+(?:more\\s+|some\\s+)?[A-Z]{2,5}\\b"
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:[ \\t]*(?:[-*\\u2022\\u2013\\u2014]|\\d{1,2}[.)])[ \\t]+)?(?:\\*\\*|__)?(?:Buy|Sell|Short|Hold(?:\\s+on\\s?to)?|Trim|Avoid|Accumulate|Add(?:\\s+to)?|Load up on|BUY|SELL|SHORT|HOLD|TRIM|AVOID|ADD)\\s+(?:more\\s+|some\\s+)?[A-Z]{2,5}\\b"
     },
     {
       "id": "imperative-position",
       "why": "instruction to take or leave a position",
       "flags": "",
-      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Stay (?:long|short|out of|away from|invested)|Take (?:some )?profits?|Load up|Lighten up|Step aside|Get out|Get in)\\b"
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:[ \\t]*(?:[-*\\u2022\\u2013\\u2014]|\\d{1,2}[.)])[ \\t]+)?(?:\\*\\*|__)?(?:Stay (?:long|short|out of|away from|invested)|Take (?:some )?profits?|Load up|Lighten up|Step aside|Get out|Get in)\\b"
     },
     {
       "id": "modal",
@@ -48,7 +48,7 @@
       "id": "consider",
       "why": "suggests a trade",
       "flags": "",
-      "pattern": "(?:^|[.!?:;]\\s+|\\n)Consider\\s+(?:buying|selling|shorting|adding|trimming|accumulating|exiting|entering|taking (?:some )?profits?|a position|an entry|an exit)\\b"
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:[ \\t]*(?:[-*\\u2022\\u2013\\u2014]|\\d{1,2}[.)])[ \\t]+)?(?:\\*\\*|__)?Consider\\s+(?:buying|selling|shorting|adding|trimming|accumulating|exiting|entering|taking (?:some )?profits?|a position|an entry|an exit)\\b"
     },
     {
       "id": "rating",
@@ -116,7 +116,7 @@
       "id": "expect",
       "why": "tells the reader what to expect",
       "flags": "",
-      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:Expect|Watch for|Watch out for|Look for|Look out for|Keep an eye out for|Keep an eye on|Brace for|Prepare for|Be ready for|Get ready for)\\s+"
+      "pattern": "(?:^|[.!?:;]\\s+|\\n)(?:[ \\t]*(?:[-*\\u2022\\u2013\\u2014]|\\d{1,2}[.)])[ \\t]+)?(?:\\*\\*|__)?(?:Expect|Watch for|Watch out for|Look for|Look out for|Keep an eye out for|Keep an eye on|Brace for|Prepare for|Be ready for|Get ready for)\\s+"
     },
     {
       "id": "can-expect",
@@ -209,7 +209,12 @@
       "Investors could look to add SPOT to the alerts and pile in.",
       "Get in touch via Settings if alerts do not arrive.",
       "Get in touch with the team through the support page.",
-      "Get in touch with your broker and load up on NVDA."
+      "Get in touch with your broker and load up on NVDA.",
+      "Chips fell this week.\n- Trim AMD after its run",
+      "- Take profits on TSMC",
+      "\u2022 Hold NVDA for now",
+      "1) Consider adding SK Hynix",
+      "- **Buy NVDA** before the print"
     ],
     "advice_passes": [
       "Buyers stepped in late in the session.",
@@ -255,7 +260,9 @@
       "Snap shares up 12% after the company beat revenue estimates.",
       "Some analysts called the price a steal at 8 times earnings.",
       "Double down: Intel said it would spend $20 billion on two new fabs.",
-      "The plan has three parts: go long on renewables, cut coal and build storage."
+      "The plan has three parts: go long on renewables, cut coal and build storage.",
+      "- Semiconductors led, up 2.4% on average.",
+      "- Holdings data is not in the facts."
     ],
     "prediction_removes": [
       "AMD is likely to rebound.",
@@ -316,7 +323,8 @@
       "The signal resets if NVDA could bounce.",
       "Additionally, ESTC, DOCU, and NOW transitioned into watchlist setups, indicating forming opportunities.",
       "Several other names moved into watchlist setups, forming new potential opportunities as they began to recover.",
-      "The sell-off leaves an opportunity in beaten-down names."
+      "The sell-off leaves an opportunity in beaten-down names.",
+      "- Expect more selling in chips."
     ],
     "prediction_keeps": [
       "A broad rally tends to lower scores.",

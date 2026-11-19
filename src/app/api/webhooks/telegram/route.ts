@@ -34,14 +34,28 @@
  * buttons is kept as a note on the same generation. A command, including a replied STOP, is always
  * a command. setWebhook must allow "callback_query" as well as "message" (npm run telegram:webhook).
  *
+ * The circle (v0.144.0): a small invite-only group of friends - see src/lib/circle/handle.ts. Every
+ * update is offered to the circle first. Someone who opened the invite link (`/start c<code>`) is a
+ * member, and in a PRIVATE chat a member's free text is a question for Lyra: it is still untrusted
+ * data - screened for injection, answered only from facts code computed, by the free pool of
+ * open-weight models, and checked by guardProse before it is sent (src/lib/circle/converse.ts). It is
+ * never an instruction, and nothing it says can place an order or change a setting. The answer is
+ * written after this route has returned 200 (next/server after()), so a slow model never makes
+ * Telegram retry. Anyone who is not a member gets exactly the closed command set above - and so does
+ * a member for everything this route owns: a subscribe or pairing link, a reply to a briefing's or an
+ * alert's buttons, and the commands the circle does not know. A member's STOP pauses the circle's
+ * reads and then runs this route's stop as well, in one reply.
+ *
  * The route always returns 200 fast after the auth gate, replying via the server-only
  * sender in src/lib/notifications/telegram.ts when TELEGRAM_BOT_TOKEN is configured.
  */
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { circleConfigFromEnv, handleCircleMessage, handleCircleTap, type CircleIo, type ReplyTarget } from '@/lib/circle/handle';
+import { CircleStore } from '@/lib/circle/store';
 import { parseMessage, type ParsedMessage } from '@/lib/notifications/telegram-commands';
-import { answerCallbackQuery, editMessageReplyMarkup, sendTelegramMessage } from '@/lib/notifications/telegram';
+import { answerCallbackQuery, editMessageReplyMarkup, sendChatAction, sendTelegramMessage } from '@/lib/notifications/telegram';
 import { readerForChat, recordFeedback, type FeedbackOutcome } from '@/lib/feedback/store';
 import { generationFromMarkup, nextStep, NOTE_REPLY, parseFeedbackData } from '@/lib/feedback/telegram-feedback';
 import { completeTelegramPairing, disconnectChat, pairedUserForChat } from '@/lib/notifications/telegram-pairing';
@@ -51,6 +65,9 @@ import { activateTelegramSubscriber, activeChatSubscription, unsubscribeChat, ty
 import { createSupabaseServiceClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
+// A circle answer is written after the 200 (after()), inside this function's lifetime: the free pool
+// gets at most 35 seconds, the world board and the holdings a few more.
+export const maxDuration = 60;
 
 // --- auth: constant-time secret check ---------------------------------------
 
@@ -80,8 +97,8 @@ const telegramUpdateSchema = z.object({
     .object({
       message_id: z.number().int(),
       text: z.string().max(4096).optional(),
-      chat: z.object({ id: z.number().int() }),
-      from: z.object({ id: z.number().int() }).optional(),
+      chat: z.object({ id: z.number().int(), type: z.string().max(32).optional() }),
+      from: z.object({ id: z.number().int(), first_name: z.string().max(256).optional() }).optional(),
       // The message a reply answers - with its buttons, which name the generation it came from.
       reply_to_message: z
         .object({
@@ -205,16 +222,21 @@ function base(ctx: ReplyContext): string {
   return ctx.base;
 }
 
-async function stopReply(ctx: ReplyContext): Promise<string> {
-  if (!ctx.client) return NO_DATABASE;
+/**
+ * STOP: end the briefing subscription and disconnect the account for this chat. `circleNote` is the
+ * circle's own part when a circle member sent it (their reads are already paused) - the reply then
+ * says that too, and never claims nothing changed or that Lyra will not message them again.
+ */
+async function stopReply(ctx: ReplyContext, circleNote: string | null = null): Promise<string> {
+  if (!ctx.client) return circleNote ?? NO_DATABASE;
   const ended = await unsubscribeChat(ctx.client, ctx.chatId, 'stop', ctx.now);
   const disconnected = await disconnectChat(ctx.client, ctx.chatId, ctx.now);
-  console.info(JSON.stringify({ at: 'telegram.webhook', event: 'stop', ended, disconnected: Boolean(disconnected) }));
-  if (!ended && !disconnected) return 'This chat had no Lyra subscription or connection to end - nothing was changed.';
-  const parts = [];
+  console.info(JSON.stringify({ at: 'telegram.webhook', event: 'stop', ended, disconnected: Boolean(disconnected), circle: circleNote !== null }));
+  if (!ended && !disconnected) return circleNote ?? 'This chat had no Lyra subscription or connection to end - nothing was changed.';
+  const parts = circleNote ? [circleNote] : [];
   if (ended) parts.push('Your evening briefing subscription has ended.');
   if (disconnected) parts.push('This chat is no longer connected to your Lyra account.');
-  parts.push(`Lyra will not message this chat again. Come back any time at ${ctx.base}/subscribe.`);
+  parts.push(circleNote ? `Come back to the briefing any time at ${ctx.base}/subscribe.` : `Lyra will not message this chat again. Come back any time at ${ctx.base}/subscribe.`);
   return parts.join(' ');
 }
 
@@ -386,6 +408,35 @@ async function noteReply(
   return (outcome === 'table_missing' ? NOT_SAVED_YET : SAVE_FAILED) + optOut;
 }
 
+// --- the circle -----------------------------------------------------------------
+
+function circleIo(): CircleIo {
+  return {
+    store: new CircleStore(),
+    send: sendTelegramMessage,
+    answerTap: answerCallbackQuery,
+    editMarkup: editMessageReplyMarkup,
+    typing: (chatId) => sendChatAction(chatId),
+    later: (work) => after(work),
+    config: circleConfigFromEnv(),
+  };
+}
+
+/**
+ * What a message replies to, from the replied-to message's buttons: a circle read (`cl:r:` - not yet
+ * rated; `cl:y:` or `cl:n:` - rated, so a reply is the reader's note on it), or another Lyra message
+ * carrying the feedback flow's buttons, whose reply is that flow's note.
+ */
+function replyTargetOf(markup: z.infer<typeof inlineKeyboardSchema>): ReplyTarget {
+  for (const row of markup?.inline_keyboard ?? []) {
+    for (const button of row) {
+      const match = /^cl:([ryn]):([me]\d{8})(?::|$)/.exec(button.callback_data ?? '');
+      if (match) return { kind: 'read', readId: match[2]!, rated: match[1] !== 'r' };
+    }
+  }
+  return generationFromMarkup(markup) ? { kind: 'feedback' } : null;
+}
+
 // --- route --------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -416,6 +467,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   //    is still a 200: Telegram retries non-2xx, and a retried tap would only double-answer.
   if (update.callback_query) {
     try {
+      const query = update.callback_query;
+      // A circle button (`cl:`) belongs to the circle; every other tap is the feedback flow's.
+      if (query.data?.startsWith('cl:')) {
+        // The same per-chat limit as messages: a tap can message every owner, so it is not free.
+        if (!allowMessage(String(query.from.id), Date.now())) return NextResponse.json({ ok: true });
+        await handleCircleTap(
+          {
+            id: query.id,
+            fromId: String(query.from.id),
+            chatId: query.message ? String(query.message.chat.id) : String(query.from.id),
+            messageId: query.message?.message_id ?? null,
+            data: query.data,
+          },
+          circleIo(),
+        );
+        return NextResponse.json({ ok: true });
+      }
       await handleFeedbackTap(update.callback_query, Date.now());
     } catch (err) {
       console.warn(JSON.stringify({ at: 'telegram.webhook', event: 'callback_error', error: err instanceof Error ? err.name : 'unknown' }));
@@ -444,7 +512,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true });
   }
 
-  // 6. Parse the untrusted text into the closed command enum. Log the command name
+  // 6. The circle first: a circle /start link, or anything from a member. Untrusted text either
+  //    way - the circle parses it against its own closed command set, and a member's question goes
+  //    to the guarded chat (src/lib/circle/converse.ts). Anything that is not the circle's falls
+  //    through, unchanged, to the closed command set below.
+  let circleStop: string | null = null;
+  try {
+    const repliesToBot = message.reply_to_message?.from?.is_bot === true;
+    const outcome = await handleCircleMessage(
+      {
+        updateId: update.update_id,
+        chatId,
+        chatType: message.chat.type ?? 'private',
+        fromId,
+        firstName: message.from?.first_name ?? '',
+        text,
+        replyTo: repliesToBot ? replyTargetOf(message.reply_to_message?.reply_markup) : null,
+        repliesToBot,
+      },
+      circleIo(),
+    );
+    if (outcome.handled) return NextResponse.json({ ok: true });
+    circleStop = outcome.stop?.note ?? null;
+  } catch (err) {
+    // A circle failure must never stop the route's own commands, nor become a non-2xx.
+    console.warn(JSON.stringify({ at: 'telegram.webhook', event: 'circle_error', error: err instanceof Error ? err.name : 'unknown' }));
+  }
+
+  // 7. Parse the untrusted text into the closed command enum. Log the command name
   //    only - never the raw text or a /start argument, which are untrusted user input.
   const parsed = parseMessage(text);
   console.info(
@@ -458,7 +553,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }),
   );
 
-  // 7. Reply. Keyed by update_id so a Telegram redelivery of the same update is
+  // 8. Reply. Keyed by update_id so a Telegram redelivery of the same update is
   //    suppressed by the sender's idempotency dedupe instead of double-replying. A
   //    database error must never turn into a non-2xx (Telegram would retry it for ever).
   let reply: string;
@@ -468,7 +563,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // - /stop, a bare STOP, anything the parser knows - is always handled as the command.
     const repliedTo = message.reply_to_message;
     const isFreeText = parsed.kind === 'command' && parsed.command === 'unknown' && !text.trim().startsWith('/');
-    reply = isFreeText && repliedTo?.from?.is_bot ? await noteReply(text, repliedTo, ctx) : await buildReply(parsed, ctx);
+    // A circle member's STOP (their circle reads already paused): this route's stop, with the circle's line in it.
+    if (circleStop !== null) reply = await stopReply(ctx, circleStop);
+    else reply = isFreeText && repliedTo?.from?.is_bot ? await noteReply(text, repliedTo, ctx) : await buildReply(parsed, ctx);
   } catch (err) {
     console.warn(JSON.stringify({ at: 'telegram.webhook', event: 'reply_error', error: err instanceof Error ? err.name : 'unknown' }));
     reply = 'Something went wrong on our side - try again in a minute.';
@@ -480,7 +577,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 8. Always 200 - Telegram retries any non-2xx, and retries of handled updates
+  // 9. Always 200 - Telegram retries any non-2xx, and retries of handled updates
   //    only create duplicate work.
   return NextResponse.json({ ok: true });
 }
